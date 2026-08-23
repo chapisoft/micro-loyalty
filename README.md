@@ -85,10 +85,6 @@ micro-loyalty/
 | :---: | :--- | :--- | :--- |
 | 1 | **Phương Án Giải Pháp Tổng Thể** | [docs/ba/solution.md](docs/ba/solution.md) | Tổng quan bối cảnh, mục tiêu chiến lược, kiến trúc giải pháp, mô hình liên thông Ví Phần Thưởng, cơ chế bù trừ tài chính liên minh, động cơ cột mốc chiến dịch, gợi nhắc ngữ cảnh và kinh tế Cổng Game. |
 | 2 | **Thiết Kế Kỹ Thuật Chi Tiết** | [docs/ba/detailed_design.md](docs/ba/detailed_design.md) | Kiến trúc đa thuê bao, khóa phân tán Redisson RLock, Transactional Outbox, xác thực Khóa kép HMAC-SHA256, thiết kế cơ sở dữ liệu 17 bảng PostgreSQL 15+ và đặc tả chi tiết các RESTful API. |
-| 3 | **Kế Hoạch Sản Xuất Chi Tiết** | [plan/production_plan.md](plan/production_plan.md) | Kế hoạch 4 Giai đoạn – 8 Đợt nước rút – 42 Tác vụ kỹ thuật có tiêu chí nghiệm thu (DoD) và Cột Tình Trạng theo dõi trực tiếp. |
-| 4 | **Bảng Theo Dõi Tiến Độ Master Tracker** | [plan/project_status.md](plan/project_status.md) | Ma trận WBS theo dõi % tiến độ chi tiết của 11 Phân hệ nghiệp vụ (D0 → D10, QA) và bảng phân loại các vấn đề kỹ thuật (Blockers). |
-| 5 | **Quy Chuẩn Rà Soát Mã Nguồn Tự Động** | [plan/prompt_audit.md](plan/prompt_audit.md) | Quy định thang điểm đánh giá tiến độ thực tế, tiêu chuẩn Zero Mock/Stub, quy trình rà soát 4 bước và cập nhật đồng bộ các tệp theo dõi. |
-| 6 | **Bản Đồ Cấu Trúc Mã Nguồn** | [docs/dev/codebase.md](docs/dev/codebase.md) | Báo cáo chi tiết về việc kế thừa 11 module thư viện `ims-libraries`, bảo mật HMAC và hạ tầng container hóa. |
 
 ---
 

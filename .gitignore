@@ -1,0 +1,220 @@
+# ==============================================================================
+# .gitignore — Hệ Sinh Thái Khách Hàng Thân Thiết Liên Minh (micro-loyalty)
+# Tệp Cấu Hình Duy Nhất Tại Thư Mục Gốc Quản Lý Toàn Bộ Dự Án & Module Con
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. JAVA & MAVEN BUILD ARTIFACTS (Backend, ims-libraries, loyalty-service)
+# ------------------------------------------------------------------------------
+target/
+**/target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+*.lst
+classes.lst
+
+# Maven wrapper & runtime
+.mvn/
+**/.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+.mvn/wrapper/.maven/
+HELP.md
+
+# ------------------------------------------------------------------------------
+# 2. NODE / TYPESCRIPT / FRONTEND (loyalty-cms, loyalty-webview, loyalty-sandbox)
+# ------------------------------------------------------------------------------
+node_modules/
+**/node_modules/
+
+dist/
+**/dist/
+dist-ssr/
+**/dist-ssr/
+build/
+**/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+out/
+**/out/
+publish/
+**/publish/
+
+# Bundler & Framework Caches
+.next/
+**/.next/
+.nuxt/
+**/.nuxt/
+.turbo/
+**/.turbo/
+.output/
+**/.output/
+.cache/
+**/.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+**/*.tsbuildinfo
+**/tsconfig.app.tsbuildinfo
+**/tsconfig.node.tsbuildinfo
+
+# Package manager lock/logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.yarn/install-state.gz
+yarn.lock
+package-lock.json.bak
+
+# ------------------------------------------------------------------------------
+# 3. MOBILE & REACT NATIVE (natcash-eu-app / iOS & Android)
+# ------------------------------------------------------------------------------
+# Android
+**/android/build/
+**/android/app/build/
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/*.iml
+**/android/key.properties
+*.keystore
+!debug.keystore
+
+# iOS
+**/ios/Pods/
+**/ios/build/
+**/ios/*.xcworkspace/xcuserdata/
+**/ios/*.xcodeproj/xcuserdata/
+**/ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/DerivedData/
+
+# ------------------------------------------------------------------------------
+# 4. DEVOPS, DOCKER & LOCAL RUNTIMES (deploy/)
+# ------------------------------------------------------------------------------
+# PostgreSQL / Redis local mount data
+deploy/postgres_data/
+deploy/redis_data/
+**/data/postgres/
+**/data/redis/
+
+# Secrets & Environment (Chỉ giữ lại tệp mẫu *.example)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.crt
+*.p12
+
+# Bảo tồn các tệp mẫu cấu hình môi trường
+!.env.example
+!.env.production.example
+!.env.staging.example
+
+# ------------------------------------------------------------------------------
+# 5. LOGS & COVERAGE REPORTS
+# ------------------------------------------------------------------------------
+*.log
+logs/
+**/logs/
+coverage/
+**/coverage/
+*.lcov
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# 6. IDEs, EDITORS & OS SYSTEM FILES
+# ------------------------------------------------------------------------------
+# IntelliJ IDEA
+.idea/
+**/.idea/
+.jpb/
+*.iws
+*.iml
+**/*.iml
+*.ipr
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# Visual Studio Code / Cursor / Other Editors
+.vscode/
+**/.vscode/
+.cursor/
+**/.cursor/
+.history/
+**/.history/
+*.code-workspace
+
+# Visual Studio / Windows tools
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.patch
+*.diff
+*.orig
+*.rej
+
+# NetBeans
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# macOS
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ------------------------------------------------------------------------------
+# 7. TEMPORARY, CACHE & SCRATCH FILES
+# ------------------------------------------------------------------------------
+temp/
+**/temp/
+tmp/
+**/tmp/
+scratch/
+.gemini/
+.system_generated/
+*.bak
+*.swp
+*.swo
+*~
+notification-templates/
+
+# Báo cáo rà soát nội bộ (Audit Reports)
+plan/audit/
+**/plan/audit/
+docs/dev/audit/
+**/audit/
