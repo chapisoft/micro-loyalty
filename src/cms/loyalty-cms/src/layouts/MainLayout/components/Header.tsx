@@ -172,6 +172,11 @@ const Header: React.FC = () => {
             icon: 'pi pi-list',
             command: () => handleNavigate(paths.auditManagement),
           },
+          {
+            label: t('nav.dead_letter', { defaultValue: 'Lỗi Webhook (Dead-Letter)' }),
+            icon: 'pi pi-exclamation-circle',
+            command: () => handleNavigate(paths.deadLetterManagement),
+          },
         ],
       },
     ],

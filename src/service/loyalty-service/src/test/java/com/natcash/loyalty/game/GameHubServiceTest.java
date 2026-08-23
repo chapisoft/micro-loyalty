@@ -54,6 +54,9 @@ class GameHubServiceTest {
     @Mock
     private LoyaltyPointLedgerRepository ledgerRepository;
 
+    @Mock
+    private com.natcash.loyalty.wallet.repository.ClearingTransactionRepository clearingRepository;
+
     @InjectMocks
     private GameHubService gameHubService;
 
@@ -206,5 +209,48 @@ class GameHubServiceTest {
                 gameHubService.inGameCheckout("TENANT_DELIMART", request));
 
         verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("BE-14.5: Webhook đối tác mua lượt game thành công, cộng lượt và ghi nợ đối soát thu tiền")
+    void testProcessPartnerTurnPurchaseSuccess() {
+        GameSessionEntity session = GameSessionEntity.builder()
+                .id(100L)
+                .tenantId("TENANT_DELIMART")
+                .externalUserId("USER_01")
+                .sessionToken("GS_TOKEN_123")
+                .turnsAllocated(2)
+                .turnsUsed(1)
+                .status(SessionStatus.ACTIVE)
+                .build();
+
+        when(sessionRepository.findByTenantIdAndSessionToken("TENANT_DELIMART", "GS_TOKEN_123"))
+                .thenReturn(Optional.of(session));
+
+        com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookRequest request =
+                com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookRequest.builder()
+                        .partnerCode("NATCASH_WALLET")
+                        .externalUserId("USER_01")
+                        .sessionToken("GS_TOKEN_123")
+                        .gameCode("QUIZ_MASTER")
+                        .turnsPurchased(5)
+                        .paymentAmount(new BigDecimal("50.00"))
+                        .currency("HTG")
+                        .partnerTransactionCode("NC_TX_987654")
+                        .build();
+
+        com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookResponse response =
+                gameHubService.processPartnerTurnPurchase("TENANT_DELIMART", request);
+
+        assertNotNull(response);
+        assertEquals("NC_TX_987654", response.getPartnerTransactionCode());
+        assertEquals("USER_01", response.getExternalUserId());
+        assertEquals(5, response.getTurnsAdded());
+        assertEquals(6, response.getTotalTurnsAvailable()); // 2 - 1 + 5 = 6
+        assertEquals("PENDING", response.getClearingStatus());
+        assertNotNull(response.getTransactionCode());
+
+        verify(sessionRepository, times(1)).save(session);
+        verify(clearingRepository, times(1)).save(any(com.natcash.loyalty.wallet.entity.ClearingTransactionEntity.class));
     }
 }

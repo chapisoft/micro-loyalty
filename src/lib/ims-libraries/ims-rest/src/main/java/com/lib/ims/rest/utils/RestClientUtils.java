@@ -21,7 +21,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
-@SuppressWarnings({ "unchecked", "rawtypes", "null" })
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class RestClientUtils {
    @Generated
    private static final Logger log = LoggerFactory.getLogger(RestClientUtils.class);

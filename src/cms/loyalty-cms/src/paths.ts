@@ -29,6 +29,7 @@ export const paths = {
   userManagement: '/admin/users',
   roleManagement: '/admin/roles',
   auditManagement: '/admin/audit-logs',
+  deadLetterManagement: '/admin/dead-letter',
   sandboxUsers: '/admin/sandbox/users',
   sandboxGroups: '/admin/sandbox/groups',
   sandboxMenus: '/admin/sandbox/menus',

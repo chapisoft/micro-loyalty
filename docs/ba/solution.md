@@ -274,20 +274,20 @@ Hệ thống tự động tính toán dữ liệu hành vi của từng khách h
 
 ## 7. MÔ HÌNH NGHIỆP VỤ CỔNG GAME VÀ KINH TẾ TRÒ CHƠI
 
-Cổng Game là phân hệ giải trí và trò chơi hóa trực thuộc giải pháp Khách hàng thân thiết:
+Cổng Game (GameHub) là phân hệ giải trí, giữ chân khách hàng và trò chơi hóa (Gamification) độc lập trực thuộc hệ sinh thái Khách hàng thân thiết:
 
 ```mermaid
 flowchart LR
-    subgraph COL_PUB ["GIAI ĐOẠN 1: XUẤT BẢN TRÒ CHƠI"]
+    subgraph COL_PUB ["GIAI ĐOẠN 1: QUẢN TRỊ & XUẤT BẢN TRÒ CHƠI"]
         direction TB
-        G_Upload["1. Đối Tác Đưa Game Lên Hub<br/>• Cung cấp gói mã nguồn game lẻ<br/>• Thiết lập bảng giá mua lượt/vật phẩm<br/>• Thỏa thuận tỉ lệ chia sẻ doanh thu"]
-        G_Publish["2. Natcash Lưu Trữ & Phục Vụ<br/>• Lưu trữ game tập trung trên Hub<br/>• Hiển thị danh mục trên ứng dụng ví<br/>• Khởi tạo phiên chơi trực tiếp từ Hub"]
-        G_Upload --> G_Publish
+        G_CMS["1. 7 Nhóm Cấu Hình Game CMS<br/>• Thuộc tính, Giao diện/Âm thanh<br/>• Tặng lượt, Đổi điểm, Mua gói combo<br/>• Reset/Cộng dồn lượt & Ma trận trả thưởng"]
+        G_Publish["2. Phân Phối H5 Decoupled<br/>• Đóng gói Game H5 độc lập trên Webview<br/>• Phím tắt Động & Deep Link chơi 1 chạm<br/>• Mở qua GameHub hoặc nhúng App đối tác"]
+        G_CMS --> G_Publish
     end
 
     subgraph COL_BILL ["GIAI ĐOẠN 2: THU PHÍ VÀ ĐỐI SOÁT"]
         direction TB
-        G_Billing["3. Thu Phí Qua Số Dư Ví<br/>• Người dùng xác thực bằng mã PIN ví<br/>• Trừ số dư ví khi mua lượt/vật phẩm<br/>• Tự động tích điểm thưởng Loyalty"]
+        G_Billing["3. Thu Phí Qua Số Dư Ví<br/>• Người dùng xác thực bằng mã PIN ví<br/>• Trừ số dư ví khi mua lượt/gói combo<br/>• Tự động tích điểm thưởng Loyalty"]
         G_Payout["4. Đối Soát & Chia Sẻ Doanh Thu<br/>• Ghi nhận doanh thu chi tiết từng game<br/>• Giữ lại phí dịch vụ nền tảng cho Natcash<br/>• Kết chuyển phần chia sẻ cho đối tác"]
         G_Billing --> G_Payout
     end
@@ -300,38 +300,53 @@ flowchart LR
 * **Tạo động lực kiếm điểm:** Tạo môi trường cạnh tranh bảng xếp hạng, chuỗi thắng để nhận điểm thưởng thăng hạng hội viên.
 * **Kênh giải phóng kho quà:** Phân phối các gói phiếu giảm giá, tiền hoàn ví từ kho quà đến tay người chơi một cách tự nhiên và hào hứng.
 
-### 7.2. Mô Hình Xuất Bản Game Lẻ và Chia Sẻ Doanh Thu
-* **Nền tảng mở cho đối tác:** Các studio hoặc nhà phát triển game bên thứ ba đưa các gói game lẻ lên phân phối trên GameHub Natcash.
-* **Thanh toán in-game liền mạch:** Người dùng sử dụng trực tiếp số dư ví Natcash để mua lượt chơi hoặc vật phẩm trong game.
-* **Tự động đối soát phân chia doanh thu:** Hệ thống tự động ghi nhận doanh thu, trừ chi phí vận hành nền tảng của Natcash và kết chuyển phần doanh thu chia sẻ cho đối tác định kỳ.
+### 7.2. Kiến Trúc Tách Rời Webview Độc Lập & Game H5 Decoupled
+* **Không làm trực tiếp vào mã nguồn ứng dụng ví Natcash:** Toàn bộ giao diện Frontend của Trung tâm Loyalty, Cổng GameHub và các trò chơi H5 được đặt trọn vẹn trong module độc lập `loyalty-webview` và các gói tĩnh H5 riêng biệt.
+* **Cơ chế nhúng đa đối tác (Decoupled Embedding):** Ứng dụng ví Natcash hoặc bất kỳ ứng dụng đối tác liên minh nào (Siêu thị Delimart, Cây xăng, Ngân hàng, Viễn thông) chỉ cần tích hợp khung Webview cơ bản, truyền định danh đối tác `tenant_id`, vé phiên `session_ticket` và tương tác qua cầu nối hai chiều `LoyaltyJSBridge`.
+* **Khả năng thay đổi nhận diện thương hiệu tức thì:** Khi mở Webview với tham số `theme`, toàn bộ hệ thống màu sắc, biểu tượng, đơn vị tiền tệ và danh mục voucher tự động biến đổi phù hợp với từng đối tác mà không cần biên dịch lại mã nguồn.
+
+### 7.3. Các Phương Thức Tích Hợp Linh Hoạt Đa Kênh
+Hệ thống hỗ trợ 4 phương thức tích hợp tối ưu theo từng nhu cầu trải nghiệm:
+1. **Phương thức 1: Mở qua Cổng GameHub Tập Trung (GameHub Portal):** Người dùng truy cập Cổng GameHub để xem toàn bộ danh mục game theo thể loại (Vòng quay, Trí tuệ, Tương tác nhanh), kho lượt chơi cá nhân và bảng xếp hạng sự kiện.
+2. **Phương thức 2: Mở Trực Tiếp Cổng GameHub Độc Lập (Không qua Loyalty):** GameHub hoạt động như một dịch vụ giải trí độc lập ngay trên màn hình trang chủ App. Người dùng không cần phải vào Trung tâm Loyalty mới thấy GameHub.
+3. **Phương thức 3: Chơi Ngay Qua Phím Tắt Động / Liên Kết Sâu (Direct Game Shortcut):** Người dùng chạm vào các icon/banner/widget game động trên trang chủ ví Natcash (ví dụ liên kết sâu `natcash://game/lucky-wheel`), hệ thống mở ngay trình chơi game H5 trong tích tắc, bỏ qua mọi bước điều hướng trung gian.
+4. **Phương thức 4: Nhúng Webview Cho Mọi Đối Tác B2B:** Đối tác bên thứ ba tích hợp Webview qua API cấp vé phiên và cầu nối `LoyaltyJSBridge` để cung cấp game cho khách hàng của riêng họ.
+
+### 7.4. Tiêu Chuẩn 7 Nhóm Cấu Hình Game Chuẩn Công Nghiệp Phát Hành Trên CMS
+Toàn bộ trò chơi phát hành trên hệ thống bắt buộc phải được cấu hình đầy đủ trên `loyalty-cms` theo 7 nhóm thông số chuẩn:
+1. **Nhóm 1: Thuộc tính & Siêu dữ liệu cơ bản:** Mã game, tên game đa ngôn ngữ, thể loại, ảnh icon 1:1, ảnh banner 16:9, URL gói H5 bundle, định hướng màn hình (dọc/ngang), trạng thái phát hành (Nháp / Đang chạy / Tạm dừng / Bảo trì) và thời gian hiệu lực sự kiện.
+2. **Nhóm 2: Cấu hình thành phần giao diện & âm thanh:** Bộ skin/theme theo mùa (Tết, Giáng sinh), số ô đĩa quay (8 ô, 12 ô), hình ảnh từng ô giải thưởng, nhạc nền BGM, âm thanh quay đĩa, âm thanh trúng giải đặc biệt, âm thanh trượt giải và hiệu ứng pháo hoa chúc mừng.
+3. **Nhóm 3: Chính sách tặng lượt chơi miễn phí:** Tặng khi mở tài khoản/đăng ký mới, tặng khi điểm danh hàng ngày theo khung giờ, tặng định kỳ theo cấp bậc hội viên (Bạc, Vàng, Bạch Kim, Kim Cương), tặng khi hoàn thành nhiệm vụ cột mốc chiến dịch.
+4. **Nhóm 4: Chính sách đổi điểm lấy lượt chơi:** Bật/tắt tính năng đổi điểm, tỷ lệ quy đổi (ví dụ: 10 điểm Loyalty = 1 lượt chơi), giới hạn số lượt đổi tối đa mỗi ngày / mỗi tuần trên từng tài khoản và hạn mức quỹ đổi toàn hệ thống.
+5. **Nhóm 5: Chính sách mua thêm lượt chơi lẻ & Gói Combo:** Bảng giá mua lượt lẻ (ví dụ: 5 HTG / 1 lượt), danh mục gói bán combo (Gói 5 lượt, Gói 10 lượt, Gói VIP 50 lượt tặng kèm 10 lượt khuyến mại), cấu hình nhãn nổi bật ("Bán chạy nhất", "Tiết kiệm 20%").
+6. **Nhóm 6: Chính sách vòng đời & hết hạn lượt chơi:** Cơ chế xử lý khi hết ngày: **Cộng dồn (Roll-over)** cho lượt mua bằng tiền/đổi điểm và **Làm mới về 0 (Daily Reset)** vào 23:59:59 cho lượt tặng miễn phí trong ngày; thứ tự ưu tiên trừ lượt (trừ lượt miễn phí trong ngày trước, trừ lượt mua/đổi điểm sau).
+7. **Nhóm 7: Chính sách trả thưởng & Ma trận xác suất:** Danh mục giải thưởng (Tiền hoàn ví, Điểm loyalty, Voucher, Hiện vật, Tặng thêm lượt, Chúc may mắn), ma trận xác suất trúng thưởng (%) tổng 100%, hạn mức ngân sách tiền mặt tối đa trong ngày, hạn mức số lượng giải lớn trong ngày, lệnh nguyên tử trừ ngân sách Redis `DECRBY` và luật tự động lái xác suất khi hết hạn ngạch.
 
 ---
 
 ## 8. CHIẾN LƯỢC TÍCH HỢP VÀ LỘ TRÌNH TRIỂN KHAI
 
 ### 8.1. Phương Án Tích Hợp Hệ Thống
-* **Ứng dụng di động:** Nhúng Mobile SDK để hiển thị Trung tâm Khách hàng thân thiết, Cổng Game, Bảng tiến độ cột mốc và Mã QR tiêu điểm tại quầy thu ngân.
-* **Cổng Webview nhúng (`loyalty-webview`):** Cung cấp giao diện trọn gói cho đối tác liên minh nhúng trực tiếp vào ứng dụng di động của họ qua vé phiên một lần (SSO) và cầu nối JSBridge.
-* **Cổng Quản trị Trung tâm (`loyalty-cms`):** Cung cấp cổng điều hành cho phép quản trị viên cấu hình chính sách tích/tiêu điểm, tỷ giá, quản lý kho voucher và duyệt quyết toán bù trừ tài chính.
+* **Ứng dụng di động (`natcash-eu-app`):** Nhúng Mobile SDK để hiển thị Trung tâm Khách hàng thân thiết, Cổng Game, Phím tắt Động trên trang chủ và Mã QR tiêu điểm động 60s tại quầy thu ngân.
+* **Cổng Webview nhúng & Game H5 Decoupled (`loyalty-webview`):** Cung cấp giao diện trọn gói cho đối tác liên minh nhúng trực tiếp vào ứng dụng di động của họ qua vé phiên một lần (SSO) và cầu nối `LoyaltyJSBridge`.
+* **Cổng Quản trị Trung tâm (`loyalty-cms`):** Cung cấp cổng điều hành cho phép quản trị viên cấu hình 7 nhóm thông số Game chuẩn phát hành, chính sách tích/tiêu điểm, tỷ giá, quản lý kho voucher và duyệt quyết toán bù trừ tài chính.
+* **Hệ sinh thái Công cụ & Trình Giả lập (`loyalty-sandbox` & Simulators - Sprint 9):** Bộ công cụ Web POS Live Simulator, App Đối tác Giả lập nhúng Webview, Smartphone Live Simulator và Cổng Sandbox Portal tra cứu API / soi mã HMAC.
 * **Hệ thống POS / Máy tính tiền đối tác:** Tích hợp với Cổng API Loyalty để tra cứu toàn diện Ví Phần Thưởng và thực hiện giao dịch trừ điểm/đổi quà theo thời gian thực.
-* **Cổng API Gateway hiện có:** Đóng vai trò là Reverse Proxy xác thực người dùng và chuyển tiếp yêu cầu sang Dịch vụ độc lập `loyalty-service` kèm định danh thuê bao `X-Tenant-Id`.
+* **Cổng API Gateway hiện có (`natcash-eu-api`):** Đóng vai trò là Reverse Proxy xác thực người dùng và chuyển tiếp yêu cầu sang Dịch vụ độc lập `loyalty-service` kèm định danh thuê bao `X-Tenant-Id`.
 * **Dịch vụ độc lập `loyalty-service`:** Chịu trách nhiệm toàn bộ logic phân hạng, tích điểm, liên thông Ví Phần Thưởng, quản lý Cổng Game, động cơ cột mốc và đối soát bù trừ tài chính trên cơ sở dữ liệu **PostgreSQL 15+**.
 
-### 8.2. Lộ Trình Triển Khai 4 Giai Đoạn
+### 8.2. Lộ Trình Triển Khai 5 Giai Đoạn (9 Sprints)
 
-1. **Giai đoạn 1: Xây dựng nền tảng Dịch vụ độc lập SaaS và Trung tâm Bù trừ Điểm:**
-   - Thiết lập kiến trúc đa thuê bao, cơ sở dữ liệu `loyalty_db` trên PostgreSQL 15+ độc lập hoàn toàn với `natcash_db`, bảo mật API Key và Webhook Outbox Engine.
-   - Xây dựng các phân hệ cốt lõi của Loyalty: Sổ cái điểm hợp nhất, Động cơ liên thông Ví Phần Thưởng, Động cơ cột mốc chiến dịch và Động cơ bù trừ công nợ liên minh.
-   - Xây dựng phân hệ Cổng Game: Quản lý danh mục game, Động cơ thu phí in-game qua ví và Động cơ đối soát doanh thu.
-2. **Giai đoạn 2: Xây dựng Cổng Quản trị CMS, Cổng Webview và Tích hợp API Gateway:**
-   - Hoàn thiện Cổng Quản trị `loyalty-cms` phục vụ cấu hình chính sách, hạn mức và đối soát.
-   - Hoàn thiện Cổng Webview `loyalty-webview` nhúng đa nền tảng tích hợp cầu nối JSBridge.
-   - Kết nối API liên thông Ví Phần Thưởng với hệ thống máy tính tiền / POS của các chuỗi siêu thị và cây xăng đối tác tiên phong.
-   - Cài đặt Động cơ gợi nhắc thông minh và cơ chế kiểm soát tần suất gửi thông báo.
-   - Định tuyến toàn bộ yêu cầu Loyalty và Game từ API Gateway sang Dịch vụ độc lập.
-3. **Giai đoạn 3: Hoàn thiện Ứng dụng di động và phát hành trò chơi đầu tiên:**
-   - Hoàn thiện giao diện Trung tâm Khách hàng thân thiết, màn hình quét mã QR tiêu điểm tại quầy, Bảng theo dõi cột mốc sự kiện và Cổng Game.
-   - Phát hành trò chơi đầu tiên: Vòng quay may mắn (Lucky Draw) kết nối trực tiếp với điểm Loyalty và số dư ví.
-4. **Giai đoạn 4: Mở rộng Liên minh Toàn quốc và Vận hành Thương mại:**
-   - Mở rộng kết nối mạng lưới đối tác bán lẻ, ẩm thực và dịch vụ công trên toàn quốc.
-   - Mở cổng quản trị đối tác để tiếp nhận các gói game lẻ tải lên GameHub và tự động đối soát phân chia doanh thu định kỳ.
+1. **Giai đoạn 1: Hạ Tầng Kế Thừa, Cơ Sở Dữ Liệu PostgreSQL 15+ & Bảo Mật B2B (Sprint 1 & 2):**
+   - Tích hợp 11 module thư viện lõi `ims-libraries`, PostgreSQL 15+ độc lập `loyalty_db`, bộ lọc đa thuê bao `TenantContextFilter`, bảo mật Khóa kép HMAC-SHA256, khóa phân tán Redisson RLock, Redis Streams và Transactional Outbox Engine.
+2. **Giai đoạn 2: Phát Triển 7 Phân Hệ Nghiệp Vụ, CMS & Webview Độc Lập (Sprint 3 & 4):**
+   - Hoàn thiện Sổ cái điểm thưởng kép, phân hạng 4 cấp, liên thông Ví Phần Thưởng, động cơ cột mốc chiến dịch và động cơ bù trừ tài chính liên minh.
+   - Xây dựng 7 nhóm cấu hình Game trên CMS (`loyalty-cms`), Trình mở Game H5 độc lập và đĩa quay Canvas 60 FPS (`loyalty-webview`).
+3. **Giai đoạn 3: Tích Hợp API Gateway, Ứng Dụng Di Động, Webview & Phím Tắt Động (Sprint 5 & 6):**
+   - Nâng cấp Reverse Proxy Gateway `natcash-eu-api`, đồng bộ hồ sơ hai chiều và Webhook thăng hạng.
+   - Nâng cấp `natcash-eu-app`: Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60s, Cổng GameHub độc lập, Phím tắt Động chơi game tức thì 1 chạm và kiểm thử E2E tích hợp.
+4. **Giai đoạn 4: Kiểm Thử Tải Lớn, An Ninh & Triển Khai Production (Sprint 7 & 8):**
+   - Kiểm thử tải 1.000 RPS API điểm bán POS, kiểm thử tải đồng thời Vòng quay may mắn & ngân sách Redis `DECRBY`, Pentest bảo mật, đóng gói CI/CD Docker Kubernetes và chạy thử nghiệm Pilot tại Siêu thị Delimart.
+5. **Giai đoạn 5: Hệ Sinh Thái Giả Lập, Thử Nghiệm Sandbox & Chuyển Giao Đối Tác (Sprint 9):**
+   - Xây dựng Web POS Live Simulator cho quầy thu ngân siêu thị, App Đối tác Giả lập nhúng Webview qua SSO Ticket & JSBridge, Trình Giả lập Smartphone Live trên Webview và Cổng Developer Sandbox Portal soi chữ ký HMAC-SHA256.
+

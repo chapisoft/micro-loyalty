@@ -6,6 +6,8 @@ import com.natcash.loyalty.game.dto.GameHubDto.InGameCheckoutRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.InGameCheckoutResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.InitSessionRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.InitSessionResponse;
+import com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookRequest;
+import com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookResponse;
 import com.natcash.loyalty.game.service.GameHubService;
 import com.natcash.loyalty.tenant.TenantContext;
 
@@ -51,12 +53,22 @@ public class GameHubController {
     }
 
     @PostMapping("/billing/in-game-checkout")
-    @Operation(summary = "Thanh toán mua thêm lượt chơi trong game", description = "Khấu trừ điểm hoặc tiền ví để gia tăng số lượt chơi trong phiên")
+    @Operation(summary = "Thanh toán mua thêm lượt chơi trong game bằng Điểm", description = "Khấu trừ điểm Loyalty để gia tăng số lượt chơi trong phiên 1 chạm")
     public ResponseEntity<InGameCheckoutResponse> inGameCheckout(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody InGameCheckoutRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         InGameCheckoutResponse response = gameHubService.inGameCheckout(tenantId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/webhooks/partner-turn-purchase")
+    @Operation(summary = "Webhook tiếp nhận mua lượt chơi từ Đối tác", description = "Tiếp nhận thông báo trừ tiền thành công từ đối tác (Ví Natcash, Delimart), cộng lượt chơi và ghi nợ đối soát thu tiền")
+    public ResponseEntity<PartnerTurnPurchaseWebhookResponse> handlePartnerTurnPurchase(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @Valid @RequestBody PartnerTurnPurchaseWebhookRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        PartnerTurnPurchaseWebhookResponse response = gameHubService.processPartnerTurnPurchase(tenantId, request);
         return ResponseEntity.ok(response);
     }
 }

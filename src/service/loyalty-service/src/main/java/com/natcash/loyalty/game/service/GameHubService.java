@@ -4,6 +4,7 @@ import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.GameStatus;
 import com.natcash.loyalty.domain.enums.PaymentMethod;
 import com.natcash.loyalty.domain.enums.PointActionType;
@@ -16,12 +17,16 @@ import com.natcash.loyalty.game.dto.GameHubDto.InGameCheckoutRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.InGameCheckoutResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.InitSessionRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.InitSessionResponse;
+import com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookRequest;
+import com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookResponse;
 import com.natcash.loyalty.game.entity.GameHubEntity;
 import com.natcash.loyalty.game.entity.GameSessionEntity;
 import com.natcash.loyalty.game.repository.GameHubRepository;
 import com.natcash.loyalty.game.repository.GameSessionRepository;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
+import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
+import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +50,20 @@ public class GameHubService {
     private final AccountService accountService;
     private final LoyaltyAccountRepository accountRepository;
     private final LoyaltyPointLedgerRepository ledgerRepository;
+    private final ClearingTransactionRepository clearingRepository;
 
     public GameHubService(GameHubRepository gameRepository,
                           GameSessionRepository sessionRepository,
                           AccountService accountService,
                           LoyaltyAccountRepository accountRepository,
-                          LoyaltyPointLedgerRepository ledgerRepository) {
+                          LoyaltyPointLedgerRepository ledgerRepository,
+                          ClearingTransactionRepository clearingRepository) {
         this.gameRepository = gameRepository;
         this.sessionRepository = sessionRepository;
         this.accountService = accountService;
         this.accountRepository = accountRepository;
         this.ledgerRepository = ledgerRepository;
+        this.clearingRepository = clearingRepository;
     }
 
     @Transactional(readOnly = true)
@@ -198,6 +206,62 @@ public class GameHubService {
                 .paymentMethod(paymentMethod)
                 .remainingPointBalance(remainingBalance)
                 .message("Mua lượt chơi game thành công")
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    @Transactional
+    public PartnerTurnPurchaseWebhookResponse processPartnerTurnPurchase(String tenantId, PartnerTurnPurchaseWebhookRequest request) {
+        String userId = request.getExternalUserId();
+        String gameCode = request.getGameCode();
+        int turns = request.getTurnsPurchased() != null ? request.getTurnsPurchased() : 1;
+        BigDecimal amount = request.getPaymentAmount();
+        String currency = request.getCurrency() != null ? request.getCurrency() : "HTG";
+        String partnerTxCode = request.getPartnerTransactionCode();
+        String partnerCode = request.getPartnerCode();
+
+        String loyaltyTxCode = "PUR_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+
+        // 1. Cập nhật lượt chơi cho session (nếu có sessionToken)
+        int totalTurns = turns;
+        if (request.getSessionToken() != null && !request.getSessionToken().isBlank()) {
+            GameSessionEntity session = sessionRepository.findByTenantIdAndSessionToken(tenantId, request.getSessionToken()).orElse(null);
+            if (session != null) {
+                session.setTurnsAllocated(session.getTurnsAllocated() + turns);
+                sessionRepository.save(session);
+                totalTurns = session.getTurnsAllocated() - session.getTurnsUsed();
+            }
+        }
+
+        // 2. Ghi nợ đối soát tài chính (Accounts Receivable - Ghi nợ đối tác để thu tiền kỳ)
+        ClearingTransactionEntity clearingTx = ClearingTransactionEntity.builder()
+                .tenantId(tenantId)
+                .transactionCode(loyaltyTxCode)
+                .issuerPartnerId(1L) // Loyalty Platform
+                .redeemerPartnerId(2L) // Partner (Natcash Wallet / Delimart)
+                .externalUserId(userId)
+                .pointsRedeemed(BigDecimal.ZERO)
+                .fiatAmount(amount)
+                .exchangeRate(BigDecimal.ONE)
+                .status(ClearingStatus.PENDING)
+                .createdAt(Instant.now())
+                .build();
+        clearingRepository.save(clearingTx);
+
+        log.info("[GAME-PARTNER-PURCHASE-WEBHOOK] tenantId={}, partner={}, user={}, game={}, turns={}, amount={}, txCode={}, ref={}",
+                tenantId, partnerCode, userId, gameCode, turns, amount, loyaltyTxCode, partnerTxCode);
+
+        return PartnerTurnPurchaseWebhookResponse.builder()
+                .transactionCode(loyaltyTxCode)
+                .partnerTransactionCode(partnerTxCode)
+                .externalUserId(userId)
+                .gameCode(gameCode)
+                .turnsAdded(turns)
+                .totalTurnsAvailable(totalTurns)
+                .paymentAmount(amount)
+                .currency(currency)
+                .clearingStatus(ClearingStatus.PENDING.name())
+                .message("Đã cộng lượt chơi và ghi nhận công nợ đối soát thu tiền thành công")
                 .timestamp(Instant.now())
                 .build();
     }

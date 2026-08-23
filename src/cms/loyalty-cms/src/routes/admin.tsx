@@ -28,5 +28,12 @@ export const route: RouteObject = {
         return { Component: AuditLogPage };
       },
     },
+    {
+      path: paths.deadLetterManagement,
+      lazy: async () => {
+        const { DeadLetterPage } = await import('@/pages/deadletter/DeadLetterPage');
+        return { Component: DeadLetterPage };
+      },
+    },
   ],
 };

@@ -197,13 +197,14 @@ flowchart LR
 
 ### 4.1. Trách Nhiệm Chi Tiết Của Tầng Ứng Dụng Di Động (`natcash-eu-app`) và Cổng Webview (`loyalty-webview`)
 
-| STT | Thành phần giao diện / Chức năng | Chi tiết công việc Tầng App cần thực hiện | Giao thức / Dữ liệu tương tác |
+| STT | Thành phần giao diện / Chức năng | Chi tiết công việc Tầng App & Webview cần thực hiện | Giao thức / Dữ liệu tương tác |
 | :---: | :--- | :--- | :--- |
-| **1** | **Trung tâm Khách hàng thân thiết** | Xây dựng màn hình `LoyaltyScreen`: Hiển thị thẻ VIP (Bạc, Vàng, Bạch Kim), thanh tiến độ điểm xét hạng chu kỳ năm, danh sách nhiệm vụ điểm danh ngày và các thẻ gợi nhắc thông minh (sinh nhật, nâng hạng). | Gọi `POST /loyalty/v1/profile`, `POST /loyalty/v1/missions/list`, `POST /loyalty/v1/engagement/in-app-nudges` qua Gateway. |
+| **1** | **Trung tâm Khách hàng thân thiết** | Xây dựng màn hình `LoyaltyScreen`: Hiển thị thẻ VIP (Bạc, Vàng, Bạch Kim, Kim Cương), thanh tiến độ điểm xét hạng chu kỳ 12 tháng, danh sách nhiệm vụ điểm danh ngày và các thẻ gợi nhắc thông minh (sinh nhật, nâng hạng). | Gọi `POST /loyalty/v1/profile`, `POST /loyalty/v1/missions/list`, `POST /loyalty/v1/engagement/in-app-nudges` qua Gateway. |
 | **2** | **Màn hình Sinh mã QR Tiêu điểm** | Xây dựng modal/màn hình sinh mã QR động chứa token bảo mật mã hóa có hiệu lực trong 60 giây để máy POS siêu thị quét tra cứu Ví Phần Thưởng và trừ điểm/dùng voucher trực tiếp trên hóa đơn. | Tạo chuỗi mã hóa: `QR:tenant_id:user_id:timestamp:hash` kèm đếm lùi thời gian tự làm mới. |
-| **3** | **Cổng Game & Trình chơi Webview** | Nâng cấp `GameStack`: Lưới danh sách game 2 cột, bảng giá lượt chơi/vật phẩm, cửa sổ nhập mã PIN ví để xác thực thanh toán in-game và cầu nối `JSBridge` cho game HTML5. | Nhận sự kiện `window.LoyaltyJSBridge.requestPayment(payload)` từ Webview để mở modal xác thực ví. |
-| **4** | **Vòng quay may mắn (Lucky Draw)** | Nhúng component đĩa quay may mắn Canvas, phát âm thanh `lucky_rotate_sound.mp3`, gọi API quay thưởng và hiển thị popup kết quả trúng thưởng. | Gọi `POST /luckydraw/v1/config` để lấy số lượt và `POST /luckydraw/v1/spin` để thực hiện quay. |
-| **5** | **Lưu trữ đệm ngoại tuyến** | Lưu đệm thông tin thẻ hội viên và danh mục game trên Redux Toolkit / AsyncStorage để hiển thị tức thì khi mở app. | Đồng bộ ngầm khi có kết nối mạng. |
+| **3** | **Cổng GameHub & Trình chơi Webview Độc Lập** | Phân tách `loyalty-webview` thành module độc lập chứa FE Loyalty, GameHub và các Game H5: Lưới danh sách game theo thể loại, kho lượt chơi cá nhân, bảng xếp hạng và cầu nối `LoyaltyJSBridge` cho game H5. Hỗ trợ mở Cổng GameHub độc lập trực tiếp không cần qua Loyalty. | Nhận sự kiện `window.LoyaltyJSBridge.requestPayment(payload)` từ Webview để mở modal xác thực ví. |
+| **4** | **Phím Tắt Động & Deep Link Chơi Game 1 Chạm** | Cài đặt cơ chế Dynamic Shortcuts và Deep Link Scheme (`natcash://game/:gameCode`, `natcash://gamehub`): Hiển thị icon/banner game động trên trang chủ ví Natcash, người dùng bấm 1 chạm là vào chơi ngay game tương ứng. | Mở trực tiếp Webview URL: `.../webview/game/:gameCode?ticket={ticket}&theme=natcash&source=home_shortcut`. |
+| **5** | **Vòng quay may mắn (Lucky Draw)** | Nhúng component đĩa quay may mắn Canvas 60 FPS, phát âm thanh `lucky_rotate_sound.mp3`, nhận diện số lượt quay, gọi API quay thưởng và hiển thị popup kết quả trúng thưởng. | Gọi `POST /luckydraw/v1/config` để lấy số lượt và `POST /luckydraw/v1/spin` để thực hiện quay. |
+| **6** | **Lưu trữ đệm ngoại tuyến** | Lưu đệm thông tin thẻ hội viên và danh mục game trên Redux Toolkit / AsyncStorage để hiển thị tức thì khi mở app. | Đồng bộ ngầm khi có kết nối mạng. |
 
 ---
 
@@ -397,11 +398,15 @@ erDiagram
 * **`LOYALTY_POINT_LEDGER`**: Sổ cái ghi nhận bất biến mọi giao dịch cộng/trừ điểm thưởng (`id`, `tenant_id`, `user_account_id`, `point_change`, `change_type`, `reference_code`, `expired_at`, `created_at`).
 * **`LOYALTY_VOUCHERS` & `LOYALTY_VOUCHER_REDEMPTIONS`**: Quản trị kho quà phiếu ưu đãi điện tử và lịch sử sở hữu/đổi phiếu của người dùng.
 
-#### 4. Nhóm Bảng Cổng Game & Trò Chơi
-* **`GAME_PARTNERS` & `GAMES`**: Quản lý đối tác phát triển game và danh mục trò chơi phát hành trên GameHub.
-* **`IN_GAME_TRANSACTIONS`**: Giao dịch trừ tiền ví khi người dùng mua lượt hoặc vật phẩm trong game.
+#### 4. Nhóm Bảng Cổng Game, Trò Chơi & 7 Nhóm Cấu Hình CMS
+* **`GAMES` & `GAME_PARTNERS`**: Quản lý đối tác phát triển game và danh mục trò chơi phát hành (`id`, `tenant_id`, `partner_id`, `game_code`, `game_name`, `category`, `icon_url`, `banner_url`, `h5_bundle_url`, `version`, `screen_orientation`, `status`, `start_time`, `end_time`).
+* **`GAME_CONFIG_METADATA`**: Cấu hình thành phần giao diện, theme/skin mùa lễ hội, số ô đĩa quay, danh mục âm thanh BGM, âm quay, âm thắng giải và hiệu ứng pháo hoa.
+* **`GAME_TURN_POLICIES`**: Cấu hình chính sách tặng lượt miễn phí (đăng ký mới, điểm danh hàng ngày, theo hạng VIP Bạc/Vàng/Bạch Kim/Kim Cương, nhiệm vụ cột mốc), chính sách đổi điểm lấy lượt (`point_cost_per_turn`, `max_redeem_turns_per_day`) và cơ chế vòng đời lượt (`RESET_DAILY_2359` vs `ROLL_OVER_ACCUMULATIVE`).
+* **`GAME_TURN_PACKAGES`**: Quản lý danh mục gói bán lượt chơi combo (`id`, `game_id`, `package_code`, `package_name`, `base_turns`, `bonus_turns`, `price`, `discount_price`, `badge_label`, `status`).
+* **`GAME_TURN_BALANCES`**: Sổ theo dõi số dư lượt chơi của người dùng, phân tách rõ ràng: số lượt miễn phí có hạn trong ngày và số lượt mua/đổi điểm tích lũy vĩnh viễn.
+* **`IN_GAME_TRANSACTIONS`**: Giao dịch trừ tiền ví khi người dùng mua lượt hoặc gói combo trong game qua API xác thực mã PIN.
 * **`PARTNER_SETTLEMENTS`**: Quyết toán doanh thu chia sẻ định kỳ cho từng nhà phát triển game lẻ.
-* **`GAMES_TURN`, `PRIZES`, `PRIZES_STRUCTURE`, `GAMES_RESULTS`**: Quản lý lượt quay, cấu trúc giải thưởng và kết quả trúng thưởng trò chơi Vòng quay may mắn.
+* **`PRIZES`, `PRIZES_STRUCTURE`, `GAMES_RESULTS`**: Quản lý danh mục giải thưởng (Tiền hoàn ví, Điểm loyalty, Voucher, Hiện vật, Lượt chơi thêm, Miss), ma trận xác suất trúng thưởng (%), hạn mức ngân sách tiền mặt tối đa trong ngày, hạn mức số lượng giải lớn và kết quả trúng thưởng.
 
 ---
 
@@ -444,11 +449,15 @@ Mọi yêu cầu gọi đến `loyalty-service` đều phải truyền kèm các
 5. **`POST /loyalty/v1/vouchers/redeem`**: Thực hiện đổi điểm thưởng lấy mã ưu đãi phiếu giảm giá.
 6. **`POST /loyalty/v1/cashback/redeem`**: Thực hiện đổi điểm thưởng lấy tiền mặt hoàn thẳng vào số dư ví Natcash.
 
-### 8.7. Nhóm Giao Diện Cổng Game và Thanh Toán Trong Game
+### 8.7. Nhóm Giao Diện Cổng Game, Cấu Hình CMS và Mua Lượt Chơi
 1. **`POST /gamehub/v1/games/list`**: Truy vấn danh sách game theo thể loại, từ khóa tìm kiếm và trạng thái nổi bật.
-2. **`POST /gamehub/v1/session/init`**: Khởi tạo phiên chơi game tập trung trên GameHub.
-3. **`POST /gamehub/v1/billing/in-game-checkout`**: Thanh toán mua vật phẩm trong game qua số dư ví Natcash.
-4. **`POST /luckydraw/v1/spin`**: Thực hiện lượt quay may mắn và trả thưởng theo thuật toán xác suất có trọng số.
+2. **`GET /gamehub/v1/games/{gameId}/config`**: Lấy cấu hình đầy đủ của game: Giao diện, theme, âm thanh, luật chơi và ma trận giải thưởng.
+3. **`POST /gamehub/v1/games/{gameId}/packages`**: Lấy danh sách bảng giá mua lượt lẻ và các gói combo ưu đãi.
+4. **`POST /gamehub/v1/games/{gameId}/purchase-turns`**: Thực hiện mua lượt chơi lẻ hoặc gói combo in-game, trừ số dư ví Natcash an toàn qua mã PIN.
+5. **`POST /gamehub/v1/games/{gameId}/redeem-turns`**: Thực hiện đổi điểm Loyalty lấy lượt chơi theo tỷ giá cấu hình.
+6. **`POST /gamehub/v1/games/{gameId}/claim-daily-turns`**: Nhận lượt chơi miễn phí điểm danh hàng ngày hoặc theo cấp bậc hội viên VIP.
+7. **`POST /gamehub/v1/session/init`**: Khởi tạo phiên chơi game tập trung trên GameHub hoặc từ Shortcut động 1 chạm.
+8. **`POST /luckydraw/v1/spin`**: Thực hiện lượt quay may mắn và trả thưởng theo thuật toán xác suất có trọng số kết hợp trừ ngân sách nguyên tử Redis `DECRBY`.
 
 ---
 
@@ -644,24 +653,19 @@ flowchart LR
 
 ---
 
-### 11.2. Kế Hoạch Chuyển Đổi Kỹ Thuật Từng Bước
+### 11.2. Kế Hoạch Chuyển Đổi Kỹ Thuật 5 Giai Đoạn (9 Sprints)
 
-1. **Bước 1: Khởi tạo và thiết lập Dịch vụ độc lập `loyalty-service`:**
-   - Tạo dự án dịch vụ mới (Java 17 LTS, Spring Boot 2.7.14+).
-   - Thiết lập cơ sở dữ liệu độc lập `loyalty_db` trên **PostgreSQL 15+** hoàn toàn tách rời `natcash_db`, cấu hình phân tách đa thuê bao, Liên minh đối tác, Cột mốc chiến dịch và Động cơ gợi nhắc thông minh.
-   - Cài đặt Động cơ Webhook Outbox Publisher đồng bộ dữ liệu hai chiều với hệ thống ví lõi qua Redis Streams.
-   - Cài đặt Động cơ liên thông Ví Phần Thưởng và Động cơ bù trừ công nợ liên minh.
-2. **Bước 2: Chuyển đổi Cổng API Gateway (`natcash-eu-api`):**
-   - Giữ nguyên các định tuyến API công khai để tương thích với ứng dụng di động.
-   - Chuyển đổi `GamesController` trong Gateway thành các Proxy Client gọi sang Dịch vụ độc lập kèm tiêu đề `X-Tenant-Id: NATCASH`.
-3. **Bước 3: Nâng cấp và hoàn thiện Ứng dụng di động, Webview nhúng & Điểm bán:**
-   - Xây dựng Cổng Quản trị `loyalty-cms` và Cổng Webview `loyalty-webview` bằng ReactJS / Vite (đóng gói tĩnh qua Nginx).
-   - Tích hợp màn hình sinh mã QR tiêu điểm tại quầy thu ngân siêu thị / điểm bán đối tác.
-   - Tích hợp các thẻ gợi nhắc thông minh và thanh tiến độ cột mốc chiến dịch trên giao diện Trung tâm Loyalty.
-   - Giữ nguyên màn hình `LuckyDraw` và các màn hình `GameStack` hiện có, chỉ cập nhật kết nối dữ liệu.
-4. **Bước 4: Kiểm thử tích hợp toàn diện và đưa vào vận hành:**
-   - Kiểm thử tiến trình liên thông Ví Phần Thưởng (tra cứu Hạng, Điểm, Voucher, Quà) và thực thi giao dịch khấu trừ tại quầy thu ngân đối tác.
-   - Kiểm thử tiến trình đồng bộ dữ liệu hai chiều và thử lại Webhook Outbox khi có sự cố mạng.
-   - Kiểm thử tiến trình gợi nhắc thông minh (tính toán khoảng cách thăng hạng, cảnh báo điểm hết hạn, chúc mừng sinh nhật) kèm kiểm soát hạn mức tần suất gửi tin.
-   - Kiểm thử luồng bù trừ công nợ đa phương giữa Viễn thông, Ví điện tử và Chuỗi bán lẻ.
-   - Kiểm thử toàn diện trò chơi Vòng quay may mắn và luồng thanh toán trong game.
+1. **Giai đoạn 1 (Sprint 1 & 2): Hạ tầng kế thừa, Cơ sở dữ liệu PostgreSQL 15+ & Bảo mật B2B:**
+   - Tạo dự án dịch vụ mới (Java 17 LTS, Spring Boot 2.7.14+), tích hợp 11 module thư viện lõi `ims-libraries`.
+   - Thiết lập cơ sở dữ liệu độc lập `loyalty_db` trên **PostgreSQL 15+** hoàn toàn tách rời `natcash_db`, cấu hình phân tách đa thuê bao `TenantContextFilter`, bảo mật Khóa kép HMAC-SHA256, khóa phân tán Redisson RLock, Redis Streams và Transactional Outbox Engine.
+2. **Giai đoạn 2 (Sprint 3 & 4): Phát triển 7 Phân hệ Nghiệp vụ, CMS & Webview Độc Lập:**
+   - Sổ cái điểm thưởng kép, phân hạng 4 cấp chu kỳ 12 tháng, Động cơ liên thông Ví Phần Thưởng và Động cơ bù trừ công nợ liên minh.
+   - Xây dựng **7 nhóm cấu hình Game trên CMS (`loyalty-cms`)** theo chuẩn công nghiệp phát hành game.
+   - Xây dựng Trình mở Game H5 độc lập và đĩa quay Canvas 60 FPS (`loyalty-webview`).
+3. **Giai đoạn 3 (Sprint 5 & 6): Tích hợp API Gateway, Ứng dụng Di Động, Webview & Phím Tắt Động:**
+   - Chuyển đổi API Gateway (`natcash-eu-api`) thành Reverse Proxy Client gọi sang Dịch vụ độc lập kèm tiêu đề `X-Tenant-Id: NATCASH`.
+   - Nâng cấp `natcash-eu-app`: Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60s, Cổng GameHub độc lập, Phím tắt Động chơi game tức thì 1 chạm trên trang chủ và kiểm thử luồng đầu cuối E2E.
+4. **Giai đoạn 4 (Sprint 7 & 8): Kiểm thử tải lớn, An toàn thông tin & Triển khai Production:**
+   - Kiểm thử tải 1.000 RPS API điểm bán POS, kiểm thử tải đồng thời Vòng quay may mắn & ngân sách Redis `DECRBY`, Pentest bảo mật, đóng gói CI/CD Docker Kubernetes và chạy thử nghiệm Pilot tại Siêu thị Delimart.
+5. **Giai đoạn 5 (Sprint 9): Hệ sinh thái Giả lập, Thử nghiệm Sandbox & Chuyển giao Đối tác:**
+   - Xây dựng Trình Giả Lập Điểm Bán Web POS Siêu Thị (`SIM-01`), Ứng Dụng Đối Tác Giả Lập Nhúng Webview (`SIM-02`), Mở Rộng Cổng Thử Nghiệm Sandbox & Soi Chữ Ký HMAC (`SIM-03`) và Trình Giả Lập Smartphone Live (`SIM-04`).

@@ -115,4 +115,53 @@ public class OutboxService {
             }
         });
     }
+
+    @Transactional(readOnly = true)
+    public java.util.List<WebhookDeadLetterEntity> getDeadLetters(String tenantId) {
+        return deadLetterRepository.findByTenantId(tenantId);
+    }
+
+    @Transactional
+    public boolean retriggerDeadLetter(Long deadLetterId) {
+        return deadLetterRepository.findById(deadLetterId).map(deadLetter -> {
+            WebhookOutboxEntity newOutbox = WebhookOutboxEntity.builder()
+                    .tenantId(deadLetter.getTenantId())
+                    .eventType(deadLetter.getEventType())
+                    .payload(deadLetter.getPayload())
+                    .targetUrl(deadLetter.getTargetUrl())
+                    .retryCount(0)
+                    .maxRetries(5)
+                    .status(WebhookStatus.PENDING)
+                    .nextRetryAt(Instant.now())
+                    .build();
+            outboxRepository.save(newOutbox);
+            deadLetterRepository.delete(deadLetter);
+            log.info("[DEAD-LETTER-RETRIGGER] deadLetterId={}, eventType={}, newOutboxId={}",
+                    deadLetterId, deadLetter.getEventType(), newOutbox.getId());
+            return true;
+        }).orElse(false);
+    }
+
+    @Transactional
+    public int batchRetriggerDeadLetters(String tenantId) {
+        java.util.List<WebhookDeadLetterEntity> deadLetters = deadLetterRepository.findByTenantId(tenantId);
+        int count = 0;
+        for (WebhookDeadLetterEntity deadLetter : deadLetters) {
+            WebhookOutboxEntity newOutbox = WebhookOutboxEntity.builder()
+                    .tenantId(deadLetter.getTenantId())
+                    .eventType(deadLetter.getEventType())
+                    .payload(deadLetter.getPayload())
+                    .targetUrl(deadLetter.getTargetUrl())
+                    .retryCount(0)
+                    .maxRetries(5)
+                    .status(WebhookStatus.PENDING)
+                    .nextRetryAt(Instant.now())
+                    .build();
+            outboxRepository.save(newOutbox);
+            deadLetterRepository.delete(deadLetter);
+            count++;
+        }
+        log.info("[DEAD-LETTER-BATCH-RETRIGGER] tenantId={}, count={}", tenantId, count);
+        return count;
+    }
 }

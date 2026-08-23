@@ -134,4 +134,54 @@ public final class GameHubDto {
         private String message;
         private Instant timestamp;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PartnerTurnPurchaseWebhookRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotBlank(message = "Mã đối tác không được để trống")
+        private String partnerCode;
+
+        @NotBlank(message = "Mã người dùng không được để trống")
+        private String externalUserId;
+
+        private String sessionToken;
+
+        @NotBlank(message = "Mã game không được để trống")
+        private String gameCode;
+
+        @NotNull(message = "Số lượt mua không được để trống")
+        private Integer turnsPurchased;
+
+        @NotNull(message = "Số tiền thanh toán không được để trống")
+        private BigDecimal paymentAmount;
+
+        private String currency;
+
+        @NotBlank(message = "Mã giao dịch đối tác không được để trống")
+        private String partnerTransactionCode;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PartnerTurnPurchaseWebhookResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String transactionCode;
+        private String partnerTransactionCode;
+        private String externalUserId;
+        private String gameCode;
+        private Integer turnsAdded;
+        private Integer totalTurnsAvailable;
+        private BigDecimal paymentAmount;
+        private String currency;
+        private String clearingStatus;
+        private String message;
+        private Instant timestamp;
+    }
 }

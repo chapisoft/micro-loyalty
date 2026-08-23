@@ -140,4 +140,52 @@ class OutboxServiceTest {
         assertEquals(5, captured.getRetryCount());
         assertEquals("Host Unreachable 503", captured.getErrorMessage());
     }
+
+    @Test
+    @DisplayName("BE-07-UT-05: Bơm gửi lại 1 bản ghi Dead Letter thành công")
+    void testRetriggerDeadLetterSuccess() {
+        WebhookDeadLetterEntity deadLetter = WebhookDeadLetterEntity.builder()
+                .id(201L)
+                .tenantId("TENANT_DELIMART")
+                .eventType("POINT_REDEEMED")
+                .payload("{\"points\":1000}")
+                .targetUrl("https://partner.delimart.com/webhook")
+                .build();
+
+        when(deadLetterRepository.findById(201L)).thenReturn(Optional.of(deadLetter));
+
+        boolean result = outboxService.retriggerDeadLetter(201L);
+
+        org.junit.jupiter.api.Assertions.assertTrue(result);
+        verify(outboxRepository, times(1)).save(any(WebhookOutboxEntity.class));
+        verify(deadLetterRepository, times(1)).delete(deadLetter);
+    }
+
+    @Test
+    @DisplayName("BE-07-UT-06: Bơm gửi lại toàn bộ bản ghi Dead Letter theo Tenant")
+    void testBatchRetriggerDeadLettersSuccess() {
+        WebhookDeadLetterEntity dl1 = WebhookDeadLetterEntity.builder()
+                .id(301L)
+                .tenantId("TENANT_DELIMART")
+                .eventType("EVENT_1")
+                .payload("{}")
+                .targetUrl("http://target1")
+                .build();
+        WebhookDeadLetterEntity dl2 = WebhookDeadLetterEntity.builder()
+                .id(302L)
+                .tenantId("TENANT_DELIMART")
+                .eventType("EVENT_2")
+                .payload("{}")
+                .targetUrl("http://target2")
+                .build();
+
+        when(deadLetterRepository.findByTenantId("TENANT_DELIMART")).thenReturn(java.util.List.of(dl1, dl2));
+
+        int retriggered = outboxService.batchRetriggerDeadLetters("TENANT_DELIMART");
+
+        assertEquals(2, retriggered);
+        verify(outboxRepository, times(2)).save(any(WebhookOutboxEntity.class));
+        verify(deadLetterRepository, times(1)).delete(dl1);
+        verify(deadLetterRepository, times(1)).delete(dl2);
+    }
 }
