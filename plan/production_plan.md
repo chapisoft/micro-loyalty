@@ -298,7 +298,7 @@ flowchart LR
   <td>Sử dụng cấu hình <code>ims-redis</code> từ Smart-OTP, xây dựng tiện ích <code>DistributedLockHelper</code> quản lý khóa theo mẫu <code>lock:burn:tenant_id:user_id</code> với thời gian chờ tối đa 3.000ms.</td>
   <td align="center"><strong>Kế thừa 90%</strong> từ <code>smart-otp</code> (<code>ims-redis</code>)</td>
   <td>Viết kiểm thử đồng thời 10 luồng cùng chiếm khóa; xác nhận các luồng được tuần tự hóa chính xác.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-06</code></td>
@@ -307,7 +307,7 @@ flowchart LR
   <td>Cấu hình Redis Streams, xây dựng các Producer đẩy sự kiện <code>LOYALTY_EARN_EVENT</code> vào Stream <code>loyalty.events.tenant_id</code> và các Consumer xử lý tính điểm bất đồng bộ.</td>
   <td align="center"><strong>Kế thừa 40%</strong> (Cấu hình kết nối từ <code>ims-redis</code>)</td>
   <td>Đẩy và nhận thông điệp qua Redis Streams thành công với độ trễ dưới 5ms trên môi trường thử nghiệm.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-07</code></td>
@@ -316,7 +316,7 @@ flowchart LR
   <td>Xây dựng <code>OutboxService</code> lưu sự kiện vào bảng <code>WEBHOOK_OUTBOX</code> (JSONB) trong cùng Local Transaction. Xây dựng <code>OutboxPublisher</code> quét bản ghi mỗi 1 giây để gửi Webhook kèm cơ chế thử lại theo cấp số nhân.</td>
   <td align="center"><strong>Phát triển mới</strong> (Tích hợp <code>ims-rest</code> WebClient)</td>
   <td>Dữ liệu sự kiện được gửi sang hệ thống đích tin cậy 100%, không bị mất ngay cả khi giả lập ngắt mạng.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-08</code></td>
@@ -325,7 +325,7 @@ flowchart LR
   <td>Viết API <code>POST /loyalty/v1/sso/generate-session-ticket</code> sinh vé ngẫu nhiên 32 bytes lưu Redis TTL 60s và API <code>POST /loyalty/v1/sso/exchange-token</code> đổi vé lấy JWT Access Token (15 phút).</td>
   <td align="center"><strong>Kế thừa 50%</strong> (Xử lý JWT &amp; Redis từ <code>ims-security</code>)</td>
   <td>Vé phiên chỉ sử dụng được 1 lần duy nhất; từ chối vé phiên quá hạn 60 giây.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-03</code></td>
@@ -334,7 +334,7 @@ flowchart LR
   <td>Tái sử dụng màn hình quản trị đối tác từ <code>src/cms/cms-admin</code> của Smart-OTP: chức năng sinh khóa <code>API Key</code>, <code>Secret Key</code>, <code>Webhook Secret</code>, bảng cấu hình IP Whitelist.</td>
   <td align="center"><strong>Kế thừa 85%</strong> từ <code>smart-otp</code> (<code>cms-admin</code>)</td>
   <td>Quản trị viên tạo đối tác mới, lấy khóa bảo mật và cấu hình IP thành công.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-04</code></td>
@@ -343,7 +343,7 @@ flowchart LR
   <td>Tái sử dụng logic gán vai trò người dùng CMS: Quản trị cấp cao, Vận hành nghiệp vụ, Kế toán tài chính, Quản trị đối tác.</td>
   <td align="center"><strong>Kế thừa 90%</strong> từ <code>smart-otp</code> (<code>cms-admin</code>)</td>
   <td>Người dùng chỉ truy cập được các menu chức năng tương ứng với vai trò được cấp.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>WV-03</code></td>
@@ -352,7 +352,7 @@ flowchart LR
   <td>Xây dựng hook <code>useSSOAuth</code> tự động lấy tham số <code>ticket</code> từ URL, gọi API đổi lấy JWT Token, lưu vào <code>sessionStorage</code> và tự động gắn Token vào tiêu đề các API tiếp theo.</td>
   <td align="center"><strong>Kế thừa 40%</strong> (Hook xác thực &amp; Token Storage)</td>
   <td>Mở Webview với URL kèm vé hợp lệ tự động đăng nhập và chuyển vào trang chủ Hub dưới 1 giây.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>SB-01</code></td>
@@ -361,7 +361,7 @@ flowchart LR
   <td>Tái sử dụng module <code>src/sandbox</code> từ Smart-OTP: Trang đăng nhập nhà phát triển, trang tra cứu tài liệu API động và tải Postman Collections.</td>
   <td align="center"><strong>Kế thừa 75%</strong> từ <code>smart-otp</code> (<code>src/sandbox</code>)</td>
   <td>Cổng Sandbox hoạt động độc lập, hỗ trợ đối tác tra cứu API và lấy khóa thử nghiệm.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>QA-01</code></td>
@@ -370,7 +370,7 @@ flowchart LR
   <td>Viết bộ kiểm thử tự động (Postman / REST-assured) kiểm tra tính cô lập đa thuê bao, kiểm tra tính lũy kế của Transactional Outbox và kiểm tra an toàn luồng SSO Ticket.</td>
   <td align="center"><strong>Kế thừa 50%</strong> (Bộ khung kiểm thử REST-assured)</td>
   <td>100% kịch bản kiểm thử hạ tầng lõi đạt kết quả Passed.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr style="background-color: #f0f4f8;">
   <td colspan="7" align="left"><strong>GIAI ĐOẠN 2: PHÁT TRIỂN 7 PHÂN HỆ NGHIỆP VỤ BACKEND &amp; GIAO DIỆN CMS</strong></td>
@@ -385,7 +385,7 @@ flowchart LR
   <td>Viết <code>AccountService</code> xử lý API <code>POST /loyalty/v1/profile</code>, tính toán điểm tích lũy, điểm xét hạng, tự động thăng hạng lên Vàng/Bạch Kim và kích hoạt sự kiện <code>TIER_UPGRADED</code>.</td>
   <td align="center"><strong>Kế thừa 30%</strong> (<code>ims-core</code> BaseEntity, DTO, Auditing)</td>
   <td>Hồ sơ hội viên hiển thị chính xác hạng, hệ số nhân điểm và tiến độ lên hạng tiếp theo.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-10</code></td>
@@ -394,7 +394,7 @@ flowchart LR
   <td>Viết <code>PointLedgerService</code> xử lý <code>POST /loyalty/v1/earn</code>, <code>POST /loyalty/v1/point-history</code> (phân trang), ghi sổ giao dịch điểm bất biến, quản lý điểm khả dụng và điểm tạm giữ.</td>
   <td align="center"><strong>Kế thừa 35%</strong> (<code>ims-jasypt</code> mã hóa &amp; <code>ims-core</code> Paging)</td>
   <td>Ghi nhận chính xác mọi giao dịch cộng/trừ điểm; số dư trong tài khoản luôn khớp tổng sổ cái.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-11</code></td>
@@ -403,7 +403,7 @@ flowchart LR
   <td>Viết <code>MilestoneService</code> xử lý <code>POST /loyalty/v1/milestones/active-campaigns</code>, theo dõi tiến độ từng chặng mốc giao dịch trong tuần lễ vàng và API nhận thưởng <code>claim-reward</code>.</td>
   <td align="center"><strong>Kế thừa 30%</strong> (<code>ims-redis</code> Cache chiến dịch &amp; TTL)</td>
   <td>Người dùng hoàn thành đủ số giao dịch theo mốc sẽ nhận thưởng điểm/voucher chính xác.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-12</code></td>
@@ -412,7 +412,7 @@ flowchart LR
   <td>Viết <code>EngagementService</code> xử lý <code>POST /loyalty/v1/engagement/in-app-nudges</code>, tính toán khoảng cách điểm thăng hạng, cảnh báo điểm hết hạn và kiểm tra bảng <code>LOYALTY_COMMUNICATION_LOGS</code>.</td>
   <td align="center"><strong>Kế thừa 35%</strong> (<code>ims-redis</code> chặn spam 1 tin/ngày)</td>
   <td>Trả về chính xác thông điệp gợi nhắc theo ngữ cảnh của từng người dùng; không gửi trùng tin trong ngày.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-13</code></td>
@@ -421,7 +421,7 @@ flowchart LR
   <td>Viết <code>RewardWalletService</code> xử lý 3 API: <code>reward-wallet/inquiry</code> (tra cứu Hạng, Điểm, Voucher, Quà), <code>reward-wallet/redeem</code> (khấu trừ đa phương tiện), <code>reward-wallet/refund</code> (hoàn trả).</td>
   <td align="center"><strong>Kế thừa 60%</strong> (<code>ims-rest</code> CircuitBreaker &amp; <code>ims-redis</code> Lock)</td>
   <td>Thực thi trừ điểm, hủy voucher và ghi nhận giao dịch bù trừ liên minh thành công trong 1 Transaction.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-05</code></td>
@@ -430,7 +430,7 @@ flowchart LR
   <td>Xây dựng trang cấu hình tỷ lệ tích điểm theo giao dịch ví/cước, cấu hình tỷ lệ khấu trừ tối đa tại từng điểm bán đối tác (30%, 50%, 100%), tỷ giá quy đổi 1 điểm = 1 HTG.</td>
   <td align="center"><strong>Kế thừa 60%</strong> (Khung DataTable, Form Zod từ <code>cms-admin</code>)</td>
   <td>Cấu hình chính sách lưu thành công và có hiệu lực ngay lập tức với các API liên quan.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-06</code></td>
@@ -439,7 +439,7 @@ flowchart LR
   <td>Xây dựng trang cấu hình 4 hạng hội viên Bạc, Vàng, Bạch Kim, Kim Cương, ngưỡng điểm xét hạng chu kỳ 12 tháng, hệ số nhân điểm (×1.0, ×1.2, ×1.5, ×2.0).</td>
   <td align="center"><strong>Kế thừa 60%</strong> (Khung DataTable, Drawer từ <code>cms-admin</code>)</td>
   <td>Quản trị viên cập nhật ngưỡng điểm và ma trận đặc quyền thành công.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-07</code></td>
@@ -448,7 +448,7 @@ flowchart LR
   <td>Xây dựng trang tạo chiến dịch khuyến mại, thiết lập chuỗi cột mốc sự kiện nhiều chặng, cấu hình phần thưởng điểm/voucher/lượt quay cho từng chặng mốc.</td>
   <td align="center"><strong>Kế thừa 60%</strong> (Modal CRUD, StatusBadge từ <code>cms-admin</code>)</td>
   <td>Tạo chiến dịch mới thành công, hiển thị đầy đủ trên danh sách chiến dịch đang chạy.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>WV-04</code></td>
@@ -457,7 +457,7 @@ flowchart LR
   <td>Xây dựng giao diện trang <code>/hub</code>: Thẻ VIP xoay 3D nhẹ, thanh tiến độ điểm thăng hạng, danh sách nhiệm vụ điểm danh ngày và các thẻ gợi nhắc thông minh hiển thị âm thầm.</td>
   <td align="center"><strong>Kế thừa 30%</strong> (Component Card &amp; i18n từ Web SDK)</td>
   <td>Trang chủ tải nhanh dưới 0.5 giây, hiển thị chuẩn xác thông tin tài khoản người dùng.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>WV-05</code></td>
@@ -466,7 +466,7 @@ flowchart LR
   <td>Xây dựng trang <code>/qr-pay</code>: Tạo mã QR động chứa chuỗi bảo mật có hiệu lực 60 giây, thanh đếm lùi thời gian tự động làm mới mã QR để máy POS siêu thị quét.</td>
   <td align="center"><strong>Kế thừa 40%</strong> (Bộ thư viện tạo mã QR &amp; Countdown)</td>
   <td>Mã QR sinh chuẩn xác, quét thử nghiệm trên máy đọc mã phản hồi đúng chuỗi dữ liệu.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr style="background-color: #f8fafc;">
   <td colspan="7" align="left"><em>Sprint 4: Đợt Nước Rút 4 (Tuần 4) — Cổng Game, Vòng quay, Bù trừ tài chính &amp; Batch Jobs</em></td>

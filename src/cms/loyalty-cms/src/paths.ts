@@ -17,6 +17,11 @@ export const paths = {
   systemParameters: '/system-parameters',
   sandbox: '/sandbox',
 
+  // Loyalty Core Modules
+  policyConfig: '/policies',
+  tierManagement: '/tiers',
+  campaignMilestones: '/campaigns',
+
   // Admin & Security
   userManagement: '/admin/users',
   roleManagement: '/admin/roles',

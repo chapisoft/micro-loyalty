@@ -2,7 +2,8 @@ package com.natcash.loyalty.security;
 
 import com.natcash.loyalty.constant.SecurityConstants;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -11,8 +12,9 @@ import java.util.HexFormat;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-@Slf4j
 public final class SignatureUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(SignatureUtils.class);
 
     private SignatureUtils() {
         // Chặn khởi tạo class tiện ích

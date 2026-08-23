@@ -91,6 +91,28 @@ const mainAppRoutes: RouteObject = {
         return { Component: SandboxHubPage };
       }),
     },
+    // Loyalty Core modules
+    {
+      path: paths.policyConfig,
+      lazy: safeLazy(async () => {
+        const { PolicyConfigurationPage } = await import('@/pages/policy/PolicyConfigurationPage');
+        return { Component: PolicyConfigurationPage };
+      }),
+    },
+    {
+      path: paths.tierManagement,
+      lazy: safeLazy(async () => {
+        const { TierManagementPage } = await import('@/pages/tiers/TierManagementPage');
+        return { Component: TierManagementPage };
+      }),
+    },
+    {
+      path: paths.campaignMilestones,
+      lazy: safeLazy(async () => {
+        const { CampaignMilestonesPage } = await import('@/pages/campaigns/CampaignMilestonesPage');
+        return { Component: CampaignMilestonesPage };
+      }),
+    },
     // Admin routes
     {
       path: paths.userManagement,

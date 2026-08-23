@@ -2,6 +2,9 @@ export default {
   // Navigation
   nav: {
     dashboard: 'Dashboard',
+    tiers: 'Membership Tiers',
+    policies: 'Point Policies',
+    campaigns: 'Campaigns & Milestones',
     customers: 'Customers',
     partners: 'Partners',
     transactions: 'OTP Transactions',
@@ -14,6 +17,54 @@ export default {
     users: 'User Management',
     roles: 'Role Management',
     audit_logs: 'Audit Logs',
+  },
+
+  // Loyalty Policy Configuration
+  policy: {
+    management_title: 'Point Earning & Burning Policy Configuration',
+    add_new: 'Add Policy',
+    create_title: 'Create New Policy',
+    edit_title: 'Update Policy',
+    partner_code: 'Partner Code',
+    partner_code_placeholder: 'E.g., DELIMART_POS',
+    partner_name: 'Store / Channel Name',
+    partner_name_placeholder: 'E.g., Delimart Port-au-Prince Supermarket',
+    earn_rate: 'Base Earning Multiplier',
+    max_burn: 'Maximum Point Deduction Limit',
+    of_bill: 'of invoice',
+    exchange_rate: 'Exchange Rate (1 Point = ? HTG)',
+  },
+
+  // Loyalty Tier & Benefits
+  tier: {
+    management_title: 'Tier Management & Privilege Matrix',
+    edit_title: 'Update Tier Configuration',
+    code: 'Tier Code',
+    name: 'Tier Name',
+    level: 'Tier Level',
+    min_points: 'Qualification Points Threshold (12-Month Cycle)',
+    multiplier: 'Reward Point Multiplier',
+    free_turns: 'Free Daily Lucky Wheel Spins',
+  },
+
+  // Loyalty Campaign & Milestones
+  campaign: {
+    management_title: 'Campaign & Milestone Event Management',
+    add_new: 'Create Milestone',
+    create_title: 'Create New Milestone',
+    edit_title: 'Update Milestone',
+    code: 'Campaign Code',
+    code_placeholder: 'E.g., GOLDEN_WEEK_2026',
+    name: 'Campaign Name',
+    name_placeholder: 'E.g., Golden Shopping Week',
+    step: 'Step',
+    target_metric: 'Target Metric Type',
+    metric_bill: 'Total Shopping Bill (HTG)',
+    metric_tx_count: 'Completed Transaction Count',
+    metric_points: 'Points Accumulated',
+    target_value: 'Target Threshold to Complete',
+    reward_points: 'Reward Points on Step Completion',
+    reward_spins: 'Bonus Lucky Wheel Spins',
   },
 
   // Dashboard

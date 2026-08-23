@@ -13,6 +13,7 @@ import { AppBreadcrumb } from 'components';
 export const Partners: React.FC = () => {
   const { t } = useTranslation();
   const [items, setItems] = useState<Partner[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<Partner>>({});
@@ -63,14 +64,30 @@ export const Partners: React.FC = () => {
   const actionBodyTemplate = (rowData: Partner) => {
     return (
       <div className="flex gap-2">
-        <Button icon="pi pi-pencil" rounded outlined severity="warning" size="small" onClick={() => editItem(rowData)} tooltip={t('common.edit', { defaultValue: 'Sửa' })} />
+        <Button
+          icon="pi pi-pencil"
+          rounded
+          outlined
+          severity="warning"
+          size="small"
+          onClick={() => editItem(rowData)}
+          tooltip={t('common.edit', { defaultValue: 'Chỉnh sửa' })}
+        />
+        <Button
+          icon="pi pi-key"
+          rounded
+          outlined
+          severity="info"
+          size="small"
+          tooltip={t('partner.regenerate_key', { defaultValue: 'Cấp lại API Key' })}
+        />
       </div>
     );
   };
 
   const statusBodyTemplate = (rowData: Partner) => {
     return rowData.status === 1 ? (
-      <Tag severity="success" value={t('common.active', { defaultValue: 'Hoạt động' })} />
+      <Tag severity="success" value={t('common.active', { defaultValue: 'Đang hoạt động' })} />
     ) : (
       <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Ngừng hoạt động' })} />
     );
@@ -88,13 +105,13 @@ export const Partners: React.FC = () => {
   };
 
   const statusOptions = [
-    { label: t('common.active', { defaultValue: 'Hoạt động (Active)' }), value: 1 },
-    { label: t('common.inactive', { defaultValue: 'Ngừng hoạt động (Inactive)' }), value: 0 },
+    { label: t('common.active', { defaultValue: 'Đang hoạt động' }), value: 1 },
+    { label: t('common.inactive', { defaultValue: 'Ngừng hoạt động' }), value: 0 },
   ];
 
   const header = (
     <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <h4 className="m-0 text-primary font-bold">{t('partner.management_title', { defaultValue: 'Quản lý Đối tác Tích hợp (Partners)' })}</h4>
+      <h4 className="m-0 text-primary font-bold">{t('partner.management_title', { defaultValue: 'Quản lý Đối tác Liên minh' })}</h4>
       <div className="flex gap-2">
         <Button label={t('partner.add_new', { defaultValue: 'Thêm Đối tác' })} icon="pi pi-plus" severity="success" onClick={openNew} />
         <Button icon="pi pi-refresh" rounded outlined onClick={fetchData} tooltip={t('common.refresh', { defaultValue: 'Làm mới' })} />
@@ -108,6 +125,8 @@ export const Partners: React.FC = () => {
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable
           value={items}
+          selection={selectedItems}
+          onSelectionChange={(e) => setSelectedItems(e.value as Partner[])}
           loading={loading}
           header={header}
           dataKey="id"
@@ -118,12 +137,29 @@ export const Partners: React.FC = () => {
           stripedRows
           responsiveLayout="scroll"
         >
-          <Column field="id" header="ID" sortable style={{ width: '5rem' }} />
+          {/* Cột 1: Checkbox */}
+          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
+
+          {/* Cột 2: STT */}
+          <Column
+            header={t('common.stt', { defaultValue: 'STT' })}
+            body={(_, options) => options.rowIndex + 1}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+
+          {/* Cột 3: Thao tác / Hành động */}
+          <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            header={t('common.actions', { defaultValue: 'Thao tác' })}
+            style={{ width: '8rem' }}
+          />
+
+          {/* Cột 4 trở đi: Dữ liệu nghiệp vụ */}
           <Column field="partnerCode" header={t('partner.code', { defaultValue: 'Mã Đối tác' })} sortable style={{ minWidth: '10rem' }} />
           <Column field="partnerName" header={t('partner.name', { defaultValue: 'Tên Đối tác' })} sortable style={{ minWidth: '14rem' }} />
           <Column field="status" body={statusBodyTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem' }} />
           <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Ngày tạo' })} sortable style={{ minWidth: '12rem' }} />
-          <Column body={actionBodyTemplate} exportable={false} header={t('common.actions', { defaultValue: 'Thao tác' })} style={{ minWidth: '8rem' }} />
         </DataTable>
       </div>
 
@@ -137,7 +173,7 @@ export const Partners: React.FC = () => {
         onHide={() => setShowDialog(false)}
       >
         <div className="field mb-3">
-          <label htmlFor="partnerCode" className="font-bold">{t('partner.code', { defaultValue: 'Mã Đối tác (VD: NATCASH)' })}</label>
+          <label htmlFor="partnerCode" className="font-bold">{t('partner.code', { defaultValue: 'Mã Đối tác' })}</label>
           <InputText
             id="partnerCode"
             value={formData.partnerCode || ''}
@@ -145,7 +181,7 @@ export const Partners: React.FC = () => {
             required
             autoFocus
             disabled={isEdit}
-            placeholder="VD: NATCASH"
+            placeholder={t('partner.code_placeholder', { defaultValue: 'Nhập mã đối tác (ví dụ: DELIMART)' })}
           />
         </div>
         <div className="field mb-3">
@@ -155,7 +191,7 @@ export const Partners: React.FC = () => {
             value={formData.partnerName || ''}
             onChange={(e) => setFormData({ ...formData, partnerName: e.target.value })}
             required
-            placeholder="VD: Natcash Payment Service"
+            placeholder={t('partner.name_placeholder', { defaultValue: 'Nhập tên đối tác liên minh' })}
           />
         </div>
         <div className="field mb-3">

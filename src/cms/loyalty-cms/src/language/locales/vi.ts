@@ -2,6 +2,9 @@ export default {
   // Navigation
   nav: {
     dashboard: 'Tổng quan',
+    tiers: 'Hạng Hội viên',
+    policies: 'Chính sách Điểm',
+    campaigns: 'Chiến dịch & Cột mốc',
     customers: 'Khách hàng',
     partners: 'Đối tác',
     transactions: 'Giao dịch OTP',
@@ -14,6 +17,54 @@ export default {
     users: 'Quản lý Tài khoản',
     roles: 'Quản lý Vai trò',
     audit_logs: 'Nhật ký Hoạt động',
+  },
+
+  // Loyalty Policy Configuration
+  policy: {
+    management_title: 'Cấu hình Chính sách Tích & Tiêu Điểm',
+    add_new: 'Thêm Chính sách',
+    create_title: 'Thêm mới Chính sách',
+    edit_title: 'Cập nhật Chính sách',
+    partner_code: 'Mã Đối tác',
+    partner_code_placeholder: 'Ví dụ: DELIMART_POS',
+    partner_name: 'Tên Điểm bán / Kênh',
+    partner_name_placeholder: 'Ví dụ: Siêu thị Delimart Port-au-Prince',
+    earn_rate: 'Hệ số tích điểm cơ bản',
+    max_burn: 'Hạn mức tiêu điểm tối đa',
+    of_bill: 'hóa đơn',
+    exchange_rate: 'Tỷ giá quy đổi (1 Điểm = ? HTG)',
+  },
+
+  // Loyalty Tier & Benefits
+  tier: {
+    management_title: 'Quản trị Hạng Hội Viên & Ma Trận Đặc Quyền',
+    edit_title: 'Cập nhật Cấu hình Hạng Hội Viên',
+    code: 'Mã Hạng',
+    name: 'Tên Hạng',
+    level: 'Cấp độ',
+    min_points: 'Ngưỡng điểm xét hạng (chu kỳ 12 tháng)',
+    multiplier: 'Hệ số nhân điểm thưởng',
+    free_turns: 'Lượt quay may mắn miễn phí/ngày',
+  },
+
+  // Loyalty Campaign & Milestones
+  campaign: {
+    management_title: 'Quản trị Chiến Dịch & Chuỗi Cột Mốc Sự Kiện',
+    add_new: 'Tạo Cột Mốc Mới',
+    create_title: 'Tạo mới Cột Mốc',
+    edit_title: 'Cập nhật Cột Mốc',
+    code: 'Mã Chiến dịch',
+    code_placeholder: 'Ví dụ: GOLDEN_WEEK_2026',
+    name: 'Tên Chiến dịch',
+    name_placeholder: 'Ví dụ: Tuần Lễ Vàng Mua Sắm',
+    step: 'Chặng',
+    target_metric: 'Loại chỉ tiêu đo lường',
+    metric_bill: 'Tổng chi tiêu mua sắm (HTG)',
+    metric_tx_count: 'Số lượng giao dịch hoàn thành',
+    metric_points: 'Số điểm tích lũy được',
+    target_value: 'Giá trị chỉ tiêu cần hoàn thành',
+    reward_points: 'Điểm thưởng khi hoàn thành chặng',
+    reward_spins: 'Lượt quay vòng quay may mắn tặng kèm',
   },
 
   // Dashboard

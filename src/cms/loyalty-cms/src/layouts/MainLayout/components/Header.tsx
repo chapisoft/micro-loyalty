@@ -66,6 +66,9 @@ const Header: React.FC = () => {
   const isCustomersActive = location.pathname.startsWith(paths.customers);
   const isPartnersActive = location.pathname.startsWith(paths.partners);
   const isTransactionsActive = location.pathname.startsWith(paths.transactions);
+  const isPolicyActive = location.pathname.startsWith(paths.policyConfig);
+  const isTierActive = location.pathname.startsWith(paths.tierManagement);
+  const isCampaignActive = location.pathname.startsWith(paths.campaignMilestones);
   const isParametersActive = location.pathname.startsWith(paths.systemParameters);
   const isSandboxActive = location.pathname.startsWith(paths.sandbox);
   const isAdminActive = [paths.userManagement, paths.roleManagement, paths.auditManagement].some((p) =>
@@ -81,10 +84,22 @@ const Header: React.FC = () => {
         command: () => handleNavigate(paths.dashboard),
       },
       {
-        label: t('nav.customers', { defaultValue: 'Khách hàng' }),
-        icon: 'pi pi-users',
-        className: isCustomersActive ? 'menu-pill-active' : 'menu-pill-item',
-        command: () => handleNavigate(paths.customers),
+        label: t('nav.tiers', { defaultValue: 'Hạng Hội viên' }),
+        icon: 'pi pi-star',
+        className: isTierActive ? 'menu-pill-active' : 'menu-pill-item',
+        command: () => handleNavigate(paths.tierManagement),
+      },
+      {
+        label: t('nav.policies', { defaultValue: 'Chính sách Điểm' }),
+        icon: 'pi pi-sliders-h',
+        className: isPolicyActive ? 'menu-pill-active' : 'menu-pill-item',
+        command: () => handleNavigate(paths.policyConfig),
+      },
+      {
+        label: t('nav.campaigns', { defaultValue: 'Chiến dịch & Cột mốc' }),
+        icon: 'pi pi-flag',
+        className: isCampaignActive ? 'menu-pill-active' : 'menu-pill-item',
+        command: () => handleNavigate(paths.campaignMilestones),
       },
       {
         label: t('nav.partners', { defaultValue: 'Đối tác' }),

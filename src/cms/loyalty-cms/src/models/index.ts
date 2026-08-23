@@ -406,3 +406,36 @@ export interface INewBaseRequestPagingParams {
   search?: string;
   [key: string]: any;
 }
+
+// Loyalty Domain Enums & Models
+export enum CommonStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
+export enum TierLevel {
+  SILVER = 'SILVER',
+  GOLD = 'GOLD',
+  PLATINUM = 'PLATINUM',
+  DIAMOND = 'DIAMOND',
+}
+
+export enum CampaignMetric {
+  BILL_AMOUNT = 'BILL_AMOUNT',
+  TRANSACTION_COUNT = 'TRANSACTION_COUNT',
+  EARN_POINTS = 'EARN_POINTS',
+}
+
+export enum DiscountType {
+  FIXED_AMOUNT = 'FIXED_AMOUNT',
+  PERCENTAGE = 'PERCENTAGE',
+}
+
+export enum ClearingStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  SETTLED = 'SETTLED',
+  DISPUTED = 'DISPUTED',
+  CANCELLED = 'CANCELLED',
+  REFUNDED = 'REFUNDED',
+}

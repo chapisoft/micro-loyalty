@@ -62,7 +62,6 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
         String apiKey = request.getHeader(LoyaltyConstants.API_KEY_HEADER);
         String timestampStr = request.getHeader(LoyaltyConstants.TIMESTAMP_HEADER);
-        String signature = request.getHeader(LoyaltyConstants.SIGNATURE_HEADER);
 
         // Trường hợp truy cập nội bộ có Authorization Bearer JWT (từ CMS hoặc Gateway)
         String authHeader = request.getHeader("Authorization");
