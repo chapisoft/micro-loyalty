@@ -1,0 +1,18 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#1a4b59"/>
+  
+  <!-- User head -->
+  <circle cx="100" cy="70" r="35" fill="#e8f4f8"/>
+  
+  <!-- User body/shoulders -->
+  <path d="M 65 105 Q 65 105 65 120 Q 65 135 100 135 Q 135 135 135 120 Q 135 105 135 105 Z" fill="#e8f4f8"/>
+  
+  <!-- Professional accent: briefcase or gear icon for admin -->
+  <g transform="translate(100, 160)">
+    <!-- Subtle accent circle -->
+    <circle cx="0" cy="0" r="25" fill="#00659F" opacity="0.9"/>
+    <!-- Shield icon (for security/admin) -->
+    <path d="M -12 -8 L 0 -15 L 12 -8 L 12 2 Q 0 10 -12 2 Z" fill="#e8f4f8" stroke="#e8f4f8" stroke-width="1"/>
+  </g>
+</svg>

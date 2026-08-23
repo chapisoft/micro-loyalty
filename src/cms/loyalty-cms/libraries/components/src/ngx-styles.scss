@@ -1,0 +1,45 @@
+/* You can add global styles to this file, and also import other style files */
+@layer antd, lowcoder-sdk, primereact, primeng;
+$gutter: 1rem; //for primeflex grid system
+
+@import 'https://cdn.jsdelivr.net/npm/pace-js@latest/pace-theme-default.min.css';
+@import 'https://maps.viettel.vn/files/sdk/vtmap-gl-js/v1.2.1/vtmap-gl.css';
+@import 'https://files-maps.viettel.vn/sdk/vtmap-gl-directions/v4.1.0/vtmap-gl-directions.css';
+@import 'https://cdn.jsdelivr.net/npm/@vietdanh1899/lowcoder-sdk@2.4.12-6/dist/style.css'
+layer(lowcoder-sdk);
+
+/* Tabler*/
+@import 'assets/tabler-icons/tabler-icons.scss';
+
+@import 'assets/layout/styles/layout/layout.scss';
+@import 'assets/layout/styles/primereact-helper/index.scss';
+
+/* PrimeNG */
+@import 'primeng/resources/primeng.min.css';
+@import 'primeflex/primeflex.scss';
+@import 'primeicons/primeicons.css';
+
+*::-webkit-scrollbar {
+  cursor: pointer;
+  width: 0.25rem;
+  height: 0.25rem;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  cursor: pointer;
+  border-radius: 4px;
+  background-color: var(--text-color);
+}
+
+.required::after {
+  content: " *";
+  color: var(--red-500);
+}
+
+.ngx-colors-overlay {
+  z-index: 9999 !important;
+}

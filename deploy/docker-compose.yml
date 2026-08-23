@@ -1,0 +1,243 @@
+version: '3.8'
+
+# ==============================================================================
+# Hệ Sinh Thái Loyalty & GameHub (micro-loyalty) — Docker Compose Stack
+# Vị trí: deploy/docker-compose.yml
+# ==============================================================================
+
+networks:
+  loyalty-network:
+    name: loyalty-network
+    driver: bridge
+
+volumes:
+  loyalty_postgres_data:
+  loyalty_redis_data:
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. PostgreSQL 15 — Cơ sở dữ liệu quan hệ độc lập loyalty_db
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: loyalty-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-loyalty_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-T3st$2025}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - loyalty_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-loyalty_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1024M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - loyalty-network
+
+  # ----------------------------------------------------------------------------
+  # 2. Redis 7 — Khóa phân tán Redisson, Atomic DECRBY, Rate Limiting & Streams
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: loyalty-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    command: >
+      redis-server 
+      --requirepass ${REDIS_PASSWORD:-NatCash2022} 
+      --maxmemory 512mb 
+      --maxmemory-policy allkeys-lru 
+      --save 900 1 
+      --save 300 10
+    volumes:
+      - loyalty_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-NatCash2022}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - loyalty-network
+
+  # ----------------------------------------------------------------------------
+  # 3. Loyalty Service — Dịch vụ máy chủ nghiệp vụ độc lập (Spring Boot / Java 17)
+  # ----------------------------------------------------------------------------
+  loyalty-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: loyalty-service.jar
+    image: loyalty/loyalty-service:latest
+    container_name: loyalty-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-production}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-loyalty_db}?currentSchema=public&reWriteBatchedInserts=true
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-T3st$2025}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-NatCash2022}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1024M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - loyalty-network
+
+  # ----------------------------------------------------------------------------
+  # 4. Loyalty CMS — Cổng thông tin quản trị trung tâm (ReactJS 18+ / Nginx)
+  # ----------------------------------------------------------------------------
+  loyalty-cms:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: loyalty/loyalty-cms:latest
+    container_name: loyalty-cms
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - loyalty-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-network
+
+  # ----------------------------------------------------------------------------
+  # 5. Loyalty Webview — Cổng trải nghiệm nhúng di động (Mobile-First / Nginx)
+  # ----------------------------------------------------------------------------
+  loyalty-webview:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: loyalty/loyalty-webview:latest
+    container_name: loyalty-webview
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - loyalty-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-network
+
+  # ----------------------------------------------------------------------------
+  # 6. Loyalty Sandbox — Cổng nhà phát triển & Trình mô phỏng Simulator
+  # ----------------------------------------------------------------------------
+  loyalty-sandbox:
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile
+    image: loyalty/loyalty-sandbox:latest
+    container_name: loyalty-sandbox
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    depends_on:
+      - loyalty-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-network
+
+  # ----------------------------------------------------------------------------
+  # 7. Nginx Gateway — Cổng kết nối trung tâm Reverse Proxy
+  # ----------------------------------------------------------------------------
+  nginx-gateway:
+    image: nginx:alpine
+    container_name: loyalty-nginx-gateway
+    restart: unless-stopped
+    ports:
+      - "18090:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - loyalty-service
+      - loyalty-cms
+      - loyalty-webview
+      - loyalty-sandbox
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - loyalty-network

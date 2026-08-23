@@ -1,0 +1,29 @@
+package com.lib.ims.excel;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
+
+
+
+@Component
+public class ApplicationContextHolder implements ApplicationContextAware {
+   private static volatile ApplicationContext applicationContext;
+
+   public void setApplicationContext(@NonNull ApplicationContext applicationContext) {
+      synchronized (ApplicationContextHolder.class) {
+         if (ApplicationContextHolder.applicationContext == null) {
+            ApplicationContextHolder.applicationContext = applicationContext;
+         }
+      }
+   }
+
+   public static <T> T getBean(Class<T> clazz) {
+      return applicationContext.getBean(clazz);
+   }
+
+   public static <T> T getBean(String qualifier, Class<T> clazz) {
+      return applicationContext.getBean(qualifier, clazz);
+   }
+}

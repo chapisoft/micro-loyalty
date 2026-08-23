@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.lib.ims</groupId>
+        <artifactId>ims-libraries</artifactId>
+        <version>4.0.0.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>ims-bom</artifactId>
+    <packaging>pom</packaging>
+    <name>IMS Bill of Materials</name>
+    <description>Bill of Materials for IMS Libraries</description>
+
+    <properties>
+        <!-- Internal libs -->
+        <ims.core.version>4.0.0.2-SNAPSHOT</ims.core.version>
+        <ims-i18n.version>4.0.0.2-SNAPSHOT</ims-i18n.version>
+        <ims.exceptions.version>4.0.0.2-SNAPSHOT</ims.exceptions.version>
+        <ims.jasypt.version>4.0.0.2-SNAPSHOT</ims.jasypt.version>
+        <ims-kafka.version>4.0.0.2-SNAPSHOT</ims-kafka.version>
+        <ims.redis.version>4.0.0.2-SNAPSHOT</ims.redis.version>
+        <ims.rest.version>4.0.0.2-SNAPSHOT</ims.rest.version>
+        <ims.security.version>4.0.0.2-SNAPSHOT</ims.security.version>
+        <ims.file.version>4.0.0.2-SNAPSHOT</ims.file.version>
+        <ims.excel.version>4.0.0.2-SNAPSHOT</ims.excel.version>
+        <ims.word.version>4.0.0.2-SNAPSHOT</ims.word.version>
+
+        <!-- External libs -->
+        <spring-boot.version>3.5.3</spring-boot.version>
+        <jasypt.version>3.0.5</jasypt.version>
+        <jsoup.version>1.21.2</jsoup.version>
+        <commons-validator.version>1.10.1</commons-validator.version>
+        <commons-collections4.version>4.5.0</commons-collections4.version>
+        <lombok.version>1.18.40</lombok.version>
+        <jackson.version>2.20.0</jackson.version>
+        <fastjson.version>2.0.60</fastjson.version>
+        <zalando.logbook.version>3.9.0</zalando.logbook.version>
+        <resilience4j.version>2.3.0</resilience4j.version>
+        <keycloak.version>26.0.8</keycloak.version>
+        <poi.version>5.4.1</poi.version>
+        <easyexcel.version>4.0.3</easyexcel.version>
+        <swagger.version>3.0.1</swagger.version>
+        <gavlyukovskiy-spring-boot-starter.version>2.0.0</gavlyukovskiy-spring-boot-starter.version>
+        <commons-io.version>2.21.0</commons-io.version>
+        <tika.version>3.2.3</tika.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
+        <redisson-spring-boot-starter.version>4.1.0</redisson-spring-boot-starter.version>
+        <owasp-encoder.version>1.4.0</owasp-encoder.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Internal Modules -->
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-core</artifactId>
+                <version>${ims.core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-i18n</artifactId>
+                <version>${ims-i18n.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-jasypt</artifactId>
+                <version>${ims.jasypt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-kafka</artifactId>
+                <version>${ims-kafka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-redis</artifactId>
+                <version>${ims.redis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-rest</artifactId>
+                <version>${ims.rest.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-security</artifactId>
+                <version>${ims.security.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-file</artifactId>
+                <version>${ims.file.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-excel</artifactId>
+                <version>${ims.excel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lib.ims</groupId>
+                <artifactId>ims-word</artifactId>
+                <version>${ims.word.version}</version>
+            </dependency>
+
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Custom Spring Boot Starters from Mb-Repository-Public -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-aspectj</artifactId>
+                <version>4.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-kafka</artifactId>
+                <version>4.0.1</version>
+            </dependency>
+
+            <!-- Security / Auth -->
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-admin-client</artifactId>
+                <version>${keycloak.version}</version>
+            </dependency>
+
+            <!-- Redis -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson-spring-boot-starter.version}</version>
+            </dependency>
+
+            <!-- Logging / Monitoring -->
+            <dependency>
+                <groupId>org.zalando</groupId>
+                <artifactId>logbook-spring-boot-starter</artifactId>
+                <version>${zalando.logbook.version}</version>
+            </dependency>
+
+            <!-- JSON / XML -->
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+
+            <!-- Validation / Utility -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-validator</groupId>
+                <artifactId>commons-validator</artifactId>
+                <version>${commons-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
+            </dependency>
+
+            <!-- Excel / File IO -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>easyexcel</artifactId>
+                <version>${easyexcel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.opensagres.xdocreport</groupId>
+                <artifactId>fr.opensagres.poi.xwpf.converter.pdf</artifactId>
+                <version>2.0.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-csv</artifactId>
+                <version>1.10.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+
+            <!-- Dev Tools -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- Documentation -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+
+            <!-- Resilience / Retry -->
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-spring-boot3</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-circuitbreaker</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-micrometer</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+
+            <!-- Encryption -->
+            <dependency>
+                <groupId>com.github.ulisesbocchio</groupId>
+                <artifactId>jasypt-spring-boot-starter</artifactId>
+                <version>${jasypt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.gavlyukovskiy</groupId>
+                <artifactId>datasource-proxy-spring-boot-starter</artifactId>
+                <version>${gavlyukovskiy-spring-boot-starter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.gavlyukovskiy</groupId>
+                <artifactId>flexy-pool-spring-boot-starter</artifactId>
+                <version>${gavlyukovskiy-spring-boot-starter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.owasp.encoder</groupId>
+                <artifactId>encoder</artifactId>
+                <version>${owasp-encoder.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+</project>

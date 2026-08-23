@@ -1,0 +1,1 @@
+export const MEDIA_NEWS_DOMAIN_HOST = 'https://cams.microtec.vn/lux/'

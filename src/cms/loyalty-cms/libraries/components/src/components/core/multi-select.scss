@@ -1,0 +1,13 @@
+.p-multiselect.p-invalid.p-component {
+  border-color: var(--error-color);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight:not(.p-focus) {
+  background: transparent;
+  color: unset;
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight.p-focus {
+  background: var(--surface-hover);
+  color: unset;
+}

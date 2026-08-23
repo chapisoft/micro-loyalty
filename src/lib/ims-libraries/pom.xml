@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.lib.ims</groupId>
+    <artifactId>ims-libraries</artifactId>
+    <version>4.0.0.2-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>IMS Libraries</name>
+    <description>Common libraries for IMS Microservices</description>
+
+    <modules>
+        <module>ims-bom</module>
+        <module>ims-core</module>
+        <module>ims-excel</module>
+        <module>ims-file</module>
+        <module>ims-i18n</module>
+        <module>ims-jasypt</module>
+        <module>ims-kafka</module>
+        <module>ims-redis</module>
+        <module>ims-rest</module>
+        <module>ims-security</module>
+        <module>ims-word</module>
+    </modules>
+
+    <profiles>
+        <profile>
+            <id>deploy-all</id>
+            <build>
+                <defaultGoal>clean install deploy</defaultGoal>
+            </build>
+        </profile>
+    </profiles>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <ims-bom.version>4.0.0.2-SNAPSHOT</ims-bom.version>
+
+        <spring-boot.version>3.5.3</spring-boot.version>
+
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Không import ims-bom ở đây để tránh vòng lặp phụ thuộc -->
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>nexus-releases</id>
+            <name>Nexus Release Repository</name>
+            <url>https://repo.smartsolutionvn.com.vn/repository/mb-repository/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus-snapshots</id>
+            <name>Nexus Snapshot Repository</name>
+            <url>https://repo.smartsolutionvn.com.vn/repository/mb-repository-snapshot/</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>mb-repository-public</id>
+            <name>Nexus Plugin Repository</name>
+            <url>https://repo.smartsolutionvn.com.vn/repository/mb-repository-public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <repositories>
+        <repository>
+            <id>mb-repository-public</id>
+            <name>Nexus Repository</name>
+            <url>https://repo.smartsolutionvn.com.vn/repository/mb-repository-public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+</project>

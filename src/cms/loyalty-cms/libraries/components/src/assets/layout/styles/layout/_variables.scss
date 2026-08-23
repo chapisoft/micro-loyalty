@@ -1,0 +1,34 @@
+/* General */
+$scale: 14px; /* main font size */
+$borderRadius: 6px; /* border radius of layout element e.g. card, sidebar */
+$transitionDuration: 0.2s; /* transition duration of layout elements e.g. sidebar, overlay menus */
+
+$xs: 320px;
+$sm: 576px;
+$md: 768px;
+$lg: 992px;
+$xl: 1200px;
+$xxl: 1400px;
+$breakpoints: (
+    "xs": $xs,
+    "sm": $sm,
+    "md": $md,
+    "lg": $lg,
+    "xl": $xl,
+    "xxl": $xxl,
+);
+
+.lowcoder {
+    --ant-color-text: var(--text-color) !important;
+    --ant-color-text-secondary: var(--text-color-secondary) !important;
+    --ant-color-primary: var(--primary-color) !important;
+    --ant-color-primary-text: var(--primary-color-text) !important;
+    --ant-font-family: var(--font-family) !important;
+    //--inline-spacing
+    --ant-border-radius: var(--border-radius) !important;
+    //--focus-ring
+    --ant-color-bg-mask: var(--mask-bg) !important;
+    --fc-highlight-color: var(--highlight-bg) !important;
+    --ant-color-highlight: var(--highlight-text-color) !important;
+    --ant-message-content-bg: var(--surface-card) !important;
+}

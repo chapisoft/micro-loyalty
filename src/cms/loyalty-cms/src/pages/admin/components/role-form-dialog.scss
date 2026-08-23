@@ -1,0 +1,156 @@
+.role-form-dialog {
+  .form-content {
+    padding: 20px 0;
+
+    .form-group {
+      margin-bottom: 24px;
+
+      > label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .p-inputtext,
+      input[type='text'],
+      input[type='password'],
+      input[type='email'],
+      textarea {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 14px;
+        font-family: inherit;
+
+        &:focus {
+          outline: none;
+          border-color: #1976d2;
+          box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+
+        &.p-invalid {
+          border-color: #d32f2f;
+        }
+
+        &:disabled {
+          background-color: #f5f5f5;
+          cursor: not-allowed;
+        }
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .error-message {
+        display: block;
+        color: #d32f2f;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .permissions-list-view {
+        max-height: 320px;
+        overflow: auto;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 8px;
+        background: #fff;
+
+        .permission-group {
+          border: 1px solid #f0f0f0;
+          border-radius: 6px;
+          margin-bottom: 8px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+
+        .permission-group-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: #fafafa;
+          border-bottom: 1px solid #efefef;
+          padding: 8px 10px;
+        }
+
+        .permission-module {
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.2px;
+          color: #374151;
+        }
+
+        .permission-count {
+          font-size: 12px;
+          color: #6b7280;
+        }
+
+        .permission-items {
+          display: grid;
+          gap: 4px;
+          padding: 8px;
+        }
+
+        .permission-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          width: 100%;
+          padding: 6px;
+          border-radius: 4px;
+          cursor: pointer;
+
+          &:hover {
+            background: #f7f9fc;
+          }
+
+          input[type='checkbox'] {
+            width: auto;
+            flex: 0 0 auto;
+            margin-top: 3px;
+          }
+        }
+
+        .permission-item-content {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          line-height: 1.25;
+        }
+
+        .permission-name {
+          font-size: 13px;
+          color: #1f2937;
+          font-weight: 500;
+          white-space: normal;
+          word-break: break-word;
+        }
+
+        .permission-meta {
+          font-size: 11px;
+          color: #6b7280;
+          margin-top: 1px;
+          white-space: normal;
+          word-break: break-word;
+        }
+      }
+    }
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+}

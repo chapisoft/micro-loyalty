@@ -1,0 +1,43 @@
+{
+  "groups": [
+    {
+      "name": "ims.kafka.outbox",
+      "type": "com.lib.ims.kafka.config.OutboxKafkaProperties",
+      "sourceType": "com.lib.ims.kafka.config.OutboxKafkaProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "ims.kafka.outbox.batch-size",
+      "type": "java.lang.Integer",
+      "description": "Kích thước batch cho xử lý message",
+      "sourceType": "com.lib.ims.kafka.config.OutboxKafkaProperties",
+      "defaultValue": 100
+    },
+    {
+      "name": "ims.kafka.outbox.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Bật\/tắt chức năng outbox cho Kafka",
+      "sourceType": "com.lib.ims.kafka.config.OutboxKafkaProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "ims.kafka.outbox.max-retries",
+      "type": "java.lang.Integer",
+      "description": "Số lần thử lại tối đa",
+      "sourceType": "com.lib.ims.kafka.config.OutboxKafkaProperties",
+      "defaultValue": 3
+    },
+    {
+      "name": "ims.kafka.outbox.polling-interval",
+      "type": "java.lang.Long",
+      "description": "Khoảng thời gian giữa các lần polling (mili giây)",
+      "sourceType": "com.lib.ims.kafka.config.OutboxKafkaProperties",
+      "defaultValue": 5000
+    }
+  ],
+  "hints": [],
+  "ignored": {
+    "properties": []
+  }
+}

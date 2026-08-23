@@ -1,0 +1,16 @@
+router-outlet {
+  height: 100%;
+  position: relative;
+  animation: from-top 1s;
+}
+
+@keyframes from-top {
+  from {
+    opacity: 0;
+    top: -20px;
+  }
+  to {
+    opacity: 1;
+    top: 0px;
+  }
+}

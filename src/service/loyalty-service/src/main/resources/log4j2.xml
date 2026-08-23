@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+  <Properties>
+    <Property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{%5p}--[%T-%-15.15t] [%-20X{clientMessageId}]%-40.40c{1.} :%m%n%ex"/>
+  </Properties>
+  <Appenders>
+    <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
+      <PatternLayout pattern="${LOG_PATTERN}"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <AsyncLogger name="org.springframework" level="INFO"/>
+    <AsyncLogger name="org.hibernate" level="INFO"/>
+    <AsyncLogger name="com.natcash.loyalty" level="DEBUG"/>
+    <AsyncRoot level="info" includeLocation="false">
+      <AppenderRef ref="ConsoleAppender"/>
+    </AsyncRoot>
+  </Loggers>
+</Configuration>

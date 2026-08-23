@@ -1,0 +1,66 @@
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /loyalty-service
+
+spring:
+  application:
+    name: loyalty-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:T3st$2025}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        show_sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:NatCash2022}
+      timeout: 3000ms
+
+# Cấu hình bảo mật HMAC & Khóa Kép
+loyalty:
+  security:
+    timestamp-drift-tolerance-seconds: 300
+    master-key: ${LOYALTY_MASTER_KEY:c21hcnQtbG95YWx0eS1tYXN0ZXIta2V5LWFlczI1Ng==}
+  tenant:
+    default-tenant: NATCASH
+    header-name: X-Tenant-Id
+
+# Cấu hình OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Cấu hình Giám sát Micrometer & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always

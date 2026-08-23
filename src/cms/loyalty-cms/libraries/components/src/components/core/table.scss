@@ -1,0 +1,8 @@
+.p-datatable .p-sortable-column:not([align="right"]):not(.p-align-right):not([align="center"]):not(.p-align-center) .p-column-title,
+.p-datatable .p-sortable-column:not([align="right"]):not(.p-align-right):not([align="center"]):not(.p-align-center) .p-sortable-column-icon,
+.p-datatable .p-sortable-column:not([align="right"]):not(.p-align-right):not([align="center"]):not(.p-align-center) .p-sortable-column-badge {
+  margin-right: auto;
+}
+.p-paginator-left-content {
+  margin-right: unset;
+}

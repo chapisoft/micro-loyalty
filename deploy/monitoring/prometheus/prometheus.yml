@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'authentication-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['authentication-service:8080']
+        labels:
+          application: 'authentication-service'
+
+  - job_name: 'customer-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['customer-service:8082']
+        labels:
+          application: 'customer-service'
+
+  - job_name: 'partner-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['partner-service:8081']
+        labels:
+          application: 'partner-service'

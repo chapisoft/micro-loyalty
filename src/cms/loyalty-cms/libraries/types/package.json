@@ -1,0 +1,13 @@
+{
+  "name": "@ioc/types",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "danhnv7",
+  "license": "ISC",
+  "description": ""
+}

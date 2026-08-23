@@ -1,0 +1,3 @@
+[submodule "apps/zeebe-modeler"]
+	path = apps/zeebe-modeler
+	url = http://gitlab.gpdn.net/ioc-platform/spnt_vts_iocv3.0_240613/source_code/iocv3-micro-fe/zeebe-modeler.git

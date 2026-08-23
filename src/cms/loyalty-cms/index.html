@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Smart OTP — Hệ Thống Quản Trị CMS</title>
+  <script>
+    (function() {
+      const hostname = window.location.hostname;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+      const origin = window.location.origin;
+      const apiBase = isLocal ? 'https://cms.miotp.io.vn/cms' : (origin + '/cms');
+
+      window.process = {
+        env: {
+          NODE_ENV: "production",
+        },
+      };
+
+      window.__ENV__ = {
+        VITE_MODE: isLocal ? 'development' : 'production',
+        VITE_API_URL: apiBase,
+        VITE_API_AUTH_URL: apiBase,
+        VITE_IMAGE_URL: isLocal ? 'https://cms.miotp.io.vn/' : (origin + '/'),
+        VITE_ACCESS_TOKEN: '',
+        VITE_CONTEXT_PATH: '/'
+      };
+    })();
+  </script>
+  <script src="%BASE_URL%env-config.js?v=2.0.1"></script>
+  <style>
+    @layer antd, primereact, primeng;
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

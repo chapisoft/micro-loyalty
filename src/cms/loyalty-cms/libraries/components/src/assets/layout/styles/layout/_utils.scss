@@ -1,0 +1,347 @@
+.card {
+  background: var(--surface-card);
+  // border: 1px solid var(--surface-border);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--card-shadow);
+  border-radius: $borderRadius;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.p-toast {
+  &.p-toast-top-right,
+  &.p-toast-top-left,
+  &.p-toast-top-center {
+    top: 100px !important;
+  }
+}
+
+// .p-link:focus {
+//     box-shadow: none !important;
+// }
+
+.p-menubar {
+  .p-menuitem-link:focus {
+    box-shadow: none;
+  }
+}
+
+.p-menu {
+  .p-menuitem-link:focus {
+    box-shadow: none;
+  }
+}
+
+.p-column-filter-overlay {
+  min-width: 25rem !important;
+}
+
+.p-dialog-content {
+  overflow-y: visible !important;
+}
+
+.p-dialog {
+  display: unset !important;
+}
+
+.p-column-filter-buttonbar {
+  padding: 0px !important;
+  display: none;
+}
+
+.p-tree .p-tree-container .p-treenode {
+  padding: 0px !important;
+  padding-top: 0.5rem !important;
+}
+
+.p-tabview .p-tabview-panels {
+  padding: 0px !important;
+  padding-top: 1.25rem !important;
+}
+
+.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
+  padding: 0.75rem 1.25rem;
+}
+
+.p-menubar .p-menuitem > .p-menuitem-content .p-menuitem-link {
+  padding: 0.6rem 1rem;
+}
+
+// .p-menubar
+//     .p-menuitem:not(.p-highlight):not(.p-disabled)
+//     > .p-menuitem-content:hover {
+//     border-radius: 6px;
+// }
+
+.p-paginator .p-dropdown {
+  height: 2.5rem;
+  align-items: center;
+}
+
+.p-paginator .p-paginator-page-input {
+  height: 2.5rem !important;
+}
+
+.p-dialog .p-dialog-footer button {
+  min-width: 100px;
+}
+
+.p-overlay {
+  z-index: 1;
+}
+
+.p-multiselect-label {
+  // overflow: scroll;
+  text-overflow: unset;
+  white-space: unset;
+}
+
+.p-multiselect.p-multiselect-chip .p-multiselect-token {
+  margin: 4px;
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page {
+  min-width: 2.357rem;
+  height: 2.357rem;
+}
+
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  min-width: 2.357rem;
+  height: 2.357rem;
+}
+
+.p-multiselect-panel {
+  width: 100%;
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item span {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.p-component-overlay {
+  z-index: 990;
+}
+
+.layout-config-sidebar.p-sidebar {
+  z-index: 9992;
+}
+
+.p-button.p-button-link {
+  padding: 0;
+}
+
+.p-button.p-button-link:not(:disabled):focus {
+  box-shadow: unset;
+}
+
+.p-multiselect-clear-icon {
+  margin-top: 0px;
+  transform: translateY(-50%);
+}
+
+// only use when maxSelectedLabels works
+// .p-multiselect-clearable .p-multiselect-label-container {
+//     padding-right: 3rem;
+// }
+
+.p-paginator .p-paginator-page-input .p-inputtext {
+  text-align: center;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  border-width: 1px 0 1px 0;
+}
+
+// .p-datatable .p-datatable-tbody > tr > td {
+//     vertical-align: top;
+// }
+
+.p-steps .p-steps-item:first-child::before {
+  width: calc(50% + 1rem);
+  transform: translateX(100%);
+}
+
+.p-steps .p-steps-item:last-child::before {
+  width: calc(50% - 1rem);
+}
+
+.p-steps .p-steps-item .p-menuitem-link .p-steps-number {
+  border: 1px solid var(--surface-border);
+}
+
+.p-multiselect {
+  max-height: 200px;
+  overflow-y: scroll;
+}
+
+.p-multiselect-clearable .p-multiselect-label-container {
+  height: fit-content;
+}
+
+.p-dropdown-panel {
+  max-width: 30vw;
+  min-width: 300px;
+}
+
+.p-treeselect-panel {
+  max-width: 30vw;
+  min-width: 300px;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.p-treenode-label {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.p-dialog .p-dialog-content {
+  max-height: 70vh;
+  overflow: scroll;
+}
+
+.p-carousel-items-container {
+  width: fit-content;
+}
+
+.p-inputwrapper-filled .p-multiselect.p-multiselect-chip .p-multiselect-label {
+  padding: 0.75rem 0.75rem;
+}
+
+.min-w-125px {
+  min-width: 125px;
+}
+
+.p-paginator-left-content {
+  margin-right: 1rem;
+}
+
+.ti {
+  font-size: 1.25rem;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon {
+  padding: 1rem;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon svg.p-icon {
+  overflow: visible;
+}
+
+.p-dialog .p-dialog-header {
+  line-height: 1.5;
+  padding: 1.75rem;
+}
+
+.p-dialog .p-dialog-content {
+  padding: 0 1.75rem 1.75rem 1.75rem;
+}
+
+.p-dialog .p-dialog-footer {
+  padding: 0 1.75rem 1.75rem 1.75rem;
+}
+
+.p-button.p-button-sm .p-button-icon {
+  font-size: 1rem;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content {
+  border-radius: 0px;
+}
+
+.p-menubar .p-menuitem.p-highlight > .p-menuitem-content {
+  background-color: var(--surface-c);
+}
+
+.p-breadcrumb .p-breadcrumb-list li:not(:last-child) .p-menuitem-link .p-menuitem-text:hover {
+  color: var(--primary-500);
+}
+
+.p-breadcrumb .p-breadcrumb-list li:not(:last-child) .p-menuitem-link .p-menuitem-icon:hover {
+  color: var(--primary-500);
+}
+
+.p-breadcrumb .p-breadcrumb-list li .p-menuitem-link:last-child:active {
+  opacity: 1;
+}
+
+.p-breadcrumb .p-breadcrumb-list li .p-menuitem-link:last-child {
+  cursor: default;
+}
+
+.p-breadcrumb .p-breadcrumb-list li:not(:last-child) .p-menuitem-link {
+  cursor: pointer;
+}
+
+.p-ripple.p-element.p-menuitem-link.p-menuitem-link-active {
+  background-color: var(--surface-hover);
+}
+
+.p-menu .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus > .p-menuitem-content {
+  background-color: unset;
+}
+
+.max-w-600px {
+  max-width: 600px;
+}
+
+.last-column-sticky {
+  position: sticky;
+  right: 0;
+  // background-color: var(--surface-card);
+}
+
+.last-column-button {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  background-color: var(--surface-card);
+}
+
+// hover last column
+.p-datatable .p-datatable-tbody > tr:hover > td {
+  background-color: var(--surface-hover) !important;
+}
+
+// this will make all table sticky (avoid using this)
+// table th:last-child,
+// table td:last-child {
+//     position: sticky;
+//     right: 0;
+//     background-color: var(--surface-card);
+// }
+
+.p-datatable .p-paginator-bottom {
+  border: 0px;
+}
+
+.p-menubar .p-submenu-list .p-menuitem-link .p-icon-wrapper {
+  padding-left: 0.5rem;
+}
+
+.p-tabview .p-tabview-nav li .p-tabview-nav-link {
+  padding: 1.25rem 2rem;
+}
+
+.p-button.p-button-text:not(:disabled):hover {
+  background-color: var(--highlight-bg);
+}
+
+.btn-idelete:hover {
+  background-color: #eebbb7 !important;
+}

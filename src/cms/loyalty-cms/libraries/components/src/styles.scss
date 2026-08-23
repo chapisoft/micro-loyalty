@@ -1,0 +1,11 @@
+/* You can add global styles to this file, and also import other style files */
+@use 'assets/ioc-styles.css';
+@use 'assets/primeng-components-styles.css';
+
+@layer antd, lowcoder-sdk, primereact, primeng;
+
+@import 'https://cdn.jsdelivr.net/npm/pace-js@latest/pace-theme-default.min.css';
+@import 'https://maps.viettel.vn/files/sdk/vtmap-gl-js/v1.2.1/vtmap-gl.css';
+@import 'https://files-maps.viettel.vn/sdk/vtmap-gl-directions/v4.1.0/vtmap-gl-directions.css';
+@import 'https://cdn.jsdelivr.net/npm/@vietdanh1899/lowcoder-sdk@2.4.12-7/dist/style.css' layer(lowcoder-sdk);
+

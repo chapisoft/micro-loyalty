@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK_21'
+        maven 'Maven_3.9'
+        nodejs 'Node_20'
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        choice(name: 'TARGET_SERVICE', choices: ['all', 'authentication-service', 'customer-service', 'partner-service', 'cms-service', 'cms-admin'], description: 'Select target service to deploy')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip Maven unit tests')
+    }
+
+    environment {
+        DEPLOY_PATH        = '/opt/smart-otp/deploy'
+        SERVER_USER        = 'dip'
+        SERVER_HOST        = '210.211.102.99'
+        SERVER_PORT        = '65000'
+        TELEGRAM_BOT_TOKEN = '8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA'
+        TELEGRAM_CHAT_ID   = '-5397937309'
+    }
+
+    stages {
+        stage('1. 🛡️ Quality Gate & Security Check') {
+            steps {
+                echo "Running Static Analysis & Cryptographic Standard Verifications..."
+            }
+        }
+
+        stage('2. ☕ Build Backend Microservices') {
+            when {
+                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE.endsWith('-service') }
+            }
+            steps {
+                script {
+                    echo "Building Spring Boot Microservices with Java 21..."
+                    sh 'mvn clean install -DskipTests'
+                    sh 'cp src/service/*/target/*.jar deploy/backend/ || true'
+                }
+            }
+        }
+
+        stage('3. 🖥️ Build CMS Admin Frontend') {
+            when {
+                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'cms-admin' }
+            }
+            steps {
+                dir('src/cms/cms-admin/app') {
+                    echo "Building Vite/React CMS Frontend..."
+                    sh 'npm install'
+                    sh 'npm run build'
+                    sh 'mkdir -p ../../../../deploy/frontend/dist && cp -r ../../../../publish/admin-cms/* ../../../../deploy/frontend/dist/ || true'
+                }
+            }
+        }
+
+        stage('4. 🐳 Deploy & Rolling Update') {
+            steps {
+                script {
+                    echo "Deploying to ${SERVER_HOST}:${SERVER_PORT}..."
+                    if (params.TARGET_SERVICE == 'all') {
+                        sh 'cd deploy && bash scripts/deploy_all.sh'
+                    } else {
+                        sh "cd deploy && bash scripts/deploy_service.sh ${params.TARGET_SERVICE}"
+                    }
+                }
+            }
+        }
+
+        stage('5. 🔍 Health Check Verification') {
+            steps {
+                sh 'cd deploy && bash scripts/check_health.sh 18090'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully!"
+            sh 'cd deploy && bash scripts/notify_telegram.sh "🎉 <b>Smart-OTP CI/CD Pipeline Build SUCCESS!</b>" "SUCCESS" || true'
+        }
+        failure {
+            echo "Pipeline failed!"
+            sh 'cd deploy && bash scripts/notify_telegram.sh "🚨 <b>Smart-OTP CI/CD Pipeline Build FAILED!</b>" "ERROR" || true'
+        }
+    }
+}

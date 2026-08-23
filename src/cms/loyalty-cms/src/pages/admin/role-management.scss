@@ -1,0 +1,100 @@
+.role-management-page {
+  padding: 20px;
+
+  .page-header {
+    margin-bottom: 24px;
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+
+    .search-box {
+      flex: 1;
+      max-width: 300px;
+
+      .search-input {
+        width: 100%;
+      }
+    }
+  }
+
+  .data-table-wrapper {
+    border-radius: 4px;
+    overflow: hidden;
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+
+      button {
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+
+      &.active {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      &.inactive {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+    }
+  }
+}
+
+.permission-group {
+  margin-bottom: 16px;
+  .permission-group-header {
+    display: flex;
+    justify-content: space-between;
+    background: #f4f6f8;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  .permission-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    .permission-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      .permission-item-content {
+        display: flex;
+        flex-direction: column;
+        word-break: break-word;
+        .permission-name {
+          font-weight: 500;
+          word-break: break-word;
+        }
+        .permission-meta {
+          font-size: 12px;
+          color: #666;
+          word-break: break-word;
+        }
+      }
+    }
+  }
+}
