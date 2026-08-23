@@ -1,5 +1,8 @@
 package com.natcash.loyalty.campaign.dto;
 
+import com.natcash.loyalty.domain.enums.CampaignMetric;
+import com.natcash.loyalty.domain.enums.MilestoneStatus;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -38,14 +41,14 @@ public final class CampaignMilestoneDto {
         private String campaignCode;
         private String campaignName;
         private Integer milestoneStep;
-        private String targetMetric;
+        private CampaignMetric targetMetric;
         private BigDecimal targetValue;
         private BigDecimal currentProgress;
         private Double progressPercentage;
         private BigDecimal rewardPoints;
         private Long rewardVoucherId;
         private Integer rewardGameTurns;
-        private String status; // IN_PROGRESS, COMPLETED, CLAIMED
+        private MilestoneStatus status; // IN_PROGRESS, COMPLETED, CLAIMED
         private Instant startDate;
         private Instant endDate;
     }

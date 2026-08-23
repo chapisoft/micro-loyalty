@@ -3,6 +3,7 @@ package com.natcash.loyalty.engagement.service;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileRequest;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileResponse;
 import com.natcash.loyalty.account.service.AccountService;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TriggerType;
 import com.natcash.loyalty.engagement.dto.NudgeDto.InAppNudgeRequest;
 import com.natcash.loyalty.engagement.dto.NudgeDto.InAppNudgeResponse;
@@ -58,14 +59,17 @@ public class EngagementService {
 
                 if (!alreadyNotified) {
                     Optional<EngagementTriggerEntity> triggerOpt = triggerRepository
-                            .findByTenantIdAndTriggerTypeAndStatus(tenantId, TriggerType.TIER_UPGRADE_NUDGE, "ACTIVE");
+                            .findByTenantIdAndTriggerTypeAndStatus(tenantId, TriggerType.TIER_UPGRADE_NUDGE, CommonStatus.ACTIVE);
 
                     String nextTierName = profile.getNextTierProgress().getNextTierName();
                     String pointsNeeded = profile.getNextTierProgress().getPointsNeeded().toPlainString();
                     String message = String.format("Bạn chỉ còn thiếu %s điểm để thăng hạng %s và nhận thêm nhiều ưu đãi độc quyền!",
                             pointsNeeded, nextTierName);
 
-                    String deepLink = triggerOpt.map(EngagementTriggerEntity::getDeepLinkUrl).orElse("/loyalty/tier-benefit");
+                    String deepLink = "/loyalty/tier-benefit";
+                    if (triggerOpt.isPresent() && triggerOpt.get().getDeepLinkUrl() != null) {
+                        deepLink = triggerOpt.get().getDeepLinkUrl();
+                    }
 
                     nudges.add(NudgeItemDto.builder()
                             .id(1L)

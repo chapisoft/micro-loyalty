@@ -16,5 +16,7 @@ public interface ClearingTransactionRepository extends JpaRepository<ClearingTra
 
     List<ClearingTransactionEntity> findByTenantIdAndStatus(String tenantId, ClearingStatus status);
 
+    List<ClearingTransactionEntity> findByTenantIdAndCreatedAtBetween(String tenantId, java.time.Instant from, java.time.Instant to);
+
     boolean existsByTenantIdAndTransactionCode(String tenantId, String transactionCode);
 }

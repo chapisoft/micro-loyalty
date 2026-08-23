@@ -1,5 +1,6 @@
 package com.natcash.loyalty.account.dto;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TierLevel;
 
 import jakarta.validation.constraints.NotBlank;
@@ -49,7 +50,7 @@ public final class ProfileDto {
         private BigDecimal tierPoints;
         private TierInfo tier;
         private NextTierProgress nextTierProgress;
-        private String status;
+        private CommonStatus status;
         private Instant createdAt;
     }
 

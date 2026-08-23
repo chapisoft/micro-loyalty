@@ -12,6 +12,7 @@ import com.natcash.loyalty.campaign.entity.UserMilestoneEntity;
 import com.natcash.loyalty.campaign.repository.CampaignMilestoneRepository;
 import com.natcash.loyalty.campaign.repository.UserMilestoneRepository;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.MilestoneStatus;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.exception.LoyaltyException;
@@ -60,7 +61,7 @@ public class MilestoneService {
         Instant now = Instant.now();
         List<CampaignMilestoneEntity> activeMilestones = campaignRepository
                 .findByTenantIdAndStatusAndStartDateBeforeAndEndDateAfterOrderByCampaignCodeAscMilestoneStepAsc(
-                        tenantId, "ACTIVE", now, now);
+                        tenantId, CommonStatus.ACTIVE, now, now);
 
         List<UserMilestoneEntity> userProgressList = userMilestoneRepository
                 .findByTenantIdAndAccount_ExternalUserId(tenantId, externalUserId);
@@ -75,9 +76,9 @@ public class MilestoneService {
                     ? userProgress.getCurrentProgress()
                     : BigDecimal.ZERO;
 
-            String status = userProgress != null && userProgress.getStatus() != null
-                    ? userProgress.getStatus().name()
-                    : MilestoneStatus.IN_PROGRESS.name();
+            MilestoneStatus status = userProgress != null && userProgress.getStatus() != null
+                    ? userProgress.getStatus()
+                    : MilestoneStatus.IN_PROGRESS;
 
             double percentage = 0.0;
             if (m.getTargetValue() != null && m.getTargetValue().compareTo(BigDecimal.ZERO) > 0) {

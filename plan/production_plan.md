@@ -478,7 +478,7 @@ flowchart LR
   <td>Viết <code>GameHubService</code> xử lý <code>POST /gamehub/v1/games/list</code>, <code>POST /gamehub/v1/session/init</code> (sinh mã phiên chơi game), <code>POST /gamehub/v1/billing/in-game-checkout</code>.</td>
   <td align="center"><strong>Kế thừa 40%</strong> (<code>ims-rest</code> gọi ví &amp; <code>ims-redis</code> Session)</td>
   <td>Khởi tạo phiên chơi game tập trung thành công; tạo giao dịch trừ tiền ví an toàn.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-15</code></td>
@@ -487,7 +487,7 @@ flowchart LR
   <td>Viết <code>LuckyDrawService</code> xử lý <code>luckydraw/config</code> và <code>luckydraw/spin</code>. Triển khai thuật toán xác suất <code>SecureRandom</code> kết hợp trừ ngân sách tiền mặt nguyên tử Redis <code>DECRBY</code>.</td>
   <td align="center"><strong>Kế thừa 50%</strong> (<code>ims-redis</code> Atomic DECRBY &amp; Cache)</td>
   <td>Quay thưởng ngẫu nhiên chuẩn xác theo ma trận xác suất; không bao giờ chi vượt ngân sách ngày.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-16</code></td>
@@ -496,7 +496,7 @@ flowchart LR
   <td>Viết <code>ClearinghouseService</code> xử lý <code>clearinghouse/reconciliation-report</code> (tổng hợp điểm phát hành vs điểm tiêu dùng) và <code>clearinghouse/settle-period</code> (chốt công nợ ròng).</td>
   <td align="center"><strong>Kế thừa 50%</strong> (<code>ims-excel</code> Streaming SXSSF xuất file lớn)</td>
   <td>Báo cáo đối soát tính toán chính xác 100% công nợ bù trừ giữa Viễn thông và Siêu thị.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-17</code></td>
@@ -505,7 +505,7 @@ flowchart LR
   <td>Cài đặt Clustered Quartz điều phối 3 Jobs (xử lý 500 bản ghi/chunk): Quét điểm hết hạn (00:30), Tính toán gợi nhắc nâng hạng (08:00), Đối soát tự phục hồi lệch dữ liệu (02:00).</td>
   <td align="center"><strong>Kế thừa 40%</strong> (Cấu hình Spring Batch &amp; Quartz Job)</td>
   <td>3 Batch Jobs chạy tự động đúng giờ định kỳ, không bị chạy trùng lặp giữa các nút máy chủ.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-08</code></td>
@@ -514,7 +514,7 @@ flowchart LR
   <td>Xây dựng giao diện tạo voucher, chức năng nạp tệp CSV chứa 10.000 mã ưu đãi, cấu hình hạn mức phát hành, số lượng tối đa và phạm vi đối tác áp dụng.</td>
   <td align="center"><strong>Kế thừa 70%</strong> (<code>ims-excel</code> / <code>ims-file</code> &amp; Upload DragDrop)</td>
   <td>Nạp tệp CSV 10.000 mã trong dưới 3 giây; quản lý trạng thái mã đã dùng / chưa dùng rõ ràng.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-09</code></td>
@@ -523,7 +523,7 @@ flowchart LR
   <td>Xây dựng giao diện cấu hình danh mục game lẻ, cấu hình bảng giá mua lượt, thiết lập cơ cấu giải thưởng Vòng quay, ma trận xác suất và hạn mức ngân sách giải thưởng ngày.</td>
   <td align="center"><strong>Kế thừa 60%</strong> (Khung DataTable &amp; Form từ <code>cms-admin</code>)</td>
   <td>Cập nhật tỷ lệ trúng thưởng và hạn mức ngân sách thành công, đồng bộ ngay vào Redis.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>CMS-10</code></td>
@@ -532,7 +532,7 @@ flowchart LR
   <td>Xây dựng giao diện tra cứu báo cáo quyết toán bù trừ đa phương, bảng kê chi tiết giao dịch chéo giữa các bên và nút duyệt lệnh kết chuyển công nợ kỳ.</td>
   <td align="center"><strong>Kế thừa 65%</strong> (<code>ims-excel</code> xuất Excel/PDF &amp; Bảng đối soát)</td>
   <td>Bảng kê hiển thị trực quan số liệu nợ/có của từng đối tác; xuất tệp Excel/PDF chuẩn hóa.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>WV-06</code></td>
@@ -541,7 +541,7 @@ flowchart LR
   <td>Xây dựng trang <code>/lucky-draw</code>: Đĩa quay may mắn kết xuất bằng HTML5 Canvas, âm thanh quay thưởng sống động, nhận góc dừng chính xác từ API và hiển thị popup trúng thưởng.</td>
   <td align="center"><strong>Kế thừa 40%</strong> (Khung Canvas &amp; Audio từ Demo Simulator)</td>
   <td>Đĩa quay mượt mà 60 FPS trên mọi thiết bị di động, dừng chuẩn xác tại ô trúng thưởng.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>WV-07</code></td>
@@ -550,7 +550,7 @@ flowchart LR
   <td>Xây dựng trang <code>/vouchers</code>: Danh sách phiếu giảm giá người dùng đang sở hữu, phân loại theo trạng thái (Khả dụng, Đã dùng, Hết hạn), hiển thị mã vạch Barcode/QR để quét.</td>
   <td align="center"><strong>Kế thừa 30%</strong> (Danh sách thẻ &amp; Barcode Generator)</td>
   <td>Hiển thị đầy đủ danh sách voucher, sao chép mã ưu đãi nhanh bằng 1 chạm.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>WV-08</code></td>
@@ -559,7 +559,7 @@ flowchart LR
   <td>Xây dựng trang <code>/game</code>: Khung iframe nhúng game HTML5, tích hợp thanh công cụ GameHub (nút đóng, nút mua thêm lượt, bảng xếp hạng sự kiện thời gian thực).</td>
   <td align="center"><strong>Kế thừa 35%</strong> (Khung iframe &amp; JSBridge Handler)</td>
   <td>Game chạy toàn màn hình mượt mà, gọi được hàm mua lượt thanh toán ví qua JSBridge.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>QA-02</code></td>
@@ -568,7 +568,7 @@ flowchart LR
   <td>Viết kịch bản kiểm thử toàn bộ các luồng nghiệp vụ Backend, kiểm thử giao diện CMS Quản trị và kiểm thử các trang chức năng trên Webview nhúng.</td>
   <td align="center"><strong>Kế thừa 50%</strong> (Bộ kịch bản kiểm thử REST-assured/Postman)</td>
   <td>Toàn bộ các ca kiểm thử đạt kết quả Passed; xử lý triệt để các lỗi phát sinh.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr style="background-color: #f0f4f8;">
   <td colspan="7" align="left"><strong>GIAI ĐOẠN 3: TÍCH HỢP API GATEWAY, ỨNG DỤNG DI ĐỘNG &amp; CẦU NỐI JSBRIDGE</strong></td>

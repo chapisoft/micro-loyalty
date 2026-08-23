@@ -1,5 +1,6 @@
 package com.natcash.loyalty.engagement.entity;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TriggerType;
 
 import jakarta.persistence.Column;
@@ -52,9 +53,10 @@ public class EngagementTriggerEntity {
     @Column(name = "deep_link_url", length = 500)
     private String deepLinkUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "ACTIVE";
+    private CommonStatus status = CommonStatus.ACTIVE;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -70,7 +72,7 @@ public class EngagementTriggerEntity {
         }
         this.updatedAt = now;
         if (this.status == null) {
-            this.status = "ACTIVE";
+            this.status = CommonStatus.ACTIVE;
         }
         if (this.thresholdPercentage == null) {
             this.thresholdPercentage = new BigDecimal("80.00");

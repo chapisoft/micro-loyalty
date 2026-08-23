@@ -1,5 +1,6 @@
 package com.natcash.loyalty.engagement.repository;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TriggerType;
 import com.natcash.loyalty.engagement.entity.EngagementTriggerEntity;
 
@@ -12,8 +13,8 @@ import java.util.Optional;
 @Repository
 public interface EngagementTriggerRepository extends JpaRepository<EngagementTriggerEntity, Long> {
 
-    List<EngagementTriggerEntity> findByTenantIdAndStatus(String tenantId, String status);
+    List<EngagementTriggerEntity> findByTenantIdAndStatus(String tenantId, CommonStatus status);
 
     Optional<EngagementTriggerEntity> findByTenantIdAndTriggerTypeAndStatus(
-            String tenantId, TriggerType triggerType, String status);
+            String tenantId, TriggerType triggerType, CommonStatus status);
 }

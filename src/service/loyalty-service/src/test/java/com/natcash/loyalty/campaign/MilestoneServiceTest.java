@@ -11,6 +11,8 @@ import com.natcash.loyalty.campaign.entity.UserMilestoneEntity;
 import com.natcash.loyalty.campaign.repository.CampaignMilestoneRepository;
 import com.natcash.loyalty.campaign.repository.UserMilestoneRepository;
 import com.natcash.loyalty.campaign.service.MilestoneService;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.MilestoneStatus;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
@@ -61,10 +63,10 @@ class MilestoneServiceTest {
                 .campaignCode("GOLDEN_WEEK")
                 .campaignName("Tuần Lễ Vàng")
                 .milestoneStep(1)
-                .targetMetric("BILL_AMOUNT")
+                .targetMetric(CampaignMetric.BILL_AMOUNT)
                 .targetValue(new BigDecimal("1000.00"))
                 .rewardPoints(new BigDecimal("100.00"))
-                .status("ACTIVE")
+                .status(CommonStatus.ACTIVE)
                 .startDate(Instant.now().minusSeconds(86400))
                 .endDate(Instant.now().plusSeconds(86400))
                 .build();
@@ -82,7 +84,7 @@ class MilestoneServiceTest {
                 .build();
 
         when(campaignRepository.findByTenantIdAndStatusAndStartDateBeforeAndEndDateAfterOrderByCampaignCodeAscMilestoneStepAsc(
-                eq("TENANT_DELIMART"), eq("ACTIVE"), any(), any()))
+                eq("TENANT_DELIMART"), eq(CommonStatus.ACTIVE), any(), any()))
                 .thenReturn(List.of(milestone));
 
         when(userMilestoneRepository.findByTenantIdAndAccount_ExternalUserId("TENANT_DELIMART", "USER_01"))
@@ -93,7 +95,7 @@ class MilestoneServiceTest {
         assertNotNull(response);
         assertEquals(1, response.getTotalActive());
         assertEquals(50.0, response.getMilestones().get(0).getProgressPercentage());
-        assertEquals("IN_PROGRESS", response.getMilestones().get(0).getStatus());
+        assertEquals(MilestoneStatus.IN_PROGRESS, response.getMilestones().get(0).getStatus());
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.natcash.loyalty.engagement;
 import com.natcash.loyalty.account.dto.ProfileDto.NextTierProgress;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileResponse;
 import com.natcash.loyalty.account.service.AccountService;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.domain.enums.TriggerType;
 import com.natcash.loyalty.engagement.dto.NudgeDto.InAppNudgeRequest;
@@ -69,7 +70,7 @@ class EngagementServiceTest {
                 .deepLinkUrl("/loyalty/tier-benefit")
                 .build();
 
-        when(triggerRepository.findByTenantIdAndTriggerTypeAndStatus("TENANT_DELIMART", TriggerType.TIER_UPGRADE_NUDGE, "ACTIVE"))
+        when(triggerRepository.findByTenantIdAndTriggerTypeAndStatus("TENANT_DELIMART", TriggerType.TIER_UPGRADE_NUDGE, CommonStatus.ACTIVE))
                 .thenReturn(Optional.of(trigger));
 
         InAppNudgeRequest request = InAppNudgeRequest.builder()

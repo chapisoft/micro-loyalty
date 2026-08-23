@@ -9,6 +9,7 @@ import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyTierRepository;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.stream.LoyaltyStreamEvent;
@@ -136,7 +137,7 @@ public class AccountService {
                 .currentPoints(BigDecimal.ZERO)
                 .tierPoints(BigDecimal.ZERO)
                 .tierUpdatedAt(Instant.now())
-                .status("ACTIVE")
+                .status(CommonStatus.ACTIVE)
                 .build();
 
         log.info("[ACCOUNT-CREATED] tenantId={}, user={}, tier={}",
@@ -155,7 +156,7 @@ public class AccountService {
                 .pointMultiplier(BigDecimal.ONE)
                 .freeDailyTurns(1)
                 .description("Hạng hội viên Bạc khởi đầu")
-                .status("ACTIVE")
+                .status(CommonStatus.ACTIVE)
                 .build();
         return tierRepository.save(silver);
     }

@@ -1,5 +1,6 @@
 package com.natcash.loyalty.account.entity;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.TierLevel;
 
 import jakarta.persistence.Column;
@@ -60,9 +61,10 @@ public class LoyaltyTierEntity {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "ACTIVE";
+    private CommonStatus status = CommonStatus.ACTIVE;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -78,7 +80,7 @@ public class LoyaltyTierEntity {
         }
         this.updatedAt = now;
         if (this.status == null) {
-            this.status = "ACTIVE";
+            this.status = CommonStatus.ACTIVE;
         }
         if (this.minPoints == null) {
             this.minPoints = BigDecimal.ZERO;

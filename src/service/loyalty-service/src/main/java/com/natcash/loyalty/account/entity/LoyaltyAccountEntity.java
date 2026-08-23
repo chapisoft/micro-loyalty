@@ -1,7 +1,11 @@
 package com.natcash.loyalty.account.entity;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -62,9 +66,10 @@ public class LoyaltyAccountEntity {
     @Column(name = "tier_updated_at")
     private Instant tierUpdatedAt;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "ACTIVE";
+    private CommonStatus status = CommonStatus.ACTIVE;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -80,7 +85,7 @@ public class LoyaltyAccountEntity {
         }
         this.updatedAt = now;
         if (this.status == null) {
-            this.status = "ACTIVE";
+            this.status = CommonStatus.ACTIVE;
         }
         if (this.currentPoints == null) {
             this.currentPoints = BigDecimal.ZERO;

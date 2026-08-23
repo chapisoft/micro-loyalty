@@ -21,6 +21,9 @@ export const paths = {
   policyConfig: '/policies',
   tierManagement: '/tiers',
   campaignMilestones: '/campaigns',
+  voucherManagement: '/vouchers',
+  gameManagement: '/games',
+  clearingSettlement: '/clearing',
 
   // Admin & Security
   userManagement: '/admin/users',

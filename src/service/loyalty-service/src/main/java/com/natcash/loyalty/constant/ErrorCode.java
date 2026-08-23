@@ -1,31 +1,53 @@
 package com.natcash.loyalty.constant;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.natcash.loyalty.util.MessageUtils;
+
 import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
 
-    SUCCESS("00", "Giao dịch thành công"),
-    TENANT_INVALID("01", "Mã thuê bao không hợp lệ hoặc bị khóa"),
-    API_KEY_INVALID("02", "API Key không hợp lệ"),
-    SIGNATURE_INVALID("03", "Chữ ký số không hợp lệ hoặc đã bị thay đổi"),
-    TIMESTAMP_DRIFT_EXCEEDED("04", "Thời gian yêu cầu vượt quá dung sai cho phép (+-300s)"),
-    ACCOUNT_NOT_FOUND("05", "Hồ sơ hội viên không tồn tại"),
-    INSUFFICIENT_POINTS("06", "Số dư điểm không đủ để thực hiện giao dịch"),
-    VOUCHER_NOT_FOUND("07", "Phiếu ưu đãi không tồn tại hoặc đã hết hạn"),
-    VOUCHER_OUT_OF_STOCK("08", "Phiếu ưu đãi đã hết số lượng khả dụng"),
-    TRANSACTION_DUPLICATE("09", "Mã giao dịch đã tồn tại (Trùng lặp Idempotency)"),
-    CONCURRENT_LOCK_BUSY("10", "Hệ thống đang xử lý một giao dịch khác cho tài khoản này, vui lòng thử lại"),
-    PARTNER_UNAUTHORIZED("11", "Đối tác không có quyền thực hiện nghiệp vụ này"),
-    POLICY_VIOLATION("12", "Vi phạm chính sách chấp nhận tiêu điểm tại điểm bán"),
-    GAME_OUT_OF_TURNS("13", "Người dùng đã hết lượt chơi hôm nay"),
-    SYSTEM_ERROR("99", "Lỗi xử lý nội bộ hệ thống");
+    SUCCESS("00", "error.success"),
+    TENANT_INVALID("01", "error.tenant_invalid"),
+    API_KEY_INVALID("02", "error.api_key_invalid"),
+    SIGNATURE_INVALID("03", "error.signature_invalid"),
+    TIMESTAMP_DRIFT_EXCEEDED("04", "error.timestamp_drift_exceeded"),
+    ACCOUNT_NOT_FOUND("05", "error.account_not_found"),
+    INSUFFICIENT_POINTS("06", "error.insufficient_points"),
+    VOUCHER_NOT_FOUND("07", "error.voucher_not_found"),
+    VOUCHER_OUT_OF_STOCK("08", "error.voucher_out_of_stock"),
+    TRANSACTION_DUPLICATE("09", "error.transaction_duplicate"),
+    CONCURRENT_LOCK_BUSY("10", "error.concurrent_lock_busy"),
+    PARTNER_UNAUTHORIZED("11", "error.partner_unauthorized"),
+    POLICY_VIOLATION("12", "error.policy_violation"),
+    GAME_OUT_OF_TURNS("13", "error.game_out_of_turns"),
+    SYSTEM_ERROR("99", "error.system_error");
 
+    @JsonValue
     private final String code;
-    private final String message;
+    private final String messageKey;
 
-    ErrorCode(String code, String message) {
+    ErrorCode(String code, String messageKey) {
         this.code = code;
-        this.message = message;
+        this.messageKey = messageKey;
+    }
+
+    public String getMessage() {
+        return MessageUtils.getMessage(this.messageKey);
+    }
+
+    @JsonCreator
+    public static ErrorCode fromCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        for (ErrorCode err : values()) {
+            if (err.code.equalsIgnoreCase(code) || err.name().equalsIgnoreCase(code)) {
+                return err;
+            }
+        }
+        return null;
     }
 }

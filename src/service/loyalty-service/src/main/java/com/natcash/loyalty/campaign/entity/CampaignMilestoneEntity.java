@@ -1,7 +1,12 @@
 package com.natcash.loyalty.campaign.entity;
 
+import com.natcash.loyalty.domain.enums.CampaignMetric;
+import com.natcash.loyalty.domain.enums.CommonStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,8 +45,9 @@ public class CampaignMilestoneEntity {
     @Column(name = "milestone_step", nullable = false)
     private Integer milestoneStep;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "target_metric", nullable = false, length = 50)
-    private String targetMetric; // BILL_AMOUNT, TRANSACTION_COUNT, EARN_POINTS, GAME_SPINS
+    private CampaignMetric targetMetric;
 
     @Column(name = "target_value", nullable = false, precision = 18, scale = 2)
     private BigDecimal targetValue;
@@ -63,9 +69,10 @@ public class CampaignMilestoneEntity {
     @Column(name = "end_date", nullable = false)
     private Instant endDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "ACTIVE";
+    private CommonStatus status = CommonStatus.ACTIVE;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -81,7 +88,7 @@ public class CampaignMilestoneEntity {
         }
         this.updatedAt = now;
         if (this.status == null) {
-            this.status = "ACTIVE";
+            this.status = CommonStatus.ACTIVE;
         }
         if (this.rewardPoints == null) {
             this.rewardPoints = BigDecimal.ZERO;

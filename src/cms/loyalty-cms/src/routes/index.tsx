@@ -113,6 +113,27 @@ const mainAppRoutes: RouteObject = {
         return { Component: CampaignMilestonesPage };
       }),
     },
+    {
+      path: paths.voucherManagement,
+      lazy: safeLazy(async () => {
+        const { VoucherManagementPage } = await import('@/pages/vouchers/VoucherManagementPage');
+        return { Component: VoucherManagementPage };
+      }),
+    },
+    {
+      path: paths.gameManagement,
+      lazy: safeLazy(async () => {
+        const { GameManagementPage } = await import('@/pages/games/GameManagementPage');
+        return { Component: GameManagementPage };
+      }),
+    },
+    {
+      path: paths.clearingSettlement,
+      lazy: safeLazy(async () => {
+        const { ClearingSettlementPage } = await import('@/pages/clearing/ClearingSettlementPage');
+        return { Component: ClearingSettlementPage };
+      }),
+    },
     // Admin routes
     {
       path: paths.userManagement,
