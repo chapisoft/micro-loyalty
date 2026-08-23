@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     build: {
-      outDir: path.resolve(__dirname, '../../../deploy/frontend/dist'),
+      outDir: 'dist',
       emptyOutDir: true,
     },
   }

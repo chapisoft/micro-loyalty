@@ -1,0 +1,66 @@
+# ==============================================================================
+# CẤU HÌNH NGOẠI VI — MÔ HÌNH SAAS MULTI-TENANT (MICRO-LOYALTY)
+# Vị trí: deploy/micro-loyalty/config/backend/application-saas.yml
+# ==============================================================================
+
+server:
+  port: ${LOYALTY_SERVICE_PORT:8085}
+  shutdown: graceful
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: loyalty-service-saas
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:loyalty_db}?sslmode=prefer
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:T3st$2025}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${POSTGRES_MAX_POOL_SIZE:50}
+      minimum-idle: ${POSTGRES_MIN_IDLE:10}
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      pool-name: LoyaltySaasHikariCP
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:NatCash2022}
+    database: ${REDIS_DATABASE:0}
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: ${REDIS_POOL_MAX_TOTAL:100}
+        max-idle: ${REDIS_POOL_MAX_IDLE:30}
+        min-idle: 10
+  messages:
+    basename: file:/app/locales/messages
+    encoding: UTF-8
+    cache-duration: 3600
+
+loyalty:
+  deployment-mode: SAAS_MULTI_TENANT
+  security:
+    timestamp-tolerance-seconds: ${DRIFT_TOLERANCE_SECONDS:300}
+  outbox:
+    max-retries: ${OUTBOX_MAX_RETRIES:5}
+    batch-size: 50
+    publish-interval-ms: 1000
+  stream:
+    channel-prefix: loyalty.events.
+  locales-path: /app/locales
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true

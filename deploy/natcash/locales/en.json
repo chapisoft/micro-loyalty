@@ -1,0 +1,27 @@
+{
+  "common": {
+    "system_title": "Natcash Wallet Loyalty & Rewards Program",
+    "search": "Search...",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "status": "Status"
+  },
+  "loyalty": {
+    "points": "Natcash Points",
+    "tier_silver": "Natcash Silver Member",
+    "tier_gold": "Natcash Gold Member",
+    "tier_platinum": "Natcash Platinum Member",
+    "tier_diamond": "Natcash Diamond Member",
+    "burn_points": "Redeem Rewards",
+    "earn_points": "Earn Transaction Points",
+    "qr_reward_title": "Natcash Reward Wallet QR"
+  },
+  "game": {
+    "spin_now": "Spin Now",
+    "remaining_turns": "Natcash Turns Left",
+    "buy_turns": "Buy More Turns",
+    "gamehub_title": "Natcash Games Hub",
+    "win_congrats": "Congratulations, you won a Natcash reward!"
+  }
+}

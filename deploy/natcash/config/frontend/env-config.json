@@ -1,0 +1,15 @@
+{
+  "ENVIRONMENT": "onpremise-production",
+  "DEPLOYMENT_MODE": "NATCASH_ONPREMISE",
+  "API_GATEWAY_URL": "http://loyalty-internal.natcash.ht/loyalty",
+  "PUBLIC_CMS_URL": "http://loyalty-internal.natcash.ht",
+  "PUBLIC_WEBVIEW_URL": "http://loyalty-internal.natcash.ht/gamehub",
+  "DEFAULT_TENANT_ID": "TENANT_NATCASH",
+  "AVAILABLE_TENANTS": ["TENANT_NATCASH"],
+  "DEFAULT_LANGUAGE": "vi",
+  "SUPPORTED_LANGUAGES": ["vi", "en", "fr", "ht"],
+  "BRAND_NAME": "Natcash Rewards & GameHub",
+  "LOCALES_REMOTE_URL": "/locales",
+  "ENABLE_SANDBOX": false,
+  "ENABLE_DEBUG": false
+}

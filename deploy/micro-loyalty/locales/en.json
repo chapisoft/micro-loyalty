@@ -1,0 +1,30 @@
+{
+  "common": {
+    "system_title": "Alliance Loyalty & Multi-tenant GameHub Platform",
+    "search": "Search...",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "delete": "Delete Record",
+    "retry": "Retry",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "loyalty": {
+    "points": "Reward Points",
+    "tier_silver": "Silver Member",
+    "tier_gold": "Gold Member",
+    "tier_platinum": "Platinum Member",
+    "tier_diamond": "Diamond Member",
+    "burn_points": "Redeem Points",
+    "earn_points": "Earn Points",
+    "qr_reward_title": "Reward Wallet QR Code"
+  },
+  "game": {
+    "spin_now": "Spin Now",
+    "remaining_turns": "Remaining Turns",
+    "buy_turns": "Buy More Turns",
+    "gamehub_title": "Entertainment GameHub",
+    "win_congrats": "Congratulations, you won!"
+  }
+}

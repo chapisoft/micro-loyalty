@@ -1,0 +1,44 @@
+# ==============================================================================
+# CẤU HÌNH NGOẠI VI — MÔ HÌNH ON-PREMISE DÀNH CHO VÍ NATCASH
+# Vị trí: deploy/natcash/config/backend/application-natcash.yml
+# ==============================================================================
+
+server:
+  port: ${LOYALTY_SERVICE_PORT:8085}
+  shutdown: graceful
+
+spring:
+  application:
+    name: loyalty-service-natcash
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:natcash_loyalty_db}?sslmode=disable
+    username: ${POSTGRES_USER:natcash_loyalty}
+    password: ${POSTGRES_PASSWORD:Natcash$SecureDB2026!}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${POSTGRES_MAX_POOL_SIZE:30}
+      minimum-idle: ${POSTGRES_MIN_IDLE:5}
+      pool-name: LoyaltyNatcashHikariCP
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:Natcash$RedisPass2026!}
+    database: ${REDIS_DATABASE:0}
+    timeout: 2000ms
+  messages:
+    basename: file:/app/locales/messages
+    encoding: UTF-8
+    cache-duration: 3600
+
+loyalty:
+  deployment-mode: ON_PREMISE
+  default-tenant-id: ${TENANT_DEFAULT:TENANT_NATCASH}
+  partner-code: ${PARTNER_CODE:NATCASH_WALLET}
+  gateway:
+    endpoint: ${NATCASH_API_GW_ENDPOINT:http://natcash-eu-api:8080}
+  security:
+    timestamp-tolerance-seconds: 300
+  outbox:
+    max-retries: 5
+    publish-interval-ms: 2000
+  locales-path: /app/locales

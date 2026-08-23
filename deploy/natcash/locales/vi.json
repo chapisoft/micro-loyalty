@@ -1,0 +1,27 @@
+{
+  "common": {
+    "system_title": "Chương Trình Khách Hàng Thân Thiết Ví Natcash",
+    "search": "Tìm kiếm...",
+    "confirm": "Xác nhận",
+    "cancel": "Hủy bỏ",
+    "save": "Lưu thay đổi",
+    "status": "Trạng thái"
+  },
+  "loyalty": {
+    "points": "Điểm Natcash",
+    "tier_silver": "Hội viên Bạc Natcash",
+    "tier_gold": "Hội viên Vàng Natcash",
+    "tier_platinum": "Hội viên Bạch Kim Natcash",
+    "tier_diamond": "Hội viên Kim Cương Natcash",
+    "burn_points": "Đổi điểm nhận ưu đãi",
+    "earn_points": "Tích điểm giao dịch ví",
+    "qr_reward_title": "Mã QR Ví Phần Thưởng Natcash"
+  },
+  "game": {
+    "spin_now": "Quay Ngay",
+    "remaining_turns": "Lượt chơi Natcash",
+    "buy_turns": "Mua thêm lượt chơi",
+    "gamehub_title": "Cổng Trò Chơi Ví Natcash",
+    "win_congrats": "Chúc mừng bạn nhận quà từ Ví Natcash!"
+  }
+}

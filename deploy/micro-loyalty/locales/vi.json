@@ -1,0 +1,30 @@
+{
+  "common": {
+    "system_title": "Hệ Sinh Thái Khách Hàng Thân Thiết & Cổng Game Liên Minh",
+    "search": "Tìm kiếm...",
+    "confirm": "Xác nhận",
+    "cancel": "Hủy bỏ",
+    "save": "Lưu thay đổi",
+    "delete": "Xóa bản ghi",
+    "retry": "Thử lại",
+    "status": "Trạng thái",
+    "actions": "Hành động"
+  },
+  "loyalty": {
+    "points": "Điểm thưởng",
+    "tier_silver": "Hội viên Bạc",
+    "tier_gold": "Hội viên Vàng",
+    "tier_platinum": "Hội viên Bạch Kim",
+    "tier_diamond": "Hội viên Kim Cương",
+    "burn_points": "Khấu trừ điểm thưởng",
+    "earn_points": "Tích lũy điểm thưởng",
+    "qr_reward_title": "Mã QR Ví Phần Thưởng"
+  },
+  "game": {
+    "spin_now": "Quay Ngay",
+    "remaining_turns": "Lượt chơi còn lại",
+    "buy_turns": "Mua thêm lượt",
+    "gamehub_title": "Cổng Trò Chơi Giải Trí",
+    "win_congrats": "Chúc mừng bạn đã trúng thưởng!"
+  }
+}

@@ -98,6 +98,22 @@
 2. **Cơ chế dừng tiến trình êm ái (Graceful Shutdown):**
    * Cấu hình thời gian chờ tối đa 30 giây khi nhận tín hiệu dừng máy chủ (`server.shutdown: graceful`, `spring.lifecycle.timeout-per-shutdown-phase: 30s`) để hoàn tất toàn bộ các giao dịch đang xử lý trước khi đóng tiến trình.
 
+### 3.5. Quy Chuẩn Đóng Gói Và Triển Khai Đa Môi Trường Độc Lập (SaaS & On-Premise Zero-Bundled Config & Localization Standard)
+1. **Nguyên Tắc Bản Dựng Bất Biến (Immutable Build Artifacts):**
+   * Tệp thực thi Backend (`.jar`) và gói tĩnh Frontend (`dist/`) phải là bản dựng bất biến duy nhất, không phụ thuộc vào môi trường máy chủ.
+   * **Tuyệt đối cấm:** Đóng cứng cấu hình kết nối máy chủ (PostgreSQL, Redis, RabbitMQ, API URLs, Domain), khóa bí mật hoặc tệp từ điển ngôn ngữ vào trong Docker Image hoặc Dockerfile.
+2. **Cơ Chế Nạp Cấu Hình Ngoại Vi (Externalized Configuration):**
+   * **Máy chủ Backend (`loyalty-service`):** Nạp cấu hình động qua thư mục ngoại vi `--spring.config.additional-location=file:/app/config/` kết hợp biến môi trường (`.env`). Thư mục `/app/config/` được mount qua Docker Volume từ môi trường máy chủ (SaaS hoặc On-Premise).
+   * **Giao diện Frontend (`loyalty-cms` & `loyalty-webview`):** Nạp cấu hình động lúc thực thi (Runtime) qua tệp `/config/env-config.json` hoặc `window.__RUNTIME_CONFIG__` được Nginx phục vụ trực tiếp. Đảm bảo thay đổi URL Backend, Tenant ID hoặc Brand ID không cần chạy lại `npm run build`.
+3. **Cơ Chế Nạp Đa Ngôn Ngữ Ngoại Vi (Externalized Localization):**
+   * Tệp từ điển đa ngôn ngữ (`locales/*.json`) được lưu độc lập tại thư mục ngoại vi và mount vào máy chủ Nginx `/usr/share/nginx/html/locales/` hoặc Backend `/app/locales/`.
+   * Cho phép quản trị viên hoặc đối tác On-Premise chỉnh sửa trực tiếp nội dung văn bản hiển thị, thông điệp thông báo và nhãn thương hiệu đối tác mà không cần can thiệp mã nguồn hay build lại gói phần mềm.
+4. **Cấu Trúc Thư Mục Triển Khai Phân Tách Theo 2 Mô Hình Chuẩn (`deploy/`):**
+   * Bắt buộc duy trì các thư mục triển khai riêng biệt cho 2 mô hình cốt lõi:
+     * `deploy/micro-loyalty/`: **Mô hình SaaS Đa Thuê Bao** (Hệ sinh thái nền tảng trung tâm `micro-loyalty` phục vụ đa đối tác liên minh).
+     * `deploy/natcash/`: **Mô hình On-Premise Tại Chỗ** (Gói triển khai tại hạ tầng riêng biệt của hệ thống Ví Natcash).
+   * Mỗi thư mục triển khai phải có cấu trúc khép kín 100% độc lập gồm: `docker-compose.yml`, tệp biến môi trường `.env`, `.env.example`, thư mục cấu hình `config/` (Backend `application-*.yml`, Frontend `env-config.json`, Nginx `nginx-*.conf`), thư mục ngôn ngữ `locales/` (`vi.json`, `en.json`...) và các kịch bản quản trị (`start.sh`, `stop.sh`, `backup.sh`, `healthcheck.sh`).
+
 ---
 
 ## 4. QUY CHUẨN LẬP TRÌNH VÀ CHẤT LƯỢNG MÃ NGUỒN (CODING CONVENTIONS)
