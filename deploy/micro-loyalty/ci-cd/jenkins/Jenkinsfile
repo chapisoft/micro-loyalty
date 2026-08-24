@@ -15,12 +15,7 @@ pipeline {
         timeout(time: 30, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '20'))
         timestamps()
-        disableConcurrentBuilds(abortPrevious: true)
-    }
-
-    triggers {
-        githubPush()
-        pollSCM('H/2 * * * *') // Quét Git định kỳ mỗi 2 phút dự phòng sự cố Webhook
+        disableConcurrentBuilds()
     }
 
     parameters {
@@ -108,8 +103,8 @@ pipeline {
                             cp deploy/micro-loyalty/.env.example deploy/micro-loyalty/.env
                         fi
 
-                        # 2. Rolling update các container của Micro-Loyalty
-                        docker compose -f deploy/micro-loyalty/docker-compose.yml -p micro-loyalty up -d --build
+                        # 2. Rolling update các container của Micro-Loyalty với Host Project Directory
+                        docker compose -f deploy/micro-loyalty/docker-compose.yml --project-directory /home/dip/micro-loyalty/deploy -p micro-loyalty up -d --build
 
                         echo ""
                         echo "📊 Trạng thái hiện tại của toàn bộ Micro-Loyalty Containers:"
