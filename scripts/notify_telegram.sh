@@ -27,8 +27,9 @@ fi
 TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA}"
 TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:--5397937309}"
 
-MESSAGE="${1:-Thông báo từ hệ thống Micro-Loyalty}"
+RAW_MESSAGE="${1:-Thông báo từ hệ thống Micro-Loyalty}"
 STATUS_TYPE="${2:-INFO}"
+MESSAGE=$(printf '%b' "$RAW_MESSAGE")
 
 # Icon mappings
 case "$STATUS_TYPE" in

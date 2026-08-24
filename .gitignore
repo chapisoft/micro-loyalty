@@ -22,10 +22,10 @@ target/
 *.lst
 classes.lst
 
-# Maven wrapper & runtime
-.mvn/
-**/.mvn/
-!.mvn/wrapper/maven-wrapper.jar
+# Maven Wrapper Configuration
+!.mvn/
+!.mvn/wrapper/
+!.mvn/wrapper/maven-wrapper.properties
 .mvn/timing.properties
 .mvn/wrapper/.maven/
 HELP.md
@@ -198,7 +198,7 @@ ehthumbs.db
 Desktop.ini
 
 # ------------------------------------------------------------------------------
-# 7. TEMPORARY, CACHE & SCRATCH FILES
+# 7. TEMPORARY, CACHE, SCRATCH & ALERTS
 # ------------------------------------------------------------------------------
 temp/
 **/temp/
@@ -211,6 +211,9 @@ scratch/
 *.swp
 *.swo
 *~
+*.tmp
+*.temp
+.tg_alert.tmp
 notification-templates/
 
 # Báo cáo rà soát nội bộ (Audit Reports)
