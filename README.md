@@ -34,12 +34,13 @@ flowchart LR
 ```
 
 ### Bộ Sản Phẩm Bàn Giao Cốt Lõi:
-1. **Dịch vụ máy chủ nghiệp vụ độc lập (`loyalty-service`):** Xây dựng trên nền tảng Java 17 LTS và Spring Boot 3.5.3, quản lý cơ sở dữ liệu quan hệ độc lập `loyalty_db` trên PostgreSQL 15+ (tách biệt 100% với `natcash_db`).
-2. **Cổng thông tin quản trị trung tâm (`loyalty-cms`):** Xây dựng trên nền tảng ReactJS 18+, TypeScript, Vite, Ant Design 5.x, đóng gói ứng dụng trang đơn tĩnh phục vụ qua máy chủ Nginx.
-3. **Cổng Webview nhúng đa nền tảng (`loyalty-webview`):** Xây dựng trên nền tảng ReactJS 18+, Vite, TailwindCSS Mobile-First, tích hợp thư viện cầu nối `LoyaltyJSBridge` và xác thực vé một lần.
-4. **Cổng nhà phát triển và trình giả lập (`loyalty-sandbox`):** Cổng tự phục vụ dành cho nhà phát triển đối tác để tra cứu API, tính chữ ký HMAC-SHA256 và thử nghiệm bắn Webhook.
-5. **Bộ tích hợp Ứng dụng di động (`natcash-eu-app`):** Tích hợp màn hình Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60 giây, Cổng Game và Vòng quay may mắn trên ứng dụng React Native.
-6. **Cổng chuyển tiếp trung gian (`natcash-eu-api`):** Đóng vai trò Cổng kết nối chuyển tiếp xác thực người dùng, đồng bộ hai chiều và tiếp nhận Webhook.
+1. **Dịch vụ máy chủ nghiệp vụ độc lập (`loyalty-service`):** Xây dựng trên nền tảng Java 17 LTS và Spring Boot 3.5.3, quản lý cơ sở dữ liệu quan hệ độc lập `loyalty_db` trên PostgreSQL 15+ (tách biệt 100% với `natcash_db`). Vận hành 7 phân hệ nghiệp vụ, cơ chế Outbound Webhook có ký số HMAC-SHA256, kiểm soát khóa phân tán Redisson RLock và 61/61 bài kiểm thử tự động.
+2. **Cổng thông tin quản trị trung tâm (`loyalty-cms`):** Xây dựng trên nền tảng ReactJS 18+, TypeScript, Vite, Ant Design 5.x, nạp cấu hình đối tác, tỷ lệ chia sẻ doanh thu và tham số động JSONB.
+3. **Cổng Webview nhúng đa nền tảng (`loyalty-webview`):** Xây dựng trên nền tảng ReactJS 18+, Vite, TailwindCSS Mobile-First, tích hợp thư viện cầu nối `LoyaltyJSBridge`, đĩa quay Canvas 60 FPS và sảnh minigame.
+4. **Bộ thư viện SDK Tích hợp Game HTML5 (`gamehub-sdk.js` & `gamehub-sdk.ts`):** Thư viện JavaScript siêu nhẹ (0 phụ thuộc) cho phép Game Studio bên thứ ba nhúng game, tự động nhận diện token phiên, gửi điểm số nhận thưởng và mua lượt chơi.
+5. **Cổng nhà phát triển và trình giả lập (`loyalty-sandbox`):** Cổng tự phục vụ dành cho nhà phát triển đối tác để tra cứu API, tính chữ ký HMAC-SHA256 và thử nghiệm bắn Webhook.
+6. **Bộ tích hợp Ứng dụng di động (`natcash-eu-app`):** Tích hợp màn hình Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60 giây, Cổng Game và Vòng quay may mắn trên ứng dụng React Native.
+7. **Cổng chuyển tiếp trung gian (`natcash-eu-api`):** Đóng vai trò Cổng kết nối chuyển tiếp xác thực người dùng, đồng bộ hai chiều và tiếp nhận Webhook.
 
 ---
 

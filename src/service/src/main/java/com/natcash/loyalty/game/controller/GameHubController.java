@@ -62,13 +62,62 @@ public class GameHubController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/webhooks/partner-turn-purchase")
-    @Operation(summary = "Webhook tiếp nhận mua lượt chơi từ Đối tác", description = "Tiếp nhận thông báo trừ tiền thành công từ đối tác (Ví Natcash, Delimart), cộng lượt chơi và ghi nợ đối soát thu tiền")
-    public ResponseEntity<PartnerTurnPurchaseWebhookResponse> handlePartnerTurnPurchase(
+    @PostMapping("/games/submit-result")
+    @Operation(summary = "Tiếp nhận & Xử lý kết quả lượt chơi", description = "Xác thực phiên, kiểm tra khóa phân tán, trừ lượt chơi, tính toán điểm thưởng theo thể loại và ghi nhận vào sổ cái bất biến")
+    public ResponseEntity<com.natcash.loyalty.game.dto.GameHubDto.SubmitGameResultResponse> submitGameResult(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @Valid @RequestBody PartnerTurnPurchaseWebhookRequest request) {
+            @Valid @RequestBody com.natcash.loyalty.game.dto.GameHubDto.SubmitGameResultRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        PartnerTurnPurchaseWebhookResponse response = gameHubService.processPartnerTurnPurchase(tenantId, request);
+        com.natcash.loyalty.game.dto.GameHubDto.SubmitGameResultResponse response = gameHubService.submitGameResult(tenantId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/admin/games")
+    @Operation(summary = "Lấy toàn bộ danh mục game cho CMS Admin", description = "Trả về danh sách game kèm tham số chi tiết và ngân sách")
+    public ResponseEntity<java.util.List<com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto>> getAllGamesAdmin(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        java.util.List<com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto> list = gameHubService.getAllGamesAdmin(tenantId);
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/admin/games")
+    @Operation(summary = "Thêm mới hoặc Cập nhật thông tin game trên CMS", description = "Lưu thông tin trò chơi, giá lượt, hạn mức ngày và tham số chuyên sâu")
+    public ResponseEntity<com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto> saveGameAdmin(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto dto) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto saved = gameHubService.saveGameAdmin(tenantId, dto);
+        return ResponseEntity.ok(saved);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/admin/config")
+    @Operation(summary = "Lấy cấu hình chung cổng game", description = "Trả về tỷ lệ đổi điểm, khung giờ vàng, chế độ bảo trì")
+    public ResponseEntity<com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto> getGlobalConfig(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto config = gameHubService.getGlobalConfig(tenantId);
+        return ResponseEntity.ok(config);
+    }
+
+    @PostMapping("/admin/config")
+    @Operation(summary = "Lưu cấu hình chung cổng game", description = "Cập nhật các tham số toàn cục của GameHub")
+    public ResponseEntity<com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto> saveGlobalConfig(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto dto) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto saved = gameHubService.saveGlobalConfig(tenantId, dto);
+        return ResponseEntity.ok(saved);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/history/my-history")
+    @Operation(summary = "Tra cứu lịch sử chơi game của hội viên", description = "Lấy danh sách các lượt chơi, điểm số và phần thưởng đã nhận")
+    public ResponseEntity<org.springframework.data.domain.Page<com.natcash.loyalty.game.dto.GameHubDto.GamePlayHistoryItemDto>> getMyGameHistory(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @org.springframework.web.bind.annotation.RequestParam(value = "externalUserId", required = false) String externalUserId,
+            @org.springframework.data.web.PageableDefault(size = 20) org.springframework.data.domain.Pageable pageable) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        org.springframework.data.domain.Page<com.natcash.loyalty.game.dto.GameHubDto.GamePlayHistoryItemDto> page = gameHubService.getGamePlayHistory(tenantId, externalUserId, pageable);
+        return ResponseEntity.ok(page);
     }
 }

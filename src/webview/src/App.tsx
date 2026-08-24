@@ -885,60 +885,62 @@ export const App: React.FC = () => {
       </main>
 
       {/* ── MOBILE BOTTOM NAVIGATION BAR (HIGH-END FLOATING DOCK) ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-200/80 px-4 py-2 flex justify-around items-center z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-        {/* Trang Chủ */}
-        <button
-          onClick={() => navigateToTab('HOME')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 active:scale-95 ${
-            currentTab === 'HOME'
-              ? 'text-amber-600 font-extrabold bg-amber-50 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Home className={`w-4 h-4 mb-0.5 ${currentTab === 'HOME' ? 'stroke-[2.5px] text-amber-600' : ''}`} />
-          <span className="text-[10px] font-bold">{t('nav.home')}</span>
-        </button>
-
-        {/* Cổng Game: Elevated Vibrant Gradient Active Pill */}
-        <button
-          onClick={() => navigateToTab('GAMEHUB')}
-          className={`flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl transition-all duration-300 active:scale-95 relative ${
-            currentTab === 'GAMEHUB' || currentTab === 'WHEEL' || currentTab === 'QUIZ'
-              ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black shadow-lg shadow-orange-500/35 scale-105'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-          </span>
-          <Gamepad2 className={`w-4 h-4 mb-0.5 ${currentTab === 'GAMEHUB' || currentTab === 'WHEEL' || currentTab === 'QUIZ' ? 'text-white stroke-[2.5px]' : 'text-amber-600'}`} />
-          <span className={`text-[10px] ${currentTab === 'GAMEHUB' || currentTab === 'WHEEL' || currentTab === 'QUIZ' ? 'font-black text-white' : 'font-bold'}`}>
-            {t('nav.gamehub')}
-          </span>
-        </button>
-
-        {/* Kho Ưu Đãi */}
-        <button
-          onClick={() => navigateToTab('VOUCHERS')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 active:scale-95 ${
-            currentTab === 'VOUCHERS'
-              ? 'text-indigo-600 font-extrabold bg-indigo-50 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Ticket className={`w-4 h-4 mb-0.5 ${currentTab === 'VOUCHERS' ? 'stroke-[2.5px] text-indigo-600' : ''}`} />
-          <span className="text-[10px] font-bold">{t('nav.vouchers')}</span>
-        </button>
-
-        {/* Mã Ví QR */}
-        <button
-          onClick={() => setShowQrModal(true)}
-          className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-slate-500 hover:text-amber-600 transition-all duration-200 active:scale-95"
-        >
-          <QrCode className="w-4 h-4 mb-0.5 text-amber-600" />
-          <span className="text-[10px] font-bold">{t('nav.wallet_code')}</span>
-        </button>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-200/80 px-3 py-2 flex justify-around items-center z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        {[
+          {
+            id: 'HOME',
+            label: t('nav.home'),
+            icon: Home,
+            isActive: currentTab === 'HOME',
+            onClick: () => navigateToTab('HOME'),
+          },
+          {
+            id: 'GAMEHUB',
+            label: t('nav.gamehub'),
+            icon: Gamepad2,
+            isActive: currentTab === 'GAMEHUB' || currentTab === 'WHEEL' || currentTab === 'QUIZ',
+            onClick: () => navigateToTab('GAMEHUB'),
+            hasDot: true,
+          },
+          {
+            id: 'VOUCHERS',
+            label: t('nav.vouchers'),
+            icon: Ticket,
+            isActive: currentTab === 'VOUCHERS',
+            onClick: () => navigateToTab('VOUCHERS'),
+          },
+          {
+            id: 'WALLET_CODE',
+            label: t('nav.wallet_code'),
+            icon: QrCode,
+            isActive: showQrModal,
+            onClick: () => setShowQrModal(true),
+          },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={item.onClick}
+              className={`flex flex-col items-center justify-center py-1.5 px-3.5 rounded-2xl transition-all duration-200 active:scale-95 relative ${
+                item.isActive
+                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black shadow-md shadow-orange-500/30'
+                  : 'text-slate-500 hover:text-slate-900 font-semibold'
+              }`}
+            >
+              {item.hasDot && !item.isActive && (
+                <span className="absolute top-1 right-2 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              )}
+              <Icon className={`w-4 h-4 mb-0.5 ${item.isActive ? 'text-white stroke-[2.5px]' : 'text-slate-500 stroke-[2px]'}`} />
+              <span className={`text-[10px] tracking-tight ${item.isActive ? 'font-black text-white' : 'font-semibold text-slate-500'}`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* ── DESKTOP FOOTER ── */}

@@ -55,6 +55,37 @@ public class LuckyWheelController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/admin/prizes")
+    @Operation(summary = "Lấy danh sách nan quạt ô thưởng cho CMS Admin", description = "Trả về ma trận ô thưởng, xác suất trúng, hạn mức ngày")
+    public ResponseEntity<java.util.List<com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelPrizeAdminDto>> getAllPrizesAdmin(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestParam(value = "wheelCode", required = false, defaultValue = "LUCKY_WHEEL") String wheelCode) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        java.util.List<com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelPrizeAdminDto> list = luckyWheelService.getAllPrizesAdmin(tenantId, wheelCode);
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/admin/prizes")
+    @Operation(summary = "Thêm mới hoặc Cập nhật ô thưởng vòng quay trên CMS", description = "Cập nhật tên giải, loại thưởng, giá trị, trọng số xác suất, màu sắc")
+    public ResponseEntity<com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelPrizeAdminDto> savePrizeAdmin(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestParam(value = "wheelCode", required = false, defaultValue = "LUCKY_WHEEL") String wheelCode,
+            @RequestBody com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelPrizeAdminDto dto) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelPrizeAdminDto saved = luckyWheelService.savePrizeAdmin(tenantId, wheelCode, dto);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PostMapping("/admin/prizes/auto-balance")
+    @Operation(summary = "Tự động cân bằng xác suất 100% cho vòng quay", description = "Chia đều hoặc cân đối trọng số xác suất của các ô thưởng để tổng đúng bằng 100%")
+    public ResponseEntity<com.natcash.loyalty.wheel.dto.LuckyWheelDto.AutoBalancePrizesResponse> autoBalancePrizes(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestParam(value = "wheelCode", required = false, defaultValue = "LUCKY_WHEEL") String wheelCode) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        com.natcash.loyalty.wheel.dto.LuckyWheelDto.AutoBalancePrizesResponse response = luckyWheelService.autoBalancePrizes(tenantId, wheelCode);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/spin")
     @Operation(summary = "Thực hiện quay thưởng may mắn", description = "Kiểm tra khóa phân tán Redisson, trừ lượt/điểm, quay số ngẫu nhiên và khống chế ngân sách nguyên tử")
     public ResponseEntity<SpinWheelResponse> executeSpin(

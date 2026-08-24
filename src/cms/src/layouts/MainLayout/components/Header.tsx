@@ -72,6 +72,7 @@ const Header: React.FC = () => {
   const isRewardsGroupActive = [
     paths.voucherManagement,
     paths.gameManagement,
+    paths.gameHubConfig,
   ].some((p) => location.pathname.startsWith(p));
 
   const isPartnerGroupActive = [
@@ -129,9 +130,14 @@ const Header: React.FC = () => {
             command: () => handleNavigate(paths.voucherManagement),
           },
           {
-            label: t('nav.games', { defaultValue: 'Cổng Game & Vòng Quay' }),
-            icon: 'pi pi-gift',
+            label: t('nav.game_catalog', { defaultValue: 'Danh mục Trò chơi' }),
+            icon: 'pi pi-th-large',
             command: () => handleNavigate(paths.gameManagement),
+          },
+          {
+            label: t('nav.game_hub_config', { defaultValue: 'Cấu hình Chung Cổng Game' }),
+            icon: 'pi pi-cog',
+            command: () => handleNavigate(paths.gameHubConfig),
           },
         ],
       },

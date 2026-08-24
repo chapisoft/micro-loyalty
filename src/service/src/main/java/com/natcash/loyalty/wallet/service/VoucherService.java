@@ -3,6 +3,7 @@ package com.natcash.loyalty.wallet.service;
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.DiscountType;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.VoucherStatus;
@@ -132,7 +133,7 @@ public class VoucherService {
 
     @Transactional
     public UserVoucherResponse redeemVoucher(String tenantId, RedeemVoucherRequest request) {
-        String lockKey = "lock:voucher:redeem:" + tenantId + ":" + request.getExternalUserId();
+        String lockKey = RedisKeys.getVoucherRedeemLockKey(tenantId, request.getExternalUserId());
         return lockHelper.executeWithLock(lockKey, 3000, 5000, () -> {
             LoyaltyAccountEntity account = accountRepository.findByTenantIdAndExternalUserId(tenantId, request.getExternalUserId())
                     .orElseThrow(() -> new LoyaltyException(ErrorCode.ACCOUNT_NOT_FOUND, "Không tìm thấy tài khoản"));

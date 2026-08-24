@@ -16,6 +16,7 @@ export const paths = {
   campaignMilestones: '/campaigns',
   voucherManagement: '/vouchers',
   gameManagement: '/games',
+  gameHubConfig: '/games/config',
   partners: '/partners',
   transactions: '/transactions',
   customers: '/customers',

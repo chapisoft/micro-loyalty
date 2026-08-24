@@ -11,14 +11,14 @@ route:
 receivers:
   - name: 'telegram-bot'
     telegram_configs:
-      - bot_token: 'YOUR_TELEGRAM_BOT_TOKEN' # TODO: Replace with real token
-        chat_id: -1000000000000 # TODO: Replace with real chat ID
+      - bot_token: '8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA'
+        chat_id: -5397937309
         message: |-
           {{ range .Alerts }}
-          🚨 <b>{{ .Annotations.summary }}</b>
-          <i>Severity:</i> {{ .Labels.severity }}
-          <i>Description:</i> {{ .Annotations.description }}
-          <i>Started at:</i> {{ .StartsAt }}
+          🚨 <b>[PROMETHEUS-NATCASH-ALERT] {{ .Annotations.summary }}</b>
+          • <b>Mức độ (Severity):</b> <code>{{ .Labels.severity }}</code>
+          • <b>Mô tả:</b> {{ .Annotations.description }}
+          • <b>Thời gian bắt đầu:</b> {{ .StartsAt }}
           {{ end }}
         parse_mode: 'HTML'
 

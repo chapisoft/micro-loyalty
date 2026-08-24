@@ -520,12 +520,120 @@ header.sticky {
   }
 }
 
-// Button Theme Colors
+// Button Theme Colors & Global Centering Standard
+.p-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.p-button:not(.p-button-icon-only):not(.p-button-rounded) {
+  gap: 0.5rem !important;
+
+  .p-button-label {
+    flex: 0 1 auto !important;
+    text-align: center !important;
+    font-weight: 600 !important;
+    display: inline-block !important;
+    width: auto !important;
+  }
+
+  .p-button-icon {
+    font-size: 0.95rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+}
+
+// Icon only & Circular Action Buttons (Pixel-Perfect Mathematical Centering)
+.p-button.p-button-icon-only,
+.p-button.p-button-rounded {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  min-width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+
+  .p-button-label {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  .p-button-icon {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+    font-size: 0.95rem !important;
+    text-align: center !important;
+
+    &::before {
+      display: inline-block !important;
+      line-height: 1 !important;
+      vertical-align: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+}
+
+.p-button.p-button-sm.p-button-icon-only,
+.p-button.p-button-sm.p-button-rounded {
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  min-width: 2.1rem !important;
+  min-height: 2.1rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 0 !important;
+
+  .p-button-icon {
+    font-size: 0.88rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    &::before {
+      display: inline-block !important;
+      line-height: 1 !important;
+      vertical-align: 0 !important;
+    }
+  }
+}
+
 .p-button.p-button-primary,
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger) {
   background: linear-gradient(135deg, #FF6B00 0%, #EA580C 100%) !important;
   border-color: #FF6B00 !important;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25) !important;
+  color: #ffffff !important;
 }
 
 .p-button.p-button-outlined.p-button-primary {
@@ -535,4 +643,34 @@ header.sticky {
   &:hover {
     background: rgba(255, 107, 0, 0.08) !important;
   }
+}
+
+// Dialog Footer Button Groups
+.p-dialog .p-dialog-footer,
+.p-dialog-footer,
+.p-dialog .flex.justify-content-end {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+
+  .p-button {
+    min-width: 7rem !important;
+    padding: 0.65rem 1.25rem !important;
+  }
+}
+
+// Table Action Buttons Spacing Standard
+.p-datatable-tbody .p-button + .p-button,
+.action-buttons .p-button + .p-button,
+.p-datatable-tbody td .flex .p-button + .p-button {
+  margin-left: 0.5rem !important;
+}
+
+.action-buttons,
+.p-datatable-tbody td .flex {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
 }

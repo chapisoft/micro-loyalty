@@ -121,6 +121,13 @@ const mainAppRoutes: RouteObject = {
       }),
     },
     {
+      path: paths.gameHubConfig,
+      lazy: safeLazy(async () => {
+        const { GameHubConfigPage } = await import('@/pages/games/GameHubConfigPage');
+        return { Component: GameHubConfigPage };
+      }),
+    },
+    {
       path: paths.clearingSettlement,
       lazy: safeLazy(async () => {
         const { ClearingSettlementPage } = await import('@/pages/clearing/ClearingSettlementPage');

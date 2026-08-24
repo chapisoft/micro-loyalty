@@ -4,6 +4,7 @@ import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.PrizeType;
@@ -11,11 +12,13 @@ import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.lock.DistributedLockHelper;
+import com.natcash.loyalty.wheel.dto.LuckyWheelDto.AutoBalancePrizesResponse;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.PrizeConfigDto;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.SpinWheelRequest;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.SpinWheelResponse;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelConfigRequest;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelConfigResponse;
+import com.natcash.loyalty.wheel.dto.LuckyWheelDto.WheelPrizeAdminDto;
 import com.natcash.loyalty.wheel.entity.LuckyWheelEntity;
 import com.natcash.loyalty.wheel.entity.LuckyWheelPrizeEntity;
 import com.natcash.loyalty.wheel.repository.LuckyWheelPrizeRepository;
@@ -110,7 +113,7 @@ public class LuckyWheelService {
         LuckyWheelEntity wheel = wheelRepository.findByTenantIdAndWheelCodeAndStatus(tenantId, wheelCode, CommonStatus.ACTIVE)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Vòng quay may mắn đang tạm dừng hoặc không tồn tại"));
 
-        String lockKey = "lock:spin:" + tenantId + ":" + wheel.getId() + ":" + userId;
+        String lockKey = RedisKeys.getSpinLockKey(tenantId, userId, wheel.getId());
 
         return lockHelper.executeWithLock(lockKey, () -> {
             List<LuckyWheelPrizeEntity> prizes = prizeRepository.findByWheel_IdAndStatusOrderByDisplayOrderAsc(wheel.getId(), CommonStatus.ACTIVE);
@@ -237,5 +240,110 @@ public class LuckyWheelService {
                     .timestamp(Instant.now())
                     .build();
         });
+    }
+
+    // ── CMS ADMIN WHEEL PRIZE OPERATIONS ──
+
+    @Transactional(readOnly = true)
+    public List<WheelPrizeAdminDto> getAllPrizesAdmin(String tenantId, String wheelCode) {
+        String effectiveWheelCode = wheelCode != null && !wheelCode.isBlank() ? wheelCode : "DEFAULT_LUCKY_WHEEL";
+        LuckyWheelEntity wheel = wheelRepository.findByTenantIdAndWheelCode(tenantId, effectiveWheelCode)
+                .orElseGet(() -> wheelRepository.findAll().stream().filter(w -> tenantId.equals(w.getTenantId())).findFirst()
+                        .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy cấu hình vòng quay")));
+
+        List<LuckyWheelPrizeEntity> prizes = prizeRepository.findByWheel_IdOrderByDisplayOrderAsc(wheel.getId());
+        return prizes.stream().map(p -> WheelPrizeAdminDto.builder()
+                .id(p.getId())
+                .displayOrder(p.getDisplayOrder())
+                .prizeName(p.getPrizeName())
+                .prizeType(p.getPrizeType() != null ? p.getPrizeType().name() : "POINTS")
+                .prizeValue(p.getPrizeValue())
+                .probabilityWeight(p.getProbabilityWeight())
+                .dailyBudgetLimit(p.getDailyBudgetLimit())
+                .dailyMaxWinners(p.getDailyBudgetLimit() != null && p.getPrizeValue() != null && p.getPrizeValue().compareTo(BigDecimal.ZERO) > 0
+                        ? p.getDailyBudgetLimit().divide(p.getPrizeValue(), java.math.RoundingMode.DOWN).intValue()
+                        : 0)
+                .colorCode(p.getColorCode())
+                .iconUrl(p.getIconUrl())
+                .status(p.getStatus() != null ? p.getStatus().name() : "ACTIVE")
+                .actualWinCountToday(0)
+                .build()
+        ).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public WheelPrizeAdminDto savePrizeAdmin(String tenantId, String wheelCode, WheelPrizeAdminDto dto) {
+        String effectiveWheelCode = wheelCode != null && !wheelCode.isBlank() ? wheelCode : "DEFAULT_LUCKY_WHEEL";
+        LuckyWheelEntity wheel = wheelRepository.findByTenantIdAndWheelCode(tenantId, effectiveWheelCode)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy vòng quay"));
+
+        LuckyWheelPrizeEntity entity;
+        if (dto.getId() != null) {
+            entity = prizeRepository.findById(dto.getId())
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy ô thưởng để cập nhật"));
+        } else {
+            entity = LuckyWheelPrizeEntity.builder()
+                    .wheel(wheel)
+                    .createdAt(Instant.now())
+                    .build();
+        }
+
+        entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 1);
+        entity.setPrizeName(dto.getPrizeName());
+        try {
+            entity.setPrizeType(dto.getPrizeType() != null ? PrizeType.valueOf(dto.getPrizeType()) : PrizeType.POINTS);
+        } catch (Exception e) {
+            entity.setPrizeType(PrizeType.POINTS);
+        }
+        entity.setPrizeValue(dto.getPrizeValue() != null ? dto.getPrizeValue() : BigDecimal.ZERO);
+        entity.setProbabilityWeight(dto.getProbabilityWeight() != null ? dto.getProbabilityWeight() : 10);
+        entity.setDailyBudgetLimit(dto.getDailyBudgetLimit());
+        entity.setColorCode(dto.getColorCode() != null ? dto.getColorCode() : "#F59E0B");
+        entity.setIconUrl(dto.getIconUrl());
+        entity.setStatus(dto.getStatus() != null && dto.getStatus().equalsIgnoreCase("INACTIVE") ? CommonStatus.INACTIVE : CommonStatus.ACTIVE);
+
+        LuckyWheelPrizeEntity saved = prizeRepository.save(entity);
+        return WheelPrizeAdminDto.builder()
+                .id(saved.getId())
+                .displayOrder(saved.getDisplayOrder())
+                .prizeName(saved.getPrizeName())
+                .prizeType(saved.getPrizeType().name())
+                .prizeValue(saved.getPrizeValue())
+                .probabilityWeight(saved.getProbabilityWeight())
+                .dailyBudgetLimit(saved.getDailyBudgetLimit())
+                .colorCode(saved.getColorCode())
+                .iconUrl(saved.getIconUrl())
+                .status(saved.getStatus().name())
+                .build();
+    }
+
+    @Transactional
+    public AutoBalancePrizesResponse autoBalancePrizes(String tenantId, String wheelCode) {
+        String effectiveWheelCode = wheelCode != null && !wheelCode.isBlank() ? wheelCode : "DEFAULT_LUCKY_WHEEL";
+        LuckyWheelEntity wheel = wheelRepository.findByTenantIdAndWheelCode(tenantId, effectiveWheelCode)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy vòng quay"));
+
+        List<LuckyWheelPrizeEntity> prizes = prizeRepository.findByWheel_IdOrderByDisplayOrderAsc(wheel.getId());
+        if (prizes.isEmpty()) {
+            throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không có ô thưởng để cân bằng xác suất");
+        }
+
+        int count = prizes.size();
+        int baseWeight = 100 / count;
+        int remainder = 100 % count;
+
+        for (int i = 0; i < count; i++) {
+            LuckyWheelPrizeEntity p = prizes.get(i);
+            int weight = baseWeight + (i < remainder ? 1 : 0);
+            p.setProbabilityWeight(weight);
+            prizeRepository.save(p);
+        }
+
+        List<WheelPrizeAdminDto> updatedList = getAllPrizesAdmin(tenantId, effectiveWheelCode);
+        return AutoBalancePrizesResponse.builder()
+                .prizes(updatedList)
+                .totalProbability(100)
+                .message("Đã cân bằng tự động tổng xác suất 100% thành công")
+                .build();
     }
 }

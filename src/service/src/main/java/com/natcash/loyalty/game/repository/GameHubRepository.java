@@ -12,7 +12,11 @@ import java.util.Optional;
 @Repository
 public interface GameHubRepository extends JpaRepository<GameHubEntity, Long> {
 
+    List<GameHubEntity> findByTenantId(String tenantId);
+
     List<GameHubEntity> findByTenantIdAndStatus(String tenantId, GameStatus status);
 
     Optional<GameHubEntity> findByTenantIdAndGameCode(String tenantId, String gameCode);
+
+    Optional<GameHubEntity> findByTenantIdAndId(String tenantId, Long id);
 }

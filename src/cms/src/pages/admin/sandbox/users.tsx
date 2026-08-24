@@ -7,8 +7,14 @@ import { InputText } from 'primereact/inputtext';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
-import { Dropdown } from 'primereact/dropdown';
 import { sandboxAdminService, SandboxUser, SandboxGroup } from '@/service/sandbox.service';
+
+export enum SandboxUserStatus {
+  APPROVED = 'APPROVED',
+  PENDING = 'PENDING',
+  LOCKED = 'LOCKED',
+  REJECTED = 'REJECTED',
+}
 
 export function SandboxUsersPage() {
   const { t } = useTranslation();
@@ -27,7 +33,7 @@ export function SandboxUsersPage() {
     email: '',
     phone: '',
     password: '',
-    status: 'APPROVED',
+    status: SandboxUserStatus.APPROVED,
   });
 
   const loadData = async () => {
@@ -226,7 +232,7 @@ export function SandboxUsersPage() {
             header="Thao tác"
             body={(r: SandboxUser) => (
               <div className="flex gap-2">
-                {r.status === 'PENDING' && (
+                {r.status === SandboxUserStatus.PENDING && (
                   <Button
                     label="Duyệt"
                     icon="pi pi-check"
@@ -237,9 +243,9 @@ export function SandboxUsersPage() {
                   />
                 )}
                 <Button
-                  label={r.status === 'LOCKED' ? 'Mở khóa' : 'Khóa'}
-                  icon={r.status === 'LOCKED' ? 'pi pi-lock-open' : 'pi pi-lock'}
-                  severity={r.status === 'LOCKED' ? 'info' : 'danger'}
+                  label={r.status === SandboxUserStatus.LOCKED ? 'Mở khóa' : 'Khóa'}
+                  icon={r.status === SandboxUserStatus.LOCKED ? 'pi pi-lock-open' : 'pi pi-lock'}
+                  severity={r.status === SandboxUserStatus.LOCKED ? 'info' : 'danger'}
                   size="small"
                   outlined
                   onClick={() => r.id && handleToggleStatus(r.id, r.status)}

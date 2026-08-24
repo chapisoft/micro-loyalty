@@ -216,4 +216,79 @@ export const LoyaltyApi = {
     if (!res.ok) throw new Error('Không thể tải danh sách đối tác');
     return res.json();
   },
+
+  // 9. Khởi tạo phiên chơi minigame
+  async initGameSession(gameCode: string, externalUserId: string = getDefaultUserId()) {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/session/init`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({ gameCode, externalUserId }),
+    });
+    if (!res.ok) throw new Error('Không thể khởi tạo phiên chơi');
+    return res.json();
+  },
+
+  // 10. Tiếp nhận và ghi nhận kết quả lượt chơi minigame (Quiz, Farm, Dice, Tap...)
+  async submitGameResult(
+    gameCode: string,
+    score: number,
+    externalUserId: string = getDefaultUserId(),
+    sessionToken?: string,
+    details?: string
+  ) {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/games/submit-result`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({
+        externalUserId,
+        gameCode,
+        score,
+        sessionToken,
+        details,
+      }),
+    });
+    if (!res.ok) throw new Error('Không thể ghi nhận kết quả lượt chơi');
+    return res.json();
+  },
+
+  // 11. Mua thêm lượt chơi trong game bằng Điểm
+  async inGameCheckout(gameCode: string, sessionToken: string, turnsToBuy: number = 1, paymentAmount: number = 10, externalUserId: string = getDefaultUserId()) {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/billing/in-game-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({
+        externalUserId,
+        gameCode,
+        sessionToken,
+        turnsToBuy,
+        paymentAmount,
+        paymentMethod: 'POINTS',
+      }),
+    });
+    if (!res.ok) throw new Error('Không thể mua thêm lượt chơi');
+    return res.json();
+  },
+
+  // 12. Tra cứu lịch sử chơi game của người dùng
+  async getGamePlayHistory(externalUserId: string = getDefaultUserId(), page: number = 0, size: number = 20) {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/history/my-history?externalUserId=${externalUserId}&page=${page}&size=${size}`, {
+      headers: { 'X-Tenant-Id': tenant },
+    });
+    if (!res.ok) throw new Error('Không thể tải lịch sử chơi game');
+    return res.json();
+  },
 };
+

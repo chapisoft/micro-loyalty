@@ -11,6 +11,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
+import { LoyaltyApi } from '../../services/api';
 
 interface QuizQuestion {
   id: number;
@@ -120,10 +121,19 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
     setIsClaimed(false);
   };
 
-  const handleClaim = () => {
+  const handleClaim = async () => {
     setIsClaimed(true);
+    let pointsAwarded = 150;
+    try {
+      const res = await LoyaltyApi.submitGameResult('SUPERMARKET_QUIZ', score);
+      if (res && res.pointsAwarded !== undefined) {
+        pointsAwarded = Number(res.pointsAwarded);
+      }
+    } catch (e) {
+      console.warn('[TriviaQuizGame] Submit result fallback:', e);
+    }
     if (onClaimReward) {
-      onClaimReward(150);
+      onClaimReward(pointsAwarded);
     }
   };
 

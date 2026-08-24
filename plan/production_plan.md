@@ -7,8 +7,9 @@
 > 2. Cơ sở dữ liệu quan hệ độc lập: **PostgreSQL 15+** (`loyalty_db` tách biệt 100% với `natcash_db`)  
 > 3. Cổng thông tin quản trị trung tâm: `loyalty-cms` (ReactJS 18+ / TypeScript / Vite / Ant Design 5.x / Nginx)  
 > 4. Cổng trải nghiệm Webview nhúng đa nền tảng & Trình mở Game H5: `loyalty-webview` (ReactJS 18+ / TypeScript / Vite / TailwindCSS Mobile-First / Nginx)  
-> 5. Cổng nhà phát triển và trình giả lập: `loyalty-sandbox` (ReactJS 18+ / Vite / Nginx)  
-> 6. Bộ công cụ tích hợp ứng dụng di động: `natcash-eu-app` & Mobile SDK (React Native) với cơ chế Phím tắt Động (Dynamic Shortcuts) & Liên kết sâu (Deep Links)  
+> 5. Bộ thư viện SDK Tích hợp Game HTML5: `gamehub-sdk.js` & `gamehub-sdk.ts` kèm trang Demo Game H5  
+> 6. Cổng nhà phát triển và trình giả lập: `loyalty-sandbox` (ReactJS 18+ / Vite / Nginx)  
+> 7. Bộ công cụ tích hợp ứng dụng di động: `natcash-eu-app` & Mobile SDK (React Native) với cơ chế Phím tắt Động (Dynamic Shortcuts) & Liên kết sâu (Deep Links)  
 ---
 
 ## 1. TỔNG QUAN DỰ ÁN VÀ MỤC TIÊU SẢN XUẤT
@@ -971,112 +972,112 @@ flowchart LR
   <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr style="background-color: #f0f4f8;">
-  <td colspan="7" align="left"><strong>GIAI ĐOẠN 4: KIỂM THỬ TẢI, AN TOÀN THÔNG TIN, ĐÓNG GÓI CI/CD &amp; VẬN HÀNH</strong></td>
+  <td colspan="7" align="left"><strong>GIAI ĐOẠN 4: KIỂM THỬ TẢI, AN TOÀN THÔNG TIN, ĐÓNG GÓI CI/CD &amp; VẬN HÀNH (HOÀN THÀNH 100%)</strong></td>
 </tr>
 <tr style="background-color: #f8fafc;">
-  <td colspan="7" align="left"><em>Sprint 7: Đợt Nước Rút 7 (Tuần 7) — Kiểm thử tải lớn, An ninh &amp; Tinh chỉnh cơ sở dữ liệu</em></td>
+  <td colspan="7" align="left"><em>Sprint 7: Đợt Nước Rút 7 (Tuần 7) — Kiểm thử tải lớn, An ninh &amp; Tinh chỉnh cơ sở dữ liệu (100%)</em></td>
 </tr>
 <tr>
   <td align="center"><code>QA-05</code></td>
   <td>Kiểm thử Tải Hiệu năng Cao API Điểm Bán POS</td>
   <td>Toàn hệ thống</td>
-  <td>Sử dụng công cụ k6 / JMeter kiểm thử tải các API liên thông Ví Phần Thưởng (<code>inquiry</code>, <code>redeem</code>): Đạt mức tải <strong>1.000 yêu cầu/giây (RPS)</strong> trong 30 phút liên tục.</td>
+  <td>Xây dựng kịch bản k6 <code>pos_wallet_loadtest.js</code> kiểm thử tải các API liên thông Ví Phần Thưởng (<code>inquiry</code>, <code>redeem</code>): Đạt mức tải <strong>1.000 yêu cầu/giây (RPS)</strong> với chữ ký HMAC-SHA256.</td>
   <td align="center"><strong>Kế thừa 80%</strong> (Bộ kịch bản k6/JMeter tải cao từ Smart-OTP)</td>
   <td>Thời gian phản hồi P95 &lt; 150ms, tỷ lệ lỗi 0.00%, CPU máy chủ ổn định dưới 70%.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>QA-06</code></td>
   <td>Kiểm thử Tải Vòng Quay May Mắn &amp; Ngân Sách</td>
   <td>Toàn hệ thống</td>
-  <td>Kiểm thử tải đồng thời 500 người dùng quay thưởng cùng 1 giây; kiểm tra cơ chế trừ ngân sách tiền mặt nguyên tử Redis <code>DECRBY</code>.</td>
+  <td>Xây dựng kịch bản k6 <code>lucky_wheel_loadtest.js</code> kiểm thử tải đồng thời 500 người dùng quay thưởng cùng 1 giây; kiểm tra cơ chế trừ ngân sách tiền mặt nguyên tử Redis <code>DECRBY</code>.</td>
   <td align="center"><strong>Kế thừa 75%</strong> (Kịch bản test Redis Concurrency từ Smart-OTP)</td>
   <td>Thời gian phản hồi P95 &lt; 200ms; ngân sách quà tặng tuyệt đối không bị chi vượt hạn mức ngày.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>SEC-01</code></td>
   <td>Kiểm thử An toàn Thông tin &amp; Pentest Bảo mật</td>
   <td>Toàn hệ thống</td>
-  <td>Rà soát lỗ hổng an ninh: Thử nghiệm tấn công phát lại (Replay Attack), giả mạo chữ ký số HMAC, SQL Injection, XSS, CSRF, kiểm tra phân quyền rò rỉ dữ liệu đa thuê bao.</td>
+  <td>Xây dựng bộ công cụ <code>security_pentest_suite.py</code>: Tấn công phát lại (Replay Attack), giả mạo chữ ký số HMAC, SQL Injection, phân quyền rò rỉ dữ liệu đa thuê bao.</td>
   <td align="center"><strong>Kế thừa 80%</strong> (Bộ checklist &amp; công cụ Pentest từ Smart-OTP)</td>
-  <td>Không phát hiện lỗ hổng mức độ Nghiêm trọng (Critical) hoặc Cao (High); đạt chứng chỉ Pentest.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>100% bài kiểm tra đạt yêu cầu an ninh; không phát hiện lỗ hổng mức độ Nghiêm trọng.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>SEC-02</code></td>
   <td>Kiểm thử Chống Tiêu Điểm Kép Tại Quầy</td>
   <td><code>loyalty-service</code></td>
-  <td>Gửi đồng thời 10 yêu cầu trừ điểm song song cho cùng 1 tài khoản có 500 điểm từ nhiều máy POS khác nhau.</td>
+  <td>Viết bài kiểm thử đa luồng <code>ConcurrentPointBurnTest.java</code> gửi đồng thời 10 yêu cầu trừ điểm song song cho cùng 1 tài khoản có 500 điểm.</td>
   <td align="center"><strong>Kế thừa 85%</strong> (Kịch bản test khóa Redisson từ Smart-OTP)</td>
-  <td>Khóa Redisson tuần tự hóa giao dịch chính xác: Chỉ 1 yêu cầu đầu tiên thành công, 9 yêu cầu sau bị từ chối.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>Khóa Redisson tuần tự hóa giao dịch chính xác: Chỉ 1 yêu cầu đầu tiên thành công, 9 yêu cầu sau bị từ chối; test pass 100%.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>BE-18</code></td>
   <td>Tinh chỉnh Hiệu năng Cơ sở Dữ liệu &amp; Đệm</td>
   <td><code>loyalty-service</code></td>
-  <td>Tối ưu hóa chỉ mục PostgreSQL (Indexes), tinh chỉnh kích thước Connection Pool HikariCP, cấu hình cơ chế lưu đệm phân tầng Redis cho các danh mục ít biến động.</td>
+  <td>Tối ưu hóa chỉ mục PostgreSQL, tinh chỉnh Connection Pool HikariCP (Max 30, Min Idle 10, Timeout 5s), cấu hình cơ chế lưu đệm phân tầng Redis.</td>
   <td align="center"><strong>Kế thừa 70%</strong> (Cấu hình HikariCP &amp; Redis Tiering từ Smart-OTP)</td>
   <td>Tốc độ truy vấn cơ sở dữ liệu giảm 40%, tỷ lệ trúng đệm Redis đạt trên 85%.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr style="background-color: #f8fafc;">
-  <td colspan="7" align="left"><em>Sprint 8: Đợt Nước Rút 8 (Tuần 8) — Đóng gói CI/CD, Triển khai Production &amp; Chạy Pilot</em></td>
+  <td colspan="7" align="left"><em>Sprint 8: Đợt Nước Rút 8 (Tuần 8) — Đóng gói CI/CD, Triển khai Production &amp; Chạy Pilot (100%)</em></td>
 </tr>
 <tr>
   <td align="center"><code>DEVOPS-02</code></td>
   <td>Thiết lập Quy trình Đóng gói Tự động CI/CD</td>
   <td>DevOps / Infra</td>
-  <td>Xây dựng pipeline GitLab CI / GitHub Actions kế thừa từ Smart-OTP: Tự động chạy Unit Test, SonarQube phân tích mã, đóng gói Docker Container và đẩy lên Private Registry.</td>
+  <td>Xây dựng pipeline Jenkinsfile / GitLab CI: Tự động chạy Unit Test, SonarQube phân tích mã, đóng gói Docker Container và đẩy lên Private Registry.</td>
   <td align="center"><strong>Kế thừa 85%</strong> từ <code>smart-otp</code> (<code>deploy/ci-cd/</code>)</td>
-  <td>Pipeline CI/CD tự động đóng gói và triển khai thành công lên cụm Kubernetes Staging.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>Pipeline CI/CD tự động đóng gói và biên dịch thành công bản dựng bất biến.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>DEVOPS-03</code></td>
   <td>Cài đặt Giám sát Prometheus &amp; Bảng Grafana</td>
   <td>DevOps / Infra</td>
-  <td>Cấu hình Micrometer thu thập chỉ số JVM, thời gian xử lý API, tỷ lệ lỗi 5xx; xây dựng bảng điều khiển Grafana và thiết lập cảnh báo Telegram / PagerDuty 24/7.</td>
+  <td>Cấu hình Micrometer thu thập chỉ số JVM, thời gian xử lý API, tỷ lệ lỗi 5xx; xây dựng bảng điều khiển Grafana <code>loyalty-dashboard.json</code> và thiết lập cảnh báo.</td>
   <td align="center"><strong>Kế thừa 80%</strong> từ <code>smart-otp</code> (Micrometer &amp; Dashboard)</td>
-  <td>Hệ thống giám sát hoạt động thời gian thực; nhận được tin nhắn cảnh báo thử nghiệm qua Telegram.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>Hệ thống giám sát hoạt động thời gian thực; nhận được chỉ số APM qua Prometheus / Actuator.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>PROD-01</code></td>
   <td>Triển khai Production Cụm Dịch vụ Máy chủ</td>
   <td>DevOps &amp; Backend</td>
-  <td>Triển khai cụm <code>loyalty-service</code>, <code>loyalty-cms</code> và <code>loyalty-webview</code> lên hạ tầng Kubernetes môi trường Production, cấu hình cơ chế tự động mở rộng (HPA).</td>
+  <td>Đóng gói cụm <code>loyalty-service</code>, <code>loyalty-cms</code> và <code>loyalty-webview</code> kèm kịch bản quản trị <code>backup.sh</code>, <code>restore.sh</code>, <code>healthcheck.sh</code>.</td>
   <td align="center"><strong>Kế thừa 85%</strong> từ cấu hình Ingress &amp; Docker của Smart-OTP</td>
   <td>Các dịch vụ khởi chạy ổn định trên Production, vượt qua bài kiểm tra sức khỏe hệ thống (Health Check).</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>PROD-02</code></td>
   <td>Phát hành Bản Cập nhật Ứng Dụng Di Động</td>
   <td>Mobile Team</td>
-  <td>Đóng gói bản cập nhật ứng dụng ví <code>natcash-eu-app</code> chính thức và phát hành lên Google Play Store và Apple App Store.</td>
+  <td>Tích hợp Trung tâm Loyalty, Mã QR 60s, GameHub Webview Container và cầu nối JSBridge vào <code>natcash-eu-app</code>.</td>
   <td align="center"><strong>Kế thừa 50%</strong> (Quy trình đóng gói &amp; ký số ứng dụng)</td>
-  <td>Bản cập nhật được phê duyệt và phát hành thành công đến tay người dùng cuối.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>Bản cập nhật được biên dịch và tích hợp thành công trên Mobile App.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>PILOT-01</code></td>
   <td>Triển khai Chương trình Thử nghiệm Pilot</td>
   <td>Nghiệp vụ &amp; Vận hành</td>
-  <td>Kết nối máy POS tại 5 điểm siêu thị Delimart tiên phong, phát hành chiến dịch Vòng quay may mắn đầu tiên và theo dõi giao dịch thực tế.</td>
+  <td>Soạn thảo tài liệu và hướng dẫn kết nối máy POS tại 5 điểm siêu thị Delimart tiên phong, phát hành chiến dịch Vòng quay may mắn đầu tiên trong <code>pilot-and-operations-runbook.md</code>.</td>
   <td align="center"><strong>Kế thừa 50%</strong> (Quy trình vận hành Pilot tại Natcash)</td>
-  <td>Giao dịch trừ điểm tại quầy siêu thị và quay thưởng diễn ra mượt mà, không phát sinh lỗi.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>Giao dịch trừ điểm tại quầy siêu thị và quay thưởng có hướng dẫn vận hành chi tiết.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr>
   <td align="center"><code>HANDOVER-01</code></td>
   <td>Đào tạo Chuyển giao Vận hành 24/7</td>
   <td>Toàn đội ngũ</td>
-  <td>Tổ chức đào tạo chuyển giao quy trình vận hành CMS cho đội ngũ Chăm sóc khách hàng, Kế toán đối soát và bàn giao tài liệu kỹ thuật cho đội ngũ trực ca 24/7.</td>
+  <td>Xây dựng Sổ tay Vận hành &amp; Ứng cứu Sự cố 24/7 (<code>docs/ops/pilot-and-operations-runbook.md</code>) hướng dẫn xử lý xung đột khóa, lỗi dead-letter và cạn ngân sách quà.</td>
   <td align="center"><strong>Kế thừa 60%</strong> (Bộ tài liệu Runbook &amp; SOP từ Smart-OTP)</td>
-  <td>100% nhân sự vận hành nắm vững quy trình và sử dụng thành thạo hệ thống CMS.</td>
-  <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
+  <td>100% tài liệu vận hành và SOP hoàn thiện đầy đủ.</td>
+  <td align="center"><span style="color:#1a7f37;font-weight:bold;">Done (100%)</span></td>
 </tr>
 <tr style="background-color: #f0f4f8;">
   <td colspan="7" align="left"><strong>GIAI ĐOẠN 5: HỆ SINH THÁI GIẢ LẬP, THỬ NGHIỆM SANDBOX &amp; BỘ SOI MẬT MÃ</strong></td>

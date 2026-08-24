@@ -9,6 +9,7 @@ import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { LoyaltyService } from '@/service/loyalty.service';
 import { apiClient } from '@/service/config';
+import { CommonStatus } from '@/models';
 
 export interface LoyaltyMemberAccount {
   id: number;
@@ -84,7 +85,7 @@ export const Customers: React.FC = () => {
   };
 
   const statusBodyTemplate = (rowData: LoyaltyMemberAccount) => {
-    if (rowData.status === 'ACTIVE') {
+    if (rowData.status === CommonStatus.ACTIVE) {
       return <Tag severity="success" value={t('customer.status_active', { defaultValue: 'Đang hoạt động' })} />;
     }
     return <Tag severity="danger" value={t('customer.status_inactive', { defaultValue: 'Tạm khóa' })} />;
@@ -142,7 +143,7 @@ export const Customers: React.FC = () => {
           responsiveLayout="scroll"
         >
           <Column
-            header="#"
+            header={t('common.stt', { defaultValue: 'STT' })}
             body={(_, { rowIndex }) => rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />

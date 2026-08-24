@@ -184,4 +184,115 @@ public final class GameHubDto {
         private String message;
         private Instant timestamp;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubmitGameResultRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotBlank(message = "Mã người dùng không được để trống")
+        private String externalUserId;
+
+        @NotBlank(message = "Mã game không được để trống")
+        private String gameCode;
+
+        private String sessionToken;
+
+        private Integer score;
+
+        private String clientTransactionRef;
+
+        private String details;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubmitGameResultResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String transactionRef;
+        private String gameCode;
+        private String gameName;
+        private Integer score;
+        private String rewardType;
+        private BigDecimal rewardValue;
+        private BigDecimal pointsAwarded;
+        private String voucherCode;
+        private BigDecimal newPointBalance;
+        private Integer turnsRemaining;
+        private String message;
+        private Instant timestamp;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GameAdminDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String gameCode;
+        private String gameName;
+        private String category;
+        private BigDecimal pricePerTurn;
+        private BigDecimal pricePerTurnHtg;
+        private Integer freeTurnsDaily;
+        private BigDecimal dailyBudgetLimit;
+        private Boolean allowPointsSpin;
+        private String gameUrl;
+        private String iconUrl;
+        private GameStatus status;
+        private String gameParams;
+        // Third-Party Game Studio Config
+        private String partnerCode;
+        private String webhookUrl;
+        private Integer revenueSharePercent;
+        // Game parameters parsed
+        private Integer quizQuestionCount;
+        private Integer quizCountdownSec;
+        private Integer quizRewardPoints;
+        private Integer farmSeasonDays;
+        private Integer farmVoucherLimit;
+        private Integer diceMultiplierMax;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GameHubGlobalConfigDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Integer pointsPerTurnExchange;
+        private Boolean goldenHourEnabled;
+        private Boolean maintenanceMode;
+        private Integer maxDailyTurnsPerUser;
+        private String welcomeBannerText;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GamePlayHistoryItemDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String externalUserId;
+        private String gameCode;
+        private String gameName;
+        private String transactionRef;
+        private Integer score;
+        private String rewardType;
+        private BigDecimal rewardValue;
+        private BigDecimal pointsAwarded;
+        private String voucherCode;
+        private String status;
+        private Instant createdAt;
+    }
 }

@@ -1,0 +1,98 @@
+name: 🚢 Micro-Loyalty Continuous Deployment (CD - SaaS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_service:
+        description: 'Phân hệ cần triển khai'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - loyalty-service
+          - loyalty-cms
+          - loyalty-webview
+      environment:
+        description: 'Môi trường đích'
+        required: true
+        default: 'saas-uat'
+        type: choice
+        options:
+          - saas-uat
+          - saas-production
+
+env:
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA' }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '-5397937309' }}
+  SERVER_HOST: '210.211.102.99'
+  SERVER_PORT: '65000'
+  SERVER_USER: 'dip'
+
+jobs:
+  build-and-deploy:
+    name: 🚀 Build & Deploy to SaaS
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: ☕ Build Backend JAR
+        if: ${{ github.event.inputs.target_service == 'all' || github.event.inputs.target_service == 'loyalty-service' }}
+        run: |
+          cd src/service
+          mvn clean package -DskipTests
+          mkdir -p ../../deploy/micro-loyalty/backend
+          cp target/loyalty-service-1.0.0.jar ../../deploy/micro-loyalty/backend/loyalty-service.jar
+
+      - name: 🖥️ Build Frontend CMS & Webview
+        if: ${{ github.event.inputs.target_service == 'all' || github.event.inputs.target_service == 'loyalty-cms' || github.event.inputs.target_service == 'loyalty-webview' }}
+        run: |
+          if [ "${{ github.event.inputs.target_service }}" = "all" ] || [ "${{ github.event.inputs.target_service }}" = "loyalty-cms" ]; then
+            cd src/cms && npm ci && npm run build
+            mkdir -p ../../deploy/micro-loyalty/frontend/cms/dist
+            rm -rf ../../deploy/micro-loyalty/frontend/cms/dist/*
+            cp -r dist/* ../../deploy/micro-loyalty/frontend/cms/dist/
+            cd ../..
+          fi
+
+          if [ "${{ github.event.inputs.target_service }}" = "all" ] || [ "${{ github.event.inputs.target_service }}" = "loyalty-webview" ]; then
+            cd src/webview && npm ci && npm run build
+            mkdir -p ../../deploy/micro-loyalty/frontend/webview/dist
+            rm -rf ../../deploy/micro-loyalty/frontend/webview/dist/*
+            cp -r dist/* ../../deploy/micro-loyalty/frontend/webview/dist/
+            cd ../..
+          fi
+
+      - name: 📢 Notify Deployment Completed
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          EMOJI="✅"
+          if [ "${STATUS}" != "success" ]; then
+            EMOJI="❌"
+          fi
+
+          MESSAGE="<b>${EMOJI} [CD-SAAS-DEPLOY] Micro-Loyalty Deployment Notification</b>%0A"
+          MESSAGE="${MESSAGE}<b>• Trạng thái:</b> ${STATUS}%0A"
+          MESSAGE="${MESSAGE}<b>• Phân hệ:</b> <code>${{ github.event.inputs.target_service }}</code>%0A"
+          MESSAGE="${MESSAGE}<b>• Môi trường:</b> <code>${{ github.event.inputs.environment }} (${SERVER_HOST}:${SERVER_PORT})</code>%0A"
+          MESSAGE="${MESSAGE}<b>• Người kích hoạt:</b> ${{ github.actor }}%0A"
+          MESSAGE="${MESSAGE}<b>• Nhánh:</b> <code>${{ github.ref_name }}</code>"
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="${MESSAGE}" \
+            -d parse_mode="HTML" || echo "Gửi Telegram thất bại"

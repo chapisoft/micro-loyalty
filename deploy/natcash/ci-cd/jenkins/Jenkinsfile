@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK_21'
+        jdk 'JDK_17'
         maven 'Maven_3.9'
         nodejs 'Node_20'
     }
@@ -14,15 +14,15 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'TARGET_SERVICE', choices: ['all', 'authentication-service', 'customer-service', 'partner-service', 'cms-service', 'cms-admin'], description: 'Select target service to deploy')
-        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip Maven unit tests')
+        choice(name: 'TARGET_SERVICE', choices: ['all', 'loyalty-service', 'loyalty-cms', 'loyalty-webview'], description: 'Chọn phân hệ cần đóng gói và triển khai On-Premise')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Bỏ qua kiểm thử đơn vị')
     }
 
     environment {
-        DEPLOY_PATH        = '/opt/smart-otp/deploy'
-        SERVER_USER        = 'dip'
-        SERVER_HOST        = '210.211.102.99'
-        SERVER_PORT        = '65000'
+        DEPLOY_PATH        = '/u01/mascom/ringme/loyalty-game'
+        SERVER_USER        = 'mascom'
+        SERVER_HOST        = '10.228.37.65'
+        SERVER_PORT        = '22'
         TELEGRAM_BOT_TOKEN = '8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA'
         TELEGRAM_CHAT_ID   = '-5397937309'
     }
@@ -30,65 +30,109 @@ pipeline {
     stages {
         stage('1. 🛡️ Quality Gate & Security Check') {
             steps {
-                echo "Running Static Analysis & Cryptographic Standard Verifications..."
+                echo "Kiểm tra tiêu chuẩn an ninh và chất lượng mã nguồn Natcash..."
             }
         }
 
-        stage('2. ☕ Build Backend Microservices') {
+        stage('2. ☕ Build Backend Native Service') {
             when {
-                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE.endsWith('-service') }
+                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-service' }
             }
             steps {
                 script {
-                    echo "Building Spring Boot Microservices with Java 21..."
-                    sh 'mvn clean install -DskipTests'
-                    sh 'cp src/service/*/target/*.jar deploy/backend/ || true'
-                }
-            }
-        }
-
-        stage('3. 🖥️ Build CMS Admin Frontend') {
-            when {
-                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'cms-admin' }
-            }
-            steps {
-                dir('src/cms/cms-admin/app') {
-                    echo "Building Vite/React CMS Frontend..."
-                    sh 'npm install'
-                    sh 'npm run build'
-                    sh 'mkdir -p ../../../../deploy/frontend/dist && cp -r ../../../../publish/admin-cms/* ../../../../deploy/frontend/dist/ || true'
-                }
-            }
-        }
-
-        stage('4. 🐳 Deploy & Rolling Update') {
-            steps {
-                script {
-                    echo "Deploying to ${SERVER_HOST}:${SERVER_PORT}..."
-                    if (params.TARGET_SERVICE == 'all') {
-                        sh 'cd deploy && bash scripts/deploy_all.sh'
-                    } else {
-                        sh "cd deploy && bash scripts/deploy_service.sh ${params.TARGET_SERVICE}"
+                    echo "Đóng gói Backend Native Java 17 cho môi trường Natcash..."
+                    dir('src/service') {
+                        sh 'mvn clean package -DskipTests'
+                        sh 'mkdir -p ../../deploy/natcash/backend && cp target/loyalty-service-1.0.0.jar ../../deploy/natcash/backend/loyalty-service.jar'
                     }
+                }
+            }
+        }
+
+        stage('3. 🖥️ Build CMS & Webview Frontend') {
+            when {
+                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms' || params.TARGET_SERVICE == 'loyalty-webview' }
+            }
+            steps {
+                script {
+                    if (params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms') {
+                        echo "Đóng gói Loyalty CMS (Nginx Port 8080)..."
+                        dir('src/cms') {
+                            sh 'npm install'
+                            sh 'npm run build'
+                            sh 'mkdir -p ../../deploy/natcash/frontend/cms/dist && rm -rf ../../deploy/natcash/frontend/cms/dist/* && cp -r dist/* ../../deploy/natcash/frontend/cms/dist/'
+                        }
+                    }
+                    if (params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-webview') {
+                        echo "Đóng gói Loyalty Webview (Nginx Port 8443)..."
+                        dir('src/webview') {
+                            sh 'npm install'
+                            sh 'npm run build'
+                            sh 'mkdir -p ../../deploy/natcash/frontend/webview/dist && rm -rf ../../deploy/natcash/frontend/webview/dist/* && cp -r dist/* ../../deploy/natcash/frontend/webview/dist/'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('4. 🚀 Deploy Native to Natcash Server') {
+            steps {
+                script {
+                    echo "Triển khai lên máy chủ Natcash ${SERVER_HOST}:${SERVER_PORT}..."
+                    sh 'tar -czf - -C deploy/natcash . | ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH} && tar -xzf - -C ${DEPLOY_PATH}"'
+                    sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && bash scripts/start.sh"'
                 }
             }
         }
 
         stage('5. 🔍 Health Check Verification') {
             steps {
-                sh 'cd deploy && bash scripts/check_health.sh 18090'
+                script {
+                    echo "Kiểm tra sức khỏe dịch vụ Native trên cổng 8085..."
+                    sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && bash scripts/healthcheck.sh"'
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline completed successfully!"
-            sh 'cd deploy && bash scripts/notify_telegram.sh "🎉 <b>Smart-OTP CI/CD Pipeline Build SUCCESS!</b>" "SUCCESS" || true'
+            script {
+                echo "Triển khai On-Premise Natcash thành công!"
+                def msg = """
+<b>✅ [JENKINS-NATCASH-ONPREM] Triển Khai Thành Công Hoàn Toàn!</b>
+<b>• Dịch vụ:</b> <code>${params.TARGET_SERVICE}</code>
+<b>• Hạ tầng:</b> <code>${SERVER_HOST}:${SERVER_PORT} (User: ${SERVER_USER})</code>
+<b>• Thư mục:</b> <code>${DEPLOY_PATH}</code>
+<b>• Bản dựng:</b> <code>#${BUILD_NUMBER}</code>
+<b>• Cổng Native:</b> <code>8085 (Backend) | 8443 (Webview) | 8080 (CMS)</code>
+<b>• Xem Console Logs:</b> <a href="${BUILD_URL}">Jenkins Build #${BUILD_NUMBER}</a>
+"""
+                sh """
+                    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        -d chat_id="${TELEGRAM_CHAT_ID}" \
+                        --data-urlencode "text=${msg.trim()}" \
+                        -d parse_mode="HTML" || true
+                """
+            }
         }
         failure {
-            echo "Pipeline failed!"
-            sh 'cd deploy && bash scripts/notify_telegram.sh "🚨 <b>Smart-OTP CI/CD Pipeline Build FAILED!</b>" "ERROR" || true'
+            script {
+                echo "Triển khai On-Premise Natcash thất bại!"
+                def msg = """
+<b>❌ [JENKINS-NATCASH-ONPREM] Triển Khai Thất Bại!</b>
+<b>• Dịch vụ:</b> <code>${params.TARGET_SERVICE}</code>
+<b>• Hạ tầng:</b> <code>${SERVER_HOST}:${SERVER_PORT}</code>
+<b>• Bản dựng:</b> <code>#${BUILD_NUMBER}</code>
+<b>• Vui lòng kiểm tra Logs khẩn cấp:</b> <a href="${BUILD_URL}">Jenkins Build #${BUILD_NUMBER} Logs</a>
+"""
+                sh """
+                    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        -d chat_id="${TELEGRAM_CHAT_ID}" \
+                        --data-urlencode "text=${msg.trim()}" \
+                        -d parse_mode="HTML" || true
+                """
+            }
         }
     }
 }

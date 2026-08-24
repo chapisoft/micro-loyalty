@@ -92,4 +92,37 @@ public final class LuckyWheelDto {
         private String message;
         private Instant timestamp;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WheelPrizeAdminDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private Integer displayOrder;
+        private String prizeName;
+        private String prizeType;
+        private BigDecimal prizeValue;
+        private Integer probabilityWeight;
+        private BigDecimal dailyBudgetLimit;
+        private Integer dailyMaxWinners;
+        private String colorCode;
+        private String iconUrl;
+        private String status;
+        private Integer actualWinCountToday;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoBalancePrizesResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private List<WheelPrizeAdminDto> prizes;
+        private Integer totalProbability;
+        private String message;
+    }
 }

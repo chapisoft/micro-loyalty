@@ -97,10 +97,42 @@ pipeline {
 
     post {
         success {
-            echo "Quy trình CI/CD hoàn tất thành công!"
+            script {
+                echo "Quy trình CI/CD hoàn tất thành công!"
+                def msg = """
+<b>✅ [JENKINS-SAAS-CI/CD] Triển Khai Thành Công Hoàn Toàn!</b>
+<b>• Dịch vụ:</b> <code>${params.TARGET_SERVICE}</code>
+<b>• Hạ tầng:</b> <code>${SERVER_HOST}:${SERVER_PORT} (User: ${SERVER_USER})</code>
+<b>• Thư mục đích:</b> <code>${DEPLOY_PATH}</code>
+<b>• Bản dựng:</b> <code>#${BUILD_NUMBER}</code>
+<b>• Kết quả Healthcheck:</b> 100% Sống và Sẵn sàng tiếp nhận yêu cầu!
+<b>• Xem Console Logs:</b> <a href="${BUILD_URL}">Jenkins Build #${BUILD_NUMBER}</a>
+"""
+                sh """
+                    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        -d chat_id="${TELEGRAM_CHAT_ID}" \
+                        --data-urlencode "text=${msg.trim()}" \
+                        -d parse_mode="HTML" || true
+                """
+            }
         }
         failure {
-            echo "Quy trình CI/CD thất bại!"
+            script {
+                echo "Quy trình CI/CD thất bại!"
+                def msg = """
+<b>❌ [JENKINS-SAAS-CI/CD] Quá Trình Triển Khai Thất Bại!</b>
+<b>• Dịch vụ:</b> <code>${params.TARGET_SERVICE}</code>
+<b>• Hạ tầng:</b> <code>${SERVER_HOST}:${SERVER_PORT}</code>
+<b>• Bản dựng:</b> <code>#${BUILD_NUMBER}</code>
+<b>• Vui lòng kiểm tra Logs khẩn cấp:</b> <a href="${BUILD_URL}">Jenkins Build #${BUILD_NUMBER} Logs</a>
+"""
+                sh """
+                    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        -d chat_id="${TELEGRAM_CHAT_ID}" \
+                        --data-urlencode "text=${msg.trim()}" \
+                        -d parse_mode="HTML" || true
+                """
+            }
         }
     }
 }

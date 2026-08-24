@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Demo Game H5 - Tích Hợp GameHub SDK</title>
+  <script src="../sdk/gamehub-sdk.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .header-bar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-round: 16px;
+      border-radius: 16px;
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    .badge {
+      background: #4f46e5;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .badge-turns {
+      background: #ea580c;
+    }
+
+    .game-area {
+      width: 100%;
+      max-width: 480px;
+      height: 380px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 16px 0;
+    }
+
+    .diamond {
+      width: 60px;
+      height: 60px;
+      position: absolute;
+      background: radial-gradient(circle, #fbbf24 0%, #d97706 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 20px #fbbf24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      animation: pulse 1s infinite alternate;
+      transition: transform 0.1s;
+    }
+
+    .diamond:active {
+      transform: scale(0.85);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.15); }
+    }
+
+    .score-display {
+      font-size: 36px;
+      font-weight: 900;
+      color: #fbbf24;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .timer-display {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-close {
+      background: transparent;
+      color: #94a3b8;
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-box {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 380px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #f8fafc;
+    }
+
+    .modal-desc {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+
+    .reward-box {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .reward-val {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Info Bar -->
+  <div class="header-bar">
+    <div>
+      <span style="color:#94a3b8;">Game:</span>
+      <span class="badge" id="lblGameCode">DEMO_H5</span>
+    </div>
+    <div>
+      <span style="color:#94a3b8;">Lượt:</span>
+      <span class="badge badge-turns" id="lblTurns">1 khả dụng</span>
+    </div>
+  </div>
+
+  <!-- Main Gameplay Arena -->
+  <div class="game-area" id="gameArea">
+    <div id="startScreen" style="text-align: center; padding: 20px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">💎</div>
+      <h2 style="margin-bottom: 6px; font-weight: 800;">Săn Kim Cương Vàng</h2>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Chạm vào kim cương càng nhanh càng tốt trong 15 giây để nhận Điểm Thưởng!</p>
+      <button class="btn btn-primary" onclick="startGame()">Bắt Đầu Chơi</button>
+    </div>
+
+    <div id="playScreen" style="display: none; width: 100%; height: 100%; position: relative;">
+      <div style="position: absolute; top: 12px; left: 16px;">
+        <span style="font-size: 12px; color: #94a3b8;">ĐIỂM:</span>
+        <div class="score-display" id="lblScore">0</div>
+      </div>
+      <div style="position: absolute; top: 12px; right: 16px; text-align: right;">
+        <span style="font-size: 12px; color: #94a3b8;">THỜI GIAN:</span>
+        <div class="score-display" style="color:#38bdf8;" id="lblTimer">15s</div>
+      </div>
+      <div class="diamond" id="diamondObj" onclick="tapDiamond()">💎</div>
+    </div>
+  </div>
+
+  <!-- Action Controls -->
+  <div class="controls">
+    <button class="btn btn-secondary" onclick="buyMoreTurns()">
+      <span>🛒</span> Mua Thêm Lượt Bằng Điểm (10 Điểm)
+    </button>
+    <button class="btn btn-close" onclick="GameHub.closeGame()">
+      Thoát Trò Chơi
+    </button>
+  </div>
+
+  <!-- End Game Result Modal -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal-box">
+      <div style="font-size: 48px; margin-bottom: 8px;">🎉</div>
+      <div class="modal-title">Chúc Mừng Hoàn Thành!</div>
+      <div class="modal-desc">Kết quả ván chơi của bạn đã được ghi nhận an toàn vào Sổ cái hệ thống.</div>
+
+      <div class="reward-box">
+        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">ĐIỂM THƯỞNG NHẬN ĐƯỢC</div>
+        <div class="reward-val" id="lblRewardPoints">+100 Điểm</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;" id="lblTxRef">GTRX_...</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="closeResultModal()" style="margin-bottom: 8px;">Tiếp Tục</button>
+    </div>
+  </div>
+
+  <script>
+    var currentScore = 0;
+    var timeLeft = 15;
+    var gameTimer = null;
+    var isPlaying = false;
+
+    // 1. Khởi tạo GameHub SDK tự động
+    var sdkConfig = GameHub.init({
+      gameCode: 'DEMO_DIAMOND_TAP',
+      debug: true
+    });
+
+    document.getElementById('lblGameCode').innerText = sdkConfig.gameCode || 'DEMO_H5';
+
+    // 2. Lắng nghe sự kiện SDK
+    GameHub.on('scoreSubmitted', function (res) {
+      console.log('Result received from server:', res);
+      document.getElementById('lblRewardPoints').innerText = '+' + (res.pointsAwarded || 100) + ' Điểm';
+      document.getElementById('lblTxRef').innerText = 'Mã GD: ' + (res.transactionRef || 'GTRX_SUCCESS');
+      document.getElementById('resultModal').style.display = 'flex';
+    });
+
+    GameHub.on('paymentCompleted', function (res) {
+      alert('Mua lượt thành công! Số lượt khả dụng: ' + res.totalTurnsAvailable);
+      document.getElementById('lblTurns').innerText = res.totalTurnsAvailable + ' khả dụng';
+    });
+
+    function startGame() {
+      currentScore = 0;
+      timeLeft = 15;
+      isPlaying = true;
+      document.getElementById('lblScore').innerText = '0';
+      document.getElementById('lblTimer').innerText = '15s';
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('playScreen').style.display = 'block';
+
+      moveDiamondRandomly();
+
+      gameTimer = setInterval(function () {
+        timeLeft--;
+        document.getElementById('lblTimer').innerText = timeLeft + 's';
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function moveDiamondRandomly() {
+      if (!isPlaying) return;
+      var arena = document.getElementById('gameArea');
+      var diamond = document.getElementById('diamondObj');
+      var maxX = arena.clientWidth - 80;
+      var maxY = arena.clientHeight - 80;
+      var randomX = Math.max(10, Math.floor(Math.random() * maxX));
+      var randomY = Math.max(70, Math.floor(Math.random() * maxY));
+
+      diamond.style.left = randomX + 'px';
+      diamond.style.top = randomY + 'px';
+    }
+
+    function tapDiamond() {
+      if (!isPlaying) return;
+      currentScore += 10;
+      document.getElementById('lblScore').innerText = currentScore;
+      if (navigator.vibrate) navigator.vibrate(40);
+      moveDiamondRandomly();
+    }
+
+    function endGame() {
+      clearInterval(gameTimer);
+      isPlaying = false;
+      document.getElementById('playScreen').style.display = 'none';
+      document.getElementById('startScreen').style.display = 'block';
+
+      // 3. Gửi kết quả ván chơi qua GameHub SDK
+      GameHub.submitScore(currentScore, {
+        gameDuration: 15,
+        diamondsCollected: currentScore / 10
+      }).catch(function (err) {
+        console.warn('Fallback submit score:', err);
+        document.getElementById('lblRewardPoints').innerText = '+100 Điểm';
+        document.getElementById('lblTxRef').innerText = 'Mã GD: GTRX_LOCAL_DEMO';
+        document.getElementById('resultModal').style.display = 'flex';
+      });
+    }
+
+    function closeResultModal() {
+      document.getElementById('resultModal').style.display = 'none';
+    }
+
+    function buyMoreTurns() {
+      // 4. Mua thêm lượt qua GameHub SDK
+      GameHub.buyTurns(1, 10, 'POINTS').catch(function (err) {
+        alert(err.message || 'Lỗi mua lượt');
+      });
+    }
+  </script>
+</body>
+</html>

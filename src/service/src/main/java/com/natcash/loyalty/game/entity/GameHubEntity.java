@@ -52,6 +52,17 @@ public class GameHubEntity {
     @Builder.Default
     private Integer freeTurnsDaily = 1;
 
+    @Column(name = "daily_budget_limit", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal dailyBudgetLimit = new BigDecimal("50000.00");
+
+    @Column(name = "allow_points_spin", nullable = false)
+    @Builder.Default
+    private Boolean allowPointsSpin = true;
+
+    @Column(name = "game_params", columnDefinition = "jsonb")
+    private String gameParams;
+
     @Column(name = "game_url", length = 500)
     private String gameUrl;
 
@@ -84,6 +95,12 @@ public class GameHubEntity {
         }
         if (this.freeTurnsDaily == null) {
             this.freeTurnsDaily = 1;
+        }
+        if (this.dailyBudgetLimit == null) {
+            this.dailyBudgetLimit = new BigDecimal("50000.00");
+        }
+        if (this.allowPointsSpin == null) {
+            this.allowPointsSpin = true;
         }
     }
 

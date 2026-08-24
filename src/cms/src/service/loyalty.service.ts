@@ -171,6 +171,88 @@ export const LoyaltyService = {
       return [];
     }
   },
+
+  // 8. Quản lý Danh mục Game (Minigames)
+  async getGames(tenantId: string = 'TENANT_NATCASH'): Promise<any[]> {
+    try {
+      const response: any = await apiClient.get('/gamehub/v1/admin/games', {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
+    } catch (e) {
+      console.error('[getGames] Error:', e);
+      return [];
+    }
+  },
+
+  // 9. Lưu/Sửa thông tin Game & Tham số chi tiết
+  async saveGame(data: any, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    const response: any = await apiClient.post('/gamehub/v1/admin/games', data, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return response?.data || response;
+  },
+
+  // 10. Cấu hình Chung Cổng Game
+  async getGlobalGameConfig(tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    try {
+      const response: any = await apiClient.get('/gamehub/v1/admin/config', {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return response?.data || response;
+    } catch (e) {
+      console.error('[getGlobalGameConfig] Error:', e);
+      return {
+        pointsPerTurnExchange: 50,
+        goldenHourEnabled: true,
+        maintenanceMode: false,
+        maxDailyTurnsPerUser: 10,
+        welcomeBannerText: 'Tham gia minigame mỗi ngày nhận quà siêu khủng từ Natcash!',
+      };
+    }
+  },
+
+  // 11. Lưu Cấu hình Chung Cổng Game
+  async saveGlobalGameConfig(data: any, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    const response: any = await apiClient.post('/gamehub/v1/admin/config', data, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return response?.data || response;
+  },
+
+  // 12. Danh sách Ma trận Ô Thưởng Vòng Quay May Mắn
+  async getWheelPrizes(tenantId: string = 'TENANT_NATCASH', wheelCode: string = 'LUCKY_WHEEL'): Promise<any[]> {
+    try {
+      const response: any = await apiClient.get(`/loyalty/v1/luckydraw/admin/prizes?wheelCode=${wheelCode}`, {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
+    } catch (e) {
+      console.error('[getWheelPrizes] Error:', e);
+      return [];
+    }
+  },
+
+  // 13. Lưu Ô Thưởng Vòng Quay
+  async saveWheelPrize(data: any, tenantId: string = 'TENANT_NATCASH', wheelCode: string = 'LUCKY_WHEEL'): Promise<any> {
+    const response: any = await apiClient.post(`/loyalty/v1/luckydraw/admin/prizes?wheelCode=${wheelCode}`, data, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return response?.data || response;
+  },
+
+  // 14. Tự động cân bằng xác suất 100%
+  async autoBalanceWheelPrizes(tenantId: string = 'TENANT_NATCASH', wheelCode: string = 'LUCKY_WHEEL'): Promise<any> {
+    const response: any = await apiClient.post(`/loyalty/v1/luckydraw/admin/prizes/auto-balance?wheelCode=${wheelCode}`, {}, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return response?.data || response;
+  },
 };
 
 export const loyaltyService = LoyaltyService;
+
