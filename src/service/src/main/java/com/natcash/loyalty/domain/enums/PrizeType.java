@@ -14,7 +14,8 @@ public enum PrizeType {
     CASHBACK("CASHBACK", "enum.prize_type.cashback"),
     PHYSICAL_GIFT("PHYSICAL_GIFT", "enum.prize_type.physical_gift"),
     NO_LUCK("NO_LUCK", "enum.prize_type.no_luck"),
-    TURNS("TURNS", "enum.prize_type.turns");
+    TURNS("TURNS", "enum.prize_type.turns"),
+    MULTIPLIER("MULTIPLIER", "enum.prize_type.multiplier");
 
     @JsonValue
     private final String code;

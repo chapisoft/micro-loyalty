@@ -4,7 +4,6 @@ import {
   Gamepad2,
   Sparkles,
   HelpCircle,
-  Sprout,
   Trophy,
   Zap,
   PlusCircle,
@@ -12,11 +11,10 @@ import {
   Award
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
-import { NotificationModal, NotificationType } from '../components/NotificationModal';
 
 export interface GameHubPageProps {
   onBack?: () => void;
-  onSelectGame: (gameId: 'WHEEL' | 'QUIZ') => void;
+  onSelectGame: (gameId: 'WHEEL' | 'QUIZ' | 'SCRATCH' | 'PENALTY' | 'CHEST' | 'TOWER' | 'PLINKO' | 'EGG' | 'DICE') => void;
   freeTurns?: number;
   perpetualTurns?: number;
   points?: number;
@@ -55,17 +53,6 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
   const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
-  const [notifyModal, setNotifyModal] = useState<{
-    isOpen: boolean;
-    type: NotificationType;
-    title?: string;
-    message: string;
-    badge?: string;
-  }>({
-    isOpen: false,
-    type: 'info',
-    message: '',
-  });
 
   const handleBuyTurn = async (turnsCount: number = 1, amountHtg: number = 20) => {
     try {
@@ -105,162 +92,113 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       action: () => onSelectGame('WHEEL'),
     },
     {
+      id: 'SCRATCH',
+      name: t('games.scratch.title', { defaultValue: 'Vé Cào May Mắn' }),
+      category: 'LUCKY',
+      categoryLabel: 'May Mắn',
+      icon: '🎟️',
+      bgGradient: 'bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600',
+      badge: '100đ',
+      badgeBg: 'bg-amber-600',
+      perk: 'Trúng Liền',
+      description: t('games.scratch.subtitle', { defaultValue: 'Cào 3 ô trúng liền tay, rinh ngay 100 điểm và quà tặng độc quyền!' }),
+      action: () => onSelectGame('SCRATCH'),
+    },
+    {
+      id: 'PENALTY',
+      name: t('games.penalty.title', { defaultValue: 'Sút Phạt Đền 11m' }),
+      category: 'SPORTS',
+      categoryLabel: 'Thể Thao',
+      icon: '⚽',
+      bgGradient: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600',
+      badge: '+80đ',
+      badgeBg: 'bg-emerald-600',
+      perk: 'Sút Vàng',
+      description: t('games.penalty.subtitle', { defaultValue: 'Chọn góc sút hiểm hóc đánh bại thủ môn để nhận 80 Điểm Thưởng!' }),
+      action: () => onSelectGame('PENALTY'),
+    },
+    {
+      id: 'CHEST',
+      name: t('games.chest.title', { defaultValue: 'Mở Rương Caribe' }),
+      category: 'LUCKY',
+      categoryLabel: 'May Mắn',
+      icon: '🏴‍☠️',
+      bgGradient: 'bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700',
+      badge: 'NỔ HŨ',
+      badgeBg: 'bg-cyan-600',
+      perk: '200 HTG',
+      description: t('games.chest.subtitle', { defaultValue: 'Chọn 1 trong 5 rương cổ để nhận tới 200 Điểm Thưởng & Quà Nổ Hũ!' }),
+      action: () => onSelectGame('CHEST'),
+    },
+    {
+      id: 'TOWER',
+      name: t('games.tower.title', { defaultValue: 'Tháp Kho Báu' }),
+      category: 'ADVENTURE',
+      categoryLabel: 'Mạo Hiểm',
+      icon: '🏰',
+      bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-slate-800',
+      badge: 'x50 QUÀ',
+      badgeBg: 'bg-purple-600',
+      perk: '5 Tầng Tháp',
+      description: t('games.tower.subtitle', { defaultValue: 'Chinh phục 5 tầng tháp ma thuật! Leo càng cao nhân thưởng lên tới x50!' }),
+      action: () => onSelectGame('TOWER'),
+    },
+    {
+      id: 'PLINKO',
+      name: t('games.plinko.title', { defaultValue: 'Thả Bi Ziczac' }),
+      category: 'LUCKY',
+      categoryLabel: 'May Mắn',
+      icon: '🔮',
+      bgGradient: 'bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600',
+      badge: 'x10 MULTI',
+      badgeBg: 'bg-pink-600',
+      perk: 'Neon Game',
+      description: t('games.plinko.subtitle', { defaultValue: 'Thả bóng qua mê cung bàn đinh neon, rơi hộc đáy nhân thưởng tới x10!' }),
+      action: () => onSelectGame('PLINKO'),
+    },
+    {
+      id: 'EGG',
+      name: t('games.egg.title', { defaultValue: 'Đập Trứng Vàng' }),
+      category: 'LUCKY',
+      categoryLabel: 'May Mắn',
+      icon: '🥚',
+      bgGradient: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500',
+      badge: 'LÌ XÌ',
+      badgeBg: 'bg-amber-600',
+      perk: '1 Chạm',
+      description: t('games.egg.subtitle', { defaultValue: 'Dùng búa thần gõ vỡ trứng vàng nhận lì xì tới 150 Điểm Thưởng!' }),
+      action: () => onSelectGame('EGG'),
+    },
+    {
+      id: 'DICE',
+      name: t('games.dice.title', { defaultValue: 'Lắc Xúc Xắc' }),
+      category: 'LUCKY',
+      categoryLabel: 'May Mắn',
+      icon: '🎲',
+      bgGradient: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
+      badge: '300đ',
+      badgeBg: 'bg-indigo-600',
+      perk: 'Bộ Ba',
+      description: t('games.dice.subtitle', { defaultValue: 'Lắc 3 viên xúc xắc may mắn, trúng Sảnh tiến và Bộ ba nhận tới 300 Điểm!' }),
+      action: () => onSelectGame('DICE'),
+    },
+    {
       id: 'QUIZ',
       name: t('gamehub.game2_name', { defaultValue: 'Đố Vui Trúng Điểm' }),
       category: 'QUIZ',
       categoryLabel: 'Trí Tuệ',
       icon: '❓',
-      bgGradient: 'bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600',
+      bgGradient: 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600',
       badge: '+150đ',
-      badgeBg: 'bg-indigo-600',
+      badgeBg: 'bg-blue-600',
       perk: '5 Câu Hỏi',
       description: t('gamehub.game2_desc', { defaultValue: 'Thử thách trí tuệ với 5 câu hỏi nhanh, trả lời chính xác nhận ngay +150 điểm thưởng.' }),
       action: () => onSelectGame('QUIZ'),
     },
-    {
-      id: 'FARM',
-      name: t('gamehub.game3_name', { defaultValue: 'Nông Trại Delimart' }),
-      category: 'FARM',
-      categoryLabel: 'Nông Trại',
-      icon: '🌱',
-      bgGradient: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-green-600',
-      badge: 'MÙA VỤ',
-      badgeBg: 'bg-emerald-600',
-      perk: 'Đổi Nông Sản',
-      description: t('gamehub.game3_desc', { defaultValue: 'Chăm sóc mầm cây mỗi ngày, thu hoạch nông sản đổi lấy voucher giảm giá siêu thị.' }),
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'farm',
-          title: t('gamehub.game3_name', { defaultValue: 'Nông Trại Delimart' }),
-          message: t('gamehub.alert_farm', { defaultValue: 'Tính năng Nông Trại Delimart sẽ sớm ra mắt trong phiên bản kế tiếp!' }),
-          badge: 'MÙA VỤ THU HOẠCH',
-        }),
-    },
-    {
-      id: 'DICE',
-      name: t('gamehub.game4_name', { defaultValue: 'Lắc Xí Ngầu' }),
-      category: 'EVENTS',
-      categoryLabel: 'Lễ Hội',
-      icon: '🎲',
-      bgGradient: 'bg-gradient-to-br from-purple-600 via-pink-600 to-indigo-700',
-      badge: 'x10 QUÀ',
-      badgeBg: 'bg-purple-600',
-      perk: 'May Mắn',
-      description: t('gamehub.game4_desc', { defaultValue: 'Thử vận may với xúc xắc lễ hội, nhân điểm thưởng lên đến gấp 10 lần.' }),
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'dice',
-          title: t('gamehub.game4_name', { defaultValue: 'Lắc Xí Ngầu May Mắn' }),
-          message: t('gamehub.alert_dice', { defaultValue: 'Sự kiện Lắc Xí Ngầu Lễ Hội Mùa Màng đang được chuẩn bị phát hành!' }),
-          badge: 'SỰ KIỆN LỄ HỘI',
-        }),
-    },
-    {
-      id: 'GOLDEN_EGG',
-      name: 'Đập Trứng Vàng',
-      category: 'LUCKY',
-      categoryLabel: 'May Mắn',
-      icon: '🥚',
-      bgGradient: 'bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600',
-      badge: '500 HTG',
-      badgeBg: 'bg-orange-600',
-      perk: 'Quà Khủng',
-      description: 'Chọn quả trứng vàng may mắn để đập nhận ngay tiền mặt hoàn ví.',
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'dice',
-          title: 'Đập Trứng Vàng May Mắn',
-          message: 'Minigame Đập Trứng Vàng chuẩn bị khai mở trong sự kiện tri ân tuần tới!',
-          badge: 'SẮP RA MẮT',
-        }),
-    },
-    {
-      id: 'MEMORY_CARD',
-      name: 'Lật Hình Trí Nhớ',
-      category: 'QUIZ',
-      categoryLabel: 'Trí Tuệ',
-      icon: '🧠',
-      bgGradient: 'bg-gradient-to-br from-cyan-600 via-blue-500 to-indigo-600',
-      badge: '+200đ',
-      badgeBg: 'bg-cyan-600',
-      perk: 'Nhanh Mắt',
-      description: 'Lật các cặp thẻ bài tương đồng trong thời gian quy định để nhận điểm.',
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'info',
-          title: 'Lật Hình Tìm Cặp Trí Nhớ',
-          message: 'Trò chơi rèn luyện trí nhớ sẽ cập nhật ngay trong bản nâng cấp sắp tới!',
-          badge: 'MINIGAME',
-        }),
-    },
-    {
-      id: 'BUBBLE_POP',
-      name: 'Bắn Bóng Siêu Thị',
-      category: 'EVENTS',
-      categoryLabel: 'Giải Trí',
-      icon: '🎯',
-      bgGradient: 'bg-gradient-to-br from-pink-500 via-rose-500 to-red-600',
-      badge: 'VOUCHER',
-      badgeBg: 'bg-rose-600',
-      perk: 'Xả Stress',
-      description: 'Bắn bóng cùng màu để thu thập phiếu mua sắm siêu thị Delimart.',
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'info',
-          title: 'Bắn Bóng Săn Voucher',
-          message: 'Trò chơi bắn bóng siêu thị đang trong giai đoạn hoàn thiện!',
-          badge: 'SẮP RA MẮT',
-        }),
-    },
-    {
-      id: 'LUCKY_TAROT',
-      name: 'Bói Quẻ Hàng Ngày',
-      category: 'LUCKY',
-      categoryLabel: 'Quẻ May',
-      icon: '🔮',
-      bgGradient: 'bg-gradient-to-br from-violet-600 via-purple-700 to-slate-900',
-      badge: 'FREE',
-      badgeBg: 'bg-violet-600',
-      perk: 'Hằng Ngày',
-      description: 'Rút 1 lá bài may mắn mỗi sáng để nhận điểm thưởng ngẫu nhiên.',
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'info',
-          title: 'Rút Quẻ May Mắn Mỗi Ngày',
-          message: 'Tính năng rút quẻ may mắn miễn phí hàng ngày sắp được kích hoạt!',
-          badge: 'MIỄN PHÍ',
-        }),
-    },
-    {
-      id: 'SPEED_RACING',
-      name: 'Đua Xe Tích Điểm',
-      category: 'EVENTS',
-      categoryLabel: 'Tốc Độ',
-      icon: '🏎️',
-      bgGradient: 'bg-gradient-to-br from-red-600 via-orange-600 to-amber-500',
-      badge: 'TOP 1',
-      badgeBg: 'bg-red-700',
-      perk: 'Đua Top',
-      description: 'Điều khiển xe đua né chướng ngại vật và thu thập ngôi sao điểm thưởng.',
-      action: () =>
-        setNotifyModal({
-          isOpen: true,
-          type: 'info',
-          title: 'Đua Xe Tích Điểm Thưởng',
-          message: 'Game đua xe tốc độ sẽ có mặt trong mùa giải vô địch sắp tới!',
-          badge: 'SẮP RA MẮT',
-        }),
-    },
   ];
 
   const filteredGames = GAMES_LIST.filter(
-    (g) => selectedCategory === 'ALL' || g.category === selectedCategory || (selectedCategory === 'EVENTS' && (g.category === 'EVENTS' || g.category === 'LUCKY'))
+    (g) => selectedCategory === 'ALL' || g.category === selectedCategory
   );
 
   return (
@@ -327,10 +265,10 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto pb-1 no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {[
           { key: 'ALL', label: t('gamehub.filter_all', { defaultValue: 'Tất Cả Game' }), icon: Gamepad2, count: GAMES_LIST.length },
-          { key: 'LUCKY', label: t('gamehub.filter_lucky', { defaultValue: 'May Mắn' }), icon: Sparkles, count: 3 },
-          { key: 'QUIZ', label: t('gamehub.filter_quiz', { defaultValue: 'Trí Tuệ' }), icon: HelpCircle, count: 2 },
-          { key: 'FARM', label: t('gamehub.filter_farm', { defaultValue: 'Nông Trại' }), icon: Sprout, count: 1 },
-          { key: 'EVENTS', label: t('gamehub.filter_events', { defaultValue: 'Sự Kiện' }), icon: Flame, count: 3 },
+          { key: 'LUCKY', label: t('gamehub.filter_lucky', { defaultValue: 'May Mắn' }), icon: Sparkles, count: GAMES_LIST.filter((g) => g.category === 'LUCKY').length },
+          { key: 'SPORTS', label: 'Thể Thao', icon: Flame, count: GAMES_LIST.filter((g) => g.category === 'SPORTS').length },
+          { key: 'ADVENTURE', label: 'Mạo Hiểm', icon: Zap, count: GAMES_LIST.filter((g) => g.category === 'ADVENTURE').length },
+          { key: 'QUIZ', label: t('gamehub.filter_quiz', { defaultValue: 'Trí Tuệ' }), icon: HelpCircle, count: GAMES_LIST.filter((g) => g.category === 'QUIZ').length },
         ].map((cat) => {
           const Icon = cat.icon;
           const isSelected = selectedCategory === cat.key;
@@ -501,16 +439,6 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
           </div>
         </div>
       </div>
-
-      {/* ── NOTIFICATION MODAL ── */}
-      <NotificationModal
-        isOpen={notifyModal.isOpen}
-        type={notifyModal.type}
-        title={notifyModal.title}
-        message={notifyModal.message}
-        badge={notifyModal.badge}
-        onClose={() => setNotifyModal((prev) => ({ ...prev, isOpen: false }))}
-      />
 
       {/* ── FAST BUY TURNS MODAL ── */}
       {showBuyModal && (

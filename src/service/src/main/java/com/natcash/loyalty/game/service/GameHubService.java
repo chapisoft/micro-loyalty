@@ -14,28 +14,39 @@ import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.PrizeType;
 import com.natcash.loyalty.domain.enums.SessionStatus;
 import com.natcash.loyalty.exception.LoyaltyException;
+import com.natcash.loyalty.game.dto.GameHubDto.ActiveWheelThemeResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto;
+import com.natcash.loyalty.game.dto.GameHubDto.GameDetailResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListItemDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GamePlayHistoryItemDto;
+import com.natcash.loyalty.game.dto.GameHubDto.GamePrizeDto;
 import com.natcash.loyalty.game.dto.GameHubDto.InGameCheckoutRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.InGameCheckoutResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.InitSessionRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.InitSessionResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.PartnerTurnPurchaseWebhookResponse;
+import com.natcash.loyalty.game.dto.GameHubDto.PlayGameRequest;
+import com.natcash.loyalty.game.dto.GameHubDto.PlayGameResponse;
+import com.natcash.loyalty.game.dto.GameHubDto.SelectWheelThemeRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.SubmitGameResultRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.SubmitGameResultResponse;
+import com.natcash.loyalty.game.dto.GameHubDto.WheelThemeDto;
 import com.natcash.loyalty.game.entity.GameHubConfigEntity;
 import com.natcash.loyalty.game.entity.GameHubEntity;
 import com.natcash.loyalty.game.entity.GamePlayHistoryEntity;
+import com.natcash.loyalty.game.entity.GamePrizeEntity;
 import com.natcash.loyalty.game.entity.GameSessionEntity;
+import com.natcash.loyalty.game.entity.WheelThemeEntity;
 import com.natcash.loyalty.game.repository.GameHubConfigRepository;
 import com.natcash.loyalty.game.repository.GameHubRepository;
 import com.natcash.loyalty.game.repository.GamePlayHistoryRepository;
+import com.natcash.loyalty.game.repository.GamePrizeRepository;
 import com.natcash.loyalty.game.repository.GameSessionRepository;
+import com.natcash.loyalty.game.repository.WheelThemeRepository;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.lock.DistributedLockHelper;
@@ -57,8 +68,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -68,6 +82,7 @@ public class GameHubService {
     private static final Logger log = LoggerFactory.getLogger(GameHubService.class);
     private static final long SESSION_TTL_SECONDS = 1800L; // 30 phút
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Random random = new Random();
 
     private final GameHubRepository gameRepository;
     private final GameSessionRepository sessionRepository;
@@ -79,6 +94,8 @@ public class GameHubService {
     private final ClearingTransactionRepository clearingRepository;
     private final DistributedLockHelper lockHelper;
     private final RedissonClient redissonClient;
+    private final WheelThemeRepository wheelThemeRepository;
+    private final GamePrizeRepository gamePrizeRepository;
 
     public GameHubService(GameHubRepository gameRepository,
                           GameSessionRepository sessionRepository,
@@ -89,7 +106,9 @@ public class GameHubService {
                           LoyaltyPointLedgerRepository ledgerRepository,
                           ClearingTransactionRepository clearingRepository,
                           DistributedLockHelper lockHelper,
-                          RedissonClient redissonClient) {
+                          RedissonClient redissonClient,
+                          WheelThemeRepository wheelThemeRepository,
+                          GamePrizeRepository gamePrizeRepository) {
         this.gameRepository = gameRepository;
         this.sessionRepository = sessionRepository;
         this.historyRepository = historyRepository;
@@ -100,6 +119,8 @@ public class GameHubService {
         this.clearingRepository = clearingRepository;
         this.lockHelper = lockHelper;
         this.redissonClient = redissonClient;
+        this.wheelThemeRepository = wheelThemeRepository;
+        this.gamePrizeRepository = gamePrizeRepository;
     }
 
     @Transactional(readOnly = true)
@@ -129,6 +150,55 @@ public class GameHubService {
         return GameListResponse.builder()
                 .games(dtos)
                 .total(dtos.size())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public GameDetailResponse getGameDetail(String tenantId, String gameCode, String userId) {
+        GameHubEntity game = gameRepository.findByTenantIdAndGameCode(tenantId, gameCode)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy thông tin trò chơi: " + gameCode));
+
+        List<GamePrizeEntity> prizeEntities = gamePrizeRepository
+                .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc(tenantId, gameCode, "ACTIVE");
+
+        List<GamePrizeDto> prizeDtos = prizeEntities.stream().map(p -> GamePrizeDto.builder()
+                .id(p.getId())
+                .prizeCode(p.getPrizeCode())
+                .prizeName(p.getPrizeName())
+                .prizeType(p.getPrizeType().name())
+                .prizeValue(p.getPrizeValue())
+                .probabilityWeight(p.getProbabilityWeight())
+                .colorCode(p.getColorCode())
+                .iconSymbol(p.getIconSymbol())
+                .displayOrder(p.getDisplayOrder())
+                .build()
+        ).collect(Collectors.toList());
+
+        BigDecimal userBalance = BigDecimal.ZERO;
+        if (userId != null && !userId.isBlank()) {
+            userBalance = accountRepository.findByTenantIdAndExternalUserId(tenantId, userId)
+                    .map(LoyaltyAccountEntity::getCurrentPoints)
+                    .orElse(BigDecimal.ZERO);
+        }
+
+        Map<String, Object> params = parseGameParams(game.getGameParams());
+
+        return GameDetailResponse.builder()
+                .id(game.getId())
+                .gameCode(game.getGameCode())
+                .gameName(game.getGameName())
+                .category(game.getCategory())
+                .pricePerTurn(game.getPricePerTurn())
+                .freeTurnsDaily(game.getFreeTurnsDaily())
+                .remainingTurnsToday(game.getFreeTurnsDaily())
+                .userPointBalance(userBalance)
+                .description(game.getDescription())
+                .rulesText(game.getRulesText())
+                .bannerUrl(game.getBannerUrl())
+                .iconUrl(game.getIconUrl())
+                .allowPointsSpin(game.getAllowPointsSpin())
+                .prizes(prizeDtos)
+                .gameParams(params)
                 .build();
     }
 
@@ -633,4 +703,520 @@ public class GameHubService {
                     tenantId, partnerCode, webhookUrl, e.getMessage());
         }
     }
+
+    // =========================================================================
+    // THEME SWITCHER LOGIC
+    // =========================================================================
+    @Transactional(readOnly = true)
+    public ActiveWheelThemeResponse getWheelThemes(String tenantId) {
+        List<WheelThemeEntity> themes = wheelThemeRepository.findByTenantId(tenantId);
+        String activeThemeCode = themes.stream()
+                .filter(WheelThemeEntity::getIsActive)
+                .map(WheelThemeEntity::getThemeCode)
+                .findFirst()
+                .orElse("THEME_DEFAULT");
+
+        List<WheelThemeDto> dtoList = themes.stream().map(t -> WheelThemeDto.builder()
+                .id(t.getId())
+                .themeCode(t.getThemeCode())
+                .themeName(t.getThemeName())
+                .primaryColor(t.getPrimaryColor())
+                .secondaryColor(t.getSecondaryColor())
+                .accentColor(t.getAccentColor())
+                .backgroundUrl(t.getBackgroundUrl())
+                .pointerUrl(t.getPointerUrl())
+                .centerButtonUrl(t.getCenterButtonUrl())
+                .isActive(t.getIsActive())
+                .build()
+        ).collect(Collectors.toList());
+
+        return ActiveWheelThemeResponse.builder()
+                .activeThemeCode(activeThemeCode)
+                .availableThemes(dtoList)
+                .build();
+    }
+
+    @Transactional
+    public ActiveWheelThemeResponse selectWheelTheme(String tenantId, SelectWheelThemeRequest request) {
+        String targetThemeCode = request.getThemeCode();
+        List<WheelThemeEntity> themes = wheelThemeRepository.findByTenantId(tenantId);
+
+        boolean found = false;
+        for (WheelThemeEntity theme : themes) {
+            if (theme.getThemeCode().equalsIgnoreCase(targetThemeCode)) {
+                theme.setIsActive(true);
+                found = true;
+            } else {
+                theme.setIsActive(false);
+            }
+        }
+        if (!found) {
+            throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy mã chủ đề giao diện: " + targetThemeCode);
+        }
+
+        wheelThemeRepository.saveAll(themes);
+        log.info("[WHEEL-THEME-UPDATED] tenantId={}, activeTheme={}", tenantId, targetThemeCode);
+        return getWheelThemes(tenantId);
+    }
+
+    // =========================================================================
+    // FULL SECURE SERVER-SIDE PLAY GAME ENGINE
+    // =========================================================================
+    @Transactional
+    public PlayGameResponse playGame(String tenantId, PlayGameRequest request) {
+        String userId = request.getExternalUserId();
+        String gameCode = request.getGameCode();
+        String lockKey = RedisKeys.getGameLockKey(tenantId, gameCode, userId);
+
+        return lockHelper.executeWithLock(lockKey, () -> {
+            GameHubEntity game = gameRepository.findByTenantIdAndGameCode(tenantId, gameCode)
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy thông tin trò chơi"));
+
+            if (game.getStatus() != GameStatus.ACTIVE) {
+                throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Trò chơi hiện không khả dụng để tiếp nhận lượt chơi");
+            }
+
+            // 1. Kiểm tra session và trừ lượt
+            GameSessionEntity session = null;
+            if (request.getSessionToken() != null && !request.getSessionToken().isBlank()) {
+                session = sessionRepository.findByTenantIdAndSessionToken(tenantId, request.getSessionToken()).orElse(null);
+            }
+
+            int turnsRemaining = 1;
+            if (session != null) {
+                session.setTurnsUsed(session.getTurnsUsed() + 1);
+                sessionRepository.save(session);
+                turnsRemaining = Math.max(0, session.getTurnsAllocated() - session.getTurnsUsed());
+            }
+
+            // 2. Tải ma trận giải thưởng động từ DB
+            List<GamePrizeEntity> dbPrizes = gamePrizeRepository
+                    .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc(tenantId, gameCode, "ACTIVE");
+
+            String outcome = "WIN";
+            Integer clientChoice = request.getClientChoice();
+            Integer serverResult = null;
+            List<Integer> diceValues = null;
+            List<String> scratchMatrix = null;
+            Integer towerCurrentFloor = request.getStepNumber() != null ? request.getStepNumber() : 1;
+            BigDecimal towerMultiplier = BigDecimal.ONE;
+            Integer plinkoLandingIndex = null;
+            List<Integer> plinkoBouncePath = null;
+            BigDecimal pointsToAward = BigDecimal.ZERO;
+            PrizeType rewardType = PrizeType.POINTS;
+            String message = "Chúc mừng bạn đã hoàn thành lượt chơi!";
+
+            switch (gameCode) {
+                case "SCRATCH_CARD": {
+                    GamePrizeEntity wonPrize = pickWeightedPrize(dbPrizes);
+                    if (wonPrize != null) {
+                        pointsToAward = wonPrize.getPrizeValue();
+                        message = wonPrize.getPrizeName();
+                        String symbol = wonPrize.getPrizeCode().contains("GOLD") ? "GOLD_CHEST"
+                                : wonPrize.getPrizeCode().contains("SILVER") ? "SILVER_COIN"
+                                : wonPrize.getPrizeCode().contains("BRONZE") ? "BRONZE_STAR" : null;
+                        scratchMatrix = generateScratchMatrix(symbol);
+                        outcome = symbol != null ? "WIN" : "LOSE";
+                    } else {
+                        pointsToAward = BigDecimal.valueOf(50);
+                        scratchMatrix = generateScratchMatrix("SILVER_COIN");
+                        message = "Chúc mừng! Bạn đã cào trúng giải thưởng!";
+                    }
+                    break;
+                }
+
+                case "PENALTY_SHOOTOUT": {
+                    int chosenCorner = clientChoice != null ? Math.max(1, Math.min(clientChoice, 4)) : 1;
+                    GamePrizeEntity wonPrize = pickWeightedPrize(dbPrizes);
+                    if (wonPrize != null) {
+                        pointsToAward = wonPrize.getPrizeValue();
+                        message = wonPrize.getPrizeName();
+                        if ("PENALTY_GOAL".equalsIgnoreCase(wonPrize.getPrizeCode())) {
+                            outcome = "WIN";
+                            serverResult = (chosenCorner % 4) + 1; // Thủ môn bay lệch góc
+                        } else if ("PENALTY_SAVED".equalsIgnoreCase(wonPrize.getPrizeCode())) {
+                            outcome = "SAVED";
+                            serverResult = chosenCorner; // Thủ môn cản phá
+                        } else {
+                            outcome = "POST";
+                            serverResult = chosenCorner; // Dội xà ngang
+                        }
+                    } else {
+                        outcome = "WIN";
+                        serverResult = (chosenCorner % 4) + 1;
+                        pointsToAward = BigDecimal.valueOf(80);
+                        message = "VÀO! Cú sút phạt đền hiểm hóc đánh bại thủ môn!";
+                    }
+                    break;
+                }
+
+                case "TREASURE_CHEST": {
+                    serverResult = clientChoice != null ? Math.max(1, Math.min(clientChoice, 5)) : random.nextInt(5) + 1;
+                    GamePrizeEntity wonPrize = pickWeightedPrize(dbPrizes);
+                    if (wonPrize != null) {
+                        pointsToAward = wonPrize.getPrizeValue();
+                        message = wonPrize.getPrizeName();
+                        outcome = wonPrize.getPrizeCode().contains("TRAP") ? "LOSE" : "WIN";
+                    } else {
+                        pointsToAward = BigDecimal.valueOf(80);
+                        message = "Mở rương vàng thành công!";
+                    }
+                    break;
+                }
+
+                case "TOWER_CLIMB": {
+                    List<BigDecimal> multipliers = dbPrizes.stream()
+                            .filter(p -> p.getPrizeType() == PrizeType.MULTIPLIER || "MULTIPLIER".equalsIgnoreCase(p.getPrizeType().name()))
+                            .map(GamePrizeEntity::getPrizeValue)
+                            .collect(Collectors.toList());
+
+                    if (multipliers.isEmpty()) {
+                        multipliers = List.of(BigDecimal.valueOf(1.5), BigDecimal.valueOf(2.5), BigDecimal.valueOf(5.0), BigDecimal.valueOf(10.0), BigDecimal.valueOf(50.0));
+                    }
+
+                    if ("CASH_OUT".equalsIgnoreCase(request.getAction())) {
+                        outcome = "CASH_OUT";
+                        int currentIdx = Math.max(0, Math.min(towerCurrentFloor - 1, multipliers.size() - 1));
+                        towerMultiplier = multipliers.get(currentIdx);
+                        pointsToAward = BigDecimal.valueOf(20).multiply(towerMultiplier);
+                        message = "Bảo toàn kho báu thành công tại tầng " + towerCurrentFloor + "! Nhận ngay " + pointsToAward + " Điểm!";
+                    } else {
+                        int crashChance = random.nextInt(100);
+                        if (crashChance < 30) {
+                            outcome = "CRASH";
+                            pointsToAward = BigDecimal.valueOf(5);
+                            message = "Đá sập ở tầng " + towerCurrentFloor + "! Bạn nhận 5 Điểm an ủi!";
+                        } else {
+                            if (towerCurrentFloor >= multipliers.size()) {
+                                outcome = "WIN";
+                                towerMultiplier = multipliers.get(multipliers.size() - 1);
+                                pointsToAward = BigDecimal.valueOf(20).multiply(towerMultiplier);
+                                message = "CHINH PHỤC ĐỈNH THÁP! Bạn nhận siêu phần thưởng " + pointsToAward + " Điểm Thưởng!";
+                            } else {
+                                outcome = "CONTINUE";
+                                towerCurrentFloor++;
+                                int nextIdx = Math.min(towerCurrentFloor - 1, multipliers.size() - 1);
+                                towerMultiplier = multipliers.get(nextIdx);
+                                pointsToAward = BigDecimal.ZERO;
+                                message = "Vượt qua tầng an toàn! Bạn có thể bước tiếp lên tầng " + towerCurrentFloor + " hoặc Dừng lại bảo toàn!";
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                case "PLINKO_DROP": {
+                    plinkoBouncePath = new ArrayList<>();
+                    int rightBounces = 0;
+                    for (int r = 0; r < 8; r++) {
+                        int dir = random.nextInt(2);
+                        plinkoBouncePath.add(dir);
+                        rightBounces += dir;
+                    }
+                    plinkoLandingIndex = rightBounces;
+
+                    List<BigDecimal> binMultipliers = dbPrizes.stream()
+                            .filter(p -> p.getPrizeType() == PrizeType.MULTIPLIER || "MULTIPLIER".equalsIgnoreCase(p.getPrizeType().name()))
+                            .map(GamePrizeEntity::getPrizeValue)
+                            .collect(Collectors.toList());
+
+                    if (binMultipliers.size() < 9) {
+                        binMultipliers = List.of(
+                                BigDecimal.valueOf(10.0), BigDecimal.valueOf(5.0), BigDecimal.valueOf(2.0),
+                                BigDecimal.valueOf(1.0), BigDecimal.valueOf(0.5), BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(2.0), BigDecimal.valueOf(5.0), BigDecimal.valueOf(10.0)
+                        );
+                    }
+
+                    BigDecimal mult = binMultipliers.get(Math.min(plinkoLandingIndex, binMultipliers.size() - 1));
+                    pointsToAward = BigDecimal.valueOf(30).multiply(mult);
+                    message = "Bi rơi vào hộc nhân x" + mult + "! Bạn nhận " + pointsToAward + " Điểm Thưởng!";
+                    break;
+                }
+
+                case "GOLDEN_EGG": {
+                    serverResult = clientChoice != null ? Math.max(1, Math.min(clientChoice, 5)) : random.nextInt(5) + 1;
+                    GamePrizeEntity wonPrize = pickWeightedPrize(dbPrizes);
+                    if (wonPrize != null) {
+                        pointsToAward = wonPrize.getPrizeValue();
+                        message = wonPrize.getPrizeName();
+                        outcome = wonPrize.getPrizeCode().contains("CHICK") ? "LOSE" : "WIN";
+                    } else {
+                        pointsToAward = BigDecimal.valueOf(75);
+                        message = "Đập vỡ trứng vàng thành công!";
+                    }
+                    break;
+                }
+
+                case "LUCKY_DICE": {
+                    diceValues = new ArrayList<>();
+                    int d1 = random.nextInt(6) + 1;
+                    int d2 = random.nextInt(6) + 1;
+                    int d3 = random.nextInt(6) + 1;
+                    diceValues.add(d1);
+                    diceValues.add(d2);
+                    diceValues.add(d3);
+
+                    if (d1 == d2 && d2 == d3) {
+                        GamePrizeEntity prize = findPrizeByCode(dbPrizes, "DICE_TRIPLE");
+                        pointsToAward = prize != null ? prize.getPrizeValue() : BigDecimal.valueOf(300);
+                        message = "SIÊU BỘ BA MAY MẮN (" + d1 + "-" + d2 + "-" + d3 + ")! Bạn nhận " + pointsToAward + " Điểm Thưởng!";
+                    } else if (isStraight(d1, d2, d3)) {
+                        GamePrizeEntity prize = findPrizeByCode(dbPrizes, "DICE_STRAIGHT");
+                        pointsToAward = prize != null ? prize.getPrizeValue() : BigDecimal.valueOf(150);
+                        message = "SẢNH TIẾN RỰC RỠ (" + d1 + "-" + d2 + "-" + d3 + ")! Bạn nhận " + pointsToAward + " Điểm Thưởng!";
+                    } else if (d1 == d2 || d2 == d3 || d1 == d3) {
+                        GamePrizeEntity prize = findPrizeByCode(dbPrizes, "DICE_PAIR");
+                        pointsToAward = prize != null ? prize.getPrizeValue() : BigDecimal.valueOf(60);
+                        message = "ĐÔI XÚC XẮC MAY MẮN (" + d1 + "-" + d2 + "-" + d3 + ")! Bạn nhận " + pointsToAward + " Điểm Thưởng!";
+                    } else {
+                        int total = d1 + d2 + d3;
+                        pointsToAward = BigDecimal.valueOf(total * 5L);
+                        message = "Lắc được tổng " + total + " điểm nút! Bạn nhận " + pointsToAward + " Điểm Thưởng!";
+                    }
+                    break;
+                }
+
+                default: {
+                    pointsToAward = BigDecimal.valueOf(25);
+                    message = "Lượt chơi hoàn tất! Bạn nhận được " + pointsToAward + " Điểm Thưởng!";
+                    break;
+                }
+            }
+
+            // 3. Khống chế hạn mức ngân sách ngày của Game
+            if (game.getDailyBudgetLimit() != null && game.getDailyBudgetLimit().compareTo(BigDecimal.ZERO) > 0 && pointsToAward.compareTo(BigDecimal.ZERO) > 0) {
+                String todayStr = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+                String budgetKey = RedisKeys.getGameDailyBudgetKey(tenantId, game.getId(), todayStr);
+                RAtomicLong dailySpent = redissonClient.getAtomicLong(budgetKey);
+
+                long newSpent = dailySpent.addAndGet(pointsToAward.longValue());
+                if (dailySpent.remainTimeToLive() < 0) {
+                    dailySpent.expire(Duration.ofHours(24));
+                }
+
+                if (newSpent > game.getDailyBudgetLimit().longValue()) {
+                    log.warn("[GAME-BUDGET-EXCEEDED] tenantId={}, game={}, spent={}, limit={}",
+                            tenantId, game.getGameCode(), newSpent, game.getDailyBudgetLimit());
+                    dailySpent.addAndGet(-pointsToAward.longValue());
+                    pointsToAward = BigDecimal.valueOf(5);
+                    message = "Hạn mức ngân sách ngày của game đã chạm trần, bạn nhận 5 Điểm an ủi!";
+                }
+            }
+
+            // 4. Cộng điểm vào tài khoản hội viên và Sổ cái
+            LoyaltyAccountEntity account = accountService.getAccountForUpdate(tenantId, userId);
+            BigDecimal currentPoints = account.getCurrentPoints();
+
+            if (pointsToAward.compareTo(BigDecimal.ZERO) > 0) {
+                currentPoints = currentPoints.add(pointsToAward);
+                account.setCurrentPoints(currentPoints);
+                accountRepository.save(account);
+
+                String txRef = "GAME_PLAY_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+                LoyaltyPointLedgerEntity ledger = LoyaltyPointLedgerEntity.builder()
+                        .tenantId(tenantId)
+                        .account(account)
+                        .pointChange(pointsToAward)
+                        .balanceAfter(currentPoints)
+                        .changeType(PointActionType.EARN)
+                        .referenceCode(txRef)
+                        .description("Thưởng trò chơi: " + game.getGameName() + " (" + outcome + ")")
+                        .createdAt(Instant.now())
+                        .build();
+                ledgerRepository.save(ledger);
+            }
+
+            // 5. Ghi lịch sử chơi game bất biến
+            String transactionRef = "PLAY_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+            GamePlayHistoryEntity history = GamePlayHistoryEntity.builder()
+                    .tenantId(tenantId)
+                    .externalUserId(userId)
+                    .gameCode(gameCode)
+                    .sessionToken(session != null ? session.getSessionToken() : null)
+                    .transactionRef(transactionRef)
+                    .score(pointsToAward.intValue())
+                    .rewardType(rewardType)
+                    .rewardValue(pointsToAward)
+                    .pointsAwarded(pointsToAward)
+                    .status("SUCCESS")
+                    .createdAt(Instant.now())
+                    .build();
+            historyRepository.save(history);
+
+            log.info("[GAME-PLAY-COMPLETED] tenantId={}, user={}, game={}, outcome={}, points={}, newBalance={}",
+                    tenantId, userId, gameCode, outcome, pointsToAward, currentPoints);
+
+            return PlayGameResponse.builder()
+                    .transactionRef(transactionRef)
+                    .gameCode(gameCode)
+                    .gameName(game.getGameName())
+                    .outcome(outcome)
+                    .clientChoice(clientChoice)
+                    .serverResult(serverResult)
+                    .diceValues(diceValues)
+                    .scratchMatrix(scratchMatrix)
+                    .towerCurrentFloor(towerCurrentFloor)
+                    .towerMultiplier(towerMultiplier)
+                    .plinkoLandingIndex(plinkoLandingIndex)
+                    .plinkoBouncePath(plinkoBouncePath)
+                    .rewardType(rewardType.name())
+                    .rewardValue(pointsToAward)
+                    .pointsAwarded(pointsToAward)
+                    .newPointBalance(currentPoints)
+                    .turnsRemaining(turnsRemaining)
+                    .message(message)
+                    .timestamp(Instant.now())
+                    .build();
+        });
+    }
+
+    private List<String> generateScratchMatrix(String winSymbol) {
+        String[] allSymbols = {"GOLD_CHEST", "SILVER_COIN", "BRONZE_STAR", "DIAMOND", "CROWN", "RUBY", "TREASURE", "COIN_BAG"};
+        List<String> matrix = new ArrayList<>();
+        if (winSymbol != null) {
+            for (int i = 0; i < 3; i++) matrix.add(winSymbol);
+            for (int i = 0; i < 6; i++) {
+                String s;
+                do {
+                    s = allSymbols[random.nextInt(allSymbols.length)];
+                } while (s.equals(winSymbol));
+                matrix.add(s);
+            }
+        } else {
+            for (int i = 0; i < 9; i++) {
+                matrix.add(allSymbols[i % allSymbols.length]);
+            }
+        }
+        Collections.shuffle(matrix, random);
+        return matrix;
+    }
+
+    private boolean isStraight(int d1, int d2, int d3) {
+        List<Integer> list = new ArrayList<>(List.of(d1, d2, d3));
+        Collections.sort(list);
+        return (list.get(0) + 1 == list.get(1)) && (list.get(1) + 1 == list.get(2));
+    }
+
+    private GamePrizeEntity pickWeightedPrize(List<GamePrizeEntity> prizes) {
+        if (prizes == null || prizes.isEmpty()) return null;
+        int totalWeight = prizes.stream().mapToInt(GamePrizeEntity::getProbabilityWeight).sum();
+        if (totalWeight <= 0) return prizes.get(0);
+        int rand = random.nextInt(totalWeight);
+        int cumulative = 0;
+        for (GamePrizeEntity p : prizes) {
+            cumulative += p.getProbabilityWeight();
+            if (rand < cumulative) {
+                return p;
+            }
+        }
+        return prizes.get(prizes.size() - 1);
+    }
+
+    private GamePrizeEntity findPrizeByCode(List<GamePrizeEntity> prizes, String prizeCode) {
+        if (prizes == null) return null;
+        return prizes.stream()
+                .filter(p -> p.getPrizeCode().equalsIgnoreCase(prizeCode))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<GamePrizeDto> getGamePrizesAdmin(String tenantId, String gameCode) {
+        return gamePrizeRepository.findByTenantIdAndGameCodeOrderByDisplayOrderAsc(tenantId, gameCode)
+                .stream()
+                .map(p -> GamePrizeDto.builder()
+                        .id(p.getId())
+                        .gameCode(p.getGameCode())
+                        .prizeCode(p.getPrizeCode())
+                        .prizeName(p.getPrizeName())
+                        .prizeType(p.getPrizeType() != null ? p.getPrizeType().name() : "POINTS")
+                        .prizeValue(p.getPrizeValue())
+                        .probabilityWeight(p.getProbabilityWeight())
+                        .colorCode(p.getColorCode())
+                        .iconSymbol(p.getIconSymbol())
+                        .displayOrder(p.getDisplayOrder())
+                        .status(p.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public GamePrizeDto saveGamePrizeAdmin(String tenantId, String gameCode, GamePrizeDto dto) {
+        GamePrizeEntity entity;
+        if (dto.getId() != null) {
+            entity = gamePrizeRepository.findByIdAndTenantId(dto.getId(), tenantId)
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.SYSTEM_ERROR, "Không tìm thấy giải thưởng"));
+        } else {
+            entity = GamePrizeEntity.builder()
+                    .tenantId(tenantId)
+                    .gameCode(gameCode)
+                    .createdAt(Instant.now())
+                    .build();
+        }
+        entity.setPrizeCode(dto.getPrizeCode() != null ? dto.getPrizeCode() : "PRIZE_" + System.currentTimeMillis());
+        entity.setPrizeName(dto.getPrizeName());
+        if (dto.getPrizeType() != null) {
+            try {
+                entity.setPrizeType(PrizeType.valueOf(dto.getPrizeType().toUpperCase()));
+            } catch (Exception e) {
+                entity.setPrizeType(PrizeType.POINTS);
+            }
+        }
+        entity.setPrizeValue(dto.getPrizeValue() != null ? dto.getPrizeValue() : BigDecimal.ZERO);
+        entity.setProbabilityWeight(dto.getProbabilityWeight() != null ? dto.getProbabilityWeight() : 100);
+        entity.setColorCode(dto.getColorCode() != null ? dto.getColorCode() : "#F59E0B");
+        entity.setIconSymbol(dto.getIconSymbol() != null ? dto.getIconSymbol() : "🎁");
+        entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0);
+        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
+        entity.setUpdatedAt(Instant.now());
+
+        GamePrizeEntity saved = gamePrizeRepository.save(entity);
+        return GamePrizeDto.builder()
+                .id(saved.getId())
+                .gameCode(saved.getGameCode())
+                .prizeCode(saved.getPrizeCode())
+                .prizeName(saved.getPrizeName())
+                .prizeType(saved.getPrizeType() != null ? saved.getPrizeType().name() : "POINTS")
+                .prizeValue(saved.getPrizeValue())
+                .probabilityWeight(saved.getProbabilityWeight())
+                .colorCode(saved.getColorCode())
+                .iconSymbol(saved.getIconSymbol())
+                .displayOrder(saved.getDisplayOrder())
+                .status(saved.getStatus())
+                .build();
+    }
+
+    @Transactional
+    public void deleteGamePrizeAdmin(String tenantId, Long prizeId) {
+        GamePrizeEntity entity = gamePrizeRepository.findByIdAndTenantId(prizeId, tenantId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.SYSTEM_ERROR, "Không tìm thấy giải thưởng"));
+        gamePrizeRepository.delete(entity);
+    }
+
+    @Transactional
+    public List<GamePrizeDto> autoBalanceGamePrizes(String tenantId, String gameCode) {
+        List<GamePrizeEntity> prizes = gamePrizeRepository.findByTenantIdAndGameCodeOrderByDisplayOrderAsc(tenantId, gameCode);
+        if (!prizes.isEmpty()) {
+            int targetTotal = 1000;
+            int totalWeight = prizes.stream().mapToInt(GamePrizeEntity::getProbabilityWeight).sum();
+            if (totalWeight > 0) {
+                int runningSum = 0;
+                for (int i = 0; i < prizes.size(); i++) {
+                    GamePrizeEntity p = prizes.get(i);
+                    if (i == prizes.size() - 1) {
+                        p.setProbabilityWeight(Math.max(1, targetTotal - runningSum));
+                    } else {
+                        int scaled = (int) Math.round((double) p.getProbabilityWeight() * targetTotal / totalWeight);
+                        p.setProbabilityWeight(Math.max(1, scaled));
+                        runningSum += p.getProbabilityWeight();
+                    }
+                    p.setUpdatedAt(Instant.now());
+                }
+                gamePrizeRepository.saveAll(prizes);
+            }
+        }
+        return getGamePrizesAdmin(tenantId, gameCode);
+    }
 }
+

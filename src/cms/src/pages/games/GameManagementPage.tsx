@@ -6,8 +6,10 @@ import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
+import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
+import { ProgressBar } from 'primereact/progressbar';
 import { InputSwitch } from 'primereact/inputswitch';
 import { AppBreadcrumb } from 'components';
 import { CommonStatus } from '@/models';
@@ -25,6 +27,9 @@ interface GameItem {
   allowPointsSpin: boolean;
   gameUrl: string;
   iconUrl?: string;
+  bannerUrl?: string;
+  description?: string;
+  rulesText?: string;
   status: CommonStatus;
   // Third-Party Game Studio Config
   partnerCode?: string;
@@ -39,19 +44,53 @@ interface GameItem {
   diceMultiplierMax?: number;
 }
 
+interface GamePrizeItem {
+  id?: number;
+  gameCode?: string;
+  prizeCode: string;
+  prizeName: string;
+  prizeType: string;
+  prizeValue: number;
+  probabilityWeight: number;
+  colorCode: string;
+  iconSymbol: string;
+  displayOrder: number;
+  status: string;
+}
+
+const PRIZE_TYPES = [
+  { label: 'Điểm Thưởng (POINTS)', value: 'POINTS' },
+  { label: 'Mã Giảm Giá (VOUCHER)', value: 'VOUCHER' },
+  { label: 'Hoàn Tiền Mặt (CASHBACK)', value: 'CASHBACK' },
+  { label: 'Hệ Số Nhân (MULTIPLIER)', value: 'MULTIPLIER' },
+  { label: 'Lượt Chơi Thêm (TURNS)', value: 'TURNS' },
+  { label: 'Chúc May Mắn (NO_LUCK)', value: 'NO_LUCK' },
+];
+
 export const GameManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const [selectedTenant, setSelectedTenant] = useState('TENANT_NATCASH');
   const [games, setGames] = useState<GameItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGames, setSelectedGames] = useState<GameItem[]>([]);
-  const [showGameDialog, setShowGameDialog] = useState(false);
-  const [showParamsDialog, setShowParamsDialog] = useState(false);
-  const [gameFormData, setGameFormData] = useState<Partial<GameItem>>({});
-  const [paramsFormData, setParamsFormData] = useState<Partial<GameItem>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
 
+  // Dialog States
+  const [showGameDialog, setShowGameDialog] = useState(false);
+  const [showParamsDialog, setShowParamsDialog] = useState(false);
+  const [showPrizeDialog, setShowPrizeDialog] = useState(false);
+  const [showPrizeFormDialog, setShowPrizeFormDialog] = useState(false);
+
+  // Form Data States
+  const [gameFormData, setGameFormData] = useState<Partial<GameItem>>({});
+  const [paramsFormData, setParamsFormData] = useState<Partial<GameItem>>({});
+  const [selectedGameForPrizes, setSelectedGameForPrizes] = useState<GameItem | null>(null);
+  const [prizesList, setPrizesList] = useState<GamePrizeItem[]>([]);
+  const [isPrizesLoading, setIsPrizesLoading] = useState(false);
+  const [prizeFormData, setPrizeFormData] = useState<Partial<GamePrizeItem>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 1. Tải danh mục trò chơi từ Backend
   const loadGames = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -72,17 +111,101 @@ export const GameManagementPage: React.FC = () => {
     loadGames();
   }, [loadGames]);
 
+  // 2. Tải ma trận giải thưởng của 1 game
+  const loadGamePrizes = async (gameCode: string) => {
+    setIsPrizesLoading(true);
+    try {
+      const data = await LoyaltyService.getGamePrizes(gameCode, selectedTenant);
+      setPrizesList(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('[loadGamePrizes] Error:', e);
+      setPrizesList([]);
+    } finally {
+      setIsPrizesLoading(false);
+    }
+  };
+
+  const openPrizesManager = (game: GameItem) => {
+    setSelectedGameForPrizes(game);
+    setShowPrizeDialog(true);
+    loadGamePrizes(game.gameCode);
+  };
+
+  const openNewPrize = () => {
+    setPrizeFormData({
+      gameCode: selectedGameForPrizes?.gameCode,
+      prizeCode: `${selectedGameForPrizes?.gameCode}_PRIZE_${prizesList.length + 1}`,
+      prizeName: '',
+      prizeType: 'POINTS',
+      prizeValue: 50,
+      probabilityWeight: 100,
+      colorCode: '#F59E0B',
+      iconSymbol: '🎁',
+      displayOrder: prizesList.length + 1,
+      status: 'ACTIVE',
+    });
+    setShowPrizeFormDialog(true);
+  };
+
+  const editPrize = (prize: GamePrizeItem) => {
+    setPrizeFormData({ ...prize });
+    setShowPrizeFormDialog(true);
+  };
+
+  const savePrize = async () => {
+    if (!selectedGameForPrizes) return;
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.saveGamePrize(selectedGameForPrizes.gameCode, prizeFormData, selectedTenant);
+      await loadGamePrizes(selectedGameForPrizes.gameCode);
+      setShowPrizeFormDialog(false);
+    } catch (e) {
+      console.error('[savePrize] Error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deletePrize = async (prize: GamePrizeItem) => {
+    if (!selectedGameForPrizes || !prize.id) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa giải "${prize.prizeName}"?`)) return;
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.deleteGamePrize(prize.id, selectedTenant);
+      await loadGamePrizes(selectedGameForPrizes.gameCode);
+    } catch (e) {
+      console.error('[deletePrize] Error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const autoBalancePrizes = async () => {
+    if (!selectedGameForPrizes) return;
+    setIsSubmitting(true);
+    try {
+      const updated = await LoyaltyService.autoBalanceGamePrizes(selectedGameForPrizes.gameCode, selectedTenant);
+      setPrizesList(Array.isArray(updated) ? updated : []);
+    } catch (e) {
+      console.error('[autoBalancePrizes] Error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const openNewGame = () => {
     setGameFormData({
       gameCode: '',
       gameName: '',
-      category: 'LUCKY_DRAW',
+      category: 'INSTANT_WIN',
       pricePerTurn: 10,
       pricePerTurnHtg: 10,
       freeTurnsDaily: 1,
       dailyBudgetLimit: 20000,
       allowPointsSpin: true,
       gameUrl: '',
+      description: '',
+      rulesText: '',
       status: CommonStatus.ACTIVE,
     });
     setShowGameDialog(true);
@@ -124,8 +247,8 @@ export const GameManagementPage: React.FC = () => {
     }
   };
 
-  const statusTemplate = (status: CommonStatus) => {
-    return status === CommonStatus.ACTIVE ? (
+  const statusTemplate = (status: CommonStatus | string) => {
+    return status === CommonStatus.ACTIVE || status === 'ACTIVE' ? (
       <Tag severity="success" value={t('common.active', { defaultValue: 'Đang áp dụng' })} />
     ) : (
       <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Tạm dừng' })} />
@@ -134,17 +257,23 @@ export const GameManagementPage: React.FC = () => {
 
   const categoryOptions = [
     { label: 'Vòng Quay May Mắn (LUCKY_DRAW)', value: 'LUCKY_DRAW' },
+    { label: 'Vé Cào Trúng Liền (INSTANT_WIN)', value: 'INSTANT_WIN' },
+    { label: 'Thể Thao & Hành Động (ACTION)', value: 'ACTION' },
+    { label: 'Phiêu Lưu Leo Tháp (ADVENTURE)', value: 'ADVENTURE' },
+    { label: 'Bàn Cờ 3D & Xúc Xắc (BOARD_3D)', value: 'BOARD_3D' },
     { label: 'Đố Vui Trí Tuệ (QUIZ)', value: 'QUIZ' },
-    { label: 'Nông Trại Trồng Trọt (FARM)', value: 'FARM' },
-    { label: 'Lắc Xí Ngầu (DICE)', value: 'DICE' },
-    { label: 'Đập Trứng Vàng (EGG_TAP)', value: 'EGG_TAP' },
-    { label: 'Lật Hình Trí Nhớ (MEMORY_CARD)', value: 'MEMORY_CARD' },
+    { label: 'Vật Lý & Thả Bi (CASUAL)', value: 'CASUAL' },
   ];
 
   const statusOptions = [
     { label: t('common.active', { defaultValue: 'Đang áp dụng' }), value: CommonStatus.ACTIVE },
     { label: t('common.inactive', { defaultValue: 'Tạm dừng' }), value: CommonStatus.INACTIVE },
   ];
+
+  // Tính toán tổng trọng số và % xác suất
+  const totalPrizeWeight = prizesList
+    .filter((p) => p.status === 'ACTIVE')
+    .reduce((sum, item) => sum + (item.probabilityWeight || 0), 0);
 
   return (
     <div className="game-management-page">
@@ -161,7 +290,9 @@ export const GameManagementPage: React.FC = () => {
           <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-blue-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
-                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.game_list', { defaultValue: 'Tổng Game Vận Hành' })}</span>
+                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
+                  {t('game.game_list', { defaultValue: 'Tổng Game Vận Hành' })}
+                </span>
                 <div className="text-900 font-black text-2xl tracking-tight">{games.length} Game</div>
               </div>
               <div
@@ -176,7 +307,7 @@ export const GameManagementPage: React.FC = () => {
               </div>
             </div>
             <span className="text-green-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-check text-xs font-bold" /> 100% Sẵn sàng Webview
+              <i className="pi pi-check text-xs font-bold" /> 100% Sẵn sàng Webview & DB
             </span>
           </div>
         </div>
@@ -185,7 +316,9 @@ export const GameManagementPage: React.FC = () => {
           <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-orange-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
-                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.today_spins', { defaultValue: 'Tổng lượt chơi hôm nay' })}</span>
+                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
+                  {t('game.today_spins', { defaultValue: 'Tổng lượt chơi hôm nay' })}
+                </span>
                 <div className="text-900 font-black text-2xl font-mono tracking-tight text-orange-600">390 Lượt</div>
               </div>
               <div
@@ -209,7 +342,9 @@ export const GameManagementPage: React.FC = () => {
           <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-green-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
-                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.today_cost', { defaultValue: 'Tổng ngân sách đã chi' })}</span>
+                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
+                  {t('game.today_cost', { defaultValue: 'Tổng ngân sách đã chi' })}
+                </span>
                 <div className="text-900 font-black text-2xl font-mono tracking-tight text-green-600">6,000 HTG</div>
               </div>
               <div
@@ -231,8 +366,8 @@ export const GameManagementPage: React.FC = () => {
           <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-purple-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
-                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">Trạng Thái Đồng Bộ</span>
-                <div className="text-900 font-black text-2xl tracking-tight text-purple-600">Hoạt Động Tốt</div>
+                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">Cơ Chế Khóa & Sổ Cái</span>
+                <div className="text-900 font-black text-2xl tracking-tight text-purple-600">Redisson RLock</div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -242,11 +377,11 @@ export const GameManagementPage: React.FC = () => {
                   background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
                 }}
               >
-                <i className="pi pi-mobile text-white text-2xl font-bold" />
+                <i className="pi pi-shield text-white text-2xl font-bold" />
               </div>
             </div>
             <span className="text-purple-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-check text-xs font-bold" /> Natcash App Bridge sẵn sàng
+              <i className="pi pi-check text-xs font-bold" /> Toàn vẹn tài chính 100%
             </span>
           </div>
         </div>
@@ -256,8 +391,12 @@ export const GameManagementPage: React.FC = () => {
       <div className="card shadow-1 border-round-xl surface-card p-4">
         <div className="flex justify-content-between align-items-center mb-3">
           <div>
-            <h4 className="m-0 text-primary font-bold">{t('game.management_title', { defaultValue: 'Danh mục Trò chơi & Tham số Chi tiết' })}</h4>
-            <p className="text-500 text-xs mt-1 mb-0">Quản trị danh sách các trò chơi minigame, giá lượt chơi HTG, lượt miễn phí và tham số nghiệp vụ từng game.</p>
+            <h4 className="m-0 text-primary font-bold">
+              {t('game.management_title', { defaultValue: 'Danh mục Trò chơi & Cấu hình Giải thưởng Thương mại' })}
+            </h4>
+            <p className="text-500 text-xs mt-1 mb-0">
+              Quản trị ma trận giải thưởng động, tỷ lệ trúng thưởng, giá lượt chơi HTG và tham số nghiệp vụ từng game.
+            </p>
           </div>
           <div className="flex gap-2">
             <span className="p-input-icon-left">
@@ -270,7 +409,12 @@ export const GameManagementPage: React.FC = () => {
                 className="p-inputtext-sm"
               />
             </span>
-            <Button label={t('game.add_game', { defaultValue: 'Thêm Trò Chơi Mới' })} icon="pi pi-plus" severity="success" onClick={openNewGame} />
+            <Button
+              label={t('game.add_game', { defaultValue: 'Thêm Trò Chơi Mới' })}
+              icon="pi pi-plus"
+              severity="success"
+              onClick={openNewGame}
+            />
           </div>
         </div>
 
@@ -284,97 +428,497 @@ export const GameManagementPage: React.FC = () => {
           stripedRows
           responsiveLayout="scroll"
           globalFilter={globalFilter}
+          loading={isLoading}
         >
           <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
-          <Column header={t('common.stt', { defaultValue: 'STT' })} body={(_, options) => options.rowIndex + 1} style={{ width: '3.5rem', textAlign: 'center' }} />
+          <Column
+            header={t('common.stt', { defaultValue: 'STT' })}
+            body={(_, options) => options.rowIndex + 1}
+            style={{ width: '3.5rem', textAlign: 'center' }}
+          />
           <Column
             body={(rowData: GameItem) => (
-              <div className="flex align-items-center justify-content-center" style={{ gap: '0.5rem' }}>
-                <Button icon="pi pi-cog" rounded outlined severity="secondary" size="small" onClick={() => openParamsConfig(rowData)} tooltip={t('game.config_params', { defaultValue: 'Cấu hình tham số chi tiết' })} />
-                <Button icon="pi pi-pencil" rounded outlined severity="secondary" size="small" onClick={() => editGame(rowData)} tooltip={t('common.edit', { defaultValue: 'Sửa thông tin' })} />
+              <div className="flex align-items-center justify-content-center" style={{ gap: '0.4rem' }}>
+                <Button
+                  icon="pi pi-gift"
+                  rounded
+                  severity="warning"
+                  size="small"
+                  onClick={() => openPrizesManager(rowData)}
+                  tooltip="Cơ cấu giải thưởng động (DB Prizes)"
+                />
+                <Button
+                  icon="pi pi-cog"
+                  rounded
+                  outlined
+                  severity="secondary"
+                  size="small"
+                  onClick={() => openParamsConfig(rowData)}
+                  tooltip={t('game.config_params', { defaultValue: 'Cấu hình tham số chi tiết' })}
+                />
+                <Button
+                  icon="pi pi-pencil"
+                  rounded
+                  outlined
+                  severity="secondary"
+                  size="small"
+                  onClick={() => editGame(rowData)}
+                  tooltip={t('common.edit', { defaultValue: 'Sửa thông tin' })}
+                />
               </div>
             )}
             header={t('common.actions', { defaultValue: 'Thao tác' })}
-            style={{ width: '7.5rem', minWidth: '7.5rem', textAlign: 'center' }}
+            style={{ width: '10rem', minWidth: '10rem', textAlign: 'center' }}
           />
-          <Column field="gameCode" header={t('game.game_code', { defaultValue: 'Mã Game' })} sortable style={{ minWidth: '10rem', fontWeight: 600 }} />
-          <Column field="gameName" header={t('game.game_name', { defaultValue: 'Tên Trò chơi' })} sortable style={{ minWidth: '16rem' }} />
-          <Column field="category" header={t('game.category', { defaultValue: 'Thể loại' })} sortable style={{ minWidth: '8rem' }} />
-          <Column field="freeTurnsDaily" header={t('game.free_turns_daily', { defaultValue: 'Lượt miễn phí/ngày' })} body={(row: GameItem) => <span className="font-bold text-green-600">{row.freeTurnsDaily} lượt</span>} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
-          <Column field="pricePerTurnHtg" header={t('game.price_per_turn_htg', { defaultValue: 'Giá mua lượt (HTG)' })} body={(row: GameItem) => row.pricePerTurnHtg > 0 ? <span className="font-bold font-mono text-orange-600">{row.pricePerTurnHtg} HTG</span> : <Tag severity="info" value="Miễn phí" />} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
-          <Column field="dailyBudgetLimit" header={t('game.daily_budget_total', { defaultValue: 'Hạn mức ngày (HTG)' })} body={(row: GameItem) => row.dailyBudgetLimit > 0 ? <span className="font-mono">{row.dailyBudgetLimit.toLocaleString()} HTG</span> : 'Không giới hạn'} sortable style={{ minWidth: '11rem' }} />
-          <Column field="status" body={(row: GameItem) => statusTemplate(row.status)} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '8rem' }} />
+          <Column
+            field="gameCode"
+            header={t('game.game_code', { defaultValue: 'Mã Game' })}
+            sortable
+            style={{ minWidth: '10rem', fontWeight: 600 }}
+          />
+          <Column
+            field="gameName"
+            header={t('game.game_name', { defaultValue: 'Tên Trò chơi' })}
+            sortable
+            style={{ minWidth: '15rem' }}
+          />
+          <Column
+            field="category"
+            header={t('game.category', { defaultValue: 'Thể loại' })}
+            sortable
+            style={{ minWidth: '9rem' }}
+          />
+          <Column
+            field="freeTurnsDaily"
+            header={t('game.free_turns_daily', { defaultValue: 'Lượt miễn phí/ngày' })}
+            body={(row: GameItem) => <span className="font-bold text-green-600">{row.freeTurnsDaily} lượt</span>}
+            sortable
+            style={{ minWidth: '9rem', textAlign: 'center' }}
+          />
+          <Column
+            field="pricePerTurnHtg"
+            header={t('game.price_per_turn_htg', { defaultValue: 'Giá mua lượt (HTG)' })}
+            body={(row: GameItem) =>
+              row.pricePerTurnHtg > 0 ? (
+                <span className="font-bold font-mono text-orange-600">{row.pricePerTurnHtg} HTG</span>
+              ) : (
+                <Tag severity="info" value="Miễn phí" />
+              )
+            }
+            sortable
+            style={{ minWidth: '9rem', textAlign: 'center' }}
+          />
+          <Column
+            field="dailyBudgetLimit"
+            header={t('game.daily_budget_total', { defaultValue: 'Hạn mức ngày (HTG)' })}
+            body={(row: GameItem) =>
+              row.dailyBudgetLimit > 0 ? (
+                <span className="font-mono">{row.dailyBudgetLimit.toLocaleString()} HTG</span>
+              ) : (
+                'Không giới hạn'
+              )
+            }
+            sortable
+            style={{ minWidth: '10rem' }}
+          />
+          <Column
+            field="status"
+            body={(row: GameItem) => statusTemplate(row.status)}
+            header={t('common.status', { defaultValue: 'Trạng thái' })}
+            sortable
+            style={{ minWidth: '8rem' }}
+          />
         </DataTable>
       </div>
 
-      {/* ── DIALOG 1: GAME CREATION & BASIC INFO ── */}
+      {/* ── DIALOG 1: DYNAMIC PRIZE MATRIX MANAGER ── */}
+      <Dialog
+        visible={showPrizeDialog}
+        style={{ width: '900px' }}
+        header={
+          <div className="flex align-items-center gap-2">
+            <i className="pi pi-gift text-orange-500 font-bold text-xl" />
+            <span className="font-bold">
+              Quản lý Cơ cấu Giải thưởng: {selectedGameForPrizes?.gameName} ({selectedGameForPrizes?.gameCode})
+            </span>
+          </div>
+        }
+        modal
+        className="p-fluid"
+        onHide={() => setShowPrizeDialog(false)}
+      >
+        {/* Metric Summary Header */}
+        <div className="grid mb-3">
+          <div className="col-12 md:col-4">
+            <div className="p-3 surface-100 border-round-xl text-center">
+              <span className="text-xs text-500 font-bold uppercase block mb-1">Số Hạng Giải Đang Mở</span>
+              <span className="text-xl font-bold text-900">{prizesList.length} Giải Thưởng</span>
+            </div>
+          </div>
+          <div className="col-12 md:col-4">
+            <div className="p-3 surface-100 border-round-xl text-center">
+              <span className="text-xs text-500 font-bold uppercase block mb-1">Tổng Trọng Số Xác Suất (Σ W)</span>
+              <span className="text-xl font-bold font-mono text-blue-600">{totalPrizeWeight}</span>
+            </div>
+          </div>
+          <div className="col-12 md:col-4">
+            <div className="p-3 surface-100 border-round-xl text-center">
+              <span className="text-xs text-500 font-bold uppercase block mb-1">Trạng Thái Cân Bằng</span>
+              <span className="text-xl font-bold text-green-600">Đã Chuẩn Hóa RNG</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-content-between align-items-center mb-3">
+          <span className="text-xs text-600">
+            * Tỷ lệ trúng giải được tính toán tự động qua thuật toán Weighted Random Sampling bảo mật tại Backend.
+          </span>
+          <div className="flex gap-2">
+            <Button
+              label="Tự Động Cân Bằng (1000)"
+              icon="pi pi-sliders-h"
+              severity="secondary"
+              outlined
+              size="small"
+              onClick={autoBalancePrizes}
+              loading={isSubmitting}
+            />
+            <Button
+              label="Thêm Hạng Giải Mới"
+              icon="pi pi-plus"
+              severity="warning"
+              size="small"
+              onClick={openNewPrize}
+            />
+          </div>
+        </div>
+
+        <DataTable<any>
+          value={prizesList}
+          dataKey="id"
+          stripedRows
+          responsiveLayout="scroll"
+          loading={isPrizesLoading}
+          emptyMessage="Chưa có giải thưởng nào được cấu hình cho trò chơi này."
+        >
+          <Column field="displayOrder" header="STT" style={{ width: '4rem', textAlign: 'center' }} />
+          <Column
+            field="iconSymbol"
+            header="Icon"
+            body={(row: GamePrizeItem) => <span className="text-xl">{row.iconSymbol || '🎁'}</span>}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+          <Column field="prizeCode" header="Mã Giải" sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
+          <Column field="prizeName" header="Tên Giải Thưởng" sortable style={{ minWidth: '12rem' }} />
+          <Column
+            field="prizeType"
+            header="Loại Thưởng"
+            body={(row: GamePrizeItem) => <Tag severity="info" value={row.prizeType} />}
+            style={{ minWidth: '8rem' }}
+          />
+          <Column
+            field="prizeValue"
+            header="Giá Trị"
+            body={(row: GamePrizeItem) => <span className="font-bold text-orange-600">+{row.prizeValue}</span>}
+            style={{ minWidth: '6rem', textAlign: 'right' }}
+          />
+          <Column
+            field="probabilityWeight"
+            header="Trọng Số"
+            body={(row: GamePrizeItem) => <span className="font-mono">{row.probabilityWeight}</span>}
+            style={{ minWidth: '6rem', textAlign: 'center' }}
+          />
+          <Column
+            header="Tỷ Lệ %"
+            body={(row: GamePrizeItem) => {
+              const pct = totalPrizeWeight > 0 ? (row.probabilityWeight / totalPrizeWeight) * 100 : 0;
+              return (
+                <div style={{ minWidth: '6rem' }}>
+                  <span className="font-mono text-xs font-bold text-900 block mb-1">{pct.toFixed(1)}%</span>
+                  <ProgressBar value={pct} showValue={false} style={{ height: '5px' }} />
+                </div>
+              );
+            }}
+            style={{ minWidth: '7rem' }}
+          />
+          <Column
+            field="status"
+            header="Trạng Thái"
+            body={(row: GamePrizeItem) => statusTemplate(row.status)}
+            style={{ minWidth: '7rem' }}
+          />
+          <Column
+            body={(row: GamePrizeItem) => (
+              <div className="flex gap-1 justify-content-center">
+                <Button icon="pi pi-pencil" rounded text severity="secondary" size="small" onClick={() => editPrize(row)} />
+                <Button icon="pi pi-trash" rounded text severity="danger" size="small" onClick={() => deletePrize(row)} />
+              </div>
+            )}
+            style={{ width: '6rem', textAlign: 'center' }}
+          />
+        </DataTable>
+      </Dialog>
+
+      {/* ── DIALOG 2: ADD/EDIT PRIZE SUB-FORM ── */}
+      <Dialog
+        visible={showPrizeFormDialog}
+        style={{ width: '500px' }}
+        header={prizeFormData.id ? 'Sửa Hạng Giải Thưởng' : 'Thêm Hạng Giải Thưởng Mới'}
+        modal
+        className="p-fluid"
+        onHide={() => setShowPrizeFormDialog(false)}
+      >
+        <div className="field mb-3">
+          <label htmlFor="prizeCode" className="font-bold">Mã Giải Thưởng</label>
+          <InputText
+            id="prizeCode"
+            value={prizeFormData.prizeCode || ''}
+            onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeCode: e.target.value })}
+            placeholder="Ví dụ: SCRATCH_GOLD_100"
+            required
+          />
+        </div>
+
+        <div className="field mb-3">
+          <label htmlFor="prizeName" className="font-bold">Tên Giải Thưởng</label>
+          <InputText
+            id="prizeName"
+            value={prizeFormData.prizeName || ''}
+            onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeName: e.target.value })}
+            placeholder="Ví dụ: Hòm Vàng May Mắn 100 Điểm"
+            required
+          />
+        </div>
+
+        <div className="grid">
+          <div className="col-12 md:col-6 field mb-3">
+            <label htmlFor="prizeType" className="font-bold">Loại Phần Thưởng</label>
+            <Dropdown
+              id="prizeType"
+              value={prizeFormData.prizeType || 'POINTS'}
+              options={PRIZE_TYPES}
+              onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })}
+            />
+          </div>
+          <div className="col-12 md:col-6 field mb-3">
+            <label htmlFor="prizeValue" className="font-bold">Giá Trị Phần Thưởng</label>
+            <InputNumber
+              id="prizeValue"
+              value={prizeFormData.prizeValue || 0}
+              min={0}
+              onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })}
+            />
+          </div>
+        </div>
+
+        <div className="grid">
+          <div className="col-12 md:col-6 field mb-3">
+            <label htmlFor="probabilityWeight" className="font-bold">Trọng Số Xác Suất (Weight)</label>
+            <InputNumber
+              id="probabilityWeight"
+              value={prizeFormData.probabilityWeight || 100}
+              min={1}
+              onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 100 })}
+            />
+          </div>
+          <div className="col-12 md:col-6 field mb-3">
+            <label htmlFor="displayOrder" className="font-bold">Thứ Tự Hiển Thị</label>
+            <InputNumber
+              id="displayOrder"
+              value={prizeFormData.displayOrder || 1}
+              min={1}
+              onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })}
+            />
+          </div>
+        </div>
+
+        <div className="grid">
+          <div className="col-12 md:col-6 field mb-3">
+            <label htmlFor="iconSymbol" className="font-bold">Biểu Tượng (Icon / Emoji)</label>
+            <InputText
+              id="iconSymbol"
+              value={prizeFormData.iconSymbol || '🎁'}
+              onChange={(e) => setPrizeFormData({ ...prizeFormData, iconSymbol: e.target.value })}
+              placeholder="Ví dụ: 🏆, 💎, ⚽, 🎁"
+            />
+          </div>
+          <div className="col-12 md:col-6 field mb-3">
+            <label htmlFor="colorCode" className="font-bold">Mã Màu HEX</label>
+            <InputText
+              id="colorCode"
+              value={prizeFormData.colorCode || '#F59E0B'}
+              onChange={(e) => setPrizeFormData({ ...prizeFormData, colorCode: e.target.value })}
+              placeholder="#F59E0B"
+            />
+          </div>
+        </div>
+
+        <div className="field mb-3">
+          <label htmlFor="prizeStatus" className="font-bold">Trạng Thái</label>
+          <Dropdown
+            id="prizeStatus"
+            value={prizeFormData.status || 'ACTIVE'}
+            options={[
+              { label: 'Đang áp dụng (ACTIVE)', value: 'ACTIVE' },
+              { label: 'Tạm dừng (INACTIVE)', value: 'INACTIVE' },
+            ]}
+            onChange={(e) => setPrizeFormData({ ...prizeFormData, status: e.value })}
+          />
+        </div>
+
+        <div className="flex justify-content-end gap-2 mt-4">
+          <Button
+            label={t('common.cancel', { defaultValue: 'Hủy' })}
+            icon="pi pi-times"
+            outlined
+            onClick={() => setShowPrizeFormDialog(false)}
+            disabled={isSubmitting}
+          />
+          <Button
+            label={t('common.save', { defaultValue: 'Lưu giải thưởng' })}
+            icon="pi pi-check"
+            onClick={savePrize}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
+        </div>
+      </Dialog>
+
+      {/* ── DIALOG 3: GAME CREATION & BASIC INFO ── */}
       <Dialog
         visible={showGameDialog}
-        style={{ width: '550px' }}
-        header={gameFormData.id ? t('game.edit_game', { defaultValue: 'Cập nhật Trò chơi' }) : t('game.create_game', { defaultValue: 'Thêm mới Trò chơi' })}
+        style={{ width: '600px' }}
+        header={
+          gameFormData.id
+            ? t('game.edit_game', { defaultValue: 'Cập nhật Trò chơi' })
+            : t('game.create_game', { defaultValue: 'Thêm mới Trò chơi' })
+        }
         modal
         className="p-fluid"
         onHide={() => setShowGameDialog(false)}
       >
         <div className="field mb-3">
-          <label htmlFor="gameCode" className="font-bold">{t('game.game_code', { defaultValue: 'Mã Game' })}</label>
-          <InputText id="gameCode" value={gameFormData.gameCode || ''} onChange={(e) => setGameFormData({ ...gameFormData, gameCode: e.target.value })} placeholder="Ví dụ: LUCKY_WHEEL_2026" required disabled={!!gameFormData.id} />
+          <label htmlFor="gameCode" className="font-bold">
+            {t('game.game_code', { defaultValue: 'Mã Game' })}
+          </label>
+          <InputText
+            id="gameCode"
+            value={gameFormData.gameCode || ''}
+            onChange={(e) => setGameFormData({ ...gameFormData, gameCode: e.target.value })}
+            placeholder="Ví dụ: SCRATCH_CARD, LUCKY_WHEEL"
+            required
+            disabled={!!gameFormData.id}
+          />
         </div>
         <div className="field mb-3">
-          <label htmlFor="gameName" className="font-bold">{t('game.game_name', { defaultValue: 'Tên Trò chơi' })}</label>
-          <InputText id="gameName" value={gameFormData.gameName || ''} onChange={(e) => setGameFormData({ ...gameFormData, gameName: e.target.value })} placeholder="Ví dụ: Vòng Quay May Mắn Tri Ân" required />
+          <label htmlFor="gameName" className="font-bold">
+            {t('game.game_name', { defaultValue: 'Tên Trò chơi' })}
+          </label>
+          <InputText
+            id="gameName"
+            value={gameFormData.gameName || ''}
+            onChange={(e) => setGameFormData({ ...gameFormData, gameName: e.target.value })}
+            placeholder="Ví dụ: Vé Cào May Mắn Hoàng Kim"
+            required
+          />
         </div>
         <div className="grid">
           <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="category" className="font-bold">{t('game.category', { defaultValue: 'Thể loại' })}</label>
-            <Dropdown id="category" value={gameFormData.category || 'LUCKY_DRAW'} options={categoryOptions} onChange={(e) => setGameFormData({ ...gameFormData, category: e.value })} />
+            <label htmlFor="category" className="font-bold">
+              {t('game.category', { defaultValue: 'Thể loại' })}
+            </label>
+            <Dropdown
+              id="category"
+              value={gameFormData.category || 'INSTANT_WIN'}
+              options={categoryOptions}
+              onChange={(e) => setGameFormData({ ...gameFormData, category: e.value })}
+            />
           </div>
           <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="freeTurnsDaily" className="font-bold">{t('game.free_turns_daily', { defaultValue: 'Lượt miễn phí/ngày' })}</label>
-            <InputNumber id="freeTurnsDaily" value={gameFormData.freeTurnsDaily || 0} min={0} onValueChange={(e) => setGameFormData({ ...gameFormData, freeTurnsDaily: e.value || 0 })} />
+            <label htmlFor="freeTurnsDaily" className="font-bold">
+              {t('game.free_turns_daily', { defaultValue: 'Lượt miễn phí/ngày' })}
+            </label>
+            <InputNumber
+              id="freeTurnsDaily"
+              value={gameFormData.freeTurnsDaily || 0}
+              min={0}
+              onValueChange={(e) => setGameFormData({ ...gameFormData, freeTurnsDaily: e.value || 0 })}
+            />
           </div>
         </div>
         <div className="grid">
           <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="pricePerTurnHtg" className="font-bold">{t('game.price_per_turn_htg', { defaultValue: 'Giá mua lượt (HTG)' })}</label>
-            <InputNumber id="pricePerTurnHtg" value={gameFormData.pricePerTurnHtg || 0} min={0} onValueChange={(e) => setGameFormData({ ...gameFormData, pricePerTurnHtg: e.value || 0 })} />
+            <label htmlFor="pricePerTurnHtg" className="font-bold">
+              {t('game.price_per_turn_htg', { defaultValue: 'Giá mua lượt (HTG)' })}
+            </label>
+            <InputNumber
+              id="pricePerTurnHtg"
+              value={gameFormData.pricePerTurnHtg || 0}
+              min={0}
+              onValueChange={(e) => setGameFormData({ ...gameFormData, pricePerTurnHtg: e.value || 0 })}
+            />
           </div>
           <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="dailyBudgetLimit" className="font-bold">{t('game.daily_budget_total', { defaultValue: 'Hạn mức chi/ngày (HTG)' })}</label>
-            <InputNumber id="dailyBudgetLimit" value={gameFormData.dailyBudgetLimit ?? 50000} onValueChange={(e) => setGameFormData({ ...gameFormData, dailyBudgetLimit: e.value ?? 50000 })} />
+            <label htmlFor="dailyBudgetLimit" className="font-bold">
+              {t('game.daily_budget_total', { defaultValue: 'Hạn mức chi/ngày (HTG)' })}
+            </label>
+            <InputNumber
+              id="dailyBudgetLimit"
+              value={gameFormData.dailyBudgetLimit ?? 50000}
+              onValueChange={(e) => setGameFormData({ ...gameFormData, dailyBudgetLimit: e.value ?? 50000 })}
+            />
           </div>
         </div>
         <div className="field mb-3">
-          <label htmlFor="gameUrl" className="font-bold">Đường dẫn Nhúng Game HTML5 (URL)</label>
-          <InputText id="gameUrl" value={gameFormData.gameUrl || ''} onChange={(e) => setGameFormData({ ...gameFormData, gameUrl: e.target.value })} placeholder="Ví dụ: https://game-studio.com/games/bubble-shooter" />
-          <small className="text-500">Đường dẫn máy chủ bên thứ ba chạy qua giao thức HTTPS.</small>
-        </div>
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="partnerCode" className="font-bold">Mã Đối tác Game Studio</label>
-            <InputText id="partnerCode" value={gameFormData.partnerCode || ''} onChange={(e) => setGameFormData({ ...gameFormData, partnerCode: e.target.value })} placeholder="Ví dụ: STUDIO_PHASER_VN" />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="revenueSharePercent" className="font-bold">Tỷ lệ Chia sẻ Doanh thu (%)</label>
-            <InputNumber id="revenueSharePercent" value={gameFormData.revenueSharePercent ?? 70} min={0} max={100} suffix="%" onValueChange={(e) => setGameFormData({ ...gameFormData, revenueSharePercent: e.value ?? 70 })} />
-          </div>
+          <label htmlFor="description" className="font-bold">Mô tả Trò chơi</label>
+          <InputTextarea
+            id="description"
+            rows={2}
+            value={gameFormData.description || ''}
+            onChange={(e) => setGameFormData({ ...gameFormData, description: e.target.value })}
+            placeholder="Mô tả hấp dẫn về luật chơi và giải thưởng..."
+          />
         </div>
         <div className="field mb-3">
-          <label htmlFor="webhookUrl" className="font-bold">Đường dẫn Webhook Nhận Kết quả (URL)</label>
-          <InputText id="webhookUrl" value={gameFormData.webhookUrl || ''} onChange={(e) => setGameFormData({ ...gameFormData, webhookUrl: e.target.value })} placeholder="Ví dụ: https://game-studio.com/api/v1/callbacks/result" />
-          <small className="text-500">Hệ thống sẽ gửi bản tin có ký số HMAC-SHA256 về URL này khi ván chơi hoàn tất.</small>
+          <label htmlFor="rulesText" className="font-bold">Quy tắc & Thể lệ Chi tiết</label>
+          <InputTextarea
+            id="rulesText"
+            rows={3}
+            value={gameFormData.rulesText || ''}
+            onChange={(e) => setGameFormData({ ...gameFormData, rulesText: e.target.value })}
+            placeholder="Mỗi lượt chơi hội viên cào mở 9 ô..."
+          />
         </div>
         <div className="field mb-3">
-          <label htmlFor="status" className="font-bold">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
-          <Dropdown id="status" value={gameFormData.status || CommonStatus.ACTIVE} options={statusOptions} onChange={(e) => setGameFormData({ ...gameFormData, status: e.value })} />
+          <label htmlFor="status" className="font-bold">
+            {t('common.status', { defaultValue: 'Trạng thái' })}
+          </label>
+          <Dropdown
+            id="status"
+            value={gameFormData.status || CommonStatus.ACTIVE}
+            options={statusOptions}
+            onChange={(e) => setGameFormData({ ...gameFormData, status: e.value })}
+          />
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowGameDialog(false)} disabled={isSubmitting} />
-          <Button label={t('common.save', { defaultValue: 'Lưu thay đổi' })} icon="pi pi-check" onClick={saveGame} loading={isSubmitting} disabled={isSubmitting} />
+          <Button
+            label={t('common.cancel', { defaultValue: 'Hủy' })}
+            icon="pi pi-times"
+            outlined
+            onClick={() => setShowGameDialog(false)}
+            disabled={isSubmitting}
+          />
+          <Button
+            label={t('common.save', { defaultValue: 'Lưu thay đổi' })}
+            icon="pi pi-check"
+            onClick={saveGame}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
         </div>
       </Dialog>
 
-      {/* ── DIALOG 2: DETAILED GAME PARAMETERS CONFIGURATION ── */}
+      {/* ── DIALOG 4: DETAILED GAME PARAMETERS CONFIGURATION ── */}
       <Dialog
         visible={showParamsDialog}
         style={{ width: '650px' }}
@@ -388,7 +932,9 @@ export const GameManagementPage: React.FC = () => {
             <i className="pi pi-info-circle text-blue-600 font-bold" />
             <span className="font-bold">Mã trò chơi: {paramsFormData.gameCode}</span>
           </div>
-          <span className="text-xs">Tham số dưới đây sẽ được nạp động vào Webview Game khi hội viên bắt đầu phiên chơi.</span>
+          <span className="text-xs">
+            Tham số dưới đây sẽ được nạp động vào Webview Game khi hội viên bắt đầu phiên chơi.
+          </span>
         </div>
 
         {/* Dynamic Parameter Fields Based On Game Category */}
@@ -396,52 +942,35 @@ export const GameManagementPage: React.FC = () => {
           <div className="grid">
             <div className="col-12 md:col-6 field mb-3">
               <label htmlFor="quizQuestionCount" className="font-bold">Số lượng câu hỏi mỗi phiên</label>
-              <InputNumber id="quizQuestionCount" value={paramsFormData.quizQuestionCount || 5} min={1} max={20} onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizQuestionCount: e.value || 5 })} />
+              <InputNumber
+                id="quizQuestionCount"
+                value={paramsFormData.quizQuestionCount || 5}
+                min={1}
+                max={20}
+                onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizQuestionCount: e.value || 5 })}
+              />
               <small className="text-500">Số câu hỏi người chơi cần trả lời liên tiếp.</small>
             </div>
             <div className="col-12 md:col-6 field mb-3">
               <label htmlFor="quizCountdownSec" className="font-bold">Thời gian trả lời (Giây/câu)</label>
-              <InputNumber id="quizCountdownSec" value={paramsFormData.quizCountdownSec || 20} min={5} max={60} onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizCountdownSec: e.value || 20 })} />
+              <InputNumber
+                id="quizCountdownSec"
+                value={paramsFormData.quizCountdownSec || 20}
+                min={5}
+                max={60}
+                onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizCountdownSec: e.value || 20 })}
+              />
               <small className="text-500">Thời gian đếm ngược cho mỗi câu hỏi.</small>
             </div>
             <div className="col-12 field mb-3">
               <label htmlFor="quizRewardPoints" className="font-bold">Điểm thưởng khi trả lời đúng 100%</label>
-              <InputNumber id="quizRewardPoints" value={paramsFormData.quizRewardPoints || 150} min={10} onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizRewardPoints: e.value || 150 })} />
+              <InputNumber
+                id="quizRewardPoints"
+                value={paramsFormData.quizRewardPoints || 150}
+                min={10}
+                onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizRewardPoints: e.value || 150 })}
+              />
             </div>
-          </div>
-        )}
-
-        {paramsFormData.category === 'FARM' && (
-          <div className="grid">
-            <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="farmSeasonDays" className="font-bold">Thời gian mùa vụ thu hoạch (Ngày)</label>
-              <InputNumber id="farmSeasonDays" value={paramsFormData.farmSeasonDays || 7} min={1} max={30} onValueChange={(e) => setParamsFormData({ ...paramsFormData, farmSeasonDays: e.value || 7 })} />
-              <small className="text-500">Chu kỳ từ lúc gieo hạt đến khi đổi nông sản.</small>
-            </div>
-            <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="farmVoucherLimit" className="font-bold">Giới hạn đổi voucher mỗi mùa</label>
-              <InputNumber id="farmVoucherLimit" value={paramsFormData.farmVoucherLimit || 5} min={1} onValueChange={(e) => setParamsFormData({ ...paramsFormData, farmVoucherLimit: e.value || 5 })} />
-            </div>
-          </div>
-        )}
-
-        {paramsFormData.category === 'DICE' && (
-          <div className="grid">
-            <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="diceMultiplierMax" className="font-bold">Hệ số nhân thưởng tối đa (xTimes)</label>
-              <InputNumber id="diceMultiplierMax" value={paramsFormData.diceMultiplierMax || 10} min={2} max={100} onValueChange={(e) => setParamsFormData({ ...paramsFormData, diceMultiplierMax: e.value || 10 })} />
-              <small className="text-500">Mức nhân điểm thưởng tối đa khi đổ 3 mặt đồng nhất.</small>
-            </div>
-          </div>
-        )}
-
-        {paramsFormData.category === 'LUCKY_DRAW' && (
-          <div className="p-3 bg-amber-50 border-1 border-amber-200 border-round-xl text-amber-900">
-            <div className="flex align-items-center gap-2 mb-1">
-              <i className="pi pi-sliders-h text-orange-600 font-bold" />
-              <span className="font-bold">Vòng Quay May Mắn Tri Ân Khách Hàng</span>
-            </div>
-            <span className="text-xs">Ma trận xác suất 8 ô thưởng của Vòng Quay được cấu hình tại trang <strong>Cấu hình Chung Cổng Game & Vòng Quay</strong>.</span>
           </div>
         )}
 
@@ -456,8 +985,20 @@ export const GameManagementPage: React.FC = () => {
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowParamsDialog(false)} disabled={isSubmitting} />
-          <Button label={t('common.save', { defaultValue: 'Lưu cấu hình tham số' })} icon="pi pi-check" onClick={saveParamsConfig} loading={isSubmitting} disabled={isSubmitting} />
+          <Button
+            label={t('common.cancel', { defaultValue: 'Hủy' })}
+            icon="pi pi-times"
+            outlined
+            onClick={() => setShowParamsDialog(false)}
+            disabled={isSubmitting}
+          />
+          <Button
+            label={t('common.save', { defaultValue: 'Lưu cấu hình tham số' })}
+            icon="pi pi-check"
+            onClick={saveParamsConfig}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
         </div>
       </Dialog>
     </div>

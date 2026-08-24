@@ -69,6 +69,15 @@ public class GameHubEntity {
     @Column(name = "icon_url", length = 500)
     private String iconUrl;
 
+    @Column(name = "banner_url", length = 500)
+    private String bannerUrl;
+
+    @Column(name = "description", length = 500)
+    private String description;
+
+    @Column(name = "rules_text", columnDefinition = "TEXT")
+    private String rulesText;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default

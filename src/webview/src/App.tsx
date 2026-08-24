@@ -24,15 +24,36 @@ import { LoyaltyJSBridge } from './bridge/LoyaltyJSBridge';
 import { GameHubPage } from './pages/GameHubPage';
 import { LuckyWheelPage } from './pages/LuckyWheelPage';
 import { TriviaQuizGame } from './pages/games/TriviaQuizGame';
+import { ScratchCardGame } from './pages/games/ScratchCardGame';
+import { PenaltyShootoutGame } from './pages/games/PenaltyShootoutGame';
+import { TreasureChestGame } from './pages/games/TreasureChestGame';
+import { TowerClimbGame } from './pages/games/TowerClimbGame';
+import { PlinkoDropGame } from './pages/games/PlinkoDropGame';
+import { GoldenEggGame } from './pages/games/GoldenEggGame';
+import { LuckyDiceGame } from './pages/games/LuckyDiceGame';
 import { UserVoucherPage } from './pages/UserVoucherPage';
 import { LanguageSelector } from './components/LanguageSelector';
 import { TierBenefitsModal } from './components/TierBenefitsModal';
 import { NotificationModal, NotificationType } from './components/NotificationModal';
 import { LoyaltyApi, MemberProfile, MilestoneItem, LedgerItem, PartnerItem, getDefaultUserId, getTenantId } from './services/api';
 
+export type AppTabType =
+  | 'HOME'
+  | 'GAMEHUB'
+  | 'WHEEL'
+  | 'QUIZ'
+  | 'VOUCHERS'
+  | 'SCRATCH'
+  | 'PENALTY'
+  | 'CHEST'
+  | 'TOWER'
+  | 'PLINKO'
+  | 'EGG'
+  | 'DICE';
+
 export const App: React.FC = () => {
   const { t } = useTranslation();
-  const [currentTab, setCurrentTab] = useState<'HOME' | 'GAMEHUB' | 'WHEEL' | 'QUIZ' | 'VOUCHERS'>('HOME');
+  const [currentTab, setCurrentTab] = useState<AppTabType>('HOME');
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
   const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
@@ -74,7 +95,7 @@ export const App: React.FC = () => {
   }, []);
 
   // URL Hash Synchronized Navigation for Seamless Browser / Hardware Back Button
-  const navigateToTab = useCallback((tab: 'HOME' | 'GAMEHUB' | 'WHEEL' | 'QUIZ' | 'VOUCHERS') => {
+  const navigateToTab = useCallback((tab: AppTabType) => {
     if (tab === 'HOME') {
       window.location.hash = '#/';
     } else {
@@ -98,6 +119,20 @@ export const App: React.FC = () => {
         setCurrentTab('WHEEL');
       } else if (rawHash === 'QUIZ' || rawHash === 'GAMEHUB/QUIZ') {
         setCurrentTab('QUIZ');
+      } else if (rawHash === 'SCRATCH' || rawHash === 'GAMEHUB/SCRATCH') {
+        setCurrentTab('SCRATCH');
+      } else if (rawHash === 'PENALTY' || rawHash === 'GAMEHUB/PENALTY') {
+        setCurrentTab('PENALTY');
+      } else if (rawHash === 'CHEST' || rawHash === 'GAMEHUB/CHEST') {
+        setCurrentTab('CHEST');
+      } else if (rawHash === 'TOWER' || rawHash === 'GAMEHUB/TOWER') {
+        setCurrentTab('TOWER');
+      } else if (rawHash === 'PLINKO' || rawHash === 'GAMEHUB/PLINKO') {
+        setCurrentTab('PLINKO');
+      } else if (rawHash === 'EGG' || rawHash === 'GAMEHUB/EGG') {
+        setCurrentTab('EGG');
+      } else if (rawHash === 'DICE' || rawHash === 'GAMEHUB/DICE') {
+        setCurrentTab('DICE');
       } else if (rawHash === 'VOUCHERS' || rawHash === 'REWARDS') {
         setCurrentTab('VOUCHERS');
       } else {
@@ -303,6 +338,62 @@ export const App: React.FC = () => {
         {/* SUBGAME: ĐỐ VUI TRÍ TUỆ */}
         {currentTab === 'QUIZ' && (
           <TriviaQuizGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: VÉ CÀO MAY MẮN */}
+        {currentTab === 'SCRATCH' && (
+          <ScratchCardGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: SÚT PHẠT ĐỀN 11M */}
+        {currentTab === 'PENALTY' && (
+          <PenaltyShootoutGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: MỞ RƯƠNG BÁU CARIBE */}
+        {currentTab === 'CHEST' && (
+          <TreasureChestGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: THÁP KHO BÁU MAY MẮN */}
+        {currentTab === 'TOWER' && (
+          <TowerClimbGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: THẢ BI ZICZAC PLINKO */}
+        {currentTab === 'PLINKO' && (
+          <PlinkoDropGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: ĐẬP TRỨNG VÀNG */}
+        {currentTab === 'EGG' && (
+          <GoldenEggGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME: LẮC XÚC XẮC TÀI LỘC */}
+        {currentTab === 'DICE' && (
+          <LuckyDiceGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
@@ -563,87 +654,92 @@ export const App: React.FC = () => {
                     action: () => navigateToTab('WHEEL'),
                   },
                   {
+                    id: 'SCRATCH',
+                    name: t('games.scratch.title', { defaultValue: 'Vé Cào May Mắn' }),
+                    categoryLabel: 'May Mắn',
+                    icon: '🎟️',
+                    bgGradient: 'bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600',
+                    badge: '100đ',
+                    badgeBg: 'bg-amber-600',
+                    perk: 'Trúng Liền',
+                    action: () => navigateToTab('SCRATCH'),
+                  },
+                  {
+                    id: 'PENALTY',
+                    name: t('games.penalty.title', { defaultValue: 'Sút Phạt Đền 11m' }),
+                    categoryLabel: 'Thể Thao',
+                    icon: '⚽',
+                    bgGradient: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600',
+                    badge: '+80đ',
+                    badgeBg: 'bg-emerald-600',
+                    perk: 'Sút Vàng',
+                    action: () => navigateToTab('PENALTY'),
+                  },
+                  {
+                    id: 'CHEST',
+                    name: t('games.chest.title', { defaultValue: 'Mở Rương Caribe' }),
+                    categoryLabel: 'May Mắn',
+                    icon: '🏴‍☠️',
+                    bgGradient: 'bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700',
+                    badge: 'NỔ HŨ',
+                    badgeBg: 'bg-cyan-600',
+                    perk: '200 HTG',
+                    action: () => navigateToTab('CHEST'),
+                  },
+                  {
+                    id: 'TOWER',
+                    name: t('games.tower.title', { defaultValue: 'Tháp Kho Báu' }),
+                    categoryLabel: 'Mạo Hiểm',
+                    icon: '🏰',
+                    bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-slate-800',
+                    badge: 'x50 QUÀ',
+                    badgeBg: 'bg-purple-600',
+                    perk: '5 Tầng',
+                    action: () => navigateToTab('TOWER'),
+                  },
+                  {
+                    id: 'PLINKO',
+                    name: t('games.plinko.title', { defaultValue: 'Thả Bi Ziczac' }),
+                    categoryLabel: 'May Mắn',
+                    icon: '🔮',
+                    bgGradient: 'bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600',
+                    badge: 'x10 MULTI',
+                    badgeBg: 'bg-pink-600',
+                    perk: 'Neon Game',
+                    action: () => navigateToTab('PLINKO'),
+                  },
+                  {
+                    id: 'EGG',
+                    name: t('games.egg.title', { defaultValue: 'Đập Trứng Vàng' }),
+                    categoryLabel: 'May Mắn',
+                    icon: '🥚',
+                    bgGradient: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500',
+                    badge: 'LÌ XÌ',
+                    badgeBg: 'bg-amber-600',
+                    perk: '1 Chạm',
+                    action: () => navigateToTab('EGG'),
+                  },
+                  {
+                    id: 'DICE',
+                    name: t('games.dice.title', { defaultValue: 'Lắc Xúc Xắc' }),
+                    categoryLabel: 'May Mắn',
+                    icon: '🎲',
+                    bgGradient: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
+                    badge: '300đ',
+                    badgeBg: 'bg-indigo-600',
+                    perk: 'Bộ Ba',
+                    action: () => navigateToTab('DICE'),
+                  },
+                  {
                     id: 'QUIZ',
                     name: t('gamehub.game2_name', { defaultValue: 'Đố Vui Trúng Điểm' }),
                     categoryLabel: 'Trí Tuệ',
                     icon: '❓',
-                    bgGradient: 'bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600',
+                    bgGradient: 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600',
                     badge: '+150đ',
-                    badgeBg: 'bg-indigo-600',
+                    badgeBg: 'bg-blue-600',
                     perk: '5 Câu Hỏi',
                     action: () => navigateToTab('QUIZ'),
-                  },
-                  {
-                    id: 'FARM',
-                    name: t('gamehub.game3_name', { defaultValue: 'Nông Trại Delimart' }),
-                    categoryLabel: 'Nông Trại',
-                    icon: '🌱',
-                    bgGradient: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-green-600',
-                    badge: 'MÙA VỤ',
-                    badgeBg: 'bg-emerald-600',
-                    perk: 'Đổi Nông Sản',
-                    action: () =>
-                      setNotifyModal({
-                        isOpen: true,
-                        type: 'farm',
-                        title: t('gamehub.game3_name', { defaultValue: 'Nông Trại Delimart' }),
-                        message: t('gamehub.alert_farm', { defaultValue: 'Tính năng Nông Trại Delimart sẽ sớm ra mắt trong phiên bản kế tiếp!' }),
-                        badge: 'MÙA VỤ THU HOẠCH',
-                      }),
-                  },
-                  {
-                    id: 'DICE',
-                    name: t('gamehub.game4_name', { defaultValue: 'Lắc Xí Ngầu' }),
-                    categoryLabel: 'Lễ Hội',
-                    icon: '🎲',
-                    bgGradient: 'bg-gradient-to-br from-purple-600 via-pink-600 to-indigo-700',
-                    badge: 'x10 QUÀ',
-                    badgeBg: 'bg-purple-600',
-                    perk: 'May Mắn',
-                    action: () =>
-                      setNotifyModal({
-                        isOpen: true,
-                        type: 'dice',
-                        title: t('gamehub.game4_name', { defaultValue: 'Lắc Xí Ngầu May Mắn' }),
-                        message: t('gamehub.alert_dice', { defaultValue: 'Sự kiện Lắc Xí Ngầu Lễ Hội Mùa Màng đang được chuẩn bị phát hành!' }),
-                        badge: 'SỰ KIỆN LỄ HỘI',
-                      }),
-                  },
-                  {
-                    id: 'GOLDEN_EGG',
-                    name: 'Đập Trứng Vàng',
-                    categoryLabel: 'May Mắn',
-                    icon: '🥚',
-                    bgGradient: 'bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600',
-                    badge: '500 HTG',
-                    badgeBg: 'bg-orange-600',
-                    perk: 'Quà Khủng',
-                    action: () =>
-                      setNotifyModal({
-                        isOpen: true,
-                        type: 'dice',
-                        title: 'Đập Trứng Vàng May Mắn',
-                        message: 'Minigame Đập Trứng Vàng chuẩn bị khai mở trong sự kiện tri ân tuần tới!',
-                        badge: 'SẮP RA MẮT',
-                      }),
-                  },
-                  {
-                    id: 'MEMORY_CARD',
-                    name: 'Lật Hình Trí Nhớ',
-                    categoryLabel: 'Trí Tuệ',
-                    icon: '🧠',
-                    bgGradient: 'bg-gradient-to-br from-cyan-600 via-blue-500 to-indigo-600',
-                    badge: '+200đ',
-                    badgeBg: 'bg-cyan-600',
-                    perk: 'Nhanh Mắt',
-                    action: () =>
-                      setNotifyModal({
-                        isOpen: true,
-                        type: 'info',
-                        title: 'Lật Hình Tìm Cặp Trí Nhớ',
-                        message: 'Trò chơi rèn luyện trí nhớ sẽ cập nhật ngay trong bản nâng cấp sắp tới!',
-                        badge: 'MINIGAME',
-                      }),
                   },
                 ].map((game) => (
                   <div

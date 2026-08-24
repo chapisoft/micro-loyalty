@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public final class GameHubDto {
 
@@ -295,4 +296,138 @@ public final class GameHubDto {
         private String status;
         private Instant createdAt;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WheelThemeDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String themeCode;
+        private String themeName;
+        private String primaryColor;
+        private String secondaryColor;
+        private String accentColor;
+        private String backgroundUrl;
+        private String pointerUrl;
+        private String centerButtonUrl;
+        private Boolean isActive;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ActiveWheelThemeResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String activeThemeCode;
+        private List<WheelThemeDto> availableThemes;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SelectWheelThemeRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotBlank(message = "Mã chủ đề không được để trống")
+        private String themeCode;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PlayGameRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotBlank(message = "Mã người dùng không được để trống")
+        private String externalUserId;
+
+        @NotBlank(message = "Mã game không được để trống")
+        private String gameCode;
+
+        private Integer clientChoice;
+        private Integer stepNumber;
+        private String sessionToken;
+        private String action; // PLAY, CASH_OUT
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PlayGameResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String transactionRef;
+        private String gameCode;
+        private String gameName;
+        private String outcome; // WIN, LOSE, CONTINUE, CASH_OUT
+        private Integer clientChoice;
+        private Integer serverResult;
+        private List<Integer> diceValues;
+        private List<String> scratchMatrix;
+        private Integer towerCurrentFloor;
+        private BigDecimal towerMultiplier;
+        private Integer plinkoLandingIndex;
+        private List<Integer> plinkoBouncePath;
+        private String rewardType;
+        private BigDecimal rewardValue;
+        private BigDecimal pointsAwarded;
+        private String voucherCode;
+        private BigDecimal newPointBalance;
+        private Integer turnsRemaining;
+        private String message;
+        private Instant timestamp;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GamePrizeDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String gameCode;
+        private String prizeCode;
+        private String prizeName;
+        private String prizeType;
+        private BigDecimal prizeValue;
+        private Integer probabilityWeight;
+        private String colorCode;
+        private String iconSymbol;
+        private Integer displayOrder;
+        private String status;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GameDetailResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String gameCode;
+        private String gameName;
+        private String category;
+        private BigDecimal pricePerTurn;
+        private Integer freeTurnsDaily;
+        private Integer remainingTurnsToday;
+        private BigDecimal userPointBalance;
+        private String description;
+        private String rulesText;
+        private String bannerUrl;
+        private String iconUrl;
+        private Boolean allowPointsSpin;
+        private List<GamePrizeDto> prizes;
+        private Map<String, Object> gameParams;
+    }
 }
+

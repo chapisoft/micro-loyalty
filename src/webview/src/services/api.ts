@@ -290,5 +290,103 @@ export const LoyaltyApi = {
     if (!res.ok) throw new Error('Không thể tải lịch sử chơi game');
     return res.json();
   },
+
+  // 13. Lấy danh sách Theme vòng quay và Theme đang kích hoạt
+  async getWheelThemes() {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/themes`, {
+      headers: { 'X-Tenant-Id': tenant },
+    });
+    if (!res.ok) throw new Error('Không thể tải danh sách giao diện chủ đề');
+    return res.json();
+  },
+
+  // 14. Chọn giao diện chủ đề vòng quay
+  async selectWheelTheme(themeCode: string) {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/themes/select`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({ themeCode }),
+    });
+    if (!res.ok) throw new Error('Không thể cập nhật chủ đề giao diện');
+    return res.json();
+  },
+
+  // 15. Thực hiện lượt chơi may rủi bảo mật phía Server
+  async playGame(
+    gameCode: string,
+    clientChoice?: number,
+    stepNumber?: number,
+    sessionToken?: string,
+    action: string = 'PLAY',
+    externalUserId: string = getDefaultUserId()
+  ) {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/games/play`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({
+        externalUserId,
+        gameCode,
+        clientChoice,
+        stepNumber,
+        sessionToken,
+        action,
+      }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Không thể thực hiện lượt chơi');
+    }
+    return res.json();
+  },
+
+  // 16. Lấy chi tiết ma trận giải thưởng và cấu hình động của trò chơi từ DB
+  async getGameDetail(gameCode: string, externalUserId: string = getDefaultUserId()): Promise<GameDetailData> {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/gamehub/v1/games/detail?gameCode=${gameCode}&userId=${externalUserId}`, {
+      headers: { 'X-Tenant-Id': tenant },
+    });
+    if (!res.ok) throw new Error('Không thể tải thông tin chi tiết trò chơi');
+    return res.json();
+  },
 };
+
+export interface GamePrizeItem {
+  id: number;
+  prizeCode: string;
+  prizeName: string;
+  prizeType: string;
+  prizeValue: number;
+  probabilityWeight: number;
+  colorCode?: string;
+  iconSymbol?: string;
+  displayOrder: number;
+}
+
+export interface GameDetailData {
+  id: number;
+  gameCode: string;
+  gameName: string;
+  category: string;
+  pricePerTurn: number;
+  freeTurnsDaily: number;
+  remainingTurnsToday: number;
+  userPointBalance: number;
+  description?: string;
+  rulesText?: string;
+  bannerUrl?: string;
+  iconUrl?: string;
+  allowPointsSpin: boolean;
+  prizes: GamePrizeItem[];
+  gameParams?: Record<string, any>;
+}
+
 

@@ -9,10 +9,57 @@ import {
   VolumeX,
   Gift,
   Zap,
-  Flame
+  Flame,
+  Palette,
+  Check
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import { LoyaltyApi, WheelPrizeItem } from '../services/api';
+
+interface WheelThemeItem {
+  id?: number;
+  themeCode: string;
+  themeName: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  isActive?: boolean;
+}
+
+const THEME_PRESETS: Record<string, { nameKey: string; icon: string; bgClass: string; headerGradient: string; rimColor: string; centerBtnGradient: string }> = {
+  THEME_DEFAULT: {
+    nameKey: 'games.themes.theme_default',
+    icon: '👑',
+    bgClass: 'bg-slate-50',
+    headerGradient: 'from-amber-600 to-orange-600',
+    rimColor: '#F59E0B',
+    centerBtnGradient: 'from-amber-500 to-yellow-400',
+  },
+  THEME_KANAVAL: {
+    nameKey: 'games.themes.theme_kanaval',
+    icon: '🔥',
+    bgClass: 'bg-stone-900 text-white',
+    headerGradient: 'from-red-600 to-orange-500',
+    rimColor: '#DC2626',
+    centerBtnGradient: 'from-red-600 to-amber-500',
+  },
+  THEME_CARIBBEAN: {
+    nameKey: 'games.themes.theme_caribbean',
+    icon: '🏝️',
+    bgClass: 'bg-slate-900 text-white',
+    headerGradient: 'from-teal-500 to-cyan-500',
+    rimColor: '#0D9488',
+    centerBtnGradient: 'from-teal-500 to-cyan-400',
+  },
+  THEME_HOLIDAY: {
+    nameKey: 'games.themes.theme_holiday',
+    icon: '🎄',
+    bgClass: 'bg-zinc-900 text-white',
+    headerGradient: 'from-pink-600 to-rose-500',
+    rimColor: '#E11D48',
+    centerBtnGradient: 'from-rose-500 to-amber-400',
+  },
+};
 
 interface ConfettiParticle {
   x: number;
@@ -74,6 +121,9 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [pointerWobble, setPointerWobble] = useState(0);
   const [ledPhase, setLedPhase] = useState(0);
+  const [activeTheme, setActiveTheme] = useState<string>('THEME_DEFAULT');
+  const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
+  const [_availableThemes, setAvailableThemes] = useState<WheelThemeItem[]>([]);
 
   const tenantId = new URLSearchParams(window.location.search).get('tenantId') || 'TENANT_NATCASH';
   const userId = new URLSearchParams(window.location.search).get('userId') || '50937123456';
@@ -86,6 +136,31 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
       window.history.back();
     } else {
       LoyaltyJSBridge.closeWebview();
+    }
+  };
+
+  // Load themes from API
+  const loadThemes = useCallback(async () => {
+    try {
+      const res = await LoyaltyApi.getWheelThemes();
+      if (res?.activeThemeCode) {
+        setActiveTheme(res.activeThemeCode);
+      }
+      if (res?.availableThemes) {
+        setAvailableThemes(res.availableThemes);
+      }
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  const handleSelectTheme = async (themeCode: string) => {
+    try {
+      setActiveTheme(themeCode);
+      setShowThemeModal(false);
+      await LoyaltyApi.selectWheelTheme(themeCode);
+    } catch {
+      // Handled
     }
   };
 
@@ -106,7 +181,8 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
   useEffect(() => {
     loadWheelConfig();
-  }, [loadWheelConfig]);
+    loadThemes();
+  }, [loadWheelConfig, loadThemes]);
 
   // Audio synthesis Web Audio API (Tick & Win Melody)
   const playSound = (freq: number, type: OscillatorType = 'sine', duration = 0.08, gainVal = 0.15) => {
@@ -559,6 +635,14 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowThemeModal(true)}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-50 hover:bg-amber-100/80 active:scale-95 transition flex items-center justify-center text-amber-600 border border-amber-300 shadow-xs"
+              title={t('games.themes.title')}
+            >
+              <Palette className="w-4 h-4 text-amber-600" />
+            </button>
+
+            <button
               onClick={() => setSoundEnabled(!soundEnabled)}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center text-amber-600 border border-slate-200"
               title="Âm thanh"
@@ -903,6 +987,71 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             <button
               onClick={() => setShowBuyModal(false)}
               className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs active:scale-95 transition"
+            >
+              {t('wheel.btn_close')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── THEME SELECTION MODAL ── */}
+      {showThemeModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-amber-500/30 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 animate-scale-up text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="font-black text-base text-amber-300 flex items-center gap-2">
+                <Palette className="w-5 h-5 text-amber-400" /> {t('games.themes.title')}
+              </h3>
+              <button onClick={() => setShowThemeModal(false)} className="text-slate-400 hover:text-white text-sm font-bold">
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              {t('games.themes.subtitle')}
+            </p>
+
+            <div className="space-y-2.5">
+              {Object.entries(THEME_PRESETS).map(([code, preset]) => {
+                const isSelected = activeTheme === code;
+
+                return (
+                  <div
+                    key={code}
+                    onClick={() => handleSelectTheme(code)}
+                    className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer active:scale-95 transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-amber-500/20 border-amber-400 shadow-lg scale-[1.02]'
+                        : 'bg-slate-800/80 border-slate-700 hover:border-slate-500'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center text-xl shadow-inner border border-white/10">
+                        {preset.icon}
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                          {t(preset.nameKey)}
+                        </div>
+                        <div className="text-[10px] text-amber-300/80 uppercase font-mono mt-0.5">
+                          {code}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-xs shadow-md">
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setShowThemeModal(false)}
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-2xl text-xs active:scale-95 transition"
             >
               {t('wheel.btn_close')}
             </button>

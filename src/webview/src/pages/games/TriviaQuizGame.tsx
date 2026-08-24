@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
-  HelpCircle,
-  Trophy,
+  Volume2,
+  VolumeX,
+  Coins,
+  ShieldCheck,
   CheckCircle2,
   XCircle,
   Clock,
   Sparkles,
   RotateCcw
 } from 'lucide-react';
-import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
-import { LoyaltyApi } from '../../services/api';
+import { LoyaltyApi, GameDetailData } from '../../services/api';
+import { soundManager } from '../../utils/audio';
 
 interface QuizQuestion {
   id: number;
@@ -21,7 +23,7 @@ interface QuizQuestion {
   explanation: string;
 }
 
-const QUIZ_QUESTIONS: QuizQuestion[] = [
+const DEFAULT_QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 1,
     question: 'Khi mua sắm tại siêu thị Delimart, tỷ lệ tích lũy điểm Loyalty cơ bản là bao nhiêu?',
@@ -64,6 +66,7 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
   onClaimReward,
 }) => {
   const { t } = useTranslation();
+  const [gameConfig, setGameConfig] = useState<GameDetailData | null>(null);
   const [currentIdx, setCurrentIdx] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
@@ -71,18 +74,39 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
   const [timeLeft, setTimeLeft] = useState<number>(20);
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [isClaimed, setIsClaimed] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [remainingTurns, setRemainingTurns] = useState<number>(1);
 
-  const currentQ = QUIZ_QUESTIONS[currentIdx];
+  // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
+  useEffect(() => {
+    LoyaltyApi.getGameDetail('TRIVIA_QUIZ')
+      .then((cfg) => {
+        setGameConfig(cfg);
+        setUserBalance(cfg.userPointBalance || 0);
+        setRemainingTurns(cfg.remainingTurnsToday || 1);
+      })
+      .catch(() => {});
+  }, []);
 
-  // Timer countdown per question
+  const toggleSound = () => {
+    const muted = soundManager.toggleMute();
+    setIsMuted(muted);
+    if (!muted) soundManager.playTap();
+  };
+
+  const currentQ = DEFAULT_QUIZ_QUESTIONS[currentIdx];
+
+  // Đếm ngược thời gian từng câu hỏi
   useEffect(() => {
     if (isFinished || isAnswered) return;
     if (timeLeft <= 0) {
+      soundManager.playLose();
       setIsAnswered(true);
       return;
     }
     const timer = setInterval(() => {
-      setTimeLeft((t) => t - 1);
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft, isAnswered, isFinished]);
@@ -93,25 +117,55 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
     setIsAnswered(true);
 
     if (idx === currentQ.correctAnswer) {
+      soundManager.playWinFanfare();
       setScore((s) => s + 1);
       if (navigator.vibrate) navigator.vibrate(50);
     } else {
+      soundManager.playLose();
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     }
   };
 
   const handleNextQuestion = () => {
-    if (currentIdx < QUIZ_QUESTIONS.length - 1) {
+    soundManager.playTap();
+    if (currentIdx < DEFAULT_QUIZ_QUESTIONS.length - 1) {
       setCurrentIdx((i) => i + 1);
       setSelectedOption(null);
       setIsAnswered(false);
       setTimeLeft(20);
     } else {
       setIsFinished(true);
+      if (score >= 4) {
+        soundManager.playJackpot();
+      } else {
+        soundManager.playWinFanfare();
+      }
+    }
+  };
+
+  const calculateReward = () => {
+    if (score === 5) return 150;
+    if (score === 4) return 100;
+    if (score === 3) return 50;
+    return 10;
+  };
+
+  const handleClaim = async () => {
+    soundManager.playTap();
+    const points = calculateReward();
+    try {
+      await LoyaltyApi.submitGameResult('TRIVIA_QUIZ', score, 'GS_QUIZ_' + Date.now());
+      setIsClaimed(true);
+      setUserBalance((b) => b + points);
+      if (onClaimReward) onClaimReward(points);
+    } catch {
+      setIsClaimed(true);
+      if (onClaimReward) onClaimReward(points);
     }
   };
 
   const handleRestart = () => {
+    soundManager.playTap();
     setCurrentIdx(0);
     setSelectedOption(null);
     setIsAnswered(false);
@@ -121,100 +175,96 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
     setIsClaimed(false);
   };
 
-  const handleClaim = async () => {
-    setIsClaimed(true);
-    let pointsAwarded = 150;
-    try {
-      const res = await LoyaltyApi.submitGameResult('SUPERMARKET_QUIZ', score);
-      if (res && res.pointsAwarded !== undefined) {
-        pointsAwarded = Number(res.pointsAwarded);
-      }
-    } catch (e) {
-      console.warn('[TriviaQuizGame] Submit result fallback:', e);
-    }
-    if (onClaimReward) {
-      onClaimReward(pointsAwarded);
-    }
-  };
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '') {
-      window.history.back();
-    } else {
-      LoyaltyJSBridge.closeWebview();
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button
-            onClick={handleBack}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition flex items-center gap-1.5 text-xs font-bold text-slate-700 border border-slate-200"
-            title={t('nav.back')}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('gamehub.title')}</span>
-          </button>
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none pb-12">
+      {/* 1. Header Bar */}
+      <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-blue-500/20 px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => {
+            soundManager.playTap();
+            onBack?.();
+          }}
+          className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 transition-all text-slate-300"
+          aria-label={t('games.common.btn_back')}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
-          <div className="text-center">
-            <h1 className="text-sm sm:text-base font-black text-slate-900 flex items-center justify-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-indigo-600" />
-              <span>{t('quiz.title')}</span>
-            </h1>
-            <p className="text-[10px] text-slate-500">{t('quiz.subtitle')}</p>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold text-lg shadow-sm">
+            🧠
           </div>
-
-          <div className="flex items-center space-x-1 text-xs font-mono font-bold bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl text-amber-900">
-            <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin" />
-            <span>{timeLeft}s</span>
-          </div>
+          <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-blue-200 to-indigo-400 bg-clip-text text-transparent">
+            {gameConfig?.gameName || 'Đố Vui Trí Tuệ'}
+          </span>
         </div>
 
-        {/* Question Progress Bar */}
-        <div className="w-full h-1.5 bg-slate-100">
-          <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-amber-500 transition-all duration-300"
-            style={{ width: `${((currentIdx + 1) / QUIZ_QUESTIONS.length) * 100}%` }}
-          />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleSound}
+            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 transition-all text-blue-400"
+            title={isMuted ? t('games.common.sound_off') : t('games.common.sound_on')}
+          >
+            {isMuted ? <VolumeX className="w-5 h-5 text-slate-400" /> : <Volume2 className="w-5 h-5" />}
+          </button>
+          <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/30 rounded-xl px-2.5 py-1">
+            <Coins className="w-4 h-4 text-blue-400" />
+            <span className="text-xs font-bold text-blue-300">{userBalance}đ</span>
+          </div>
         </div>
       </header>
 
-      {/* Main Quiz Body */}
-      <main className="max-w-2xl mx-auto px-4 py-6 sm:py-8 flex-1 w-full flex flex-col justify-between">
+      {/* 2. Main Quiz Stage */}
+      <main className="max-w-md mx-auto w-full px-4 py-4 flex-1 flex flex-col justify-between space-y-4">
+        {/* Banner Info */}
+        <div className="w-full text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700 text-[11px] text-blue-300">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{t('games.common.remaining_turns', { turns: remainingTurns })}</span>
+          </div>
+        </div>
+
         {!isFinished ? (
-          <div className="space-y-6">
-            {/* Question Card */}
-            <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm relative overflow-hidden">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
-                  {t('quiz.question_progress', { current: currentIdx + 1, total: QUIZ_QUESTIONS.length })}
+          <>
+            {/* Progress & Countdown */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-blue-400">
+                  Câu hỏi {currentIdx + 1}/{DEFAULT_QUIZ_QUESTIONS.length}
                 </span>
-                <span className="text-xs font-black text-amber-600 font-mono">
-                  ★ Điểm: {score}/{QUIZ_QUESTIONS.length}
+                <span className="flex items-center gap-1 font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                  <Clock className="w-3.5 h-3.5 animate-pulse" /> {timeLeft}s
                 </span>
               </div>
 
-              <h2 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+              {/* Thanh Tiến Trình */}
+              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300 rounded-full"
+                  style={{
+                    width: `${((currentIdx + 1) / DEFAULT_QUIZ_QUESTIONS.length) * 100}%`,
+                  }}
+                />
+              </div>
+
+              {/* Câu Hỏi */}
+              <h2 className="text-sm sm:text-base font-extrabold text-white leading-snug pt-2">
                 {currentQ.question}
               </h2>
             </div>
 
-            {/* Answer Options Grid */}
-            <div className="space-y-3">
+            {/* 4 Phương Án Trả Lời */}
+            <div className="space-y-2.5">
               {currentQ.options.map((opt, idx) => {
-                let btnStyle = 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-xs';
+                const isSelected = selectedOption === idx;
+                const isCorrect = idx === currentQ.correctAnswer;
+                let btnStyle = 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200';
+
                 if (isAnswered) {
-                  if (idx === currentQ.correctAnswer) {
-                    btnStyle = 'bg-emerald-50 border-emerald-500 text-emerald-900 font-black shadow-sm ring-2 ring-emerald-500/20';
-                  } else if (idx === selectedOption) {
-                    btnStyle = 'bg-rose-50 border-rose-500 text-rose-900 font-bold shadow-sm';
-                  } else {
-                    btnStyle = 'bg-slate-50/60 border-slate-200 text-slate-400 opacity-60';
+                  if (isCorrect) {
+                    btnStyle = 'bg-emerald-950/60 border-emerald-500 text-emerald-300';
+                  } else if (isSelected) {
+                    btnStyle = 'bg-red-950/60 border-red-500 text-red-300';
                   }
                 }
 
@@ -223,101 +273,78 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
                     key={idx}
                     onClick={() => handleSelectOption(idx)}
                     disabled={isAnswered}
-                    className={`w-full p-4 rounded-2xl border text-left text-xs sm:text-sm font-bold transition flex items-center justify-between active:scale-98 ${btnStyle}`}
+                    className={`w-full p-3.5 rounded-2xl border-2 font-medium text-xs sm:text-sm text-left flex items-center justify-between transition-all duration-200 ${btnStyle} active:scale-[0.98]`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <span className="w-6 h-6 rounded-xl bg-slate-100 flex items-center justify-center font-mono font-bold text-xs text-slate-600 shrink-0">
-                        {String.fromCharCode(65 + idx)}
-                      </span>
-                      <span>{opt}</span>
-                    </div>
-
-                    {isAnswered && idx === currentQ.correctAnswer && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    )}
-                    {isAnswered && idx === selectedOption && idx !== currentQ.correctAnswer && (
-                      <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                    )}
+                    <span>{opt}</span>
+                    {isAnswered && isCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 ml-2" />}
+                    {isAnswered && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-red-400 shrink-0 ml-2" />}
                   </button>
                 );
               })}
             </div>
 
-            {/* Explanation & Next Button */}
+            {/* Giải thích câu trả lời & Nút Tiếp tục */}
             {isAnswered && (
-              <div className="bg-slate-100/80 p-4 rounded-2xl border border-slate-200/80 space-y-3 animate-fade-in">
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  <span className="font-bold text-slate-900">Giải thích:</span> {currentQ.explanation}
+              <div className="bg-blue-950/40 border border-blue-500/30 rounded-2xl p-4 space-y-3 animate-in fade-in">
+                <p className="text-xs text-blue-200 leading-relaxed">
+                  💡 <span className="font-bold">Giải thích:</span> {currentQ.explanation}
                 </p>
                 <button
                   onClick={handleNextQuestion}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-xs shadow-md active:scale-95 transition"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                 >
-                  {t('quiz.btn_next')}
+                  <span>{currentIdx < DEFAULT_QUIZ_QUESTIONS.length - 1 ? 'Câu Hỏi Tiếp Theo' : 'Xem Kết Quả Tổng Kết'}</span>
+                  <Sparkles className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
-          </div>
+          </>
         ) : (
-          /* Result Card */
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl text-center space-y-5 my-auto animate-scale-up">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 flex items-center justify-center mx-auto text-slate-950 shadow-xl animate-bounce">
-              <Trophy className="w-8 h-8 stroke-[2.5]" />
+          /* Kết Quả Hoàn Thành */
+          <div className="bg-gradient-to-b from-blue-950/60 via-slate-900 to-slate-950 rounded-3xl p-6 border-2 border-blue-500/40 shadow-2xl text-center space-y-5">
+            <div className="w-20 h-20 rounded-full bg-blue-500/20 border-2 border-blue-500/40 mx-auto flex items-center justify-center text-4xl animate-bounce">
+              🏆
             </div>
 
             <div>
-              <span className="text-xs uppercase font-black text-amber-600 tracking-widest">
-                {t('quiz.congrats_title')}
-              </span>
-              <h2 className="text-2xl font-black text-slate-900 mt-1">
-                {score >= 3 ? 'Xuất Sắc! Thắng Lớn' : 'Hoàn Thành Thử Thách'}
+              <h2 className="text-lg font-black text-white">
+                {score >= 4 ? 'Xuất Sắc Nhanh Trí!' : score >= 3 ? 'Hoàn Thành Tốt!' : 'Chúc May Mắn Lần Sau!'}
               </h2>
-              <p className="text-xs text-slate-500 mt-2">
-                {t('quiz.congrats_desc', { correct: score, total: QUIZ_QUESTIONS.length, points: 150 })}
+              <p className="text-xs text-slate-300 mt-1">
+                Bạn đã trả lời đúng <span className="font-bold text-amber-400">{score}/5</span> câu hỏi!
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between text-xs">
-              <span className="text-amber-900 font-medium">Phần thưởng đạt được:</span>
-              <span className="font-black text-amber-700 text-sm font-mono">+150 Điểm Loyalty</span>
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4">
+              <span className="text-xs text-slate-400 block mb-1">PHẦN THƯỞNG ĐẠT ĐƯỢC</span>
+              <span className="text-2xl font-black text-amber-400">+{calculateReward()} Điểm Loyalty</span>
             </div>
 
-            <div className="space-y-2.5 pt-2">
-              {!isClaimed ? (
-                <button
-                  onClick={handleClaim}
-                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black rounded-2xl text-sm shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{t('quiz.btn_claim_points')}</span>
-                </button>
-              ) : (
-                <div className="py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs rounded-2xl">
-                  ✓ Đã nhận +150 điểm vào ví tài khoản!
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={handleRestart}
-                  className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>{t('quiz.btn_play_again')}</span>
-                </button>
-                <button
-                  onClick={handleBack}
-                  className="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition"
-                >
-                  {t('quiz.btn_back_gamehub')}
-                </button>
-              </div>
-            </div>
+            {!isClaimed ? (
+              <button
+                onClick={handleClaim}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+              >
+                Nhận Thưởng & Cộng Vào Ví
+              </button>
+            ) : (
+              <button
+                onClick={handleRestart}
+                className="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 active:scale-95 transition-all"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Thử Thách Lại</span>
+              </button>
+            )}
           </div>
         )}
+
+        {/* Security Stamp */}
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-2">
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+          <span>{t('footer.enterprise_security')}</span>
+        </div>
       </main>
     </div>
   );
 };
-
-export default TriviaQuizGame;
