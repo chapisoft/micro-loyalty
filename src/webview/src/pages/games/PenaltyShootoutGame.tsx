@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface PenaltyShootoutGameProps {
   onBack?: () => void;
@@ -18,10 +19,11 @@ interface PenaltyShootoutGameProps {
 }
 
 const CORNERS = [
-  { id: 1, labelKey: 'games.penalty.top_left', pos: 'top-3 left-4' },
-  { id: 2, labelKey: 'games.penalty.top_right', pos: 'top-3 right-4' },
-  { id: 3, labelKey: 'games.penalty.bottom_left', pos: 'bottom-4 left-4' },
-  { id: 4, labelKey: 'games.penalty.bottom_right', pos: 'bottom-4 right-4' },
+  { id: 1, labelKey: 'games.penalty.top_left', pos: 'top-3 left-4', icon: '🎯' },
+  { id: 5, labelKey: 'games.penalty.center_golden', pos: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2', icon: '⭐', isGolden: true },
+  { id: 2, labelKey: 'games.penalty.top_right', pos: 'top-3 right-4', icon: '🎯' },
+  { id: 3, labelKey: 'games.penalty.bottom_left', pos: 'bottom-4 left-4', icon: '🎯' },
+  { id: 4, labelKey: 'games.penalty.bottom_right', pos: 'bottom-4 right-4', icon: '🎯' },
 ];
 
 export const PenaltyShootoutGame: React.FC<PenaltyShootoutGameProps> = ({ onBack, onClaimReward }) => {
@@ -30,13 +32,14 @@ export const PenaltyShootoutGame: React.FC<PenaltyShootoutGameProps> = ({ onBack
   const [selectedCorner, setSelectedCorner] = useState<number | null>(null);
   const [isShooting, setIsShooting] = useState<boolean>(false);
   const [goalieCorner, setGoalieCorner] = useState<number | null>(null);
-  const [gameOutcome, setGameOutcome] = useState<'WIN' | 'SAVED' | 'POST' | null>(null);
+  const [gameOutcome, setGameOutcome] = useState<'WIN' | 'SAVED' | 'POST' | 'GOAL' | null>(null);
   const [gameResult, setGameResult] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -59,6 +62,7 @@ export const PenaltyShootoutGame: React.FC<PenaltyShootoutGameProps> = ({ onBack
     if (isShooting) return;
     try {
       soundManager.playKick();
+      soundManager.triggerHaptic('heavy');
       setSelectedCorner(cornerId);
       setIsShooting(true);
       setErrorMsg(null);
@@ -77,18 +81,20 @@ export const PenaltyShootoutGame: React.FC<PenaltyShootoutGameProps> = ({ onBack
 
       // Hoạt ảnh thủ môn bay người và bóng bay
       setTimeout(() => {
-        setGoalieCorner(res.serverResult || cornerId);
-        setGameOutcome(res.outcome as any);
-        if (navigator.vibrate) {
-          if (res.outcome === 'WIN') navigator.vibrate([100, 50, 200]);
-          else navigator.vibrate(100);
-        }
+        const isGoal = res.outcome === 'WIN' || res.outcome === 'GOAL';
+        setGoalieCorner(isGoal ? (cornerId === 1 ? 2 : 1) : cornerId);
+        setGameOutcome(isGoal ? 'GOAL' : (res.outcome as any));
 
-        // Phát âm thanh theo kết quả
-        if (res.outcome === 'WIN') {
+        // Phát âm thanh và hiệu ứng
+        if (isGoal) {
+          soundManager.playCrowdCheer();
           soundManager.playWinFanfare();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else {
           soundManager.playLose();
+          soundManager.triggerHaptic('error');
         }
 
         // Hiển thị Popup chúc mừng
@@ -98,7 +104,7 @@ export const PenaltyShootoutGame: React.FC<PenaltyShootoutGameProps> = ({ onBack
             onClaimReward(Number(res.pointsAwarded));
           }
           setIsShooting(false);
-        }, 1000);
+        }, 900);
       }, 700);
     } catch (e: any) {
       soundManager.playLose();
@@ -337,6 +343,8 @@ export const PenaltyShootoutGame: React.FC<PenaltyShootoutGameProps> = ({ onBack
           </div>
         </div>
       )}
+
+      <ParticleCanvas trigger={particleTrigger} type="confetti" />
     </div>
   );
 };

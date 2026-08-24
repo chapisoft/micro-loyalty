@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface QuizQuestion {
   id: number;
@@ -77,6 +78,9 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
+  const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
+  const [isFiftyUsed, setIsFiftyUsed] = useState<boolean>(false);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -105,11 +109,23 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
       setIsAnswered(true);
       return;
     }
+    if (timeLeft <= 5) {
+      soundManager.playSpinTick();
+    }
     const timer = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft, isAnswered, isFinished]);
+
+  const handleUseFiftyFifty = () => {
+    if (isFiftyUsed || isAnswered) return;
+    soundManager.playTap();
+    setIsFiftyUsed(true);
+    const wrongOptions = [0, 1, 2, 3].filter((i) => i !== currentQ.correctAnswer);
+    const toHide = wrongOptions.slice(0, 2);
+    setHiddenOptions(toHide);
+  };
 
   const handleSelectOption = (idx: number) => {
     if (isAnswered) return;
@@ -118,11 +134,11 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
 
     if (idx === currentQ.correctAnswer) {
       soundManager.playWinFanfare();
+      soundManager.triggerHaptic('success');
       setScore((s) => s + 1);
-      if (navigator.vibrate) navigator.vibrate(50);
     } else {
       soundManager.playLose();
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      soundManager.triggerHaptic('error');
     }
   };
 
@@ -133,12 +149,21 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
       setSelectedOption(null);
       setIsAnswered(false);
       setTimeLeft(20);
+      setHiddenOptions([]);
     } else {
       setIsFinished(true);
       if (score >= 4) {
         soundManager.playJackpot();
-      } else {
+        soundManager.playCoinRain();
+        soundManager.triggerHaptic('success');
+        setParticleTrigger((p) => p + 1);
+      } else if (score >= 2) {
         soundManager.playWinFanfare();
+        soundManager.playCoinRain();
+        soundManager.triggerHaptic('success');
+        setParticleTrigger((p) => p + 1);
+      } else {
+        soundManager.playLose();
       }
     }
   };
@@ -232,9 +257,25 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
                 <span className="font-bold text-blue-400">
                   Câu hỏi {currentIdx + 1}/{DEFAULT_QUIZ_QUESTIONS.length}
                 </span>
-                <span className="flex items-center gap-1 font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-                  <Clock className="w-3.5 h-3.5 animate-pulse" /> {timeLeft}s
-                </span>
+
+                <div className="flex items-center gap-2">
+                  {!isAnswered && (
+                    <button
+                      onClick={handleUseFiftyFifty}
+                      disabled={isFiftyUsed}
+                      className={`text-[10px] font-black px-2.5 py-1 rounded-full border transition ${
+                        isFiftyUsed
+                          ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
+                      }`}
+                    >
+                      ⚡ Trợ Giúp 50:50
+                    </button>
+                  )}
+                  <span className="flex items-center gap-1 font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                    <Clock className="w-3.5 h-3.5 animate-pulse" /> {timeLeft}s
+                  </span>
+                </div>
               </div>
 
               {/* Thanh Tiến Trình */}
@@ -256,13 +297,24 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
             {/* 4 Phương Án Trả Lời */}
             <div className="space-y-2.5">
               {currentQ.options.map((opt, idx) => {
+                if (hiddenOptions.includes(idx)) {
+                  return (
+                    <div
+                      key={idx}
+                      className="w-full p-3.5 rounded-2xl border-2 border-slate-800/40 bg-slate-950/40 text-slate-600 text-xs italic text-center line-through"
+                    >
+                      Đã loại trừ bởi 50:50
+                    </div>
+                  );
+                }
+
                 const isSelected = selectedOption === idx;
                 const isCorrect = idx === currentQ.correctAnswer;
                 let btnStyle = 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200';
 
                 if (isAnswered) {
                   if (isCorrect) {
-                    btnStyle = 'bg-emerald-950/60 border-emerald-500 text-emerald-300';
+                    btnStyle = 'bg-emerald-950/60 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/20';
                   } else if (isSelected) {
                     btnStyle = 'bg-red-950/60 border-red-500 text-red-300';
                   }
@@ -276,7 +328,7 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
                     className={`w-full p-3.5 rounded-2xl border-2 font-medium text-xs sm:text-sm text-left flex items-center justify-between transition-all duration-200 ${btnStyle} active:scale-[0.98]`}
                   >
                     <span>{opt}</span>
-                    {isAnswered && isCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 ml-2" />}
+                    {isAnswered && isCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 ml-2 animate-bounce" />}
                     {isAnswered && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-red-400 shrink-0 ml-2" />}
                   </button>
                 );
@@ -345,6 +397,8 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
           <span>{t('footer.enterprise_security')}</span>
         </div>
       </main>
+
+      <ParticleCanvas trigger={particleTrigger} type="confetti" />
     </div>
   );
 };

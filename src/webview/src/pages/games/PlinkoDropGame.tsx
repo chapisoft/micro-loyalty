@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface PlinkoDropGameProps {
   onBack?: () => void;
@@ -32,6 +33,8 @@ export const PlinkoDropGame: React.FC<PlinkoDropGameProps> = ({ onBack, onClaimR
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
+  const [activePin, setActivePin] = useState<{ row: number; col: number } | null>(null);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -72,31 +75,38 @@ export const PlinkoDropGame: React.FC<PlinkoDropGameProps> = ({ onBack, onClaimR
       const path = res.plinkoBouncePath || [0, 1, 0, 1, 0, 1, 0, 1];
       let currentX = 50;
 
-      // Hoạt ảnh bi nảy qua 8 hàng đinh
+      // Hoạt ảnh bi nảy qua 8 hàng đinh với thang âm chromatic
       for (let step = 0; step < path.length; step++) {
-        await new Promise((r) => setTimeout(r, 160));
-        soundManager.playPlinkoBounce();
+        await new Promise((r) => setTimeout(r, 150));
+        soundManager.playChromaticDing(step);
         const dir = path[step]; // 0: left, 1: right
         currentX += dir === 1 ? 5.5 : -5.5;
         const currentY = 15 + step * 10;
         setBallPos({ x: currentX, y: currentY });
-        if (navigator.vibrate) navigator.vibrate(15);
+        setActivePin({ row: step, col: Math.round((currentX / 100) * (step + 3)) });
+        soundManager.triggerHaptic('light');
       }
 
       // Rơi vào hộc đáy
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 180));
       setBallPos({ x: currentX, y: 95 });
       setLandingIndex(res.plinkoLandingIndex ?? 4);
-
-      if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+      setActivePin(null);
 
       const points = Number(res.pointsAwarded || 0);
-      if (points >= 150) {
+      if (points >= 100) {
         soundManager.playJackpot();
+        soundManager.playCoinRain();
+        soundManager.triggerHaptic('success');
+        setParticleTrigger((p) => p + 1);
       } else if (points > 0) {
         soundManager.playWinFanfare();
+        soundManager.playCoinRain();
+        soundManager.triggerHaptic('success');
+        setParticleTrigger((p) => p + 1);
       } else {
         soundManager.playLose();
+        soundManager.triggerHaptic('warning');
       }
 
       setTimeout(() => {
@@ -191,16 +201,23 @@ export const PlinkoDropGame: React.FC<PlinkoDropGameProps> = ({ onBack, onClaimR
 
           {/* Lưới Chốt Đinh */}
           <div className="flex-1 flex flex-col justify-around py-4">
-            {[3, 4, 5, 6, 7, 8, 9, 10].map((pegsCount, rowIdx) => (
-              <div key={rowIdx} className="flex justify-around items-center px-2">
-                {Array.from({ length: pegsCount }).map((_, pIdx) => (
-                  <div
-                    key={pIdx}
-                    className="w-2.5 h-2.5 rounded-full bg-pink-400/80 shadow-[0_0_8px_#ec4899] border border-white/40"
-                  />
-                ))}
-              </div>
-            ))}
+            {[3, 4, 5, 6, 7, 8, 9, 10].map((pegsCount, rowIdx) => {
+              const isHitRow = activePin?.row === rowIdx;
+              return (
+                <div key={rowIdx} className="flex justify-around items-center px-2">
+                  {Array.from({ length: pegsCount }).map((_, pIdx) => (
+                    <div
+                      key={pIdx}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-100 border border-white/40 ${
+                        isHitRow
+                          ? 'bg-yellow-300 shadow-[0_0_12px_#fde047] scale-125'
+                          : 'bg-pink-400/80 shadow-[0_0_8px_#ec4899]'
+                      }`}
+                    />
+                  ))}
+                </div>
+              );
+            })}
           </div>
 
           {/* 9 Hộc Đáy Multipliers */}
@@ -301,6 +318,8 @@ export const PlinkoDropGame: React.FC<PlinkoDropGameProps> = ({ onBack, onClaimR
           </div>
         </div>
       )}
+
+      <ParticleCanvas trigger={particleTrigger} type="confetti" />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface LuckyDiceGameProps {
   onBack?: () => void;
@@ -38,6 +39,8 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
+  const [comboName, setComboName] = useState<string | null>(null);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -56,12 +59,27 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
     if (!muted) soundManager.playTap();
   };
 
+  const checkCombo = (vals: number[]) => {
+    const [d1, d2, d3] = [...vals].sort((a, b) => a - b);
+    if (d1 === d2 && d2 === d3) {
+      return 'BÃO TAM XÚC ĐỒNG NHẤT (SIÊU THƯỞNG)';
+    }
+    if ((d1 + 1 === d2 && d2 + 1 === d3) || (d1 === 1 && d2 === 2 && d3 === 3) || (d1 === 4 && d2 === 5 && d3 === 6)) {
+      return 'BỘ SẢNH TIẾN LIÊN HOÀN';
+    }
+    if (d1 === d2 || d2 === d3 || d1 === d3) {
+      return 'CẶP ĐÔI SONG HỶ';
+    }
+    return null;
+  };
+
   const handleRoll = async () => {
     if (isRolling) return;
     try {
       soundManager.playDiceShake();
       setIsRolling(true);
       setErrorMsg(null);
+      setComboName(null);
 
       // Hiệu ứng xúc xắc đảo nhanh
       const shakeInterval = setInterval(() => {
@@ -70,7 +88,7 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
           Math.floor(Math.random() * 6) + 1,
           Math.floor(Math.random() * 6) + 1,
         ]);
-        if (navigator.vibrate) navigator.vibrate(20);
+        soundManager.triggerHaptic('light');
       }, 70);
 
       const res = await LoyaltyApi.playGame('LUCKY_DICE');
@@ -85,18 +103,25 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
 
       setTimeout(() => {
         clearInterval(shakeInterval);
-        if (res.diceValues && res.diceValues.length === 3) {
-          setDiceValues(res.diceValues);
-        }
-        if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+        const finalDice = (res.diceValues && res.diceValues.length === 3) ? res.diceValues : [6, 6, 6];
+        setDiceValues(finalDice);
+        const combo = checkCombo(finalDice);
+        setComboName(combo);
 
         const points = Number(res.pointsAwarded || 0);
-        if (points >= 150) {
+        if (points >= 100 || combo?.includes('BÃO')) {
           soundManager.playJackpot();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else if (points > 0) {
           soundManager.playWinFanfare();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else {
           soundManager.playLose();
+          soundManager.triggerHaptic('warning');
         }
 
         setTimeout(() => {
@@ -106,7 +131,7 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
           }
           setIsRolling(false);
         }, 600);
-      }, 1000);
+      }, 900);
     } catch (e: any) {
       soundManager.playLose();
       setErrorMsg(e.message || t('common.error_occurred'));
@@ -195,6 +220,16 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
             </div>
           </div>
 
+          {/* Combo Banner */}
+          {comboName && (
+            <div className="p-2.5 bg-gradient-to-r from-amber-500/20 via-yellow-500/30 to-orange-500/20 border border-yellow-400 rounded-2xl animate-bounce">
+              <span className="text-xs font-black text-yellow-300 flex items-center justify-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-yellow-300 animate-spin" />
+                {comboName}
+              </span>
+            </div>
+          )}
+
           {/* 3 Viên Xúc Xắc 3D */}
           <div className="flex justify-center items-center gap-4">
             {diceValues.map((val, idx) => (
@@ -219,9 +254,9 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
             <div>
               <span className="text-slate-400 text-[10px] block">TỔ HỢP:</span>
               <span className="text-xs font-black text-purple-300">
-                {diceValues[0] === diceValues[1] && diceValues[1] === diceValues[2]
+                {comboName || (diceValues[0] === diceValues[1] && diceValues[1] === diceValues[2]
                   ? t('games.dice.triple_bonus')
-                  : t('games.dice.straight_bonus')}
+                  : t('games.dice.straight_bonus'))}
               </span>
             </div>
           </div>
@@ -303,6 +338,8 @@ export const LuckyDiceGame: React.FC<LuckyDiceGameProps> = ({ onBack, onClaimRew
           </div>
         </div>
       )}
+
+      <ParticleCanvas trigger={particleTrigger} type="coins" />
     </div>
   );
 };

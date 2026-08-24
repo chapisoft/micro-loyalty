@@ -384,6 +384,170 @@ class GameAudioEngine {
       osc.stop(ctx.currentTime + 0.25);
     } catch {}
   }
+
+  /**
+   * 13. Tiếng Tim Đập Dồn Dập Hồi Hộp (Tension Heartbeat: Thump... Thump...)
+   */
+  public playHeartbeat() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      [0, 0.15].forEach(delay => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(85, ctx.currentTime + delay);
+        osc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + delay + 0.12);
+
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.12);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.12);
+      });
+      this.triggerHaptic('medium');
+    } catch {}
+  }
+
+  /**
+   * 14. Tiếng Mưa Tiền Vàng Rơi Dồn Dập (Coin Rain Cascade)
+   */
+  public playCoinRain() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const coinFreqs = [1800, 2100, 2400, 1950, 2250, 2600, 2000, 2300];
+      coinFreqs.forEach((freq, idx) => {
+        const time = ctx.currentTime + idx * 0.04;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.22, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + 0.08);
+      });
+    } catch {}
+  }
+
+  /**
+   * 15. Tiếng Cổ Vũ Hò Reo Chiến Thắng Bàn Thắng (Crowd Cheer & Stadium Goal)
+   */
+  public playCrowdCheer() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      // White noise crowd roar
+      const bufferSize = ctx.sampleRate * 0.5;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1200, ctx.currentTime);
+      filter.Q.setValueAtTime(1.5, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start();
+    } catch {}
+  }
+
+  /**
+   * 16. Tiếng Đinh Đoong Thang Âm Plinko (Chromatic Step Ding)
+   */
+  public playChromaticDing(step: number = 0) {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      // Scale: C5, D5, E5, F5, G5, A5, B5, C6
+      const baseFreqs = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50, 1174.66];
+      const freq = baseFreqs[Math.min(step, baseFreqs.length - 1)] || 800;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch {}
+  }
+
+  /**
+   * 17. Tiếng Búa Nện Trứng Vàng Uy Lực (Heavy Hammer Impact)
+   */
+  public playHammerSmash() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.18);
+
+      gain.gain.setValueAtTime(0.7, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+      this.triggerHaptic('heavy');
+    } catch {}
+  }
+
+  /**
+   * 18. Bộ Rung Phản Hồi Xúc Giác Haptic Feedback Chuẩn Mobile
+   */
+  public triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' = 'light') {
+    if (typeof navigator === 'undefined' || !navigator.vibrate) return;
+    try {
+      switch (type) {
+        case 'light':
+          navigator.vibrate(15);
+          break;
+        case 'medium':
+          navigator.vibrate(35);
+          break;
+        case 'heavy':
+          navigator.vibrate(60);
+          break;
+        case 'success':
+          navigator.vibrate([20, 50, 40]);
+          break;
+        case 'warning':
+          navigator.vibrate([30, 40, 30, 40]);
+          break;
+        case 'error':
+          navigator.vibrate([60, 40, 80]);
+          break;
+      }
+    } catch {}
+  }
 }
 
 export const soundManager = new GameAudioEngine();

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface TreasureChestGameProps {
   onBack?: () => void;
@@ -37,6 +38,7 @@ export const TreasureChestGame: React.FC<TreasureChestGameProps> = ({ onBack, on
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -59,6 +61,7 @@ export const TreasureChestGame: React.FC<TreasureChestGameProps> = ({ onBack, on
     if (isOpening) return;
     try {
       soundManager.playChestOpen();
+      soundManager.triggerHaptic('medium');
       setSelectedChest(chestId);
       setIsOpening(true);
       setErrorMsg(null);
@@ -73,16 +76,21 @@ export const TreasureChestGame: React.FC<TreasureChestGameProps> = ({ onBack, on
         setRemainingTurns(res.turnsRemaining);
       }
 
-      if (navigator.vibrate) navigator.vibrate([80, 40, 150]);
-
       setTimeout(() => {
         const points = Number(res.pointsAwarded || 0);
         if (points >= 150) {
           soundManager.playJackpot();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else if (points > 0) {
           soundManager.playWinFanfare();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else {
           soundManager.playLose();
+          soundManager.triggerHaptic('warning');
         }
 
         setShowResultModal(true);
@@ -283,6 +291,8 @@ export const TreasureChestGame: React.FC<TreasureChestGameProps> = ({ onBack, on
           </div>
         </div>
       )}
+
+      <ParticleCanvas trigger={particleTrigger} type="coins" />
     </div>
   );
 };

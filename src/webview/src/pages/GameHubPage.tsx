@@ -8,9 +8,14 @@ import {
   Zap,
   PlusCircle,
   Flame,
-  Award
+  Award,
+  Gift
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
+import { LiveWinnerTicker } from '../components/gamification/LiveWinnerTicker';
+import { MegaJackpotBanner } from '../components/gamification/MegaJackpotBanner';
+import { DailyMissionModal } from '../components/gamification/DailyMissionModal';
+import { ComboStreakBadge } from '../components/gamification/ComboStreakBadge';
 
 export interface GameHubPageProps {
   onBack?: () => void;
@@ -53,6 +58,8 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
   const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
+  const [showMissionModal, setShowMissionModal] = useState<boolean>(false);
+  const [winStreak] = useState<number>(3);
 
   const handleBuyTurn = async (turnsCount: number = 1, amountHtg: number = 20) => {
     try {
@@ -73,6 +80,12 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
         onUpdateTurns(freeTurns, perpetualTurns + turnsCount);
       }
       setShowBuyModal(false);
+    }
+  };
+
+  const handleClaimMissionTurns = (addedTurns: number, _addedPoints: number) => {
+    if (onUpdateTurns) {
+      onUpdateTurns(freeTurns + addedTurns, perpetualTurns);
     }
   };
 
@@ -203,6 +216,9 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-4 sm:space-y-6 animate-fade-in">
+      {/* ── 0. REALTIME LIVE WINNER TICKER ── */}
+      <LiveWinnerTicker />
+
       {/* ── TOP HERO: TURN BALANCES & FAST RECHARGE ── */}
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 rounded-3xl p-4 sm:p-7 text-white shadow-xl shadow-amber-500/15 relative overflow-hidden isolate">
         {/* Glows */}
@@ -218,6 +234,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               <span className="text-[9px] sm:text-[10px] font-bold bg-white/25 px-2 py-0.5 rounded-full">
                 {GAMES_LIST.length} Trò Chơi
               </span>
+              <ComboStreakBadge streak={winStreak} />
             </div>
             <h1 className="text-lg sm:text-2xl md:text-3xl font-black mt-1 tracking-tight">
               {t('gamehub.title')}
@@ -228,7 +245,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
           </div>
 
           {/* Turn Balances Card */}
-          <div className="bg-black/20 backdrop-blur-xl p-2.5 sm:p-4 rounded-2xl border border-white/20 flex items-center justify-between md:justify-start gap-3 sm:gap-6 shrink-0">
+          <div className="bg-black/20 backdrop-blur-xl p-2.5 sm:p-4 rounded-2xl border border-white/20 flex items-center justify-between md:justify-start gap-2.5 sm:gap-4 shrink-0">
             <div>
               <span className="text-[9px] sm:text-[10px] text-amber-100 uppercase tracking-wide font-medium block">
                 {t('gamehub.free_daily_turns')}
@@ -249,17 +266,31 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={() => setShowBuyModal(true)}
-              className="bg-white text-slate-950 hover:bg-amber-50 active:scale-95 font-black px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs flex items-center gap-1 shadow-md transition"
-              title={t('gamehub.btn_buy_turns')}
-            >
-              <PlusCircle className="w-3.5 h-3.5 text-amber-600" />
-              <span>Nạp Lượt</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowMissionModal(true)}
+                className="bg-amber-400/30 hover:bg-amber-400/40 text-yellow-200 border border-yellow-300/40 active:scale-95 font-black px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm transition animate-pulse"
+                title="Trạm Nhiệm Vụ Săn Lượt"
+              >
+                <Gift className="w-3.5 h-3.5 text-yellow-300" />
+                <span>Nhiệm Vụ</span>
+              </button>
+
+              <button
+                onClick={() => setShowBuyModal(true)}
+                className="bg-white text-slate-950 hover:bg-amber-50 active:scale-95 font-black px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs flex items-center gap-1 shadow-md transition"
+                title={t('gamehub.btn_buy_turns')}
+              >
+                <PlusCircle className="w-3.5 h-3.5 text-amber-600" />
+                <span>Nạp Lượt</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ── MEGA JACKPOT PROGRESSIVE POOL ── */}
+      <MegaJackpotBanner />
 
       {/* ── CATEGORY FILTER PILLS (COMPACT, NO SCROLLBAR) ── */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto pb-1 no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -490,6 +521,13 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* ── DAILY MISSION REWARD MODAL ── */}
+      <DailyMissionModal
+        isOpen={showMissionModal}
+        onClose={() => setShowMissionModal(false)}
+        onClaimTurns={handleClaimMissionTurns}
+      />
     </div>
   );
 };

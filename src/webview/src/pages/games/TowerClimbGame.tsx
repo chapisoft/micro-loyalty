@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface TowerClimbGameProps {
   onBack?: () => void;
@@ -39,6 +40,7 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -60,6 +62,11 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
   const handleStep = async (action: 'PLAY' | 'CASH_OUT') => {
     if (isClimbing) return;
     try {
+      if (action === 'PLAY' && currentFloor >= 2) {
+        soundManager.playHeartbeat();
+      } else {
+        soundManager.playTap();
+      }
       setIsClimbing(true);
       setErrorMsg(null);
 
@@ -76,7 +83,9 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
 
       if (action === 'CASH_OUT') {
         soundManager.playWinFanfare();
-        if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+        soundManager.playCoinRain();
+        soundManager.triggerHaptic('success');
+        setParticleTrigger((p) => p + 1);
         setShowResultModal(true);
         if (res.pointsAwarded && onClaimReward) {
           onClaimReward(Number(res.pointsAwarded));
@@ -87,7 +96,7 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
 
       if (res.outcome === 'CRASH') {
         soundManager.playLose();
-        if (navigator.vibrate) navigator.vibrate(200);
+        soundManager.triggerHaptic('error');
         setIsCrashed(true);
         setTimeout(() => {
           setShowResultModal(true);
@@ -98,11 +107,14 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
         }, 700);
       } else {
         soundManager.playClimbStep(nextFloor);
-        if (navigator.vibrate) navigator.vibrate(50);
+        soundManager.triggerHaptic('medium');
         setCurrentFloor(res.towerCurrentFloor || nextFloor);
 
-        if (res.outcome === 'WIN') {
+        if (res.outcome === 'WIN' || nextFloor >= 5) {
           soundManager.playJackpot();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
           setTimeout(() => {
             setShowResultModal(true);
             if (res.pointsAwarded && onClaimReward) {
@@ -332,6 +344,8 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
           </div>
         </div>
       )}
+
+      <ParticleCanvas trigger={particleTrigger} type="coins" />
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface ScratchCardGameProps {
   onBack?: () => void;
@@ -44,6 +45,8 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
+  const [nearMissSymbol, setNearMissSymbol] = useState<string | null>(null);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -70,6 +73,7 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
       setRevealed(Array(9).fill(false));
       setIsFinished(false);
       setGameResult(null);
+      setNearMissSymbol(null);
 
       const res = await LoyaltyApi.playGame('SCRATCH_CARD');
       if (res.scratchMatrix) {
@@ -91,15 +95,35 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
     }
   };
 
+  const checkNearMiss = (currentRevealed: boolean[]) => {
+    const revealedSymbols: Record<string, number> = {};
+    currentRevealed.forEach((isRev, i) => {
+      if (isRev) {
+        const sym = scratchMatrix[i];
+        revealedSymbols[sym] = (revealedSymbols[sym] || 0) + 1;
+      }
+    });
+
+    // Check if any symbol has appeared 2 times
+    const twoMatches = Object.entries(revealedSymbols).find(([_, count]) => count === 2);
+    if (twoMatches && !currentRevealed.every(Boolean)) {
+      setNearMissSymbol(twoMatches[0]);
+      soundManager.playHeartbeat();
+    } else {
+      setNearMissSymbol(null);
+    }
+  };
+
   const handleRevealCell = (idx: number) => {
     soundManager.playScratch();
-    if (navigator.vibrate) navigator.vibrate(30);
+    soundManager.triggerHaptic('light');
 
     if (!gameResult) {
       startNewCard().then(() => {
         setRevealed((prev) => {
           const next = [...prev];
           next[idx] = true;
+          checkNearMiss(next);
           return next;
         });
       });
@@ -111,6 +135,7 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
     setRevealed((prev) => {
       const next = [...prev];
       next[idx] = true;
+      checkNearMiss(next);
       if (next.every(Boolean)) {
         handleGameEnd();
       }
@@ -120,7 +145,7 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
 
   const handleRevealAll = () => {
     soundManager.playScratch();
-    if (navigator.vibrate) navigator.vibrate([40, 40, 80]);
+    soundManager.triggerHaptic('heavy');
 
     if (!gameResult) {
       startNewCard().then(() => {
@@ -135,14 +160,19 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
 
   const handleGameEnd = () => {
     setIsFinished(true);
+    setNearMissSymbol(null);
     if (rewardPoints > 20) {
       soundManager.playJackpot();
+      soundManager.playCoinRain();
+      setParticleTrigger((p) => p + 1);
     } else if (rewardPoints > 0) {
       soundManager.playWinFanfare();
+      soundManager.playCoinRain();
+      setParticleTrigger((p) => p + 1);
     } else {
       soundManager.playLose();
     }
-    if (gameResult && rewardPoints > 0 && onClaimReward) {
+    if (onClaimReward && rewardPoints > 0) {
       onClaimReward(rewardPoints);
     }
   };
@@ -222,11 +252,22 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
             </span>
           </div>
 
+          {/* Banner Hồi Hộp Near-Miss */}
+          {nearMissSymbol && !allRevealed && (
+            <div className="mb-3 p-2 bg-gradient-to-r from-red-600/30 via-amber-500/30 to-orange-500/30 border border-amber-400 rounded-xl text-center animate-bounce">
+              <span className="text-[11px] font-black text-yellow-300 flex items-center justify-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin" />
+                HỒI HỘP NGHẸT THỞ! ĐÃ CÓ 2 {SYMBOL_MAP[nearMissSymbol]?.name?.toUpperCase()}!
+              </span>
+            </div>
+          )}
+
           {/* Lưới 9 Ô Cào */}
           <div className="grid grid-cols-3 gap-2.5 aspect-square">
             {scratchMatrix.map((symKey, idx) => {
               const isCellRevealed = revealed[idx];
               const symInfo = SYMBOL_MAP[symKey] || SYMBOL_MAP.GOLD_CHEST;
+              const isPulsingTarget = nearMissSymbol && !isCellRevealed;
 
               return (
                 <button
@@ -236,6 +277,8 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
                   className={`relative rounded-2xl flex flex-col items-center justify-center transition-all duration-300 overflow-hidden ${
                     isCellRevealed
                       ? 'bg-slate-800/90 border-2 border-amber-500/60 shadow-inner scale-100'
+                      : isPulsingTarget
+                      ? 'bg-gradient-to-br from-amber-900/60 via-slate-800 to-slate-900 border-2 border-yellow-400 shadow-lg shadow-yellow-500/40 animate-pulse active:scale-95'
                       : 'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-2 border-amber-500/30 hover:border-amber-400 active:scale-95 shadow-md'
                   }`}
                 >
@@ -248,11 +291,11 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-slate-400 group">
-                      <div className="w-9 h-9 rounded-full bg-slate-700/80 border border-slate-600/80 flex items-center justify-center group-hover:border-amber-400 transition-colors">
-                        <Zap className="w-4 h-4 text-amber-400" />
+                      <div className={`w-9 h-9 rounded-full ${isPulsingTarget ? 'bg-amber-500/30 border-yellow-400' : 'bg-slate-700/80 border-slate-600/80'} border flex items-center justify-center group-hover:border-amber-400 transition-colors`}>
+                        <Zap className={`w-4 h-4 ${isPulsingTarget ? 'text-yellow-300 animate-bounce' : 'text-amber-400'}`} />
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                        CÀO
+                      <span className={`text-[9px] font-bold ${isPulsingTarget ? 'text-yellow-300 font-black' : 'text-slate-400'} mt-1 uppercase tracking-widest`}>
+                        {isPulsingTarget ? 'MỞ NGAY' : 'CÀO'}
                       </span>
                     </div>
                   )}
@@ -341,6 +384,8 @@ export const ScratchCardGame: React.FC<ScratchCardGameProps> = ({ onBack, onClai
           <span>{t('footer.enterprise_security')}</span>
         </div>
       </main>
+
+      <ParticleCanvas trigger={particleTrigger} type="coins" />
     </div>
   );
 };

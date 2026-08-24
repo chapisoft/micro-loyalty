@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyApi, GameDetailData } from '../../services/api';
 import { soundManager } from '../../utils/audio';
+import { ParticleCanvas } from '../../components/effects/ParticleCanvas';
 
 interface GoldenEggGameProps {
   onBack?: () => void;
@@ -30,12 +31,14 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
   const [gameConfig, setGameConfig] = useState<GameDetailData | null>(null);
   const [selectedEgg, setSelectedEgg] = useState<number | null>(null);
   const [isSmashing, setIsSmashing] = useState<boolean>(false);
+  const [crackStage, setCrackStage] = useState<number>(0);
   const [gameResult, setGameResult] = useState<any>(null);
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [userBalance, setUserBalance] = useState<number>(0);
   const [remainingTurns, setRemainingTurns] = useState<number>(1);
+  const [particleTrigger, setParticleTrigger] = useState<number>(0);
 
   // 1. Nạp cấu hình ma trận giải thưởng động từ Cơ sở dữ liệu
   useEffect(() => {
@@ -57,9 +60,10 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
   const handleSmash = async (eggId: number) => {
     if (isSmashing) return;
     try {
-      soundManager.playEggCrack();
+      soundManager.playHammerSmash();
       setSelectedEgg(eggId);
       setIsSmashing(true);
+      setCrackStage(1);
       setErrorMsg(null);
 
       const res = await LoyaltyApi.playGame('GOLDEN_EGG', eggId);
@@ -72,34 +76,46 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
         setRemainingTurns(res.turnsRemaining);
       }
 
-      if (navigator.vibrate) navigator.vibrate([100, 50, 150]);
-
+      // Stage 2: Vỡ toác vỏ trứng
       setTimeout(() => {
+        soundManager.playEggCrack();
+        setCrackStage(2);
         const points = Number(res.pointsAwarded || 0);
-        if (points >= 150) {
+        if (points >= 100) {
           soundManager.playJackpot();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else if (points > 0) {
           soundManager.playWinFanfare();
+          soundManager.playCoinRain();
+          soundManager.triggerHaptic('success');
+          setParticleTrigger((p) => p + 1);
         } else {
           soundManager.playLose();
+          soundManager.triggerHaptic('warning');
         }
 
-        setShowResultModal(true);
-        if (res.pointsAwarded && onClaimReward) {
-          onClaimReward(points);
-        }
-        setIsSmashing(false);
-      }, 900);
+        setTimeout(() => {
+          setShowResultModal(true);
+          if (res.pointsAwarded && onClaimReward) {
+            onClaimReward(points);
+          }
+          setIsSmashing(false);
+        }, 800);
+      }, 500);
     } catch (e: any) {
       soundManager.playLose();
       setErrorMsg(e.message || t('common.error_occurred'));
       setIsSmashing(false);
+      setCrackStage(0);
     }
   };
 
   const handleReset = () => {
     soundManager.playTap();
     setSelectedEgg(null);
+    setCrackStage(0);
     setGameResult(null);
     setShowResultModal(false);
   };
@@ -189,16 +205,16 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
                   <div
                     className={`text-5xl mb-2 transition-transform duration-300 ${
                       isSelected && isSmashing
-                        ? 'animate-ping'
+                        ? 'animate-bounce scale-125'
                         : isSelected
                         ? 'scale-110'
                         : 'group-hover:scale-110'
                     }`}
                   >
-                    {isSelected ? '💥' : '🥚'}
+                    {isSelected && crackStage === 2 ? '👑' : isSelected && crackStage === 1 ? '💥' : '🥚'}
                   </div>
                   <span className="text-xs font-black text-amber-200 block">
-                    {EGG_LABELS[idx] || `Trứng ${eggId}`}
+                    {isSelected && crackStage === 2 ? 'THẦN TÀI' : EGG_LABELS[idx] || `Trứng ${eggId}`}
                   </span>
                 </div>
               );
@@ -233,8 +249,8 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
         )}
 
         {/* Security Stamp */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+        <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
           <span>{t('footer.enterprise_security')}</span>
         </div>
       </main>
@@ -244,7 +260,7 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-2 border-amber-500/40 rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl space-y-4">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-500/40 mx-auto flex items-center justify-center text-3xl animate-bounce">
-              🐣
+              👑
             </div>
 
             <div>
@@ -272,6 +288,8 @@ export const GoldenEggGame: React.FC<GoldenEggGameProps> = ({ onBack, onClaimRew
           </div>
         </div>
       )}
+
+      <ParticleCanvas trigger={particleTrigger} type="coins" />
     </div>
   );
 };
