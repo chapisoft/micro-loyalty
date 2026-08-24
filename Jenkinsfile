@@ -2,15 +2,19 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK_17'
-        maven 'Maven_3.9'
-        nodejs 'Node_20'
+        jdk 'jdk-21'
+        nodejs 'node-20'
     }
 
     options {
         timeout(time: 30, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '10'))
         disableConcurrentBuilds()
+    }
+
+    triggers {
+        githubPush()
+        pollSCM('H/2 * * * *')
     }
 
     parameters {
@@ -40,7 +44,7 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Đóng gói Backend Spring Boot (Java 17)..."
+                    echo "Đóng gói Backend Spring Boot..."
                     sh 'mvn clean package -DskipTests'
                     sh 'mkdir -p deploy/micro-loyalty/backend && cp src/service/target/loyalty-service-1.0.0.jar deploy/micro-loyalty/backend/loyalty-service.jar'
                 }
