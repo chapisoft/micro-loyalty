@@ -14,15 +14,15 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'TARGET_SERVICE', choices: ['all', 'loyalty-service', 'loyalty-cms', 'loyalty-webview'], description: 'Chọn phân hệ cần đóng gói và triển khai On-Premise')
+        choice(name: 'TARGET_SERVICE', choices: ['all', 'loyalty-service', 'loyalty-cms', 'loyalty-webview'], description: 'Chọn phân hệ cần đóng gói và triển khai')
         booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Bỏ qua kiểm thử đơn vị')
     }
 
     environment {
-        DEPLOY_PATH        = '/u01/mascom/ringme/loyalty-game'
-        SERVER_USER        = 'mascom'
-        SERVER_HOST        = '10.228.37.65'
-        SERVER_PORT        = '22'
+        DEPLOY_PATH        = '/home/dip/micro-loyalty/deploy'
+        SERVER_USER        = 'dip'
+        SERVER_HOST        = '210.211.102.99'
+        SERVER_PORT        = '65000'
         TELEGRAM_BOT_TOKEN = '8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA'
         TELEGRAM_CHAT_ID   = '-5397937309'
     }
@@ -30,19 +30,19 @@ pipeline {
     stages {
         stage('1. 🛡️ Quality Gate & Security Check') {
             steps {
-                echo "Kiểm tra tiêu chuẩn an ninh và chất lượng mã nguồn Natcash..."
+                echo "Kiểm tra chất lượng mã nguồn và tiêu chuẩn bảo mật Micro-Loyalty..."
             }
         }
 
-        stage('2. ☕ Build Backend Native Service') {
+        stage('2. ☕ Build Backend Service') {
             when {
                 expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-service' }
             }
             steps {
                 script {
-                    echo "Đóng gói Backend Native Java 17 cho môi trường Natcash..."
+                    echo "Đóng gói Backend Spring Boot (Java 17)..."
                     sh 'mvn clean package -DskipTests'
-                    sh 'mkdir -p deploy/natcash/backend && cp src/service/target/loyalty-service-1.0.0.jar deploy/natcash/backend/loyalty-service.jar'
+                    sh 'mkdir -p deploy/micro-loyalty/backend && cp src/service/target/loyalty-service-1.0.0.jar deploy/micro-loyalty/backend/loyalty-service.jar'
                 }
             }
         }
@@ -54,31 +54,31 @@ pipeline {
             steps {
                 script {
                     if (params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms') {
-                        echo "Đóng gói Loyalty CMS (Nginx Port 8080)..."
+                        echo "Đóng gói Cổng Quản Trị Loyalty CMS (ReactJS / Vite)..."
                         dir('src/cms') {
                             sh 'npm install'
                             sh 'npm run build'
-                            sh 'mkdir -p ../../deploy/natcash/frontend/cms/dist && rm -rf ../../deploy/natcash/frontend/cms/dist/* && cp -r dist/* ../../deploy/natcash/frontend/cms/dist/'
+                            sh 'mkdir -p ../../deploy/micro-loyalty/frontend/cms/dist && rm -rf ../../deploy/micro-loyalty/frontend/cms/dist/* && cp -r dist/* ../../deploy/micro-loyalty/frontend/cms/dist/'
                         }
                     }
                     if (params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-webview') {
-                        echo "Đóng gói Loyalty Webview (Nginx Port 8443)..."
+                        echo "Đóng gói Cổng Webview GameHub (TailwindCSS / Vite)..."
                         dir('src/webview') {
                             sh 'npm install'
                             sh 'npm run build'
-                            sh 'mkdir -p ../../deploy/natcash/frontend/webview/dist && rm -rf ../../deploy/natcash/frontend/webview/dist/* && cp -r dist/* ../../deploy/natcash/frontend/webview/dist/'
+                            sh 'mkdir -p ../../deploy/micro-loyalty/frontend/webview/dist && rm -rf ../../deploy/micro-loyalty/frontend/webview/dist/* && cp -r dist/* ../../deploy/micro-loyalty/frontend/webview/dist/'
                         }
                     }
                 }
             }
         }
 
-        stage('4. 🚀 Deploy Native to Natcash Server') {
+        stage('4. 🐳 Deploy & Rolling Update') {
             steps {
                 script {
-                    echo "Triển khai lên máy chủ Natcash ${SERVER_HOST}:${SERVER_PORT}..."
-                    sh 'tar -czf - -C deploy/natcash . | ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH} && tar -xzf - -C ${DEPLOY_PATH}"'
-                    sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && bash scripts/start.sh"'
+                    echo "Triển khai lên máy chủ ${SERVER_HOST}:${SERVER_PORT}..."
+                    sh 'tar -czf - -C deploy/micro-loyalty . | ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH} && tar -xzf - -C ${DEPLOY_PATH}"'
+                    sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && docker compose -p micro-loyalty up -d --build"'
                 }
             }
         }
@@ -86,7 +86,7 @@ pipeline {
         stage('5. 🔍 Health Check Verification') {
             steps {
                 script {
-                    echo "Kiểm tra sức khỏe dịch vụ Native trên cổng 8085..."
+                    echo "Kiểm tra trạng thái sức khỏe dịch vụ..."
                     sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && bash scripts/healthcheck.sh"'
                 }
             }
@@ -96,28 +96,27 @@ pipeline {
     post {
         success {
             script {
-                echo "Triển khai On-Premise Natcash thành công!"
+                echo "Quy trình CI/CD hoàn tất thành công!"
                 def msg = """🎉 *JENKINS DEPLOYMENT SUCCESSFUL!*
 • Target: `${params.TARGET_SERVICE}`
-• Environment: `Natcash On-Premise (${SERVER_HOST}:${SERVER_PORT})`
+• Environment: `SaaS (${SERVER_HOST}:${SERVER_PORT})`
 • Branch: `${env.BRANCH_NAME ?: 'main'}`
 • Build: `#${BUILD_NUMBER}`
-• Ports: `8085 (Backend) | 8443 (Webview) | 8080 (CMS)`
 • Healthcheck: 100% Sống và Sẵn sàng!
 • Jenkins Console: ${BUILD_URL}console"""
-                sh "cd deploy/natcash && chmod +x scripts/*.sh && ./scripts/notify_telegram.sh \"${msg}\" \"SUCCESS\" || true"
+                sh "cd deploy/micro-loyalty && chmod +x scripts/*.sh && ./scripts/notify_telegram.sh \"${msg}\" \"SUCCESS\" || true"
             }
         }
         failure {
             script {
-                echo "Triển khai On-Premise Natcash thất bại!"
+                echo "Quy trình CI/CD thất bại!"
                 def msg = """🚨 *JENKINS DEPLOYMENT FAILED!*
 • Target: `${params.TARGET_SERVICE}`
-• Environment: `Natcash On-Premise (${SERVER_HOST}:${SERVER_PORT})`
+• Environment: `SaaS (${SERVER_HOST}:${SERVER_PORT})`
 • Branch: `${env.BRANCH_NAME ?: 'main'}`
 • Build: `#${BUILD_NUMBER}`
 • Jenkins Console: ${BUILD_URL}console"""
-                sh "cd deploy/natcash && chmod +x scripts/*.sh && ./scripts/notify_telegram.sh \"${msg}\" \"FAILED\" || true"
+                sh "cd deploy/micro-loyalty && chmod +x scripts/*.sh && ./scripts/notify_telegram.sh \"${msg}\" \"FAILED\" || true"
             }
         }
     }
