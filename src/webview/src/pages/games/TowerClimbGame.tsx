@@ -95,7 +95,7 @@ export const TowerClimbGame: React.FC<TowerClimbGameProps> = ({ onBack, onClaimR
       }
 
       if (res.outcome === 'CRASH') {
-        soundManager.playLose();
+        soundManager.playTowerCrash();
         soundManager.triggerHaptic('error');
         setIsCrashed(true);
         setTimeout(() => {

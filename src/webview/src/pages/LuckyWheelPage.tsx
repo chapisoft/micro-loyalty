@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import { LoyaltyApi, WheelPrizeItem } from '../services/api';
+import { soundManager } from '../utils/audio';
 
 interface WheelThemeItem {
   id?: number;
@@ -185,38 +186,14 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
   }, [loadWheelConfig, loadThemes]);
 
   // Audio synthesis Web Audio API (Tick & Win Melody)
-  const playSound = (freq: number, type: OscillatorType = 'sine', duration = 0.08, gainVal = 0.15) => {
+  const playSound = (_freq?: number, _type?: OscillatorType, _duration?: number, _gainVal?: number) => {
     if (!soundEnabled) return;
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(gainVal, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-    } catch {
-      // Ignore audio context errors
-    }
+    soundManager.playSpinTick();
   };
 
   const playWinMelody = () => {
     if (!soundEnabled) return;
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-    notes.forEach((freq, i) => {
-      setTimeout(() => {
-        playSound(freq, 'triangle', 0.25, 0.2);
-      }, i * 120);
-    });
+    soundManager.playWinFanfare();
   };
 
   // Canvas 2D High-Resolution Wheel Rendering
@@ -643,7 +620,11 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             </button>
 
             <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
+              onClick={() => {
+                const muted = soundManager.toggleMute();
+                setSoundEnabled(!muted);
+                if (!muted) soundManager.playTap();
+              }}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center text-amber-600 border border-slate-200"
               title="Âm thanh"
             >

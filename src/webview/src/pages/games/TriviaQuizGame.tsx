@@ -110,7 +110,7 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
       return;
     }
     if (timeLeft <= 5) {
-      soundManager.playSpinTick();
+      soundManager.playCountdownTick();
     }
     const timer = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
@@ -120,7 +120,7 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
 
   const handleUseFiftyFifty = () => {
     if (isFiftyUsed || isAnswered) return;
-    soundManager.playTap();
+    soundManager.playFiftyFifty();
     setIsFiftyUsed(true);
     const wrongOptions = [0, 1, 2, 3].filter((i) => i !== currentQ.correctAnswer);
     const toHide = wrongOptions.slice(0, 2);
@@ -133,11 +133,11 @@ export const TriviaQuizGame: React.FC<{ onBack?: () => void; onClaimReward?: (po
     setIsAnswered(true);
 
     if (idx === currentQ.correctAnswer) {
-      soundManager.playWinFanfare();
+      soundManager.playCorrect();
       soundManager.triggerHaptic('success');
       setScore((s) => s + 1);
     } else {
-      soundManager.playLose();
+      soundManager.playWrong();
       soundManager.triggerHaptic('error');
     }
   };
