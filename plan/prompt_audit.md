@@ -85,8 +85,8 @@ flowchart LR
    * Kiểm tra khối import phân tách đúng 4 nhóm, không có import thừa và không dùng Fully Qualified Names (FQN).
 
 ### Bước 2: Rà Soát Giao Diện Quản Trị (`loyalty-cms`) & Cổng Webview (`loyalty-webview`)
-1. **Rà soát CMS Quản trị Trung tâm (`loyalty-cms`):**
-   * Quét toàn bộ tệp `.tsx` / `.jsx` trong `src/cms/loyalty-cms`.
+1. **Rà soát CMS Quản trị Trung tâm (`cms`):**
+   * Quét toàn bộ tệp `.tsx` / `.jsx` trong `src/cms`.
    * **100% Zero-Hardcoded Text:** Kiểm tra nghiêm ngặt toàn bộ text hiển thị, tiêu đề modal, tên cột bảng, placeholder, thông báo toast có được lấy qua `t("key")` từ `src/locales/` hay không.
    * **Quy chuẩn DataTable:** Đảm bảo thứ tự cột chuẩn: `Checkbox` → `STT` → `Thao tác / Hành động` → `Dữ liệu nghiệp vụ`.
 2. **Rà soát Cổng Webview Nhúng (`loyalty-webview`):**

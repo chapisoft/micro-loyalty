@@ -56,11 +56,14 @@
 
 ## 3. NGUYÊN TẮC VẬN HÀNH, ĐÓNG GÓI VÀ TRIỂN KHAI HỆ THỐNG
 
-### 3.1. Cô lập môi trường cục bộ và cấm tự ý can thiệp máy chủ từ xa
+### 3.1. Cô Lập Môi Trường Cục Bộ Và Tuyệt Đối Cấm Tự Ý Deploy / Can Thiệp Máy Chủ
 1. **Nguyên tắc ưu tiên cục bộ (Local-first):**
    * Toàn bộ thao tác lập trình, sửa lỗi, tái cấu trúc mã nguồn, chạy kiểm thử và đóng gói thử nghiệm phải được thực hiện hoàn toàn ở môi trường cục bộ trên máy trạm của lập trình viên.
-2. **Cấm tự ý tác động lên máy chủ từ xa:**
-   * Trợ lý tuyệt đối không tự ý chạy các lệnh SSH, SCP, Rsync, `docker context` từ xa hay tác động lên môi trường máy chủ thử nghiệm/vận hành khi chưa có yêu cầu trực tiếp từ người dùng.
+2. **Tuyệt đối không tự ý deploy / triển khai lên máy chủ (No Auto-deploy):**
+   * Trợ lý trí tuệ nhân tạo tuyệt đối **KHÔNG ĐƯỢC TỰ Ý chạy các lệnh triển khai (deploy), cập nhật bản dựng, đồng bộ tệp từ xa (SCP, SSH, Rsync), khởi động/tái tạo vùng chứa (`docker compose up`, `docker restart`, `docker exec`), hay nạp lại máy chủ** khi chưa có yêu cầu hoặc chỉ thị rõ ràng, tường minh từ người dùng.
+   * Mọi tác vụ phát triển tính năng, kiểm thử đơn vị, tạo gói đóng gói và viết tài liệu chỉ được thực hiện trên môi trường máy trạm cục bộ. Chỉ khi người dùng yêu cầu trực tiếp (ví dụ: *"deploy dự án lên server...", "triển khai bản vá lên máy chủ..."*), trợ lý mới được phép kết nối máy chủ để thực thi quy trình triển khai.
+3. **Cấm tự ý tác động hoặc thay đổi cấu hình máy chủ từ xa:**
+   * Cấm tự ý can thiệp, dọn dẹp đĩa cứng, thay đổi cấu hình Nginx host, tác động lên cơ sở dữ liệu hoặc khởi động lại các tiến trình/dịch vụ trên máy chủ thử nghiệm/vận hành khi chưa có chỉ đạo trực tiếp từ người dùng.
 
 ### 3.2. Quy chuẩn đóng gói dịch vụ phía máy chủ
 1. **Đóng gói ứng dụng máy chủ:**
@@ -113,6 +116,16 @@
      * `deploy/micro-loyalty/`: **Mô hình SaaS Đa Thuê Bao** (Hệ sinh thái nền tảng trung tâm `micro-loyalty` phục vụ đa đối tác liên minh).
      * `deploy/natcash/`: **Mô hình On-Premise Tại Chỗ** (Gói triển khai tại hạ tầng riêng biệt của hệ thống Ví Natcash).
    * Mỗi thư mục triển khai phải có cấu trúc khép kín 100% độc lập gồm: `docker-compose.yml`, tệp biến môi trường `.env`, `.env.example`, thư mục cấu hình `config/` (Backend `application-*.yml`, Frontend `env-config.json`, Nginx `nginx-*.conf`), thư mục ngôn ngữ `locales/` (`vi.json`, `en.json`...) và các kịch bản quản trị (`start.sh`, `stop.sh`, `backup.sh`, `healthcheck.sh`).
+5. **Nguyên Tắc Phân Lập Môi Trường Triển Khai Tuyệt Đối (Zero Cross-Environment Pollution):**
+   * `deploy/micro-loyalty/` và `deploy/natcash/` là **2 môi trường hạ tầng hoàn toàn khác nhau, tuyệt đối không được cập nhật chung, không dùng chung thông số hoặc sao chép lẫn nhau**:
+     * **Môi trường 1 (`deploy/micro-loyalty/` — Mô hình SaaS Đa Thuê Bao):**
+       * Hạ tầng máy chủ: `210.211.102.99:65000` (Tài khoản: `dip`, Hệ điều hành: Ubuntu Linux 22.04 LTS).
+       * Phương thức vận hành: Cụm Docker Compose / Docker Swarm đồng máy chủ (Co-located) cùng **DIP Platform** và **Smart-OTP**.
+       * Quy hoạch cổng mạng: PostgreSQL chuyên dụng `15435`, Redis chuyên dụng `16385`, Nginx Gateway nội bộ `18095`, Backend lõi nội bộ Docker `8088`. Tận dụng Host Nginx (`80/443`), Prometheus APM (`9090`), Grafana (`3000`), ELK Logging (`9200`/`5601`), Jenkins CI/CD (`9191`).
+     * **Môi trường 2 (`deploy/natcash/` — Mô hình On-Premise Tại Chỗ Ví Natcash):**
+       * Hạ tầng máy chủ: Máy chủ vật lý riêng biệt `10.228.37.65:22` (Tài khoản: `mascom`, Hệ điều hành: CentOS Linux 7).
+       * Phương thức vận hành: Dịch vụ Native thực thi trực tiếp qua JDK 17 (Cổng `8085`), PostgreSQL có sẵn (Cổng `5432`, DB `natcash_loyalty_db`), Redis có sẵn (Cổng `6379`, Mật khẩu `NatCash2022`), Nginx 1.20.2 phân lập cổng `8443` (Webview/API công khai ngoài Internet) và cổng `8080` (CMS nội bộ qua VPN).
+   * **Cấm tuyệt đối:** Không áp dụng chéo thông số IP, tài khoản SSH, cổng mạng, đường dẫn tệp hay kịch bản giữa 2 môi trường này. Mọi tài liệu hoặc cấu hình cho môi trường nào chỉ được cập nhật độc lập trong thư mục tương ứng.
 
 ---
 
@@ -150,7 +163,7 @@ Hệ thống bắt buộc áp dụng tiêu chuẩn Zero-Hardcode toàn diện tr
   * Cấm viết `rowData.status === 'ACTIVE'` hoặc `tier === 'GOLD'`.
   * Bắt buộc khai báo và import các Enums / Constants tập trung tại `src/types/` hoặc `src/constants/` (ví dụ `TierLevel.GOLD`, `VoucherStatus.ACTIVE`, `PolicyStatus.ACTIVE`).
 * **Hằng số đường dẫn và tham số**:
-  * Đường dẫn trang web phải lấy từ `paths.*` trong [paths.ts](file:///Users/micro/Source/chapisoft/micro-loyalty/src/cms/loyalty-cms/src/paths.ts).
+  * Đường dẫn trang web phải lấy từ `paths.*` trong [paths.ts](file:///Users/micro/Source/chapisoft/micro-loyalty/src/cms/src/paths.ts).
   * Cấu hình phân trang, định dạng ngày giờ (`DD/MM/YYYY HH:mm:ss`), tỷ lệ màn hình phải lấy từ `AppConstants`.
 
 #### 4. Trụ Cột Cấu Hình Môi Trường & Bảo Mật (Zero Secret Hardcoding Standard):

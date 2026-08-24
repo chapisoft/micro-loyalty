@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK_21'
+        jdk 'JDK_17'
         maven 'Maven_3.9'
         nodejs 'Node_20'
     }
@@ -14,12 +14,12 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'TARGET_SERVICE', choices: ['all', 'authentication-service', 'customer-service', 'partner-service', 'cms-service', 'cms-admin'], description: 'Select target service to deploy')
-        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip Maven unit tests')
+        choice(name: 'TARGET_SERVICE', choices: ['all', 'loyalty-service', 'loyalty-cms', 'loyalty-webview'], description: 'Chọn phân hệ cần đóng gói và triển khai')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Bỏ qua kiểm thử đơn vị')
     }
 
     environment {
-        DEPLOY_PATH        = '/opt/smart-otp/deploy'
+        DEPLOY_PATH        = '/home/dip/micro-loyalty/deploy'
         SERVER_USER        = 'dip'
         SERVER_HOST        = '210.211.102.99'
         SERVER_PORT        = '65000'
@@ -30,33 +30,47 @@ pipeline {
     stages {
         stage('1. 🛡️ Quality Gate & Security Check') {
             steps {
-                echo "Running Static Analysis & Cryptographic Standard Verifications..."
+                echo "Kiểm tra chất lượng mã nguồn và tiêu chuẩn bảo mật..."
             }
         }
 
-        stage('2. ☕ Build Backend Microservices') {
+        stage('2. ☕ Build Backend Service') {
             when {
-                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE.endsWith('-service') }
+                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-service' }
             }
             steps {
                 script {
-                    echo "Building Spring Boot Microservices with Java 21..."
-                    sh 'mvn clean install -DskipTests'
-                    sh 'cp src/service/*/target/*.jar deploy/backend/ || true'
+                    echo "Đóng gói Backend Spring Boot (Java 17)..."
+                    dir('src/service') {
+                        sh 'mvn clean package -DskipTests'
+                        sh 'mkdir -p ../../deploy/micro-loyalty/backend && cp target/loyalty-service-1.0.0.jar ../../deploy/micro-loyalty/backend/loyalty-service.jar'
+                    }
                 }
             }
         }
 
-        stage('3. 🖥️ Build CMS Admin Frontend') {
+        stage('3. 🖥️ Build CMS & Webview Frontend') {
             when {
-                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'cms-admin' }
+                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms' || params.TARGET_SERVICE == 'loyalty-webview' }
             }
             steps {
-                dir('src/cms/cms-admin/app') {
-                    echo "Building Vite/React CMS Frontend..."
-                    sh 'npm install'
-                    sh 'npm run build'
-                    sh 'mkdir -p ../../../../deploy/frontend/dist && cp -r ../../../../publish/admin-cms/* ../../../../deploy/frontend/dist/ || true'
+                script {
+                    if (params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms') {
+                        echo "Đóng gói Cổng Quản Trị Loyalty CMS (ReactJS / Vite)..."
+                        dir('src/cms') {
+                            sh 'npm install'
+                            sh 'npm run build'
+                            sh 'mkdir -p ../../deploy/micro-loyalty/frontend/cms/dist && rm -rf ../../deploy/micro-loyalty/frontend/cms/dist/* && cp -r dist/* ../../deploy/micro-loyalty/frontend/cms/dist/'
+                        }
+                    }
+                    if (params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-webview') {
+                        echo "Đóng gói Cổng Webview GameHub (TailwindCSS / Vite)..."
+                        dir('src/webview') {
+                            sh 'npm install'
+                            sh 'npm run build'
+                            sh 'mkdir -p ../../deploy/micro-loyalty/frontend/webview/dist && rm -rf ../../deploy/micro-loyalty/frontend/webview/dist/* && cp -r dist/* ../../deploy/micro-loyalty/frontend/webview/dist/'
+                        }
+                    }
                 }
             }
         }
@@ -64,31 +78,29 @@ pipeline {
         stage('4. 🐳 Deploy & Rolling Update') {
             steps {
                 script {
-                    echo "Deploying to ${SERVER_HOST}:${SERVER_PORT}..."
-                    if (params.TARGET_SERVICE == 'all') {
-                        sh 'cd deploy && bash scripts/deploy_all.sh'
-                    } else {
-                        sh "cd deploy && bash scripts/deploy_service.sh ${params.TARGET_SERVICE}"
-                    }
+                    echo "Triển khai lên máy chủ ${SERVER_HOST}:${SERVER_PORT}..."
+                    sh 'tar -czf - -C deploy/micro-loyalty . | ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH} && tar -xzf - -C ${DEPLOY_PATH}"'
+                    sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && docker compose -p micro-loyalty up -d --build"'
                 }
             }
         }
 
         stage('5. 🔍 Health Check Verification') {
             steps {
-                sh 'cd deploy && bash scripts/check_health.sh 18090'
+                script {
+                    echo "Kiểm tra trạng thái sức khỏe dịch vụ..."
+                    sh 'ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} "cd ${DEPLOY_PATH} && bash scripts/healthcheck.sh"'
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline completed successfully!"
-            sh 'cd deploy && bash scripts/notify_telegram.sh "🎉 <b>Smart-OTP CI/CD Pipeline Build SUCCESS!</b>" "SUCCESS" || true'
+            echo "Quy trình CI/CD hoàn tất thành công!"
         }
         failure {
-            echo "Pipeline failed!"
-            sh 'cd deploy && bash scripts/notify_telegram.sh "🚨 <b>Smart-OTP CI/CD Pipeline Build FAILED!</b>" "ERROR" || true'
+            echo "Quy trình CI/CD thất bại!"
         }
     }
 }

@@ -16,7 +16,7 @@
     <modules>
         <module>src/lib/ims-libraries</module>
         <module>src/lib/loyalty-engine</module>
-        <module>src/service/loyalty-service</module>
+        <module>src/service</module>
     </modules>
 
 </project>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Hệ Thống Quản Trị Khách Hàng Thân Thiết — Loyalty CMS</title>
+  <script>
+    (function() {
+      const hostname = window.location.hostname;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+      const origin = window.location.origin;
+      const protocol = window.location.protocol;
+      const apiBase = isLocal 
+        ? 'http://localhost:8088' 
+        : (hostname.includes('cms.mid.io.vn') ? origin : (hostname.includes('mid.io.vn') ? (protocol + '//api.mid.io.vn') : (origin + '/loyalty')));
+
+      window.process = {
+        env: {
+          NODE_ENV: "production",
+        },
+      };
+
+      window.__ENV__ = {
+        VITE_MODE: isLocal ? 'development' : 'production',
+        VITE_API_URL: apiBase,
+        VITE_API_AUTH_URL: apiBase,
+        VITE_IMAGE_URL: isLocal ? 'http://localhost:18095/' : (origin + '/'),
+        VITE_ACCESS_TOKEN: '',
+        VITE_CONTEXT_PATH: '/'
+      };
+    })();
+  </script>
+  <script src="%BASE_URL%env-config.js?v=2.0.1"></script>
+  <style>
+    @layer antd, primereact, primeng;
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

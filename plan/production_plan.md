@@ -9,10 +9,6 @@
 > 4. Cổng trải nghiệm Webview nhúng đa nền tảng & Trình mở Game H5: `loyalty-webview` (ReactJS 18+ / TypeScript / Vite / TailwindCSS Mobile-First / Nginx)  
 > 5. Cổng nhà phát triển và trình giả lập: `loyalty-sandbox` (ReactJS 18+ / Vite / Nginx)  
 > 6. Bộ công cụ tích hợp ứng dụng di động: `natcash-eu-app` & Mobile SDK (React Native) với cơ chế Phím tắt Động (Dynamic Shortcuts) & Liên kết sâu (Deep Links)  
-> 7. Cổng kết nối trung gian: `natcash-eu-api` (Java Spring Boot Reverse Proxy)  
-> **Chiến lược sản xuất:** Kế thừa và tái sử dụng toàn diện từ Giai đoạn 1 đến Giai đoạn 5 bộ khung mã nguồn, 11 module thư viện lõi (`ims-libraries`), giải pháp an ninh khóa kép HMAC-SHA256, giao diện quản trị CMS, cổng Developer Sandbox, bộ kết nối Gateway, cấu trúc Mobile App và kịch bản kiểm thử tải / CI/CD đã được kiểm chứng từ dự án `smart-otp` (`/Users/micro/Source/chapisoft/smart-otp`), giúp tiết kiệm **12 – 15 tuần-người** và rút ngắn 40% – 50% tổng thời gian phát triển.  
-> **Loại tài liệu:** Phương Án Kỹ Thuật, Bảng Phân Rã Chi Tiết Giai Đoạn – Đợt Nước Rút – Tác Vụ và Kế Hoạch Sản Xuất Thực Thi
-
 ---
 
 ## 1. TỔNG QUAN DỰ ÁN VÀ MỤC TIÊU SẢN XUẤT
@@ -362,7 +358,7 @@ flowchart LR
 
 ## 5. BẢNG PHÂN RÃ TỔNG HỢP TOÀN DIỆN CÔNG VIỆC KỸ THUẬT (PHASE – SPRINT – TASK)
 
-Kế hoạch sản xuất được chia thành **5 Giai Đoạn (Phases)**, **9 Đợt Chạy Nước Rút (Sprints)** và **46 Tác Vụ (Tasks)** kỹ thuật chi tiết. Toàn bộ các tác vụ được hợp nhất thành một bảng tổng thể duy nhất, các dòng phân nhóm Giai đoạn và Đợt nước rút được gộp trọn vẹn thành 1 ô mở rộng toàn hàng (`colspan="7"`), căn lề trái trực quan:
+Kế hoạch sản xuất được chia thành **5 Giai Đoạn (Phases)**, **9 Đợt Chạy Nước Rút (Sprints)** và **46 Tác Vụ (Tasks)** kỹ thuật chi tiết:
 
 ```mermaid
 flowchart LR
@@ -1111,7 +1107,7 @@ flowchart LR
   <td>Mở Rộng Cổng Thử Nghiệm Sandbox &amp; Soi Chữ Ký HMAC</td>
   <td><code>loyalty-sandbox</code></td>
   <td>Mở rộng cổng `loyalty-sandbox` (ReactJS / Vite): Cung cấp bộ công cụ tự động tính toán chữ ký HMAC-SHA256, trình giả lập bắn Webhook Outbox hai chiều, trình phát sinh chuỗi chuẩn hóa Canonical String và bộ Postman Collection mẫu.</td>
-  <td align="center"><strong>Kế thừa 85%</strong> từ <code>src/sandbox/loyalty-sandbox</code></td>
+  <td align="center"><strong>Kế thừa 85%</strong> từ <code>src/sandbox</code></td>
   <td>Nhà phát triển đối tác tự thử nghiệm API thành công trong dưới 10 phút mà không cần hỗ trợ kỹ thuật trực tiếp.</td>
   <td align="center"><span style="color:#64748b;font-weight:normal;">Chờ xử lý</span></td>
 </tr>

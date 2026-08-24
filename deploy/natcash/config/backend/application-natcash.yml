@@ -8,6 +8,8 @@ server:
   shutdown: graceful
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
   application:
     name: loyalty-service-natcash
   datasource:
@@ -35,7 +37,10 @@ loyalty:
   default-tenant-id: ${TENANT_DEFAULT:TENANT_NATCASH}
   partner-code: ${PARTNER_CODE:NATCASH_WALLET}
   gateway:
-    endpoint: ${NATCASH_API_GW_ENDPOINT:http://natcash-eu-api:8080}
+    endpoint: ${NATCASH_API_GW_ENDPOINT:http://10.228.37.65:8686}
+  public-urls:
+    webview-gamehub: ${PUBLIC_WEBVIEW_URL:https://loyalty.natcom.com.ht:8443/gamehub}
+    cms-portal: ${PUBLIC_CMS_URL:https://loyalty.natcom.com.ht:8443}
   security:
     timestamp-tolerance-seconds: 300
   outbox:

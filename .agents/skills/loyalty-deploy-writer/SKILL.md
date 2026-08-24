@@ -47,6 +47,10 @@ Cung cấp quy trình, mẫu cấu trúc và kịch bản đóng gói triển kh
 * Tệp từ điển JSON (`vi.json`, `en.json`, `fr.json`, `ht.json`...) được đặt ở thư mục ngoại vi `locales/` trên máy chủ và mount vào Nginx `/usr/share/nginx/html/locales/`.
 * Khi đối tác On-Premise muốn tùy biến câu chữ, thay đổi tên gọi điểm thưởng hoặc sửa đổi thông điệp thông báo, quản trị viên chỉ cần mở tệp JSON sửa trực tiếp và lưu lại; ứng dụng webview/cms sẽ tự động nạp bản dịch mới sau khi người dùng F5 mà không cần build lại mã nguồn.
 
+### 2.4. Nguyên Tắc Tuyệt Đối Không Tự Ý Triển Khai Lên Máy Chủ (No Auto-deploy Rule)
+* **Cô lập cục bộ (Local-first):** Quá trình viết mã, sửa lỗi, đóng gói và chạy kiểm thử tự động chỉ được thực hiện trên môi trường máy trạm nội bộ của lập trình viên.
+* **Cấm tự động triển khai:** Trợ lý AI tuyệt đối KHÔNG ĐƯỢC TỰ Ý kết nối SSH/SCP/Rsync, chạy lệnh triển khai hoặc tái tạo vùng chứa trên máy chủ từ xa khi chưa nhận được yêu cầu tường minh từ người dùng. Mọi thao tác deploy chỉ được kích hoạt khi có chỉ đạo rõ ràng từ người dùng.
+
 ---
 
 ## 3. CẤU TRÚC THƯ MỤC TRIỂN KHAI PHÂN TÁCH THEO MÔI TRƯỜNG
@@ -59,10 +63,11 @@ deploy/
 │   └── Dockerfile                  // Dockerfile bất biến cho Spring Boot
 ├── frontend/
 │   └── Dockerfile                  // Dockerfile bất biến cho Nginx SPA
-├── micro-loyalty/                  // 1. MÔ HÌNH SAAS ĐA THUÊ BAO (MICRO-LOYALTY)
+├── micro-loyalty/                  // 1. MÔ HÌNH SAAS ĐA THUÊ BAO (Server: 210.211.102.99:65000 dip / Docker Co-location DIP & Smart-OTP)
 │   ├── docker-compose.yml
 │   ├── .env
 │   ├── .env.example
+│   ├── deploy-guild.md             // Tài liệu hướng dẫn triển khai môi trường SaaS
 │   ├── config/
 │   │   ├── backend/
 │   │   │   └── application-saas.yml
@@ -77,10 +82,11 @@ deploy/
 │       ├── start.sh
 │       ├── stop.sh
 │       └── healthcheck.sh
-└── natcash/                        // 2. MÔ HÌNH ON-PREMISE VÍ NATCASH (NATCASH)
+└── natcash/                        // 2. MÔ HÌNH ON-PREMISE VÍ NATCASH (Server: 10.228.37.65:22 mascom / CentOS Native Service)
     ├── docker-compose.yml
     ├── .env
     ├── .env.example
+    ├── deploy-guild.md             // Tài liệu hướng dẫn triển khai môi trường On-Premise
     ├── config/
     │   ├── backend/
     │   │   └── application-natcash.yml
@@ -96,10 +102,25 @@ deploy/
         ├── start.sh
         ├── stop.sh
         └── backup.sh
+```
 
 ---
 
-## 4. BẢNG SO SÁNH ĐẶC TÍNH TRIỂN KHAI SAAS VS ON-PREMISE
+## 4. NGUYÊN TẮC PHÂN LẬP MÔI TRƯỜNG TRIỂN KHAI TUYỆT ĐỐI (ZERO CROSS-ENVIRONMENT POLLUTION)
+
+1. **Phân Định Bản Chất Hai Môi Trường:**
+   * **Môi trường SaaS `micro-loyalty` (`deploy/micro-loyalty/`):**
+     * Triển khai trên máy chủ đám mây `210.211.102.99:65000` (User `dip`, Ubuntu 22.04 LTS).
+     * Chạy theo mô hình vùng chứa Docker Compose / Docker Swarm đồng máy chủ (Co-located) cùng nền tảng **DIP** và **Smart-OTP**.
+     * Cổng mạng chuyên dụng: PostgreSQL `15435`, Redis `16385`, Nginx Gateway nội bộ `18095`, Backend lõi `8088`. Tận dụng Host Nginx (`80/443`), Prometheus APM (`9090`), Grafana (`3000`), ELK Logging (`9200`/`5601`), Jenkins CI/CD (`9191`).
+   * **Môi trường On-Premise `natcash` (`deploy/natcash/`):**
+     * Triển khai trên máy chủ vật lý độc lập `10.228.37.65:22` (User `mascom`, CentOS Linux 7).
+     * Chạy dịch vụ Native trực tiếp qua máy ảo JDK 17 (Cổng `8085`), PostgreSQL có sẵn (Cổng `5432`, DB `natcash_loyalty_db`), Redis có sẵn (Cổng `6379`, Mật khẩu `NatCash2022`), Nginx 1.20.2 phân lập cổng `8443` (Webview/API công khai ngoài Internet) và cổng `8080` (CMS nội bộ VPN).
+2. **Quy Tắc Quản Trị Cấu Hình:**
+   * **Tuyệt đối không cập nhật chung hoặc sao chép thông số cấu hình qua lại giữa 2 thư mục này.**
+   * Bất kỳ thay đổi cấu hình, kịch bản, địa chỉ IP, cổng mạng hoặc tài liệu hướng dẫn nào chỉ được cập nhật độc lập và khép kín trong thư mục của môi trường đó.
+
+## 5. BẢNG SO SÁNH ĐẶC TÍNH TRIỂN KHAI SAAS VS ON-PREMISE
 
 | Tiêu chí kỹ thuật | Mô hình SaaS Multi-tenant Cloud | Mô hình On-Premise Private Datacenter |
 |:---|:---|:---|

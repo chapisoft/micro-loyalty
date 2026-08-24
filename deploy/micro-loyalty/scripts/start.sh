@@ -24,4 +24,4 @@ echo ""
 echo "[START-SAAS] Khởi động thành công!"
 docker compose ps
 echo ""
-echo "Truy cập Gateway SaaS tại: http://localhost:18090"
+echo "Truy cập Gateway SaaS tại: http://localhost:18095"

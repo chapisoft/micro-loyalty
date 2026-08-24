@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+  <Properties>
+    <Property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{%5p}--[%T-%-15.15t] [%-20X{clientMessageId}]%-40.40c{1.} :%m%n%ex"/>
+    <Property name="LOG_PATH" value="${sys:LOG_PATH:-/app/logs}"/>
+  </Properties>
+  <Appenders>
+    <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
+      <PatternLayout pattern="${LOG_PATTERN}"/>
+    </Console>
+    <RollingFile name="FileAppender" fileName="${LOG_PATH}/loyalty-service.log"
+                 filePattern="${LOG_PATH}/loyalty-service-%d{yyyy-MM-dd}-%i.log.gz">
+      <PatternLayout pattern="${LOG_PATTERN}"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+        <SizeBasedTriggeringPolicy size="20MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="5">
+        <Delete basePath="${LOG_PATH}" maxDepth="1">
+          <IfFileName glob="loyalty-service-*.log.gz" />
+          <IfLastModified age="3d" />
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingFile>
+  </Appenders>
+  <Loggers>
+    <AsyncLogger name="org.springframework" level="INFO"/>
+    <AsyncLogger name="org.hibernate" level="INFO"/>
+    <AsyncLogger name="com.natcash.loyalty" level="DEBUG"/>
+    <AsyncRoot level="info" includeLocation="false">
+      <AppenderRef ref="ConsoleAppender"/>
+      <AppenderRef ref="FileAppender"/>
+    </AsyncRoot>
+  </Loggers>
+</Configuration>
