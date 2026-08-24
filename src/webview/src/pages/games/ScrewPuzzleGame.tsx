@@ -480,7 +480,15 @@ const LEVELS: LevelData[] = [
 export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
 
-  const [currentLevelIdx, setCurrentLevelIdx] = useState<number>(0);
+  const [currentLevelIdx, setCurrentLevelIdx] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('screw_puzzle_level');
+      const idx = saved ? parseInt(saved, 10) : 0;
+      return idx >= 0 && idx < LEVELS.length ? idx : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [levelData, setLevelData] = useState<LevelData>(LEVELS[0]);
 
   // Active Game State

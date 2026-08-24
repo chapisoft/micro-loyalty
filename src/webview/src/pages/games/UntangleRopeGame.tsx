@@ -164,7 +164,14 @@ function generateProceduralLevel(levelNum: number): { totalPegs: number; name: s
 export const UntangleRopeGame: React.FC<UntangleRopeGameProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
 
-  const [currentLevelIdx, setCurrentLevelIdx] = useState<number>(0);
+  const [currentLevelIdx, setCurrentLevelIdx] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('untangle_rope_level');
+      return saved ? Math.max(0, parseInt(saved, 10)) : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [levelName, setLevelName] = useState<string>('Khởi Động');
   const [pegs, setPegs] = useState<Peg[]>([]);
   const [ropes, setRopes] = useState<Rope[]>([]);

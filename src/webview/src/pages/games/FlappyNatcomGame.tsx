@@ -86,10 +86,14 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
   };
 
   const initGame = useCallback(() => {
+    const width = canvasRef.current?.parentElement?.clientWidth || 360;
+    const firstTowerX = Math.round(width * 0.72);
+    const secondTowerX = firstTowerX + 210;
+
     birdRef.current = { y: 200, vy: 0, angle: 0, shield: false };
     towersRef.current = [
       {
-        x: 360,
+        x: firstTowerX,
         topHeight: 120,
         bottomY: 120 + 130,
         passed: false,
@@ -98,7 +102,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
         isMoving: false,
       },
       {
-        x: 570,
+        x: secondTowerX,
         topHeight: 170,
         bottomY: 170 + 130,
         passed: false,
@@ -120,6 +124,11 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
     setDoubleSeconds(0);
     setGameState('IDLE');
   }, []);
+
+  // Initialize game on component mount
+  useEffect(() => {
+    initGame();
+  }, [initGame]);
 
   const jump = useCallback(() => {
     if (gameState === 'IDLE') {
@@ -375,10 +384,12 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
         // Spawn new towers dynamically with varied challenges
         const spawnInterval = Math.max(140, 210 - currentScore * 2.5);
-        if (towers.length > 0 && towers[towers.length - 1].x < width - spawnInterval) {
+        const lastTower = towers.length > 0 ? towers[towers.length - 1] : null;
+        if (!lastTower || lastTower.x < width - spawnInterval) {
           const minHeight = 55;
           const maxHeight = height - currentGap - 85;
           const topH = Math.floor(minHeight + Math.random() * (maxHeight - minHeight));
+          const spawnX = lastTower ? Math.max(width + 20, lastTower.x + spawnInterval) : width + 20;
 
           // Randomly spawn moving tower starting at score >= 5
           const shouldMove = currentScore >= 5 && Math.random() < 0.45;
@@ -389,7 +400,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             : undefined;
 
           towers.push({
-            x: width + 20,
+            x: spawnX,
             topHeight: topH,
             bottomY: topH + currentGap,
             passed: false,
@@ -412,8 +423,9 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
         // Upper Telecom Tower
         const topGrad = ctx.createLinearGradient(tower.x, 0, tower.x + TOWER_WIDTH, 0);
         topGrad.addColorStop(0, '#1E293B');
-        topGrad.addColorStop(0.3, '#E2E8F0');
-        topGrad.addColorStop(0.7, '#DC2626'); // Natcom Red Branding Accent
+        topGrad.addColorStop(0.25, '#CBD5E1');
+        topGrad.addColorStop(0.5, '#DC2626'); // Natcom Red Branding Accent
+        topGrad.addColorStop(0.75, '#E2E8F0');
         topGrad.addColorStop(1, '#0F172A');
         ctx.fillStyle = topGrad;
         ctx.fillRect(tower.x, 0, TOWER_WIDTH, tower.topHeight);
@@ -421,53 +433,90 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
         // Lower Telecom Tower
         const botGrad = ctx.createLinearGradient(tower.x, 0, tower.x + TOWER_WIDTH, 0);
         botGrad.addColorStop(0, '#0F172A');
-        botGrad.addColorStop(0.3, '#DC2626');
-        botGrad.addColorStop(0.7, '#E2E8F0');
+        botGrad.addColorStop(0.25, '#E2E8F0');
+        botGrad.addColorStop(0.5, '#DC2626');
+        botGrad.addColorStop(0.75, '#CBD5E1');
         botGrad.addColorStop(1, '#1E293B');
         ctx.fillStyle = botGrad;
         ctx.fillRect(tower.x, tower.bottomY, TOWER_WIDTH, height - tower.bottomY);
 
+        // Sector Antenna Panels (Red & Steel Cap on Mast Heads)
+        ctx.fillStyle = '#DC2626';
+        ctx.fillRect(tower.x - 3, tower.topHeight - 12, TOWER_WIDTH + 6, 12);
+        ctx.fillRect(tower.x - 3, tower.bottomY, TOWER_WIDTH + 6, 12);
+
+        ctx.fillStyle = '#F8FAFC';
+        ctx.fillRect(tower.x + 4, tower.topHeight - 10, 8, 8);
+        ctx.fillRect(tower.x + TOWER_WIDTH - 12, tower.topHeight - 10, 8, 8);
+        ctx.fillRect(tower.x + 4, tower.bottomY + 2, 8, 8);
+        ctx.fillRect(tower.x + TOWER_WIDTH - 12, tower.bottomY + 2, 8, 8);
+
+        // Holographic 4G Signal Waves (Vòng sóng viễn thông phát xạ từ đỉnh cột)
+        const waveTime = time * 0.003;
+        ctx.save();
+        ctx.strokeStyle = '#38BDF8';
+        ctx.shadowColor = '#0284C7';
+        ctx.shadowBlur = 8;
+        for (let w = 0; w < 3; w++) {
+          const progress = (waveTime + w * 0.33) % 1;
+          const waveRadius = 14 + progress * 32;
+          const waveAlpha = Math.max(0, (1 - progress) * 0.8);
+          ctx.globalAlpha = waveAlpha;
+          ctx.lineWidth = Math.max(1, 2.8 - progress * 1.6);
+
+          // Upper antenna signal wave (pointing downward into the flying lane)
+          ctx.beginPath();
+          ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight, waveRadius, Math.PI * 0.15, Math.PI * 0.85);
+          ctx.stroke();
+
+          // Lower antenna signal wave (pointing upward into the flying lane)
+          ctx.beginPath();
+          ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY, waveRadius, Math.PI * 1.15, Math.PI * 1.85);
+          ctx.stroke();
+        }
+        ctx.restore();
+
         // Antenna Mast Rungs / Truss pattern
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1.5;
-        for (let y = 10; y < tower.topHeight - 10; y += 18) {
+        for (let y = 10; y < tower.topHeight - 16; y += 18) {
           ctx.beginPath();
           ctx.moveTo(tower.x + 4, y);
           ctx.lineTo(tower.x + TOWER_WIDTH - 4, y + 12);
           ctx.stroke();
         }
-        for (let y = tower.bottomY + 10; y < height - 30; y += 18) {
+        for (let y = tower.bottomY + 16; y < height - 30; y += 18) {
           ctx.beginPath();
           ctx.moveTo(tower.x + 4, y);
           ctx.lineTo(tower.x + TOWER_WIDTH - 4, y + 12);
           ctx.stroke();
         }
 
-        // Flashing Warning LED on Tower tips
+        // Flashing Warning Aviation LED on Tower tips
         const ledBlink = Math.sin(time * 0.008) > 0;
         ctx.fillStyle = ledBlink ? '#EF4444' : '#7F1D1D';
         ctx.shadowColor = '#EF4444';
-        ctx.shadowBlur = ledBlink ? 8 : 0;
+        ctx.shadowBlur = ledBlink ? 12 : 0;
         ctx.beginPath();
-        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight - 5, 3.5, 0, Math.PI * 2);
-        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY + 5, 3.5, 0, Math.PI * 2);
+        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight - 6, 4, 0, Math.PI * 2);
+        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY + 6, 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
         // Microwave Transmission Dish Art
         ctx.fillStyle = '#94A3B8';
         ctx.beginPath();
-        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight - 14, 7, 0, Math.PI);
+        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight - 20, 8, 0, Math.PI);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY + 14, 7, Math.PI, 0);
+        ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY + 20, 8, Math.PI, 0);
         ctx.fill();
 
         // Oscillating Tower Movement Indicator Icon
         if (tower.isMoving) {
           ctx.fillStyle = '#38BDF8';
           ctx.font = '10px sans-serif';
-          ctx.fillText('↕', tower.x + TOWER_WIDTH / 2 - 4, tower.topHeight - 24);
+          ctx.fillText('↕', tower.x + TOWER_WIDTH / 2 - 4, tower.topHeight - 28);
         }
 
         // Draw Floating Coin
@@ -768,6 +817,11 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
                 </span>
               )}
             </div>
+            {/* 4G Signal Badge */}
+            <div className="flex items-center gap-1.5 bg-sky-500/15 border border-sky-500/40 px-2 py-0.5 rounded-full text-[9px] text-sky-300 font-bold">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>4G NATCOM</span>
+            </div>
           </div>
 
           <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-1 rounded-xl text-center shrink-0">
@@ -801,7 +855,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
           {/* IDLE Start Overlay */}
           {gameState === 'IDLE' && (
-            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
+            <div className="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] flex flex-col items-center justify-center p-6 text-center">
               <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center text-3xl shadow-xl animate-bounce mb-3">
                 🕊️
               </div>

@@ -134,7 +134,15 @@ const LEVELS: LevelStage[] = [
 export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
 
-  const [currentLevelIdx, setCurrentLevelIdx] = useState<number>(0);
+  const [currentLevelIdx, setCurrentLevelIdx] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('pull_pin_level');
+      const idx = saved ? parseInt(saved, 10) : 0;
+      return idx >= 0 && idx < LEVELS.length ? idx : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [levelData, setLevelData] = useState<LevelStage>(LEVELS[0]);
 
   const [pins, setPins] = useState<Pin[]>([]);

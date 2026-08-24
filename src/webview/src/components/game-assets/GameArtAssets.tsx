@@ -553,6 +553,154 @@ export const GameCoverArt: React.FC<GameCoverProps> = ({ gameId, className = 'w-
         </svg>
       );
 
+    case 'SCREW':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgScrew" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1E293B" />
+              <stop offset="60%" stopColor="#0F172A" />
+              <stop offset="100%" stopColor="#334155" />
+            </linearGradient>
+            <linearGradient id="metalPlate1" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#F59E0B" />
+              <stop offset="50%" stopColor="#FDE047" />
+              <stop offset="100%" stopColor="#D97706" />
+            </linearGradient>
+            <linearGradient id="metalPlate2" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#0284C7" />
+              <stop offset="50%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#0369A1" />
+            </linearGradient>
+            <linearGradient id="screwHead" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F87171" />
+              <stop offset="50%" stopColor="#EF4444" />
+              <stop offset="100%" stopColor="#991B1B" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgScrew)" />
+          {/* Perforated Board Holes */}
+          {[35, 75, 125, 165].map((x) =>
+            [40, 90, 140, 170].map((y, j) => (
+              <circle key={`${x}-${j}`} cx={x} cy={y} r="8" fill="#020617" stroke="#475569" strokeWidth="2" />
+            ))
+          )}
+          {/* Overlapping Metal Bars */}
+          <g filter="url(#shadow3d)" transform="rotate(-25 100 100)">
+            <rect x="30" y="85" width="140" height="30" rx="15" fill="url(#metalPlate1)" stroke="#FEF08A" strokeWidth="2" />
+            <circle cx="50" cy="100" r="7" fill="#020617" />
+            <circle cx="150" cy="100" r="7" fill="#020617" />
+          </g>
+          <g filter="url(#shadow3d)" transform="rotate(35 100 100)">
+            <rect x="30" y="85" width="140" height="30" rx="15" fill="url(#metalPlate2)" stroke="#BAE6FD" strokeWidth="2" />
+            <circle cx="50" cy="100" r="7" fill="#020617" />
+            <circle cx="150" cy="100" r="7" fill="#020617" />
+          </g>
+          {/* 3D Screw Bolts with Cross Slot */}
+          <g transform="translate(100, 100)" filter="url(#shadow3d)">
+            <circle cx="0" cy="0" r="14" fill="url(#screwHead)" stroke="#FCA5A5" strokeWidth="2" />
+            <line x1="-8" y1="0" x2="8" y2="0" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+            <line x1="0" y1="-8" x2="0" y2="8" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+          </g>
+          <g transform="translate(55, 60)" filter="url(#shadow3d)">
+            <circle cx="0" cy="0" r="12" fill="#F59E0B" stroke="#FEF08A" strokeWidth="2" />
+            <line x1="-6" y1="0" x2="6" y2="0" stroke="#78350F" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="0" y1="-6" x2="0" y2="6" stroke="#78350F" strokeWidth="2.5" strokeLinecap="round" />
+          </g>
+        </svg>
+      );
+
+    case 'UNTANGLE':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgUntangle" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#0B1329" />
+              <stop offset="50%" stopColor="#1E1B4B" />
+              <stop offset="100%" stopColor="#020617" />
+            </linearGradient>
+            <filter id="glowPink" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#EC4899" floodOpacity="0.9" />
+            </filter>
+            <filter id="glowCyanNeon" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#06B6D4" floodOpacity="0.9" />
+            </filter>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgUntangle)" />
+          {/* Constellation Laser Cords */}
+          <line x1="45" y1="55" x2="155" y2="145" stroke="#EC4899" strokeWidth="4" strokeLinecap="round" filter="url(#glowPink)" />
+          <line x1="45" y1="145" x2="155" y2="55" stroke="#06B6D4" strokeWidth="4" strokeLinecap="round" filter="url(#glowCyanNeon)" />
+          <line x1="100" y1="35" x2="100" y2="165" stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
+          <line x1="45" y1="55" x2="100" y2="35" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
+          <line x1="155" y1="55" x2="100" y2="35" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
+          {/* Glowing Peg Nodes */}
+          {[
+            { cx: 45, cy: 55, color: '#EC4899' },
+            { cx: 155, cy: 55, color: '#06B6D4' },
+            { cx: 100, cy: 35, color: '#10B981' },
+            { cx: 45, cy: 145, color: '#06B6D4' },
+            { cx: 155, cy: 145, color: '#EC4899' },
+            { cx: 100, cy: 165, color: '#F59E0B' },
+          ].map((peg, i) => (
+            <g key={i} filter="url(#shadow3d)">
+              <circle cx={peg.cx} cy={peg.cy} r="14" fill="#0F172A" stroke={peg.color} strokeWidth="3" />
+              <circle cx={peg.cx} cy={peg.cy} r="6" fill={peg.color} />
+              <circle cx={peg.cx - 2} cy={peg.cy - 2} r="2.5" fill="#FFFFFF" />
+            </g>
+          ))}
+          {/* Sparkle Center */}
+          <circle cx="100" cy="100" r="5" fill="#FEF08A" filter="url(#glowPink)" />
+        </svg>
+      );
+
+    case 'PULLPIN':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgPullPin" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1C1917" />
+              <stop offset="60%" stopColor="#292524" />
+              <stop offset="100%" stopColor="#0C0A09" />
+            </linearGradient>
+            <linearGradient id="pinGold" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FEF08A" />
+              <stop offset="40%" stopColor="#F59E0B" />
+              <stop offset="100%" stopColor="#B45309" />
+            </linearGradient>
+            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#0369A1" />
+            </linearGradient>
+            <linearGradient id="lavaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#F87171" />
+              <stop offset="60%" stopColor="#EF4444" />
+              <stop offset="100%" stopColor="#991B1B" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgPullPin)" />
+          {/* Castle Wall Bricks */}
+          <rect x="35" y="25" width="130" height="150" rx="12" fill="#0C0A09" stroke="#78716C" strokeWidth="4" />
+          {/* Water Chamber Top */}
+          <rect x="45" y="35" width="50" height="40" rx="6" fill="url(#waterGrad)" opacity="0.85" />
+          <text x="70" y="60" textAnchor="middle" fontSize="16">💧</text>
+          {/* Lava Chamber Right */}
+          <rect x="105" y="35" width="50" height="40" rx="6" fill="url(#lavaGrad)" opacity="0.85" />
+          <text x="130" y="60" textAnchor="middle" fontSize="16">🔥</text>
+          {/* Treasure Chamber Bottom */}
+          <rect x="45" y="125" width="110" height="40" rx="6" fill="#451A03" opacity="0.9" />
+          <text x="100" y="152" textAnchor="middle" fontSize="22">👑</text>
+          {/* Golden Pull Pins */}
+          <g filter="url(#shadow3d)">
+            {/* Top Horizontal Pin */}
+            <rect x="25" y="78" width="130" height="10" rx="5" fill="url(#pinGold)" stroke="#FEF08A" strokeWidth="1.5" />
+            <circle cx="28" cy="83" r="9" fill="url(#pinGold)" stroke="#FFFBEB" strokeWidth="2" />
+            {/* Bottom Vertical Pin */}
+            <rect x="95" y="75" width="10" height="55" rx="5" fill="url(#pinGold)" stroke="#FEF08A" strokeWidth="1.5" />
+            <circle cx="100" cy="72" r="8" fill="url(#pinGold)" stroke="#FFFBEB" strokeWidth="2" />
+          </g>
+        </svg>
+      );
+
     default:
       return null;
   }

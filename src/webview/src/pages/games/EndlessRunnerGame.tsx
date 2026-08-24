@@ -100,7 +100,21 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
 
   const GRAVITY = 0.85;
   const JUMP_FORCE = -14.5;
-  const LANE_X_POSITIONS = [75, 180, 285];
+
+  const getLaneX = (lane: Lane, width: number) => {
+    const centerX = width * 0.5;
+    const spread = width * 0.28;
+    return centerX + (lane - 1) * spread;
+  };
+
+  const getLanePerspectiveX = (lane: Lane, yProgress: number, width: number) => {
+    const centerX = width * 0.5;
+    const clampedProgress = Math.max(0, Math.min(1.2, yProgress));
+    // True non-linear perspective convergence towards vanishing point
+    const curve = Math.pow(clampedProgress, 1.25);
+    const spread = 16 + curve * (width * 0.28 - 16);
+    return centerX + (lane - 1) * spread;
+  };
 
   const toggleSound = () => {
     const next = !soundEnabled;
@@ -109,10 +123,12 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
   };
 
   const startGame = useCallback(() => {
+    const width = canvasRef.current?.parentElement?.clientWidth || 360;
+    const centerLaneX = getLaneX(1, width);
     playerRef.current = {
       lane: 1,
-      x: 180,
-      targetX: 180,
+      x: centerLaneX,
+      targetX: centerLaneX,
       jumpY: 0,
       vy: 0,
       state: 'RUN',
@@ -140,14 +156,24 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     GameSounds.playStart();
   }, []);
 
+  // Initialize player position on mount
+  useEffect(() => {
+    const width = canvasRef.current?.parentElement?.clientWidth || 360;
+    const centerLaneX = getLaneX(1, width);
+    playerRef.current.x = centerLaneX;
+    playerRef.current.targetX = centerLaneX;
+  }, []);
+
   const moveLeft = useCallback(() => {
     if (gameState !== 'RUNNING') return;
     const p = playerRef.current;
     if (p.lane > 0) {
       p.lane = (p.lane - 1) as Lane;
-      p.targetX = LANE_X_POSITIONS[p.lane];
+      const width = canvasRef.current?.parentElement?.clientWidth || 360;
+      p.targetX = getLaneX(p.lane, width);
       GameSounds.playTap();
-      fxRef.current.spawnSmokePuff(p.x, 380, 3);
+      const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
+      fxRef.current.spawnSmokePuff(p.x, playerBaseY, 4);
     }
   }, [gameState]);
 
@@ -156,9 +182,11 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     const p = playerRef.current;
     if (p.lane < 2) {
       p.lane = (p.lane + 1) as Lane;
-      p.targetX = LANE_X_POSITIONS[p.lane];
+      const width = canvasRef.current?.parentElement?.clientWidth || 360;
+      p.targetX = getLaneX(p.lane, width);
       GameSounds.playTap();
-      fxRef.current.spawnSmokePuff(p.x, 380, 3);
+      const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
+      fxRef.current.spawnSmokePuff(p.x, playerBaseY, 4);
     }
   }, [gameState]);
 
@@ -176,7 +204,8 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       p.vy = JUMP_FORCE;
       p.state = 'JUMP';
       GameSounds.playTap();
-      fxRef.current.spawnSmokePuff(p.x, 380, 6);
+      const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
+      fxRef.current.spawnSmokePuff(p.x, playerBaseY, 6);
     }
   }, [gameState, startGame]);
 
@@ -184,13 +213,13 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     if (gameState !== 'RUNNING') return;
     const p = playerRef.current;
     if (p.state === 'JUMP') {
-      // Fast drop down
       p.vy = 16;
     }
     p.state = 'SLIDE';
-    p.slideTimer = 32; // ~0.55s
+    p.slideTimer = 34; // ~0.58s
     GameSounds.playScratch();
-    fxRef.current.spawnSmokePuff(p.x, 380, 4);
+    const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
+    fxRef.current.spawnSmokePuff(p.x, playerBaseY, 5);
   }, [gameState]);
 
   // Global Keyboard Controls (WASD / Arrows / Space)
@@ -248,7 +277,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     }
   };
 
-  // Main Canvas Render & Animation Loop (60 FPS 2.5D Caribbean Parkour)
+  // Main Canvas Render & Animation Loop (60 FPS 2.5D High-Octane Caribbean Parkour)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -264,11 +293,6 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
 
     const horizonY = height * 0.28;
     const playerBaseY = height * 0.82;
-
-    const palmTrees = [
-      { x: 25, size: 45, side: 'left' },
-      { x: width - 25, size: 48, side: 'right' },
-    ];
 
     const render = (time: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = time;
@@ -287,110 +311,192 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         }
       }
 
-      // Base run speed
+      // Base run speed & Turbo
       const isTurbo = turboTimerRef.current > 0;
-      const currentSpeed = (4.8 + Math.min(5.0, distRef.current * 0.008)) * (isTurbo ? 1.5 : 1.0);
+      const currentSpeed = (4.8 + Math.min(5.5, distRef.current * 0.009)) * (isTurbo ? 1.55 : 1.0);
 
       // 0. Screen Shake Offset
       const shake = fxRef.current.getShakeOffset();
       ctx.save();
       ctx.translate(shake.x, shake.y);
 
-      // 1. Caribbean Sunset Sky Gradient
+      // 1. Caribbean Sunset Sky Gradient with Atmospheric Haze
       const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
       skyGrad.addColorStop(0, '#0F172A');
-      skyGrad.addColorStop(0.35, '#831843');
-      skyGrad.addColorStop(0.7, '#EA580C');
+      skyGrad.addColorStop(0.3, '#581C87');
+      skyGrad.addColorStop(0.65, '#BE185D');
+      skyGrad.addColorStop(0.85, '#F97316');
       skyGrad.addColorStop(1, '#FDE047');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(-20, -20, width + 40, horizonY + 20);
 
-      // Sun Disk with Warm Flare
+      // Warm Sun Disk with Multi-layer Flares
       ctx.save();
       ctx.fillStyle = '#FEF08A';
       ctx.shadowColor = '#F97316';
       ctx.shadowBlur = 35;
       ctx.beginPath();
-      ctx.arc(width * 0.5, horizonY - 15, 26, 0, Math.PI * 2);
+      ctx.arc(width * 0.5, horizonY - 14, 28, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
-      // Distant Caribbean Mountain Silhouettes
+      // Distant Caribbean Mountains Silhouette
       ctx.fillStyle = '#451A03';
       ctx.beginPath();
       ctx.moveTo(0, horizonY);
-      ctx.lineTo(50, horizonY - 24);
-      ctx.lineTo(120, horizonY - 10);
-      ctx.lineTo(200, horizonY - 30);
-      ctx.lineTo(290, horizonY - 12);
-      ctx.lineTo(width, horizonY - 20);
+      ctx.lineTo(40, horizonY - 22);
+      ctx.lineTo(100, horizonY - 8);
+      ctx.lineTo(170, horizonY - 28);
+      ctx.lineTo(240, horizonY - 12);
+      ctx.lineTo(310, horizonY - 26);
+      ctx.lineTo(width, horizonY - 14);
       ctx.lineTo(width, horizonY);
       ctx.closePath();
       ctx.fill();
 
-      // 2. 3D Perspective Road (Asphalt Highway)
-      // Sidewalk / Grass sides
+      // Port-au-Prince Distant Skyline & 4G Telecom Towers on Horizon
+      ctx.fillStyle = '#1E1B4B';
+      for (let bx = 15; bx < width - 15; bx += 32) {
+        const bH = 12 + Math.sin(bx * 0.1) * 8;
+        ctx.fillRect(bx, horizonY - bH, 20, bH);
+        // Neon windows
+        ctx.fillStyle = '#FDE047';
+        ctx.fillRect(bx + 4, horizonY - bH + 3, 3, 3);
+        ctx.fillRect(bx + 12, horizonY - bH + 3, 3, 3);
+        ctx.fillStyle = '#1E1B4B';
+      }
+
+      // 2. 3D Perspective Highway Road
+      // Lush Caribbean Grass Curbs
       ctx.fillStyle = '#14532D';
       ctx.fillRect(0, horizonY, width, height - horizonY);
 
-      // Asphalt Trapezoid
-      ctx.fillStyle = '#1E293B';
+      // 3D Asphalt Trapezoid
+      const asphaltGrad = ctx.createLinearGradient(0, horizonY, 0, height);
+      asphaltGrad.addColorStop(0, '#334155');
+      asphaltGrad.addColorStop(0.3, '#1E293B');
+      asphaltGrad.addColorStop(1, '#0F172A');
+      ctx.fillStyle = asphaltGrad;
+
       ctx.beginPath();
-      ctx.moveTo(width * 0.38, horizonY);
-      ctx.lineTo(width * 0.62, horizonY);
-      ctx.lineTo(width + 20, height);
-      ctx.lineTo(-20, height);
+      ctx.moveTo(width * 0.5 - 38, horizonY);
+      ctx.lineTo(width * 0.5 + 38, horizonY);
+      ctx.lineTo(width * 0.5 + width * 0.46, height);
+      ctx.lineTo(width * 0.5 - width * 0.46, height);
       ctx.closePath();
       ctx.fill();
 
-      // Road Golden Neon Borders
-      ctx.strokeStyle = '#F59E0B';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(width * 0.38, horizonY);
-      ctx.lineTo(-20, height);
-      ctx.moveTo(width * 0.62, horizonY);
-      ctx.lineTo(width + 20, height);
-      ctx.stroke();
+      // 3D Red-and-White Beveled Roadside Curbs
+      const curbCount = 14;
+      const curbOffset = (time * currentSpeed * 0.04) % 1;
+      for (let c = 0; c < curbCount; c++) {
+        const p1 = (c + curbOffset) / curbCount;
+        const p2 = (c + 1 + curbOffset) / curbCount;
+        if (p1 > 1.1) continue;
 
-      // 3-Lane Perspective Dividers (Animated Dashes)
-      const roadOffset = (time * currentSpeed * 0.25) % 60;
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([16, 16]);
-      ctx.lineDashOffset = -roadOffset;
+        const y1 = horizonY + Math.pow(p1, 1.4) * (height - horizonY);
+        const y2 = horizonY + Math.pow(p2, 1.4) * (height - horizonY);
 
-      // Divider 1 (Left-Center)
-      ctx.beginPath();
-      ctx.moveTo(width * 0.46, horizonY);
-      ctx.lineTo(width * 0.35, height);
-      ctx.stroke();
+        const leftX1 = width * 0.5 - (38 + Math.pow(p1, 1.25) * (width * 0.46 - 38));
+        const leftX2 = width * 0.5 - (38 + Math.pow(p2, 1.25) * (width * 0.46 - 38));
+        const rightX1 = width * 0.5 + (38 + Math.pow(p1, 1.25) * (width * 0.46 - 38));
+        const rightX2 = width * 0.5 + (38 + Math.pow(p2, 1.25) * (width * 0.46 - 38));
 
-      // Divider 2 (Center-Right)
-      ctx.beginPath();
-      ctx.moveTo(width * 0.54, horizonY);
-      ctx.lineTo(width * 0.65, height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Swaying Palm Trees along curbs
-      palmTrees.forEach((tree) => {
-        ctx.fillStyle = '#78350F';
-        ctx.fillRect(tree.x - 3, horizonY + 20, 6, 60);
-        ctx.fillStyle = '#15803D';
+        ctx.fillStyle = c % 2 === 0 ? '#DC2626' : '#F8FAFC';
+        // Left Curb segment
         ctx.beginPath();
-        ctx.arc(tree.x, horizonY + 20, tree.size * 0.4, 0, Math.PI * 2);
+        ctx.moveTo(leftX1, y1);
+        ctx.lineTo(leftX1 - 8 * p1, y1);
+        ctx.lineTo(leftX2 - 8 * p2, y2);
+        ctx.lineTo(leftX2, y2);
+        ctx.closePath();
         ctx.fill();
-      });
+
+        // Right Curb segment
+        ctx.beginPath();
+        ctx.moveTo(rightX1, y1);
+        ctx.lineTo(rightX1 + 8 * p1, y1);
+        ctx.lineTo(rightX2 + 8 * p2, y2);
+        ctx.lineTo(rightX2, y2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Animated 3-Lane Perspective Dividers (Rushing Dashes)
+      const dashCount = 12;
+      const dashOffset = (time * currentSpeed * 0.05) % 1;
+      ctx.lineWidth = 2.5;
+
+      for (let d = 0; d < dashCount; d++) {
+        const p1 = (d + dashOffset) / dashCount;
+        const p2 = (d + 0.55 + dashOffset) / dashCount;
+        if (p1 >= 1.0) continue;
+
+        const y1 = horizonY + Math.pow(p1, 1.4) * (height - horizonY);
+        const y2 = horizonY + Math.pow(p2, 1.4) * (height - horizonY);
+
+        const dividerSpread1 = 12 + Math.pow(p1, 1.25) * (width * 0.145 - 12);
+        const dividerSpread2 = 12 + Math.pow(p2, 1.25) * (width * 0.145 - 12);
+
+        ctx.strokeStyle = `rgba(254, 240, 138, ${Math.min(1, p1 * 1.5)})`;
+
+        // Left-Center Divider
+        ctx.beginPath();
+        ctx.moveTo(width * 0.5 - dividerSpread1, y1);
+        ctx.lineTo(width * 0.5 - dividerSpread2, y2);
+        ctx.stroke();
+
+        // Center-Right Divider
+        ctx.beginPath();
+        ctx.moveTo(width * 0.5 + dividerSpread1, y1);
+        ctx.lineTo(width * 0.5 + dividerSpread2, y2);
+        ctx.stroke();
+      }
+
+      // Parallax Swaying Palm Trees along curbs
+      const treeParallax = (time * currentSpeed * 0.02) % 120;
+      for (let tIdx = 0; tIdx < 4; tIdx++) {
+        const tProgress = (tIdx * 30 + treeParallax) / 120;
+        const tScale = 0.3 + Math.pow(tProgress, 1.3) * 0.9;
+        const tY = horizonY + Math.pow(tProgress, 1.4) * (height - horizonY);
+        const tLeftX = width * 0.5 - (50 + Math.pow(tProgress, 1.25) * (width * 0.49 - 50));
+        const tRightX = width * 0.5 + (50 + Math.pow(tProgress, 1.25) * (width * 0.49 - 50));
+
+        if (tY > horizonY + 10 && tY < height + 40) {
+          // Left Tree
+          ctx.save();
+          ctx.translate(tLeftX, tY);
+          ctx.scale(tScale, tScale);
+          ctx.fillStyle = '#78350F';
+          ctx.fillRect(-3, -40, 6, 40);
+          ctx.fillStyle = '#15803D';
+          ctx.beginPath();
+          ctx.arc(0, -42, 18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Right Tree
+          ctx.save();
+          ctx.translate(tRightX, tY);
+          ctx.scale(tScale, tScale);
+          ctx.fillStyle = '#78350F';
+          ctx.fillRect(-3, -40, 6, 40);
+          ctx.fillStyle = '#16A34A';
+          ctx.beginPath();
+          ctx.arc(0, -42, 18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
 
       // 3. Spawning & Movement Logic
       if (gameState === 'RUNNING') {
-        distRef.current += (isTurbo ? 0.35 : 0.2) * (currentSpeed / 4.8);
+        distRef.current += (isTurbo ? 0.38 : 0.22) * (currentSpeed / 4.8);
         setDistance(Math.floor(distRef.current));
         setSpeedMultiplier(Number((currentSpeed / 4.8).toFixed(1)));
 
         // Spawn obstacles and items along perspective distance
-        if (time - lastSpawnYRef.current > Math.max(900, 1600 - distRef.current * 1.5) / (currentSpeed / 4.8)) {
+        if (time - lastSpawnYRef.current > Math.max(850, 1500 - distRef.current * 1.5) / (currentSpeed / 4.8)) {
           lastSpawnYRef.current = time;
 
           const chosenLane: Lane = Math.floor(Math.random() * 3) as Lane;
@@ -401,8 +507,8 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
             lane: chosenLane,
             y: 0,
             type: obsType,
-            width: 46,
-            height: obsType === 'TAPTAP' ? 42 : 28,
+            width: 52,
+            height: obsType === 'TAPTAP' ? 46 : 28,
             passed: false,
           });
 
@@ -411,13 +517,13 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
           for (let i = 0; i < 3; i++) {
             coinsRef.current.push({
               lane: coinLane,
-              y: -i * 35,
+              y: -i * 38,
               collected: false,
             });
           }
 
-          // Random Power-Up Spawn (15% chance)
-          if (Math.random() < 0.18) {
+          // Random Power-Up Spawn (18% chance)
+          if (Math.random() < 0.2) {
             const puChoices: PowerUpType[] = ['SHIELD', 'MAGNET', 'TURBO'];
             const puType = puChoices[Math.floor(Math.random() * puChoices.length)];
             const puLane: Lane = ((chosenLane + 2) % 3) as Lane;
@@ -430,31 +536,31 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
           }
         }
 
-        // Advance obstacles along Y (from horizon 0 to playerBaseY 1.0)
+        // Advance obstacles along Y
         for (let i = obstaclesRef.current.length - 1; i >= 0; i--) {
           const obs = obstaclesRef.current[i];
-          obs.y += currentSpeed * 0.9;
-          if (obs.y > height + 80) obstaclesRef.current.splice(i, 1);
+          obs.y += currentSpeed * 0.95;
+          if (obs.y > height + 90) obstaclesRef.current.splice(i, 1);
         }
 
         // Advance coins
         for (let i = coinsRef.current.length - 1; i >= 0; i--) {
           const c = coinsRef.current[i];
-          c.y += currentSpeed * 0.9;
-          if (c.y > height + 80) coinsRef.current.splice(i, 1);
+          c.y += currentSpeed * 0.95;
+          if (c.y > height + 90) coinsRef.current.splice(i, 1);
         }
 
         // Advance power-ups
         for (let i = powerUpsRef.current.length - 1; i >= 0; i--) {
           const pu = powerUpsRef.current[i];
-          pu.y += currentSpeed * 0.9;
-          if (pu.y > height + 80) powerUpsRef.current.splice(i, 1);
+          pu.y += currentSpeed * 0.95;
+          if (pu.y > height + 90) powerUpsRef.current.splice(i, 1);
         }
 
-        // Player physics
+        // Player physics & Smooth Lane Interpolation
         const p = playerRef.current;
-        p.x += (p.targetX - p.x) * 0.28; // smooth lane transition
-        p.runCycle += 0.25;
+        p.x += (p.targetX - p.x) * 0.28;
+        p.runCycle += 0.26;
 
         if (p.state === 'JUMP') {
           p.vy += GRAVITY;
@@ -479,10 +585,9 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         for (const obs of obstaclesRef.current) {
           const obsScreenY = horizonY + obs.y;
 
-          // Check proximity on Y and same lane
-          if (obs.lane === p.lane && Math.abs(obsScreenY - playerBaseY) < 28) {
+          if (obs.lane === p.lane && Math.abs(obsScreenY - playerBaseY) < 30) {
             let safe = false;
-            if (obs.type === 'BARRIER_LOW' && p.state === 'JUMP' && p.jumpY < -20) {
+            if (obs.type === 'BARRIER_LOW' && p.state === 'JUMP' && p.jumpY < -22) {
               safe = true; // jumped over low barrier
             } else if (obs.type === 'BARRIER_HIGH' && p.state === 'SLIDE') {
               safe = true; // slid under high barrier
@@ -529,24 +634,25 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         // Coin Magnetic Attraction & Collection
         coinsRef.current.forEach((coin) => {
           if (!coin.collected && coin.y > 0) {
-            let coinScreenX = LANE_X_POSITIONS[coin.lane];
+            const coinYProgress = coin.y / (playerBaseY - horizonY);
+            let coinScreenX = getLanePerspectiveX(coin.lane, coinYProgress, width);
             let coinScreenY = horizonY + coin.y;
 
             if (magnetTimerRef.current > 0) {
               const dist = Math.hypot(pScreenX - coinScreenX, playerBaseY - coinScreenY);
-              if (dist < 180) {
-                coinScreenX += (pScreenX - coinScreenX) * 0.18;
-                coinScreenY += (playerBaseY - coinScreenY) * 0.18;
+              if (dist < 190) {
+                coinScreenX += (pScreenX - coinScreenX) * 0.22;
+                coinScreenY += (playerBaseY - coinScreenY) * 0.22;
               }
             }
 
             const dist = Math.hypot(pScreenX - coinScreenX, pScreenY - 20 - coinScreenY);
-            if (dist < 26) {
+            if (dist < 28) {
               coin.collected = true;
               const coinGain = isTurbo ? 2 : 1;
               coinsCountRef.current += coinGain;
               setCoins(coinsCountRef.current);
-              fxRef.current.spawnSparkles(coinScreenX, coinScreenY, 12, '#FDE047');
+              fxRef.current.spawnSparkles(coinScreenX, coinScreenY, 14, '#FDE047');
               fxRef.current.spawnFloatText(
                 coinScreenX,
                 coinScreenY - 14,
@@ -561,11 +667,12 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         // Power-Up Collection
         powerUpsRef.current.forEach((pu) => {
           if (!pu.collected && pu.y > 0) {
-            const puScreenX = LANE_X_POSITIONS[pu.lane];
+            const puYProgress = pu.y / (playerBaseY - horizonY);
+            const puScreenX = getLanePerspectiveX(pu.lane, puYProgress, width);
             const puScreenY = horizonY + pu.y;
             const dist = Math.hypot(pScreenX - puScreenX, pScreenY - 20 - puScreenY);
 
-            if (dist < 30) {
+            if (dist < 32) {
               pu.collected = true;
               GameSounds.playWinFanfare();
 
@@ -590,11 +697,12 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         });
       }
 
-      // 4. Draw Obstacles (Haitian Tap-Tap Buses & Road Barriers)
+      // 4. Draw Obstacles (3D Haitian Tap-Tap Buses & Neon Road Barriers)
       obstaclesRef.current.forEach((obs) => {
         if (obs.y < 0) return;
-        const scale = 0.4 + Math.min(0.65, (obs.y / (playerBaseY - horizonY)) * 0.65);
-        const screenX = LANE_X_POSITIONS[obs.lane];
+        const yProgress = obs.y / (playerBaseY - horizonY);
+        const scale = 0.35 + Math.pow(Math.min(1.2, yProgress), 1.25) * 0.72;
+        const screenX = getLanePerspectiveX(obs.lane, yProgress, width);
         const screenY = horizonY + obs.y;
 
         ctx.save();
@@ -602,157 +710,352 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         ctx.scale(scale, scale);
 
         if (obs.type === 'TAPTAP') {
-          // Authentic 3D Haitian Tap-Tap Bus (Colorful Mini-bus)
-          // Ground Shadow
-          ctx.fillStyle = 'rgba(0,0,0,0.4)';
-          ctx.beginPath();
-          ctx.ellipse(0, 22, 34, 10, 0, 0, Math.PI * 2);
-          ctx.fill();
+          // ── 3D AUTHENTIC HAITIAN TAP-TAP BUS (POP-ART MASTERPIECE) ──
+          const bounceY = Math.sin(time * 0.018 + obs.lane * 3) * 1.5;
+          ctx.translate(0, bounceY);
 
-          // Headlight Ground Beams
-          ctx.fillStyle = 'rgba(254, 240, 138, 0.18)';
+          // 1. Soft Ambient Ground Shadow under tires
+          ctx.save();
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
           ctx.beginPath();
-          ctx.moveTo(-18, 12);
-          ctx.lineTo(-30, 60);
-          ctx.lineTo(-6, 60);
+          ctx.ellipse(0, 24, 38, 12, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // 2. Volumetric Headlight Beams illuminating road
+          ctx.save();
+          const beamGrad = ctx.createLinearGradient(0, 10, 0, 75);
+          beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
+          beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0.0)');
+          ctx.fillStyle = beamGrad;
+
+          ctx.beginPath();
+          ctx.moveTo(-18, 10);
+          ctx.lineTo(-38, 75);
+          ctx.lineTo(-6, 75);
           ctx.closePath();
           ctx.fill();
+
           ctx.beginPath();
-          ctx.moveTo(18, 12);
-          ctx.lineTo(6, 60);
-          ctx.lineTo(30, 60);
+          ctx.moveTo(18, 10);
+          ctx.lineTo(6, 75);
+          ctx.lineTo(38, 75);
           ctx.closePath();
           ctx.fill();
+          ctx.restore();
 
-          // Main Tap-Tap Chassis (Vibrant Cyan & Gold)
-          const busGrad = ctx.createLinearGradient(-30, -25, 30, 25);
-          busGrad.addColorStop(0, '#0284C7');
-          busGrad.addColorStop(0.5, '#06B6D4');
-          busGrad.addColorStop(1, '#0369A1');
-          ctx.fillStyle = busGrad;
+          // 3. Four 3D Road Tires with Alloy Rims
+          ctx.fillStyle = '#0F172A';
           ctx.beginPath();
-          ctx.roundRect(-28, -26, 56, 44, 8);
+          ctx.roundRect(-34, 4, 10, 20, 4);
           ctx.fill();
-          ctx.strokeStyle = '#FEF08A';
+          ctx.fillStyle = '#64748B';
+          ctx.fillRect(-32, 8, 6, 12);
+
+          ctx.fillStyle = '#0F172A';
+          ctx.beginPath();
+          ctx.roundRect(24, 4, 10, 20, 4);
+          ctx.fill();
+          ctx.fillStyle = '#64748B';
+          ctx.fillRect(26, 8, 6, 12);
+
+          // 4. Main Tap-Tap Bus Cab Body (Vibrant Caribbean Blue/Cyan 3D Metallic)
+          const cabGrad = ctx.createLinearGradient(-30, -28, 30, 25);
+          cabGrad.addColorStop(0, '#0284C7');
+          cabGrad.addColorStop(0.3, '#38BDF8');
+          cabGrad.addColorStop(0.7, '#0284C7');
+          cabGrad.addColorStop(1, '#0C4A6E');
+          ctx.fillStyle = cabGrad;
+          ctx.beginPath();
+          ctx.roundRect(-30, -28, 60, 46, 10);
+          ctx.fill();
+          ctx.strokeStyle = '#FDE047';
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          // Colorful Haitian Pop Art Side Stripes
-          ctx.fillStyle = '#DC2626';
-          ctx.fillRect(-28, -2, 56, 7);
-          ctx.fillStyle = '#F59E0B';
-          ctx.fillRect(-28, 5, 56, 5);
+          // 5. Haitian Kanaval Festive Stripes & Pop-Art Decals
+          ctx.fillStyle = '#DC2626'; // Scarlet Red Stripe
+          ctx.fillRect(-30, -2, 60, 8);
+          ctx.fillStyle = '#F59E0B'; // Marigold Yellow Stripe
+          ctx.fillRect(-30, 6, 60, 6);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(-30, -3, 60, 1.5);
 
-          // Front Windshield (Glass reflection)
-          ctx.fillStyle = '#BAE6FD';
+          // Kanaval Geometric Triangular Pattern
+          ctx.fillStyle = '#FEF08A';
+          for (let px = -24; px < 24; px += 10) {
+            ctx.beginPath();
+            ctx.moveTo(px, -2);
+            ctx.lineTo(px + 5, 5);
+            ctx.lineTo(px + 10, -2);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // 6. Panoramic Tinted Windshield with Horizon Sunset Reflection
+          const glassGrad = ctx.createLinearGradient(0, -24, 0, -8);
+          glassGrad.addColorStop(0, '#38BDF8');
+          glassGrad.addColorStop(0.5, '#E0F2FE');
+          glassGrad.addColorStop(1, '#0284C7');
+          ctx.fillStyle = glassGrad;
           ctx.beginPath();
-          ctx.roundRect(-22, -22, 44, 16, 4);
+          ctx.roundRect(-24, -24, 48, 18, 5);
           ctx.fill();
-          ctx.strokeStyle = '#0284C7';
+          ctx.strokeStyle = '#0369A1';
           ctx.lineWidth = 1.5;
           ctx.stroke();
 
-          // Headlights (Lit)
+          // Sun-Visor Top Banner
+          ctx.fillStyle = '#DC2626';
+          ctx.fillRect(-24, -24, 48, 6);
           ctx.fillStyle = '#FEF08A';
-          ctx.shadowColor = '#FBBF24';
-          ctx.shadowBlur = 10;
-          ctx.beginPath();
-          ctx.arc(-18, 10, 4.5, 0, Math.PI * 2);
-          ctx.arc(18, 10, 4.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-
-          // Chrome Front Grille & Natcom Slogan
-          ctx.fillStyle = '#E2E8F0';
-          ctx.fillRect(-12, 6, 24, 8);
-          ctx.fillStyle = '#0F172A';
-          ctx.font = 'bold 6px sans-serif';
+          ctx.font = 'bold 5px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('NATCOM', 0, 12);
+          ctx.fillText('NATCOM 4G LTE', 0, -19);
 
-          // Roof Luggage Rack with Luggage
-          ctx.fillStyle = '#78350F';
-          ctx.fillRect(-24, -30, 48, 4);
-          ctx.fillStyle = '#EA580C';
-          ctx.fillRect(-16, -37, 14, 7);
-          ctx.fillStyle = '#16A34A';
-          ctx.fillRect(2, -36, 16, 6);
-        } else if (obs.type === 'BARRIER_LOW') {
-          // Low Striped Construction Barrier (JUMP OVER)
-          ctx.fillStyle = '#EA580C';
-          ctx.fillRect(-26, -14, 52, 14);
+          // Windshield Wipers
+          ctx.strokeStyle = '#1E293B';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(-14, -8);
+          ctx.lineTo(-4, -16);
+          ctx.moveTo(4, -8);
+          ctx.lineTo(14, -16);
+          ctx.stroke();
+
+          // 7. Heavy-Duty Chrome Bumper & Bull-Bar Grille
+          const bumperGrad = ctx.createLinearGradient(0, 12, 0, 22);
+          bumperGrad.addColorStop(0, '#F8FAFC');
+          bumperGrad.addColorStop(0.5, '#94A3B8');
+          bumperGrad.addColorStop(1, '#334155');
+          ctx.fillStyle = bumperGrad;
+          ctx.beginPath();
+          ctx.roundRect(-28, 12, 56, 9, 4);
+          ctx.fill();
+          ctx.strokeStyle = '#CBD5E1';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // License Plate (Haiti)
+          ctx.fillStyle = '#0F172A';
+          ctx.fillRect(-10, 14, 20, 6);
+          ctx.fillStyle = '#FEF08A';
+          ctx.font = 'bold 5px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('HT-2048', 0, 19);
+
+          // Dual Crystal Halogen Headlights (Lit)
+          ctx.save();
+          ctx.shadowColor = '#FBBF24';
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = '#FEF08A';
+          ctx.beginPath();
+          ctx.arc(-20, 10, 5.5, 0, Math.PI * 2);
+          ctx.arc(20, 10, 5.5, 0, Math.PI * 2);
+          ctx.fill();
           ctx.fillStyle = '#FFFFFF';
-          // Diagonal stripes
-          for (let x = -22; x < 24; x += 12) {
+          ctx.beginPath();
+          ctx.arc(-20, 10, 3, 0, Math.PI * 2);
+          ctx.arc(20, 10, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Amber Indicator Lights
+          ctx.fillStyle = '#F97316';
+          ctx.beginPath();
+          ctx.arc(-26, 10, 2.5, 0, Math.PI * 2);
+          ctx.arc(26, 10, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 8. Roof Luggage Rack with Packed Haitian Cargo
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(-26, -32, 52, 4);
+          ctx.fillRect(-22, -36, 3, 5);
+          ctx.fillRect(19, -36, 3, 5);
+
+          // Woven Haitian Straw Basket
+          ctx.fillStyle = '#D97706';
+          ctx.beginPath();
+          ctx.roundRect(-20, -41, 14, 9, 3);
+          ctx.fill();
+
+          // Vintage Orange Suitcase with Leather Straps
+          ctx.fillStyle = '#EA580C';
+          ctx.beginPath();
+          ctx.roundRect(-4, -43, 16, 11, 2);
+          ctx.fill();
+          ctx.fillStyle = '#78350F';
+          ctx.fillRect(-1, -43, 2.5, 11);
+          ctx.fillRect(7, -43, 2.5, 11);
+
+          // Spare Tire with Deep Treads
+          ctx.fillStyle = '#1E293B';
+          ctx.beginPath();
+          ctx.ellipse(17, -37, 7, 6, Math.PI * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#94A3B8';
+          ctx.beginPath();
+          ctx.arc(17, -37, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 9. Exhaust Tailpipe with Animated Smoke Puffs
+          ctx.fillStyle = '#64748B';
+          ctx.fillRect(-32, 16, 4, 4);
+          const smokePuff = (time * 0.008) % 1;
+          ctx.fillStyle = `rgba(226, 232, 240, ${0.45 * (1 - smokePuff)})`;
+          ctx.beginPath();
+          ctx.arc(-36 - smokePuff * 8, 14 - smokePuff * 4, 3 + smokePuff * 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obs.type === 'BARRIER_LOW') {
+          // ── LOW 3D REFLECTIVE CONSTRUCTION BARRIER (JUMP OVER) ──
+          // Ambient Shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+          ctx.beginPath();
+          ctx.ellipse(0, 8, 30, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Main Barricade Beam
+          ctx.fillStyle = '#EA580C';
+          ctx.beginPath();
+          ctx.roundRect(-28, -16, 56, 16, 3);
+          ctx.fill();
+
+          // High-Visibility Diagonal Chevron Reflectors
+          ctx.fillStyle = '#FFFFFF';
+          for (let x = -24; x < 26; x += 12) {
             ctx.beginPath();
-            ctx.moveTo(x, -14);
-            ctx.lineTo(x + 6, -14);
+            ctx.moveTo(x, -16);
+            ctx.lineTo(x + 6, -16);
             ctx.lineTo(x + 2, 0);
             ctx.lineTo(x - 4, 0);
             ctx.closePath();
             ctx.fill();
           }
-          // Support Legs
-          ctx.fillStyle = '#64748B';
-          ctx.fillRect(-22, 0, 5, 14);
-          ctx.fillRect(17, 0, 5, 14);
 
-          // Flashing Amber Warning LED
-          const blink = Math.sin(time * 0.01) > 0;
-          ctx.fillStyle = blink ? '#FDE047' : '#B45309';
+          // Steel Support A-Frames
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(-24, 0, 6, 14);
+          ctx.fillRect(18, 0, 6, 14);
+
+          // Pulsing Dual Amber Strobe LEDs
+          const blink = Math.sin(time * 0.012) > 0;
+          ctx.save();
+          ctx.fillStyle = blink ? '#FEF08A' : '#78350F';
+          ctx.shadowColor = '#FBBF24';
+          ctx.shadowBlur = blink ? 14 : 0;
           ctx.beginPath();
-          ctx.arc(0, -18, 4, 0, Math.PI * 2);
+          ctx.arc(-22, -20, 4, 0, Math.PI * 2);
+          ctx.arc(22, -20, 4, 0, Math.PI * 2);
           ctx.fill();
+          ctx.restore();
         } else {
-          // High Overhead Signboard Barrier (SLIDE UNDER)
-          ctx.fillStyle = '#1E293B';
-          ctx.fillRect(-32, -45, 64, 20);
+          // ── HIGH OVERHEAD 4G LASER GANTRY (SLIDE UNDER) ──
+          // Overhead Cyber Signboard
+          ctx.fillStyle = '#0F172A';
+          ctx.beginPath();
+          ctx.roundRect(-34, -48, 68, 22, 4);
+          ctx.fill();
           ctx.strokeStyle = '#F59E0B';
           ctx.lineWidth = 1.5;
-          ctx.strokeRect(-32, -45, 64, 20);
+          ctx.stroke();
 
+          // Neon Glowing Warning Message
           ctx.fillStyle = '#FEF08A';
           ctx.font = 'bold 8px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('▼ SLIDE ▼', 0, -32);
+          ctx.fillText('▼ SLIDE 4G ▼', 0, -34);
 
-          // Tall Metal Support Pillars
-          ctx.fillStyle = '#94A3B8';
-          ctx.fillRect(-30, -25, 4, 38);
-          ctx.fillRect(26, -25, 4, 38);
+          // Glowing Holographic Laser Beam
+          const laserAlpha = 0.5 + Math.sin(time * 0.01) * 0.3;
+          ctx.fillStyle = `rgba(239, 68, 68, ${laserAlpha})`;
+          ctx.fillRect(-30, -26, 60, 4);
+
+          // Metal Gantry Support Towers
+          ctx.fillStyle = '#64748B';
+          ctx.fillRect(-32, -26, 5, 42);
+          ctx.fillRect(27, -26, 5, 42);
         }
 
         ctx.restore();
       });
 
-      // 5. Draw 3D Floating Gold Coins
+      // 5. Draw 3D Rotating & Floating Gold Coins
       coinsRef.current.forEach((coin) => {
         if (coin.collected || coin.y < 0) return;
-        const scale = 0.45 + Math.min(0.55, (coin.y / (playerBaseY - horizonY)) * 0.55);
-        const screenX = LANE_X_POSITIONS[coin.lane];
-        const screenY = horizonY + coin.y;
+        const yProgress = coin.y / (playerBaseY - horizonY);
+        const scale = 0.38 + Math.pow(Math.min(1.2, yProgress), 1.2) * 0.68;
+        const screenX = getLanePerspectiveX(coin.lane, yProgress, width);
+        const floatY = Math.sin(time * 0.006 + coin.y * 0.02) * 4;
+        const screenY = horizonY + coin.y + floatY;
 
         ctx.save();
         ctx.translate(screenX, screenY);
         ctx.scale(scale, scale);
 
+        // 3D Horizontal Spin Phase
+        const spinPhase = time * 0.007 + coin.lane * 1.5 + coin.y * 0.015;
+        const spin = Math.cos(spinPhase);
+        const xRadius = Math.max(1.8, 11 * Math.abs(spin));
+        const isBackSide = spin < 0;
+
+        // Ground Shadow below coin
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(0, 18 - floatY, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Warm Golden Halo Glow
         ctx.shadowColor = '#FBBF24';
         ctx.shadowBlur = 12;
-        ctx.fillStyle = '#F59E0B';
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
 
-        ctx.fillStyle = '#FEF08A';
-        ctx.beginPath();
-        ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
-        ctx.fill();
+        // 3D Coin Rim Thickness
+        if (Math.abs(spin) < 0.92) {
+          const rimOffset = (spin > 0 ? 1 : -1) * (1 - Math.abs(spin)) * 3.5;
+          ctx.fillStyle = '#B45309';
+          ctx.beginPath();
+          ctx.ellipse(rimOffset, 0, xRadius, 11, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
-        ctx.fillStyle = '#B45309';
-        ctx.font = 'bold 8px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('★', 0, 0);
+        // Outer Coin Face (Rich Metallic Gold Gradient)
+        const coinGrad = ctx.createRadialGradient(-2, -2, 2, 0, 0, 11);
+        coinGrad.addColorStop(0, '#FEF08A');
+        coinGrad.addColorStop(0.35, '#F59E0B');
+        coinGrad.addColorStop(0.8, '#D97706');
+        coinGrad.addColorStop(1, '#92400E');
+        ctx.fillStyle = coinGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, xRadius, 11, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#FEF08A';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Inner Beaded Ring & Embossed Star / N Logo
+        if (xRadius > 5) {
+          ctx.strokeStyle = '#B45309';
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, xRadius * 0.75, 8.2, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#78350F';
+          ctx.font = `bold ${Math.round(8 * Math.abs(spin))}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(isBackSide ? '★' : 'N', 0, 0);
+
+          // Specular Light Gleam Sweep
+          const sweep = ((time * 0.003 + coin.lane) % 2) - 1;
+          if (sweep > -0.8 && sweep < 0.8) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(sweep * xRadius, 0, 2, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
 
         ctx.restore();
       });
@@ -760,9 +1063,11 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       // 6. Draw 3D Floating Power-Ups
       powerUpsRef.current.forEach((pu) => {
         if (pu.collected || pu.y < 0) return;
-        const scale = 0.5 + Math.min(0.5, (pu.y / (playerBaseY - horizonY)) * 0.5);
-        const screenX = LANE_X_POSITIONS[pu.lane];
-        const screenY = horizonY + pu.y;
+        const yProgress = pu.y / (playerBaseY - horizonY);
+        const scale = 0.48 + Math.pow(Math.min(1.2, yProgress), 1.2) * 0.58;
+        const screenX = getLanePerspectiveX(pu.lane, yProgress, width);
+        const floatY = Math.sin(time * 0.005 + pu.lane) * 5;
+        const screenY = horizonY + pu.y + floatY;
 
         ctx.save();
         ctx.translate(screenX, screenY);
@@ -770,34 +1075,34 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
 
         if (pu.type === 'SHIELD') {
           ctx.shadowColor = '#38BDF8';
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 16;
           ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
           ctx.beginPath();
-          ctx.arc(0, 0, 15, 0, Math.PI * 2);
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
           ctx.fill();
-          ctx.font = '15px sans-serif';
+          ctx.font = '16px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('🛡️', 0, 0);
         } else if (pu.type === 'MAGNET') {
           ctx.shadowColor = '#EF4444';
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 16;
           ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
           ctx.beginPath();
-          ctx.arc(0, 0, 15, 0, Math.PI * 2);
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
           ctx.fill();
-          ctx.font = '15px sans-serif';
+          ctx.font = '16px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('🧲', 0, 0);
         } else if (pu.type === 'TURBO') {
           ctx.shadowColor = '#F59E0B';
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 16;
           ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
           ctx.beginPath();
-          ctx.arc(0, 0, 15, 0, Math.PI * 2);
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
           ctx.fill();
-          ctx.font = '15px sans-serif';
+          ctx.font = '16px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('⭐', 0, 0);
@@ -806,7 +1111,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         ctx.restore();
       });
 
-      // 7. Draw 3D Articulated Parkour Runner Character
+      // 7. Draw 3D Articulated Parkour Runner Athlete Character (Người Chạy)
       const p = playerRef.current;
       const pScreenX = p.x;
       const pScreenY = playerBaseY + p.jumpY;
@@ -814,18 +1119,22 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       ctx.save();
       ctx.translate(pScreenX, pScreenY);
 
+      // Smooth Banking / Tilting Roll during lane transitions
+      const rollAngle = Math.max(-0.22, Math.min(0.22, (p.targetX - p.x) * 0.007));
+      ctx.rotate(rollAngle);
+
       // Ground Shadow
       const shadowScale = Math.max(0.3, 1 - Math.abs(p.jumpY) / 120);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.beginPath();
-      ctx.ellipse(0, 8, 18 * shadowScale, 6 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 8, 20 * shadowScale, 6 * shadowScale, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Active 4G Shield Bubble
+      // Active 4G Shield Energy Bubble
       if (p.shield) {
         ctx.save();
         ctx.shadowColor = '#38BDF8';
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 22;
         ctx.strokeStyle = '#38BDF8';
         ctx.lineWidth = 2.5;
         ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
@@ -839,7 +1148,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       // Magnet Aura
       if (magnetTimerRef.current > 0) {
         ctx.save();
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.55)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([3, 3]);
         ctx.beginPath();
@@ -848,93 +1157,312 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
         ctx.restore();
       }
 
-      // Turbo Speed Trail
-      if (turboTimerRef.current > 0) {
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.3)';
+      // Turbo Speed Wind Streaks
+      if (isTurbo) {
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
         ctx.beginPath();
-        ctx.moveTo(-10, -5);
-        ctx.lineTo(-25, 5);
-        ctx.lineTo(-10, 10);
+        ctx.moveTo(-10, -8);
+        ctx.lineTo(-28, 4);
+        ctx.lineTo(-10, 12);
         ctx.closePath();
         ctx.fill();
       }
 
       if (p.state === 'SLIDE') {
-        // Sliding Pose (Low Profile)
-        ctx.fillStyle = '#DC2626';
+        // ── SLIDING POSE (Streamlined Low Baseball Slide) ──
+        const sparkPhase = (time * 0.03) % 1;
+        ctx.fillStyle = '#FDE047';
         ctx.beginPath();
-        ctx.ellipse(0, -10, 18, 9, 0, 0, Math.PI * 2);
+        ctx.arc(-14 - sparkPhase * 12, 6, 2, 0, Math.PI * 2);
+        ctx.arc(-8 - sparkPhase * 8, 4, 1.5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#F59E0B';
-        ctx.beginPath();
-        ctx.arc(14, -13, 7, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        // Upright Running & Jumping Animation Pose
-        const legAngle = p.state === 'JUMP' ? Math.PI / 4 : Math.sin(p.runCycle) * 0.55;
 
-        // Back Leg
+        // Trail Leg
         ctx.strokeStyle = '#1E293B';
-        ctx.lineWidth = 4.5;
+        ctx.lineWidth = 6;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(-2, -12);
-        ctx.lineTo(-2 - Math.sin(legAngle) * 14, 2);
+        ctx.moveTo(-12, -4);
+        ctx.lineTo(-24, 4);
         ctx.stroke();
 
-        // Front Leg
+        // Lead Sliding Leg with Pro Sneaker
         ctx.strokeStyle = '#0F172A';
         ctx.beginPath();
-        ctx.moveTo(2, -12);
-        ctx.lineTo(2 + Math.sin(legAngle) * 14, 2);
+        ctx.moveTo(4, -4);
+        ctx.lineTo(20, 2);
         ctx.stroke();
 
-        // Runner Torso (Natcom Athletic Red & Gold Jersey)
-        const torsoGrad = ctx.createLinearGradient(-8, -32, 8, -10);
+        // White Sneaker Sole
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.roundRect(16, 1, 10, 4, 2);
+        ctx.fill();
+        ctx.fillStyle = '#DC2626';
+        ctx.fillRect(16, -2, 8, 3);
+
+        // Torso Low Profile (Athletic Red Singlet)
+        const torsoGrad = ctx.createLinearGradient(-10, -16, 10, 0);
         torsoGrad.addColorStop(0, '#DC2626');
         torsoGrad.addColorStop(1, '#991B1B');
         ctx.fillStyle = torsoGrad;
         ctx.beginPath();
-        ctx.roundRect(-8, -32, 16, 20, 4);
+        ctx.roundRect(-10, -14, 22, 12, 4);
         ctx.fill();
 
-        // Gold Natcom Logo Stripe
-        ctx.fillStyle = '#F59E0B';
-        ctx.fillRect(-8, -24, 16, 3.5);
-
-        // Swinging Arms
-        ctx.strokeStyle = '#F59E0B';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(-6, -28);
-        ctx.lineTo(-6 + Math.sin(legAngle) * 10, -18);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(6, -28);
-        ctx.lineTo(6 - Math.sin(legAngle) * 10, -18);
-        ctx.stroke();
-
-        // Runner Head & Hair
+        // Head & Visor
         ctx.fillStyle = '#78350F';
         ctx.beginPath();
-        ctx.arc(0, -38, 7.5, 0, Math.PI * 2);
+        ctx.arc(14, -14, 7, 0, Math.PI * 2);
         ctx.fill();
 
-        // Natcom Gold Headband with Flying Ribbons
-        ctx.fillStyle = '#F59E0B';
-        ctx.fillRect(-7.5, -42, 15, 3.5);
+        ctx.fillStyle = '#38BDF8';
         ctx.beginPath();
-        ctx.moveTo(-7.5, -40);
-        ctx.lineTo(-15, -43);
-        ctx.lineTo(-13, -38);
-        ctx.closePath();
+        ctx.roundRect(16, -16, 7, 3.5, 1.5);
         ctx.fill();
+
+        // Streamer Ribbon in Wind
+        ctx.strokeStyle = '#F59E0B';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(8, -14);
+        ctx.quadraticCurveTo(-2, -18, -14, -12);
+        ctx.stroke();
+      } else if (p.state === 'JUMP') {
+        // ── JUMPING POSE (Airborne Parkour Hurdle Leap) ──
+        // Back Tucked Leg
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-4, -14);
+        ctx.lineTo(-14, -4);
+        ctx.lineTo(-6, 2);
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(-8, 1, 8, 4);
+
+        // Front Extended Leg
+        ctx.strokeStyle = '#0F172A';
+        ctx.beginPath();
+        ctx.moveTo(4, -14);
+        ctx.lineTo(12, -2);
+        ctx.lineTo(18, 6);
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.roundRect(15, 5, 10, 4, 2);
+        ctx.fill();
+        ctx.fillStyle = '#DC2626';
+        ctx.fillRect(15, 2, 8, 3);
+
+        // Torso in Leap
+        const torsoGrad = ctx.createLinearGradient(-9, -36, 9, -12);
+        torsoGrad.addColorStop(0, '#DC2626');
+        torsoGrad.addColorStop(1, '#7F1D1D');
+        ctx.fillStyle = torsoGrad;
+        ctx.beginPath();
+        ctx.roundRect(-9, -34, 18, 22, 5);
+        ctx.fill();
+
+        // Natcom Gold Racing Stripe
+        ctx.fillStyle = '#F59E0B';
+        ctx.fillRect(-9, -26, 18, 4);
+
+        // Outstretched Balance Arms
+        ctx.strokeStyle = '#F59E0B';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-8, -30);
+        ctx.lineTo(-20, -22);
+        ctx.moveTo(8, -30);
+        ctx.lineTo(20, -24);
+        ctx.stroke();
+
+        ctx.fillStyle = '#0F172A';
+        ctx.beginPath();
+        ctx.arc(-20, -22, 3, 0, Math.PI * 2);
+        ctx.arc(20, -24, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head, Visor & Ribbon
+        ctx.fillStyle = '#78350F';
+        ctx.beginPath();
+        ctx.arc(0, -42, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#38BDF8';
+        ctx.beginPath();
+        ctx.roundRect(1, -44, 8, 4, 1.5);
+        ctx.fill();
+
+        ctx.strokeStyle = '#DC2626';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-6, -42);
+        ctx.quadraticCurveTo(-14, -48, -24, -42);
+        ctx.stroke();
+      } else {
+        // ── RUNNING POSE (High-Octane 8-Phase Articulated Sprint) ──
+        const runCycle = p.runCycle;
+        const stride = Math.sin(runCycle);
+        const bobY = -Math.abs(Math.sin(runCycle * 2)) * 4.5;
+        ctx.translate(0, bobY);
+
+        // 1. Back Leg
+        const backHipAngle = -stride * 0.7;
+        const backKneeAngle = stride > 0 ? stride * 0.9 : 0.2;
+        const backKneeX = -3 + Math.sin(backHipAngle) * 12;
+        const backKneeY = -12 + Math.cos(backHipAngle) * 12;
+        const backFootX = backKneeX + Math.sin(backHipAngle + backKneeAngle) * 12;
+        const backFootY = backKneeY + Math.cos(backHipAngle + backKneeAngle) * 12;
+
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-3, -14);
+        ctx.lineTo(backKneeX, backKneeY);
+        ctx.lineTo(backFootX, backFootY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.roundRect(backFootX - 4, backFootY - 2, 10, 4.5, 2);
+        ctx.fill();
+        ctx.fillStyle = '#DC2626';
+        ctx.fillRect(backFootX - 3, backFootY - 4, 7, 3);
+
+        // 2. Front Leg
+        const frontHipAngle = stride * 0.7;
+        const frontKneeAngle = stride < 0 ? -stride * 0.9 : 0.2;
+        const frontKneeX = 3 + Math.sin(frontHipAngle) * 12;
+        const frontKneeY = -12 + Math.cos(frontHipAngle) * 12;
+        const frontFootX = frontKneeX + Math.sin(frontHipAngle + frontKneeAngle) * 12;
+        const frontFootY = frontKneeY + Math.cos(frontHipAngle + frontKneeAngle) * 12;
+
+        ctx.strokeStyle = '#0F172A';
+        ctx.lineWidth = 5.5;
+        ctx.beginPath();
+        ctx.moveTo(3, -14);
+        ctx.lineTo(frontKneeX, frontKneeY);
+        ctx.lineTo(frontFootX, frontFootY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.roundRect(frontFootX - 4, frontFootY - 2, 11, 5, 2.5);
+        ctx.fill();
+        ctx.fillStyle = '#F59E0B';
+        ctx.fillRect(frontFootX - 3, frontFootY - 5, 8, 3.5);
+
+        // 3. Torso & Singlet with Lean
+        ctx.save();
+        ctx.rotate(0.08);
+
+        const torsoGrad = ctx.createLinearGradient(-9, -35, 9, -12);
+        torsoGrad.addColorStop(0, '#DC2626');
+        torsoGrad.addColorStop(0.6, '#B91C1C');
+        torsoGrad.addColorStop(1, '#7F1D1D');
+        ctx.fillStyle = torsoGrad;
+        ctx.beginPath();
+        ctx.roundRect(-9, -35, 18, 23, 5);
+        ctx.fill();
+
+        ctx.fillStyle = '#FEF08A';
+        ctx.fillRect(-9, -26, 18, 4);
+        ctx.fillStyle = '#78350F';
+        ctx.font = 'bold 7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('10', 0, -23);
+
+        // Hydration Backpack with Glowing Cyan Status
+        ctx.fillStyle = '#1E293B';
+        ctx.beginPath();
+        ctx.roundRect(-7, -33, 14, 12, 3);
+        ctx.fill();
+        ctx.fillStyle = '#38BDF8';
+        ctx.fillRect(-5, -27, 10, 2.5);
+
+        // 4. Pumping Arms
+        const armSwing = -stride * 0.75;
+        ctx.strokeStyle = '#F59E0B';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-7, -30);
+        ctx.lineTo(-7 + Math.sin(armSwing) * 11, -20);
+        ctx.lineTo(-7 + Math.sin(armSwing) * 16, -14);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(7, -30);
+        ctx.lineTo(7 - Math.sin(armSwing) * 11, -20);
+        ctx.lineTo(7 - Math.sin(armSwing) * 16, -14);
+        ctx.stroke();
+
+        ctx.fillStyle = '#0F172A';
+        ctx.beginPath();
+        ctx.arc(-7 + Math.sin(armSwing) * 16, -14, 3, 0, Math.PI * 2);
+        ctx.arc(7 - Math.sin(armSwing) * 16, -14, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 5. Head & Flowing Ribbons
+        ctx.fillStyle = '#78350F';
+        ctx.beginPath();
+        ctx.arc(0, -42, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        const visorGrad = ctx.createLinearGradient(0, -44, 8, -40);
+        visorGrad.addColorStop(0, '#38BDF8');
+        visorGrad.addColorStop(1, '#F43F5E');
+        ctx.fillStyle = visorGrad;
+        ctx.beginPath();
+        ctx.roundRect(1, -44, 8, 4, 1.5);
+        ctx.fill();
+
+        ctx.fillStyle = '#F59E0B';
+        ctx.fillRect(-8, -46, 16, 3.5);
+
+        const ribbonWave1 = Math.sin(time * 0.02) * 5;
+        const ribbonWave2 = Math.cos(time * 0.025) * 6;
+        ctx.strokeStyle = '#DC2626';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-8, -44);
+        ctx.quadraticCurveTo(-16, -46 + ribbonWave1, -26, -42 + ribbonWave1 * 1.2);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#FEF08A';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-8, -42);
+        ctx.quadraticCurveTo(-14, -40 + ribbonWave2, -22, -38 + ribbonWave2);
+        ctx.stroke();
+
+        ctx.restore();
       }
 
       ctx.restore();
 
-      // 8. Update and Render Particles & Floating Text FX
+      // 8. Speed Tunnel Lines for Turbo and High Speeds
+      if (isTurbo || currentSpeed > 7) {
+        ctx.save();
+        const streakAlpha = isTurbo ? 0.35 : 0.18;
+        ctx.strokeStyle = `rgba(254, 240, 138, ${streakAlpha})`;
+        ctx.lineWidth = isTurbo ? 2.5 : 1.5;
+        for (let s = 0; s < 6; s++) {
+          const streakY = (time * 0.6 + s * 80) % height;
+          ctx.beginPath();
+          ctx.moveTo(8, streakY);
+          ctx.lineTo(8, streakY + 45);
+          ctx.moveTo(width - 8, streakY);
+          ctx.lineTo(width - 8, streakY + 45);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // 9. Update and Render Particles & Floating Text FX
       fxRef.current.update();
       fxRef.current.render(ctx);
 

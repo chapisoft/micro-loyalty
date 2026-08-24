@@ -674,12 +674,15 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* ── SECTION 3: FEATURED 6 GAMES ON DASHBOARD (3-COLUMN RESPONSIVE GRID) ── */}
+            {/* ── SECTION 3: TOÀN BỘ 13 TRÒ CHƠI GAMEHUB (RESPONSIVE GRID & FULL CATALOG) ── */}
             <div className="space-y-3 sm:space-y-3.5">
               <div className="flex justify-between items-end">
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                     <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" /> {t('gamehub.title')}
+                    <span className="text-[10px] font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                      13 Trò Chơi
+                    </span>
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-500">{t('gamehub.subtitle')}</p>
                 </div>
@@ -692,8 +695,8 @@ export const App: React.FC = () => {
                 </button>
               </div>
 
-              {/* 6 Featured Games Grid (Mobile: 3/row, Tablet/Desktop: 6/row) */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 sm:gap-3.5">
+              {/* Toàn bộ 13 trò chơi (Mobile: 3 cột, Tablet: 4-5 cột, Desktop: 6-7 cột) */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2.5 sm:gap-3.5">
                 {[
                   {
                     id: 'WHEEL',
@@ -734,7 +737,7 @@ export const App: React.FC = () => {
                     categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
                     icon: '🃏',
                     bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-pink-600',
-                    badge: t('gamehub.badge_45s', { defaultValue: '45 Giây' }),
+                    badge: 'HOT',
                     badgeBg: 'bg-purple-600',
                     perk: 'Delimart',
                     action: () => navigateToTab('MEMORY'),
@@ -760,6 +763,83 @@ export const App: React.FC = () => {
                     badgeBg: 'bg-emerald-600',
                     perk: 'Caribe',
                     action: () => navigateToTab('FRUIT'),
+                  },
+                  {
+                    id: 'KNIFE',
+                    name: t('games.knife.title', { defaultValue: 'Phi Dao Gỗ' }),
+                    categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+                    icon: '🗡️',
+                    bgGradient: 'bg-gradient-to-br from-amber-600 via-orange-600 to-red-700',
+                    badge: t('gamehub.badge_red_envelope', { defaultValue: 'LÌ XÌ' }),
+                    badgeBg: 'bg-red-600',
+                    perk: t('gamehub.perk_fortune', { defaultValue: 'Thần Tài' }),
+                    action: () => navigateToTab('KNIFE'),
+                  },
+                  {
+                    id: 'BLOCK',
+                    name: t('games.block.title', { defaultValue: 'Xếp Gạch Kim Cương' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '💎',
+                    bgGradient: 'bg-gradient-to-br from-blue-600 via-cyan-600 to-indigo-700',
+                    badge: t('gamehub.badge_8x8', { defaultValue: '8x8 LƯỚI' }),
+                    badgeBg: 'bg-cyan-600',
+                    perk: t('gamehub.perk_diamond', { defaultValue: 'Kim Cương' }),
+                    action: () => navigateToTab('BLOCK'),
+                  },
+                  {
+                    id: 'RUNNER',
+                    name: t('games.runner.title', { defaultValue: 'Đường Đua Siêu Tốc' }),
+                    categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+                    icon: '🏃',
+                    bgGradient: 'bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500',
+                    badge: 'TAP-TAP',
+                    badgeBg: 'bg-orange-600',
+                    perk: t('gamehub.perk_speed', { defaultValue: 'Siêu Tốc' }),
+                    action: () => navigateToTab('RUNNER'),
+                  },
+                  {
+                    id: 'WORDLE',
+                    name: t('games.wordle.title', { defaultValue: 'Đoán Chữ May Mắn' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '🔤',
+                    bgGradient: 'bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700',
+                    badge: t('gamehub.badge_5_letters', { defaultValue: '5 CHỮ CÁI' }),
+                    badgeBg: 'bg-violet-600',
+                    perk: 'Kreyòl/Fr',
+                    action: () => navigateToTab('WORDLE'),
+                  },
+                  {
+                    id: 'SCREW',
+                    name: t('games.screw.title', { defaultValue: 'Tháo Ốc Vít' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '🔩',
+                    bgGradient: 'bg-gradient-to-br from-slate-700 via-zinc-800 to-amber-700',
+                    badge: 'HOT',
+                    badgeBg: 'bg-amber-600',
+                    perk: 'Gỡ Thanh',
+                    action: () => navigateToTab('SCREW'),
+                  },
+                  {
+                    id: 'UNTANGLE',
+                    name: t('games.untangle.title', { defaultValue: 'Gỡ Rối Dây' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '🪢',
+                    bgGradient: 'bg-gradient-to-br from-purple-700 via-indigo-800 to-pink-700',
+                    badge: 'IQ PRO',
+                    badgeBg: 'bg-purple-600',
+                    perk: 'Laser',
+                    action: () => navigateToTab('UNTANGLE'),
+                  },
+                  {
+                    id: 'PULLPIN',
+                    name: t('games.pullpin.title', { defaultValue: 'Rút Chốt Kho Báu' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '🗝️',
+                    bgGradient: 'bg-gradient-to-br from-amber-700 via-stone-800 to-red-900',
+                    badge: 'TOP 1',
+                    badgeBg: 'bg-red-600',
+                    perk: 'Kho Vàng',
+                    action: () => navigateToTab('PULLPIN'),
                   },
                 ].map((game) => (
                   <div
