@@ -52,10 +52,9 @@ jobs:
       - name: ☕ Build Backend JAR
         if: ${{ github.event.inputs.target_service == 'all' || github.event.inputs.target_service == 'loyalty-service' }}
         run: |
-          cd src/service
-          mvn clean package -DskipTests
-          mkdir -p ../../deploy/micro-loyalty/backend
-          cp target/loyalty-service-1.0.0.jar ../../deploy/micro-loyalty/backend/loyalty-service.jar
+          mvn clean package -DskipTests -B
+          mkdir -p deploy/micro-loyalty/backend
+          cp src/service/target/loyalty-service-1.0.0.jar deploy/micro-loyalty/backend/loyalty-service.jar
 
       - name: 🖥️ Build Frontend CMS & Webview
         if: ${{ github.event.inputs.target_service == 'all' || github.event.inputs.target_service == 'loyalty-cms' || github.event.inputs.target_service == 'loyalty-webview' }}

@@ -41,10 +41,8 @@ pipeline {
             steps {
                 script {
                     echo "Đóng gói Backend Spring Boot (Java 17)..."
-                    dir('src/service') {
-                        sh 'mvn clean package -DskipTests'
-                        sh 'mkdir -p ../../deploy/micro-loyalty/backend && cp target/loyalty-service-1.0.0.jar ../../deploy/micro-loyalty/backend/loyalty-service.jar'
-                    }
+                    sh 'mvn clean package -DskipTests'
+                    sh 'mkdir -p deploy/micro-loyalty/backend && cp src/service/target/loyalty-service-1.0.0.jar deploy/micro-loyalty/backend/loyalty-service.jar'
                 }
             }
         }

@@ -26,9 +26,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: 🧪 Run Backend Unit & Integration Tests
+      - name: 🧪 Run Backend Unit & Integration Tests (Reactor All 15 Modules)
         run: |
-          cd src/service
           mvn clean test -B
 
   frontend-build:
