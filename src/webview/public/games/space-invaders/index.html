@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cyber Defender - Natcash Loyalty Edition</title>
+  <script src="../../sdk/gamehub-sdk.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      background: #090d16;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      touch-action: none;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      max-width: 420px;
+      margin: 0 auto;
+      z-index: 10;
+    }
+    .hud-box {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 6px 14px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .hud-label {
+      font-size: 9px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .hud-val {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    #game-canvas {
+      background: radial-gradient(circle at 50% 30%, #1e1b4b, #090d16 80%);
+      border: 2px solid rgba(245, 158, 11, 0.4);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+      z-index: 5;
+    }
+    .game-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 50;
+    }
+    .game-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 28px 36px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    .modal-score {
+      font-size: 16px;
+      color: #cbd5e1;
+    }
+    .btn-action {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      color: #ffffff;
+      border: none;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="hud-box">
+      <div class="hud-label">ĐIỂM SỐ</div>
+      <div id="score-val" class="hud-val">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">ĐỢT TẤN CÔNG</div>
+      <div id="wave-val" class="hud-val">1</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">MẠNG SỐNG</div>
+      <div id="lives-val" class="hud-val">❤️❤️❤️</div>
+    </div>
+  </div>
+
+  <canvas id="game-canvas" width="360" height="520"></canvas>
+
+  <div class="game-modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-title">PHI THUYỀN BỊ BẮN HẠ</div>
+      <div class="modal-score" id="modal-score-text">Điểm của bạn: 0</div>
+      <button class="btn-action" id="btn-replay">CHƠI LẠI</button>
+    </div>
+  </div>
+
+  <script>
+    if (window.GameHub) {
+      GameHub.init({ gameCode: 'SPACE_INVADERS' });
+    }
+
+    let soundEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playTone(freq, duration, type = 'sine') {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'SET_SOUND') {
+        soundEnabled = e.data.enabled;
+      } else if (e.data && e.data.type === 'RESTART_GAME') {
+        resetGame();
+      }
+    });
+
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreVal = document.getElementById('score-val');
+    const waveVal = document.getElementById('wave-val');
+    const livesVal = document.getElementById('lives-val');
+    const modal = document.getElementById('modal');
+    const modalScoreText = document.getElementById('modal-score-text');
+    const btnReplay = document.getElementById('btn-replay');
+
+    let score = 0;
+    let wave = 1;
+    let lives = 3;
+    let gameOver = false;
+    let stars = [];
+
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height - 45,
+      width: 36,
+      height: 24,
+      speed: 5,
+      tripleShot: 0
+    };
+
+    let bullets = [];
+    let enemyBullets = [];
+    let enemies = [];
+    let particles = [];
+    let enemyDir = 1;
+    let enemySpeed = 1;
+    let lastShoot = 0;
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 40; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          speed: 0.5 + Math.random() * 1.5,
+          size: 1 + Math.random() * 2
+        });
+      }
+    }
+
+    function spawnEnemies() {
+      enemies = [];
+      const rows = 4;
+      const cols = 6;
+      const startX = 35;
+      const startY = 60;
+      const spacingX = 48;
+      const spacingY = 36;
+      const alienIcons = ['👾', '🛸', '🛰️', '🤖'];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          enemies.push({
+            x: startX + c * spacingX,
+            y: startY + r * spacingY,
+            width: 28,
+            height: 24,
+            icon: alienIcons[r % alienIcons.length],
+            points: (rows - r) * 20
+          });
+        }
+      }
+      enemySpeed = 0.8 + (wave - 1) * 0.3;
+    }
+
+    function resetGame() {
+      score = 0;
+      wave = 1;
+      lives = 3;
+      gameOver = false;
+      player.x = canvas.width / 2;
+      player.tripleShot = 0;
+      bullets = [];
+      enemyBullets = [];
+      particles = [];
+      scoreVal.innerText = score;
+      waveVal.innerText = wave;
+      updateLivesDisplay();
+      modal.classList.remove('active');
+
+      initStars();
+      spawnEnemies();
+    }
+
+    function updateLivesDisplay() {
+      livesVal.innerText = '❤️'.repeat(Math.max(0, lives));
+    }
+
+    function spawnBurst(x, y, color) {
+      for (let i = 0; i < 10; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          alpha: 1,
+          size: 2 + Math.random() * 3
+        });
+      }
+    }
+
+    function shoot() {
+      const now = Date.now();
+      if (now - lastShoot < 200) return;
+      lastShoot = now;
+
+      if (player.tripleShot > 0) {
+        bullets.push({ x: player.x, y: player.y - 12, vx: 0, vy: -7 });
+        bullets.push({ x: player.x - 10, y: player.y - 8, vx: -1.5, vy: -6.5 });
+        bullets.push({ x: player.x + 10, y: player.y - 8, vx: 1.5, vy: -6.5 });
+        player.tripleShot--;
+      } else {
+        bullets.push({ x: player.x, y: player.y - 12, vx: 0, vy: -7 });
+      }
+      playTone(700, 0.04, 'square');
+    }
+
+    // Touch & Pointer Dragging
+    canvas.addEventListener('pointermove', (e) => {
+      if (gameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      player.x = Math.max(player.width / 2, Math.min(canvas.width - player.width / 2, x));
+      shoot();
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (gameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      player.x = Math.max(player.width / 2, Math.min(canvas.width - player.width / 2, x));
+      shoot();
+    });
+
+    function update() {
+      if (gameOver) return;
+
+      // Stars
+      stars.forEach(s => {
+        s.y += s.speed;
+        if (s.y > canvas.height) s.y = 0;
+      });
+
+      // Bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        if (b.y < 0) {
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        // Enemy collision
+        for (let j = enemies.length - 1; j >= 0; j--) {
+          const e = enemies[j];
+          if (b.x > e.x - e.width / 2 && b.x < e.x + e.width / 2 &&
+              b.y > e.y - e.height / 2 && b.y < e.y + e.height / 2) {
+            spawnBurst(e.x, e.y, '#f59e0b');
+            score += e.points;
+            scoreVal.innerText = score;
+            playTone(400, 0.08, 'triangle');
+
+            if (Math.random() < 0.15) {
+              player.tripleShot += 15;
+            }
+
+            enemies.splice(j, 1);
+            bullets.splice(i, 1);
+
+            if (window.parent) {
+              window.parent.postMessage({ type: 'GAME_SCORE_UPDATE', score }, '*');
+            }
+            break;
+          }
+        }
+      }
+
+      // Enemy Bullets
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        eb.y += eb.vy;
+        if (eb.y > canvas.height) {
+          enemyBullets.splice(i, 1);
+          continue;
+        }
+
+        // Player collision
+        if (Math.abs(eb.x - player.x) < player.width / 2 && Math.abs(eb.y - player.y) < player.height / 2) {
+          spawnBurst(player.x, player.y, '#ef4444');
+          lives--;
+          updateLivesDisplay();
+          enemyBullets.splice(i, 1);
+          playTone(200, 0.2, 'sawtooth');
+
+          if (lives <= 0) {
+            endGame();
+          }
+        }
+      }
+
+      // Move Enemies
+      let changeDir = false;
+      enemies.forEach(e => {
+        e.x += enemyDir * enemySpeed;
+        if (e.x < e.width / 2 + 10 || e.x > canvas.width - e.width / 2 - 10) {
+          changeDir = true;
+        }
+
+        // Random shoot
+        if (Math.random() < 0.003 + wave * 0.001) {
+          enemyBullets.push({ x: e.x, y: e.y + 12, vy: 3 + wave * 0.3 });
+        }
+
+        // Reach player
+        if (e.y >= player.y - player.height) {
+          endGame();
+        }
+      });
+
+      if (changeDir) {
+        enemyDir *= -1;
+        enemies.forEach(e => e.y += 12);
+      }
+
+      // Wave Cleared
+      if (enemies.length === 0) {
+        wave++;
+        waveVal.innerText = wave;
+        score += 500;
+        scoreVal.innerText = score;
+        playTone(660, 0.25, 'sine');
+        spawnEnemies();
+      }
+
+      // Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      modalScoreText.innerText = `Điểm tích lũy: ${score} Điểm`;
+      modal.classList.add('active');
+
+      if (window.GameHub) {
+        GameHub.submitScore(score, { wave });
+      }
+      if (window.parent) {
+        window.parent.postMessage({ type: 'GAME_OVER', score }, '*');
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Stars
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      stars.forEach(s => {
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+      });
+
+      // Player
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      // Spaceship Body
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(0, -14);
+      ctx.lineTo(-16, 12);
+      ctx.lineTo(0, 6);
+      ctx.lineTo(16, 12);
+      ctx.closePath();
+      ctx.fill();
+
+      // Wing glow
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-6, 2, 12, 4);
+      ctx.restore();
+
+      // Bullets
+      ctx.fillStyle = '#facc15';
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 8;
+      bullets.forEach(b => {
+        ctx.fillRect(b.x - 2, b.y - 6, 4, 12);
+      });
+      ctx.shadowBlur = 0;
+
+      // Enemy Bullets
+      ctx.fillStyle = '#ef4444';
+      enemyBullets.forEach(eb => {
+        ctx.fillRect(eb.x - 2, eb.y - 4, 4, 8);
+      });
+
+      // Enemies
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      enemies.forEach(e => {
+        ctx.fillText(e.icon, e.x, e.y);
+      });
+
+      // Particles
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    btnReplay.addEventListener('click', resetGame);
+
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

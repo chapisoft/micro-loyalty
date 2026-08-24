@@ -11,7 +11,7 @@ export interface KnifeHitGameProps {
 }
 
 interface PinnedKnife {
-  angle: number; // Angle relative to rotating log
+  angle: number; // Angle relative to rotating log (+Y down = 0)
 }
 
 interface TargetItem {
@@ -22,6 +22,17 @@ interface TargetItem {
   collected: boolean;
 }
 
+interface FlyingKnife {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  rot: number;
+  vrot: number;
+  active: boolean;
+  clashed: boolean;
+}
+
 export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -30,18 +41,22 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
   const [score, setScore] = useState<number>(0);
   const [knivesLeft, setKnivesLeft] = useState<number>(8);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
-  const [isStageClear, setIsStageClear] = useState<boolean>(false);
+  const [, setIsStageClear] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(!GameSounds.isSoundMuted());
   const [showRewardModal, setShowRewardModal] = useState<boolean>(false);
   const [rewardAmount, setRewardAmount] = useState<number>(0);
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
 
   // Rotating target and knife state refs
+  const stageRef = useRef<number>(1);
   const logAngleRef = useRef<number>(0);
   const logSpeedRef = useRef<number>(0.025);
   const pinnedKnivesRef = useRef<PinnedKnife[]>([]);
   const targetItemsRef = useRef<TargetItem[]>([]);
-  const flyingKnifeRef = useRef<{ y: number; vy: number; active: boolean } | null>(null);
+  const flyingKnifeRef = useRef<FlyingKnife | null>(null);
+  const knivesLeftRef = useRef<number>(8);
+  const isGameOverRef = useRef<boolean>(false);
+  const isStageClearRef = useRef<boolean>(false);
   const fxRef = useRef<GameFXSystem>(new GameFXSystem());
   const frameIdRef = useRef<number | null>(null);
 
@@ -52,28 +67,36 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
   };
 
   const initStage = useCallback((stageNum: number) => {
+    stageRef.current = stageNum;
     setStage(stageNum);
     logAngleRef.current = 0;
-    // Alternate rotational directions & speeds per stage
-    logSpeedRef.current = (0.022 + stageNum * 0.006) * (stageNum % 2 === 0 ? -1 : 1);
+    logSpeedRef.current = 0.024 + stageNum * 0.005;
 
-    // Stage setups with initial pre-pinned knives & gifts
+    // Stage setups with initial pre-pinned knives & gifts in local log coords
     pinnedKnivesRef.current = [];
     if (stageNum > 1) {
       pinnedKnivesRef.current.push({ angle: Math.PI * 0.5 });
     }
     if (stageNum > 2) {
-      pinnedKnivesRef.current.push({ angle: Math.PI * 1.2 });
+      pinnedKnivesRef.current.push({ angle: Math.PI * 1.3 });
+    }
+    if (stageNum > 3) {
+      pinnedKnivesRef.current.push({ angle: Math.PI * 0.85 });
     }
 
     targetItemsRef.current = [
-      { angle: Math.PI * 0.2, icon: '🧧', type: 'RED_ENVELOPE', points: 30, collected: false },
-      { angle: Math.PI * 1.6, icon: '📶', type: 'DATA_PACK', points: 50, collected: false },
+      { angle: Math.PI * 0.25, icon: '🧧', type: 'RED_ENVELOPE', points: 30, collected: false },
+      { angle: Math.PI * 1.65, icon: '📶', type: 'DATA_PACK', points: 50, collected: false },
     ];
+
+    const totalKnives = 6 + stageNum;
+    knivesLeftRef.current = totalKnives;
+    setKnivesLeft(totalKnives);
 
     flyingKnifeRef.current = null;
     fxRef.current.clear();
-    setKnivesLeft(7 + stageNum);
+    isGameOverRef.current = false;
+    isStageClearRef.current = false;
     setIsGameOver(false);
     setIsStageClear(false);
   }, []);
@@ -83,16 +106,30 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
   }, [initStage]);
 
   const throwKnife = useCallback(() => {
-    if (flyingKnifeRef.current?.active || isGameOver || isStageClear || knivesLeft <= 0) return;
+    if (
+      flyingKnifeRef.current?.active ||
+      isGameOverRef.current ||
+      isStageClearRef.current ||
+      knivesLeftRef.current <= 0
+    ) {
+      return;
+    }
 
     flyingKnifeRef.current = {
-      y: 380,
-      vy: -22,
+      x: 0, // centered
+      y: 375,
+      vx: 0,
+      vy: -24,
+      rot: 0,
+      vrot: 0,
       active: true,
+      clashed: false,
     };
+
+    knivesLeftRef.current -= 1;
+    setKnivesLeft(knivesLeftRef.current);
     GameSounds.playTap();
-    setKnivesLeft((k) => k - 1);
-  }, [isGameOver, isStageClear, knivesLeft]);
+  }, []);
 
   // Main Canvas Render & Animation Loop with 60 FPS Particle FX
   useEffect(() => {
@@ -109,31 +146,45 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
     ctx.scale(dpr, dpr);
 
     const logCenterX = width / 2;
-    const logCenterY = 150;
+    const logCenterY = 145;
     const logRadius = 65;
 
-    const render = () => {
+    const render = (time: number) => {
       // 0. Screen Shake Offset
       const shake = fxRef.current.getShakeOffset();
       ctx.save();
       ctx.translate(shake.x, shake.y);
 
       // 1. Draw Background Stage
-      ctx.fillStyle = '#0F172A';
+      ctx.fillStyle = '#0B1329';
       ctx.fillRect(-20, -20, width + 40, height + 40);
 
       // Background subtle glow behind log
-      const bgGlow = ctx.createRadialGradient(logCenterX, logCenterY, 20, logCenterX, logCenterY, 140);
-      bgGlow.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
+      const bgGlow = ctx.createRadialGradient(logCenterX, logCenterY, 20, logCenterX, logCenterY, 150);
+      bgGlow.addColorStop(0, 'rgba(245, 158, 11, 0.2)');
       bgGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = bgGlow;
       ctx.beginPath();
-      ctx.arc(logCenterX, logCenterY, 140, 0, Math.PI * 2);
+      ctx.arc(logCenterX, logCenterY, 150, 0, Math.PI * 2);
       ctx.fill();
 
-      // Update log rotation angle
-      if (!isGameOver && !isStageClear) {
-        logAngleRef.current += logSpeedRef.current;
+      // Dynamic variable rotation speeds based on stage
+      if (!isGameOverRef.current && !isStageClearRef.current) {
+        const curStage = stageRef.current;
+        let speedMultiplier = 1.0;
+
+        if (curStage === 2) {
+          // Subtle pulsation
+          speedMultiplier = 1.0 + 0.4 * Math.sin(time * 0.003);
+        } else if (curStage === 3) {
+          // Reversing direction
+          speedMultiplier = Math.cos(time * 0.002) * 1.3;
+        } else if (curStage >= 4) {
+          // Erratic sudden stops & fast spins
+          speedMultiplier = Math.sin(time * 0.0035) > 0 ? 1.5 : -1.0;
+        }
+
+        logAngleRef.current += logSpeedRef.current * speedMultiplier;
       }
 
       // 2. Draw Rotating Wooden Target Log
@@ -184,17 +235,17 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.fillStyle = '#78350F';
-      ctx.font = '900 11px sans-serif';
+      ctx.font = '900 10.5px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('NATCASH', 0, 0.5);
 
-      // Draw Pinned Items (Red Envelope & 4G Data Packs)
+      // Draw Pinned Items (Red Envelopes & 4G Data Packs)
       targetItemsRef.current.forEach((item) => {
         if (!item.collected) {
           ctx.save();
           ctx.rotate(item.angle);
-          ctx.translate(0, -logRadius + 14);
+          ctx.translate(0, logRadius - 12);
 
           if (item.type === 'RED_ENVELOPE') {
             // 3D Red Velvet Envelope
@@ -224,7 +275,7 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
         }
       });
 
-      // Draw Pinned Damascus Daggers
+      // Draw Pinned Damascus Daggers (Pointing into log at angle)
       pinnedKnivesRef.current.forEach((k) => {
         ctx.save();
         ctx.rotate(k.angle);
@@ -262,74 +313,102 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
 
       ctx.restore(); // Restore Log Translate
 
-      // 3. Update and Draw Flying Knife Physics & Collision
+      // 3. Update and Draw Flying Knife Physics & Collision Check
       const knife = flyingKnifeRef.current;
-      if (knife && knife.active) {
-        knife.y += knife.vy;
+      if (knife) {
+        if (knife.active) {
+          knife.y += knife.vy;
 
-        // Collision Check with Rotating Log Center
-        if (knife.y <= logCenterY + logRadius + 10) {
-          knife.active = false;
+          // Check Impact with Log Rim at bottom (y = logCenterY + logRadius)
+          if (knife.y <= logCenterY + logRadius + 2) {
+            knife.active = false;
 
-          // Calculate impact angle relative to rotating log
-          let rawAngle = Math.PI * 0.5 - logAngleRef.current;
-          let normalizedHitAngle = rawAngle % (Math.PI * 2);
-          if (normalizedHitAngle < 0) normalizedHitAngle += Math.PI * 2;
+            // Compute exact local angle on log when hit at bottom (+Y axis)
+            const rawAngle = -logAngleRef.current;
+            const normalizedHitAngle = ((rawAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 
-          // Check knife clash with already pinned knives
-          const hasClashed = pinnedKnivesRef.current.some((pinned) => {
-            let diff = Math.abs(normalizedHitAngle - pinned.angle);
-            if (diff > Math.PI) diff = Math.PI * 2 - diff;
-            return diff < 0.22;
-          });
-
-          if (hasClashed) {
-            // KNIFE COLLISION: Sparks & camera trauma
-            fxRef.current.spawnSparkles(logCenterX, knife.y, 25, '#EF4444');
-            fxRef.current.addScreenShake(0.8);
-            GameSounds.playTowerCrash();
-            setIsGameOver(true);
-          } else {
-            // SUCCESSFUL STICK: Wood splinters, camera bounce, points popup
-            fxRef.current.spawnWoodSplinters(logCenterX, logCenterY + logRadius, 12);
-            fxRef.current.spawnFloatText(logCenterX, logCenterY + logRadius + 30, '+20', '#FEF08A');
-            fxRef.current.addScreenShake(0.22);
-            GameSounds.playKick();
-            pinnedKnivesRef.current.push({ angle: normalizedHitAngle });
-            setScore((s) => s + 20);
-
-            // Check if collected any items
-            targetItemsRef.current.forEach((item) => {
-              if (!item.collected) {
-                let diff = Math.abs(normalizedHitAngle - item.angle);
-                if (diff > Math.PI) diff = Math.PI * 2 - diff;
-                if (diff < 0.3) {
-                  item.collected = true;
-                  fxRef.current.spawnSparkles(logCenterX, logCenterY + logRadius, 20, '#FDE047');
-                  fxRef.current.spawnFloatText(logCenterX, logCenterY + logRadius + 50, `+${item.points} GIFT! 🧧`, '#F43F5E');
-                  fxRef.current.addScreenShake(0.35);
-                  setScore((s) => s + item.points);
-                  GameSounds.playCoinRain();
-                }
-              }
+            // Check Clash with already pinned knives
+            const hasClashed = pinnedKnivesRef.current.some((pinned) => {
+              let diff = Math.abs(normalizedHitAngle - pinned.angle);
+              if (diff > Math.PI) diff = Math.PI * 2 - diff;
+              return diff < 0.22; // ~12.6 degrees collision envelope
             });
 
-            // Check if stage cleared (All knives thrown successfully)
-            if (knivesLeft <= 1) {
-              setIsStageClear(true);
-              fxRef.current.spawnConfettiExplosion(logCenterX, logCenterY, 45);
-              GameSounds.playWinFanfare();
-              setRewardAmount(150 + stage * 50);
-              setTimeout(() => {
-                setShowRewardModal(true);
-              }, 600);
+            if (hasClashed) {
+              // KNIFE CLASH: Knife bounces off and tumbles down with sparks!
+              knife.clashed = true;
+              knife.vx = (Math.random() - 0.5) * 8;
+              knife.vy = 7;
+              knife.vrot = 0.25;
+
+              isGameOverRef.current = true;
+              setIsGameOver(true);
+              fxRef.current.spawnSparkles(logCenterX, logCenterY + logRadius, 30, '#EF4444');
+              fxRef.current.addScreenShake(0.85);
+              GameSounds.playTowerCrash();
+            } else {
+              // SUCCESSFUL STICK: Pin knife into log at exact impact point!
+              flyingKnifeRef.current = null;
+              pinnedKnivesRef.current.push({ angle: normalizedHitAngle });
+
+              fxRef.current.spawnWoodSplinters(logCenterX, logCenterY + logRadius, 14);
+              fxRef.current.spawnFloatText(logCenterX, logCenterY + logRadius + 30, '+20', '#FEF08A');
+              fxRef.current.addScreenShake(0.25);
+              GameSounds.playKick();
+              setScore((s) => s + 20);
+
+              // Check if hit gift items
+              targetItemsRef.current.forEach((item) => {
+                if (!item.collected) {
+                  let diff = Math.abs(normalizedHitAngle - item.angle);
+                  if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                  if (diff < 0.28) {
+                    item.collected = true;
+                    fxRef.current.spawnSparkles(logCenterX, logCenterY + logRadius, 24, '#FDE047');
+                    fxRef.current.spawnFloatText(
+                      logCenterX,
+                      logCenterY + logRadius + 50,
+                      `+${item.points} GIFT! 🧧`,
+                      '#F43F5E'
+                    );
+                    fxRef.current.addScreenShake(0.35);
+                    setScore((s) => s + item.points);
+                    GameSounds.playCoinRain();
+                  }
+                }
+              });
+
+              // Check if stage cleared
+              if (knivesLeftRef.current <= 0) {
+                isStageClearRef.current = true;
+                setIsStageClear(true);
+                fxRef.current.spawnConfettiExplosion(logCenterX, logCenterY, 50);
+                GameSounds.playWinFanfare();
+                const bonusReward = 120 + stageRef.current * 40;
+                setRewardAmount(bonusReward);
+                setTimeout(() => {
+                  setShowRewardModal(true);
+                }, 600);
+              }
             }
+          }
+        } else if (knife.clashed) {
+          // Deflected knife falling animation
+          knife.x += knife.vx;
+          knife.y += knife.vy;
+          knife.vy += 0.5; // gravity
+          knife.rot += knife.vrot;
+
+          if (knife.y > height + 80) {
+            flyingKnifeRef.current = null;
           }
         }
 
-        // Draw 3D Damascus Flying Knife
+        // Draw Flying / Falling Knife
         ctx.save();
-        ctx.translate(logCenterX, knife.y);
+        ctx.translate(logCenterX + knife.x, knife.y);
+        ctx.rotate(knife.rot);
+
         // Damascus Steel Blade
         const bladeGrad = ctx.createLinearGradient(-4, 0, 4, 0);
         bladeGrad.addColorStop(0, '#94A3B8');
@@ -342,12 +421,15 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
         ctx.lineTo(-4, 26);
         ctx.closePath();
         ctx.fill();
+
         // Golden Guard & Bolster
         ctx.fillStyle = '#F59E0B';
         ctx.fillRect(-7, 26, 14, 5);
+
         // Ruby Crimson Handle
         ctx.fillStyle = '#BE123C';
         ctx.fillRect(-4, 31, 8, 20);
+
         // Gold Pommel
         ctx.fillStyle = '#FEF08A';
         ctx.beginPath();
@@ -356,20 +438,20 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
         ctx.restore();
       }
 
-      // 4. Update and Render Particles & Floating Text FX
-      fxRef.current.update();
-      fxRef.current.render(ctx);
-
-      ctx.restore();
-
-      // 4. Draw 3D Ready Knife at Bottom Launcher
-      if (!knife?.active && !isGameOver && !isStageClear && knivesLeft > 0) {
+      // 4. Draw Ready Knife at Bottom Launcher
+      if (
+        !flyingKnifeRef.current?.active &&
+        !isGameOverRef.current &&
+        !isStageClearRef.current &&
+        knivesLeftRef.current > 0
+      ) {
         ctx.save();
         ctx.translate(logCenterX, 375);
-        // Outer Ready Glow
+        // Ready Glow
         ctx.shadowColor = '#F59E0B';
-        ctx.shadowBlur = 12;
-        // Damascus Steel Blade
+        ctx.shadowBlur = 14;
+
+        // Damascus Blade
         const bladeGrad = ctx.createLinearGradient(-4, 0, 4, 0);
         bladeGrad.addColorStop(0, '#94A3B8');
         bladeGrad.addColorStop(0.5, '#FFFFFF');
@@ -382,19 +464,24 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
         ctx.closePath();
         ctx.fill();
         ctx.shadowBlur = 0;
-        // Golden Guard & Bolster
+
+        // Golden Guard & Handle
         ctx.fillStyle = '#F59E0B';
         ctx.fillRect(-8, 28, 16, 5);
-        // Ruby Crimson Handle
         ctx.fillStyle = '#BE123C';
         ctx.fillRect(-4, 33, 8, 22);
-        // Gold Pommel
         ctx.fillStyle = '#FEF08A';
         ctx.beginPath();
         ctx.arc(0, 57, 4.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
+
+      // 5. Update and Render Particles & Floating Text FX
+      fxRef.current.update();
+      fxRef.current.render(ctx);
+
+      ctx.restore();
 
       frameIdRef.current = requestAnimationFrame(render);
     };
@@ -403,11 +490,11 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
     return () => {
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
     };
-  }, [isGameOver, isStageClear, knivesLeft, stage]);
+  }, []);
 
   const nextStage = () => {
-    setStage((s) => s + 1);
-    initStage(stage + 1);
+    const nextS = stage + 1;
+    initStage(nextS);
     setShowRewardModal(false);
   };
 
@@ -432,26 +519,23 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-md mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
+      <main className="flex-1 max-w-md mx-auto w-full px-3 py-3 flex flex-col items-center justify-between">
         {/* Stage & Knives Left Bar */}
-        <div className="w-full flex items-center justify-between gap-3 mb-2">
-          <div>
-            <h1 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 tracking-tight">
-              {t('games.knife.title')}
-            </h1>
-            <span className="text-[11px] font-bold text-amber-400">
+        <div className="w-full flex items-center justify-between gap-3 mb-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded-lg border border-amber-400/30 font-mono">
               {t('games.knife.stage', { stage })}
             </span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-2xl text-center min-w-[70px]">
-              <span className="text-[9px] text-slate-400 block uppercase font-bold">{t('games.knife.knives_left', { left: '' })}</span>
-              <span className="font-mono font-black text-amber-400 text-sm">{knivesLeft}</span>
+            <div className="bg-slate-800/90 border border-slate-700/80 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-slate-400 block uppercase font-bold">{t('games.knife.knives_left', { left: '' })}</span>
+              <span className="font-mono font-black text-amber-400 text-xs">{knivesLeft}</span>
             </div>
-            <div className="bg-amber-950/60 border border-amber-500/40 px-3 py-1.5 rounded-2xl text-center min-w-[70px]">
-              <span className="text-[9px] text-amber-300 block uppercase font-bold">{t('games.common.points_won', { points: '' })}</span>
-              <span className="font-mono font-black text-white text-sm">{score}</span>
+            <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-amber-300 block uppercase font-bold">{t('games.common.points_won', { points: '' })}</span>
+              <span className="font-mono font-black text-white text-xs">{score}</span>
             </div>
           </div>
         </div>

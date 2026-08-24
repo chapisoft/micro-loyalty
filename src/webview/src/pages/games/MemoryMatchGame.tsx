@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock } from 'lucide-react';
+import { Clock, Eye, Sparkles, Flame, Zap, RotateCcw } from 'lucide-react';
 import { GameSounds } from '../../utils/audio';
 import { GameHeader } from '../../components/common/GameHeader';
 import { GameTutorialModal } from '../../components/common/GameTutorialModal';
@@ -10,33 +10,84 @@ export interface MemoryMatchGameProps {
   onClaimReward?: (pointsWon: number) => void;
 }
 
+export type ThemeType = 'PARTNERS' | 'CARNIVAL' | 'GEMS';
+export type DifficultyType = 'EASY' | 'NORMAL' | 'HARD';
+
+interface CardDef {
+  pairId: number;
+  icon: string;
+  label: string;
+  bgGradient: string;
+  accentColor: string;
+}
+
 interface CardItem {
   id: number;
   pairId: number;
   icon: string;
   label: string;
   bgGradient: string;
+  accentColor: string;
   isFlipped: boolean;
   isMatched: boolean;
 }
 
-const PARTNER_CARDS = [
-  { pairId: 1, icon: '🛒', label: 'Delimart', bgGradient: 'from-amber-500 to-orange-600' },
-  { pairId: 2, icon: '⛽', label: 'Total', bgGradient: 'from-red-500 to-rose-600' },
-  { pairId: 3, icon: '📡', label: 'Natcom 4G', bgGradient: 'from-blue-500 to-indigo-600' },
-  { pairId: 4, icon: '👑', label: 'Natcash', bgGradient: 'from-yellow-400 to-amber-500' },
-  { pairId: 5, icon: '🌴', label: 'Caribe', bgGradient: 'from-emerald-500 to-teal-600' },
-  { pairId: 6, icon: '🎭', label: 'Kanaval', bgGradient: 'from-purple-500 to-pink-600' },
+// ── THEME 1: ĐỐI TÁC LIÊN MINH & VÍ NATCASH ──
+const PARTNERS_THEME_CARDS: CardDef[] = [
+  { pairId: 1, icon: '🛒', label: 'Delimart', bgGradient: 'from-amber-500 to-orange-600', accentColor: '#F59E0B' },
+  { pairId: 2, icon: '⛽', label: 'Total', bgGradient: 'from-red-500 to-rose-600', accentColor: '#EF4444' },
+  { pairId: 3, icon: '📡', label: 'Natcom 4G', bgGradient: 'from-blue-500 to-indigo-600', accentColor: '#3B82F6' },
+  { pairId: 4, icon: '👑', label: 'Natcash', bgGradient: 'from-yellow-400 to-amber-500', accentColor: '#EAB308' },
+  { pairId: 5, icon: '📱', label: 'Ví Tiền', bgGradient: 'from-emerald-500 to-teal-600', accentColor: '#10B981' },
+  { pairId: 6, icon: '💳', label: 'Thẻ Kredi', bgGradient: 'from-purple-500 to-pink-600', accentColor: '#A855F7' },
+  { pairId: 7, icon: '☀️', label: 'Solar 24/7', bgGradient: 'from-orange-400 to-amber-600', accentColor: '#F97316' },
+  { pairId: 8, icon: '🏬', label: 'Siêu Thị', bgGradient: 'from-cyan-500 to-blue-600', accentColor: '#06B6D4' },
+  { pairId: 9, icon: '🎁', label: 'Quà VIP', bgGradient: 'from-rose-500 to-pink-600', accentColor: '#F43F5E' },
+  { pairId: 10, icon: '💎', label: 'Kim Cương', bgGradient: 'from-violet-500 to-purple-600', accentColor: '#8B5CF6' },
+];
+
+// ── THEME 2: LỄ HỘI KANAVAL & KHO BÁU CARIBE ──
+const CARNIVAL_THEME_CARDS: CardDef[] = [
+  { pairId: 1, icon: '🥁', label: 'Trống Rara', bgGradient: 'from-amber-500 to-red-600', accentColor: '#F59E0B' },
+  { pairId: 2, icon: '🎭', label: 'Mặt Nạ', bgGradient: 'from-purple-500 to-pink-600', accentColor: '#A855F7' },
+  { pairId: 3, icon: '🏴‍☠️', label: 'Rương Vàng', bgGradient: 'from-yellow-500 to-amber-700', accentColor: '#EAB308' },
+  { pairId: 4, icon: '🏮', label: 'Hải Đăng', bgGradient: 'from-orange-500 to-rose-600', accentColor: '#F97316' },
+  { pairId: 5, icon: '⛵', label: 'Thuyền Buồm', bgGradient: 'from-sky-500 to-blue-600', accentColor: '#0EA5E9' },
+  { pairId: 6, icon: '🦪', label: 'Ngọc Trai', bgGradient: 'from-teal-400 to-emerald-600', accentColor: '#14B8A6' },
+  { pairId: 7, icon: '🌴', label: 'Cọ Caribe', bgGradient: 'from-emerald-500 to-green-700', accentColor: '#10B981' },
+  { pairId: 8, icon: '🦜', label: 'Vẹt Nhiệt Đới', bgGradient: 'from-lime-500 to-emerald-600', accentColor: '#84CC16' },
+  { pairId: 9, icon: '🐬', label: 'Cá Heo', bgGradient: 'from-cyan-500 to-blue-700', accentColor: '#06B6D4' },
+  { pairId: 10, icon: '👑', label: 'Vương Miện', bgGradient: 'from-yellow-400 to-amber-600', accentColor: '#EAB308' },
+];
+
+// ── THEME 3: ĐÁ QUÝ & THẦN TÀI MAY MẮN ──
+const GEMS_THEME_CARDS: CardDef[] = [
+  { pairId: 1, icon: '💎', label: 'Kim Cương', bgGradient: 'from-cyan-400 to-blue-600', accentColor: '#06B6D4' },
+  { pairId: 2, icon: '🔴', label: 'Ruby Đỏ', bgGradient: 'from-rose-500 to-red-600', accentColor: '#F43F5E' },
+  { pairId: 3, icon: '🟢', label: 'Lục Bảo', bgGradient: 'from-emerald-400 to-teal-600', accentColor: '#10B981' },
+  { pairId: 4, icon: '🔮', label: 'Thạch Anh', bgGradient: 'from-purple-500 to-indigo-600', accentColor: '#A855F7' },
+  { pairId: 5, icon: '🪙', label: 'Xu Vàng', bgGradient: 'from-amber-400 to-yellow-600', accentColor: '#F59E0B' },
+  { pairId: 6, icon: '🔔', label: 'Chuông Vàng', bgGradient: 'from-yellow-400 to-orange-500', accentColor: '#EAB308' },
+  { pairId: 7, icon: '⭐', label: 'Sao Vàng', bgGradient: 'from-amber-300 to-orange-500', accentColor: '#F59E0B' },
+  { pairId: 8, icon: '🔥', label: 'Lửa Thần', bgGradient: 'from-orange-500 to-red-600', accentColor: '#F97316' },
+  { pairId: 9, icon: '🍀', label: 'Cỏ 4 Lá', bgGradient: 'from-green-400 to-emerald-600', accentColor: '#22C55E' },
+  { pairId: 10, icon: '💖', label: 'Trái Tim', bgGradient: 'from-pink-500 to-rose-600', accentColor: '#EC4899' },
 ];
 
 export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
 
+  // Settings state
+  const [currentTheme, setCurrentTheme] = useState<ThemeType>('PARTNERS');
+  const [difficulty, setDifficulty] = useState<DifficultyType>('EASY');
+
+  // Game state
   const [cards, setCards] = useState<CardItem[]>([]);
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedCount, setMatchedCount] = useState<number>(0);
   const [moves, setMoves] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(45);
+  const [totalTime, setTotalTime] = useState<number>(45);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isWon, setIsWon] = useState<boolean>(false);
   const [isTimeout, setIsTimeout] = useState<boolean>(false);
@@ -46,6 +97,12 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [matchPopup, setMatchPopup] = useState<string | null>(null);
 
+  // Power-ups and Combos
+  const [peekAvailable, setPeekAvailable] = useState<boolean>(true);
+  const [isPeeking, setIsPeeking] = useState<boolean>(false);
+  const [freezeAvailable, setFreezeAvailable] = useState<boolean>(true);
+  const [comboStreak, setComboStreak] = useState<number>(0);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleSound = () => {
@@ -54,18 +111,49 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     GameSounds.setMuted(!next);
   };
 
+  // Get active source deck based on theme & difficulty
+  const getDeckConfig = useCallback(() => {
+    let sourcePool: CardDef[];
+    if (currentTheme === 'CARNIVAL') {
+      sourcePool = CARNIVAL_THEME_CARDS;
+    } else if (currentTheme === 'GEMS') {
+      sourcePool = GEMS_THEME_CARDS;
+    } else {
+      sourcePool = PARTNERS_THEME_CARDS;
+    }
+
+    let pairsCount = 6; // EASY: 12 cards (4x3)
+    let initialTime = 45;
+
+    if (difficulty === 'NORMAL') {
+      pairsCount = 8; // NORMAL: 16 cards (4x4)
+      initialTime = 55;
+    } else if (difficulty === 'HARD') {
+      pairsCount = 10; // HARD: 20 cards (5x4)
+      initialTime = 65;
+    }
+
+    return {
+      cards: sourcePool.slice(0, pairsCount),
+      pairsCount,
+      initialTime,
+    };
+  }, [currentTheme, difficulty]);
+
+  // Shuffle and start new game
   const shuffleDeck = useCallback(() => {
+    const config = getDeckConfig();
     const deck: CardItem[] = [];
     let idCounter = 0;
 
-    PARTNER_CARDS.forEach((card) => {
-      // 2 cards for each pair
+    config.cards.forEach((card) => {
       deck.push({
         id: idCounter++,
         pairId: card.pairId,
         icon: card.icon,
         label: card.label,
         bgGradient: card.bgGradient,
+        accentColor: card.accentColor,
         isFlipped: false,
         isMatched: false,
       });
@@ -75,12 +163,13 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
         icon: card.icon,
         label: card.label,
         bgGradient: card.bgGradient,
+        accentColor: card.accentColor,
         isFlipped: false,
         isMatched: false,
       });
     });
 
-    // Shuffle deck array
+    // Fisher-Yates Shuffle
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -90,11 +179,16 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     setFlippedIndices([]);
     setMatchedCount(0);
     setMoves(0);
-    setTimeLeft(45);
+    setTimeLeft(config.initialTime);
+    setTotalTime(config.initialTime);
     setIsPlaying(true);
     setIsWon(false);
     setIsTimeout(false);
-  }, []);
+    setPeekAvailable(true);
+    setIsPeeking(false);
+    setFreezeAvailable(true);
+    setComboStreak(0);
+  }, [getDeckConfig]);
 
   useEffect(() => {
     shuffleDeck();
@@ -125,62 +219,109 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     };
   }, [isPlaying, isWon, isTimeout]);
 
+  // Power-up 1: X-Ray Peek (Lật ngửa toàn bộ thẻ trong 1.5s)
+  const handleXRayPeek = () => {
+    if (!peekAvailable || !isPlaying || isWon || isTimeout || isPeeking) return;
+    setPeekAvailable(false);
+    setIsPeeking(true);
+    GameSounds.playFiftyFifty();
+
+    setCards((prev) => prev.map((c) => ({ ...c, isFlipped: true })));
+
+    setTimeout(() => {
+      setCards((prev) =>
+        prev.map((c) => (c.isMatched ? { ...c, isFlipped: true } : { ...c, isFlipped: false }))
+      );
+      setIsPeeking(false);
+      setFlippedIndices([]);
+    }, 1500);
+  };
+
+  // Power-up 2: Time Freeze (+10 Giây)
+  const handleTimeFreeze = () => {
+    if (!freezeAvailable || !isPlaying || isWon || isTimeout) return;
+    setFreezeAvailable(false);
+    GameSounds.playFiftyFifty();
+    setTimeLeft((prev) => prev + 10);
+    setMatchPopup('+10s TIME BONUS! ⏳');
+    setTimeout(() => setMatchPopup(null), 1200);
+  };
+
   // Card flip interaction
   const handleCardClick = (index: number) => {
-    if (!isPlaying || isWon || isTimeout) return;
-    if (cards[index].isFlipped || cards[index].isMatched) return;
-    if (flippedIndices.length >= 2) return; // wait for checking
+    if (!isPlaying || isWon || isTimeout || isPeeking) return;
+    if (cards[index]?.isFlipped || cards[index]?.isMatched) return;
+    if (flippedIndices.length >= 2) return;
 
     GameSounds.playTap();
     const newFlipped = [...flippedIndices, index];
 
-    // Flip target card
-    const updatedCards = [...cards];
-    updatedCards[index].isFlipped = true;
-    setCards(updatedCards);
+    setCards((prev) => {
+      const next = prev.map((c, i) => (i === index ? { ...c, isFlipped: true } : c));
+      return next;
+    });
     setFlippedIndices(newFlipped);
 
     if (newFlipped.length === 2) {
       setMoves((m) => m + 1);
       const [firstIdx, secondIdx] = newFlipped;
-      const firstCard = updatedCards[firstIdx];
-      const secondCard = updatedCards[secondIdx];
+      const firstCard = cards[firstIdx];
+      const secondCard = cards[secondIdx];
 
-      if (firstCard.pairId === secondCard.pairId) {
+      if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
         // MATCHED!
         setTimeout(() => {
           GameSounds.playCorrect();
-          updatedCards[firstIdx].isMatched = true;
-          updatedCards[secondIdx].isMatched = true;
-          setCards([...updatedCards]);
+          const nextStreak = comboStreak + 1;
+          setComboStreak(nextStreak);
+
+          setCards((prev) =>
+            prev.map((c, i) =>
+              i === firstIdx || i === secondIdx ? { ...c, isMatched: true, isFlipped: true } : c
+            )
+          );
           setFlippedIndices([]);
 
-          setMatchPopup(`${firstCard.label} MATCH! ✨`);
+          if (nextStreak >= 2) {
+            setMatchPopup(`COMBO x${nextStreak}! 🔥`);
+          } else {
+            setMatchPopup(`${firstCard.label} MATCH! ✨`);
+          }
           setTimeout(() => setMatchPopup(null), 1000);
 
-          const nextMatched = matchedCount + 1;
-          setMatchedCount(nextMatched);
+          const config = getDeckConfig();
+          setMatchedCount((prev) => {
+            const nextMatched = prev + 1;
+            if (nextMatched === config.pairsCount) {
+              setIsWon(true);
+              setIsPlaying(false);
+              const difficultyMultiplier = difficulty === 'HARD' ? 1.5 : difficulty === 'NORMAL' ? 1.2 : 1.0;
+              const basePoints = config.pairsCount * 20;
+              const timeBonus = Math.round(timeLeft * 2 * difficultyMultiplier);
+              const comboBonus = nextStreak * 15;
+              const totalReward = Math.round(basePoints + timeBonus + comboBonus);
 
-          if (nextMatched === PARTNER_CARDS.length) {
-            setIsWon(true);
-            setIsPlaying(false);
-            const reward = 100 + timeLeft * 2;
-            setRewardAmount(reward);
-            setTimeout(() => {
-              setShowRewardModal(true);
-              GameSounds.playWinFanfare();
-            }, 600);
-          }
-        }, 400);
+              setRewardAmount(totalReward);
+              setTimeout(() => {
+                setShowRewardModal(true);
+                GameSounds.playWinFanfare();
+              }, 600);
+            }
+            return nextMatched;
+          });
+        }, 350);
       } else {
-        // NO MATCH -> Flip back after delay
+        // NO MATCH -> Reset combo and flip back
         setTimeout(() => {
           GameSounds.playWrong();
-          updatedCards[firstIdx].isFlipped = false;
-          updatedCards[secondIdx].isFlipped = false;
-          setCards([...updatedCards]);
+          setComboStreak(0);
+          setCards((prev) =>
+            prev.map((c, i) =>
+              (i === firstIdx || i === secondIdx) && !c.isMatched ? { ...c, isFlipped: false } : c
+            )
+          );
           setFlippedIndices([]);
-        }, 800);
+        }, 650);
       }
     }
   };
@@ -192,11 +333,17 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     setShowRewardModal(false);
   };
 
+  const config = getDeckConfig();
+  const progressPercent = Math.min(100, Math.round((matchedCount / config.pairsCount) * 100));
+
+  // Determine grid columns
+  const gridColsClass = difficulty === 'HARD' ? 'grid-cols-4 sm:grid-cols-5' : 'grid-cols-4';
+
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none pb-12 animate-fade-in">
       <GameHeader
         title={t('games.memory.title')}
-        subtitle={t('games.memory.matches', { matched: matchedCount, total: PARTNER_CARDS.length })}
+        subtitle={t('games.memory.matches', { matched: matchedCount, total: config.pairsCount })}
         onBack={onBack}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
@@ -206,166 +353,269 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-md mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
-        {/* Title Header */}
-        <div className="text-center space-y-1 mb-2">
-          <h1 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 tracking-tight flex items-center justify-center gap-2">
-            <span>🃏</span> {t('games.memory.title')}
-          </h1>
-          <p className="text-xs text-slate-400 max-w-xs mx-auto">{t('games.memory.subtitle')}</p>
+      <main className="flex-1 max-w-lg mx-auto w-full px-3 py-2 flex flex-col items-center justify-between space-y-3">
+        {/* ── 1. THEME & DIFFICULTY SELECTOR TABS ── */}
+        <div className="w-full space-y-2">
+          {/* Theme Selector */}
+          <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-1 rounded-2xl gap-1 shadow-md">
+            <button
+              onClick={() => {
+                setCurrentTheme('PARTNERS');
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                currentTheme === 'PARTNERS'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🏢</span>
+              <span>{t('games.memory.theme_partners', { defaultValue: 'Đối Tác & Ví' })}</span>
+            </button>
+            <button
+              onClick={() => {
+                setCurrentTheme('CARNIVAL');
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                currentTheme === 'CARNIVAL'
+                  ? 'bg-pink-500 text-white shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🎭</span>
+              <span>{t('games.memory.theme_carnival', { defaultValue: 'Lễ Hội Caribe' })}</span>
+            </button>
+            <button
+              onClick={() => {
+                setCurrentTheme('GEMS');
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                currentTheme === 'GEMS'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>💎</span>
+              <span>{t('games.memory.theme_gems', { defaultValue: 'Đá Quý May Mắn' })}</span>
+            </button>
+          </div>
+
+          {/* Difficulty Levels */}
+          <div className="flex items-center justify-between gap-1.5 text-[10px] sm:text-[11px] font-bold">
+            <button
+              onClick={() => setDifficulty('EASY')}
+              className={`flex-1 py-1 px-1.5 rounded-lg border text-center transition ${
+                difficulty === 'EASY'
+                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-black'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t('games.memory.level_easy', { defaultValue: 'Tập Sự (12 Thẻ)' })}
+            </button>
+            <button
+              onClick={() => setDifficulty('NORMAL')}
+              className={`flex-1 py-1 px-1.5 rounded-lg border text-center transition ${
+                difficulty === 'NORMAL'
+                  ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t('games.memory.level_normal', { defaultValue: 'Chuyên Gia (16 Thẻ)' })}
+            </button>
+            <button
+              onClick={() => setDifficulty('HARD')}
+              className={`flex-1 py-1 px-1.5 rounded-lg border text-center transition ${
+                difficulty === 'HARD'
+                  ? 'bg-rose-500/20 border-rose-400 text-rose-300 font-black'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t('games.memory.level_hard', { defaultValue: 'Bậc Thầy (20 Thẻ)' })}
+            </button>
+          </div>
         </div>
 
-        {/* Stats Status Bar */}
-        <div className="w-full flex items-center justify-between bg-slate-900/90 border border-slate-800 px-4 py-2 rounded-2xl mb-3 shadow-md">
-          <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-300">
+        {/* ── 2. STATS & POWER-UP ACTION BAR ── */}
+        <div className="w-full bg-slate-900/90 border border-slate-800 px-3.5 py-2.5 rounded-2xl shadow-md flex items-center justify-between gap-2">
+          {/* Timer with Progress Indicator */}
+          <div className="flex items-center gap-2">
             <Clock className={`w-4 h-4 ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-amber-400'}`} />
-            <span className={`font-mono text-sm ${timeLeft <= 10 ? 'text-red-400 font-black' : 'text-white'}`}>
-              {t('games.memory.time_left', { time: timeLeft })}
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className={`font-mono text-sm font-black ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                  {timeLeft}s
+                </span>
+                <span className="text-[10px] text-slate-400">/ {totalTime}s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Combo & Moves Tracker */}
+          <div className="flex items-center gap-2">
+            {comboStreak > 1 && (
+              <span className="flex items-center gap-1 text-[11px] font-black text-amber-400 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full animate-bounce">
+                <Flame className="w-3 h-3 fill-amber-400" />
+                x{comboStreak}
+              </span>
+            )}
+            <span className="text-xs font-mono text-slate-300">
+              {moves} {t('games.memory.moves_unit', { defaultValue: 'lượt' })}
+            </span>
+            <span className="bg-amber-500 text-slate-950 font-black text-xs px-2 py-0.5 rounded-lg shadow-xs">
+              {matchedCount}/{config.pairsCount}
             </span>
           </div>
 
-          <div className="flex items-center space-x-2 text-xs font-bold">
-            <span className="text-slate-400 font-mono">{t('games.memory.moves', { moves })}</span>
-            <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-lg border border-amber-500/30">
-              {t('games.memory.matches', { matched: matchedCount, total: PARTNER_CARDS.length })}
-            </span>
+          {/* Interactive Power-up Buttons */}
+          <div className="flex items-center gap-1.5">
+            {/* X-Ray Peek Button */}
+            <button
+              onClick={handleXRayPeek}
+              disabled={!peekAvailable || isPeeking}
+              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${
+                peekAvailable && !isPeeking
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white hover:brightness-110 active:scale-95'
+                  : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+              }`}
+              title={t('games.memory.btn_peek', { defaultValue: 'Mắt Thần (1.5s)' })}
+            >
+              <Eye className="w-3 h-3" />
+              <span>{t('games.memory.btn_peek', { defaultValue: 'Mắt Thần' })}</span>
+            </button>
+
+            {/* Time Freeze (+10s) */}
+            <button
+              onClick={handleTimeFreeze}
+              disabled={!freezeAvailable}
+              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${
+                freezeAvailable
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 border-emerald-400 text-white hover:brightness-110 active:scale-95'
+                  : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+              }`}
+              title={t('games.memory.btn_freeze', { defaultValue: '+10 Giây' })}
+            >
+              <Zap className="w-3 h-3" />
+              <span>{t('games.memory.btn_freeze', { defaultValue: '+10s' })}</span>
+            </button>
           </div>
         </div>
 
-        {/* 4x3 Cards Grid Board with Floating Match Popup */}
-        <div className="relative w-full aspect-[4/3] max-w-[380px] grid grid-cols-4 gap-2.5 sm:gap-3 p-1">
+        {/* Progress Bar */}
+        <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+          <div
+            className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* ── 3. DYNAMIC 3D CARDS BOARD ── */}
+        <div className="relative w-full max-w-md flex-1 flex items-center justify-center p-1">
           {matchPopup && (
             <div className="absolute -top-3 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
-              <span className="px-4 py-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs rounded-full shadow-xl border border-yellow-200">
+              <span className="px-4 py-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs rounded-full shadow-2xl border-2 border-yellow-200">
                 {matchPopup}
               </span>
             </div>
           )}
 
-          {cards.map((card, idx) => (
-            <div
-              key={card.id}
-              onClick={() => handleCardClick(idx)}
-              className="relative aspect-square rounded-2xl cursor-pointer perspective-1000 transition-all duration-300 active:scale-95 select-none"
-            >
-              <div
-                className={`w-full h-full rounded-2xl transition-all duration-500 transform-style-3d relative ${
-                  card.isFlipped || card.isMatched ? 'rotate-y-180 shadow-2xl' : 'shadow-md'
-                }`}
-              >
-                {/* Card Back (Facedown - Luxury Gold Foil Filigree) */}
-                <div className="absolute inset-0 backface-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-400/60 rounded-2xl flex flex-col items-center justify-center p-2 hover:border-amber-300 transition group overflow-hidden">
-                  <div className="absolute inset-1 rounded-xl border border-amber-400/20 border-dashed" />
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-lg border border-yellow-200">
-                    <span className="text-amber-950 font-black text-base">★</span>
-                  </div>
-                  <span className="text-[7.5px] font-black text-amber-300 uppercase tracking-widest mt-1">NATCASH</span>
-                </div>
+          <div className={`w-full grid ${gridColsClass} gap-2 sm:gap-2.5`}>
+            {cards.map((card, idx) => {
+              const isRevealed = card.isFlipped || card.isMatched;
 
-                {/* Card Front (Faceup - Authentic High-DPI Partner Vector Crest) */}
+              return (
                 <div
-                  className={`absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br ${card.bgGradient} rounded-2xl border-2 border-white/60 flex flex-col items-center justify-center p-1.5 text-white shadow-xl overflow-hidden`}
+                  key={card.id}
+                  onClick={() => handleCardClick(idx)}
+                  className="relative aspect-square rounded-2xl cursor-pointer perspective-1000 transition-transform duration-200 active:scale-95 select-none group"
                 >
-                  <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
-                  
-                  {/* SVG Partner Crests */}
-                  <div className="w-10 h-10 flex items-center justify-center drop-shadow-md">
-                    {card.pairId === 1 && (
-                      <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
-                        <circle cx="24" cy="24" r="22" fill="#0284C7" stroke="#BAE6FD" strokeWidth="2" />
-                        <path d="M12 16 H16 L20 30 H34 L37 20 H18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        <circle cx="22" cy="35" r="2.5" fill="#FDE047" />
-                        <circle cx="32" cy="35" r="2.5" fill="#FDE047" />
-                      </svg>
-                    )}
-                    {card.pairId === 2 && (
-                      <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
-                        <circle cx="24" cy="24" r="22" fill="#BE123C" stroke="#FDA4AF" strokeWidth="2" />
-                        <path d="M24 8 C24 8 32 18 32 26 C32 30.4 28.4 34 24 34 C19.6 34 16 30.4 16 26 C16 18 24 8 24 8 Z" fill="#F59E0B" />
-                        <path d="M24 16 C24 16 28 22 28 27 C28 29.2 26.2 31 24 31 C21.8 31 20 29.2 20 27 C20 22 24 16 24 16 Z" fill="#FEF08A" />
-                      </svg>
-                    )}
-                    {card.pairId === 3 && (
-                      <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
-                        <circle cx="24" cy="24" r="22" fill="#1D4ED8" stroke="#93C5FD" strokeWidth="2" />
-                        <path d="M24 14 L24 36 M18 20 L24 14 L30 20 M14 26 L24 14 L34 26" stroke="#FEF08A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        <circle cx="24" cy="14" r="2" fill="#EF4444" />
-                      </svg>
-                    )}
-                    {card.pairId === 4 && (
-                      <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
-                        <circle cx="24" cy="24" r="22" fill="#B45309" stroke="#FEF08A" strokeWidth="2" />
-                        <path d="M12 30 L15 16 L24 23 L33 16 L36 30 Z" fill="#FEF08A" stroke="#78350F" strokeWidth="1.5" />
-                        <circle cx="15" cy="15" r="2" fill="#EF4444" />
-                        <circle cx="24" cy="22" r="2" fill="#10B981" />
-                        <circle cx="33" cy="15" r="2" fill="#EF4444" />
-                      </svg>
-                    )}
-                    {card.pairId === 5 && (
-                      <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
-                        <circle cx="24" cy="24" r="22" fill="#047857" stroke="#A7F3D0" strokeWidth="2" />
-                        <circle cx="32" cy="16" r="6" fill="#FDE047" />
-                        <path d="M22 36 C22 28 26 22 28 18" stroke="#78350F" strokeWidth="3" strokeLinecap="round" />
-                        <path d="M28 18 Q20 14 14 18 Q22 20 28 18 Z" fill="#22C55E" />
-                        <path d="M28 18 Q34 12 40 15 Q34 18 28 18 Z" fill="#16A34A" />
-                      </svg>
-                    )}
-                    {card.pairId === 6 && (
-                      <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
-                        <circle cx="24" cy="24" r="22" fill="#7E22CE" stroke="#E9D5FF" strokeWidth="2" />
-                        <path d="M14 22 C14 18 20 16 24 16 C28 16 34 18 34 22 C34 28 28 32 24 32 C20 32 14 28 14 22 Z" fill="#FDE047" stroke="#B45309" strokeWidth="1.5" />
-                        <ellipse cx="19" cy="22" rx="3" ry="2" fill="#1E1B4B" />
-                        <ellipse cx="29" cy="22" rx="3" ry="2" fill="#1E1B4B" />
-                        <path d="M24 16 Q20 8 18 6 Q24 12 24 16 Z" fill="#EF4444" />
-                        <path d="M24 16 Q28 8 30 6 Q24 12 24 16 Z" fill="#3B82F6" />
-                      </svg>
-                    )}
-                  </div>
+                  <div
+                    className={`w-full h-full rounded-2xl transition-transform duration-500 transform-style-3d relative ${
+                      isRevealed ? 'rotate-y-180 shadow-xl' : 'shadow-md'
+                    }`}
+                  >
+                    {/* Card Back (Facedown - Luxury Gold Pattern) */}
+                    <div
+                      className={`absolute inset-0 backface-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-400/60 rounded-2xl flex flex-col items-center justify-center p-1.5 group-hover:border-amber-300 transition overflow-hidden ${
+                        isRevealed ? 'pointer-events-none opacity-0' : 'z-10 opacity-100'
+                      }`}
+                    >
+                      <div className="absolute inset-1 rounded-xl border border-amber-400/20 border-dashed" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg border border-yellow-200 group-hover:scale-110 transition">
+                        <span className="text-amber-950 font-black text-sm sm:text-base">★</span>
+                      </div>
+                      <span className="text-[7px] sm:text-[8px] font-black text-amber-300 uppercase tracking-widest mt-1">
+                        NATCASH
+                      </span>
+                    </div>
 
-                  <span className="text-[9px] sm:text-[10px] font-black tracking-tight text-white mt-1 uppercase text-center line-clamp-1 leading-tight">
-                    {card.label}
-                  </span>
+                    {/* Card Front (Faceup - Thematic Vector Art) */}
+                    <div
+                      className={`absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br ${card.bgGradient} rounded-2xl border-2 ${
+                        card.isMatched ? 'border-amber-300 ring-2 ring-amber-400/70 shadow-amber-500/30' : 'border-white/70'
+                      } flex flex-col items-center justify-center p-1.5 text-white shadow-xl overflow-hidden ${
+                        isRevealed ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'
+                      }`}
+                    >
+                      <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
+
+                      {/* Icon */}
+                      <span className="text-2xl sm:text-3xl drop-shadow-md transform transition group-hover:scale-110">
+                        {card.icon}
+                      </span>
+
+                      {/* Label */}
+                      <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-tight text-white mt-1 uppercase text-center line-clamp-1 leading-none drop-shadow">
+                        {card.label}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
 
           {/* Timeout Overlay */}
           {isTimeout && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20">
-              <div className="w-14 h-14 rounded-2xl bg-red-600/30 border border-red-500 text-red-400 flex items-center justify-center text-2xl mb-2">
+            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in z-30">
+              <div className="w-14 h-14 rounded-2xl bg-red-600/30 border border-red-500 text-red-400 flex items-center justify-center text-2xl mb-2 animate-bounce">
                 ⏰
               </div>
               <h3 className="text-lg font-black text-red-400 mb-1">{t('games.memory.timeout_title')}</h3>
-              <p className="text-xs text-slate-300 mb-4">{t('games.memory.matches', { matched: matchedCount, total: PARTNER_CARDS.length })}</p>
+              <p className="text-xs text-slate-300 mb-4">
+                {t('games.memory.matches', { matched: matchedCount, total: config.pairsCount })}
+              </p>
               <button
                 onClick={shuffleDeck}
-                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-xl text-sm shadow-lg active:scale-95 transition"
+                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-xl text-sm shadow-lg active:scale-95 transition flex items-center gap-2"
               >
-                {t('games.memory.btn_restart')}
+                <RotateCcw className="w-4 h-4" />
+                <span>{t('games.memory.btn_restart')}</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Footer Hint */}
-        <p className="text-[11px] text-slate-400 mt-4 text-center max-w-xs">{t('games.memory.subtitle')}</p>
+        {/* Footer Subtitle */}
+        <p className="text-[11px] text-slate-400 text-center max-w-xs leading-relaxed">
+          {t('games.memory.subtitle')}
+        </p>
       </main>
 
       {/* ── REWARD MODAL ── */}
       {showRewardModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-amber-500/50 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border-2 border-amber-500/70 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl relative overflow-hidden">
             <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center text-3xl mx-auto shadow-xl animate-bounce">
               🏆
             </div>
             <div>
               <h3 className="text-lg font-black text-white">{t('games.memory.win_title')}</h3>
               <p className="text-xs text-slate-400 mt-1">
-                {t('games.memory.time_left', { time: timeLeft })} • {t('games.memory.moves', { moves })}
+                {moves} {t('games.memory.moves_unit', { defaultValue: 'lượt' })} • {timeLeft}s {t('games.memory.time_bonus_label', { defaultValue: 'thời gian dư' })}
               </p>
-              <div className="text-3xl font-black text-amber-400 font-mono mt-2">
-                +{rewardAmount} {t('nav.points_unit')}
+              <div className="text-3xl font-black text-amber-400 font-mono mt-2 flex items-center justify-center gap-1.5">
+                <Sparkles className="w-6 h-6 text-yellow-300 animate-spin" />
+                <span>+{rewardAmount}</span>
+                <span className="text-sm font-bold text-amber-200">{t('nav.points_unit')}</span>
               </div>
             </div>
             <button
@@ -377,12 +627,13 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
           </div>
         </div>
       )}
+
       {/* ── GAME TUTORIAL MODAL ── */}
       <GameTutorialModal
         isOpen={showTutorial}
         onClose={() => setShowTutorial(false)}
         gameTitle={t('games.memory.title')}
-        gameIcon="🃏"
+        gameIcon="🧠"
         goal={t('games.memory.tutorial.goal')}
         controls={t('games.memory.tutorial.controls')}
         scoring={t('games.memory.tutorial.scoring')}

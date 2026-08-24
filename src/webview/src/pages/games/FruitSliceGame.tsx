@@ -494,26 +494,21 @@ export const FruitSliceGame: React.FC<FruitSliceGameProps> = ({ onBack, onClaimR
       {/* ── MAIN STAGE ── */}
       <main className="flex-1 max-w-md mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
         {/* Score & Lives HUD */}
-        <div className="w-full flex items-center justify-between gap-3 mb-2">
-          <div>
-            <h1 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 tracking-tight">
-              {t('games.fruit.title')}
-            </h1>
-            <div className="flex items-center gap-1 mt-0.5">
-              {[1, 2, 3].map((i) => (
-                <Heart key={i} className={`w-3.5 h-3.5 ${i <= lives ? 'text-red-500 fill-red-500' : 'text-slate-700'}`} />
-              ))}
-              {combo > 1 && (
-                <span className="ml-2 text-[10px] font-black text-amber-300 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-400/40 animate-pulse">
-                  {t('games.fruit.combo', { combo })}
-                </span>
-              )}
-            </div>
+        <div className="w-full flex items-center justify-between gap-3 mb-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            {[1, 2, 3].map((i) => (
+              <Heart key={i} className={`w-4 h-4 ${i <= lives ? 'text-red-500 fill-red-500' : 'text-slate-700'}`} />
+            ))}
+            {combo > 1 && (
+              <span className="ml-2 text-[10px] font-black text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-400/40 animate-pulse font-mono">
+                {t('games.fruit.combo', { combo })}
+              </span>
+            )}
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-2xl text-center min-w-[80px]">
-            <span className="text-[9px] text-slate-400 block uppercase font-bold">{t('games.fruit.score', { score: '' })}</span>
-            <span className="font-mono font-black text-amber-400 text-base">{score}</span>
+          <div className="bg-slate-800/90 border border-slate-700/80 px-3 py-1 rounded-xl text-center min-w-[70px]">
+            <span className="text-[8px] text-slate-400 block uppercase font-bold">{t('games.fruit.score', { score: '' })}</span>
+            <span className="font-mono font-black text-amber-400 text-sm">{score}</span>
           </div>
         </div>
 

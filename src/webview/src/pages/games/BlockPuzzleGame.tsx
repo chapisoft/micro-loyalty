@@ -57,6 +57,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [comboText, setComboText] = useState<string | null>(null);
   const [shakeBoard, setShakeBoard] = useState<boolean>(false);
+  const [hoverPos, setHoverPos] = useState<{ r: number; c: number } | null>(null);
 
   const toggleSound = () => {
     const next = !soundEnabled;
@@ -88,6 +89,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
     setLinesCleared(0);
     setIsGameOver(false);
     setSelectedPieceIndex(null);
+    setHoverPos(null);
     setPieces(generateNewPieces());
     GameSounds.playTap();
   }, [generateNewPieces]);
@@ -154,6 +156,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
     const updatedPieces = [...pieces];
     updatedPieces[selectedPieceIndex].used = true;
     setSelectedPieceIndex(null);
+    setHoverPos(null);
 
     // Check full rows & columns to clear
     const fullRows: number[] = [];
@@ -200,7 +203,9 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
     setScore(newScore);
     if (newScore > highScore) {
       setHighScore(newScore);
-      try { localStorage.setItem('block_puzzle_best_score', String(newScore)); } catch {}
+      try {
+        localStorage.setItem('block_puzzle_best_score', String(newScore));
+      } catch {}
     }
 
     setGrid(newGrid);
@@ -230,8 +235,35 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
     setShowRewardModal(false);
   };
 
+  // Check if cell is covered by hover preview
+  const isCellHovered = (rIdx: number, cIdx: number) => {
+    if (selectedPieceIndex === null || !hoverPos) return false;
+    const piece = pieces[selectedPieceIndex];
+    if (!piece || piece.used) return false;
+
+    const rowOffset = rIdx - hoverPos.r;
+    const colOffset = cIdx - hoverPos.c;
+
+    if (
+      rowOffset >= 0 &&
+      rowOffset < piece.matrix.length &&
+      colOffset >= 0 &&
+      colOffset < piece.matrix[0].length
+    ) {
+      return piece.matrix[rowOffset][colOffset] === 1;
+    }
+    return false;
+  };
+
+  const isHoverValid = () => {
+    if (selectedPieceIndex === null || !hoverPos) return false;
+    const piece = pieces[selectedPieceIndex];
+    if (!piece || piece.used) return false;
+    return canFitAt(grid, piece.matrix, hoverPos.r, hoverPos.c);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none pb-12 animate-fade-in">
       <GameHeader
         title={t('games.block.title')}
         subtitle={t('games.block.high_score', { best: highScore })}
@@ -243,46 +275,71 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
         onHelp={() => setShowTutorial(true)}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4 max-w-md mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center p-3 max-w-md mx-auto w-full">
+        {/* HUD Info Status Bar */}
         <div className="w-full grid grid-cols-3 gap-2 mb-3">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 flex flex-col items-center">
-            <span className="text-[10px] text-slate-400 font-medium uppercase">{t('games.block.score', { score: '' })}</span>
-            <span className="font-mono font-black text-amber-400 text-base">{score}</span>
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 flex flex-col items-center shadow-md">
+            <span className="text-[9px] text-slate-400 font-medium uppercase">{t('games.block.score', { score: '' })}</span>
+            <span className="font-mono font-black text-amber-400 text-sm">{score}</span>
           </div>
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 flex flex-col items-center">
-            <span className="text-[10px] text-slate-400 font-medium uppercase">{t('games.block.lines_cleared', { lines: '' })}</span>
-            <span className="font-mono font-black text-emerald-400 text-base">{linesCleared}</span>
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 flex flex-col items-center shadow-md">
+            <span className="text-[9px] text-slate-400 font-medium uppercase">{t('games.block.lines_cleared', { lines: '' })}</span>
+            <span className="font-mono font-black text-emerald-400 text-sm">{linesCleared}</span>
           </div>
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 flex flex-col items-center">
-            <span className="text-[10px] text-slate-400 font-medium uppercase">{t('games.block.high_score', { best: '' })}</span>
-            <span className="font-mono font-black text-yellow-400 text-base">{highScore}</span>
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 flex flex-col items-center shadow-md">
+            <span className="text-[9px] text-slate-400 font-medium uppercase">{t('games.block.high_score', { best: '' })}</span>
+            <span className="font-mono font-black text-yellow-400 text-sm">{highScore}</span>
           </div>
         </div>
 
-        <div className={`relative w-full aspect-square max-w-[360px] bg-slate-900/90 border-2 border-amber-500/40 rounded-3xl p-2.5 shadow-2xl touch-none select-none transition-transform ${shakeBoard ? 'scale-105 rotate-1' : ''}`}>
+        {/* Symmetrical 8x8 Grid Board with Zero Overflow */}
+        <div
+          className={`relative w-full aspect-square max-w-[360px] bg-slate-900/95 border-2 border-amber-500/50 rounded-3xl p-2.5 shadow-2xl touch-none select-none transition-transform flex flex-col items-center justify-center ${
+            shakeBoard ? 'scale-105 rotate-1' : ''
+          }`}
+          onMouseLeave={() => setHoverPos(null)}
+        >
           {comboText && (
-            <div className="absolute -top-4 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
+            <div className="absolute -top-3.5 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
               <span className="px-4 py-1 bg-gradient-to-r from-amber-500 via-rose-500 to-yellow-400 text-slate-950 font-black text-xs rounded-full shadow-xl border border-yellow-200">
                 {comboText}
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-8 gap-1 w-full h-full">
+          <div
+            className="grid gap-1 sm:gap-1.5 w-full h-full"
+            style={{
+              gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
+              gridTemplateRows: 'repeat(8, minmax(0, 1fr))',
+            }}
+          >
             {grid.map((row, rIdx) =>
-              row.map((cell, cIdx) => (
-                <div
-                  key={`${rIdx}-${cIdx}`}
-                  onClick={() => handleCellClick(rIdx, cIdx)}
-                  className={`rounded-lg cursor-pointer transition-all duration-150 relative overflow-hidden ${
-                    cell ? `${cell} shadow-md border border-white/40 scale-100` : 'bg-slate-800/40 border border-slate-700/30 hover:bg-slate-700/50'
-                  }`}
-                >
-                  {cell && (
-                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/40 to-transparent pointer-events-none rounded-t-lg" />
-                  )}
-                </div>
-              ))
+              row.map((cell, cIdx) => {
+                const hovered = isCellHovered(rIdx, cIdx);
+                const validPlacement = isHoverValid();
+
+                return (
+                  <div
+                    key={`${rIdx}-${cIdx}`}
+                    onClick={() => handleCellClick(rIdx, cIdx)}
+                    onMouseEnter={() => setHoverPos({ r: rIdx, c: cIdx })}
+                    className={`w-full h-full aspect-square rounded-lg cursor-pointer transition-all duration-150 relative overflow-hidden flex items-center justify-center ${
+                      cell
+                        ? `${cell} shadow-md border border-white/40 scale-100`
+                        : hovered
+                        ? validPlacement
+                          ? 'bg-emerald-500/40 border-2 border-emerald-400 animate-pulse'
+                          : 'bg-rose-500/40 border-2 border-rose-400'
+                        : 'bg-slate-800/40 border border-slate-700/30 hover:bg-slate-700/50'
+                    }`}
+                  >
+                    {cell && (
+                      <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/40 to-transparent pointer-events-none rounded-t-lg" />
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 

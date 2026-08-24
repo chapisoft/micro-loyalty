@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hextris - Natcash Loyalty Edition</title>
+  <script src="../../sdk/gamehub-sdk.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      background: #0f172a;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      touch-action: none;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 20px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-box {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 6px 16px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .hud-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .hud-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    .touch-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+      pointer-events: auto;
+    }
+    .btn-rotate {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: rgba(30, 41, 59, 0.85);
+      border: 2px solid rgba(245, 158, 11, 0.5);
+      color: #fbbf24;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    .btn-rotate:active {
+      transform: scale(0.92);
+      background: rgba(245, 158, 11, 0.3);
+    }
+    .game-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 50;
+    }
+    .game-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 24px 32px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    .modal-score {
+      font-size: 16px;
+      color: #cbd5e1;
+    }
+    .btn-action {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      color: #ffffff;
+      border: none;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      margin-top: 8px;
+    }
+    .btn-action:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-box">
+      <div class="hud-label">ĐIỂM SỐ</div>
+      <div id="score" class="hud-val">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">COMBO</div>
+      <div id="combo" class="hud-val">x1</div>
+    </div>
+  </div>
+
+  <div class="touch-controls">
+    <div class="btn-rotate" id="btn-left">↺</div>
+    <div class="btn-rotate" id="btn-right">↻</div>
+  </div>
+
+  <div class="game-modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-title">KẾT THÚC VÁN</div>
+      <div class="modal-score" id="modal-score-text">Điểm của bạn: 0</div>
+      <button class="btn-action" id="btn-replay">CHƠI LẠI</button>
+    </div>
+  </div>
+
+  <script>
+    if (window.GameHub) {
+      GameHub.init({ gameCode: 'HEXTRIS' });
+    }
+
+    let soundEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playSound(freq, duration, type = 'sine') {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'SET_SOUND') {
+        soundEnabled = e.data.enabled;
+      } else if (e.data && e.data.type === 'RESTART_GAME') {
+        resetGame();
+      }
+    });
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const comboEl = document.getElementById('combo');
+    const modal = document.getElementById('modal');
+    const modalScoreText = document.getElementById('modal-score-text');
+    const btnReplay = document.getElementById('btn-replay');
+
+    const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6'];
+    const HEX_RADIUS = 50;
+    const BLOCK_THICKNESS = 18;
+    const MAX_BLOCKS = 7;
+
+    let width, height, centerX, centerY;
+    let rotation = 0;
+    let targetRotation = 0;
+    let lanes = [[], [], [], [], [], []]; // 6 sides
+    let fallingBlocks = [];
+    let particles = [];
+    let score = 0;
+    let combo = 1;
+    let gameOver = false;
+    let lastSpawn = 0;
+    let spawnInterval = 1400;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      centerX = width / 2;
+      centerY = height / 2;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    function resetGame() {
+      lanes = [[], [], [], [], [], []];
+      fallingBlocks = [];
+      particles = [];
+      score = 0;
+      combo = 1;
+      gameOver = false;
+      rotation = 0;
+      targetRotation = 0;
+      spawnInterval = 1400;
+      scoreEl.innerText = '0';
+      comboEl.innerText = 'x1';
+      modal.classList.remove('active');
+    }
+
+    function rotate(direction) {
+      if (gameOver) return;
+      targetRotation += (Math.PI / 3) * direction;
+      playSound(350, 0.08, 'sine');
+    }
+
+    function spawnBlock() {
+      const laneIndex = Math.floor(Math.random() * 6);
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      fallingBlocks.push({
+        lane: laneIndex,
+        dist: Math.max(width, height) / 2 + 50,
+        speed: 2.2 + Math.min(3.5, score * 0.01),
+        color: color
+      });
+    }
+
+    function createParticles(x, y, color) {
+      for (let i = 0; i < 15; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 2;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          alpha: 1,
+          size: Math.random() * 4 + 2
+        });
+      }
+    }
+
+    function checkMatches() {
+      let matched = false;
+      for (let i = 0; i < 6; i++) {
+        const lane = lanes[i];
+        if (lane.length >= 3) {
+          // Check 3 consecutive identical colors
+          let streak = 1;
+          let matchColor = lane[0];
+          for (let j = 1; j < lane.length; j++) {
+            if (lane[j] === matchColor) {
+              streak++;
+              if (streak >= 3) {
+                // Clear matched blocks
+                matched = true;
+                lane.splice(j - streak + 1, streak);
+                const pts = streak * 15 * combo;
+                score += pts;
+                combo++;
+                scoreEl.innerText = score;
+                comboEl.innerText = `x${combo}`;
+                playSound(580 + combo * 40, 0.2, 'triangle');
+                createParticles(centerX, centerY, matchColor);
+
+                if (window.parent) {
+                  window.parent.postMessage({ type: 'GAME_SCORE_UPDATE', score }, '*');
+                }
+                break;
+              }
+            } else {
+              matchColor = lane[j];
+              streak = 1;
+            }
+          }
+        }
+      }
+      if (!matched && combo > 1) {
+        // Slowly reset combo if no continuous match
+      }
+    }
+
+    function update(dt) {
+      if (gameOver) return;
+
+      // Smooth rotation
+      rotation += (targetRotation - rotation) * 0.25;
+
+      // Spawn blocks
+      lastSpawn += dt;
+      if (lastSpawn > spawnInterval) {
+        spawnBlock();
+        lastSpawn = 0;
+        spawnInterval = Math.max(700, 1400 - score * 2);
+      }
+
+      // Update falling blocks
+      for (let i = fallingBlocks.length - 1; i >= 0; i--) {
+        const block = fallingBlocks[i];
+        block.dist -= block.speed;
+
+        const lane = lanes[block.lane];
+        const targetDist = HEX_RADIUS + (lane.length * BLOCK_THICKNESS);
+
+        if (block.dist <= targetDist) {
+          // Lands on lane
+          lane.push(block.color);
+          fallingBlocks.splice(i, 1);
+          playSound(280, 0.06, 'square');
+
+          if (lane.length >= MAX_BLOCKS) {
+            // Game over
+            gameOver = true;
+            playSound(160, 0.4, 'sawtooth');
+            modalScoreText.innerText = `Điểm số đạt được: ${score} Điểm`;
+            modal.classList.add('active');
+
+            if (window.GameHub) {
+              GameHub.submitScore(score, { maxCombo: combo });
+            }
+            if (window.parent) {
+              window.parent.postMessage({ type: 'GAME_OVER', score }, '*');
+            }
+            return;
+          }
+
+          checkMatches();
+        }
+      }
+
+      // Update particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rotation);
+
+      // Draw Center Hexagon
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        const hx = Math.cos(a) * HEX_RADIUS;
+        const hy = Math.sin(a) * HEX_RADIUS;
+        if (i === 0) ctx.moveTo(hx, hy);
+        else ctx.lineTo(hx, hy);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.stroke();
+
+      // Draw Stacked Blocks on Lanes
+      for (let i = 0; i < 6; i++) {
+        const a1 = (i * Math.PI) / 3;
+        const a2 = ((i + 1) * Math.PI) / 3;
+        const lane = lanes[i];
+
+        for (let j = 0; j < lane.length; j++) {
+          const r1 = HEX_RADIUS + (j * BLOCK_THICKNESS) + 2;
+          const r2 = r1 + BLOCK_THICKNESS - 4;
+
+          ctx.beginPath();
+          ctx.arc(0, 0, r1, a1, a2);
+          ctx.arc(0, 0, r2, a2, a1, true);
+          ctx.closePath();
+          ctx.fillStyle = lane[j];
+          ctx.fill();
+        }
+      }
+
+      // Draw Falling Blocks
+      for (const block of fallingBlocks) {
+        const a1 = (block.lane * Math.PI) / 3;
+        const a2 = ((block.lane + 1) * Math.PI) / 3;
+        const r1 = block.dist;
+        const r2 = r1 + BLOCK_THICKNESS - 4;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r1, a1, a2);
+        ctx.arc(0, 0, r2, a2, a1, true);
+        ctx.closePath();
+        ctx.fillStyle = block.color;
+        ctx.fill();
+      }
+
+      ctx.restore();
+
+      // Draw Particles
+      for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    let lastTime = performance.now();
+    function loop(now) {
+      const dt = now - lastTime;
+      lastTime = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // Input handlers
+    document.getElementById('btn-left').addEventListener('pointerdown', (e) => { e.preventDefault(); rotate(-1); });
+    document.getElementById('btn-right').addEventListener('pointerdown', (e) => { e.preventDefault(); rotate(1); });
+
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowLeft', 'KeyA'].includes(e.code)) rotate(-1);
+      else if (['ArrowRight', 'KeyD'].includes(e.code)) rotate(1);
+    });
+
+    btnReplay.addEventListener('click', resetGame);
+
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

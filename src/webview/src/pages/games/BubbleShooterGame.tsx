@@ -412,22 +412,17 @@ export const BubbleShooterGame: React.FC<BubbleShooterGameProps> = ({ onBack, on
       {/* ── MAIN STAGE ── */}
       <main className="flex-1 max-w-md mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
         {/* Score & Shots Status */}
-        <div className="w-full flex items-center justify-between gap-3 mb-2">
-          <div>
-            <h1 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 tracking-tight">
-              {t('games.bubble.title')}
-            </h1>
-            <p className="text-[11px] text-slate-400">{t('games.bubble.subtitle')}</p>
-          </div>
+        <div className="w-full flex items-center justify-between gap-3 mb-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-2">
+          <p className="text-[11px] text-slate-400 font-medium">{t('games.bubble.subtitle')}</p>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-2xl text-center min-w-[70px]">
-              <span className="text-[9px] text-slate-400 block uppercase font-bold">{t('games.bubble.score', { score: '' })}</span>
-              <span className="font-mono font-black text-white text-sm">{score}</span>
+            <div className="bg-slate-800/90 border border-slate-700/80 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-slate-400 block uppercase font-bold">{t('games.bubble.score', { score: '' })}</span>
+              <span className="font-mono font-black text-white text-xs">{score}</span>
             </div>
-            <div className="bg-amber-950/60 border border-amber-500/40 px-3 py-1.5 rounded-2xl text-center min-w-[70px]">
-              <span className="text-[9px] text-amber-300 block uppercase font-bold">{t('games.bubble.shots_left', { shots: '' })}</span>
-              <span className="font-mono font-black text-amber-400 text-sm">{shotsLeft}</span>
+            <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-amber-300 block uppercase font-bold">{t('games.bubble.shots_left', { shots: '' })}</span>
+              <span className="font-mono font-black text-amber-400 text-xs">{shotsLeft}</span>
             </div>
           </div>
         </div>

@@ -32,6 +32,9 @@ import { KnifeHitGame } from './pages/games/KnifeHitGame';
 import { BlockPuzzleGame } from './pages/games/BlockPuzzleGame';
 import { EndlessRunnerGame } from './pages/games/EndlessRunnerGame';
 import { WordleGame } from './pages/games/WordleGame';
+import { ScrewPuzzleGame } from './pages/games/ScrewPuzzleGame';
+import { UntangleRopeGame } from './pages/games/UntangleRopeGame';
+import { PullThePinGame } from './pages/games/PullThePinGame';
 import { UserVoucherPage } from './pages/UserVoucherPage';
 import { GameCoverArt } from './components/game-assets/GameArtAssets';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -52,6 +55,9 @@ export type AppTabType =
   | 'BLOCK'
   | 'RUNNER'
   | 'WORDLE'
+  | 'SCREW'
+  | 'UNTANGLE'
+  | 'PULLPIN'
   | 'VOUCHERS';
 
 export const App: React.FC = () => {
@@ -138,6 +144,12 @@ export const App: React.FC = () => {
         setCurrentTab('RUNNER');
       } else if (rawHash === 'WORDLE' || rawHash === 'GAMEHUB/WORDLE') {
         setCurrentTab('WORDLE');
+      } else if (rawHash === 'SCREW' || rawHash === 'GAMEHUB/SCREW') {
+        setCurrentTab('SCREW');
+      } else if (rawHash === 'UNTANGLE' || rawHash === 'GAMEHUB/UNTANGLE') {
+        setCurrentTab('UNTANGLE');
+      } else if (rawHash === 'PULLPIN' || rawHash === 'GAMEHUB/PULLPIN') {
+        setCurrentTab('PULLPIN');
       } else if (rawHash === 'VOUCHERS' || rawHash === 'REWARDS') {
         setCurrentTab('VOUCHERS');
       } else {
@@ -411,6 +423,30 @@ export const App: React.FC = () => {
         {/* SUBGAME 9: ĐOÁN CHỮ MAY MẮN */}
         {currentTab === 'WORDLE' && (
           <WordleGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME 10: THÁO VÍT KIM LOẠI & GỖ */}
+        {currentTab === 'SCREW' && (
+          <ScrewPuzzleGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME 11: GỠ RỐI DÂY THỪNG 3D */}
+        {currentTab === 'UNTANGLE' && (
+          <UntangleRopeGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME 12: KÉO CHỐT BẮT TRỘM & GIẢI CỨU */}
+        {currentTab === 'PULLPIN' && (
+          <PullThePinGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />

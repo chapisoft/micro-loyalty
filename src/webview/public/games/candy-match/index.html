@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gem Match - Natcash Loyalty Edition</title>
+  <script src="../../sdk/gamehub-sdk.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      background: #0f172a;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      touch-action: none;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 10;
+    }
+    .hud-box {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 6px 16px;
+      border-radius: 14px;
+      text-align: center;
+    }
+    .hud-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .hud-val {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    #game-canvas {
+      background: rgba(30, 41, 59, 0.7);
+      border: 2px solid rgba(245, 158, 11, 0.4);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+    .game-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 50;
+    }
+    .game-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 28px 36px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    .modal-score {
+      font-size: 16px;
+      color: #cbd5e1;
+    }
+    .btn-action {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      color: #ffffff;
+      border: none;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="hud-box">
+      <div class="hud-label">ĐIỂM SỐ</div>
+      <div id="score-val" class="hud-val">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">LƯỢT DI CHUYỂN</div>
+      <div id="moves-val" class="hud-val">25</div>
+    </div>
+  </div>
+
+  <canvas id="game-canvas" width="360" height="360"></canvas>
+
+  <div class="game-modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-title">HẾT LƯỢT ĐI</div>
+      <div class="modal-score" id="modal-score-text">Điểm của bạn: 0</div>
+      <button class="btn-action" id="btn-replay">CHƠI LẠI</button>
+    </div>
+  </div>
+
+  <script>
+    if (window.GameHub) {
+      GameHub.init({ gameCode: 'CANDY_MATCH' });
+    }
+
+    let soundEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playTone(freq, duration, type = 'sine') {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'SET_SOUND') {
+        soundEnabled = e.data.enabled;
+      } else if (e.data && e.data.type === 'RESTART_GAME') {
+        resetGame();
+      }
+    });
+
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreVal = document.getElementById('score-val');
+    const movesVal = document.getElementById('moves-val');
+    const modal = document.getElementById('modal');
+    const modalScoreText = document.getElementById('modal-score-text');
+    const btnReplay = document.getElementById('btn-replay');
+
+    const GRID_SIZE = 8;
+    const CELL_SIZE = 45;
+    const GEM_ICONS = ['💎', '🔶', '🔮', '⭐', '❤️', '🍀'];
+    const GEM_COLORS = ['#38bdf8', '#fb923c', '#c084fc', '#facc15', '#f43f5e', '#34d399'];
+
+    let grid = [];
+    let score = 0;
+    let movesLeft = 25;
+    let selectedCell = null;
+    let isProcessing = false;
+    let particles = [];
+
+    function resetGame() {
+      score = 0;
+      movesLeft = 25;
+      selectedCell = null;
+      isProcessing = false;
+      particles = [];
+      scoreVal.innerText = score;
+      movesVal.innerText = movesLeft;
+      modal.classList.remove('active');
+
+      initGrid();
+    }
+
+    function initGrid() {
+      grid = [];
+      for (let r = 0; r < GRID_SIZE; r++) {
+        const row = [];
+        for (let c = 0; c < GRID_SIZE; c++) {
+          row.push(getRandomGemType(r, c));
+        }
+        grid.push(row);
+      }
+    }
+
+    function getRandomGemType(r, c) {
+      let type;
+      let valid = false;
+      while (!valid) {
+        type = Math.floor(Math.random() * GEM_ICONS.length);
+        // Avoid initial 3-in-a-row
+        if (c >= 2 && grid[r] && grid[r][c - 1] === type && grid[r][c - 2] === type) continue;
+        if (r >= 2 && grid[r - 1] && grid[r - 2] && grid[r - 1][c] === type && grid[r - 2][c] === type) continue;
+        valid = true;
+      }
+      return type;
+    }
+
+    function findMatches() {
+      const matches = [];
+      // Horizontal
+      for (let r = 0; r < GRID_SIZE; r++) {
+        let matchLen = 1;
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const checkNext = c < GRID_SIZE - 1 && grid[r][c] !== -1 && grid[r][c] === grid[r][c + 1];
+          if (checkNext) {
+            matchLen++;
+          } else {
+            if (matchLen >= 3) {
+              for (let k = 0; k < matchLen; k++) {
+                matches.push({ r, c: c - k });
+              }
+            }
+            matchLen = 1;
+          }
+        }
+      }
+
+      // Vertical
+      for (let c = 0; c < GRID_SIZE; c++) {
+        let matchLen = 1;
+        for (let r = 0; r < GRID_SIZE; r++) {
+          const checkNext = r < GRID_SIZE - 1 && grid[r][c] !== -1 && grid[r][c] === grid[r + 1][c];
+          if (checkNext) {
+            matchLen++;
+          } else {
+            if (matchLen >= 3) {
+              for (let k = 0; k < matchLen; k++) {
+                matches.push({ r: r - k, c });
+              }
+            }
+            matchLen = 1;
+          }
+        }
+      }
+
+      // Deduplicate
+      const unique = [];
+      const set = new Set();
+      matches.forEach(m => {
+        const key = `${m.r},${m.c}`;
+        if (!set.has(key)) {
+          set.add(key);
+          unique.push(m);
+        }
+      });
+      return unique;
+    }
+
+    function spawnBurst(x, y, color) {
+      for (let i = 0; i < 8; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          alpha: 1,
+          size: 3 + Math.random() * 3
+        });
+      }
+    }
+
+    async function processMatches(multiplier = 1) {
+      isProcessing = true;
+      const matches = findMatches();
+      if (matches.length === 0) {
+        isProcessing = false;
+        checkGameOver();
+        return;
+      }
+
+      // Score
+      const gain = Math.round(matches.length * 20 * multiplier);
+      score += gain;
+      scoreVal.innerText = score;
+      playTone(550 * multiplier, 0.12, 'triangle');
+
+      if (window.parent) {
+        window.parent.postMessage({ type: 'GAME_SCORE_UPDATE', score }, '*');
+      }
+
+      // Clear
+      matches.forEach(m => {
+        const gemType = grid[m.r][m.c];
+        if (gemType >= 0) {
+          spawnBurst(m.c * CELL_SIZE + CELL_SIZE / 2, m.r * CELL_SIZE + CELL_SIZE / 2, GEM_COLORS[gemType]);
+        }
+        grid[m.r][m.c] = -1;
+      });
+
+      await new Promise(res => setTimeout(res, 200));
+
+      // Drop
+      for (let c = 0; c < GRID_SIZE; c++) {
+        let emptySpot = GRID_SIZE - 1;
+        for (let r = GRID_SIZE - 1; r >= 0; r--) {
+          if (grid[r][c] !== -1) {
+            if (emptySpot !== r) {
+              grid[emptySpot][c] = grid[r][c];
+              grid[r][c] = -1;
+            }
+            emptySpot--;
+          }
+        }
+        // Fill top
+        for (let r = emptySpot; r >= 0; r--) {
+          grid[r][c] = Math.floor(Math.random() * GEM_ICONS.length);
+        }
+      }
+
+      await new Promise(res => setTimeout(res, 200));
+      processMatches(multiplier + 0.5);
+    }
+
+    function checkGameOver() {
+      if (movesLeft <= 0) {
+        modalScoreText.innerText = `Điểm tích lũy: ${score} Điểm`;
+        modal.classList.add('active');
+        playTone(300, 0.3, 'sawtooth');
+
+        if (window.GameHub) {
+          GameHub.submitScore(score, { remainingMoves: 0 });
+        }
+        if (window.parent) {
+          window.parent.postMessage({ type: 'GAME_OVER', score }, '*');
+        }
+      }
+    }
+
+    async function trySwap(r1, c1, r2, c2) {
+      if (isProcessing || movesLeft <= 0) return;
+      const isAdjacent = Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
+      if (!isAdjacent) {
+        selectedCell = { r: r2, c: c2 };
+        return;
+      }
+
+      // Swap
+      const temp = grid[r1][c1];
+      grid[r1][c1] = grid[r2][c2];
+      grid[r2][c2] = temp;
+      selectedCell = null;
+
+      const matches = findMatches();
+      if (matches.length > 0) {
+        movesLeft--;
+        movesVal.innerText = movesLeft;
+        playTone(400, 0.06, 'sine');
+        processMatches(1);
+      } else {
+        // Swap back
+        playTone(200, 0.08, 'square');
+        await new Promise(res => setTimeout(res, 150));
+        grid[r2][c2] = grid[r1][c1];
+        grid[r1][c1] = temp;
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (isProcessing || movesLeft <= 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const c = Math.floor(x / CELL_SIZE);
+      const r = Math.floor(y / CELL_SIZE);
+
+      if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+        if (!selectedCell) {
+          selectedCell = { r, c };
+          playTone(440, 0.04, 'sine');
+        } else {
+          trySwap(selectedCell.r, selectedCell.c, r, c);
+        }
+      }
+    });
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Grid background
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.1)';
+          ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+          if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(c * CELL_SIZE + 2, r * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+          }
+
+          const gem = grid[r][c];
+          if (gem >= 0) {
+            ctx.font = '22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(GEM_ICONS[gem], c * CELL_SIZE + CELL_SIZE / 2, r * CELL_SIZE + CELL_SIZE / 2 + 1);
+          }
+        }
+      }
+
+      // Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    btnReplay.addEventListener('click', resetGame);
+
+    resetGame();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

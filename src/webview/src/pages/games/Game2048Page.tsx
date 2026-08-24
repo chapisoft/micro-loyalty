@@ -367,24 +367,19 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-md mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
-        {/* Header & Score Bar */}
-        <div className="w-full flex items-center justify-between gap-3 mb-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 tracking-tight">
-              {t('games.game2048.title')}
-            </h1>
-            <p className="text-[11px] text-slate-400">{t('games.game2048.subtitle')}</p>
-          </div>
+      <main className="flex-1 max-w-md mx-auto w-full px-3 py-3 flex flex-col items-center justify-between">
+        {/* Score HUD Bar */}
+        <div className="w-full flex items-center justify-between gap-2 mb-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-2">
+          <p className="text-[11px] text-slate-400 font-medium">{t('games.game2048.subtitle')}</p>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-2xl text-center min-w-[70px]">
-              <span className="text-[9px] text-slate-400 block uppercase font-bold">{t('games.game2048.score', { score: '' })}</span>
-              <span className="font-mono font-black text-white text-sm">{score}</span>
+            <div className="bg-slate-800/90 border border-slate-700/80 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-slate-400 block uppercase font-bold">{t('games.game2048.score', { score: '' })}</span>
+              <span className="font-mono font-black text-white text-xs">{score}</span>
             </div>
-            <div className="bg-amber-950/60 border border-amber-500/40 px-3 py-1.5 rounded-2xl text-center min-w-[70px]">
-              <span className="text-[9px] text-amber-300 block uppercase font-bold">{t('games.game2048.best_score', { best: '' })}</span>
-              <span className="font-mono font-black text-amber-400 text-sm">{highScore}</span>
+            <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-amber-300 block uppercase font-bold">{t('games.game2048.best_score', { best: '' })}</span>
+              <span className="font-mono font-black text-amber-400 text-xs">{highScore}</span>
             </div>
           </div>
         </div>

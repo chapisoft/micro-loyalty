@@ -20,7 +20,7 @@ import { GameCoverArt } from '../components/game-assets/GameArtAssets';
 
 export interface GameHubPageProps {
   onBack?: () => void;
-  onSelectGame: (gameId: 'WHEEL' | 'FLAPPY' | 'GAME2048' | 'MEMORY' | 'BUBBLE' | 'FRUIT' | 'KNIFE' | 'BLOCK' | 'RUNNER' | 'WORDLE') => void;
+  onSelectGame: (gameId: 'WHEEL' | 'FLAPPY' | 'GAME2048' | 'MEMORY' | 'BUBBLE' | 'FRUIT' | 'KNIFE' | 'BLOCK' | 'RUNNER' | 'WORDLE' | 'SCREW' | 'UNTANGLE' | 'PULLPIN') => void;
   freeTurns?: number;
   perpetualTurns?: number;
   points?: number;
@@ -133,15 +133,15 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
     },
     {
       id: 'MEMORY',
-      name: t('games.memory.title', { defaultValue: 'Lật Thẻ Tìm Cặp' }),
+      name: t('games.memory.title', { defaultValue: 'Siêu Trí Nhớ' }),
       category: 'PUZZLE',
       categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
-      icon: '🃏',
+      icon: '🧠',
       bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-pink-600',
-      badge: t('gamehub.badge_45s', { defaultValue: '45 Giây' }),
-      badgeBg: 'bg-purple-600',
-      perk: 'Delimart',
-      description: t('games.memory.subtitle', { defaultValue: 'Khám phá các cặp logo đối tác Delimart, TotalEnergies, Natcom trong 45 giây!' }),
+      badge: 'HOT',
+      badgeBg: 'bg-indigo-600',
+      perk: 'x2 Combo',
+      description: t('games.memory.subtitle', { defaultValue: 'Lật thẻ, ghi nhớ và ghép các cặp hình ảnh đa dạng chủ đề trước khi hết giờ!' }),
       action: () => onSelectGame('MEMORY'),
     },
     {
