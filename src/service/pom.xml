@@ -7,7 +7,7 @@
         <groupId>vn.com.microtech</groupId>
         <artifactId>loyalty-engine</artifactId>
         <version>1.0.0</version>
-        <relativePath>../../lib/loyalty-engine/pom.xml</relativePath>
+        <relativePath>../lib/loyalty-engine/pom.xml</relativePath>
     </parent>
 
     <artifactId>loyalty-service</artifactId>
