@@ -16,10 +16,11 @@ import { LiveWinnerTicker } from '../components/gamification/LiveWinnerTicker';
 import { MegaJackpotBanner } from '../components/gamification/MegaJackpotBanner';
 import { DailyMissionModal } from '../components/gamification/DailyMissionModal';
 import { ComboStreakBadge } from '../components/gamification/ComboStreakBadge';
+import { GameCoverArt } from '../components/game-assets/GameArtAssets';
 
 export interface GameHubPageProps {
   onBack?: () => void;
-  onSelectGame: (gameId: 'WHEEL' | 'QUIZ' | 'SCRATCH' | 'PENALTY' | 'CHEST' | 'TOWER' | 'PLINKO' | 'EGG' | 'DICE') => void;
+  onSelectGame: (gameId: 'WHEEL' | 'FLAPPY' | 'GAME2048' | 'MEMORY' | 'BUBBLE' | 'FRUIT' | 'KNIFE' | 'BLOCK' | 'RUNNER' | 'WORDLE') => void;
   freeTurns?: number;
   perpetualTurns?: number;
   points?: number;
@@ -89,124 +90,137 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
     }
   };
 
-  // Comprehensive Game Catalog (Grid 3 per row on mobile, scalable to 100+ games)
+  // Comprehensive 10-Game Catalog (1 Lucky Wheel + 9 Proven HTML5 Classics)
   const GAMES_LIST: GameHubItem[] = [
     {
       id: 'WHEEL',
       name: t('gamehub.game1_name', { defaultValue: 'Vòng Quay Tri Ân' }),
       category: 'LUCKY',
-      categoryLabel: 'May Mắn',
+      categoryLabel: t('gamehub.cat_lucky', { defaultValue: 'May Mắn' }),
       icon: '🎡',
       bgGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500',
       badge: 'HOT',
       badgeBg: 'bg-red-600',
-      perk: freeTurns > 0 ? `${freeTurns} Lượt Free` : '20 HTG',
-      description: t('gamehub.game1_desc', { defaultValue: 'Vòng quay may mắn 100% trúng quà: Điểm Loyalty, tiền mặt và Voucher Delimart.' }),
+      perk: freeTurns > 0 ? `${freeTurns} Free` : '20 HTG',
+      description: t('gamehub.game1_desc', { defaultValue: 'Vòng quay may mắn 100% trúng quà: Điểm Loyalty, tiền mặt và Voucher.' }),
       action: () => onSelectGame('WHEEL'),
     },
     {
-      id: 'SCRATCH',
-      name: t('games.scratch.title', { defaultValue: 'Vé Cào May Mắn' }),
-      category: 'LUCKY',
-      categoryLabel: 'May Mắn',
-      icon: '🎟️',
-      bgGradient: 'bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600',
-      badge: '100đ',
-      badgeBg: 'bg-amber-600',
-      perk: 'Trúng Liền',
-      description: t('games.scratch.subtitle', { defaultValue: 'Cào 3 ô trúng liền tay, rinh ngay 100 điểm và quà tặng độc quyền!' }),
-      action: () => onSelectGame('SCRATCH'),
-    },
-    {
-      id: 'PENALTY',
-      name: t('games.penalty.title', { defaultValue: 'Sút Phạt Đền 11m' }),
-      category: 'SPORTS',
-      categoryLabel: 'Thể Thao',
-      icon: '⚽',
-      bgGradient: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600',
-      badge: '+80đ',
+      id: 'FLAPPY',
+      name: t('games.flappy.title', { defaultValue: 'Flappy Natcom' }),
+      category: 'SKILL',
+      categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+      icon: '🕊️',
+      bgGradient: 'bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700',
+      badge: 'NEW',
       badgeBg: 'bg-emerald-600',
-      perk: 'Sút Vàng',
-      description: t('games.penalty.subtitle', { defaultValue: 'Chọn góc sút hiểm hóc đánh bại thủ môn để nhận 80 Điểm Thưởng!' }),
-      action: () => onSelectGame('PENALTY'),
+      perk: 'Data 4G',
+      description: t('games.flappy.subtitle', { defaultValue: 'Điều khiển chú chim bay vượt cột sóng 4G Natcom, nhặt xu vàng nhận quà khủng!' }),
+      action: () => onSelectGame('FLAPPY'),
     },
     {
-      id: 'CHEST',
-      name: t('games.chest.title', { defaultValue: 'Mở Rương Caribe' }),
-      category: 'LUCKY',
-      categoryLabel: 'May Mắn',
-      icon: '🏴‍☠️',
-      bgGradient: 'bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700',
-      badge: 'NỔ HŨ',
-      badgeBg: 'bg-cyan-600',
-      perk: '200 HTG',
-      description: t('games.chest.subtitle', { defaultValue: 'Chọn 1 trong 5 rương cổ để nhận tới 200 Điểm Thưởng & Quà Nổ Hũ!' }),
-      action: () => onSelectGame('CHEST'),
-    },
-    {
-      id: 'TOWER',
-      name: t('games.tower.title', { defaultValue: 'Tháp Kho Báu' }),
-      category: 'ADVENTURE',
-      categoryLabel: 'Mạo Hiểm',
-      icon: '🏰',
-      bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-slate-800',
-      badge: 'x50 QUÀ',
-      badgeBg: 'bg-purple-600',
-      perk: '5 Tầng Tháp',
-      description: t('games.tower.subtitle', { defaultValue: 'Chinh phục 5 tầng tháp ma thuật! Leo càng cao nhân thưởng lên tới x50!' }),
-      action: () => onSelectGame('TOWER'),
-    },
-    {
-      id: 'PLINKO',
-      name: t('games.plinko.title', { defaultValue: 'Thả Bi Ziczac' }),
-      category: 'LUCKY',
-      categoryLabel: 'May Mắn',
-      icon: '🔮',
-      bgGradient: 'bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600',
-      badge: 'x10 MULTI',
-      badgeBg: 'bg-pink-600',
-      perk: 'Neon Game',
-      description: t('games.plinko.subtitle', { defaultValue: 'Thả bóng qua mê cung bàn đinh neon, rơi hộc đáy nhân thưởng tới x10!' }),
-      action: () => onSelectGame('PLINKO'),
-    },
-    {
-      id: 'EGG',
-      name: t('games.egg.title', { defaultValue: 'Đập Trứng Vàng' }),
-      category: 'LUCKY',
-      categoryLabel: 'May Mắn',
-      icon: '🥚',
-      bgGradient: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500',
-      badge: 'LÌ XÌ',
+      id: 'GAME2048',
+      name: t('games.game2048.title', { defaultValue: '2048 Natcash' }),
+      category: 'PUZZLE',
+      categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+      icon: '🔢',
+      bgGradient: 'bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600',
+      badge: '2048 HTG',
       badgeBg: 'bg-amber-600',
-      perk: '1 Chạm',
-      description: t('games.egg.subtitle', { defaultValue: 'Dùng búa thần gõ vỡ trứng vàng nhận lì xì tới 150 Điểm Thưởng!' }),
-      action: () => onSelectGame('EGG'),
+      perk: t('gamehub.perk_merge', { defaultValue: 'Gộp Tiền' }),
+      description: t('games.game2048.subtitle', { defaultValue: 'Ghép các mệnh giá tiền Gourde HTG & biểu tượng Natcom để đạt mốc 2048!' }),
+      action: () => onSelectGame('GAME2048'),
     },
     {
-      id: 'DICE',
-      name: t('games.dice.title', { defaultValue: 'Lắc Xúc Xắc' }),
-      category: 'LUCKY',
-      categoryLabel: 'May Mắn',
-      icon: '🎲',
-      bgGradient: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
-      badge: '300đ',
-      badgeBg: 'bg-indigo-600',
-      perk: 'Bộ Ba',
-      description: t('games.dice.subtitle', { defaultValue: 'Lắc 3 viên xúc xắc may mắn, trúng Sảnh tiến và Bộ ba nhận tới 300 Điểm!' }),
-      action: () => onSelectGame('DICE'),
+      id: 'MEMORY',
+      name: t('games.memory.title', { defaultValue: 'Lật Thẻ Tìm Cặp' }),
+      category: 'PUZZLE',
+      categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+      icon: '🃏',
+      bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-pink-600',
+      badge: t('gamehub.badge_45s', { defaultValue: '45 Giây' }),
+      badgeBg: 'bg-purple-600',
+      perk: 'Delimart',
+      description: t('games.memory.subtitle', { defaultValue: 'Khám phá các cặp logo đối tác Delimart, TotalEnergies, Natcom trong 45 giây!' }),
+      action: () => onSelectGame('MEMORY'),
     },
     {
-      id: 'QUIZ',
-      name: t('gamehub.game2_name', { defaultValue: 'Đố Vui Trúng Điểm' }),
-      category: 'QUIZ',
-      categoryLabel: 'Trí Tuệ',
-      icon: '❓',
-      bgGradient: 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600',
-      badge: '+150đ',
-      badgeBg: 'bg-blue-600',
-      perk: '5 Câu Hỏi',
-      description: t('gamehub.game2_desc', { defaultValue: 'Thử thách trí tuệ với 5 câu hỏi nhanh, trả lời chính xác nhận ngay +150 điểm thưởng.' }),
-      action: () => onSelectGame('QUIZ'),
+      id: 'BUBBLE',
+      name: t('games.bubble.title', { defaultValue: 'Bắn Bóng Kanaval' }),
+      category: 'CASUAL',
+      categoryLabel: t('gamehub.cat_casual', { defaultValue: 'Giải Trí' }),
+      icon: '🔮',
+      bgGradient: 'bg-gradient-to-br from-pink-500 via-rose-600 to-amber-500',
+      badge: t('gamehub.badge_jackpot', { defaultValue: 'NỔ HŨ' }),
+      badgeBg: 'bg-pink-600',
+      perk: 'Combo x5',
+      description: t('games.bubble.subtitle', { defaultValue: 'Súng thần công ngắm bắn vỡ cụm 3 bóng rực rỡ lễ hội Kanaval Haiti!' }),
+      action: () => onSelectGame('BUBBLE'),
+    },
+    {
+      id: 'FRUIT',
+      name: t('games.fruit.title', { defaultValue: 'Chém Hoa Quả' }),
+      category: 'SKILL',
+      categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+      icon: '🥭',
+      bgGradient: 'bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600',
+      badge: t('gamehub.badge_slash', { defaultValue: 'VUNG KIẾM' }),
+      badgeBg: 'bg-emerald-600',
+      perk: 'Caribe',
+      description: t('games.fruit.subtitle', { defaultValue: 'Vuốt tay chém hoa quả nhiệt đới xoài Francisque, dừa, dứa, né bom bẫy!' }),
+      action: () => onSelectGame('FRUIT'),
+    },
+    {
+      id: 'KNIFE',
+      name: t('games.knife.title', { defaultValue: 'Phi Dao Gỗ' }),
+      category: 'SKILL',
+      categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+      icon: '🗡️',
+      bgGradient: 'bg-gradient-to-br from-amber-600 via-orange-600 to-red-700',
+      badge: t('gamehub.badge_red_envelope', { defaultValue: 'LÌ XÌ' }),
+      badgeBg: 'bg-red-600',
+      perk: t('gamehub.perk_fortune', { defaultValue: 'Thần Tài' }),
+      description: t('games.knife.subtitle', { defaultValue: 'Căn nhịp phi dao cắm bia gỗ xoay tròn trúng phong bao lì xì và gói Data!' }),
+      action: () => onSelectGame('KNIFE'),
+    },
+    {
+      id: 'BLOCK',
+      name: t('games.block.title', { defaultValue: 'Xếp Gạch Kim Cương' }),
+      category: 'PUZZLE',
+      categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+      icon: '💎',
+      bgGradient: 'bg-gradient-to-br from-blue-600 via-cyan-600 to-indigo-700',
+      badge: t('gamehub.badge_8x8', { defaultValue: '8x8 LƯỚI' }),
+      badgeBg: 'bg-cyan-600',
+      perk: t('gamehub.perk_diamond', { defaultValue: 'Kim Cương' }),
+      description: t('games.block.subtitle', { defaultValue: 'Kéo thả khối gạch đá quý lấp đầy hàng ngang hoặc cột dọc để kích nổ điểm!' }),
+      action: () => onSelectGame('BLOCK'),
+    },
+    {
+      id: 'RUNNER',
+      name: t('games.runner.title', { defaultValue: 'Đường Đua Siêu Tốc' }),
+      category: 'SKILL',
+      categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+      icon: '🏃',
+      bgGradient: 'bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500',
+      badge: 'TAP-TAP',
+      badgeBg: 'bg-orange-600',
+      perk: t('gamehub.perk_speed', { defaultValue: 'Siêu Tốc' }),
+      description: t('games.runner.subtitle', { defaultValue: 'Nhảy và trượt né xe buýt Tap-Tap, nhặt tiền vàng trên đường phố Haiti!' }),
+      action: () => onSelectGame('RUNNER'),
+    },
+    {
+      id: 'WORDLE',
+      name: t('games.wordle.title', { defaultValue: 'Đoán Chữ May Mắn' }),
+      category: 'PUZZLE',
+      categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+      icon: '🔤',
+      bgGradient: 'bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700',
+      badge: t('gamehub.badge_5_letters', { defaultValue: '5 CHỮ CÁI' }),
+      badgeBg: 'bg-violet-600',
+      perk: 'Kreyòl/Fr',
+      description: t('games.wordle.subtitle', { defaultValue: 'Đoán từ vựng bí ẩn 5 chữ cái trong 6 lần thử để nhận điểm thưởng!' }),
+      action: () => onSelectGame('WORDLE'),
     },
   ];
 
@@ -232,7 +246,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 GAMEHUB CENTER
               </span>
               <span className="text-[9px] sm:text-[10px] font-bold bg-white/25 px-2 py-0.5 rounded-full">
-                {GAMES_LIST.length} Trò Chơi
+                {t('gamehub.games_count', { count: GAMES_LIST.length, defaultValue: `${GAMES_LIST.length} Trò Chơi` })}
               </span>
               <ComboStreakBadge streak={winStreak} />
             </div>
@@ -251,7 +265,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 {t('gamehub.free_daily_turns')}
               </span>
               <div className="text-lg sm:text-2xl font-black text-yellow-200 font-mono leading-tight">
-                {freeTurns} <span className="text-xs text-white/80 font-normal">lượt</span>
+                {freeTurns} <span className="text-xs text-white/80 font-normal">{t('gamehub.unit_turns', { defaultValue: 'lượt' })}</span>
               </div>
             </div>
 
@@ -262,7 +276,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 {t('gamehub.perpetual_turns')}
               </span>
               <div className="text-lg sm:text-2xl font-black text-white font-mono leading-tight">
-                {perpetualTurns} <span className="text-xs text-white/80 font-normal">lượt</span>
+                {perpetualTurns} <span className="text-xs text-white/80 font-normal">{t('gamehub.unit_turns', { defaultValue: 'lượt' })}</span>
               </div>
             </div>
 
@@ -270,10 +284,10 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               <button
                 onClick={() => setShowMissionModal(true)}
                 className="bg-amber-400/30 hover:bg-amber-400/40 text-yellow-200 border border-yellow-300/40 active:scale-95 font-black px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm transition animate-pulse"
-                title="Trạm Nhiệm Vụ Săn Lượt"
+                title={t('gamehub.btn_missions', { defaultValue: 'Nhiệm Vụ' })}
               >
                 <Gift className="w-3.5 h-3.5 text-yellow-300" />
-                <span>Nhiệm Vụ</span>
+                <span>{t('gamehub.btn_missions', { defaultValue: 'Nhiệm Vụ' })}</span>
               </button>
 
               <button
@@ -282,7 +296,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 title={t('gamehub.btn_buy_turns')}
               >
                 <PlusCircle className="w-3.5 h-3.5 text-amber-600" />
-                <span>Nạp Lượt</span>
+                <span>{t('gamehub.btn_buy_turns', { defaultValue: 'Nạp Lượt' })}</span>
               </button>
             </div>
           </div>
@@ -295,11 +309,11 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       {/* ── CATEGORY FILTER PILLS (COMPACT, NO SCROLLBAR) ── */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto pb-1 no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {[
-          { key: 'ALL', label: t('gamehub.filter_all', { defaultValue: 'Tất Cả Game' }), icon: Gamepad2, count: GAMES_LIST.length },
+          { key: 'ALL', label: t('gamehub.filter_all', { defaultValue: 'Tất Cả' }), icon: Gamepad2, count: GAMES_LIST.length },
           { key: 'LUCKY', label: t('gamehub.filter_lucky', { defaultValue: 'May Mắn' }), icon: Sparkles, count: GAMES_LIST.filter((g) => g.category === 'LUCKY').length },
-          { key: 'SPORTS', label: 'Thể Thao', icon: Flame, count: GAMES_LIST.filter((g) => g.category === 'SPORTS').length },
-          { key: 'ADVENTURE', label: 'Mạo Hiểm', icon: Zap, count: GAMES_LIST.filter((g) => g.category === 'ADVENTURE').length },
-          { key: 'QUIZ', label: t('gamehub.filter_quiz', { defaultValue: 'Trí Tuệ' }), icon: HelpCircle, count: GAMES_LIST.filter((g) => g.category === 'QUIZ').length },
+          { key: 'SKILL', label: t('gamehub.filter_skill', { defaultValue: 'Phản Xạ' }), icon: Flame, count: GAMES_LIST.filter((g) => g.category === 'SKILL').length },
+          { key: 'PUZZLE', label: t('gamehub.filter_quiz', { defaultValue: 'Trí Tuệ' }), icon: HelpCircle, count: GAMES_LIST.filter((g) => g.category === 'PUZZLE').length },
+          { key: 'CASUAL', label: t('gamehub.filter_casual', { defaultValue: 'Giải Trí' }), icon: Zap, count: GAMES_LIST.filter((g) => g.category === 'CASUAL').length },
         ].map((cat) => {
           const Icon = cat.icon;
           const isSelected = selectedCategory === cat.key;
@@ -346,9 +360,9 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                   </span>
                 )}
 
-                {/* Giant Icon Occupying ~80% height of the square tile */}
-                <div className="relative z-0 h-[80%] aspect-square flex items-center justify-center text-[70px] xs:text-[78px] sm:text-[88px] md:text-[98px] drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 select-none leading-none">
-                  {game.icon}
+                {/* 3D High-End Vector Art Cover (Replacing generic emoji) */}
+                <div className="relative z-0 w-full h-full flex items-center justify-center p-1.5 group-hover:scale-105 transition-all duration-300 select-none">
+                  <GameCoverArt gameId={game.id} className="w-full h-full object-contain drop-shadow-xl" />
                 </div>
 
                 {/* Floating Bottom Perk Tag */}

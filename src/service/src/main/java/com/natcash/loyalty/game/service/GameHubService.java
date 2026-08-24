@@ -196,7 +196,7 @@ public class GameHubService {
         BigDecimal userBalance = BigDecimal.ZERO;
         if (userId != null && !userId.isBlank()) {
             userBalance = accountRepository.findByTenantIdAndExternalUserId(tenantId, userId)
-                    .map(LoyaltyAccountEntity::getCurrentPoints)
+                    .map(acc -> acc.getCurrentPoints())
                     .orElse(BigDecimal.ZERO);
         }
 
@@ -730,8 +730,8 @@ public class GameHubService {
     public ActiveWheelThemeResponse getWheelThemes(String tenantId) {
         List<WheelThemeEntity> themes = wheelThemeRepository.findByTenantId(tenantId);
         String activeThemeCode = themes.stream()
-                .filter(WheelThemeEntity::getIsActive)
-                .map(WheelThemeEntity::getThemeCode)
+                .filter(t -> Boolean.TRUE.equals(t.getIsActive()))
+                .map(t -> t.getThemeCode())
                 .findFirst()
                 .orElse("THEME_DEFAULT");
 
@@ -901,7 +901,7 @@ public class GameHubService {
                 case "TOWER_CLIMB": {
                     List<BigDecimal> multipliers = dbPrizes.stream()
                             .filter(p -> p.getPrizeType() == PrizeType.MULTIPLIER || "MULTIPLIER".equalsIgnoreCase(p.getPrizeType().name()))
-                            .map(GamePrizeEntity::getPrizeValue)
+                            .map(p -> p.getPrizeValue())
                             .collect(Collectors.toList());
 
                     if (multipliers.isEmpty()) {
@@ -951,7 +951,7 @@ public class GameHubService {
 
                     List<BigDecimal> binMultipliers = dbPrizes.stream()
                             .filter(p -> p.getPrizeType() == PrizeType.MULTIPLIER || "MULTIPLIER".equalsIgnoreCase(p.getPrizeType().name()))
-                            .map(GamePrizeEntity::getPrizeValue)
+                            .map(p -> p.getPrizeValue())
                             .collect(Collectors.toList());
 
                     if (binMultipliers.size() < 9) {
@@ -1134,7 +1134,7 @@ public class GameHubService {
 
     private GamePrizeEntity pickWeightedPrize(List<GamePrizeEntity> prizes) {
         if (prizes == null || prizes.isEmpty()) return null;
-        int totalWeight = prizes.stream().mapToInt(GamePrizeEntity::getProbabilityWeight).sum();
+        int totalWeight = prizes.stream().mapToInt(p -> p.getProbabilityWeight() != null ? p.getProbabilityWeight() : 0).sum();
         if (totalWeight <= 0) return prizes.get(0);
         int rand = random.nextInt(totalWeight);
         int cumulative = 0;
@@ -1233,7 +1233,7 @@ public class GameHubService {
         List<GamePrizeEntity> prizes = gamePrizeRepository.findByTenantIdAndGameCodeOrderByDisplayOrderAsc(tenantId, gameCode);
         if (!prizes.isEmpty()) {
             int targetTotal = 1000;
-            int totalWeight = prizes.stream().mapToInt(GamePrizeEntity::getProbabilityWeight).sum();
+            int totalWeight = prizes.stream().mapToInt(p -> p.getProbabilityWeight() != null ? p.getProbabilityWeight() : 0).sum();
             if (totalWeight > 0) {
                 int runningSum = 0;
                 for (int i = 0; i < prizes.size(); i++) {

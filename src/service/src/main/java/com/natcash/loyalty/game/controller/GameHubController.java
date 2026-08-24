@@ -4,7 +4,6 @@ import com.natcash.loyalty.game.dto.GameHubDto.ActiveWheelThemeResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameDetailResponse;
-import com.natcash.loyalty.game.dto.GameHubDto.GameListItemDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GamePlayHistoryItemDto;

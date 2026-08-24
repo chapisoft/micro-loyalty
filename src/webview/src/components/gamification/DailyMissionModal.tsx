@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Gift, CheckCircle2 } from 'lucide-react';
 import { soundManager } from '../../utils/audio';
 
@@ -10,8 +11,10 @@ export interface DailyMissionModalProps {
 
 interface MissionItem {
   id: string;
-  title: string;
-  desc: string;
+  titleKey: string;
+  descKey: string;
+  defaultTitle: string;
+  defaultDesc: string;
   rewardTurns: number;
   rewardPoints: number;
   icon: string;
@@ -25,11 +28,14 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
   onClose,
   onClaimTurns,
 }) => {
+  const { t } = useTranslation();
   const [missions, setMissions] = useState<MissionItem[]>([
     {
       id: 'LOGIN_DAILY',
-      title: 'Điểm Danh Mỗi Ngày',
-      desc: 'Mở ứng dụng GameHub nhận quà khởi động',
+      titleKey: 'daily_missions.m1_title',
+      descKey: 'daily_missions.m1_desc',
+      defaultTitle: 'Điểm Danh Mỗi Ngày',
+      defaultDesc: 'Mở ứng dụng GameHub nhận quà khởi động',
       rewardTurns: 1,
       rewardPoints: 20,
       icon: '📅',
@@ -39,8 +45,10 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
     },
     {
       id: 'PLAY_3_GAMES',
-      title: 'Nhà Thám Hiểm GameHub',
-      desc: 'Trải nghiệm 3 trò chơi bất kỳ hôm nay',
+      titleKey: 'daily_missions.m2_title',
+      descKey: 'daily_missions.m2_desc',
+      defaultTitle: 'Nhà Thám Hiểm GameHub',
+      defaultDesc: 'Trải nghiệm 3 trò chơi bất kỳ hôm nay',
       rewardTurns: 2,
       rewardPoints: 50,
       icon: '🎮',
@@ -50,8 +58,10 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
     },
     {
       id: 'SHARE_WIN',
-      title: 'Chia Sẻ Chiến Tích',
-      desc: 'Khoe kết quả trúng thưởng với bạn bè',
+      titleKey: 'daily_missions.m3_title',
+      descKey: 'daily_missions.m3_desc',
+      defaultTitle: 'Chia Sẻ Chiến Tích',
+      defaultDesc: 'Khoe kết quả trúng thưởng với bạn bè',
       rewardTurns: 1,
       rewardPoints: 30,
       icon: '📣',
@@ -61,8 +71,10 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
     },
     {
       id: 'WALLET_TRANSACTION',
-      title: 'Giao Dịch Ví Natcash',
-      desc: 'Thực hiện thanh toán hoặc nạp tiền ví từ 50 HTG',
+      titleKey: 'daily_missions.m4_title',
+      descKey: 'daily_missions.m4_desc',
+      defaultTitle: 'Giao Dịch Ví Natcash',
+      defaultDesc: 'Thực hiện thanh toán hoặc nạp tiền ví từ 50 HTG',
       rewardTurns: 5,
       rewardPoints: 200,
       icon: '💳',
@@ -101,9 +113,11 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400">
-              Trạm Nhiệm Vụ Săn Lượt
+              {t('daily_missions.modal_title', { defaultValue: 'Trạm Nhiệm Vụ Hàng Ngày' })}
             </h3>
-            <p className="text-xs text-slate-400">Hoàn thành nhiệm vụ mỗi ngày để nhận lượt chơi miễn phí!</p>
+            <p className="text-xs text-slate-400">
+              {t('daily_missions.modal_subtitle', { defaultValue: 'Hoàn thành nhiệm vụ mỗi ngày để nhận lượt chơi miễn phí!' })}
+            </p>
           </div>
         </div>
 
@@ -121,15 +135,17 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
                   <span className="text-2xl">{mission.icon}</span>
                   <div>
                     <div className="font-semibold text-sm text-slate-100 flex items-center gap-2">
-                      {mission.title}
+                      {t(mission.titleKey, { defaultValue: mission.defaultTitle })}
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-tight">{mission.desc}</p>
+                    <p className="text-[11px] text-slate-400 leading-tight">
+                      {t(mission.descKey, { defaultValue: mission.defaultDesc })}
+                    </p>
                     <div className="flex items-center gap-2 mt-1.5 text-[10px]">
                       <span className="bg-amber-500/15 text-amber-400 font-bold px-2 py-0.5 rounded-md border border-amber-500/30">
-                        +{mission.rewardTurns} Lượt Free
+                        +{mission.rewardTurns} {t('gamehub.unit_turns', { defaultValue: 'lượt' })}
                       </span>
                       <span className="bg-emerald-500/15 text-emerald-400 font-bold px-2 py-0.5 rounded-md border border-emerald-500/30">
-                        +{mission.rewardPoints} Điểm
+                        +{mission.rewardPoints} {t('nav.points_unit', { defaultValue: 'Điểm' })}
                       </span>
                       <span className="text-slate-500">
                         ({mission.progress}/{mission.target})
@@ -141,21 +157,21 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
                 {mission.isClaimed ? (
                   <span className="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-xl">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    Đã Nhận
+                    {t('daily_missions.claimed', { defaultValue: 'Đã Nhận' })}
                   </span>
                 ) : isCompleted ? (
                   <button
                     onClick={() => handleClaim(mission.id, mission.rewardTurns, mission.rewardPoints)}
                     className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow-lg shadow-amber-500/30 transition active:scale-95 animate-pulse"
                   >
-                    Nhận Quà
+                    {t('daily_missions.btn_claim', { defaultValue: 'Nhận Ngay' })}
                   </button>
                 ) : (
                   <button
                     onClick={onClose}
                     className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3 py-1.5 rounded-xl transition"
                   >
-                    Thực Hiện
+                    {t('missions.in_progress', { defaultValue: 'Đang Thực Hiện' })}
                   </button>
                 )}
               </div>
@@ -166,7 +182,7 @@ export const DailyMissionModal: React.FC<DailyMissionModalProps> = ({
         {/* Footer */}
         <div className="mt-4 pt-3 border-t border-slate-800 text-center">
           <p className="text-[11px] text-slate-500">
-            Nhiệm vụ tự động làm mới vào lúc <span className="text-amber-400 font-bold">00:00 hàng ngày</span>.
+            {t('missions.daily_subtitle', { defaultValue: 'Nhiệm vụ tự động làm mới vào lúc 00:00 hàng ngày.' })}
           </p>
         </div>
       </div>

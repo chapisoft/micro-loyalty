@@ -375,6 +375,14 @@ class GameAudioEngine {
   }
 
   /**
+   * 23. Tiếng Bắt Đầu Ván Game
+   */
+  public playStart() {
+    this.playFile('tap');
+    this.triggerHaptic('medium');
+  }
+
+  /**
    * 23. Bộ Rung Phản Hồi Xúc Giác Haptic Feedback Chuẩn Mobile
    */
   public triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' = 'light') {
@@ -402,6 +410,23 @@ class GameAudioEngine {
       }
     } catch {}
   }
+
+  public setMuted(muted: boolean) {
+    this.isMuted = muted;
+    try {
+      localStorage.setItem('loyalty_game_sound_muted', JSON.stringify(this.isMuted));
+    } catch {}
+
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.9, this.ctx.currentTime);
+    }
+  }
+
+  public isSoundMuted(): boolean {
+    return this.isMuted;
+  }
 }
 
 export const soundManager = new GameAudioEngine();
+export const GameSounds = soundManager;
+

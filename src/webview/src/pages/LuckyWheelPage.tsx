@@ -11,11 +11,13 @@ import {
   Zap,
   Flame,
   Palette,
-  Check
+  Check,
+  HelpCircle,
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import { LoyaltyApi, WheelPrizeItem } from '../services/api';
 import { soundManager } from '../utils/audio';
+import { GameTutorialModal } from '../components/common/GameTutorialModal';
 
 interface WheelThemeItem {
   id?: number;
@@ -27,38 +29,158 @@ interface WheelThemeItem {
   isActive?: boolean;
 }
 
-const THEME_PRESETS: Record<string, { nameKey: string; icon: string; bgClass: string; headerGradient: string; rimColor: string; centerBtnGradient: string }> = {
+export interface ThemeConfig {
+  nameKey: string;
+  icon: string;
+  isDark: boolean;
+  bgClass: string;
+  cardBg: string;
+  textColor: string;
+  subtextColor: string;
+  headerGradient: string;
+  wheelStandBg: string;
+  ctaGradient: string;
+  centerPinGradient: string;
+  pointerBulb: string;
+  pointerArrow: string;
+  ambientGlow: string;
+  rimGradColors: string[];
+  bezelColor: string;
+  ledActiveColor: string;
+  ledInactiveColor: string;
+  ledGlowColor: string;
+  sliceGradients: string[][];
+  dividerColor: string;
+}
+
+const THEME_PRESETS: Record<string, ThemeConfig> = {
   THEME_DEFAULT: {
     nameKey: 'games.themes.theme_default',
     icon: '👑',
-    bgClass: 'bg-slate-50',
+    isDark: false,
+    bgClass: 'bg-slate-50 text-slate-800',
+    cardBg: 'bg-white border-amber-200 shadow-sm text-slate-800',
+    textColor: 'text-slate-800',
+    subtextColor: 'text-amber-700',
     headerGradient: 'from-amber-600 to-orange-600',
-    rimColor: '#F59E0B',
-    centerBtnGradient: 'from-amber-500 to-yellow-400',
+    wheelStandBg: 'from-amber-200/90 via-white to-amber-100 border-amber-300 shadow-amber-500/20',
+    ctaGradient: 'from-amber-500 via-yellow-400 to-orange-500 text-slate-950 shadow-amber-500/30',
+    centerPinGradient: 'from-amber-500 via-yellow-300 to-amber-600 shadow-amber-500/40',
+    pointerBulb: 'from-amber-600 via-yellow-300 to-amber-100 border-amber-950',
+    pointerArrow: 'border-l-amber-500',
+    ambientGlow: 'from-amber-200/40 via-orange-200/20 to-transparent',
+    rimGradColors: ['#F59E0B', '#FEF3C7', '#D97706', '#FDE68A', '#78350F'],
+    bezelColor: '#1E1B4B',
+    ledActiveColor: '#FEF08A',
+    ledInactiveColor: '#78350F',
+    ledGlowColor: '#FBBF24',
+    sliceGradients: [
+      ['#F59E0B', '#B45309'], // Gold
+      ['#EF4444', '#991B1B'], // Crimson
+      ['#06B6D4', '#0E7490'], // Cyan
+      ['#3B82F6', '#1D4ED8'], // Blue
+      ['#10B981', '#047857'], // Emerald
+      ['#8B5CF6', '#5B21B6'], // Purple
+      ['#EC4899', '#9D174D'], // Pink
+      ['#F97316', '#C2410C'], // Orange
+    ],
+    dividerColor: '#FEF3C7',
   },
   THEME_KANAVAL: {
     nameKey: 'games.themes.theme_kanaval',
     icon: '🔥',
-    bgClass: 'bg-stone-900 text-white',
-    headerGradient: 'from-red-600 to-orange-500',
-    rimColor: '#DC2626',
-    centerBtnGradient: 'from-red-600 to-amber-500',
+    isDark: true,
+    bgClass: 'bg-gradient-to-b from-stone-950 via-red-950 to-neutral-950 text-white',
+    cardBg: 'bg-red-950/40 border-red-500/40 shadow-xl shadow-red-950/50 text-white',
+    textColor: 'text-white',
+    subtextColor: 'text-orange-300',
+    headerGradient: 'from-red-500 via-orange-500 to-yellow-400',
+    wheelStandBg: 'from-red-900/90 via-orange-950 to-stone-900 border-red-500/60 shadow-red-600/40',
+    ctaGradient: 'from-red-600 via-orange-500 to-yellow-500 text-white shadow-red-500/50',
+    centerPinGradient: 'from-red-600 via-orange-400 to-amber-500 shadow-red-500/50',
+    pointerBulb: 'from-red-600 via-orange-400 to-yellow-200 border-red-950',
+    pointerArrow: 'border-l-red-500',
+    ambientGlow: 'from-red-600/40 via-orange-600/20 to-transparent',
+    rimGradColors: ['#DC2626', '#FCA5A5', '#991B1B', '#F87171', '#450A0A'],
+    bezelColor: '#450A0A',
+    ledActiveColor: '#FDE047',
+    ledInactiveColor: '#7F1D1D',
+    ledGlowColor: '#EF4444',
+    sliceGradients: [
+      ['#DC2626', '#7F1D1D'], // Fire Red
+      ['#EA580C', '#9A3412'], // Blazing Orange
+      ['#EAB308', '#854D0E'], // Gold Flame
+      ['#B91C1C', '#450A0A'], // Crimson Ruby
+      ['#F97316', '#C2410C'], // Ember Orange
+      ['#991B1B', '#500724'], // Dark Burgundy
+      ['#F59E0B', '#78350F'], // Amber Glow
+      ['#C2410C', '#7C2D12'], // Deep Lava
+    ],
+    dividerColor: '#FDE047',
   },
   THEME_CARIBBEAN: {
     nameKey: 'games.themes.theme_caribbean',
     icon: '🏝️',
-    bgClass: 'bg-slate-900 text-white',
-    headerGradient: 'from-teal-500 to-cyan-500',
-    rimColor: '#0D9488',
-    centerBtnGradient: 'from-teal-500 to-cyan-400',
+    isDark: true,
+    bgClass: 'bg-gradient-to-b from-slate-950 via-cyan-950 to-slate-900 text-white',
+    cardBg: 'bg-cyan-950/40 border-teal-500/40 shadow-xl shadow-cyan-950/50 text-white',
+    textColor: 'text-white',
+    subtextColor: 'text-cyan-300',
+    headerGradient: 'from-teal-400 via-cyan-400 to-blue-400',
+    wheelStandBg: 'from-teal-900/90 via-cyan-950 to-slate-900 border-teal-500/60 shadow-teal-500/40',
+    ctaGradient: 'from-teal-500 via-cyan-500 to-blue-600 text-white shadow-teal-500/50',
+    centerPinGradient: 'from-teal-400 via-cyan-300 to-blue-500 shadow-teal-500/50',
+    pointerBulb: 'from-teal-600 via-cyan-300 to-blue-200 border-teal-950',
+    pointerArrow: 'border-l-teal-400',
+    ambientGlow: 'from-cyan-500/40 via-teal-500/20 to-transparent',
+    rimGradColors: ['#0D9488', '#99F6E4', '#0F766E', '#5EEAD4', '#134E4A'],
+    bezelColor: '#042F2E',
+    ledActiveColor: '#2DD4BF',
+    ledInactiveColor: '#115E59',
+    ledGlowColor: '#06B6D4',
+    sliceGradients: [
+      ['#0D9488', '#115E59'], // Tropical Teal
+      ['#06B6D4', '#155E75'], // Ocean Cyan
+      ['#0284C7', '#0369A1'], // Deep Marine
+      ['#14B8A6', '#0F766E'], // Turquoise Wave
+      ['#3B82F6', '#1E40AF'], // Sapphire Blue
+      ['#10B981', '#065F46'], // Island Palm
+      ['#6366F1', '#3730A3'], // Twilight Indigo
+      ['#0EA5E9', '#075985'], // Lagoon Sky
+    ],
+    dividerColor: '#99F6E4',
   },
   THEME_HOLIDAY: {
     nameKey: 'games.themes.theme_holiday',
     icon: '🎄',
-    bgClass: 'bg-zinc-900 text-white',
-    headerGradient: 'from-pink-600 to-rose-500',
-    rimColor: '#E11D48',
-    centerBtnGradient: 'from-rose-500 to-amber-400',
+    isDark: true,
+    bgClass: 'bg-gradient-to-b from-zinc-950 via-emerald-950 to-zinc-950 text-white',
+    cardBg: 'bg-emerald-950/40 border-rose-500/40 shadow-xl shadow-emerald-950/50 text-white',
+    textColor: 'text-white',
+    subtextColor: 'text-rose-300',
+    headerGradient: 'from-rose-500 via-amber-300 to-emerald-400',
+    wheelStandBg: 'from-rose-900/90 via-emerald-950 to-zinc-900 border-rose-500/60 shadow-rose-500/40',
+    ctaGradient: 'from-rose-600 via-pink-500 to-emerald-600 text-white shadow-rose-500/50',
+    centerPinGradient: 'from-rose-500 via-amber-300 to-emerald-500 shadow-rose-500/50',
+    pointerBulb: 'from-rose-600 via-yellow-300 to-emerald-200 border-rose-950',
+    pointerArrow: 'border-l-rose-500',
+    ambientGlow: 'from-rose-600/40 via-emerald-600/20 to-transparent',
+    rimGradColors: ['#E11D48', '#FECDD3', '#BE123C', '#FDA4AF', '#881337'],
+    bezelColor: '#064E3B',
+    ledActiveColor: '#FEF08A',
+    ledInactiveColor: '#065F46',
+    ledGlowColor: '#F43F5E',
+    sliceGradients: [
+      ['#E11D48', '#881337'], // Christmas Berry
+      ['#059669', '#064E3B'], // Pine Needle
+      ['#F59E0B', '#B45309'], // Holiday Gold
+      ['#DC2626', '#991B1B'], // Ribbon Crimson
+      ['#10B981', '#047857'], // Mistletoe Green
+      ['#BE123C', '#4C0519'], // Mulled Wine
+      ['#D97706', '#78350F'], // Warm Amber
+      ['#047857', '#022C22'], // Deep Pine
+    ],
+    dividerColor: '#FECDD3',
   },
 };
 
@@ -81,17 +203,6 @@ const DEFAULT_PRIZES: WheelPrizeItem[] = [
   { prizeId: 4, prizeName: '200 Điểm Thưởng', prizeType: 'POINTS', prizeValue: 200, displayOrder: 3, colorCode: '#3B82F6' },
   { prizeId: 5, prizeName: '500 HTG Tiền Mặt', prizeType: 'CASHBACK', prizeValue: 500, displayOrder: 4, colorCode: '#10B981' },
   { prizeId: 6, prizeName: 'Thêm 1 Lượt Quay', prizeType: 'TURNS', prizeValue: 1, displayOrder: 5, colorCode: '#8B5CF6' },
-];
-
-const SLICE_GRADIENTS = [
-  ['#F59E0B', '#B45309'], // Gold
-  ['#EF4444', '#991B1B'], // Crimson
-  ['#06B6D4', '#0E7490'], // Cyan
-  ['#3B82F6', '#1D4ED8'], // Blue
-  ['#10B981', '#047857'], // Emerald
-  ['#8B5CF6', '#5B21B6'], // Purple
-  ['#EC4899', '#9D174D'], // Pink
-  ['#F97316', '#C2410C'], // Orange
 ];
 
 const RECENT_WINNERS = [
@@ -122,8 +233,11 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [pointerWobble, setPointerWobble] = useState(0);
   const [ledPhase, setLedPhase] = useState(0);
-  const [activeTheme, setActiveTheme] = useState<string>('THEME_DEFAULT');
+  const [activeTheme, setActiveTheme] = useState<string>(
+    () => localStorage.getItem('loyalty_wheel_active_theme') || 'THEME_DEFAULT'
+  );
   const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [_availableThemes, setAvailableThemes] = useState<WheelThemeItem[]>([]);
 
   const tenantId = new URLSearchParams(window.location.search).get('tenantId') || 'TENANT_NATCASH';
@@ -144,7 +258,10 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
   const loadThemes = useCallback(async () => {
     try {
       const res = await LoyaltyApi.getWheelThemes();
-      if (res?.activeThemeCode) {
+      const savedTheme = localStorage.getItem('loyalty_wheel_active_theme');
+      if (savedTheme && THEME_PRESETS[savedTheme]) {
+        setActiveTheme(savedTheme);
+      } else if (res?.activeThemeCode) {
         setActiveTheme(res.activeThemeCode);
       }
       if (res?.availableThemes) {
@@ -157,7 +274,9 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
   const handleSelectTheme = async (themeCode: string) => {
     try {
+      soundManager.playTap();
       setActiveTheme(themeCode);
+      localStorage.setItem('loyalty_wheel_active_theme', themeCode);
       setShowThemeModal(false);
       await LoyaltyApi.selectWheelTheme(themeCode);
     } catch {
@@ -203,6 +322,8 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const currentPreset = THEME_PRESETS[activeTheme] || THEME_PRESETS.THEME_DEFAULT;
+
     // Retina display sharp rendering
     const dpr = window.devicePixelRatio || 2;
     const size = 500;
@@ -218,16 +339,17 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
     ctx.clearRect(0, 0, size, size);
 
-    // 1. Outer Golden Metallic Rim Ring
+    // 1. Outer Themed Metallic Rim Ring
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius + 12, 0, 2 * Math.PI);
     const rimGrad = ctx.createLinearGradient(0, 0, size, size);
-    rimGrad.addColorStop(0, '#F59E0B');
-    rimGrad.addColorStop(0.25, '#FEF3C7');
-    rimGrad.addColorStop(0.5, '#D97706');
-    rimGrad.addColorStop(0.75, '#FDE68A');
-    rimGrad.addColorStop(1, '#78350F');
+    const rimColors = currentPreset.rimGradColors;
+    rimGrad.addColorStop(0, rimColors[0]);
+    rimGrad.addColorStop(0.25, rimColors[1]);
+    rimGrad.addColorStop(0.5, rimColors[2]);
+    rimGrad.addColorStop(0.75, rimColors[3]);
+    rimGrad.addColorStop(1, rimColors[4]);
     ctx.fillStyle = rimGrad;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
     ctx.shadowBlur = 20;
@@ -239,7 +361,7 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius + 3, 0, 2 * Math.PI);
-    ctx.fillStyle = '#1E1B4B'; // Deep Indigo
+    ctx.fillStyle = currentPreset.bezelColor;
     ctx.fill();
     ctx.restore();
 
@@ -254,9 +376,9 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
       ctx.beginPath();
       ctx.arc(ledX, ledY, 4, 0, 2 * Math.PI);
       const isLit = (i + ledPhase) % 2 === 0;
-      ctx.fillStyle = isLit ? '#FEF08A' : '#78350F';
+      ctx.fillStyle = isLit ? currentPreset.ledActiveColor : currentPreset.ledInactiveColor;
       if (isLit) {
-        ctx.shadowColor = '#FBBF24';
+        ctx.shadowColor = currentPreset.ledGlowColor;
         ctx.shadowBlur = 10;
       }
       ctx.fill();
@@ -267,6 +389,8 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(angle);
+
+    const sliceGradList = currentPreset.sliceGradients;
 
     prizes.forEach((prize, i) => {
       const startAngle = i * sliceAngle;
@@ -280,18 +404,18 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
       ctx.closePath();
 
       // Slice Gradient
-      const gradColors = SLICE_GRADIENTS[i % SLICE_GRADIENTS.length];
+      const gradColors = sliceGradList[i % sliceGradList.length];
       const sliceGrad = ctx.createRadialGradient(0, 0, 20, 0, 0, radius);
       sliceGrad.addColorStop(0, gradColors[0]);
       sliceGrad.addColorStop(1, gradColors[1]);
       ctx.fillStyle = sliceGrad;
       ctx.fill();
 
-      // Slice Divider Line (Gold Shimmer)
+      // Slice Divider Line
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.lineTo(radius * Math.cos(startAngle), radius * Math.sin(startAngle));
-      ctx.strokeStyle = '#FEF3C7';
+      ctx.strokeStyle = currentPreset.dividerColor;
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
@@ -346,14 +470,14 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
     ctx.restore();
 
-    // 4. Compact Elegant Center Gold Hub Base (Radius 24px, no text overlap)
+    // 4. Compact Elegant Center Themed Hub Base (Radius 24px, no text overlap)
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, 24, 0, 2 * Math.PI);
     const centerGrad = ctx.createLinearGradient(centerX - 24, centerY - 24, centerX + 24, centerY + 24);
-    centerGrad.addColorStop(0, '#FEF3C7');
-    centerGrad.addColorStop(0.5, '#F59E0B');
-    centerGrad.addColorStop(1, '#78350F');
+    centerGrad.addColorStop(0, rimColors[1]);
+    centerGrad.addColorStop(0.5, rimColors[0]);
+    centerGrad.addColorStop(1, rimColors[4]);
     ctx.fillStyle = centerGrad;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
     ctx.shadowBlur = 10;
@@ -365,9 +489,9 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
-    ctx.fillStyle = '#0F172A';
+    ctx.fillStyle = currentPreset.bezelColor;
     ctx.fill();
-    ctx.strokeStyle = '#FDE68A';
+    ctx.strokeStyle = currentPreset.dividerColor;
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -377,7 +501,7 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     ctx.textBaseline = 'middle';
     ctx.fillText('✨', centerX, centerY);
     ctx.restore();
-  }, [prizes, ledPhase]);
+  }, [prizes, ledPhase, activeTheme]);
 
   // Initial draw and LED bulb chase animation
   useEffect(() => {
@@ -573,28 +697,31 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     }
   };
 
+  const currentPreset = THEME_PRESETS[activeTheme] || THEME_PRESETS.THEME_DEFAULT;
+  const isDarkTheme = currentPreset.isDark;
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans relative overflow-x-hidden select-none pb-24 md:pb-12">
+    <div className={`min-h-screen ${currentPreset.bgClass} flex flex-col font-sans relative overflow-x-hidden select-none pb-24 md:pb-12 transition-colors duration-500`}>
       {/* Confetti Explosion Canvas */}
       <canvas
         ref={confettiCanvasRef}
         className="fixed inset-0 pointer-events-none z-50"
       />
 
-      {/* ── ATMOSPHERIC CASINO LIGHTING & SUNBURST RAYS (Light Theme) ── */}
+      {/* ── ATMOSPHERIC CASINO LIGHTING & SUNBURST RAYS ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Ambient Warm Glow Orbs */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-gradient-to-b from-amber-200/40 via-orange-200/20 to-transparent rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-indigo-100/50 rounded-full blur-3xl" />
-        <div className="absolute -top-20 -right-20 w-80 h-80 bg-amber-100/60 rounded-full blur-3xl" />
+        <div className={`absolute top-10 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-gradient-to-b ${currentPreset.ambientGlow} rounded-full blur-3xl`} />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-indigo-900/20 rounded-full blur-3xl" />
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl" />
       </div>
 
-      {/* ── TOP LUXURY APP BAR (Light Theme) ── */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+      {/* ── TOP LUXURY APP BAR ── */}
+      <header className={`sticky top-0 z-30 ${isDarkTheme ? 'bg-slate-950/85 border-slate-800/80 text-white' : 'bg-white/90 border-slate-200 text-slate-800'} backdrop-blur-xl border-b shadow-sm transition-colors duration-500`}>
         <div className="max-w-6xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center text-slate-700 border border-slate-200"
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl ${isDarkTheme ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'} active:scale-95 transition flex items-center justify-center border`}
             title={t('nav.back')}
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -602,21 +729,29 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
           <div className="text-center">
             <div className="flex items-center justify-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-              <h1 className="text-sm sm:text-base font-black tracking-wider uppercase bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+              <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+              <h1 className={`text-sm sm:text-base font-black tracking-wider uppercase bg-gradient-to-r ${currentPreset.headerGradient} bg-clip-text text-transparent`}>
                 {t('wheel.title')}
               </h1>
             </div>
-            <p className="text-[10px] text-amber-700 font-medium tracking-wide">{t('wheel.subtitle')}</p>
+            <p className={`text-[10px] ${currentPreset.subtextColor} font-medium tracking-wide`}>{t('wheel.subtitle')}</p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowTutorial(true)}
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl ${isDarkTheme ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-amber-400' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-amber-600'} active:scale-95 transition flex items-center justify-center border shadow-xs`}
+              title={t('games.common.btn_how_to_play')}
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+
+            <button
               onClick={() => setShowThemeModal(true)}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-50 hover:bg-amber-100/80 active:scale-95 transition flex items-center justify-center text-amber-600 border border-amber-300 shadow-xs"
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl ${isDarkTheme ? 'bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/40 text-amber-400' : 'bg-amber-50 hover:bg-amber-100/80 border-amber-300 text-amber-600'} active:scale-95 transition flex items-center justify-center border shadow-xs`}
               title={t('games.themes.title')}
             >
-              <Palette className="w-4 h-4 text-amber-600" />
+              <Palette className="w-4 h-4" />
             </button>
 
             <button
@@ -625,18 +760,18 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 setSoundEnabled(!muted);
                 if (!muted) soundManager.playTap();
               }}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center text-amber-600 border border-slate-200"
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl ${isDarkTheme ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 border-slate-200'} active:scale-95 transition flex items-center justify-center border`}
               title="Âm thanh"
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
             </button>
           </div>
         </div>
 
-        {/* Live Winners Marquee Ticker (Continuous Auto-scrolling Floating Marquee) */}
-        <div className="bg-amber-50 border-t border-b border-amber-200/80 py-1.5 px-3 flex items-center overflow-hidden relative select-none">
+        {/* Live Winners Marquee Ticker */}
+        <div className={`${isDarkTheme ? 'bg-slate-900/90 border-t border-b border-slate-800' : 'bg-amber-50 border-t border-b border-amber-200/80'} py-1.5 px-3 flex items-center overflow-hidden relative select-none transition-colors duration-500`}>
           {/* Sticky Badge Label */}
-          <div className="flex items-center space-x-1.5 z-10 shrink-0 pr-2.5 bg-amber-50">
+          <div className={`flex items-center space-x-1.5 z-10 shrink-0 pr-2.5 ${isDarkTheme ? 'bg-slate-900' : 'bg-amber-50'}`}>
             <span className="bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
               {t('wheel.news_tag')}
@@ -648,22 +783,22 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             <div className="animate-marquee-infinite flex items-center space-x-8">
               {/* Loop Set 1 */}
               {RECENT_WINNERS.map((w, idx) => (
-                <span key={`w1-${idx}`} className="inline-flex items-center space-x-1.5 text-xs text-amber-950 font-medium shrink-0">
+                <span key={`w1-${idx}`} className={`inline-flex items-center space-x-1.5 text-xs ${isDarkTheme ? 'text-slate-300' : 'text-amber-950'} font-medium shrink-0`}>
                   <span>{w.avatar}</span>
-                  <span className="text-slate-900 font-bold">{w.phone}</span>
-                  <span className="text-amber-800 font-normal">{t('wheel.just_won')}</span>
-                  <span className="text-orange-700 font-black">{w.prize}</span>
-                  <span className="text-amber-300 font-bold">•</span>
+                  <span className={`${isDarkTheme ? 'text-white' : 'text-slate-900'} font-bold`}>{w.phone}</span>
+                  <span className={`${isDarkTheme ? 'text-slate-400' : 'text-amber-800'} font-normal`}>{t('wheel.just_won')}</span>
+                  <span className="text-amber-400 font-black">{w.prize}</span>
+                  <span className="text-amber-300/40 font-bold">•</span>
                 </span>
               ))}
-              {/* Loop Set 2 (Duplicate for Seamless Endless Scroll) */}
+              {/* Loop Set 2 */}
               {RECENT_WINNERS.map((w, idx) => (
-                <span key={`w2-${idx}`} className="inline-flex items-center space-x-1.5 text-xs text-amber-950 font-medium shrink-0">
+                <span key={`w2-${idx}`} className={`inline-flex items-center space-x-1.5 text-xs ${isDarkTheme ? 'text-slate-300' : 'text-amber-950'} font-medium shrink-0`}>
                   <span>{w.avatar}</span>
-                  <span className="text-slate-900 font-bold">{w.phone}</span>
-                  <span className="text-amber-800 font-normal">{t('wheel.just_won')}</span>
-                  <span className="text-orange-700 font-black">{w.prize}</span>
-                  <span className="text-amber-300 font-bold">•</span>
+                  <span className={`${isDarkTheme ? 'text-white' : 'text-slate-900'} font-bold`}>{w.phone}</span>
+                  <span className={`${isDarkTheme ? 'text-slate-400' : 'text-amber-800'} font-normal`}>{t('wheel.just_won')}</span>
+                  <span className="text-amber-400 font-black">{w.prize}</span>
+                  <span className="text-amber-300/40 font-bold">•</span>
                 </span>
               ))}
             </div>
@@ -681,10 +816,10 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             {/* Balance Cards */}
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-md">
               {/* Free Turns Card */}
-              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-amber-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+              <div className={`${currentPreset.cardBg} rounded-2xl p-3 sm:p-4 border flex items-center justify-between relative overflow-hidden group transition-colors duration-500`}>
                 <div>
-                  <span className="text-[11px] text-slate-500 font-medium">{t('wheel.free_turns')}</span>
-                  <div className="text-lg sm:text-2xl font-black text-amber-600 tracking-tight leading-none mt-1 font-mono">
+                  <span className={`text-[11px] ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'} font-medium`}>{t('wheel.free_turns')}</span>
+                  <div className="text-lg sm:text-2xl font-black text-amber-500 tracking-tight leading-none mt-1 font-mono">
                     {freeTurns} <span className="text-xs font-semibold text-slate-400">{t('wheel.turns_unit')}</span>
                   </div>
                 </div>
@@ -698,14 +833,14 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
               </div>
 
               {/* Point Balance Card */}
-              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-emerald-200 shadow-sm flex items-center justify-between relative overflow-hidden">
+              <div className={`${currentPreset.cardBg} rounded-2xl p-3 sm:p-4 border flex items-center justify-between relative overflow-hidden transition-colors duration-500`}>
                 <div>
-                  <span className="text-[11px] text-slate-500 font-medium">{t('wheel.available_points')}</span>
-                  <div className="text-lg sm:text-2xl font-black text-emerald-600 tracking-tight leading-none mt-1 font-mono">
+                  <span className={`text-[11px] ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'} font-medium`}>{t('wheel.available_points')}</span>
+                  <div className="text-lg sm:text-2xl font-black text-emerald-400 tracking-tight leading-none mt-1 font-mono">
                     {points.toLocaleString()} <span className="text-xs font-semibold text-slate-400">{t('nav.points_unit')}</span>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black">
                   <Trophy className="w-4 h-4" />
                 </div>
               </div>
@@ -714,7 +849,7 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             {/* ── 3D CANVAS WHEEL CONTAINER (EXPANDED TO SCREEN BORDER) ── */}
             <div className="relative flex items-center justify-center my-1 sm:my-2 w-full max-w-[460px] sm:max-w-[490px] px-0.5">
               
-              {/* 3D Golden Needle Pointer at 9 O'Clock (Left side, Pointing Right into Wheel) */}
+              {/* 3D Themed Needle Pointer at 9 O'Clock */}
               <div
                 className="absolute left-0 z-30 transition-transform duration-100 flex items-center pointer-events-none"
                 style={{
@@ -724,17 +859,17 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 }}
               >
                 {/* Pointer Jewel Crown Bulb */}
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-600 via-yellow-300 to-amber-100 border-2 border-amber-950 shadow-2xl flex items-center justify-center -mr-1.5 relative z-10">
+                <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${currentPreset.pointerBulb} border-2 shadow-2xl flex items-center justify-center -mr-1.5 relative z-10`}>
                   <div className="w-3 h-3 rounded-full bg-red-600 border border-white shadow-inner animate-pulse" />
                 </div>
                 {/* 3D Arrow Needle Pointing Right */}
                 <div
-                  className="w-0 h-0 border-y-[13px] border-y-transparent border-l-[32px] border-l-amber-500 drop-shadow-xl"
+                  className={`w-0 h-0 border-y-[13px] border-y-transparent border-l-[32px] ${currentPreset.pointerArrow} drop-shadow-xl`}
                 />
               </div>
 
-              {/* Canvas Wheel Outer Stand Base (Enlarged to edge of screen) */}
-              <div className="p-1 sm:p-2.5 rounded-full bg-gradient-to-b from-amber-200/90 via-white to-amber-100 shadow-2xl border-2 border-amber-300 w-full aspect-square max-w-[440px] max-h-[440px] flex items-center justify-center">
+              {/* Canvas Wheel Outer Stand Base (Themed Gradient) */}
+              <div className={`p-1 sm:p-2.5 rounded-full bg-gradient-to-b ${currentPreset.wheelStandBg} border-2 shadow-2xl w-full aspect-square max-w-[440px] max-h-[440px] flex items-center justify-center transition-all duration-500`}>
                 <canvas
                   ref={canvasRef}
                   className="rounded-full cursor-pointer touch-none select-none w-full h-full"
@@ -742,12 +877,12 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 />
               </div>
 
-              {/* Floating Compact Luxury Center Pin (No text, never covers slice text) */}
+              {/* Floating Center Pin */}
               <button
                 onClick={handleSpin}
                 disabled={isSpinning}
                 aria-label={t('wheel.btn_spin')}
-                className="absolute z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-amber-500 via-yellow-300 to-amber-600 hover:scale-105 active:scale-90 disabled:cursor-not-allowed transition transform shadow-xl shadow-amber-500/40 border-2 border-white flex items-center justify-center cursor-pointer"
+                className={`absolute z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr ${currentPreset.centerPinGradient} hover:scale-105 active:scale-90 disabled:cursor-not-allowed transition transform shadow-xl border-2 border-white flex items-center justify-center cursor-pointer`}
               >
                 <Flame className={`w-5 h-5 text-slate-950 fill-current ${isSpinning ? 'animate-spin' : 'animate-pulse'}`} />
               </button>
@@ -758,12 +893,12 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
               <button
                 onClick={handleSpin}
                 disabled={isSpinning}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/30 border-t-2 border-yellow-200 active:scale-98 disabled:opacity-70 transition flex items-center justify-center space-x-2 animate-shimmer"
+                className={`w-full py-4 rounded-2xl bg-gradient-to-r ${currentPreset.ctaGradient} font-black text-sm sm:text-base tracking-wider uppercase shadow-xl border-t-2 border-white/40 active:scale-98 disabled:opacity-70 transition flex items-center justify-center space-x-2 animate-shimmer`}
               >
                 <Flame className="w-5 h-5 fill-current" />
                 <span>{freeTurns > 0 ? t('wheel.btn_spin_now') : t('wheel.btn_spin_points')}</span>
               </button>
-              <p className="text-center text-[11px] text-slate-500 mt-2">
+              <p className={`text-center text-[11px] ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'} mt-2`}>
                 {freeTurns > 0 ? t('wheel.hint_free', { turns: freeTurns }) : t('wheel.hint_points')}
               </p>
             </div>
@@ -773,97 +908,97 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
           <div className="lg:col-span-5 space-y-4 sm:space-y-6">
             
             {/* Live Winners Card */}
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                <div className="flex items-center space-x-2 font-black text-sm text-slate-900">
-                  <Trophy className="w-4 h-4 text-amber-500" />
+            <div className={`${currentPreset.cardBg} rounded-3xl p-4 sm:p-5 border shadow-sm space-y-3 transition-colors duration-500`}>
+              <div className={`flex items-center justify-between pb-2.5 border-b ${isDarkTheme ? 'border-slate-800' : 'border-slate-100'}`}>
+                <div className={`flex items-center space-x-2 font-black text-sm ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
+                  <Trophy className="w-4 h-4 text-amber-400" />
                   <span>{t('wheel.winners_board')}</span>
                 </div>
-                <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> {t('wheel.live_badge')}
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> {t('wheel.live_badge')}
                 </span>
               </div>
 
               <div className="space-y-2">
                 {RECENT_WINNERS.slice(0, 4).map((winner, idx) => (
-                  <div key={idx} className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                  <div key={idx} className={`p-2.5 rounded-2xl ${isDarkTheme ? 'bg-slate-900/60 border-slate-800/80' : 'bg-slate-50 border-slate-100'} border flex items-center justify-between text-xs`}>
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs">
                         {winner.avatar}
                       </div>
                       <div>
-                        <div className="font-mono font-bold text-slate-800">{winner.phone}</div>
+                        <div className={`font-mono font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>{winner.phone}</div>
                         <div className="text-[10px] text-slate-400">{winner.time}</div>
                       </div>
                     </div>
-                    <span className="font-black text-amber-600">{winner.prize}</span>
+                    <span className="font-black text-amber-400">{winner.prize}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Prize Rewards List */}
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center space-x-2 font-black text-sm text-slate-900">
-                  <Gift className="w-4 h-4 text-indigo-600" />
+            <div className={`${currentPreset.cardBg} rounded-3xl p-4 sm:p-5 border shadow-sm space-y-3 transition-colors duration-500`}>
+              <div className={`flex items-center justify-between pb-2 border-b ${isDarkTheme ? 'border-slate-800' : 'border-slate-100'}`}>
+                <div className={`flex items-center space-x-2 font-black text-sm ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
+                  <Gift className="w-4 h-4 text-indigo-400" />
                   <span>{t('wheel.prizes_structure')}</span>
                 </div>
-                <span className="text-[10px] text-slate-500 font-medium">{t('wheel.prizes_100_percent')}</span>
+                <span className="text-[10px] text-slate-400 font-medium">{t('wheel.prizes_100_percent')}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 {prizes.map((prize, idx) => (
                   <div
                     key={prize.prizeId || idx}
-                    className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center space-x-2.5 text-xs hover:border-amber-300 transition"
+                    className={`p-2.5 rounded-2xl ${isDarkTheme ? 'bg-slate-900/60 border-slate-800/80 hover:border-amber-500/60' : 'bg-slate-50 border-slate-100 hover:border-amber-300'} border flex items-center space-x-2.5 text-xs transition`}
                   >
                     <span className="w-3 h-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: prize.colorCode }} />
-                    <span className="font-semibold text-slate-800 truncate">{prize.prizeName}</span>
+                    <span className={`font-semibold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'} truncate`}>{prize.prizeName}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Quick Buy Turns Banner */}
-            <div className="bg-gradient-to-br from-indigo-50 via-white to-indigo-50/80 rounded-3xl p-4 sm:p-5 border border-indigo-200 shadow-sm space-y-3">
+            <div className={`${currentPreset.cardBg} rounded-3xl p-4 sm:p-5 border shadow-sm space-y-3 transition-colors duration-500`}>
               <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2 font-black text-sm text-indigo-950">
-                  <Zap className="w-4 h-4 text-amber-500" />
+                <div className={`flex items-center space-x-2 font-black text-sm ${isDarkTheme ? 'text-white' : 'text-indigo-950'}`}>
+                  <Zap className="w-4 h-4 text-amber-400" />
                   <span>{t('wheel.saving_packages')}</span>
                 </div>
-                <span className="text-[10px] text-indigo-700 font-bold bg-indigo-100 px-2 py-0.5 rounded-full">{t('wheel.reward_wallet')}</span>
+                <span className="text-[10px] text-amber-400 font-bold bg-amber-500/20 px-2 py-0.5 rounded-full">{t('wheel.reward_wallet')}</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div
                   onClick={() => handleBuyTurn(1, 20)}
-                  className="p-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 cursor-pointer active:scale-95 transition flex flex-col justify-between shadow-xs"
+                  className={`p-2.5 rounded-2xl ${isDarkTheme ? 'bg-slate-900/80 hover:bg-slate-800 border-slate-700' : 'bg-white hover:bg-slate-50 border-slate-200'} border cursor-pointer active:scale-95 transition flex flex-col justify-between shadow-xs`}
                 >
-                  <span className="text-xs font-black text-slate-800">{t('wheel.pack_1_turn')}</span>
-                  <span className="text-[11px] text-amber-600 font-bold mt-1">20 HTG</span>
+                  <span className={`text-xs font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>{t('wheel.pack_1_turn')}</span>
+                  <span className="text-[11px] text-amber-400 font-bold mt-1">20 HTG</span>
                 </div>
 
                 <div
                   onClick={() => handleBuyTurn(5, 100)}
-                  className="p-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100/60 border border-amber-300 cursor-pointer active:scale-95 transition flex flex-col justify-between shadow-xs"
+                  className={`p-2.5 rounded-2xl ${isDarkTheme ? 'bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/40' : 'bg-amber-50 hover:bg-amber-100/60 border-amber-300'} border cursor-pointer active:scale-95 transition flex flex-col justify-between shadow-xs`}
                 >
                   <div className="flex justify-center">
                     <span className="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded-full">{t('wheel.bonus_1')}</span>
                   </div>
-                  <span className="text-xs font-black text-amber-950 mt-0.5">{t('wheel.pack_5_turns')}</span>
-                  <span className="text-[11px] text-amber-700 font-bold mt-0.5">100 HTG</span>
+                  <span className={`text-xs font-black ${isDarkTheme ? 'text-amber-300' : 'text-amber-950'} mt-0.5`}>{t('wheel.pack_5_turns')}</span>
+                  <span className="text-[11px] text-amber-400 font-bold mt-0.5">100 HTG</span>
                 </div>
 
                 <div
                   onClick={() => handleBuyTurn(10, 180)}
-                  className="p-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100/60 border border-emerald-300 cursor-pointer active:scale-95 transition flex flex-col justify-between shadow-xs"
+                  className={`p-2.5 rounded-2xl ${isDarkTheme ? 'bg-emerald-950/40 hover:bg-emerald-900/60 border-emerald-500/40' : 'bg-emerald-50 hover:bg-emerald-100/60 border-emerald-300'} border cursor-pointer active:scale-95 transition flex flex-col justify-between shadow-xs`}
                 >
                   <div className="flex justify-center">
                     <span className="text-[9px] bg-emerald-500 text-white font-black px-1 rounded-full">{t('wheel.save_10')}</span>
                   </div>
-                  <span className="text-xs font-black text-emerald-950 mt-0.5">{t('wheel.pack_10_turns')}</span>
-                  <span className="text-[11px] text-emerald-700 font-bold mt-0.5">180 HTG</span>
+                  <span className={`text-xs font-black ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-950'} mt-0.5`}>{t('wheel.pack_10_turns')}</span>
+                  <span className="text-[11px] text-emerald-400 font-bold mt-0.5">180 HTG</span>
                 </div>
               </div>
             </div>
@@ -1039,6 +1174,18 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
           </div>
         </div>
       )}
+
+      {/* ── GAME TUTORIAL MODAL ── */}
+      <GameTutorialModal
+        isOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        gameTitle={t('wheel.title')}
+        gameIcon="🎡"
+        goal={t('games.wheel.tutorial.goal')}
+        controls={t('games.wheel.tutorial.controls')}
+        scoring={t('games.wheel.tutorial.scoring')}
+        tips={t('games.wheel.tutorial.tips')}
+      />
     </div>
   );
 };

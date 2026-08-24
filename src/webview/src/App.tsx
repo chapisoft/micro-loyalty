@@ -23,15 +23,17 @@ import {
 import { LoyaltyJSBridge } from './bridge/LoyaltyJSBridge';
 import { GameHubPage } from './pages/GameHubPage';
 import { LuckyWheelPage } from './pages/LuckyWheelPage';
-import { TriviaQuizGame } from './pages/games/TriviaQuizGame';
-import { ScratchCardGame } from './pages/games/ScratchCardGame';
-import { PenaltyShootoutGame } from './pages/games/PenaltyShootoutGame';
-import { TreasureChestGame } from './pages/games/TreasureChestGame';
-import { TowerClimbGame } from './pages/games/TowerClimbGame';
-import { PlinkoDropGame } from './pages/games/PlinkoDropGame';
-import { GoldenEggGame } from './pages/games/GoldenEggGame';
-import { LuckyDiceGame } from './pages/games/LuckyDiceGame';
+import { FlappyNatcomGame } from './pages/games/FlappyNatcomGame';
+import { Game2048Page } from './pages/games/Game2048Page';
+import { MemoryMatchGame } from './pages/games/MemoryMatchGame';
+import { BubbleShooterGame } from './pages/games/BubbleShooterGame';
+import { FruitSliceGame } from './pages/games/FruitSliceGame';
+import { KnifeHitGame } from './pages/games/KnifeHitGame';
+import { BlockPuzzleGame } from './pages/games/BlockPuzzleGame';
+import { EndlessRunnerGame } from './pages/games/EndlessRunnerGame';
+import { WordleGame } from './pages/games/WordleGame';
 import { UserVoucherPage } from './pages/UserVoucherPage';
+import { GameCoverArt } from './components/game-assets/GameArtAssets';
 import { LanguageSelector } from './components/LanguageSelector';
 import { TierBenefitsModal } from './components/TierBenefitsModal';
 import { NotificationModal, NotificationType } from './components/NotificationModal';
@@ -41,15 +43,16 @@ export type AppTabType =
   | 'HOME'
   | 'GAMEHUB'
   | 'WHEEL'
-  | 'QUIZ'
-  | 'VOUCHERS'
-  | 'SCRATCH'
-  | 'PENALTY'
-  | 'CHEST'
-  | 'TOWER'
-  | 'PLINKO'
-  | 'EGG'
-  | 'DICE';
+  | 'FLAPPY'
+  | 'GAME2048'
+  | 'MEMORY'
+  | 'BUBBLE'
+  | 'FRUIT'
+  | 'KNIFE'
+  | 'BLOCK'
+  | 'RUNNER'
+  | 'WORDLE'
+  | 'VOUCHERS';
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
@@ -117,22 +120,24 @@ export const App: React.FC = () => {
         setCurrentTab('GAMEHUB');
       } else if (rawHash === 'WHEEL' || rawHash === 'GAMEHUB/WHEEL') {
         setCurrentTab('WHEEL');
-      } else if (rawHash === 'QUIZ' || rawHash === 'GAMEHUB/QUIZ') {
-        setCurrentTab('QUIZ');
-      } else if (rawHash === 'SCRATCH' || rawHash === 'GAMEHUB/SCRATCH') {
-        setCurrentTab('SCRATCH');
-      } else if (rawHash === 'PENALTY' || rawHash === 'GAMEHUB/PENALTY') {
-        setCurrentTab('PENALTY');
-      } else if (rawHash === 'CHEST' || rawHash === 'GAMEHUB/CHEST') {
-        setCurrentTab('CHEST');
-      } else if (rawHash === 'TOWER' || rawHash === 'GAMEHUB/TOWER') {
-        setCurrentTab('TOWER');
-      } else if (rawHash === 'PLINKO' || rawHash === 'GAMEHUB/PLINKO') {
-        setCurrentTab('PLINKO');
-      } else if (rawHash === 'EGG' || rawHash === 'GAMEHUB/EGG') {
-        setCurrentTab('EGG');
-      } else if (rawHash === 'DICE' || rawHash === 'GAMEHUB/DICE') {
-        setCurrentTab('DICE');
+      } else if (rawHash === 'FLAPPY' || rawHash === 'GAMEHUB/FLAPPY') {
+        setCurrentTab('FLAPPY');
+      } else if (rawHash === 'GAME2048' || rawHash === '2048' || rawHash === 'GAMEHUB/2048') {
+        setCurrentTab('GAME2048');
+      } else if (rawHash === 'MEMORY' || rawHash === 'GAMEHUB/MEMORY') {
+        setCurrentTab('MEMORY');
+      } else if (rawHash === 'BUBBLE' || rawHash === 'GAMEHUB/BUBBLE') {
+        setCurrentTab('BUBBLE');
+      } else if (rawHash === 'FRUIT' || rawHash === 'GAMEHUB/FRUIT') {
+        setCurrentTab('FRUIT');
+      } else if (rawHash === 'KNIFE' || rawHash === 'GAMEHUB/KNIFE') {
+        setCurrentTab('KNIFE');
+      } else if (rawHash === 'BLOCK' || rawHash === 'GAMEHUB/BLOCK') {
+        setCurrentTab('BLOCK');
+      } else if (rawHash === 'RUNNER' || rawHash === 'GAMEHUB/RUNNER') {
+        setCurrentTab('RUNNER');
+      } else if (rawHash === 'WORDLE' || rawHash === 'GAMEHUB/WORDLE') {
+        setCurrentTab('WORDLE');
       } else if (rawHash === 'VOUCHERS' || rawHash === 'REWARDS') {
         setCurrentTab('VOUCHERS');
       } else {
@@ -210,10 +215,13 @@ export const App: React.FC = () => {
   const progressPercent = profile?.nextTierProgress?.progressPercentage ?? Math.min(100, Math.round((currentTierPoints / nextTierPoints) * 100));
   const pointsNeeded = profile?.nextTierProgress?.pointsNeeded ?? Math.max(0, nextTierPoints - currentTierPoints);
 
+  const isPlayingGame = currentTab !== 'HOME' && currentTab !== 'GAMEHUB' && currentTab !== 'VOUCHERS';
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-amber-500 selection:text-white pb-20 md:pb-0">
+    <div className={`min-h-screen ${isPlayingGame ? 'bg-slate-950 pb-0' : 'bg-slate-50 text-slate-800 pb-20 md:pb-0'} flex flex-col font-sans selection:bg-amber-500 selection:text-white`}>
       {/* ── TOP LUXURY DESKTOP & MOBILE HEADER (Light Theme) ── */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-xs">
+      {!isPlayingGame && (
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo and Brand */}
           <div
@@ -253,7 +261,7 @@ export const App: React.FC = () => {
             <button
               onClick={() => navigateToTab('GAMEHUB')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 relative ${
-                currentTab === 'GAMEHUB' || currentTab === 'WHEEL' || currentTab === 'QUIZ'
+                currentTab !== 'HOME' && currentTab !== 'VOUCHERS'
                   ? 'bg-white text-amber-700 shadow-sm font-extrabold'
                   : 'text-slate-600 hover:text-slate-950'
               }`}
@@ -312,6 +320,7 @@ export const App: React.FC = () => {
           </div>
         </div>
       </header>
+      )}
 
       {/* ── MAIN CONTENT ROUTER ── */}
       <main className="flex-1">
@@ -335,65 +344,73 @@ export const App: React.FC = () => {
           <LuckyWheelPage onBack={() => navigateToTab('GAMEHUB')} />
         )}
 
-        {/* SUBGAME: ĐỐ VUI TRÍ TUỆ */}
-        {currentTab === 'QUIZ' && (
-          <TriviaQuizGame
+        {/* SUBGAME 1: FLAPPY NATCOM */}
+        {currentTab === 'FLAPPY' && (
+          <FlappyNatcomGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: VÉ CÀO MAY MẮN */}
-        {currentTab === 'SCRATCH' && (
-          <ScratchCardGame
+        {/* SUBGAME 2: 2048 NATCASH */}
+        {currentTab === 'GAME2048' && (
+          <Game2048Page
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: SÚT PHẠT ĐỀN 11M */}
-        {currentTab === 'PENALTY' && (
-          <PenaltyShootoutGame
+        {/* SUBGAME 3: LẬT THẺ TÌM CẶP */}
+        {currentTab === 'MEMORY' && (
+          <MemoryMatchGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: MỞ RƯƠNG BÁU CARIBE */}
-        {currentTab === 'CHEST' && (
-          <TreasureChestGame
+        {/* SUBGAME 4: BẮN BÓNG KANAVAL */}
+        {currentTab === 'BUBBLE' && (
+          <BubbleShooterGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: THÁP KHO BÁU MAY MẮN */}
-        {currentTab === 'TOWER' && (
-          <TowerClimbGame
+        {/* SUBGAME 5: CHÉM HOA QUẢ CARIBE */}
+        {currentTab === 'FRUIT' && (
+          <FruitSliceGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: THẢ BI ZICZAC PLINKO */}
-        {currentTab === 'PLINKO' && (
-          <PlinkoDropGame
+        {/* SUBGAME 6: PHI DAO VÒNG GỖ */}
+        {currentTab === 'KNIFE' && (
+          <KnifeHitGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: ĐẬP TRỨNG VÀNG */}
-        {currentTab === 'EGG' && (
-          <GoldenEggGame
+        {/* SUBGAME 7: XẾP GẠCH KIM CƯƠNG */}
+        {currentTab === 'BLOCK' && (
+          <BlockPuzzleGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
         )}
 
-        {/* SUBGAME: LẮC XÚC XẮC TÀI LỘC */}
-        {currentTab === 'DICE' && (
-          <LuckyDiceGame
+        {/* SUBGAME 8: ĐƯỜNG ĐUA SIÊU TỐC */}
+        {currentTab === 'RUNNER' && (
+          <EndlessRunnerGame
+            onBack={() => navigateToTab('GAMEHUB')}
+            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+          />
+        )}
+
+        {/* SUBGAME 9: ĐOÁN CHỮ MAY MẮN */}
+        {currentTab === 'WORDLE' && (
+          <WordleGame
             onBack={() => navigateToTab('GAMEHUB')}
             onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
           />
@@ -645,101 +662,68 @@ export const App: React.FC = () => {
                   {
                     id: 'WHEEL',
                     name: t('gamehub.game1_name', { defaultValue: 'Vòng Quay Tri Ân' }),
-                    categoryLabel: 'May Mắn',
+                    categoryLabel: t('gamehub.cat_lucky', { defaultValue: 'May Mắn' }),
                     icon: '🎡',
                     bgGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500',
                     badge: 'HOT',
                     badgeBg: 'bg-red-600',
-                    perk: freeTurns > 0 ? `${freeTurns} Lượt Free` : '20 HTG',
+                    perk: freeTurns > 0 ? `${freeTurns} Free` : '20 HTG',
                     action: () => navigateToTab('WHEEL'),
                   },
                   {
-                    id: 'SCRATCH',
-                    name: t('games.scratch.title', { defaultValue: 'Vé Cào May Mắn' }),
-                    categoryLabel: 'May Mắn',
-                    icon: '🎟️',
-                    bgGradient: 'bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600',
-                    badge: '100đ',
-                    badgeBg: 'bg-amber-600',
-                    perk: 'Trúng Liền',
-                    action: () => navigateToTab('SCRATCH'),
-                  },
-                  {
-                    id: 'PENALTY',
-                    name: t('games.penalty.title', { defaultValue: 'Sút Phạt Đền 11m' }),
-                    categoryLabel: 'Thể Thao',
-                    icon: '⚽',
-                    bgGradient: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600',
-                    badge: '+80đ',
+                    id: 'FLAPPY',
+                    name: t('games.flappy.title', { defaultValue: 'Flappy Natcom' }),
+                    categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+                    icon: '🕊️',
+                    bgGradient: 'bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700',
+                    badge: 'NEW',
                     badgeBg: 'bg-emerald-600',
-                    perk: 'Sút Vàng',
-                    action: () => navigateToTab('PENALTY'),
+                    perk: 'Data 4G',
+                    action: () => navigateToTab('FLAPPY'),
                   },
                   {
-                    id: 'CHEST',
-                    name: t('games.chest.title', { defaultValue: 'Mở Rương Caribe' }),
-                    categoryLabel: 'May Mắn',
-                    icon: '🏴‍☠️',
-                    bgGradient: 'bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700',
-                    badge: 'NỔ HŨ',
-                    badgeBg: 'bg-cyan-600',
-                    perk: '200 HTG',
-                    action: () => navigateToTab('CHEST'),
-                  },
-                  {
-                    id: 'TOWER',
-                    name: t('games.tower.title', { defaultValue: 'Tháp Kho Báu' }),
-                    categoryLabel: 'Mạo Hiểm',
-                    icon: '🏰',
-                    bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-slate-800',
-                    badge: 'x50 QUÀ',
-                    badgeBg: 'bg-purple-600',
-                    perk: '5 Tầng',
-                    action: () => navigateToTab('TOWER'),
-                  },
-                  {
-                    id: 'PLINKO',
-                    name: t('games.plinko.title', { defaultValue: 'Thả Bi Ziczac' }),
-                    categoryLabel: 'May Mắn',
-                    icon: '🔮',
-                    bgGradient: 'bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600',
-                    badge: 'x10 MULTI',
-                    badgeBg: 'bg-pink-600',
-                    perk: 'Neon Game',
-                    action: () => navigateToTab('PLINKO'),
-                  },
-                  {
-                    id: 'EGG',
-                    name: t('games.egg.title', { defaultValue: 'Đập Trứng Vàng' }),
-                    categoryLabel: 'May Mắn',
-                    icon: '🥚',
-                    bgGradient: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500',
-                    badge: 'LÌ XÌ',
+                    id: 'GAME2048',
+                    name: t('games.game2048.title', { defaultValue: '2048 Natcash' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '🔢',
+                    bgGradient: 'bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600',
+                    badge: '2048 HTG',
                     badgeBg: 'bg-amber-600',
-                    perk: '1 Chạm',
-                    action: () => navigateToTab('EGG'),
+                    perk: t('gamehub.perk_merge', { defaultValue: 'Gộp Tiền' }),
+                    action: () => navigateToTab('GAME2048'),
                   },
                   {
-                    id: 'DICE',
-                    name: t('games.dice.title', { defaultValue: 'Lắc Xúc Xắc' }),
-                    categoryLabel: 'May Mắn',
-                    icon: '🎲',
-                    bgGradient: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
-                    badge: '300đ',
-                    badgeBg: 'bg-indigo-600',
-                    perk: 'Bộ Ba',
-                    action: () => navigateToTab('DICE'),
+                    id: 'MEMORY',
+                    name: t('games.memory.title', { defaultValue: 'Lật Thẻ Tìm Cặp' }),
+                    categoryLabel: t('gamehub.cat_puzzle', { defaultValue: 'Trí Tuệ' }),
+                    icon: '🃏',
+                    bgGradient: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-pink-600',
+                    badge: t('gamehub.badge_45s', { defaultValue: '45 Giây' }),
+                    badgeBg: 'bg-purple-600',
+                    perk: 'Delimart',
+                    action: () => navigateToTab('MEMORY'),
                   },
                   {
-                    id: 'QUIZ',
-                    name: t('gamehub.game2_name', { defaultValue: 'Đố Vui Trúng Điểm' }),
-                    categoryLabel: 'Trí Tuệ',
-                    icon: '❓',
-                    bgGradient: 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600',
-                    badge: '+150đ',
-                    badgeBg: 'bg-blue-600',
-                    perk: '5 Câu Hỏi',
-                    action: () => navigateToTab('QUIZ'),
+                    id: 'BUBBLE',
+                    name: t('games.bubble.title', { defaultValue: 'Bắn Bóng Kanaval' }),
+                    categoryLabel: t('gamehub.cat_casual', { defaultValue: 'Giải Trí' }),
+                    icon: '🔮',
+                    bgGradient: 'bg-gradient-to-br from-pink-500 via-rose-600 to-amber-500',
+                    badge: t('gamehub.badge_jackpot', { defaultValue: 'NỔ HŨ' }),
+                    badgeBg: 'bg-pink-600',
+                    perk: 'Combo x5',
+                    action: () => navigateToTab('BUBBLE'),
+                  },
+                  {
+                    id: 'FRUIT',
+                    name: t('games.fruit.title', { defaultValue: 'Chém Hoa Quả' }),
+                    categoryLabel: t('gamehub.cat_skill', { defaultValue: 'Phản Xạ' }),
+                    icon: '🥭',
+                    bgGradient: 'bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600',
+                    badge: t('gamehub.badge_slash', { defaultValue: 'VUNG KIẾM' }),
+                    badgeBg: 'bg-emerald-600',
+                    perk: 'Caribe',
+                    action: () => navigateToTab('FRUIT'),
                   },
                 ].map((game) => (
                   <div
@@ -760,9 +744,9 @@ export const App: React.FC = () => {
                         </span>
                       )}
 
-                      {/* Giant Icon Occupying ~80% height of the square tile */}
-                      <div className="relative z-0 h-[80%] aspect-square flex items-center justify-center text-[70px] xs:text-[78px] sm:text-[88px] md:text-[98px] drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 select-none leading-none">
-                        {game.icon}
+                      {/* 3D High-End Vector Art Cover (Replacing generic emoji) */}
+                      <div className="relative z-0 w-full h-full flex items-center justify-center p-1.5 group-hover:scale-105 transition-all duration-300 select-none">
+                        <GameCoverArt gameId={game.id} className="w-full h-full object-contain drop-shadow-xl" />
                       </div>
 
                       {/* Floating Bottom Perk Tag */}
@@ -980,77 +964,81 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* ── MOBILE BOTTOM NAVIGATION BAR (HIGH-END FLOATING DOCK) ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-200/80 px-3 py-2 flex justify-around items-center z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-        {[
-          {
-            id: 'HOME',
-            label: t('nav.home'),
-            icon: Home,
-            isActive: currentTab === 'HOME',
-            onClick: () => navigateToTab('HOME'),
-          },
-          {
-            id: 'GAMEHUB',
-            label: t('nav.gamehub'),
-            icon: Gamepad2,
-            isActive: currentTab === 'GAMEHUB' || currentTab === 'WHEEL' || currentTab === 'QUIZ',
-            onClick: () => navigateToTab('GAMEHUB'),
-            hasDot: true,
-          },
-          {
-            id: 'VOUCHERS',
-            label: t('nav.vouchers'),
-            icon: Ticket,
-            isActive: currentTab === 'VOUCHERS',
-            onClick: () => navigateToTab('VOUCHERS'),
-          },
-          {
-            id: 'WALLET_CODE',
-            label: t('nav.wallet_code'),
-            icon: QrCode,
-            isActive: showQrModal,
-            onClick: () => setShowQrModal(true),
-          },
-        ].map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={item.onClick}
-              className={`flex flex-col items-center justify-center py-1.5 px-3.5 rounded-2xl transition-all duration-200 active:scale-95 relative ${
-                item.isActive
-                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black shadow-md shadow-orange-500/30'
-                  : 'text-slate-500 hover:text-slate-900 font-semibold'
-              }`}
-            >
-              {item.hasDot && !item.isActive && (
-                <span className="absolute top-1 right-2 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-              )}
-              <Icon className={`w-4 h-4 mb-0.5 ${item.isActive ? 'text-white stroke-[2.5px]' : 'text-slate-500 stroke-[2px]'}`} />
-              <span className={`text-[10px] tracking-tight ${item.isActive ? 'font-black text-white' : 'font-semibold text-slate-500'}`}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* ── MOBILE BOTTOM NAVIGATION BAR & DESKTOP FOOTER (HIDDEN DURING GAMEPLAY) ── */}
+      {!isPlayingGame && (
+        <>
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-200/80 px-3 py-2 flex justify-around items-center z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+            {[
+              {
+                id: 'HOME',
+                label: t('nav.home'),
+                icon: Home,
+                isActive: currentTab === 'HOME',
+                onClick: () => navigateToTab('HOME'),
+              },
+              {
+                id: 'GAMEHUB',
+                label: t('nav.gamehub'),
+                icon: Gamepad2,
+                isActive: currentTab !== 'HOME' && currentTab !== 'VOUCHERS',
+                onClick: () => navigateToTab('GAMEHUB'),
+                hasDot: true,
+              },
+              {
+                id: 'VOUCHERS',
+                label: t('nav.vouchers'),
+                icon: Ticket,
+                isActive: currentTab === 'VOUCHERS',
+                onClick: () => navigateToTab('VOUCHERS'),
+              },
+              {
+                id: 'WALLET_CODE',
+                label: t('nav.wallet_code'),
+                icon: QrCode,
+                isActive: showQrModal,
+                onClick: () => setShowQrModal(true),
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={item.onClick}
+                  className={`flex flex-col items-center justify-center py-1.5 px-3.5 rounded-2xl transition-all duration-200 active:scale-95 relative ${
+                    item.isActive
+                      ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black shadow-md shadow-orange-500/30'
+                      : 'text-slate-500 hover:text-slate-900 font-semibold'
+                  }`}
+                >
+                  {item.hasDot && !item.isActive && (
+                    <span className="absolute top-1 right-2 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
+                  <Icon className={`w-4 h-4 mb-0.5 ${item.isActive ? 'text-white stroke-[2.5px]' : 'text-slate-500 stroke-[2px]'}`} />
+                  <span className={`text-[10px] tracking-tight ${item.isActive ? 'font-black text-white' : 'font-semibold text-slate-500'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-      {/* ── DESKTOP FOOTER ── */}
-      <footer className="hidden md:block bg-white text-slate-500 text-xs py-6 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>{t('footer.enterprise_security')}</span>
-          </div>
-          <div>
-            <span>{t('footer.copyright')}</span>
-          </div>
-        </div>
-      </footer>
+          {/* ── DESKTOP FOOTER ── */}
+          <footer className="hidden md:block bg-white text-slate-500 text-xs py-6 border-t border-slate-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>{t('footer.enterprise_security')}</span>
+              </div>
+              <div>
+                <span>{t('footer.copyright')}</span>
+              </div>
+            </div>
+          </footer>
+        </>
+      )}
 
       {/* ── DYNAMIC QR MODAL ── */}
       {showQrModal && (

@@ -1,201 +1,171 @@
-# DANH MỤC TRÒ CHƠI CỔNG GAME VÀ CHIẾN LƯỢC PHÁT TRIỂN HỆ SINH THÁI LOYALTY
+# DANH MỤC TRÒ CHƠI CỔNG GAME VÀ CHIẾN LƯỢC TẬN DỤNG MÃ NGUỒN MỞ (OPEN-SOURCE HTML5 INTEGRATION)
 
-Tài liệu đặc tả danh mục các trò chơi HTML5 mang tính may rủi vui nhộn, hấp dẫn, dễ tiếp cận và được tối ưu hóa chuyên biệt cho người dùng ví điện tử Natcash cùng thị trường Haiti.
+Tài liệu đặc tả giải pháp tận dụng các trò chơi HTML5 có sẵn từ các kênh chia sẻ miễn phí và cộng đồng mã nguồn mở, kết hợp quy trình tùy biến nhanh (Reskinning & Branding) và đấu nối cầu nối API chuẩn hóa với hệ sinh thái Loyalty Ví Natcash.
 
 ---
 
-## 1. TỔNG QUAN CHIẾN LƯỢC DANH MỤC TRÒ CHƠI
+## 1. CHIẾN LƯỢC TẬN DỤNG GAME CÓ SẴN (FAST RESKINNING & TIME-TO-MARKET)
 
-Cổng Game (GameHub) trong hệ sinh thái `micro-loyalty` không chỉ đóng vai trò là một tiện ích giải trí đơn thuần, mà là một động cơ giữ chân khách hàng (Retention Engine) và kích hoạt giao dịch (Transaction Activation Engine) cốt lõi.
+Thay vì phải thiết kế đồ họa vật lý, lập trình bộ máy chuyển động (Physics Engine) và viết mã logic từ đầu cho từng trò chơi (tốn 2-4 tuần/game), hệ thống áp dụng **Chiến Lược Tái Bản Hóa Nhanh (Fast Reskinning Strategy)**:
 
 ```mermaid
 flowchart LR
-    subgraph S_LEFT ["ĐỘNG CƠ KÍCH HOẠT VÀ TÍCH LŨY LƯỢT CHƠI"]
+    subgraph S_SOURCE ["1. NGUỒN GAME CÓ SẴN (OPEN-SOURCE)"]
         direction TB
-        G1["Giao dịch Tài chính Ví Natcash<br/>• Chuyển tiền, nạp tiền, rút tiền<br/>• Thanh toán cước viễn thông Natcom<br/>• Thanh toán quầy thu ngân đối tác"]
-        G2["Điểm Thưởng Hội viên Loyalty<br/>• Đăng nhập điểm danh mỗi ngày<br/>• Hoàn thành nhiệm vụ chiến dịch<br/>• Đổi điểm tích lũy lấy lượt chơi"]
-        G1 --> G2
+        SRC_1["Kho mã nguồn mở GitHub (Giấy phép MIT / Apache 2.0)<br/>• Phaser.js, Pixi.js, HTML5 Canvas Mini-games"]
+        SRC_2["Cộng đồng chia sẻ miễn phí GameDev<br/>• CodePen, js13kGames, itch.io open-source assets"]
+        SRC_1 --> SRC_2
     end
 
-    subgraph S_RIGHT ["VÒNG LẶP TRẢI NGHIỆM VÀ PHẦN THƯỞNG"]
+    subgraph S_RESKIN ["2. TÙY BIẾN NHANH (1 - 2 NGÀY/GAME)"]
         direction TB
-        P1["Trải nghiệm Trò chơi May rủi Siêu tốc<br/>• Thời gian 1 ván dưới 10 giây<br/>• Hiệu ứng rực rỡ, âm thanh phấn khích<br/>• Tính toán kết quả tuyệt đối tại Backend"]
-        P2["Phần thưởng Giá trị Thiết thực<br/>• Tiền hoàn trực tiếp vào Ví Natcash<br/>• Gói cước Data 4G / Phút gọi Natcom<br/>• Mã giảm giá mua sắm quầy đối tác"]
-        P1 --> P2
+        RES_1["Thay thế Tài nguyên Đồ họa (Assets Reskinning)<br/>• Đổi sprite nhân vật, logo Natcash, biểu tượng Natcom<br/>• Tùy biến hình nền phong cách Haiti Kanaval, Caribe"]
+        RES_2["Tích hợp Âm thanh Bản địa hóa<br/>• Gắn bộ 20 file âm thanh WAV đã dựng sẵn vào các sự kiện"]
+        RES_1 --> RES_2
     end
 
-    G2 --> P1
-    P2 -->|Tái kích hoạt chi tiêu| G1
+    subgraph S_BRIDGE ["3. ĐẤU NỐI CẦU NỐI NATCASH GAME BRIDGE"]
+        direction TB
+        BR_1["Nhúng qua Webview Component hoặc iFrame Sandbox"]
+        BR_2["Đấu nối API Backend loyalty-service<br/>• Kiểm tra lượt chơi, nhận kết quả RNG từ Server<br/>• Tự động cộng Data 4G, Tiền ví, Voucher đối tác"]
+        BR_1 --> BR_2
+    end
+
+    S_SOURCE --> S_RESKIN
+    S_RESKIN --> S_BRIDGE
 ```
 
-### Phân Định Danh Mục Sản Phẩm:
-1. **Phân hệ Vòng Quay May Mắn Nền Tảng (LuckyDraw Engine):** Đã tích hợp sẵn trong hệ thống, hỗ trợ động cơ nạp đa giao diện chủ đề linh hoạt (Dynamic Themes) theo từng mùa lễ hội hoặc chiến dịch thương hiệu.
-2. **Bộ Sưu Tập 7 Trò Chơi May Rủi Mới Độc Lập:** Bộ trò chơi tương tác tức thì, tập trung vào trải nghiệm may rủi kịch tính, đồ họa bắt mắt và cơ chế phần thưởng hấp dẫn.
+### Ưu Điểm Đột Phá Của Giải Pháp:
+1. **Rút ngắn 85% thời gian phát triển:** Từ 3-4 tuần/game xuống chỉ còn **1 - 2 ngày làm việc** cho 1 game hoàn chỉnh (chỉ cần thay đổi ảnh, màu sắc và gắn hàm gọi API).
+2. **Gameplay đã được kiểm chứng (Proven Fun & Stability):** Các tựa game mã nguồn mở kinh điển (như Flappy, 2048, Lật thẻ, Bắn bóng) đã có hàng triệu người chơi trên toàn cầu, logic hoạt họa cực kỳ mượt mà và không lo phát sinh lỗi chuyển động vật lý.
+3. **Chi phí gần như bằng 0:** Khai thác 100% tài nguyên miễn phí với giấy phép mở thương mại (MIT / Creative Commons / Apache 2.0).
 
 ---
 
-## 2. NÂNG CẤP ĐA GIAO DIỆN CHỦ ĐỀ CHO VÒNG QUAY NỀN TẢNG (LUCKYDRAW THEMES)
+## 2. DANH MỤC 10 TRÒ CHƠI HTML5 CÓ SẴN PHÙ HỢP NHẤT CHO THỊ TRƯỜNG HAITI
 
-Vòng quay may mắn (LuckyDraw) là tính năng cốt lõi đã có sẵn. Thay vì xây dựng lại từ đầu, hệ thống bổ sung **Cơ chế Đổi Giao Diện Chủ Đề (Dynamic Theme Switcher)** được cấu hình trực tiếp từ Cổng quản trị Loyalty CMS:
-
-* **Giao diện 1 — Tiêu Chuẩn Ví Natcash (Default Brand Theme):** Tông màu đỏ cam và trắng hiện đại, ánh kim sang trọng của thương hiệu Natcash.
-* **Giao diện 2 — Lễ Hội Đường Phố Lửa Rực Rỡ (Kanaval Festive Theme):** Sắc màu nhiệt đới rực rỡ, vòng quay trang trí lông vũ, mặt nạ hóa trang và hiệu ứng lửa ấm áp cùng âm nhạc lễ hội Haiti.
-* **Giao diện 3 — Đêm Biển Đảo Caribe (Caribbean Summer Night Theme):** Nền biển đêm xanh ngọc, rạn san hô phát sáng và ngọc trai lấp lánh.
-* **Giao diện 4 — Năm Mới & Giáng Sinh Rộn Ràng (Holiday & New Year Theme):** Hộp quà thắt nơ, pháo hoa nổ rực rỡ đón chào năm mới.
-
----
-
-## 3. BỘ SƯU TẬP 7 TRÒ CHƠI MAY RỦI MỚI ĐỘC LẬP
-
----
-
-### 3.1. Vé Cào Trúng Thưởng Siêu Tốc (Instant Scratch Card)
-
-* **Bối cảnh & Phong cách:** Mô phỏng chiếc vé cào may mắn trúng liền, một nét văn hóa giải trí rất quen thuộc trong đời sống hàng ngày tại Haiti.
-* **Cơ chế tương tác:** Màn hình hiển thị tấm vé với ma trận 3×3 ô phủ lớp mạ bạc. Người chơi dùng ngón tay vuốt trực tiếp lên màn hình để bóc mở từng ô hoặc bấm nút "Cào tất cả" để mở nhanh.
-* **Yếu tố may rủi & Cảm xúc:**
-  * Tìm đủ 3 biểu tượng trùng khớp (3 túi tiền vàng, 3 quả dừa nhiệt đới, 3 vương miện) để nhận giải thưởng tương ứng.
-  * Việc cào mở từng góc tạo cảm giác tự tay khám phá vận may vô cùng kích thích.
-* **Thời gian 1 ván:** 5 đến 8 giây.
+| STT | Tên Trò Chơi Gốc & Nguồn Mở | Tên Bản Địa Hóa Natcash | Bối Cảnh Tùy Biến Cho Haiti | Cách Chơi & Thời Gian 1 Ván | Mức Độ Hấp Dẫn |
+| :---: | :--- | :--- | :--- | :--- | :---: |
+| **1** | **Flappy Bird Clone** *(HTML5 Canvas / MIT)* | **Flappy Natcom (Bay Vượt Trạm Sóng)** | Điều khiển chú chim Natcom bay qua các khe hở giữa các cột thu phát sóng viễn thông 4G Natcom. | Chạm màn hình giữ độ cao. Vượt 10 trạm nhận quà.<br/>*(Thời gian: 10 - 20 giây)* | Cực kỳ cuốn hút |
+| **2** | **2048 Game Engine** *(Gabriele Cirulli / MIT)* | **2048 Natcash Edition** | Ghép các đồng tiền Gourde (HTG) và logo Natcom/Natcash từ 2 $\rightarrow$ 4 $\rightarrow$ 8 $\rightarrow$ ... $\rightarrow$ 2048. | Vuốt 4 hướng để gộp ô. Đạt mốc 512, 1024, 2048 nhận Data 4G.<br/>*(Thời gian: 1 - 2 phút)* | Trí tuệ cao |
+| **3** | **Memory Match Card** *(HTML5 JS / MIT)* | **Lật Thẻ Tìm Cặp Nhận Quà** | Bộ thẻ bài in logo các đối tác lớn tại Haiti: Siêu thị Delimart, Cây xăng TotalEnergies, Natcom, Ví Natcash. | Lật mở từng cặp thẻ giống nhau trong 30 giây.<br/>*(Thời gian: 15 - 30 giây)* | Dễ chơi, hợp mọi lứa tuổi |
+| **4** | **Bubble Shooter 2D** *(Phaser.js / MIT)* | **Bắn Bóng Nổ Hũ Kanaval** | Súng thần công bắn các quả bóng màu rực rỡ lễ hội Kanaval Haiti (Đỏ, Vàng, Xanh, Tím). | Bắn trúng cụm 3 bóng cùng màu để ăn điểm thưởng.<br/>*(Thời gian: 30 - 45 giây)* | Rất thư giãn |
+| **5** | **Fruit Ninja / Fruit Slice Clone** *(Canvas / MIT)* | **Chém Hoa Quả Vùng Vịnh Caribe** | Chém các loại trái cây nhiệt đới đặc trưng của Haiti: Dừa, Xoài Francisque, Dứa, Đu đủ. | Vuốt tay chém hoa quả bay lên, tránh chém trúng bom.<br/>*(Thời gian: 20 - 30 giây)* | Kịch tính cao |
+| **6** | **Knife Hit Clone** *(Phaser / Canvas / MIT)* | **Phi Dao Vòng Gỗ Thần Tài** | Bàn gỗ xoay tròn đính các phong bao lì xì và gói Data. Người chơi căn nhịp phi dao găm vào thớt gỗ. | Chạm để phi dao, không được phi đè lên dao đã cắm.<br/>*(Thời gian: 10 - 15 giây)* | Thử thách phản xạ |
+| **7** | **Block Puzzle / Tetris Classic** *(HTML5 Canvas / MIT)* | **Xếp Gạch Kim Cương Natcash** | Xếp các khối gạch màu sắc lấp đầy hàng ngang hoặc cột dọc để phát nổ tiền vàng. | Kéo thả khối gạch vào bàn cờ 8×8 hoặc 10×10.<br/>*(Thời gian: 1 - 2 phút)* | Giữ chân cực lâu |
+| **8** | **Endless Runner 2D** *(Canvas / MIT)* | **Đường Đua Siêu Tốc Port-au-Prince** | Nhân vật chạy vượt chướng ngại vật trên đường phố Haiti, nhặt các đồng tiền vàng Natcash. | Nhảy và trượt để né xe buýt Tap-Tap và chướng ngại vật.<br/>*(Thời gian: 20 - 40 giây)* | Phấn khích |
+| **9** | **Match-3 Jewel / Candy Engine** *(HTML5 / MIT)* | **Ghép 3 Kim Cương Caribe** | Ghép các viên đá quý, ngọc bích và rương báu biển Caribe để mở khóa các mốc điểm. | Đổi vị trí 2 ô liền kề tạo hàng 3 viên cùng loại.<br/>*(Thời gian: 30 - 60 giây)* | Gây nghiện cao |
+| **10** | **Wordle Clone Multi-language** *(React / MIT)* | **Đoán Chữ May Mắn (Creole / Pháp)** | Đoán từ vựng bí ẩn có 5 chữ cái bằng tiếng Creole hoặc tiếng Pháp trong 6 lần thử. | Nhập chữ đoán, ô đổi màu Xanh/Vàng/Xám.<br/>*(Thời gian: 1 - 2 phút)* | Văn hóa bản địa |
 
 ---
 
-### 3.2. Sút Phạt Đền Cuồng Nhiệt (Penalty Football Shootout)
+## 3. KIẾN TRÚC TÍCH HỢP VÀ CẦU NỐI KỸ THUẬT (NATCASH GAME BRIDGE SDK)
 
-* **Bối cảnh & Phong cách:** Bóng đá là môn thể thao được yêu thích cuồng nhiệt số một tại Haiti. Sân vận động chật kín khán giả reo hò dưới ánh đèn rực rỡ.
-* **Cơ chế tương tác:** Người chơi đặt bóng tại chấm phạt đền 11m, vuốt tay trên màn hình để chọn góc sút và lực sút (Góc cao trái/phải, Góc thấp trái/phải, hoặc Sút chính diện) đối đầu với thủ môn máy tính.
-* **Yếu tố may rủi & Cảm xúc:**
-  * Máy chủ tính toán xác suất thủ môn bay người cản phá hoặc bắt hụt.
-  * Bóng tung lưới: Khán giả reo hò cuồng nhiệt, pháo sáng rực rỡ và nhận thưởng lớn.
-  * Bóng trúng cột dọc/xà ngang: Nhận phần thưởng an ủi và điểm kinh nghiệm.
-* **Thời gian 1 ván:** 3 đến 5 giây.
-
----
-
-### 3.3. Mở Rương Báu Vùng Biển Caribe (Pirate Treasure Chests)
-
-* **Bối cảnh & Phong cách:** Hang động bí mật dưới đáy biển Caribe với những chiếc rương kho báu cổ mạ vàng, bản đồ da dê và đá quý lấp lánh.
-* **Cơ chế tương tác:** Màn hình xuất hiện 3 hoặc 5 chiếc rương cổ đang khóa chặt đung đưa. Người chơi chạm tay chọn duy nhất 1 chiếc rương để mở khóa.
-* **Yếu tố may rủi & Cảm xúc:**
-  * Mỗi rương ẩn chứa một bất ngờ: Rương chứa tiền vàng ngập tràn, Rương ngọc bích nhân ba điểm thưởng, hoặc Rương Nổ Hũ (Jackpot) tích lũy của tuần.
-  * Hiệu ứng mở nắp rương phát ra luồng ánh sáng chói lọi cùng âm thanh mở khóa kim loại chân thực.
-* **Thời gian 1 ván:** 3 đến 4 giây.
-
----
-
-### 3.4. Tháp Kho Báu May Mắn (Treasure Tower Climb)
-
-* **Bối cảnh & Phong cách:** Ngọn tháp kho báu 5 tầng với các bậc đá cổ kính chứa đầy phần thưởng tăng dần theo độ cao.
-* **Cơ chế tương tác:** Mỗi tầng tháp có 3 ô cửa đá. Người chơi chạm mở 1 ô để bước lên tầng tiếp theo:
-  * **Ô May Mắn:** Mở ra ngọc quý, nhân đôi hệ số phần thưởng (Tầng 1: ×1, Tầng 2: ×2, Tầng 3: ×5, Tầng 4: ×10, Đỉnh tháp: ×50). Người chơi có quyền chọn **Dừng lại bảo toàn nhận thưởng ngay** hoặc **Bước tiếp lên tầng cao hơn**.
-  * **Ô Bẫy Đá Sập:** Ván chơi kết thúc, người chơi nhận phần thưởng an ủi cố định.
-* **Yếu tố may rủi & Cảm xúc:** Sự giằng xé kịch tính giữa việc dừng lại an toàn hay mạo hiểm leo tiếp để ăn giải thưởng khổng lồ.
-* **Thời gian 1 ván:** 4 đến 8 giây.
-
----
-
-### 3.5. Thả Bi Ziczac May Mắn (Plinko Ball Drop)
-
-* **Bối cảnh & Phong cách:** Trò chơi bàn đinh kinh điển với thiết kế dạng thác nước nhiệt đới neon hiện đại.
-* **Cơ chế tương tác:** Người chơi nhấn nút thả bóng tròn từ đỉnh bàn đinh ziczac. Quả bóng nảy ngẫu nhiên qua các chốt đinh và rơi xuống các ô hệ số nhân phần thưởng ở đáy bàn.
-* **Yếu tố may rủi & Cảm xúc:**
-  * Quỹ đạo rơi của bóng biến đổi liên tục sau mỗi lần va chạm đinh ghim, tạo cảm giác nín thở theo dõi từng cú nảy.
-  * Các ô ở đáy có hệ số thưởng đối xứng: Ở giữa là hệ số an toàn (×1, ×1.5), hai mép ngoài cùng là hệ số siêu khủng (×10, ×50, ×100).
-* **Thời gian 1 ván:** 6 đến 10 giây.
-
----
-
-### 3.6. Đập Trứng Vàng May Mắn (Golden Egg Smash)
-
-* **Bối cảnh & Phong cách:** Nông trại nhiệt đới vui nhộn với 3 đến 5 quả trứng vàng khổng lồ đung đưa trên tổ rơm.
-* **Cơ chế tương tác:** Người chơi điều khiển chiếc búa thần kỳ gõ mạnh vào một quả trứng vàng bất kỳ để đập vỡ vỏ trứng.
-* **Yếu tố may rủi & Cảm xúc:**
-  * Vỏ trứng nứt ra kèm theo tiếng nổ pháo hoa, gà con nhảy múa mang theo các phong bao lì xì tiền mặt hoặc phiếu giảm giá.
-  * Thao tác 1 chạm siêu nhanh, phù hợp cho mọi đối tượng khách hàng ở mọi lứa tuổi.
-* **Thời gian 1 ván:** 3 đến 4 giây.
-
----
-
-### 3.7. Lắc Cốc Xúc Xắc Tài Lộc (Lucky Dice Roll)
-
-* **Bối cảnh & Phong cách:** Trò chơi lắc xúc xắc dân gian quen thuộc trên nền bàn gỗ cổ điển.
-* **Cơ chế tương tác:** Người chơi nhấn nút lắc chiếc cốc da chứa 2 hoặc 3 viên xúc xắc 3D. Cốc mở ra và các viên xúc xắc đổ ra bàn.
-* **Yếu tố may rủi & Cảm xúc:**
-  * Tính điểm theo các bộ số may mắn: Đạt cặp số giống nhau (như đôi 6), tổng điểm nút trên 10, hoặc số tiến (4-5-6) để nhận giải thưởng lớn.
-  * Có thể mở rộng sang cơ chế đường đua thám hiểm: Số điểm nút lắc được là số bước nhân vật di chuyển trên bản đồ nhận quà.
-* **Thời gian 1 ván:** 4 đến 5 giây.
-
----
-
-## 4. MA TRẬN SO SÁNH VÀ ĐÁNH GIÁ CHỈ SỐ VẬN HÀNH
-
-| Phân Loại & Tên Trò Chơi | Thời Lượng | Mức Độ Kịch Tính | Độ Hợp Thị Trường Haiti | Tải Trọng Đồ Họa | Độ Phức Tạp Lập Trình |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Vòng Quay LuckyDraw (Đổi Theme)** | 4 – 6 giây | Cao | Tuyệt đối | Có sẵn | Đã hoàn thành |
-| **1. Vé Cào Trúng Thưởng** | 5 – 8 giây | Rất cao | Rất cao | Siêu nhẹ (~250KB) | Thấp |
-| **2. Sút Phạt Đền Cuồng Nhiệt** | 3 – 5 giây | Cực cao | Tuyệt đối | Nhẹ (~400KB) | Trung bình |
-| **3. Mở Rương Báu Caribe** | 3 – 4 giây | Cao | Rất cao | Siêu nhẹ (~220KB) | Thấp |
-| **4. Tháp Kho Báu May Mắn** | 4 – 8 giây | Cực cao | Rất cao | Siêu nhẹ (~250KB) | Trung bình |
-| **5. Thả Bi Ziczac (Plinko)** | 6 – 10 giây | Cực cao | Cao | Nhẹ (~350KB) | Trung bình |
-| **6. Đập Trứng Vàng** | 3 – 4 giây | Trung bình | Cao | Siêu nhẹ (~200KB) | Thấp |
-| **7. Lắc Cốc Xúc Xắc** | 4 – 5 giây | Cao | Cao | Siêu nhẹ (~250KB) | Thấp |
-
----
-
-## 5. CƠ CHẾ TRÒ CHƠI HÓA VÀ GẮN KẾT VÍ NATCASH
-
-Để các trò chơi phát huy tối đa hiệu quả kinh doanh, toàn bộ luồng cấp phát lượt chơi và trả thưởng được liên kết chặt chẽ với các hành vi trên ứng dụng ví Natcash:
+Để nhúng bất kỳ trò chơi HTML5 có sẵn nào vào ứng dụng Webview Natcash mà không cần sửa đổi sâu mã nguồn gốc của game, hệ thống sử dụng cơ chế **Cầu Nối Thông Điệp (Window PostMessage Bridge)** chuẩn hóa:
 
 ```mermaid
 flowchart LR
-    subgraph S_SOURCES ["NGUỒN CẤP LƯỢT CHƠI MỖI NGÀY"]
+    subgraph S_GAME_CLIENT ["TRÒ CHƠI HTML5 CÓ SẴN (IFRAME / COMPONENT)"]
         direction TB
-        S1["Lượt Miễn phí Định kỳ<br/>• Tặng 1 lượt miễn phí mỗi ngày khi mở ứng dụng<br/>• Duy trì chuỗi đăng nhập liên tục 7 ngày nhận rương báu"]
-        S2["Nhiệm vụ Giao dịch Tài chính<br/>• Chuyển tiền / Nạp tiền ví từ 500 HTG: Nhận +1 lượt<br/>• Nạp thẻ cào / Mua gói Data Natcom: Nhận +2 lượt<br/>• Thanh toán quét mã QR tại quầy: Nhận +1 lượt"]
-        S3["Đổi Điểm Loyalty Tích Lũy<br/>• Đổi 50 điểm Loyalty lấy 1 lượt chơi"]
-        S1 --> S2
-        S2 --> S3
+        G_START["1. Khởi động Game: Gửi thông điệp GAME_INIT"]
+        G_PLAY["2. Người chơi bắt đầu ván: Gửi GAME_START_TURN"]
+        G_OVER["3. Kết thúc ván: Gửi GAME_FINISH kèm Điểm số"]
+        G_START --> G_PLAY --> G_OVER
     end
 
-    subgraph S_REWARDS ["DANH MỤC PHẦN THƯỞNG TRẢ VỀ"]
+    subgraph S_BRIDGE_LAYER ["CẦU NỐI NATCASH GAME BRIDGE (REACT WEBVIEW)"]
         direction TB
-        R1["Tiền mặt Ví Natcash (Nạp tức thì)<br/>• Cộng trực tiếp vào số dư khả dụng của khách hàng"]
-        R2["Tài nguyên Viễn thông Natcom<br/>• Gói Data 1GB/3GB, gói 50 phút gọi nội mạng"]
-        R3["Phiếu Ưu Đãi Mua Sắm Đối Tác<br/>• Voucher giảm giá tại chuỗi siêu thị, xăng dầu, ăn uống"]
-        R4["Điểm Thưởng Loyalty Nâng Hạng<br/>• Tích lũy điểm để nâng hạng Bạc, Vàng, Kim Cương"]
-        R1 --> R2
-        R2 --> R3
-        R3 --> R4
+        B_AUTH["Kiểm tra Token JWT, Số dư Lượt chơi & Điểm hội viên"]
+        B_API["Gửi yêu cầu POST /api/v1/games/{id}/play lên Backend"]
+        B_RES["Nhận phần thưởng từ Backend RNG & Phản hồi vào Game"]
+        B_AUTH --> B_API --> B_RES
     end
 
-    S_SOURCES -->|Tham gia Trò chơi| S_REWARDS
+    G_PLAY -->|postMessage| B_AUTH
+    B_RES -->|postMessage| G_OVER
+```
+
+### 3.1. Mã Nguồn Cầu Nối Chuẩn Hóa (`NatcashGameBridge.js`)
+
+Tệp script siêu nhẹ này được nhúng trực tiếp vào tệp `index.html` của bất kỳ trò chơi mã nguồn mở nào:
+
+```javascript
+// public/games/common/NatcashGameBridge.js
+window.NatcashGameBridge = {
+  // 1. Gửi yêu cầu bắt đầu chơi và trừ lượt lên Webview cha
+  requestPlayTurn: function(gameCode, callback) {
+    window.parent.postMessage({
+      type: 'NATCASH_GAME_PLAY_REQUEST',
+      gameCode: gameCode,
+      timestamp: Date.now()
+    }, '*');
+
+    // Lắng nghe kết quả phần thưởng trả về từ Backend
+    window.addEventListener('message', function onResult(event) {
+      if (event.data && event.data.type === 'NATCASH_GAME_RESULT') {
+        window.removeEventListener('message', onResult);
+        callback(event.data.payload);
+      }
+    });
+  },
+
+  // 2. Báo cáo kết thúc ván chơi và gửi điểm số để ghi nhận BXH
+  reportGameOver: function(gameCode, score, stats) {
+    window.parent.postMessage({
+      type: 'NATCASH_GAME_OVER',
+      gameCode: gameCode,
+      score: score,
+      stats: stats
+    }, '*');
+  },
+
+  // 3. Phát âm thanh đồng bộ qua hệ thống âm thanh Webview
+  playSound: function(soundName) {
+    window.parent.postMessage({
+      type: 'NATCASH_PLAY_SOUND',
+      sound: soundName
+    }, '*');
+  }
+};
 ```
 
 ---
 
-## 6. KIẾN TRÚC KỸ THUẬT VÀ BẢO MẬT PHÍA MÁY CHỦ
+## 4. QUY TRÌNH 4 BƯỚC CHUYỂN ĐỔI GAME CÓ SẴN THÀNH GAME NATCASH (SOP)
 
-1. **Thuật toán sinh kết quả ngẫu nhiên bảo mật (Backend RNG):**
-   * Phía giao diện Frontend Webview **tuyệt đối không nắm giữ logic tính toán thắng thua**.
-   * Khi người chơi bấm nút chơi, ứng dụng gửi yêu cầu `POST /api/v1/games/play` lên máy chủ `loyalty-service`.
-   * Backend kiểm tra lượt chơi hợp lệ, chiếm giữ khóa phân tán `lock:spin:tenant_id:game_id:user_id` qua Redisson, thực thi thuật toán quay số có trọng số cấu hình từ CMS kết hợp hạn mức ngân sách ngày, rồi trả về mã giải thưởng cùng góc quay/vị trí hiển thị.
-   * Giao diện chỉ thực thi hoạt họa (Animation) khớp với kết quả máy chủ đã chỉ định.
-2. **Khóa chống gian lận và chống bẫy đồng thời:**
-   * Ngăn chặn người chơi can thiệp sửa đổi gói tin, chặn đứng việc mở nhiều luồng bắn request cùng một thời điểm để trục lợi lượt chơi.
-3. **Cơ chế ghi sổ bất biến và đối soát:**
-   * Mọi lượt chơi đều được ghi nhận vào bảng `loyalty_game_turns` và `loyalty_point_ledger` với đầy đủ mã giao dịch duy nhất, thời gian và giá trị phần thưởng.
+```mermaid
+flowchart LR
+    subgraph S_STEP1 ["BƯỚC 1: LỰA CHỌN MÃ NGUỒN"]
+        direction TB
+        ST1["Tìm kiếm repository HTML5 mini-game trên GitHub<br/>• Kiểm tra giấy phép: MIT / Creative Commons / Apache 2.0<br/>• Tải mã nguồn về thư mục src/webview/public/games/&lt;slug&gt;/"]
+    end
+
+    subgraph S_STEP2 ["BƯỚC 2: TÁI THIẾT KẾ ĐỒ HỌA"]
+        direction TB
+        ST2["Thay thế các tệp hình ảnh (.png, .svg) trong thư mục assets/<br/>• Nhân vật, icon tiền xu Natcash, cọc Data 4G Natcom<br/>• Nền phong cách Kanaval, Caribe, Cờ Haiti"]
+    end
+
+    subgraph S_STEP3 ["BƯỚC 3: ĐẤU NỐI BRIDGE"]
+        direction TB
+        ST3["Chèn tệp NatcashGameBridge.js vào index.html<br/>• Thay thế nút 'Start Game' gốc bằng hàm requestPlayTurn()<br/>• Gắn hàm reportGameOver() khi kết thúc ván"]
+    end
+
+    subgraph S_STEP4 ["BƯỚC 4: ĐĂNG KÝ TRÊN CMS"]
+        direction TB
+        ST4["Khai báo Game mới trên Loyalty CMS<br/>• Đặt tên game, tải ảnh thumbnail<br/>• Cấu hình tỷ lệ trúng thưởng và liên kết nhiệm vụ"]
+    end
+
+    S_STEP1 --> S_STEP2 --> S_STEP3 --> S_STEP4
+```
+
+* **Thời gian thực hiện toàn bộ quy trình:** Chỉ mất **từ 4 đến 8 giờ làm việc** cho 1 lập trình viên Frontend để đưa một tựa game mới tinh lên sóng!
 
 ---
 
-## 7. LỘ TRÌNH TRIỂN KHAI THEO TỪNG GIAI ĐOẠN
+## 5. KẾT LUẬN VÀ KẾ HOẠCH HÀNH ĐỘNG
 
-* **Giai đoạn 1 (Ra mắt Cốt lõi & Đổi Theme Vòng Quay):**
-  * Tích hợp bộ **Theme Lễ hội Kanaval** cho Vòng quay LuckyDraw sẵn có.
-  * Phát hành trò chơi mới: **Vé Cào Trúng Thưởng Siêu Tốc**.
-  * Tích hợp nhiệm vụ nhận lượt chơi từ giao dịch nạp tiền ví Natcash và cước Natcom.
-* **Giai đoạn 2 (Mở rộng Tương tác Thể thao & Thử Thách Mạo Hiểm):**
-  * Ra mắt **Sút Phạt Đền Cuồng Nhiệt** và **Tháp Kho Báu May Mắn**.
-  * Ra mắt **Mở Rương Báu Vùng Biển Caribe** kết hợp sự kiện nổ hũ Jackpot cuối tuần.
-* **Giai đoạn 3 (Đa dạng hóa Trải nghiệm):**
-  * Bổ sung **Thả Bi Ziczac (Plinko)**, **Đập Trứng Vàng** và **Lắc Cốc Xúc Xắc**.
-  * Mở rộng cổng cấu hình tùy biến tỷ lệ trúng thưởng linh hoạt cho quản trị viên đối tác trên Loyalty CMS.
+Chiến lược tận dụng các game có sẵn giúp Natcash:
+
+1. **Sở hữu ngay Cổng Game đồ sộ với 10+ trò chơi hấp dẫn** chỉ trong vòng 1-2 tuần mà không cần đội ngũ Game Studio chuyên trách.
+2. **Đảm bảo gameplay mượt mà, ổn định 100%** trên mọi dòng máy điện thoại thông minh từ cấu hình thấp đến cao tại Haiti.
+3. **Linh hoạt thay đổi chủ đề theo từng sự kiện:** Khi đến mùa bóng đá World Cup, giải vô địch Haiti (Ligue Haïtienne) hay Lễ hội Kanaval, chỉ cần thay đổi bộ ảnh nền trong 1 giờ là có ngay một phiên bản game mới phục vụ chiến dịch tiếp thị.

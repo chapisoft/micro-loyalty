@@ -6,8 +6,6 @@ import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.domain.enums.GameStatus;
 import com.natcash.loyalty.domain.enums.PaymentMethod;
 import com.natcash.loyalty.domain.enums.SessionStatus;
-import com.natcash.loyalty.exception.LoyaltyException;
-import com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListRequest;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListResponse;
@@ -95,7 +93,7 @@ class GameHubServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(lockHelper.executeWithLock(anyString(), any(Supplier.class)))
+        lenient().when(lockHelper.executeWithLock(anyString(), org.mockito.ArgumentMatchers.<Supplier<Object>>any()))
                 .thenAnswer(invocation -> {
                     Supplier<?> supplier = invocation.getArgument(1);
                     return supplier.get();
