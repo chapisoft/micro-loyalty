@@ -95,21 +95,21 @@ pipeline {
             steps {
                 script {
                     echo "Triển khai trực tiếp lên máy chủ SaaS qua Docker Daemon..."
-                    sh '''
-                        # 1. Đồng bộ cấu hình .env từ host nếu có
-                        if [ -f "/home/dip/micro-loyalty/deploy/.env" ]; then
-                            cp /home/dip/micro-loyalty/deploy/.env deploy/micro-loyalty/.env
-                        elif [ -f "deploy/micro-loyalty/.env.example" ] && [ ! -f "deploy/micro-loyalty/.env" ]; then
-                            cp deploy/micro-loyalty/.env.example deploy/micro-loyalty/.env
-                        fi
+                    dir('deploy/micro-loyalty') {
+                        sh '''
+                            # 1. Đồng bộ cấu hình .env nếu chưa có
+                            if [ ! -f ".env" ]; then
+                                cp .env.example .env
+                            fi
 
-                        # 2. Rolling update các container của Micro-Loyalty với Host Project Directory
-                        docker compose -f deploy/micro-loyalty/docker-compose.yml --project-directory /home/dip/micro-loyalty/deploy -p micro-loyalty up -d --build
+                            # 2. Rolling update các container của Micro-Loyalty (Tự trị 100%)
+                            docker compose -p micro-loyalty up -d --build
 
-                        echo ""
-                        echo "📊 Trạng thái hiện tại của toàn bộ Micro-Loyalty Containers:"
-                        docker ps --filter 'name=loyalty-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-                    '''
+                            echo ""
+                            echo "📊 Trạng thái hiện tại của toàn bộ Micro-Loyalty Containers:"
+                            docker ps --filter 'name=loyalty-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+                        '''
+                    }
                 }
             }
         }
