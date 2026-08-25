@@ -218,15 +218,57 @@ const defaultSliceAngle = (2 * Math.PI) / numSlicesDefault;
 // Initial angle to perfectly center Prize 0 at 9 o'clock pointer (PI)
 const INITIAL_WHEEL_ANGLE = Math.PI - defaultSliceAngle / 2;
 
-export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const { t } = useTranslation();
+interface LuckyWheelPageProps {
+  onBack?: () => void;
+  userPoints?: number;
+  freeTurns?: number;
+  onClaimReward?: (earnedPoints: number, newBalance?: number) => void;
+  onUpdateTurns?: (remainingTurns: number) => void;
+}
+
+export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
+  onBack,
+  userPoints: propUserPoints,
+  freeTurns: propFreeTurns,
+  onClaimReward,
+  onUpdateTurns,
+}) => {
+  const { t, i18n } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [prizes, setPrizes] = useState<WheelPrizeItem[]>(DEFAULT_PRIZES);
   const [isSpinning, setIsSpinning] = useState(false);
   const [currentAngle, setCurrentAngle] = useState(INITIAL_WHEEL_ANGLE);
-  const [freeTurns, setFreeTurns] = useState(2);
-  const [points, setPoints] = useState(2480);
+
+  const tenantId = new URLSearchParams(window.location.search).get('tenantId') || 'TENANT_NATCASH';
+  const userId = new URLSearchParams(window.location.search).get('userId') || '50937123456';
+  const wheelCode = tenantId === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL_NATCASH';
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [points, setPoints] = useState<number>(() => {
+    if (propUserPoints !== undefined) return propUserPoints;
+    const saved = localStorage.getItem(`loyalty_points_${userId}`);
+    return saved !== null ? Number(saved) : 2480;
+  });
+
+  const [freeTurns, setFreeTurns] = useState<number>(() => {
+    if (propFreeTurns !== undefined) return propFreeTurns;
+    const saved = localStorage.getItem(`loyalty_wheel_turns_${userId}_${today}`);
+    return saved !== null ? Number(saved) : 2;
+  });
+
+  useEffect(() => {
+    if (propUserPoints !== undefined) {
+      setPoints(propUserPoints);
+    }
+  }, [propUserPoints]);
+
+  useEffect(() => {
+    if (propFreeTurns !== undefined) {
+      setFreeTurns(propFreeTurns);
+    }
+  }, [propFreeTurns]);
+
   const [wonPrize, setWonPrize] = useState<WheelPrizeItem | null>(null);
   const [showPrizeModal, setShowPrizeModal] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
@@ -239,10 +281,6 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
   const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [_availableThemes, setAvailableThemes] = useState<WheelThemeItem[]>([]);
-
-  const tenantId = new URLSearchParams(window.location.search).get('tenantId') || 'TENANT_NATCASH';
-  const userId = new URLSearchParams(window.location.search).get('userId') || '50937123456';
-  const wheelCode = tenantId === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL_NATCASH';
 
   const handleBack = () => {
     if (onBack) {
@@ -314,6 +352,16 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     if (!soundEnabled) return;
     soundManager.playWinFanfare();
   };
+
+  const getLocalizedPrizeName = useCallback((p: WheelPrizeItem | null | undefined): string => {
+    if (!p) return '';
+    const lang = (i18n.language || 'vi').toLowerCase();
+    if (lang.startsWith('en') && p.nameEn) return p.nameEn;
+    if (lang.startsWith('fr') && p.nameFr) return p.nameFr;
+    if ((lang.startsWith('ht') || lang.startsWith('kr')) && p.nameHt) return p.nameHt;
+    if (p.nameVi) return p.nameVi;
+    return p.prizeName || 'Quà Tặng';
+  }, [i18n.language]);
 
   // Canvas 2D High-Resolution Wheel Rendering
   const drawWheel = useCallback((angle: number) => {
@@ -403,11 +451,16 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
       ctx.arc(0, 0, radius, startAngle, endAngle);
       ctx.closePath();
 
-      // Slice Gradient
+      // Slice Gradient (Use custom colorCode if specified, or fallback to theme preset)
       const gradColors = sliceGradList[i % sliceGradList.length];
       const sliceGrad = ctx.createRadialGradient(0, 0, 20, 0, 0, radius);
-      sliceGrad.addColorStop(0, gradColors[0]);
-      sliceGrad.addColorStop(1, gradColors[1]);
+      if (prize.colorCode && prize.colorCode.startsWith('#')) {
+        sliceGrad.addColorStop(0, prize.colorCode);
+        sliceGrad.addColorStop(1, '#000000aa');
+      } else {
+        sliceGrad.addColorStop(0, gradColors[0]);
+        sliceGrad.addColorStop(1, gradColors[1]);
+      }
       ctx.fillStyle = sliceGrad;
       ctx.fill();
 
@@ -430,13 +483,16 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
       ctx.save();
       ctx.rotate(midAngle);
 
-      // 3.1 Mini Icon at outer position (r = radius - 20)
-      let icon = '🎁';
-      if (prize.prizeType === 'POINTS') icon = '⭐';
-      else if (prize.prizeType === 'VOUCHER') icon = '🎟️';
-      else if (prize.prizeType === 'CASHBACK') icon = '💵';
-      else if (prize.prizeType === 'TURNS') icon = '⚡';
-      else if (prize.prizeType === 'NO_LUCK') icon = '🍀';
+      // 3.1 Custom or Dynamic Icon at outer position (r = radius - 20)
+      let icon = prize.iconSymbol;
+      if (!icon) {
+        if (prize.prizeType === 'POINTS') icon = '⭐';
+        else if (prize.prizeType === 'VOUCHER') icon = '🎟️';
+        else if (prize.prizeType === 'CASHBACK') icon = '💵';
+        else if (prize.prizeType === 'TURNS') icon = '⚡';
+        else if (prize.prizeType === 'NO_LUCK') icon = '🍀';
+        else icon = '🎁';
+      }
 
       ctx.save();
       ctx.translate(radius - 20, 0);
@@ -461,8 +517,8 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
       ctx.shadowOffsetX = 1;
       ctx.shadowOffsetY = 1;
 
-      const name = prize.prizeName || 'Quà Tặng';
-      ctx.fillText(name, 0, 0);
+      const localizedName = getLocalizedPrizeName(prize);
+      ctx.fillText(localizedName, 0, 0);
       ctx.restore();
 
       ctx.restore();
@@ -501,7 +557,7 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     ctx.textBaseline = 'middle';
     ctx.fillText('✨', centerX, centerY);
     ctx.restore();
-  }, [prizes, ledPhase, activeTheme]);
+  }, [prizes, ledPhase, activeTheme, getLocalizedPrizeName]);
 
   // Initial draw and LED bulb chase animation
   useEffect(() => {
@@ -592,21 +648,37 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
     let targetSliceIndex = 0;
     let serverPrize: WheelPrizeItem | null = null;
+    let newBalanceFromApi: number | undefined = undefined;
 
     try {
       const result = await LoyaltyApi.spinLuckyWheel(userId, false, wheelCode);
-      if (result && result.wonPrize) {
-        targetSliceIndex = result.wonPrize.sliceIndex ?? 0;
+      if (result) {
+        targetSliceIndex = result.winningIndex ?? result.wonPrize?.sliceIndex ?? 0;
+        const pId = result.prizeId ?? result.wonPrize?.prizeId ?? 1;
+        const pName = result.prizeName ?? result.wonPrize?.prizeName ?? 'Phần Thưởng May Mắn';
+        const pType = result.prizeType ?? result.wonPrize?.prizeType ?? 'POINTS';
+        const pVal = Number(result.prizeValue ?? result.wonPrize?.prizeValue ?? 100);
+
         serverPrize = {
-          prizeId: result.wonPrize.prizeId,
-          prizeName: result.wonPrize.prizeName,
-          prizeType: result.wonPrize.prizeType,
-          prizeValue: result.wonPrize.prizeValue,
+          prizeId: pId,
+          prizeName: pName,
+          prizeType: pType,
+          prizeValue: pVal,
           displayOrder: targetSliceIndex,
           colorCode: '#F59E0B',
         };
+
         if (result.newPointBalance !== undefined) {
-          setPoints(result.newPointBalance);
+          newBalanceFromApi = Number(result.newPointBalance);
+          setPoints(newBalanceFromApi);
+          localStorage.setItem(`loyalty_points_${userId}`, String(newBalanceFromApi));
+        }
+
+        if (result.remainingSpinsToday !== undefined) {
+          const remTurns = Number(result.remainingSpinsToday);
+          setFreeTurns(remTurns);
+          localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(remTurns));
+          if (onUpdateTurns) onUpdateTurns(remTurns);
         }
       }
     } catch {
@@ -615,7 +687,14 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     }
 
     const selectedPrize = serverPrize || prizes[targetSliceIndex] || DEFAULT_PRIZES[0];
-    setFreeTurns((prev) => Math.max(0, prev - 1));
+
+    // Decrement free turn if not updated by server
+    setFreeTurns((prev) => {
+      const nextTurns = Math.max(0, prev - 1);
+      localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(nextTurns));
+      if (onUpdateTurns) onUpdateTurns(nextTurns);
+      return nextTurns;
+    });
 
     const numSlices = prizes.length || 6;
     const sliceAngle = (2 * Math.PI) / numSlices;
@@ -669,9 +748,20 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
         triggerConfetti();
 
         if (selectedPrize.prizeType === 'POINTS') {
-          setPoints((p) => p + selectedPrize.prizeValue);
+          const earned = selectedPrize.prizeValue;
+          const finalBalance = newBalanceFromApi !== undefined ? newBalanceFromApi : points + earned;
+          setPoints(finalBalance);
+          localStorage.setItem(`loyalty_points_${userId}`, String(finalBalance));
+          if (onClaimReward) {
+            onClaimReward(earned, finalBalance);
+          }
         } else if (selectedPrize.prizeType === 'TURNS') {
-          setFreeTurns((t) => t + selectedPrize.prizeValue);
+          setFreeTurns((t) => {
+            const nextTurns = t + selectedPrize.prizeValue;
+            localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(nextTurns));
+            if (onUpdateTurns) onUpdateTurns(nextTurns);
+            return nextTurns;
+          });
         }
       }
     };
@@ -1020,7 +1110,7 @@ export const LuckyWheelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             <div>
               <span className="text-xs uppercase font-black text-amber-600 tracking-widest">{t('wheel.congrats')}</span>
               <h3 className="text-2xl font-black text-slate-900 mt-1">
-                {wonPrize.prizeName}
+                {getLocalizedPrizeName(wonPrize)}
               </h3>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 {t('wheel.congrats_desc')}

@@ -72,9 +72,19 @@ export const App: React.FC = () => {
   const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
   const [partners, setPartners] = useState<PartnerItem[]>([]);
 
+  const userId = getDefaultUserId();
+  const tenantId = getTenantId();
+  const today = new Date().toISOString().slice(0, 10);
+
   // User state
-  const [userPoints, setUserPoints] = useState<number>(2480);
-  const [freeTurns, setFreeTurns] = useState<number>(2);
+  const [userPoints, setUserPoints] = useState<number>(() => {
+    const saved = localStorage.getItem(`loyalty_points_${userId}`);
+    return saved !== null ? Number(saved) : 2480;
+  });
+  const [freeTurns, setFreeTurns] = useState<number>(() => {
+    const saved = localStorage.getItem(`loyalty_wheel_turns_${userId}_${today}`);
+    return saved !== null ? Number(saved) : 2;
+  });
   const [perpetualTurns, setPerpetualTurns] = useState<number>(5);
 
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -98,9 +108,6 @@ export const App: React.FC = () => {
   const [checkinStreak, setCheckinStreak] = useState<number>(3);
   const [hasCheckedInToday, setHasCheckedInToday] = useState<boolean>(false);
   const [soundMuted, setSoundMuted] = useState<boolean>(soundHaptics.isMuted());
-
-  const userId = getDefaultUserId();
-  const tenantId = getTenantId();
 
   // Smooth Scroll to Top Helper
   const scrollToTop = useCallback(() => {
@@ -230,12 +237,21 @@ export const App: React.FC = () => {
         undefined,
         JSON.stringify({ pointsAwarded: earnedPoints, gameCode })
       );
-      if (res?.newPointBalance) {
+      if (res?.newPointBalance !== undefined) {
         setUserPoints(res.newPointBalance);
-      } else if (res?.pointsAwarded) {
-        setUserPoints((p) => p + res.pointsAwarded);
+        localStorage.setItem(`loyalty_points_${userId}`, String(res.newPointBalance));
+      } else if (res?.pointsAwarded !== undefined) {
+        setUserPoints((p) => {
+          const updated = p + res.pointsAwarded;
+          localStorage.setItem(`loyalty_points_${userId}`, String(updated));
+          return updated;
+        });
       } else {
-        setUserPoints((p) => p + earnedPoints);
+        setUserPoints((p) => {
+          const updated = p + earnedPoints;
+          localStorage.setItem(`loyalty_points_${userId}`, String(updated));
+          return updated;
+        });
       }
       // Nạp lại thông tin sổ cái và hồ sơ nền
       LoyaltyApi.getProfile(userId).then((p) => {
@@ -246,7 +262,11 @@ export const App: React.FC = () => {
       });
     } catch (e) {
       console.warn('[handleMinigameReward] Fallback local state:', e);
-      setUserPoints((p) => p + earnedPoints);
+      setUserPoints((p) => {
+        const updated = p + earnedPoints;
+        localStorage.setItem(`loyalty_points_${userId}`, String(updated));
+        return updated;
+      });
     }
   };
 
@@ -390,19 +410,52 @@ export const App: React.FC = () => {
             onUpdateTurns={(free, perp) => {
               setFreeTurns(free);
               setPerpetualTurns(perp);
+              localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(free));
             }}
           />
         )}
 
         {/* SUBGAME: VÒNG QUAY TRI ÂN */}
         {currentTab === 'WHEEL' && (
-          <LuckyWheelPage onBack={() => navigateToTab('GAMEHUB')} />
+          <LuckyWheelPage
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
+            userPoints={points}
+            freeTurns={freeTurns}
+            onClaimReward={(earnedPoints, newBalance) => {
+              if (newBalance !== undefined) {
+                setUserPoints(newBalance);
+                localStorage.setItem(`loyalty_points_${userId}`, String(newBalance));
+              } else {
+                setUserPoints((p) => {
+                  const updated = p + earnedPoints;
+                  localStorage.setItem(`loyalty_points_${userId}`, String(updated));
+                  return updated;
+                });
+              }
+              LoyaltyApi.getProfile(userId).then((p) => {
+                if (p) setProfile(p);
+              });
+              LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
+                if (l?.items) setLedgerItems(l.items);
+              });
+            }}
+            onUpdateTurns={(remainingTurns) => {
+              setFreeTurns(remainingTurns);
+              localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(remainingTurns));
+            }}
+          />
         )}
 
         {/* SUBGAME 1: FLAPPY NATCOM */}
         {currentTab === 'FLAPPY' && (
           <FlappyNatcomGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('FLAPPY_NATCOM', earnedPoints)}
           />
         )}
@@ -410,7 +463,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 2: 2048 NATCASH */}
         {currentTab === 'GAME2048' && (
           <Game2048Page
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('GAME_2048', earnedPoints)}
           />
         )}
@@ -418,7 +474,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 3: LẬT THẺ TÌM CẶP */}
         {currentTab === 'MEMORY' && (
           <MemoryMatchGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('MEMORY_MATCH', earnedPoints)}
           />
         )}
@@ -426,7 +485,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 4: BẮN BÓNG KANAVAL */}
         {currentTab === 'BUBBLE' && (
           <BubbleShooterGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('BUBBLE_SHOOTER', earnedPoints)}
           />
         )}
@@ -434,7 +496,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 5: CHÉM HOA QUẢ CARIBE */}
         {currentTab === 'FRUIT' && (
           <FruitSliceGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('FRUIT_SLICE', earnedPoints)}
           />
         )}
@@ -442,7 +507,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 6: PHI DAO VÒNG GỖ */}
         {currentTab === 'KNIFE' && (
           <KnifeHitGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('KNIFE_HIT', earnedPoints)}
           />
         )}
@@ -450,7 +518,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 7: XẾP GẠCH KIM CƯƠNG */}
         {currentTab === 'BLOCK' && (
           <BlockPuzzleGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('BLOCK_PUZZLE', earnedPoints)}
           />
         )}
@@ -458,7 +529,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 8: ĐƯỜNG ĐUA SIÊU TỐC */}
         {currentTab === 'RUNNER' && (
           <EndlessRunnerGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('ENDLESS_RUNNER', earnedPoints)}
           />
         )}
@@ -466,7 +540,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 9: ĐOÁN CHỮ MAY MẮN */}
         {currentTab === 'WORDLE' && (
           <WordleGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('WORDLE_GAME', earnedPoints)}
           />
         )}
@@ -474,7 +551,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 10: THÁO VÍT KIM LOẠI & GỖ */}
         {currentTab === 'SCREW' && (
           <ScrewPuzzleGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('SCREW_PUZZLE', earnedPoints)}
           />
         )}
@@ -482,7 +562,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 11: GỠ RỐI DÂY THỪNG 3D */}
         {currentTab === 'UNTANGLE' && (
           <UntangleRopeGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('UNTANGLE_ROPE', earnedPoints)}
           />
         )}
@@ -490,7 +573,10 @@ export const App: React.FC = () => {
         {/* SUBGAME 12: KÉO CHỐT BẮT TRỘM & GIẢI CỨU */}
         {currentTab === 'PULLPIN' && (
           <PullThePinGame
-            onBack={() => navigateToTab('GAMEHUB')}
+            onBack={() => {
+              loadData();
+              navigateToTab('GAMEHUB');
+            }}
             onClaimReward={(earnedPoints) => handleMinigameReward('PULL_PIN', earnedPoints)}
           />
         )}
@@ -498,9 +584,18 @@ export const App: React.FC = () => {
         {/* TAB: KHO ƯU ĐÃI & ĐỔI THƯỞNG */}
         {currentTab === 'VOUCHERS' && (
           <UserVoucherPage
-            onBack={() => navigateToTab('HOME')}
+            onBack={() => {
+              loadData();
+              navigateToTab('HOME');
+            }}
             userPoints={points}
-            onDeductPoints={(pts) => setUserPoints((p) => Math.max(0, p - pts))}
+            onDeductPoints={(pts) => {
+              setUserPoints((p) => {
+                const updated = Math.max(0, p - pts);
+                localStorage.setItem(`loyalty_points_${userId}`, String(updated));
+                return updated;
+              });
+            }}
           />
         )}
 

@@ -49,11 +49,22 @@ interface GamePrizeItem {
   gameCode?: string;
   prizeCode: string;
   prizeName: string;
+  nameVi?: string;
+  nameEn?: string;
+  nameFr?: string;
+  nameHt?: string;
   prizeType: string;
   prizeValue: number;
   probabilityWeight: number;
+  dailyBudgetLimit?: number;
+  weeklyBudgetLimit?: number;
+  monthlyBudgetLimit?: number;
+  dailyMaxWinners?: number;
+  weeklyMaxWinners?: number;
+  monthlyMaxWinners?: number;
   colorCode: string;
   iconSymbol: string;
+  bgImageUrl?: string;
   displayOrder: number;
   status: string;
 }
@@ -662,94 +673,178 @@ export const GameManagementPage: React.FC = () => {
       {/* ── DIALOG 2: ADD/EDIT PRIZE SUB-FORM ── */}
       <Dialog
         visible={showPrizeFormDialog}
-        style={{ width: '500px' }}
-        header={prizeFormData.id ? 'Sửa Hạng Giải Thưởng' : 'Thêm Hạng Giải Thưởng Mới'}
+        style={{ width: '640px' }}
+        header={prizeFormData.id ? 'Sửa Hạng Giải Thưởng Minigame' : 'Thêm Hạng Giải Thưởng Mới'}
         modal
         className="p-fluid"
         onHide={() => setShowPrizeFormDialog(false)}
       >
-        <div className="field mb-3">
-          <label htmlFor="prizeCode" className="font-bold">Mã Giải Thưởng</label>
-          <InputText
-            id="prizeCode"
-            value={prizeFormData.prizeCode || ''}
-            onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeCode: e.target.value })}
-            placeholder="Ví dụ: SCRATCH_GOLD_100"
-            required
-          />
-        </div>
-
-        <div className="field mb-3">
-          <label htmlFor="prizeName" className="font-bold">Tên Giải Thưởng</label>
-          <InputText
-            id="prizeName"
-            value={prizeFormData.prizeName || ''}
-            onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeName: e.target.value })}
-            placeholder="Ví dụ: Hòm Vàng May Mắn 100 Điểm"
-            required
-          />
-        </div>
-
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="prizeType" className="font-bold">Loại Phần Thưởng</label>
-            <Dropdown
-              id="prizeType"
-              value={prizeFormData.prizeType || 'POINTS'}
-              options={PRIZE_TYPES}
-              onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })}
-            />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="prizeValue" className="font-bold">Giá Trị Phần Thưởng</label>
-            <InputNumber
-              id="prizeValue"
-              value={prizeFormData.prizeValue || 0}
-              min={0}
-              onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })}
-            />
-          </div>
-        </div>
-
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="probabilityWeight" className="font-bold">Trọng Số Xác Suất (Weight)</label>
-            <InputNumber
-              id="probabilityWeight"
-              value={prizeFormData.probabilityWeight || 100}
-              min={1}
-              onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 100 })}
-            />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="displayOrder" className="font-bold">Thứ Tự Hiển Thị</label>
-            <InputNumber
-              id="displayOrder"
-              value={prizeFormData.displayOrder || 1}
-              min={1}
-              onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })}
-            />
-          </div>
-        </div>
-
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="iconSymbol" className="font-bold">Biểu Tượng (Icon / Emoji)</label>
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">1. Thông tin Giải Thưởng & Đa Ngôn Ngữ</div>
+          <div className="field mb-2">
+            <label htmlFor="prizeCode" className="font-bold text-xs">Mã Giải Thưởng (Unique Code)</label>
             <InputText
-              id="iconSymbol"
-              value={prizeFormData.iconSymbol || '🎁'}
-              onChange={(e) => setPrizeFormData({ ...prizeFormData, iconSymbol: e.target.value })}
-              placeholder="Ví dụ: 🏆, 💎, ⚽, 🎁"
+              id="prizeCode"
+              value={prizeFormData.prizeCode || ''}
+              onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeCode: e.target.value })}
+              placeholder="Ví dụ: FLAPPY_GOLD_100"
+              required
             />
           </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="colorCode" className="font-bold">Mã Màu HEX</label>
-            <InputText
-              id="colorCode"
-              value={prizeFormData.colorCode || '#F59E0B'}
-              onChange={(e) => setPrizeFormData({ ...prizeFormData, colorCode: e.target.value })}
-              placeholder="#F59E0B"
-            />
+
+          <div className="grid">
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameVi" className="font-bold text-xs">Tên Tiếng Việt (Mặc định)</label>
+              <InputText
+                id="nameVi"
+                value={prizeFormData.nameVi || prizeFormData.prizeName || ''}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameVi: e.target.value, prizeName: e.target.value })}
+                placeholder="100 Điểm Thưởng"
+                required
+              />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameEn" className="font-bold text-xs">English (Tiếng Anh)</label>
+              <InputText
+                id="nameEn"
+                value={prizeFormData.nameEn || ''}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameEn: e.target.value })}
+                placeholder="100 Bonus Points"
+              />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameFr" className="font-bold text-xs">Français (Tiếng Pháp)</label>
+              <InputText
+                id="nameFr"
+                value={prizeFormData.nameFr || ''}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameFr: e.target.value })}
+                placeholder="100 Points Bonus"
+              />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameHt" className="font-bold text-xs">Kreyòl Ayisyen (Haiti Creole)</label>
+              <InputText
+                id="nameHt"
+                value={prizeFormData.nameHt || ''}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameHt: e.target.value })}
+                placeholder="100 Pwen Kado"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">2. Loại Quà, Giá Trị & Xác Suất</div>
+          <div className="grid">
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="prizeType" className="font-bold text-xs">Loại Phần Thưởng</label>
+              <Dropdown
+                id="prizeType"
+                value={prizeFormData.prizeType || 'POINTS'}
+                options={PRIZE_TYPES}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })}
+              />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="prizeValue" className="font-bold text-xs">Giá Trị Phần Thưởng</label>
+              <InputNumber
+                id="prizeValue"
+                value={prizeFormData.prizeValue || 0}
+                min={0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })}
+              />
+            </div>
+          </div>
+
+          <div className="grid">
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="probabilityWeight" className="font-bold text-xs">Trọng Số Xác Suất</label>
+              <InputNumber
+                id="probabilityWeight"
+                value={prizeFormData.probabilityWeight || 100}
+                min={1}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 100 })}
+              />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="displayOrder" className="font-bold text-xs">Thứ Tự Hiển Thị</label>
+              <InputNumber
+                id="displayOrder"
+                value={prizeFormData.displayOrder || 1}
+                min={1}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })}
+              />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="iconSymbol" className="font-bold text-xs">Biểu Tượng (Icon)</label>
+              <InputText
+                id="iconSymbol"
+                value={prizeFormData.iconSymbol || '🎁'}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, iconSymbol: e.target.value })}
+                placeholder="🏆, 💎, ⚽, 🎁"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">3. Hạn Mức Ngân Sách & Giới Hạn Trúng (Ngày / Tuần / Tháng)</div>
+          <div className="grid">
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="dailyBudgetLimit" className="font-bold text-xs">Hạn mức Ngày (HTG)</label>
+              <InputNumber
+                id="dailyBudgetLimit"
+                value={prizeFormData.dailyBudgetLimit || 0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyBudgetLimit: e.value || 0 })}
+                placeholder="0: Vô hạn"
+              />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="weeklyBudgetLimit" className="font-bold text-xs">Hạn mức Tuần (HTG)</label>
+              <InputNumber
+                id="weeklyBudgetLimit"
+                value={prizeFormData.weeklyBudgetLimit || 0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyBudgetLimit: e.value || 0 })}
+                placeholder="0: Vô hạn"
+              />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="monthlyBudgetLimit" className="font-bold text-xs">Hạn mức Tháng (HTG)</label>
+              <InputNumber
+                id="monthlyBudgetLimit"
+                value={prizeFormData.monthlyBudgetLimit || 0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyBudgetLimit: e.value || 0 })}
+                placeholder="0: Vô hạn"
+              />
+            </div>
+
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="dailyMaxWinners" className="font-bold text-xs">Tối đa người trúng / Ngày</label>
+              <InputNumber
+                id="dailyMaxWinners"
+                value={prizeFormData.dailyMaxWinners || 0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyMaxWinners: e.value || 0 })}
+                placeholder="0: Vô hạn"
+              />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="weeklyMaxWinners" className="font-bold text-xs">Tối đa người trúng / Tuần</label>
+              <InputNumber
+                id="weeklyMaxWinners"
+                value={prizeFormData.weeklyMaxWinners || 0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyMaxWinners: e.value || 0 })}
+                placeholder="0: Vô hạn"
+              />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="monthlyMaxWinners" className="font-bold text-xs">Tối đa người trúng / Tháng</label>
+              <InputNumber
+                id="monthlyMaxWinners"
+                value={prizeFormData.monthlyMaxWinners || 0}
+                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyMaxWinners: e.value || 0 })}
+                placeholder="0: Vô hạn"
+              />
+            </div>
           </div>
         </div>
 

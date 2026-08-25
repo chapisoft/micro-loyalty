@@ -18,12 +18,23 @@ interface WheelPrizeItem {
   id: number;
   displayOrder: number;
   prizeName: string;
+  nameVi?: string;
+  nameEn?: string;
+  nameFr?: string;
+  nameHt?: string;
   prizeType: string;
   prizeValue: number;
   probabilityWeight: number;
   dailyBudgetLimit: number;
+  weeklyBudgetLimit?: number;
+  monthlyBudgetLimit?: number;
   dailyMaxWinners: number;
+  weeklyMaxWinners?: number;
+  monthlyMaxWinners?: number;
   colorCode: string;
+  iconSymbol?: string;
+  iconUrl?: string;
+  bgImageUrl?: string;
   status: CommonStatus;
   actualWinCountToday?: number;
 }
@@ -35,6 +46,19 @@ interface GameHubGlobalSettings {
   maxDailyTurnsPerUser: number;
   welcomeBannerText: string;
 }
+
+const ICON_PRESETS = [
+  { label: '⭐ Ngôi sao (Điểm thưởng)', value: '⭐' },
+  { label: '⚡ Tia sét (Lượt chơi)', value: '⚡' },
+  { label: '🎟️ Vé giảm giá (Voucher)', value: '🎟️' },
+  { label: '💵 Tiền mặt (Cashback)', value: '💵' },
+  { label: '🎁 Hộp quà may mắn', value: '🎁' },
+  { label: '💎 Kim cương (Đặc biệt)', value: '💎' },
+  { label: '👑 Vương miện (Jackpot)', value: '👑' },
+  { label: '🍀 Cỏ 4 lá (May mắn)', value: '🍀' },
+  { label: '🏆 Cúp vàng (Top 1)', value: '🏆' },
+  { label: '💰 Túi tiền vàng', value: '💰' },
+];
 
 export const GameHubConfigPage: React.FC = () => {
   const { t } = useTranslation();
@@ -94,17 +118,29 @@ export const GameHubConfigPage: React.FC = () => {
   const isProbabilityBalanced = totalProbability === 100;
   const activePrizesCount = prizes.filter((p) => p.status === CommonStatus.ACTIVE).length;
   const totalDailyBudget = prizes.reduce((sum, item) => sum + (item.dailyBudgetLimit || 0), 0);
+  const totalWeeklyBudget = prizes.reduce((sum, item) => sum + (item.weeklyBudgetLimit || 0), 0);
+  const totalMonthlyBudget = prizes.reduce((sum, item) => sum + (item.monthlyBudgetLimit || 0), 0);
 
   const openNewPrize = () => {
     setPrizeFormData({
       displayOrder: prizes.length + 1,
       prizeName: '',
+      nameVi: '',
+      nameEn: '',
+      nameFr: '',
+      nameHt: '',
       prizeType: 'POINTS',
       prizeValue: 100,
       probabilityWeight: 10,
       dailyBudgetLimit: 20000,
+      weeklyBudgetLimit: 100000,
+      monthlyBudgetLimit: 400000,
       dailyMaxWinners: 100,
+      weeklyMaxWinners: 500,
+      monthlyMaxWinners: 2000,
       colorCode: '#FF6B00',
+      iconSymbol: '⭐',
+      bgImageUrl: '',
       status: CommonStatus.ACTIVE,
     });
     setShowPrizeDialog(true);
@@ -206,6 +242,41 @@ export const GameHubConfigPage: React.FC = () => {
     );
   };
 
+  const prizeNameTemplate = (row: WheelPrizeItem) => {
+    return (
+      <div>
+        <div className="font-bold text-sm text-900 flex align-items-center gap-1">
+          <span>{row.iconSymbol || '🎁'}</span>
+          <span>{row.nameVi || row.prizeName}</span>
+        </div>
+        <div className="text-500 text-xs mt-1 flex flex-wrap gap-2">
+          {row.nameEn && <span className="bg-blue-50 text-blue-700 px-1 border-round font-medium">EN: {row.nameEn}</span>}
+          {row.nameFr && <span className="bg-purple-50 text-purple-700 px-1 border-round font-medium">FR: {row.nameFr}</span>}
+          {row.nameHt && <span className="bg-green-50 text-green-700 px-1 border-round font-medium">HT: {row.nameHt}</span>}
+        </div>
+      </div>
+    );
+  };
+
+  const budgetMatrixTemplate = (row: WheelPrizeItem) => {
+    return (
+      <div className="text-xs space-y-1">
+        <div className="flex justify-content-between gap-2">
+          <span className="text-500">Ngày:</span>
+          <span className="font-mono font-bold text-orange-600">{row.dailyBudgetLimit > 0 ? `${row.dailyBudgetLimit.toLocaleString()} HTG` : 'Vô hạn'}</span>
+        </div>
+        <div className="flex justify-content-between gap-2">
+          <span className="text-500">Tuần:</span>
+          <span className="font-mono font-bold text-blue-600">{(row.weeklyBudgetLimit && row.weeklyBudgetLimit > 0) ? `${row.weeklyBudgetLimit.toLocaleString()} HTG` : 'Vô hạn'}</span>
+        </div>
+        <div className="flex justify-content-between gap-2">
+          <span className="text-500">Tháng:</span>
+          <span className="font-mono font-bold text-purple-600">{(row.monthlyBudgetLimit && row.monthlyBudgetLimit > 0) ? `${row.monthlyBudgetLimit.toLocaleString()} HTG` : 'Vô hạn'}</span>
+        </div>
+      </div>
+    );
+  };
+
   const prizeTypeOptions = [
     { label: 'Điểm Thưởng Loyalty (POINTS)', value: 'POINTS' },
     { label: 'Voucher Đối Tác (VOUCHER)', value: 'VOUCHER' },
@@ -263,8 +334,8 @@ export const GameHubConfigPage: React.FC = () => {
           <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-green-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
-                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.today_cost', { defaultValue: 'Tổng ngân sách ngày' })}</span>
-                <div className="text-900 font-black text-2xl font-mono tracking-tight text-green-600">{totalDailyBudget.toLocaleString()} HTG</div>
+                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">Ngân Sách Ngày / Tuần / Tháng</span>
+                <div className="text-900 font-black text-xl font-mono tracking-tight text-green-600">{totalDailyBudget.toLocaleString()} HTG / ngày</div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -277,7 +348,7 @@ export const GameHubConfigPage: React.FC = () => {
                 <i className="pi pi-wallet text-white text-2xl font-bold" />
               </div>
             </div>
-            <span className="text-600 font-medium text-xs">Quản lý quỹ giải thưởng tự động</span>
+            <span className="text-600 font-medium text-xs">Tuần: {totalWeeklyBudget.toLocaleString()} HTG • Tháng: {totalMonthlyBudget.toLocaleString()} HTG</span>
           </div>
         </div>
 
@@ -300,7 +371,7 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
             </div>
             <span className="text-green-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-check text-xs font-bold" /> Nan quạt 3D sẵn sàng
+              <i className="pi pi-check text-xs font-bold" /> Nan quạt Động 100%
             </span>
           </div>
         </div>
@@ -447,13 +518,12 @@ export const GameHubConfigPage: React.FC = () => {
             header={t('common.actions', { defaultValue: 'Thao tác' })}
             style={{ width: '5.5rem', textAlign: 'center' }}
           />
-          <Column field="displayOrder" header={t('game.display_order', { defaultValue: 'Vị trí nan (1..8)' })} body={(r: WheelPrizeItem) => <span className="font-bold bg-slate-100 border-circle w-2rem h-2rem inline-flex align-items-center justify-content-center">{r.displayOrder}</span>} sortable style={{ minWidth: '7rem', textAlign: 'center' }} />
-          <Column field="prizeName" header={t('game.prize_name', { defaultValue: 'Tên Giải thưởng' })} sortable style={{ minWidth: '14rem', fontWeight: 600 }} />
+          <Column field="displayOrder" header={t('game.display_order', { defaultValue: 'Vị trí nan' })} body={(r: WheelPrizeItem) => <span className="font-bold bg-slate-100 border-circle w-2rem h-2rem inline-flex align-items-center justify-content-center shadow-1">{r.displayOrder}</span>} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
+          <Column header="Tên Ô Thưởng & Đa Ngôn Ngữ" body={prizeNameTemplate} sortable field="prizeName" style={{ minWidth: '16rem' }} />
           <Column field="prizeType" header={t('game.prize_type', { defaultValue: 'Loại quà' })} body={(r: WheelPrizeItem) => prizeTypeTemplate(r.prizeType)} sortable style={{ minWidth: '11rem' }} />
           <Column field="prizeValue" header={t('game.prize_value', { defaultValue: 'Giá trị' })} body={(r: WheelPrizeItem) => <span className="font-mono font-bold">{r.prizeValue.toLocaleString()}</span>} sortable style={{ minWidth: '8rem', textAlign: 'right' }} />
           <Column field="probabilityWeight" header={t('game.probability_weight', { defaultValue: 'Tỷ lệ xác suất (%)' })} body={probabilityBarTemplate} sortable style={{ minWidth: '10rem' }} />
-          <Column field="dailyBudgetLimit" header={t('game.daily_budget_limit', { defaultValue: 'Hạn mức ngày (HTG)' })} body={(row: WheelPrizeItem) => row.dailyBudgetLimit > 0 ? <span className="font-mono font-bold text-orange-600">{row.dailyBudgetLimit.toLocaleString()} HTG</span> : <Tag severity="info" value="Không giới hạn" />} sortable style={{ minWidth: '12rem' }} />
-          <Column field="dailyMaxWinners" header={t('game.daily_max_winners', { defaultValue: 'Số giải tối đa/ngày' })} body={(row: WheelPrizeItem) => row.dailyMaxWinners > 0 ? `${row.dailyMaxWinners} giải` : 'Vô hạn'} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
+          <Column header="Ngân Sách Ngày / Tuần / Tháng" body={budgetMatrixTemplate} style={{ minWidth: '14rem' }} />
           <Column field="colorCode" body={colorBadgeTemplate} header={t('game.color_code', { defaultValue: 'Màu nan quạt' })} style={{ minWidth: '9rem' }} />
           <Column field="status" body={(row: WheelPrizeItem) => statusTemplate(row.status)} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '8rem' }} />
         </DataTable>
@@ -462,67 +532,122 @@ export const GameHubConfigPage: React.FC = () => {
       {/* ── DIALOG: WHEEL PRIZE CONFIGURATION ── */}
       <Dialog
         visible={showPrizeDialog}
-        style={{ width: '500px' }}
-        header={prizeFormData.id ? t('game.edit_prize', { defaultValue: 'Cập nhật Ô Thưởng Vòng Quay' }) : t('game.create_prize', { defaultValue: 'Thêm mới Ô Thưởng' })}
+        style={{ width: '680px' }}
+        header={prizeFormData.id ? t('game.edit_prize', { defaultValue: 'Cập nhật Ô Thưởng Vòng Quay Động' }) : t('game.create_prize', { defaultValue: 'Thêm mới Ô Thưởng Vòng Quay' })}
         modal
         className="p-fluid"
         onHide={() => setShowPrizeDialog(false)}
       >
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="displayOrder" className="font-bold">{t('game.display_order', { defaultValue: 'Vị trí nan (1..8)' })}</label>
-            <InputNumber id="displayOrder" value={prizeFormData.displayOrder || 1} min={1} max={8} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })} />
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">1. Cấu hình Vị trí & Nhận diện Trực quan</div>
+          <div className="grid">
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="displayOrder" className="font-bold text-xs">{t('game.display_order', { defaultValue: 'Vị trí nan (1, 2, 3...)' })}</label>
+              <InputNumber id="displayOrder" value={prizeFormData.displayOrder || 1} min={1} max={24} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })} />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="colorCode" className="font-bold text-xs">{t('game.color_code', { defaultValue: 'Màu nan quạt Hex' })}</label>
+              <div className="p-inputgroup">
+                <span className="p-inputgroup-addon" style={{ backgroundColor: prizeFormData.colorCode || '#FF6B00', width: '2.5rem' }} />
+                <InputText id="colorCode" value={prizeFormData.colorCode || '#FF6B00'} onChange={(e) => setPrizeFormData({ ...prizeFormData, colorCode: e.target.value })} />
+              </div>
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="iconSymbol" className="font-bold text-xs">Biểu tượng Icon</label>
+              <Dropdown
+                id="iconSymbol"
+                value={prizeFormData.iconSymbol || '⭐'}
+                options={ICON_PRESETS}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, iconSymbol: e.value })}
+                editable
+              />
+            </div>
+            <div className="col-12 field mb-2">
+              <label htmlFor="bgImageUrl" className="font-bold text-xs">Ảnh nền nan quạt (Tùy chọn URL)</label>
+              <InputText id="bgImageUrl" value={prizeFormData.bgImageUrl || ''} onChange={(e) => setPrizeFormData({ ...prizeFormData, bgImageUrl: e.target.value })} placeholder="https://example.com/slice-bg.png" />
+            </div>
           </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="colorCode" className="font-bold">{t('game.color_code', { defaultValue: 'Mã màu Hex' })}</label>
-            <div className="p-inputgroup">
-              <span className="p-inputgroup-addon" style={{ backgroundColor: prizeFormData.colorCode || '#FF6B00', width: '2.5rem' }} />
-              <InputText id="colorCode" value={prizeFormData.colorCode || '#FF6B00'} onChange={(e) => setPrizeFormData({ ...prizeFormData, colorCode: e.target.value })} />
+        </div>
+
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">2. Tên Hiển Thị Đa Ngôn Ngữ (4 Ngôn Ngữ)</div>
+          <div className="grid">
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameVi" className="font-bold text-xs">Tiếng Việt (Mặc định)</label>
+              <InputText id="nameVi" value={prizeFormData.nameVi || prizeFormData.prizeName || ''} onChange={(e) => setPrizeFormData({ ...prizeFormData, nameVi: e.target.value, prizeName: e.target.value })} placeholder="100 Điểm Thưởng" required />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameEn" className="font-bold text-xs">English (Tiếng Anh)</label>
+              <InputText id="nameEn" value={prizeFormData.nameEn || ''} onChange={(e) => setPrizeFormData({ ...prizeFormData, nameEn: e.target.value })} placeholder="100 Bonus Points" />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameFr" className="font-bold text-xs">Français (Tiếng Pháp)</label>
+              <InputText id="nameFr" value={prizeFormData.nameFr || ''} onChange={(e) => setPrizeFormData({ ...prizeFormData, nameFr: e.target.value })} placeholder="100 Points Bonus" />
+            </div>
+            <div className="col-12 md:col-6 field mb-2">
+              <label htmlFor="nameHt" className="font-bold text-xs">Kreyòl Ayisyen (Haiti Creole)</label>
+              <InputText id="nameHt" value={prizeFormData.nameHt || ''} onChange={(e) => setPrizeFormData({ ...prizeFormData, nameHt: e.target.value })} placeholder="100 Pwen Kado" />
+            </div>
+          </div>
+        </div>
+
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">3. Giá Trị & Xác Suất Trúng (%)</div>
+          <div className="grid">
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="prizeType" className="font-bold text-xs">{t('game.prize_type', { defaultValue: 'Loại quà' })}</label>
+              <Dropdown id="prizeType" value={prizeFormData.prizeType || 'POINTS'} options={prizeTypeOptions} onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })} />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="prizeValue" className="font-bold text-xs">{t('game.prize_value', { defaultValue: 'Giá trị phần thưởng' })}</label>
+              <InputNumber id="prizeValue" value={prizeFormData.prizeValue || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })} />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="probabilityWeight" className="font-bold text-xs">{t('game.probability_weight', { defaultValue: 'Tỷ lệ xác suất (%)' })}</label>
+              <InputNumber id="probabilityWeight" value={prizeFormData.probabilityWeight || 0} min={0} max={100} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 0 })} />
+            </div>
+          </div>
+        </div>
+
+        <div className="surface-100 p-3 border-round-lg mb-3">
+          <div className="font-bold text-sm mb-2 text-primary">4. Khống Chế Ngân Sách Ngày / Tuần / Tháng</div>
+          <div className="grid">
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="dailyBudgetLimit" className="font-bold text-xs">Hạn mức Ngày (HTG)</label>
+              <InputNumber id="dailyBudgetLimit" value={prizeFormData.dailyBudgetLimit || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyBudgetLimit: e.value || 0 })} placeholder="0: Không giới hạn" />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="weeklyBudgetLimit" className="font-bold text-xs">Hạn mức Tuần (HTG)</label>
+              <InputNumber id="weeklyBudgetLimit" value={prizeFormData.weeklyBudgetLimit || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyBudgetLimit: e.value || 0 })} placeholder="0: Không giới hạn" />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="monthlyBudgetLimit" className="font-bold text-xs">Hạn mức Tháng (HTG)</label>
+              <InputNumber id="monthlyBudgetLimit" value={prizeFormData.monthlyBudgetLimit || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyBudgetLimit: e.value || 0 })} placeholder="0: Không giới hạn" />
+            </div>
+
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="dailyMaxWinners" className="font-bold text-xs">Số giải tối đa / Ngày</label>
+              <InputNumber id="dailyMaxWinners" value={prizeFormData.dailyMaxWinners || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyMaxWinners: e.value || 0 })} placeholder="0: Vô hạn" />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="weeklyMaxWinners" className="font-bold text-xs">Số giải tối đa / Tuần</label>
+              <InputNumber id="weeklyMaxWinners" value={prizeFormData.weeklyMaxWinners || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyMaxWinners: e.value || 0 })} placeholder="0: Vô hạn" />
+            </div>
+            <div className="col-12 md:col-4 field mb-2">
+              <label htmlFor="monthlyMaxWinners" className="font-bold text-xs">Số giải tối đa / Tháng</label>
+              <InputNumber id="monthlyMaxWinners" value={prizeFormData.monthlyMaxWinners || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyMaxWinners: e.value || 0 })} placeholder="0: Vô hạn" />
             </div>
           </div>
         </div>
 
         <div className="field mb-3">
-          <label htmlFor="prizeName" className="font-bold">{t('game.prize_name', { defaultValue: 'Tên Giải thưởng' })}</label>
-          <InputText id="prizeName" value={prizeFormData.prizeName || ''} onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeName: e.target.value })} placeholder="Ví dụ: 100 Điểm Thưởng" required />
-        </div>
-
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="prizeType" className="font-bold">{t('game.prize_type', { defaultValue: 'Loại quà' })}</label>
-            <Dropdown id="prizeType" value={prizeFormData.prizeType || 'POINTS'} options={prizeTypeOptions} onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })} />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="prizeValue" className="font-bold">{t('game.prize_value', { defaultValue: 'Giá trị' })}</label>
-            <InputNumber id="prizeValue" value={prizeFormData.prizeValue || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })} />
-          </div>
-        </div>
-
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="probabilityWeight" className="font-bold">{t('game.probability_weight', { defaultValue: 'Tỷ lệ xác suất (%)' })}</label>
-            <InputNumber id="probabilityWeight" value={prizeFormData.probabilityWeight || 0} min={0} max={100} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 0 })} />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="dailyMaxWinners" className="font-bold">{t('game.daily_max_winners', { defaultValue: 'Số giải tối đa/ngày' })}</label>
-            <InputNumber id="dailyMaxWinners" value={prizeFormData.dailyMaxWinners || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyMaxWinners: e.value || 0 })} placeholder="0: Không giới hạn" />
-          </div>
-        </div>
-
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="dailyBudgetLimit" className="font-bold">{t('game.daily_budget_limit', { defaultValue: 'Hạn mức ngày (HTG)' })}</label>
-            <InputNumber id="dailyBudgetLimit" value={prizeFormData.dailyBudgetLimit || 0} onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyBudgetLimit: e.value || 0 })} placeholder="0: Không giới hạn" />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="prizeStatus" className="font-bold">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
-            <Dropdown id="prizeStatus" value={prizeFormData.status || CommonStatus.ACTIVE} options={statusOptions} onChange={(e) => setPrizeFormData({ ...prizeFormData, status: e.value })} />
-          </div>
+          <label htmlFor="prizeStatus" className="font-bold">{t('common.status', { defaultValue: 'Trạng thái hoạt động' })}</label>
+          <Dropdown id="prizeStatus" value={prizeFormData.status || CommonStatus.ACTIVE} options={statusOptions} onChange={(e) => setPrizeFormData({ ...prizeFormData, status: e.value })} />
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
           <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowPrizeDialog(false)} disabled={isSubmitting} />
-          <Button label={t('common.save', { defaultValue: 'Lưu thay đổi' })} icon="pi pi-check" onClick={savePrize} loading={isSubmitting} disabled={isSubmitting} />
+          <Button label={t('common.save', { defaultValue: 'Lưu Thay Đổi' })} icon="pi pi-check" onClick={savePrize} loading={isSubmitting} disabled={isSubmitting} />
         </div>
       </Dialog>
     </div>

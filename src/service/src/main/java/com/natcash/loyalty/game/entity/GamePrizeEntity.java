@@ -62,11 +62,44 @@ public class GamePrizeEntity {
     @Builder.Default
     private Integer probabilityWeight = 10;
 
+    @Column(name = "daily_budget_limit", precision = 18, scale = 2)
+    private BigDecimal dailyBudgetLimit;
+
+    @Column(name = "weekly_budget_limit", precision = 18, scale = 2)
+    private BigDecimal weeklyBudgetLimit;
+
+    @Column(name = "monthly_budget_limit", precision = 18, scale = 2)
+    private BigDecimal monthlyBudgetLimit;
+
+    @Column(name = "daily_max_winners")
+    private Integer dailyMaxWinners;
+
+    @Column(name = "weekly_max_winners")
+    private Integer weeklyMaxWinners;
+
+    @Column(name = "monthly_max_winners")
+    private Integer monthlyMaxWinners;
+
+    @Column(name = "name_vi", length = 255)
+    private String nameVi;
+
+    @Column(name = "name_en", length = 255)
+    private String nameEn;
+
+    @Column(name = "name_fr", length = 255)
+    private String nameFr;
+
+    @Column(name = "name_ht", length = 255)
+    private String nameHt;
+
     @Column(name = "color_code", length = 30)
     private String colorCode;
 
     @Column(name = "icon_symbol", length = 50)
     private String iconSymbol;
+
+    @Column(name = "bg_image_url", length = 500)
+    private String bgImageUrl;
 
     @Column(name = "display_order", nullable = false)
     @Builder.Default

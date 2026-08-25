@@ -397,11 +397,22 @@ public final class GameHubDto {
         private String gameCode;
         private String prizeCode;
         private String prizeName;
+        private String nameVi;
+        private String nameEn;
+        private String nameFr;
+        private String nameHt;
         private String prizeType;
         private BigDecimal prizeValue;
         private Integer probabilityWeight;
+        private BigDecimal dailyBudgetLimit;
+        private BigDecimal weeklyBudgetLimit;
+        private BigDecimal monthlyBudgetLimit;
+        private Integer dailyMaxWinners;
+        private Integer weeklyMaxWinners;
+        private Integer monthlyMaxWinners;
         private String colorCode;
         private String iconSymbol;
+        private String bgImageUrl;
         private Integer displayOrder;
         private String status;
     }

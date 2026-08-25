@@ -86,11 +86,17 @@ public class LuckyWheelService {
         List<PrizeConfigDto> prizeDtos = prizes.stream().map(p -> PrizeConfigDto.builder()
                 .prizeId(p.getId())
                 .prizeName(p.getPrizeName())
+                .nameVi(p.getNameVi() != null ? p.getNameVi() : p.getPrizeName())
+                .nameEn(p.getNameEn() != null ? p.getNameEn() : p.getPrizeName())
+                .nameFr(p.getNameFr() != null ? p.getNameFr() : p.getPrizeName())
+                .nameHt(p.getNameHt() != null ? p.getNameHt() : p.getPrizeName())
                 .prizeType(p.getPrizeType())
                 .prizeValue(p.getPrizeValue())
                 .displayOrder(p.getDisplayOrder())
                 .colorCode(p.getColorCode())
                 .iconUrl(p.getIconUrl())
+                .iconSymbol(p.getIconSymbol() != null ? p.getIconSymbol() : "🎁")
+                .bgImageUrl(p.getBgImageUrl())
                 .build()
         ).collect(Collectors.toList());
 
@@ -170,31 +176,66 @@ public class LuckyWheelService {
                 }
             }
 
-            // 3. Khống chế ngân sách trúng thưởng nguyên tử hàng ngày qua Redis Atomic DECRBY / INCRBY
+            // 3. Khống chế ngân sách trúng thưởng Ngày / Tuần / Tháng nguyên tử qua Redis Atomic
+            boolean budgetExceeded = false;
+            LocalDate now = LocalDate.now();
+            String todayStr = now.format(DateTimeFormatter.BASIC_ISO_DATE);
+            int weekOfYear = now.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            int weekYear = now.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR);
+            String weekStr = weekYear + "_W" + String.format("%02d", weekOfYear);
+            String monthStr = now.format(DateTimeFormatter.ofPattern("yyyyMM"));
+
+            long prizeCost = winningPrize.getPrizeValue() != null ? winningPrize.getPrizeValue().longValue() : 0;
+
+            // 3.1 Kiểm tra ngân sách Ngày
             if (winningPrize.getDailyBudgetLimit() != null && winningPrize.getDailyBudgetLimit().compareTo(BigDecimal.ZERO) > 0) {
-                String todayStr = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-                String budgetKey = "budget:spin:" + tenantId + ":" + winningPrize.getId() + ":" + todayStr;
-                RAtomicLong dailySpent = redissonClient.getAtomicLong(budgetKey);
-
-                long prizeCost = winningPrize.getPrizeValue().longValue();
-                long newSpent = dailySpent.addAndGet(prizeCost);
-                if (dailySpent.remainTimeToLive() < 0) {
-                    dailySpent.expire(Duration.ofHours(24));
+                String dayKey = "budget:spin:" + tenantId + ":" + winningPrize.getId() + ":D:" + todayStr;
+                RAtomicLong daySpent = redissonClient.getAtomicLong(dayKey);
+                long newSpent = daySpent.addAndGet(prizeCost);
+                if (daySpent.remainTimeToLive() < 0) {
+                    daySpent.expire(Duration.ofHours(24));
                 }
-
                 if (newSpent > winningPrize.getDailyBudgetLimit().longValue()) {
-                    log.warn("[SPIN-BUDGET-EXCEEDED] tenantId={}, prize={}, spent={}, limit={}",
-                            tenantId, winningPrize.getPrizeName(), newSpent, winningPrize.getDailyBudgetLimit());
-                    // Hoàn lại ngân sách đã cộng thử
-                    dailySpent.addAndGet(-prizeCost);
+                    daySpent.addAndGet(-prizeCost);
+                    budgetExceeded = true;
+                }
+            }
 
-                    // Fallback về giải khuyến khích / chúc may mắn lần sau
-                    for (int i = 0; i < prizes.size(); i++) {
-                        if (prizes.get(i).getPrizeType() == PrizeType.NO_LUCK || prizes.get(i).getDailyBudgetLimit() == null) {
-                            winningPrize = prizes.get(i);
-                            winningIndex = i;
-                            break;
-                        }
+            // 3.2 Kiểm tra ngân sách Tuần
+            if (!budgetExceeded && winningPrize.getWeeklyBudgetLimit() != null && winningPrize.getWeeklyBudgetLimit().compareTo(BigDecimal.ZERO) > 0) {
+                String weekKey = "budget:spin:" + tenantId + ":" + winningPrize.getId() + ":W:" + weekStr;
+                RAtomicLong weekSpent = redissonClient.getAtomicLong(weekKey);
+                long newSpent = weekSpent.addAndGet(prizeCost);
+                if (weekSpent.remainTimeToLive() < 0) {
+                    weekSpent.expire(Duration.ofDays(8));
+                }
+                if (newSpent > winningPrize.getWeeklyBudgetLimit().longValue()) {
+                    weekSpent.addAndGet(-prizeCost);
+                    budgetExceeded = true;
+                }
+            }
+
+            // 3.3 Kiểm tra ngân sách Tháng
+            if (!budgetExceeded && winningPrize.getMonthlyBudgetLimit() != null && winningPrize.getMonthlyBudgetLimit().compareTo(BigDecimal.ZERO) > 0) {
+                String monthKey = "budget:spin:" + tenantId + ":" + winningPrize.getId() + ":M:" + monthStr;
+                RAtomicLong monthSpent = redissonClient.getAtomicLong(monthKey);
+                long newSpent = monthSpent.addAndGet(prizeCost);
+                if (monthSpent.remainTimeToLive() < 0) {
+                    monthSpent.expire(Duration.ofDays(32));
+                }
+                if (newSpent > winningPrize.getMonthlyBudgetLimit().longValue()) {
+                    monthSpent.addAndGet(-prizeCost);
+                    budgetExceeded = true;
+                }
+            }
+
+            if (budgetExceeded) {
+                log.warn("[SPIN-BUDGET-EXCEEDED] tenantId={}, prize={}", tenantId, winningPrize.getPrizeName());
+                for (int i = 0; i < prizes.size(); i++) {
+                    if (prizes.get(i).getPrizeType() == PrizeType.NO_LUCK || prizes.get(i).getDailyBudgetLimit() == null) {
+                        winningPrize = prizes.get(i);
+                        winningIndex = i;
+                        break;
                     }
                 }
             }
@@ -256,15 +297,25 @@ public class LuckyWheelService {
                 .id(p.getId())
                 .displayOrder(p.getDisplayOrder())
                 .prizeName(p.getPrizeName())
+                .nameVi(p.getNameVi() != null ? p.getNameVi() : p.getPrizeName())
+                .nameEn(p.getNameEn())
+                .nameFr(p.getNameFr())
+                .nameHt(p.getNameHt())
                 .prizeType(p.getPrizeType() != null ? p.getPrizeType().name() : "POINTS")
                 .prizeValue(p.getPrizeValue())
                 .probabilityWeight(p.getProbabilityWeight())
                 .dailyBudgetLimit(p.getDailyBudgetLimit())
-                .dailyMaxWinners(p.getDailyBudgetLimit() != null && p.getPrizeValue() != null && p.getPrizeValue().compareTo(BigDecimal.ZERO) > 0
+                .weeklyBudgetLimit(p.getWeeklyBudgetLimit())
+                .monthlyBudgetLimit(p.getMonthlyBudgetLimit())
+                .dailyMaxWinners(p.getDailyMaxWinners() != null ? p.getDailyMaxWinners() : (p.getDailyBudgetLimit() != null && p.getPrizeValue() != null && p.getPrizeValue().compareTo(BigDecimal.ZERO) > 0
                         ? p.getDailyBudgetLimit().divide(p.getPrizeValue(), java.math.RoundingMode.DOWN).intValue()
-                        : 0)
+                        : 0))
+                .weeklyMaxWinners(p.getWeeklyMaxWinners())
+                .monthlyMaxWinners(p.getMonthlyMaxWinners())
                 .colorCode(p.getColorCode())
                 .iconUrl(p.getIconUrl())
+                .iconSymbol(p.getIconSymbol() != null ? p.getIconSymbol() : "🎁")
+                .bgImageUrl(p.getBgImageUrl())
                 .status(p.getStatus() != null ? p.getStatus().name() : "ACTIVE")
                 .actualWinCountToday(0)
                 .build()
@@ -290,6 +341,10 @@ public class LuckyWheelService {
 
         entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 1);
         entity.setPrizeName(dto.getPrizeName());
+        entity.setNameVi(dto.getNameVi() != null ? dto.getNameVi() : dto.getPrizeName());
+        entity.setNameEn(dto.getNameEn());
+        entity.setNameFr(dto.getNameFr());
+        entity.setNameHt(dto.getNameHt());
         try {
             entity.setPrizeType(dto.getPrizeType() != null ? PrizeType.valueOf(dto.getPrizeType()) : PrizeType.POINTS);
         } catch (Exception e) {
@@ -298,8 +353,15 @@ public class LuckyWheelService {
         entity.setPrizeValue(dto.getPrizeValue() != null ? dto.getPrizeValue() : BigDecimal.ZERO);
         entity.setProbabilityWeight(dto.getProbabilityWeight() != null ? dto.getProbabilityWeight() : 10);
         entity.setDailyBudgetLimit(dto.getDailyBudgetLimit());
+        entity.setWeeklyBudgetLimit(dto.getWeeklyBudgetLimit());
+        entity.setMonthlyBudgetLimit(dto.getMonthlyBudgetLimit());
+        entity.setDailyMaxWinners(dto.getDailyMaxWinners());
+        entity.setWeeklyMaxWinners(dto.getWeeklyMaxWinners());
+        entity.setMonthlyMaxWinners(dto.getMonthlyMaxWinners());
         entity.setColorCode(dto.getColorCode() != null ? dto.getColorCode() : "#F59E0B");
         entity.setIconUrl(dto.getIconUrl());
+        entity.setIconSymbol(dto.getIconSymbol() != null ? dto.getIconSymbol() : "🎁");
+        entity.setBgImageUrl(dto.getBgImageUrl());
         entity.setStatus(dto.getStatus() != null && dto.getStatus().equalsIgnoreCase("INACTIVE") ? CommonStatus.INACTIVE : CommonStatus.ACTIVE);
 
         LuckyWheelPrizeEntity saved = prizeRepository.save(entity);
@@ -307,12 +369,23 @@ public class LuckyWheelService {
                 .id(saved.getId())
                 .displayOrder(saved.getDisplayOrder())
                 .prizeName(saved.getPrizeName())
+                .nameVi(saved.getNameVi())
+                .nameEn(saved.getNameEn())
+                .nameFr(saved.getNameFr())
+                .nameHt(saved.getNameHt())
                 .prizeType(saved.getPrizeType().name())
                 .prizeValue(saved.getPrizeValue())
                 .probabilityWeight(saved.getProbabilityWeight())
                 .dailyBudgetLimit(saved.getDailyBudgetLimit())
+                .weeklyBudgetLimit(saved.getWeeklyBudgetLimit())
+                .monthlyBudgetLimit(saved.getMonthlyBudgetLimit())
+                .dailyMaxWinners(saved.getDailyMaxWinners())
+                .weeklyMaxWinners(saved.getWeeklyMaxWinners())
+                .monthlyMaxWinners(saved.getMonthlyMaxWinners())
                 .colorCode(saved.getColorCode())
                 .iconUrl(saved.getIconUrl())
+                .iconSymbol(saved.getIconSymbol())
+                .bgImageUrl(saved.getBgImageUrl())
                 .status(saved.getStatus().name())
                 .build();
     }

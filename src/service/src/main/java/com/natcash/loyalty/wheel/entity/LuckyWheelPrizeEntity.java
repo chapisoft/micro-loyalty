@@ -56,7 +56,34 @@ public class LuckyWheelPrizeEntity {
     private Integer probabilityWeight = 10; // Trọng số xác suất (vd: tổng 100)
 
     @Column(name = "daily_budget_limit", precision = 18, scale = 2)
-    private BigDecimal dailyBudgetLimit; // Hạn mức chi trả tối đa trong ngày (tiền mặt/điểm)
+    private BigDecimal dailyBudgetLimit; // Hạn mức chi trả tối đa trong ngày
+
+    @Column(name = "weekly_budget_limit", precision = 18, scale = 2)
+    private BigDecimal weeklyBudgetLimit; // Hạn mức chi trả tối đa trong tuần
+
+    @Column(name = "monthly_budget_limit", precision = 18, scale = 2)
+    private BigDecimal monthlyBudgetLimit; // Hạn mức chi trả tối đa trong tháng
+
+    @Column(name = "daily_max_winners")
+    private Integer dailyMaxWinners; // Số lượt trúng tối đa trong ngày
+
+    @Column(name = "weekly_max_winners")
+    private Integer weeklyMaxWinners; // Số lượt trúng tối đa trong tuần
+
+    @Column(name = "monthly_max_winners")
+    private Integer monthlyMaxWinners; // Số lượt trúng tối đa trong tháng
+
+    @Column(name = "name_vi", length = 255)
+    private String nameVi; // Tên giải tiếng Việt
+
+    @Column(name = "name_en", length = 255)
+    private String nameEn; // Tên giải tiếng Anh
+
+    @Column(name = "name_fr", length = 255)
+    private String nameFr; // Tên giải tiếng Pháp
+
+    @Column(name = "name_ht", length = 255)
+    private String nameHt; // Tên giải tiếng Haiti Creole
 
     @Column(name = "display_order", nullable = false)
     @Builder.Default
@@ -67,6 +94,13 @@ public class LuckyWheelPrizeEntity {
 
     @Column(name = "icon_url", length = 500)
     private String iconUrl;
+
+    @Column(name = "icon_symbol", length = 50)
+    @Builder.Default
+    private String iconSymbol = "🎁";
+
+    @Column(name = "bg_image_url", length = 500)
+    private String bgImageUrl; // Hình ảnh nền của nan quạt
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)

@@ -1164,11 +1164,22 @@ public class GameHubService {
                         .gameCode(p.getGameCode())
                         .prizeCode(p.getPrizeCode())
                         .prizeName(p.getPrizeName())
+                        .nameVi(p.getNameVi() != null ? p.getNameVi() : p.getPrizeName())
+                        .nameEn(p.getNameEn())
+                        .nameFr(p.getNameFr())
+                        .nameHt(p.getNameHt())
                         .prizeType(p.getPrizeType() != null ? p.getPrizeType().name() : "POINTS")
                         .prizeValue(p.getPrizeValue())
                         .probabilityWeight(p.getProbabilityWeight())
+                        .dailyBudgetLimit(p.getDailyBudgetLimit())
+                        .weeklyBudgetLimit(p.getWeeklyBudgetLimit())
+                        .monthlyBudgetLimit(p.getMonthlyBudgetLimit())
+                        .dailyMaxWinners(p.getDailyMaxWinners())
+                        .weeklyMaxWinners(p.getWeeklyMaxWinners())
+                        .monthlyMaxWinners(p.getMonthlyMaxWinners())
                         .colorCode(p.getColorCode())
                         .iconSymbol(p.getIconSymbol())
+                        .bgImageUrl(p.getBgImageUrl())
                         .displayOrder(p.getDisplayOrder())
                         .status(p.getStatus())
                         .build())
@@ -1190,6 +1201,10 @@ public class GameHubService {
         }
         entity.setPrizeCode(dto.getPrizeCode() != null ? dto.getPrizeCode() : "PRIZE_" + System.currentTimeMillis());
         entity.setPrizeName(dto.getPrizeName());
+        entity.setNameVi(dto.getNameVi() != null ? dto.getNameVi() : dto.getPrizeName());
+        entity.setNameEn(dto.getNameEn());
+        entity.setNameFr(dto.getNameFr());
+        entity.setNameHt(dto.getNameHt());
         if (dto.getPrizeType() != null) {
             try {
                 entity.setPrizeType(PrizeType.valueOf(dto.getPrizeType().toUpperCase()));
@@ -1199,8 +1214,15 @@ public class GameHubService {
         }
         entity.setPrizeValue(dto.getPrizeValue() != null ? dto.getPrizeValue() : BigDecimal.ZERO);
         entity.setProbabilityWeight(dto.getProbabilityWeight() != null ? dto.getProbabilityWeight() : 100);
+        entity.setDailyBudgetLimit(dto.getDailyBudgetLimit());
+        entity.setWeeklyBudgetLimit(dto.getWeeklyBudgetLimit());
+        entity.setMonthlyBudgetLimit(dto.getMonthlyBudgetLimit());
+        entity.setDailyMaxWinners(dto.getDailyMaxWinners());
+        entity.setWeeklyMaxWinners(dto.getWeeklyMaxWinners());
+        entity.setMonthlyMaxWinners(dto.getMonthlyMaxWinners());
         entity.setColorCode(dto.getColorCode() != null ? dto.getColorCode() : "#F59E0B");
         entity.setIconSymbol(dto.getIconSymbol() != null ? dto.getIconSymbol() : "🎁");
+        entity.setBgImageUrl(dto.getBgImageUrl());
         entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0);
         entity.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
         entity.setUpdatedAt(Instant.now());
@@ -1211,11 +1233,22 @@ public class GameHubService {
                 .gameCode(saved.getGameCode())
                 .prizeCode(saved.getPrizeCode())
                 .prizeName(saved.getPrizeName())
+                .nameVi(saved.getNameVi())
+                .nameEn(saved.getNameEn())
+                .nameFr(saved.getNameFr())
+                .nameHt(saved.getNameHt())
                 .prizeType(saved.getPrizeType() != null ? saved.getPrizeType().name() : "POINTS")
                 .prizeValue(saved.getPrizeValue())
                 .probabilityWeight(saved.getProbabilityWeight())
+                .dailyBudgetLimit(saved.getDailyBudgetLimit())
+                .weeklyBudgetLimit(saved.getWeeklyBudgetLimit())
+                .monthlyBudgetLimit(saved.getMonthlyBudgetLimit())
+                .dailyMaxWinners(saved.getDailyMaxWinners())
+                .weeklyMaxWinners(saved.getWeeklyMaxWinners())
+                .monthlyMaxWinners(saved.getMonthlyMaxWinners())
                 .colorCode(saved.getColorCode())
                 .iconSymbol(saved.getIconSymbol())
+                .bgImageUrl(saved.getBgImageUrl())
                 .displayOrder(saved.getDisplayOrder())
                 .status(saved.getStatus())
                 .build();
