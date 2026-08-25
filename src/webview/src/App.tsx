@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
+import { DailyCheckinModal } from './components/DailyCheckinModal';
+import { soundHaptics } from './utils/soundHaptics';
 import {
+  Volume2,
+  VolumeX,
   QrCode,
   X,
   Sparkles,
@@ -90,6 +94,10 @@ export const App: React.FC = () => {
   const [qrCountdown, setQrCountdown] = useState<number>(60);
   const [qrToken, setQrToken] = useState<string>('NATCASH_PAY_TOKEN_' + Math.floor(100000 + Math.random() * 900000));
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
+  const [showCheckinModal, setShowCheckinModal] = useState<boolean>(false);
+  const [checkinStreak, setCheckinStreak] = useState<number>(3);
+  const [hasCheckedInToday, setHasCheckedInToday] = useState<boolean>(false);
+  const [soundMuted, setSoundMuted] = useState<boolean>(soundHaptics.isMuted());
 
   const userId = getDefaultUserId();
   const tenantId = getTenantId();
@@ -213,10 +221,33 @@ export const App: React.FC = () => {
     setTimeout(() => setCopiedToken(false), 2000);
   };
 
-  const handleDailyCheckin = async () => {
-    setUserPoints((p) => p + 20);
-    setPaymentStatus(t('wallet.checkin_success'));
-    setTimeout(() => setPaymentStatus(null), 4000);
+  const handleMinigameReward = async (gameCode: string, earnedPoints: number, score: number = 0) => {
+    try {
+      const res = await LoyaltyApi.submitGameResult(
+        gameCode,
+        score > 0 ? score : earnedPoints,
+        userId,
+        undefined,
+        JSON.stringify({ pointsAwarded: earnedPoints, gameCode })
+      );
+      if (res?.newPointBalance) {
+        setUserPoints(res.newPointBalance);
+      } else if (res?.pointsAwarded) {
+        setUserPoints((p) => p + res.pointsAwarded);
+      } else {
+        setUserPoints((p) => p + earnedPoints);
+      }
+      // Nạp lại thông tin sổ cái và hồ sơ nền
+      LoyaltyApi.getProfile(userId).then((p) => {
+        if (p) setProfile(p);
+      });
+      LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
+        if (l?.items) setLedgerItems(l.items);
+      });
+    } catch (e) {
+      console.warn('[handleMinigameReward] Fallback local state:', e);
+      setUserPoints((p) => p + earnedPoints);
+    }
   };
 
   const points = userPoints;
@@ -318,6 +349,18 @@ export const App: React.FC = () => {
               </div>
             </div>
 
+            {/* Sound Mute Toggle */}
+            <button
+              onClick={() => {
+                const next = soundHaptics.toggleMute();
+                setSoundMuted(next);
+              }}
+              className="p-2 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-600 hover:text-slate-900 border border-slate-200"
+              title={soundMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+            >
+              {soundMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
+            </button>
+
             {/* Language Dropdown */}
             <LanguageSelector />
 
@@ -360,7 +403,7 @@ export const App: React.FC = () => {
         {currentTab === 'FLAPPY' && (
           <FlappyNatcomGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('FLAPPY_NATCOM', earnedPoints)}
           />
         )}
 
@@ -368,7 +411,7 @@ export const App: React.FC = () => {
         {currentTab === 'GAME2048' && (
           <Game2048Page
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('GAME_2048', earnedPoints)}
           />
         )}
 
@@ -376,7 +419,7 @@ export const App: React.FC = () => {
         {currentTab === 'MEMORY' && (
           <MemoryMatchGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('MEMORY_MATCH', earnedPoints)}
           />
         )}
 
@@ -384,7 +427,7 @@ export const App: React.FC = () => {
         {currentTab === 'BUBBLE' && (
           <BubbleShooterGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('BUBBLE_SHOOTER', earnedPoints)}
           />
         )}
 
@@ -392,7 +435,7 @@ export const App: React.FC = () => {
         {currentTab === 'FRUIT' && (
           <FruitSliceGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('FRUIT_SLICE', earnedPoints)}
           />
         )}
 
@@ -400,7 +443,7 @@ export const App: React.FC = () => {
         {currentTab === 'KNIFE' && (
           <KnifeHitGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('KNIFE_HIT', earnedPoints)}
           />
         )}
 
@@ -408,7 +451,7 @@ export const App: React.FC = () => {
         {currentTab === 'BLOCK' && (
           <BlockPuzzleGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('BLOCK_PUZZLE', earnedPoints)}
           />
         )}
 
@@ -416,7 +459,7 @@ export const App: React.FC = () => {
         {currentTab === 'RUNNER' && (
           <EndlessRunnerGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('ENDLESS_RUNNER', earnedPoints)}
           />
         )}
 
@@ -424,7 +467,7 @@ export const App: React.FC = () => {
         {currentTab === 'WORDLE' && (
           <WordleGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('WORDLE_GAME', earnedPoints)}
           />
         )}
 
@@ -432,7 +475,7 @@ export const App: React.FC = () => {
         {currentTab === 'SCREW' && (
           <ScrewPuzzleGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('SCREW_PUZZLE', earnedPoints)}
           />
         )}
 
@@ -440,7 +483,7 @@ export const App: React.FC = () => {
         {currentTab === 'UNTANGLE' && (
           <UntangleRopeGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('UNTANGLE_ROPE', earnedPoints)}
           />
         )}
 
@@ -448,7 +491,7 @@ export const App: React.FC = () => {
         {currentTab === 'PULLPIN' && (
           <PullThePinGame
             onBack={() => navigateToTab('GAMEHUB')}
-            onClaimReward={(earnedPoints) => setUserPoints((p) => p + earnedPoints)}
+            onClaimReward={(earnedPoints) => handleMinigameReward('PULL_PIN', earnedPoints)}
           />
         )}
 
@@ -583,6 +626,28 @@ export const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Smart Point Expiration Warning Chip */}
+                <div
+                  onClick={() => {
+                    soundHaptics.playClick();
+                    navigateToTab('VOUCHERS');
+                  }}
+                  className="bg-gradient-to-r from-amber-50 to-orange-50/80 hover:from-amber-100 hover:to-orange-100 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between cursor-pointer transition active:scale-98 shadow-xs"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-900 flex items-center justify-center font-bold text-sm shrink-0">
+                      ⏳
+                    </div>
+                    <div className="text-xs">
+                      <span className="font-extrabold text-amber-950 block">150 điểm sẽ hết hạn vào 31/08/2026</span>
+                      <p className="text-[11px] text-amber-800">Đổi ngay phiếu quà tặng siêu thị hoặc gói data để không lãng phí điểm</p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-black text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition shrink-0">
+                    Đổi quà →
+                  </span>
+                </div>
               </div>
 
               {/* Right Column: Embedded Dynamic QR Payment Card */}
@@ -623,18 +688,24 @@ export const App: React.FC = () => {
                   {/* Fast Action Buttons Grid */}
                   <div className="grid grid-cols-2 gap-2.5 pt-1">
                     <button
-                      onClick={handleDailyCheckin}
-                      className="py-2 px-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center space-x-1 shadow-md shadow-amber-500/20 active:scale-95 transition"
+                      onClick={() => {
+                        soundHaptics.playClick();
+                        setShowCheckinModal(true);
+                      }}
+                      className="py-2.5 px-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-amber-500/20 active:scale-95 transition"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{t('wallet.btn_checkin')}</span>
+                      <Gift className="w-4 h-4" />
+                      <span>{t('wallet.btn_checkin', { defaultValue: 'Chuỗi Điểm Danh' })}</span>
                     </button>
 
                     <button
-                      onClick={() => navigateToTab('VOUCHERS')}
-                      className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center space-x-1 border border-slate-200 active:scale-95 transition"
+                      onClick={() => {
+                        soundHaptics.playClick();
+                        navigateToTab('VOUCHERS');
+                      }}
+                      className="py-2.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center space-x-1 border border-slate-200 active:scale-95 transition"
                     >
-                      <Ticket className="w-3.5 h-3.5 text-indigo-600" />
+                      <Ticket className="w-4 h-4 text-indigo-600" />
                       <span>{t('wallet.btn_vouchers')}</span>
                     </button>
                   </div>
@@ -1210,6 +1281,19 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ── DAILY CHECKIN 7-DAY STREAK MODAL ── */}
+      <DailyCheckinModal
+        isOpen={showCheckinModal}
+        onClose={() => setShowCheckinModal(false)}
+        currentStreakDays={checkinStreak}
+        hasCheckedInToday={hasCheckedInToday}
+        onClaimReward={(pts, dayNum) => {
+          handleMinigameReward('DAILY_CHECKIN', pts, dayNum);
+          setHasCheckedInToday(true);
+          setCheckinStreak((prev) => (prev >= 7 ? 1 : prev + 1));
+        }}
+      />
 
       {/* ── TIER PRIVILEGES MODAL ── */}
       <TierBenefitsModal

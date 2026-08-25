@@ -17,6 +17,8 @@ import { MegaJackpotBanner } from '../components/gamification/MegaJackpotBanner'
 import { DailyMissionModal } from '../components/gamification/DailyMissionModal';
 import { ComboStreakBadge } from '../components/gamification/ComboStreakBadge';
 import { GameCoverArt } from '../components/game-assets/GameArtAssets';
+import { TurnRegenCountdown } from '../components/TurnRegenCountdown';
+import { soundHaptics } from '../utils/soundHaptics';
 
 export interface GameHubPageProps {
   onBack?: () => void;
@@ -319,9 +321,19 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-col sm:flex-row items-center gap-1.5">
+              <TurnRegenCountdown
+                freeTurns={freeTurns}
+                onTurnRegenerated={() => {
+                  if (onUpdateTurns) onUpdateTurns(freeTurns + 1, perpetualTurns);
+                }}
+              />
+
               <button
-                onClick={() => setShowMissionModal(true)}
+                onClick={() => {
+                  soundHaptics.playClick();
+                  setShowMissionModal(true);
+                }}
                 className="bg-amber-400/30 hover:bg-amber-400/40 text-yellow-200 border border-yellow-300/40 active:scale-95 font-black px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm transition animate-pulse"
                 title={t('gamehub.btn_missions', { defaultValue: 'Nhiệm Vụ' })}
               >
@@ -330,7 +342,10 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               </button>
 
               <button
-                onClick={() => setShowBuyModal(true)}
+                onClick={() => {
+                  soundHaptics.playClick();
+                  setShowBuyModal(true);
+                }}
                 className="bg-white text-slate-950 hover:bg-amber-50 active:scale-95 font-black px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs flex items-center gap-1 shadow-md transition"
                 title={t('gamehub.btn_buy_turns')}
               >
@@ -359,7 +374,10 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
           return (
             <button
               key={cat.key}
-              onClick={() => setSelectedCategory(cat.key)}
+              onClick={() => {
+                soundHaptics.playClick();
+                setSelectedCategory(cat.key);
+              }}
               className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition flex items-center space-x-1.5 active:scale-95 shrink-0 ${
                 isSelected
                   ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-orange-500/20'

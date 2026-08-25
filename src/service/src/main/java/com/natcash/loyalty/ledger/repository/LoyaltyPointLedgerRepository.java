@@ -26,4 +26,7 @@ public interface LoyaltyPointLedgerRepository extends JpaRepository<LoyaltyPoint
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType = com.natcash.loyalty.domain.enums.PointActionType.BURN")
     java.math.BigDecimal sumBurnedPoints(@org.springframework.data.repository.query.Param("tenantId") String tenantId);
+
+    java.util.List<LoyaltyPointLedgerEntity> findTop500ByChangeTypeInAndExpiredAtBeforeAndExpiredAtIsNotNullOrderByIdAsc(
+            java.util.Collection<com.natcash.loyalty.domain.enums.PointActionType> changeTypes, java.time.Instant now);
 }

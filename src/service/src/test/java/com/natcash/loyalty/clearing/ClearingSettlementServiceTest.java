@@ -9,6 +9,7 @@ import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
 import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
 
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,9 @@ class ClearingSettlementServiceTest {
 
     @Mock
     private ClearingTransactionRepository clearingRepository;
+
+    @Mock
+    private LoyaltyPartnerRepository partnerRepository;
 
     @InjectMocks
     private ClearingSettlementService clearingService;

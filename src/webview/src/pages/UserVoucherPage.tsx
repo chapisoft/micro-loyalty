@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Ticket,
-  QrCode,
   Copy,
   Check,
-  X,
   Search,
   Gift,
   Coins,
@@ -17,6 +15,8 @@ import {
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import { LoyaltyApi, UserVoucherItem } from '../services/api';
 import { NotificationModal, NotificationType } from '../components/NotificationModal';
+import { VoucherBarcodeModal } from '../components/VoucherBarcodeModal';
+import { soundHaptics } from '../utils/soundHaptics';
 
 const DEFAULT_MY_VOUCHERS: UserVoucherItem[] = [
   {
@@ -439,7 +439,12 @@ export const UserVoucherPage: React.FC<{
                   return (
                     <div
                       key={v.id}
-                      onClick={() => isAvailable && setSelectedVoucher(v)}
+                      onClick={() => {
+                        if (isAvailable) {
+                          soundHaptics.playClick();
+                          setSelectedVoucher(v);
+                        }
+                      }}
                       className={`bg-white rounded-2xl border p-4 shadow-xs transition flex flex-col justify-between relative overflow-hidden ${
                         isAvailable
                           ? 'border-slate-200/90 hover:border-amber-400 hover:shadow-md cursor-pointer'
@@ -641,59 +646,25 @@ export const UserVoucherPage: React.FC<{
         )}
       </main>
 
-      {/* ── MODAL: QR CODE ZOOM DIALOG ── */}
-      {selectedVoucher && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl text-center space-y-4 animate-scale-up">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                {selectedVoucher.partnerName}
-              </span>
-              <button
-                onClick={() => setSelectedVoucher(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <h3 className="text-sm font-black text-slate-900">{selectedVoucher.title}</h3>
-
-            {/* QR Code Container */}
-            <div className="p-4 bg-white border-2 border-dashed border-amber-300 rounded-2xl inline-block mx-auto shadow-inner">
-              <div className="w-44 h-44 bg-slate-950 rounded-xl p-3 flex items-center justify-center text-white relative">
-                <QrCode className="w-36 h-36" />
-              </div>
-            </div>
-
-            <div className="bg-slate-100 p-2.5 rounded-xl font-mono text-xs font-bold text-slate-800 flex items-center justify-between">
-              <span>{selectedVoucher.code}</span>
-              <button
-                onClick={(e) => handleCopyCode(selectedVoucher.code, e)}
-                className="text-amber-600 font-bold hover:underline flex items-center gap-1"
-              >
-                {copiedCode === selectedVoucher.code ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-                <span>{copiedCode === selectedVoucher.code ? t('vouchers.btn_copied') : t('vouchers.btn_copy')}</span>
-              </button>
-            </div>
-
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Đưa mã QR hoặc đọc mã phiếu cho thu ngân quầy để giảm trừ trực tiếp trên hóa đơn.
-            </p>
-
-            <button
-              onClick={() => setSelectedVoucher(null)}
-              className="w-full py-3 bg-slate-900 text-white font-bold rounded-2xl text-xs hover:bg-slate-800 transition"
-            >
-              {t('wheel.btn_close')}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── MODAL: HIGH-CONTRAST BARCODE & QR CODE DIALOG ── */}
+      <VoucherBarcodeModal
+        isOpen={Boolean(selectedVoucher)}
+        onClose={() => setSelectedVoucher(null)}
+        voucher={
+          selectedVoucher
+            ? {
+                id: selectedVoucher.id,
+                voucherCode: selectedVoucher.code,
+                voucherTitle: selectedVoucher.title,
+                partnerName: selectedVoucher.partnerName,
+                discountValue: 50,
+                discountType: 'FIXED_AMOUNT',
+                expiredAt: selectedVoucher.validUntil,
+                terms: selectedVoucher.terms,
+              }
+            : null
+        }
+      />
 
       {/* ── HIGH-END NOTIFICATION MODAL ── */}
       <NotificationModal

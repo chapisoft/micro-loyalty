@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -9,7 +9,15 @@ import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
-import { CampaignMetric, CommonStatus } from '@/models';
+import { CommonStatus } from '@/models';
+import { LoyaltyService } from '@/service/loyalty.service';
+
+export enum CampaignMetric {
+  BILL_AMOUNT = 'BILL_AMOUNT',
+  TRANSACTION_COUNT = 'TRANSACTION_COUNT',
+  EARN_POINTS = 'EARN_POINTS',
+  GAME_SPINS = 'GAME_SPINS',
+}
 
 export interface CampaignMilestoneItem {
   id: number;
@@ -25,65 +33,60 @@ export interface CampaignMilestoneItem {
   endDate: string;
 }
 
-const INITIAL_CAMPAIGNS: CampaignMilestoneItem[] = [
-  {
-    id: 1,
-    campaignCode: 'GOLDEN_WEEK_2026',
-    campaignName: 'Tuần Lễ Vàng Mua Sắm',
-    milestoneStep: 1,
-    targetMetric: CampaignMetric.BILL_AMOUNT,
-    targetValue: 500,
-    rewardPoints: 50,
-    rewardGameTurns: 1,
-    status: CommonStatus.ACTIVE,
-    startDate: '2026-08-20',
-    endDate: '2026-08-30',
-  },
-  {
-    id: 2,
-    campaignCode: 'GOLDEN_WEEK_2026',
-    campaignName: 'Tuần Lễ Vàng Mua Sắm',
-    milestoneStep: 2,
-    targetMetric: CampaignMetric.BILL_AMOUNT,
-    targetValue: 2000,
-    rewardPoints: 250,
-    rewardGameTurns: 3,
-    status: CommonStatus.ACTIVE,
-    startDate: '2026-08-20',
-    endDate: '2026-08-30',
-  },
-  {
-    id: 3,
-    campaignCode: 'GOLDEN_WEEK_2026',
-    campaignName: 'Tuần Lễ Vàng Mua Sắm',
-    milestoneStep: 3,
-    targetMetric: CampaignMetric.BILL_AMOUNT,
-    targetValue: 5000,
-    rewardPoints: 1000,
-    rewardGameTurns: 10,
-    status: CommonStatus.ACTIVE,
-    startDate: '2026-08-20',
-    endDate: '2026-08-30',
-  },
-];
-
 export const CampaignMilestonesPage: React.FC = () => {
   const { t } = useTranslation();
-  const [campaigns, setCampaigns] = useState<CampaignMilestoneItem[]>(INITIAL_CAMPAIGNS);
-  const [selectedItems, setSelectedItems] = useState<CampaignMilestoneItem[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignMilestoneItem[]>([]);
+  const [selectedCampaigns, setSelectedCampaigns] = useState<CampaignMilestoneItem[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<CampaignMilestoneItem>>({});
   const [isEdit, setIsEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const fetchMilestones = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await LoyaltyService.getMilestones();
+      if (data && data.length > 0) {
+        setCampaigns(
+          data.map((m: any) => ({
+            id: m.id,
+            campaignCode: m.campaignCode,
+            campaignName: m.campaignName,
+            milestoneStep: m.milestoneStep || 1,
+            targetMetric: (m.targetMetric as CampaignMetric) || CampaignMetric.BILL_AMOUNT,
+            targetValue: m.targetValue || 0,
+            rewardPoints: m.rewardPoints || 0,
+            rewardGameTurns: m.rewardGameTurns || 0,
+            status: (m.status as CommonStatus) || CommonStatus.ACTIVE,
+            startDate: m.startDate ? String(m.startDate).substring(0, 10) : '2026-08-01',
+            endDate: m.endDate ? String(m.endDate).substring(0, 10) : '2026-12-31',
+          }))
+        );
+      }
+    } catch (e) {
+      console.error('[fetchMilestones] Error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMilestones();
+  }, [fetchMilestones]);
 
   const openNew = () => {
     setFormData({
+      campaignCode: 'CAMP_' + Math.floor(Math.random() * 10000),
+      campaignName: 'Chiến dịch kích cầu mua sắm',
       milestoneStep: 1,
       targetMetric: CampaignMetric.BILL_AMOUNT,
       targetValue: 1000,
       rewardPoints: 100,
       rewardGameTurns: 1,
       status: CommonStatus.ACTIVE,
+      startDate: '2026-08-01',
+      endDate: '2026-12-31',
     });
     setIsEdit(false);
     setShowDialog(true);
@@ -95,14 +98,34 @@ export const CampaignMilestonesPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const saveItem = () => {
+  const deleteItem = async (item: CampaignMilestoneItem) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa cột mốc ${item.campaignCode} (${item.campaignName})?`)) {
+      setLoading(true);
+      try {
+        await LoyaltyService.deleteMilestone(item.id);
+        await fetchMilestones();
+      } catch (e) {
+        console.error('[deleteMilestone] Error:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const saveItem = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
       if (isEdit && formData.id) {
-        setCampaigns(campaigns.map((c) => (c.id === formData.id ? ({ ...c, ...formData } as CampaignMilestoneItem) : c)));
+        await LoyaltyService.updateMilestone(formData.id, {
+          campaignName: formData.campaignName,
+          targetMetric: formData.targetMetric,
+          targetValue: formData.targetValue,
+          rewardPoints: formData.rewardPoints,
+          rewardGameTurns: formData.rewardGameTurns,
+          status: formData.status,
+        });
       } else {
-        const newItem: CampaignMilestoneItem = {
-          id: Date.now(),
+        await LoyaltyService.createMilestone({
           campaignCode: formData.campaignCode || 'NEW_CAMPAIGN',
           campaignName: formData.campaignName || 'Chiến dịch mới',
           milestoneStep: formData.milestoneStep || 1,
@@ -111,14 +134,15 @@ export const CampaignMilestonesPage: React.FC = () => {
           rewardPoints: formData.rewardPoints || 0,
           rewardGameTurns: formData.rewardGameTurns || 0,
           status: formData.status || CommonStatus.ACTIVE,
-          startDate: formData.startDate || '2026-08-01',
-          endDate: formData.endDate || '2026-08-31',
-        };
-        setCampaigns([...campaigns, newItem]);
+        });
       }
-      setIsSubmitting(false);
       setShowDialog(false);
-    }, 300);
+      await fetchMilestones();
+    } catch (e) {
+      console.error('[saveMilestone] Error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const actionTemplate = (rowData: CampaignMilestoneItem) => (
@@ -132,6 +156,15 @@ export const CampaignMilestonesPage: React.FC = () => {
         onClick={() => editItem(rowData)}
         tooltip={t('common.edit', { defaultValue: 'Sửa' })}
       />
+      <Button
+        icon="pi pi-trash"
+        rounded
+        outlined
+        severity="danger"
+        size="small"
+        onClick={() => deleteItem(rowData)}
+        tooltip={t('common.delete', { defaultValue: 'Xóa' })}
+      />
     </div>
   );
 
@@ -143,14 +176,26 @@ export const CampaignMilestonesPage: React.FC = () => {
     );
   };
 
-  const stepTemplate = (rowData: CampaignMilestoneItem) => (
-    <Tag severity="info" value={`${t('campaign.step', { defaultValue: 'Chặng' })} ${rowData.milestoneStep}`} />
-  );
+  const metricLabelTemplate = (metric: CampaignMetric) => {
+    switch (metric) {
+      case CampaignMetric.BILL_AMOUNT:
+        return t('milestone.metric_bill', { defaultValue: 'Chi tiêu tích lũy (HTG)' });
+      case CampaignMetric.TRANSACTION_COUNT:
+        return t('milestone.metric_tx_count', { defaultValue: 'Số lượng giao dịch' });
+      case CampaignMetric.EARN_POINTS:
+        return t('milestone.metric_points', { defaultValue: 'Điểm tích lũy' });
+      case CampaignMetric.GAME_SPINS:
+        return t('milestone.metric_spins', { defaultValue: 'Lượt quay vòng quay' });
+      default:
+        return metric;
+    }
+  };
 
   const metricOptions = [
-    { label: t('campaign.metric_bill', { defaultValue: 'Tổng chi tiêu mua sắm (HTG)' }), value: CampaignMetric.BILL_AMOUNT },
-    { label: t('campaign.metric_tx_count', { defaultValue: 'Số lượng giao dịch hoàn thành' }), value: CampaignMetric.TRANSACTION_COUNT },
-    { label: t('campaign.metric_points', { defaultValue: 'Số điểm tích lũy được' }), value: CampaignMetric.EARN_POINTS },
+    { label: t('milestone.metric_bill', { defaultValue: 'Chi tiêu tích lũy (HTG)' }), value: CampaignMetric.BILL_AMOUNT },
+    { label: t('milestone.metric_tx_count', { defaultValue: 'Số lượng giao dịch' }), value: CampaignMetric.TRANSACTION_COUNT },
+    { label: t('milestone.metric_points', { defaultValue: 'Điểm tích lũy' }), value: CampaignMetric.EARN_POINTS },
+    { label: t('milestone.metric_spins', { defaultValue: 'Lượt quay vòng quay' }), value: CampaignMetric.GAME_SPINS },
   ];
 
   const statusOptions = [
@@ -160,139 +205,164 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   const header = (
     <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <h4 className="m-0 text-primary font-bold">{t('campaign.management_title', { defaultValue: 'Quản trị Chiến Dịch & Chuỗi Cột Mốc Sự Kiện' })}</h4>
+      <h4 className="m-0 text-primary font-bold">{t('milestone.management_title', { defaultValue: 'Cấu hình Cột mốc Chiến dịch (Gamification)' })}</h4>
       <div className="flex gap-2">
-        <Button label={t('campaign.add_new', { defaultValue: 'Tạo Cột Mốc Mới' })} icon="pi pi-plus" severity="success" onClick={openNew} />
+        <Button label={t('milestone.add_new', { defaultValue: 'Thêm Cột mốc' })} icon="pi pi-plus" severity="success" onClick={openNew} />
+        <Button icon="pi pi-refresh" outlined onClick={fetchMilestones} loading={loading} />
       </div>
     </div>
   );
 
   return (
     <div>
-      <AppBreadcrumb items={[{ label: t('nav.campaigns', { defaultValue: 'Chiến dịch & Cột mốc' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.milestones', { defaultValue: 'Cột mốc Chiến dịch' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
           value={campaigns}
-          selection={selectedItems}
-          onSelectionChange={(e: any) => setSelectedItems(e.value || [])}
-          header={header}
+          selection={selectedCampaigns}
+          onSelectionChange={(e) => setSelectedCampaigns(e.value as CampaignMilestoneItem[])}
           dataKey="id"
           paginator
           rows={10}
-          emptyMessage={t('common.no_data', { defaultValue: 'Không có chiến dịch nào' })}
-          stripedRows
+          loading={loading}
+          rowsPerPageOptions={[5, 10, 25]}
+          header={header}
           responsiveLayout="scroll"
+          emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chiến dịch cột mốc nào' })}
         >
-          {/* Cột 1: Checkbox */}
-          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
-
-          {/* Cột 2: STT */}
+          <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
+          <Column field="campaignCode" header={t('milestone.code', { defaultValue: 'Mã Chiến dịch' })} sortable style={{ fontWeight: 'bold' }} />
+          <Column field="campaignName" header={t('milestone.name', { defaultValue: 'Tên Chiến dịch' })} sortable />
+          <Column field="milestoneStep" header={t('milestone.step', { defaultValue: 'Chặng #' })} sortable style={{ textAlign: 'center', width: '6rem' }} />
+          <Column field="targetMetric" header={t('milestone.metric', { defaultValue: 'Chỉ tiêu đo lường' })} body={(row: CampaignMilestoneItem) => metricLabelTemplate(row.targetMetric)} sortable />
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
-            body={(_, options) => options.rowIndex + 1}
-            style={{ width: '4rem', textAlign: 'center' }}
+            field="targetValue"
+            header={t('milestone.target_value', { defaultValue: 'Mục tiêu' })}
+            body={(row: CampaignMilestoneItem) => `${row.targetValue.toLocaleString()}`}
+            sortable
           />
-
-          {/* Cột 3: Thao tác */}
-          <Column body={actionTemplate} exportable={false} header={t('common.actions', { defaultValue: 'Thao tác' })} style={{ width: '6rem' }} />
-
-          {/* Cột 4 trở đi: Dữ liệu */}
-          <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến dịch' })} sortable style={{ minWidth: '10rem' }} />
-          <Column field="campaignName" header={t('campaign.name', { defaultValue: 'Tên Chiến dịch' })} sortable style={{ minWidth: '14rem' }} />
-          <Column field="milestoneStep" body={stepTemplate} header={t('campaign.step', { defaultValue: 'Chặng' })} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
-          <Column field="targetValue" header={t('campaign.target_value', { defaultValue: 'Chỉ tiêu cần đạt' })} sortable style={{ minWidth: '10rem' }} />
-          <Column field="rewardPoints" header={t('campaign.reward_points', { defaultValue: 'Thưởng Điểm' })} sortable style={{ minWidth: '9rem' }} />
-          <Column field="rewardGameTurns" header={t('campaign.reward_spins', { defaultValue: 'Thưởng Lượt Quay' })} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
-          <Column field="status" body={statusTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem' }} />
+          <Column
+            field="rewardPoints"
+            header={t('milestone.reward_points', { defaultValue: 'Thưởng Điểm' })}
+            body={(row: CampaignMilestoneItem) => (
+              <span className="font-bold text-orange-500">
+                <i className="pi pi-star-fill mr-1" />
+                +{row.rewardPoints}
+              </span>
+            )}
+            sortable
+          />
+          <Column
+            field="rewardGameTurns"
+            header={t('milestone.reward_turns', { defaultValue: 'Thưởng Lượt Game' })}
+            body={(row: CampaignMilestoneItem) => (
+              <span className="font-bold text-indigo-500">
+                <i className="pi pi-bolt mr-1" />
+                +{row.rewardGameTurns}
+              </span>
+            )}
+            sortable
+          />
+          <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={statusTemplate} sortable />
+          <Column body={actionTemplate} exportable={false} style={{ minWidth: '8rem' }} />
         </DataTable>
       </div>
 
       <Dialog
         visible={showDialog}
-        style={{ width: '32rem' }}
-        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header={isEdit ? t('campaign.edit_title', { defaultValue: 'Cập nhật Cột Mốc' }) : t('campaign.create_title', { defaultValue: 'Tạo mới Cột Mốc' })}
+        style={{ width: '480px' }}
+        header={isEdit ? t('milestone.edit_title', { defaultValue: 'Chỉnh sửa Cột mốc' }) : t('milestone.add_title', { defaultValue: 'Tạo Cột mốc mới' })}
         modal
         className="p-fluid"
         onHide={() => setShowDialog(false)}
       >
         <div className="field mb-3">
-          <label htmlFor="campaignCode" className="font-bold">{t('campaign.code', { defaultValue: 'Mã Chiến dịch' })}</label>
+          <label htmlFor="campaignCode" className="font-bold">{t('milestone.code', { defaultValue: 'Mã Chiến dịch' })}</label>
           <InputText
             id="campaignCode"
             value={formData.campaignCode || ''}
             onChange={(e) => setFormData({ ...formData, campaignCode: e.target.value })}
-            required
-            placeholder={t('campaign.code_placeholder', { defaultValue: 'Ví dụ: GOLDEN_WEEK_2026' })}
+            placeholder="VD: DELIMART_GOLDEN_WEEK"
+            disabled={isEdit}
           />
         </div>
+
         <div className="field mb-3">
-          <label htmlFor="campaignName" className="font-bold">{t('campaign.name', { defaultValue: 'Tên Chiến dịch' })}</label>
+          <label htmlFor="campaignName" className="font-bold">{t('milestone.name', { defaultValue: 'Tên Chiến dịch' })}</label>
           <InputText
             id="campaignName"
             value={formData.campaignName || ''}
             onChange={(e) => setFormData({ ...formData, campaignName: e.target.value })}
-            required
-            placeholder={t('campaign.name_placeholder', { defaultValue: 'Ví dụ: Tuần Lễ Vàng Mua Sắm' })}
+            placeholder="VD: Tuần Lễ Vàng Mua Sắm Siêu Thị"
           />
         </div>
-        <div className="field mb-3">
-          <label htmlFor="milestoneStep" className="font-bold">{t('campaign.step', { defaultValue: 'Thứ tự chặng mốc' })}</label>
-          <InputNumber
-            id="milestoneStep"
-            value={formData.milestoneStep ?? 1}
-            onValueChange={(e) => setFormData({ ...formData, milestoneStep: e.value ?? 1 })}
-          />
+
+        <div className="formgrid grid mb-3">
+          <div className="field col-6">
+            <label htmlFor="milestoneStep" className="font-bold">{t('milestone.step', { defaultValue: 'Chặng #' })}</label>
+            <InputNumber
+              id="milestoneStep"
+              value={formData.milestoneStep}
+              onValueChange={(e) => setFormData({ ...formData, milestoneStep: e.value || 1 })}
+              min={1}
+            />
+          </div>
+          <div className="field col-6">
+            <label htmlFor="targetMetric" className="font-bold">{t('milestone.metric', { defaultValue: 'Chỉ tiêu' })}</label>
+            <Dropdown
+              id="targetMetric"
+              value={formData.targetMetric}
+              options={metricOptions}
+              onChange={(e) => setFormData({ ...formData, targetMetric: e.value })}
+            />
+          </div>
         </div>
-        <div className="field mb-3">
-          <label htmlFor="targetMetric" className="font-bold">{t('campaign.target_metric', { defaultValue: 'Loại chỉ tiêu đo lường' })}</label>
-          <Dropdown
-            id="targetMetric"
-            value={formData.targetMetric || 'BILL_AMOUNT'}
-            options={metricOptions}
-            onChange={(e) => setFormData({ ...formData, targetMetric: e.value })}
-          />
+
+        <div className="formgrid grid mb-3">
+          <div className="field col-6">
+            <label htmlFor="targetValue" className="font-bold">{t('milestone.target_value', { defaultValue: 'Mục tiêu' })}</label>
+            <InputNumber
+              id="targetValue"
+              value={formData.targetValue}
+              onValueChange={(e) => setFormData({ ...formData, targetValue: e.value || 0 })}
+            />
+          </div>
+          <div className="field col-6">
+            <label htmlFor="rewardPoints" className="font-bold">{t('milestone.reward_points', { defaultValue: 'Thưởng Điểm' })}</label>
+            <InputNumber
+              id="rewardPoints"
+              value={formData.rewardPoints}
+              onValueChange={(e) => setFormData({ ...formData, rewardPoints: e.value || 0 })}
+            />
+          </div>
         </div>
-        <div className="field mb-3">
-          <label htmlFor="targetValue" className="font-bold">{t('campaign.target_value', { defaultValue: 'Giá trị chỉ tiêu cần hoàn thành' })}</label>
-          <InputNumber
-            id="targetValue"
-            value={formData.targetValue ?? 1000}
-            onValueChange={(e) => setFormData({ ...formData, targetValue: e.value ?? 1000 })}
-          />
+
+        <div className="formgrid grid mb-3">
+          <div className="field col-6">
+            <label htmlFor="rewardGameTurns" className="font-bold">{t('milestone.reward_turns', { defaultValue: 'Thưởng Lượt Quay' })}</label>
+            <InputNumber
+              id="rewardGameTurns"
+              value={formData.rewardGameTurns}
+              onValueChange={(e) => setFormData({ ...formData, rewardGameTurns: e.value || 0 })}
+            />
+          </div>
+          <div className="field col-6">
+            <label htmlFor="status" className="font-bold">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
+            <Dropdown
+              id="status"
+              value={formData.status}
+              options={statusOptions}
+              onChange={(e) => setFormData({ ...formData, status: e.value })}
+            />
+          </div>
         </div>
-        <div className="field mb-3">
-          <label htmlFor="rewardPoints" className="font-bold">{t('campaign.reward_points', { defaultValue: 'Điểm thưởng khi hoàn thành chặng' })}</label>
-          <InputNumber
-            id="rewardPoints"
-            value={formData.rewardPoints ?? 0}
-            onValueChange={(e) => setFormData({ ...formData, rewardPoints: e.value ?? 0 })}
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="rewardGameTurns" className="font-bold">{t('campaign.reward_spins', { defaultValue: 'Lượt quay vòng quay may mắn tặng kèm' })}</label>
-          <InputNumber
-            id="rewardGameTurns"
-            value={formData.rewardGameTurns ?? 0}
-            onValueChange={(e) => setFormData({ ...formData, rewardGameTurns: e.value ?? 0 })}
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="status" className="font-bold">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
-          <Dropdown
-            id="status"
-            value={formData.status || CommonStatus.ACTIVE}
-            options={statusOptions}
-            onChange={(e) => setFormData({ ...formData, status: e.value })}
-          />
-        </div>
+
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} disabled={isSubmitting} />
-          <Button label={t('common.save', { defaultValue: 'Lưu cột mốc' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} disabled={isSubmitting} />
+          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
+          <Button label={t('common.save', { defaultValue: 'Lưu Cột mốc' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} />
         </div>
       </Dialog>
     </div>
   );
 };
-
 export default CampaignMilestonesPage;

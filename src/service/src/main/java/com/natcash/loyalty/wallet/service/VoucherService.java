@@ -196,6 +196,36 @@ public class VoucherService {
         });
     }
 
+    @Transactional
+    public VoucherResponse updateVoucher(String tenantId, Long id, CreateVoucherRequest request) {
+        LoyaltyVoucherEntity entity = voucherRepository.findById(id)
+                .filter(v -> v.getTenantId().equals(tenantId))
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy voucher #" + id));
+
+        if (request.getTitle() != null) entity.setTitle(request.getTitle());
+        if (request.getDescription() != null) entity.setDescription(request.getDescription());
+        if (request.getDiscountType() != null) entity.setDiscountType(request.getDiscountType());
+        if (request.getDiscountValue() != null) entity.setDiscountValue(request.getDiscountValue());
+        if (request.getMinBillAmount() != null) entity.setMinBillAmount(request.getMinBillAmount());
+        if (request.getMaxDiscountAmount() != null) entity.setMaxDiscountAmount(request.getMaxDiscountAmount());
+        if (request.getPointCost() != null) entity.setPointCost(request.getPointCost());
+        if (request.getTotalQuantity() != null) {
+            int diff = request.getTotalQuantity() - entity.getTotalQuantity();
+            entity.setTotalQuantity(request.getTotalQuantity());
+            entity.setAvailableQuantity(Math.max(0, entity.getAvailableQuantity() + diff));
+        }
+
+        LoyaltyVoucherEntity updated = voucherRepository.save(entity);
+        return mapToVoucherResponse(updated);
+    }
+
+    @Transactional
+    public void deleteVoucher(String tenantId, Long id) {
+        voucherRepository.findById(id)
+                .filter(v -> v.getTenantId().equals(tenantId))
+                .ifPresent(voucherRepository::delete);
+    }
+
     private VoucherResponse mapToVoucherResponse(LoyaltyVoucherEntity v) {
         return VoucherResponse.builder()
                 .id(v.getId())

@@ -10,8 +10,11 @@ import com.natcash.loyalty.wallet.service.VoucherService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,6 +62,27 @@ public class VoucherController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         VoucherResponse response = voucherService.createVoucher(tenantId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Cập nhật voucher ưu đãi", description = "Dành cho Quản trị viên CMS cập nhật chiến dịch voucher")
+    public ResponseEntity<VoucherResponse> updateVoucher(
+            @PathVariable("id") Long id,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody CreateVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        VoucherResponse response = voucherService.updateVoucher(tenantId, id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa voucher", description = "Xóa voucher khỏi hệ thống")
+    public ResponseEntity<Void> deleteVoucher(
+            @PathVariable("id") Long id,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        voucherService.deleteVoucher(tenantId, id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/redeem")

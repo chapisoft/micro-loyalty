@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
-import { Calendar } from 'primereact/calendar';
 import { AppBreadcrumb } from 'components';
 import { ClearingStatus } from '@/models';
+import { LoyaltyService } from '@/service/loyalty.service';
 
 interface PartnerClearingItem {
   id: number;
@@ -21,51 +21,61 @@ interface PartnerClearingItem {
   status: ClearingStatus;
 }
 
-const INITIAL_CLEARING_SUMMARIES: PartnerClearingItem[] = [
-  {
-    id: 1,
-    partnerCode: 'DELIMART_SUPERMARKET',
-    partnerName: 'Hệ Thống Siêu Thị Delimart Port-au-Prince',
-    totalTransactions: 1420,
-    totalPointsRedeemed: 142000,
-    totalFiatReceivable: 142000,
-    totalFiatPayable: 0,
-    netSettlementAmount: 142000, // Natcash cần chuyển trả Delimart 142.000 HTG
-    status: ClearingStatus.PENDING,
-  },
-  {
-    id: 2,
-    partnerCode: 'NATCOM_TELECOM',
-    partnerName: 'Công Ty Viễn Thông Natcom',
-    totalTransactions: 890,
-    totalPointsRedeemed: 44500,
-    totalFiatReceivable: 0,
-    totalFiatPayable: 44500,
-    netSettlementAmount: -44500, // Natcom cần quyết toán 44.500 HTG
-    status: ClearingStatus.PENDING,
-  },
-];
-
 export const ClearingSettlementPage: React.FC = () => {
   const { t } = useTranslation();
-  const [clearingList, setClearingList] = useState<PartnerClearingItem[]>(INITIAL_CLEARING_SUMMARIES);
+  const [clearingList, setClearingList] = useState<PartnerClearingItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<PartnerClearingItem[]>([]);
-  const [fromDate, setFromDate] = useState<Date | null>(new Date(2026, 7, 1));
-  const [toDate, setToDate] = useState<Date | null>(new Date(2026, 7, 23));
   const [showConfirmSettle, setShowConfirmSettle] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [settleSuccessMsg, setSettleSuccessMsg] = useState<string | null>(null);
+
+  const fetchClearingData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const report = await LoyaltyService.getClearingReport();
+      if (report && report.partnerSummaries) {
+        setClearingList(
+          report.partnerSummaries.map((s, idx) => ({
+            id: s.partnerId || idx + 1,
+            partnerCode: s.partnerId === 1 ? 'DELIMART' : s.partnerId === 2 ? 'NATCOM' : `PARTNER_${s.partnerId}`,
+            partnerName: s.partnerName,
+            totalTransactions: s.totalTransactions || 0,
+            totalPointsRedeemed: s.totalPointsRedeemed || 0,
+            totalFiatReceivable: s.totalFiatReceivable || 0,
+            totalFiatPayable: s.totalFiatPayable || 0,
+            netSettlementAmount: s.netSettlementAmount || 0,
+            status: (s.status as ClearingStatus) || ClearingStatus.PENDING,
+          }))
+        );
+      }
+    } catch (e) {
+      console.error('[fetchClearingData] Error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClearingData();
+  }, [fetchClearingData]);
 
   const totalTransactions = clearingList.reduce((sum, item) => sum + item.totalTransactions, 0);
   const totalPointsRedeemed = clearingList.reduce((sum, item) => sum + item.totalPointsRedeemed, 0);
   const totalNetSettlement = clearingList.reduce((sum, item) => sum + item.netSettlementAmount, 0);
 
-  const handleSettlePeriod = () => {
+  const handleSettlePeriod = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      setClearingList(clearingList.map((item) => ({ ...item, status: ClearingStatus.SETTLED })));
-      setIsSubmitting(false);
+    try {
+      const res = await LoyaltyService.settleClearingPeriod();
+      setSettleSuccessMsg(res?.message || 'Quyết toán kết chuyển kỳ bù trừ thành công!');
       setShowConfirmSettle(false);
-    }, 500);
+      await fetchClearingData();
+    } catch (e) {
+      console.error('[handleSettlePeriod] Error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const statusTemplate = (status: ClearingStatus) => {
@@ -89,7 +99,7 @@ export const ClearingSettlementPage: React.FC = () => {
     <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
       <h4 className="m-0 text-primary font-bold">{t('clearing.management_title', { defaultValue: 'Quyết Toán Bù Trừ Tài Chính Đa Phương' })}</h4>
       <div className="flex flex-wrap gap-2">
-        <Button label={t('clearing.export_excel', { defaultValue: 'Xuất File Đối Soát' })} icon="pi pi-file-excel" severity="info" outlined />
+        <Button icon="pi pi-refresh" outlined onClick={fetchClearingData} loading={loading} />
         <Button
           label={t('clearing.settle_period', { defaultValue: 'Kết Chuyển Kỳ Quyết Toán' })}
           icon="pi pi-check-circle"
@@ -103,6 +113,13 @@ export const ClearingSettlementPage: React.FC = () => {
   return (
     <div>
       <AppBreadcrumb items={[{ label: t('nav.clearing', { defaultValue: 'Bù Trừ & Quyết Toán' }) }]} />
+
+      {settleSuccessMsg && (
+        <div className="p-3 mb-3 border-round bg-green-50 text-green-800 border-1 border-green-200 flex align-items-center justify-content-between">
+          <span><i className="pi pi-check-circle mr-2" />{settleSuccessMsg}</span>
+          <Button icon="pi pi-times" text rounded severity="success" onClick={() => setSettleSuccessMsg(null)} />
+        </div>
+      )}
 
       {/* Thẻ Thống Kê Tổng Quan */}
       <div className="grid mb-4">
@@ -135,30 +152,17 @@ export const ClearingSettlementPage: React.FC = () => {
           dataKey="id"
           paginator
           rows={10}
+          loading={loading}
           emptyMessage={t('common.no_data', { defaultValue: 'Không có dữ liệu đối soát' })}
           stripedRows
           responsiveLayout="scroll"
         >
-          {/* Cột 1: Checkbox */}
           <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
-
-          {/* Cột 2: STT */}
           <Column
             header={t('common.stt', { defaultValue: 'STT' })}
             body={(_, options) => options.rowIndex + 1}
             style={{ width: '4rem', textAlign: 'center' }}
           />
-
-          {/* Cột 3: Thao tác */}
-          <Column
-            body={() => (
-              <Button icon="pi pi-eye" rounded outlined severity="info" size="small" tooltip={t('common.view', { defaultValue: 'Xem chi tiết' })} />
-            )}
-            header={t('common.actions', { defaultValue: 'Thao tác' })}
-            style={{ width: '6rem' }}
-          />
-
-          {/* Cột 4 trở đi: Dữ liệu */}
           <Column field="partnerCode" header={t('partner.code', { defaultValue: 'Mã Đối tác' })} sortable style={{ minWidth: '10rem' }} />
           <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Đơn vị Đối tác' })} sortable style={{ minWidth: '16rem' }} />
           <Column field="totalTransactions" header={t('clearing.total_txs', { defaultValue: 'Số Giao dịch' })} sortable style={{ minWidth: '9rem', textAlign: 'center' }} />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -10,87 +10,69 @@ import { Dropdown } from 'primereact/dropdown';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { CommonStatus } from '@/models';
+import { LoyaltyService } from '@/service/loyalty.service';
 
 export interface PolicyRule {
   id: number;
   partnerCode: string;
   partnerName: string;
-  earnRate: number; // Điểm nhận trên 100 HTG
-  maxBurnPercentage: number; // 30, 50, 100%
-  exchangeRate: number; // 1 Điểm = X HTG
+  earnRate: number;
+  maxBurnPercentage: number;
+  exchangeRate: number;
   status: CommonStatus;
   updatedAt: string;
+  description?: string;
 }
-
-const INITIAL_POLICIES: PolicyRule[] = [
-  {
-    id: 1,
-    partnerCode: 'NATCASH_WALLET',
-    partnerName: 'Ví Điện Tử Natcash',
-    earnRate: 1.0,
-    maxBurnPercentage: 100,
-    exchangeRate: 1.0,
-    status: CommonStatus.ACTIVE,
-    updatedAt: '2026-08-23 10:00:00',
-  },
-  {
-    id: 2,
-    partnerCode: 'DELIMART_SUPERMARKET',
-    partnerName: 'Chuỗi Siêu Thị Delimart',
-    earnRate: 1.2,
-    maxBurnPercentage: 50,
-    exchangeRate: 1.0,
-    status: CommonStatus.ACTIVE,
-    updatedAt: '2026-08-23 10:00:00',
-  },
-  {
-    id: 3,
-    partnerCode: 'NATCOM_TELECOM',
-    partnerName: 'Nhà Mạng Viễn Thông Natcom',
-    earnRate: 1.5,
-    maxBurnPercentage: 30,
-    exchangeRate: 1.0,
-    status: CommonStatus.ACTIVE,
-    updatedAt: '2026-08-23 10:00:00',
-  },
-];
-
-import { LoyaltyService } from '@/service/loyalty.service';
 
 export const PolicyConfigurationPage: React.FC = () => {
   const { t } = useTranslation();
-  const [policies, setPolicies] = useState<PolicyRule[]>(INITIAL_POLICIES);
+  const [policies, setPolicies] = useState<PolicyRule[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PolicyRule[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<PolicyRule>>({});
   const [isEdit, setIsEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    LoyaltyService.getPolicies().then((data) => {
+  const fetchPolicies = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await LoyaltyService.getPolicies();
       if (data && data.length > 0) {
         setPolicies(
           data.map((item) => ({
             id: item.id,
-            partnerCode: item.partnerCode,
-            partnerName: item.partnerName,
-            earnRate: item.earnRate,
-            maxBurnPercentage: item.maxBurnPercent,
-            exchangeRate: 1.0,
-            status: item.status as CommonStatus,
-            updatedAt: item.effectiveDate || '2026-08-24 00:00:00',
+            partnerCode: item.partnerCode || 'DELIMART',
+            partnerName: item.partnerName || 'Siêu Thị Delimart',
+            earnRate: item.earnRate || 1.0,
+            maxBurnPercentage: item.maxBurnPercentage || item.maxBurnPercent || 50,
+            exchangeRate: item.exchangeRate || 1.0,
+            status: (item.status as CommonStatus) || CommonStatus.ACTIVE,
+            updatedAt: item.effectiveDate || new Date().toLocaleString('vi-VN'),
+            description: item.description || '',
           }))
         );
       }
-    });
+    } catch (e) {
+      console.error('[fetchPolicies] Error:', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPolicies();
+  }, [fetchPolicies]);
 
   const openNew = () => {
     setFormData({
+      partnerCode: 'PARTNER_' + Math.floor(Math.random() * 1000),
+      partnerName: 'Đối tác liên minh mới',
       earnRate: 1.0,
       maxBurnPercentage: 50,
       exchangeRate: 1.0,
       status: CommonStatus.ACTIVE,
+      description: 'Chính sách áp dụng toàn hệ sinh thái',
     });
     setIsEdit(false);
     setShowDialog(true);
@@ -102,27 +84,51 @@ export const PolicyConfigurationPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const saveItem = () => {
+  const deleteItem = async (item: PolicyRule) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa chính sách #${item.id} (${item.partnerName})?`)) {
+      setLoading(true);
+      try {
+        await LoyaltyService.deletePolicy(item.id);
+        await fetchPolicies();
+      } catch (e) {
+        console.error('[deletePolicy] Error:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const saveItem = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
       if (isEdit && formData.id) {
-        setPolicies(policies.map((p) => (p.id === formData.id ? ({ ...p, ...formData, updatedAt: new Date().toLocaleString('vi-VN') } as PolicyRule) : p)));
+        await LoyaltyService.updatePolicy(formData.id, {
+          partnerCode: formData.partnerCode,
+          partnerName: formData.partnerName,
+          earnRatePercent: formData.earnRate,
+          maxBurnPercentage: formData.maxBurnPercentage,
+          exchangeRate: formData.exchangeRate,
+          status: formData.status,
+          description: formData.description,
+        });
       } else {
-        const newItem: PolicyRule = {
-          id: Date.now(),
+        await LoyaltyService.createPolicy({
           partnerCode: formData.partnerCode || 'NEW_PARTNER',
-          partnerName: formData.partnerName || 'Đối tác mới',
-          earnRate: formData.earnRate || 1.0,
+          partnerName: formData.partnerName || 'Đối Tác Mới',
+          earnRatePercent: formData.earnRate || 1.0,
           maxBurnPercentage: formData.maxBurnPercentage || 50,
           exchangeRate: formData.exchangeRate || 1.0,
           status: formData.status || CommonStatus.ACTIVE,
-          updatedAt: new Date().toLocaleString('vi-VN'),
-        };
-        setPolicies([...policies, newItem]);
+          description: formData.description || 'Chính sách mới tạo từ CMS',
+        });
       }
-      setIsSubmitting(false);
       setShowDialog(false);
-    }, 300);
+      await fetchPolicies();
+    } catch (e) {
+      console.error('[savePolicy] Error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const actionTemplate = (rowData: PolicyRule) => (
@@ -135,6 +141,15 @@ export const PolicyConfigurationPage: React.FC = () => {
         size="small"
         onClick={() => editItem(rowData)}
         tooltip={t('common.edit', { defaultValue: 'Sửa' })}
+      />
+      <Button
+        icon="pi pi-trash"
+        rounded
+        outlined
+        severity="danger"
+        size="small"
+        onClick={() => deleteItem(rowData)}
+        tooltip={t('common.delete', { defaultValue: 'Xóa' })}
       />
     </div>
   );
@@ -167,6 +182,7 @@ export const PolicyConfigurationPage: React.FC = () => {
       <h4 className="m-0 text-primary font-bold">{t('policy.management_title', { defaultValue: 'Cấu hình Chính sách Tích & Tiêu Điểm' })}</h4>
       <div className="flex gap-2">
         <Button label={t('policy.add_new', { defaultValue: 'Thêm Chính sách' })} icon="pi pi-plus" severity="success" onClick={openNew} />
+        <Button icon="pi pi-refresh" outlined onClick={fetchPolicies} loading={loading} />
       </div>
     </div>
   );
@@ -178,105 +194,114 @@ export const PolicyConfigurationPage: React.FC = () => {
         <DataTable<any>
           value={policies}
           selection={selectedPolicies}
-          onSelectionChange={(e: any) => setSelectedPolicies(e.value || [])}
-          header={header}
+          onSelectionChange={(e) => setSelectedPolicies(e.value as PolicyRule[])}
           dataKey="id"
           paginator
           rows={10}
-          emptyMessage={t('common.no_data', { defaultValue: 'Không có chính sách nào' })}
-          stripedRows
+          loading={loading}
+          rowsPerPageOptions={[5, 10, 25]}
+          header={header}
           responsiveLayout="scroll"
+          emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chính sách nào' })}
         >
-          {/* Cột 1: Checkbox */}
-          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
-
-          {/* Cột 2: STT */}
+          <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
+          <Column field="id" header="#" style={{ width: '4rem' }} />
+          <Column field="partnerCode" header={t('policy.partner_code', { defaultValue: 'Mã Đối Tác' })} sortable />
+          <Column field="partnerName" header={t('policy.partner_name', { defaultValue: 'Tên Đối Tác' })} sortable />
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
-            body={(_, options) => options.rowIndex + 1}
-            style={{ width: '4rem', textAlign: 'center' }}
+            field="earnRate"
+            header={t('policy.earn_rate', { defaultValue: 'Tỷ lệ tích điểm' })}
+            body={(row: PolicyRule) => `${row.earnRate}%`}
+            sortable
           />
-
-          {/* Cột 3: Thao tác */}
-          <Column body={actionTemplate} exportable={false} header={t('common.actions', { defaultValue: 'Thao tác' })} style={{ width: '6rem' }} />
-
-          {/* Cột 4 trở đi: Dữ liệu */}
-          <Column field="partnerCode" header={t('policy.partner_code', { defaultValue: 'Mã Đối tác' })} sortable style={{ minWidth: '10rem' }} />
-          <Column field="partnerName" header={t('policy.partner_name', { defaultValue: 'Tên Điểm bán / Kênh' })} sortable style={{ minWidth: '14rem' }} />
-          <Column field="earnRate" header={t('policy.earn_rate', { defaultValue: 'Tỷ lệ tích điểm' })} sortable style={{ minWidth: '9rem' }} />
-          <Column field="maxBurnPercentage" body={burnPercentageTemplate} header={t('policy.max_burn', { defaultValue: 'Hạn mức trừ điểm tối đa' })} sortable style={{ minWidth: '12rem' }} />
-          <Column field="exchangeRate" header={t('policy.exchange_rate', { defaultValue: 'Tỷ giá quy đổi (1 Điểm = ? HTG)' })} sortable style={{ minWidth: '12rem' }} />
-          <Column field="status" body={statusTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem' }} />
-          <Column field="updatedAt" header={t('common.updated_at', { defaultValue: 'Cập nhật' })} sortable style={{ minWidth: '11rem' }} />
+          <Column
+            field="maxBurnPercentage"
+            header={t('policy.max_burn', { defaultValue: 'Khấu trừ tối đa' })}
+            body={burnPercentageTemplate}
+            sortable
+          />
+          <Column
+            field="exchangeRate"
+            header={t('policy.exchange_rate', { defaultValue: 'Quy đổi (1đ = ? HTG)' })}
+            body={(row: PolicyRule) => `${row.exchangeRate} HTG`}
+            sortable
+          />
+          <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={statusTemplate} sortable />
+          <Column field="updatedAt" header={t('common.updated_at', { defaultValue: 'Cập nhật' })} sortable />
+          <Column body={actionTemplate} exportable={false} style={{ minWidth: '8rem' }} />
         </DataTable>
       </div>
 
       <Dialog
         visible={showDialog}
-        style={{ width: '32rem' }}
-        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header={isEdit ? t('policy.edit_title', { defaultValue: 'Cập nhật Chính sách' }) : t('policy.create_title', { defaultValue: 'Thêm mới Chính sách' })}
+        style={{ width: '450px' }}
+        header={isEdit ? t('policy.edit_title', { defaultValue: 'Chỉnh sửa Chính sách' }) : t('policy.add_title', { defaultValue: 'Thêm mới Chính sách' })}
         modal
         className="p-fluid"
         onHide={() => setShowDialog(false)}
       >
         <div className="field mb-3">
-          <label htmlFor="partnerCode" className="font-bold">{t('policy.partner_code', { defaultValue: 'Mã Đối tác' })}</label>
+          <label htmlFor="partnerCode" className="font-bold">{t('policy.partner_code', { defaultValue: 'Mã Đối Tác' })}</label>
           <InputText
             id="partnerCode"
             value={formData.partnerCode || ''}
             onChange={(e) => setFormData({ ...formData, partnerCode: e.target.value })}
-            required
-            autoFocus
-            disabled={isEdit}
-            placeholder={t('policy.partner_code_placeholder', { defaultValue: 'Ví dụ: DELIMART_POS' })}
+            placeholder="VD: DELIMART_SUPERMARKET"
           />
         </div>
+
         <div className="field mb-3">
-          <label htmlFor="partnerName" className="font-bold">{t('policy.partner_name', { defaultValue: 'Tên Điểm bán' })}</label>
+          <label htmlFor="partnerName" className="font-bold">{t('policy.partner_name', { defaultValue: 'Tên Đối Tác' })}</label>
           <InputText
             id="partnerName"
             value={formData.partnerName || ''}
             onChange={(e) => setFormData({ ...formData, partnerName: e.target.value })}
-            required
-            placeholder={t('policy.partner_name_placeholder', { defaultValue: 'Ví dụ: Siêu thị Delimart Port-au-Prince' })}
+            placeholder="VD: Chuỗi Siêu Thị Delimart"
           />
         </div>
+
         <div className="field mb-3">
-          <label htmlFor="earnRate" className="font-bold">{t('policy.earn_rate', { defaultValue: 'Hệ số tích điểm cơ bản' })}</label>
+          <label htmlFor="earnRate" className="font-bold">{t('policy.earn_rate_percent', { defaultValue: 'Tỷ lệ tích điểm (%)' })}</label>
           <InputNumber
             id="earnRate"
-            value={formData.earnRate ?? 1.0}
-            onValueChange={(e) => setFormData({ ...formData, earnRate: e.value ?? 1.0 })}
+            value={formData.earnRate}
+            onValueChange={(e) => setFormData({ ...formData, earnRate: e.value || 0 })}
+            mode="decimal"
             minFractionDigits={1}
             maxFractionDigits={2}
+            min={0}
+            max={100}
+            suffix=" %"
           />
         </div>
+
         <div className="field mb-3">
-          <label htmlFor="maxBurnPercentage" className="font-bold">{t('policy.max_burn', { defaultValue: 'Hạn mức tiêu điểm tối đa' })}</label>
+          <label htmlFor="maxBurnPercentage" className="font-bold">{t('policy.max_burn_percentage', { defaultValue: 'Khấu trừ tối đa (% Hóa đơn)' })}</label>
           <Dropdown
             id="maxBurnPercentage"
-            value={formData.maxBurnPercentage ?? 50}
+            value={formData.maxBurnPercentage}
             options={burnOptions}
             onChange={(e) => setFormData({ ...formData, maxBurnPercentage: e.value })}
+            placeholder={t('policy.select_burn', { defaultValue: 'Chọn tỷ lệ khấu trừ' })}
           />
         </div>
+
         <div className="field mb-3">
           <label htmlFor="status" className="font-bold">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
           <Dropdown
             id="status"
-            value={formData.status || CommonStatus.ACTIVE}
+            value={formData.status}
             options={statusOptions}
             onChange={(e) => setFormData({ ...formData, status: e.value })}
           />
         </div>
+
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} disabled={isSubmitting} />
-          <Button label={t('common.save', { defaultValue: 'Lưu chính sách' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} disabled={isSubmitting} />
+          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
+          <Button label={t('common.save', { defaultValue: 'Lưu thay đổi' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} />
         </div>
       </Dialog>
     </div>
   );
 };
-
 export default PolicyConfigurationPage;

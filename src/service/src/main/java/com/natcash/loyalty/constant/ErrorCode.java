@@ -24,6 +24,7 @@ public enum ErrorCode {
     POLICY_VIOLATION("12", "error.policy_violation"),
     GAME_OUT_OF_TURNS("13", "error.game_out_of_turns"),
     UNAUTHORIZED("14", "error.unauthorized"),
+    NOT_FOUND("15", "error.not_found"),
     SYSTEM_ERROR("99", "error.system_error");
 
     @JsonValue

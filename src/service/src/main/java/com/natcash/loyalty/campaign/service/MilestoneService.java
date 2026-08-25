@@ -180,4 +180,43 @@ public class MilestoneService {
                 .claimedAt(Instant.now())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public List<CampaignMilestoneEntity> getAllMilestones(String tenantId) {
+        return campaignRepository.findAll().stream()
+                .filter(m -> m.getTenantId().equals(tenantId))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CampaignMilestoneEntity createMilestone(String tenantId, CampaignMilestoneEntity request) {
+        request.setTenantId(tenantId);
+        if (request.getStartDate() == null) request.setStartDate(Instant.now());
+        if (request.getEndDate() == null) request.setEndDate(Instant.now().plusSeconds(90L * 86400L));
+        if (request.getStatus() == null) request.setStatus(CommonStatus.ACTIVE);
+        return campaignRepository.save(request);
+    }
+
+    @Transactional
+    public CampaignMilestoneEntity updateMilestone(String tenantId, Long id, CampaignMilestoneEntity request) {
+        CampaignMilestoneEntity entity = campaignRepository.findById(id)
+                .filter(m -> m.getTenantId().equals(tenantId))
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy cột mốc #" + id));
+
+        if (request.getCampaignName() != null) entity.setCampaignName(request.getCampaignName());
+        if (request.getTargetMetric() != null) entity.setTargetMetric(request.getTargetMetric());
+        if (request.getTargetValue() != null) entity.setTargetValue(request.getTargetValue());
+        if (request.getRewardPoints() != null) entity.setRewardPoints(request.getRewardPoints());
+        if (request.getRewardGameTurns() != null) entity.setRewardGameTurns(request.getRewardGameTurns());
+        if (request.getStatus() != null) entity.setStatus(request.getStatus());
+
+        return campaignRepository.save(entity);
+    }
+
+    @Transactional
+    public void deleteMilestone(String tenantId, Long id) {
+        campaignRepository.findById(id)
+                .filter(m -> m.getTenantId().equals(tenantId))
+                .ifPresent(campaignRepository::delete);
+    }
 }

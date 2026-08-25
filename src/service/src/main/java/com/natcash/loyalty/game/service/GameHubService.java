@@ -64,6 +64,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -72,7 +73,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -82,7 +82,7 @@ public class GameHubService {
     private static final Logger log = LoggerFactory.getLogger(GameHubService.class);
     private static final long SESSION_TTL_SECONDS = 1800L; // 30 phút
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final Random random = new Random();
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     private final GameHubRepository gameRepository;
     private final GameSessionRepository sessionRepository;
@@ -885,7 +885,7 @@ public class GameHubService {
                 }
 
                 case "TREASURE_CHEST": {
-                    serverResult = clientChoice != null ? Math.max(1, Math.min(clientChoice, 5)) : random.nextInt(5) + 1;
+                    serverResult = clientChoice != null ? Math.max(1, Math.min(clientChoice, 5)) : secureRandom.nextInt(5) + 1;
                     GamePrizeEntity wonPrize = pickWeightedPrize(dbPrizes);
                     if (wonPrize != null) {
                         pointsToAward = wonPrize.getPrizeValue();
@@ -915,7 +915,7 @@ public class GameHubService {
                         pointsToAward = BigDecimal.valueOf(20).multiply(towerMultiplier);
                         message = "Bảo toàn kho báu thành công tại tầng " + towerCurrentFloor + "! Nhận ngay " + pointsToAward + " Điểm!";
                     } else {
-                        int crashChance = random.nextInt(100);
+                        int crashChance = secureRandom.nextInt(100);
                         if (crashChance < 30) {
                             outcome = "CRASH";
                             pointsToAward = BigDecimal.valueOf(5);
@@ -943,7 +943,7 @@ public class GameHubService {
                     plinkoBouncePath = new ArrayList<>();
                     int rightBounces = 0;
                     for (int r = 0; r < 8; r++) {
-                        int dir = random.nextInt(2);
+                        int dir = secureRandom.nextInt(2);
                         plinkoBouncePath.add(dir);
                         rightBounces += dir;
                     }
@@ -969,7 +969,7 @@ public class GameHubService {
                 }
 
                 case "GOLDEN_EGG": {
-                    serverResult = clientChoice != null ? Math.max(1, Math.min(clientChoice, 5)) : random.nextInt(5) + 1;
+                    serverResult = clientChoice != null ? Math.max(1, Math.min(clientChoice, 5)) : secureRandom.nextInt(5) + 1;
                     GamePrizeEntity wonPrize = pickWeightedPrize(dbPrizes);
                     if (wonPrize != null) {
                         pointsToAward = wonPrize.getPrizeValue();
@@ -984,9 +984,9 @@ public class GameHubService {
 
                 case "LUCKY_DICE": {
                     diceValues = new ArrayList<>();
-                    int d1 = random.nextInt(6) + 1;
-                    int d2 = random.nextInt(6) + 1;
-                    int d3 = random.nextInt(6) + 1;
+                    int d1 = secureRandom.nextInt(6) + 1;
+                    int d2 = secureRandom.nextInt(6) + 1;
+                    int d3 = secureRandom.nextInt(6) + 1;
                     diceValues.add(d1);
                     diceValues.add(d2);
                     diceValues.add(d3);
@@ -1113,7 +1113,7 @@ public class GameHubService {
             for (int i = 0; i < 6; i++) {
                 String s;
                 do {
-                    s = allSymbols[random.nextInt(allSymbols.length)];
+                    s = allSymbols[secureRandom.nextInt(allSymbols.length)];
                 } while (s.equals(winSymbol));
                 matrix.add(s);
             }
@@ -1122,7 +1122,7 @@ public class GameHubService {
                 matrix.add(allSymbols[i % allSymbols.length]);
             }
         }
-        Collections.shuffle(matrix, random);
+        Collections.shuffle(matrix, secureRandom);
         return matrix;
     }
 
@@ -1136,7 +1136,7 @@ public class GameHubService {
         if (prizes == null || prizes.isEmpty()) return null;
         int totalWeight = prizes.stream().mapToInt(p -> p.getProbabilityWeight() != null ? p.getProbabilityWeight() : 0).sum();
         if (totalWeight <= 0) return prizes.get(0);
-        int rand = random.nextInt(totalWeight);
+        int rand = secureRandom.nextInt(totalWeight);
         int cumulative = 0;
         for (GamePrizeEntity p : prizes) {
             cumulative += p.getProbabilityWeight();
