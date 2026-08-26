@@ -1,6 +1,6 @@
 const origin = typeof window !== 'undefined' && window.location && window.location.origin ? window.location.origin : '';
 const defaultApiUrl = 'https://api.mid.io.vn';
-const defaultAuthUrl = 'https://cms.mid.io.vn';
+const defaultAuthUrl = 'https://api.mid.io.vn';
 
 export const envVariables = {
   MODE: window.__ENV__?.VITE_MODE ?? import.meta.env.VITE_MODE ?? 'production',
