@@ -11,9 +11,9 @@ echo " [SETUP-SERVER] Bắt đầu khởi tạo môi trường Loyalty On-Premis
 echo "=============================================================================="
 
 # 1. Tạo cây thư mục ứng dụng
-echo "[1/4] Tạo cây thư mục ứng dụng tại /u01/mascom/ringme/loyalty-game/..."
-mkdir -p /u01/mascom/ringme/loyalty-game/{bin,config,locales,web/cms,web/webview,scripts,logs,backups}
-chmod -R 755 /u01/mascom/ringme/loyalty-game
+echo "[1/4] Tạo cây thư mục ứng dụng tại /u01/mascom/loyalty/..."
+mkdir -p /u01/mascom/loyalty/{bin,config,locales,web/cms,web/webview,scripts,logs,backups}
+chmod -R 755 /u01/mascom/loyalty
 
 # 2. Khởi tạo dữ liệu PostgreSQL nếu chưa có
 echo "[2/4] Kiểm tra và khởi tạo cơ sở dữ liệu PostgreSQL..."

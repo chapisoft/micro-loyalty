@@ -4,8 +4,21 @@
 # ==============================================================================
 
 server:
-  port: ${LOYALTY_SERVICE_PORT:8085}
+  port: ${LOYALTY_SERVICE_PORT:8694}
+  servlet:
+    context-path: ""
   shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
 
 spring:
   main:
@@ -13,7 +26,7 @@ spring:
   application:
     name: loyalty-service-natcash
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:natcash_loyalty_db}?sslmode=disable
+    url: jdbc:postgresql://${POSTGRES_HOST:127.0.0.1}:${POSTGRES_PORT:5432}/${POSTGRES_DB:natcash_loyalty_db}?sslmode=disable
     username: ${POSTGRES_USER:natcash_loyalty}
     password: ${POSTGRES_PASSWORD:Natcash$SecureDB2026!}
     driver-class-name: org.postgresql.Driver
@@ -22,13 +35,21 @@ spring:
       minimum-idle: ${POSTGRES_MIN_IDLE:5}
       pool-name: LoyaltyNatcashHikariCP
   redis:
-    host: ${REDIS_HOST:redis}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:Natcash$RedisPass2026!}
-    database: ${REDIS_DATABASE:0}
-    timeout: 2000ms
+    host: ${REDIS_HOST:127.0.0.1}
+    port: ${REDIS_PORT:6579}
+    password: ${REDIS_PASSWORD:NatCash2022}
+    cluster:
+      nodes: ${REDIS_CLUSTER_NODES:127.0.0.1:6579,127.0.0.1:6679,127.0.0.1:6779}
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6579}
+      password: ${REDIS_PASSWORD:NatCash2022}
+      cluster:
+        nodes: ${REDIS_CLUSTER_NODES:127.0.0.1:6579,127.0.0.1:6679,127.0.0.1:6779}
+      timeout: 3000ms
   messages:
-    basename: file:/app/locales/messages
+    basename: file:${LOCALES_PATH:/u01/mascom/loyalty/locales}/messages
     encoding: UTF-8
     cache-duration: 3600
 
@@ -37,13 +58,13 @@ loyalty:
   default-tenant-id: ${TENANT_DEFAULT:TENANT_NATCASH}
   partner-code: ${PARTNER_CODE:NATCASH_WALLET}
   gateway:
-    endpoint: ${NATCASH_API_GW_ENDPOINT:http://10.228.37.65:8686}
+    endpoint: ${NATCASH_API_GW_ENDPOINT:http://127.0.0.1:8686}
   public-urls:
-    webview-gamehub: ${PUBLIC_WEBVIEW_URL:https://loyalty.natcom.com.ht:8443/gamehub}
-    cms-portal: ${PUBLIC_CMS_URL:https://loyalty.natcom.com.ht:8443}
+    webview-gamehub: ${PUBLIC_WEBVIEW_URL:https://uatloyalty.natcom.com.ht:8443/gamehub}
+    cms-portal: ${PUBLIC_CMS_URL:http://10.228.37.65:8992}
   security:
     timestamp-tolerance-seconds: 300
   outbox:
     max-retries: 5
     publish-interval-ms: 2000
-  locales-path: /app/locales
+  locales-path: ${LOCALES_PATH:/u01/mascom/loyalty/locales}

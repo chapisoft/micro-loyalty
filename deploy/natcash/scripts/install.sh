@@ -2,27 +2,22 @@
 set -e
 
 # ==============================================================================
-# SCRIPT CÀI ĐẶT ON-PREMISE VÍ NATCASH
+# KỊCH BẢN THIẾT LẬP CẤU TRÚC VÀ PHÂN QUYỀN TRÊN MÁY CHỦ NATCASH
 # ==============================================================================
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$DIR"
+APP_DIR="/u01/mascom/loyalty"
 
 echo "=============================================================================="
-echo " [INSTALL-NATCASH] Bắt đầu cài đặt hệ thống Loyalty On-Premise Ví Natcash..."
-echo " Thư mục đích: $DIR"
+echo " [INSTALL-NATCASH] Bắt đầu thiết lập môi trường On-Premise..."
+echo " Thư mục ứng dụng: $APP_DIR"
 echo "=============================================================================="
 
-if ! command -v docker &> /dev/null; then
-    echo "[LỖI] Máy chủ chưa cài đặt Docker. Vui lòng cài Docker 20.10+ trước."
-    exit 1
-fi
+# 1. Tạo cây thư mục chuẩn
+mkdir -p "$APP_DIR"/{bin,config,locales,web/cms,web/webview,scripts,logs,backups}
 
-if [ ! -f .env ]; then
-    echo "[INFO] Khởi tạo .env từ mẫu .env.example..."
-    cp .env.example .env || true
-fi
+# 2. Phân quyền thực thi
+chmod -R 755 "$APP_DIR"
+chmod +x "$APP_DIR"/scripts/*.sh 2>/dev/null || true
 
-chmod -R 755 config/ locales/
-
-echo "[INSTALL-NATCASH] Cài đặt hoàn tất! Sử dụng ./scripts/start.sh để khởi chạy."
+echo "[INSTALL-NATCASH] Thiết lập cấu trúc thư mục thành công 100%!"
+echo "Sử dụng $APP_DIR/scripts/start.sh để khởi động dịch vụ."
