@@ -192,6 +192,18 @@ Hệ thống bắt buộc áp dụng tiêu chuẩn Zero-Hardcode toàn diện tr
    * Sử dụng kiểu dữ liệu `BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, `TIMESTAMPTZ`, `DECIMAL(18,2)`, và `JSONB` cho dữ liệu Webhook / Metadata.
    * Tạo chỉ mục (Indexes) có tiền tố `idx_` rõ ràng cho các trường tìm kiếm thường xuyên (`tenant_id`, `external_user_id`, `status`, `created_at`).
 
+### 4.4. Quy Chuẩn Thiết Kế Giao Diện Bảng Dữ Liệu & Kiểu Chữ (DataTable UI & Typography Standard)
+1. **Tiêu Đề Cột Ngắn Gọn & Tooltip Giải Thích (Concise Headers & Tooltip Standard):**
+   * Tiêu đề các cột trong bảng DataTable phải ngắn gọn, súc tích (từ 2 đến 4 từ), tuyệt đối không đưa nguyên câu mô tả dài dòng, chu kỳ hay công thức tính toán vào nhãn tiêu đề làm bảng bị kéo dãn chiều ngang vô lý.
+   * Toàn bộ thông tin mô tả chi tiết, chu kỳ thời gian hoặc đơn vị quy đổi phải được đưa vào thuộc tính `title="..."` hoặc Tooltip của thẻ `<span>` tiêu đề cột để người dùng di chuột (hover) vào sẽ xem đầy đủ nội dung.
+   * Thiết lập độ rộng `minWidth` và `style` cân đối, tối ưu hóa không gian hiển thị để toàn bộ bảng hiển thị vừa vặn trong khung nhìn, hạn chế tối đa việc cuộn ngang.
+2. **Hạn Chế Tối Đa In Đậm Chữ Tùy Tiện (Selective Typography Weight Standard):**
+   * **Tuyệt đối cấm:** In đậm (`font-bold`, `font-black`, `font-semibold`) tràn lan toàn bộ các ô trong bảng dữ liệu hoặc giao diện. Việc lạm dụng chữ in đậm làm mất tính tương phản thị giác, khiến bảng dữ liệu nặng nề và khó đọc.
+   * **Quy chuẩn phân cấp độ đậm chữ:**
+     * *Chữ đậm vừa (`font-semibold` / `font-medium`):* Chỉ dùng có chọn lọc cho 1 trường định danh chính duy nhất (như Mã giao dịch, Tên sản phẩm, Tên đối tác) hoặc tiêu đề khối Card.
+     * *Chữ thường (`font-normal` / `text-700` / `text-800`):* Áp dụng cho 100% các trường dữ liệu thông thường còn lại (Cấp độ, Số thứ tự, Điểm số, Số lượng, Thời gian, Mô tả, Đơn giá).
+     * *Dữ liệu số và mã kỹ thuật:* Sử dụng font monospace (`font-mono`) với độ đậm vừa phải (`font-normal` hoặc `font-medium`) để giữ nét thanh thoát, hiện đại và chuẩn mực.
+
 ---
 
 ## 5. NGUYÊN TẮC BẢO MẬT VÀ TOÀN VẸN TÀI CHÍNH

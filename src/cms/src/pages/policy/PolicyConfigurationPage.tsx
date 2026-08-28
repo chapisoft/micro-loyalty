@@ -163,7 +163,7 @@ export const PolicyConfigurationPage: React.FC = () => {
   };
 
   const burnPercentageTemplate = (rowData: PolicyRule) => (
-    <span className="font-bold text-primary">{rowData.maxBurnPercentage}% {t('policy.of_bill', { defaultValue: 'hóa đơn' })}</span>
+    <span className="text-primary font-medium">{rowData.maxBurnPercentage}% {t('policy.of_bill', { defaultValue: 'hóa đơn' })}</span>
   );
 
   const statusOptions = [
@@ -205,30 +205,33 @@ export const PolicyConfigurationPage: React.FC = () => {
           emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chính sách nào' })}
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
-          <Column field="id" header="#" style={{ width: '4rem' }} />
-          <Column field="partnerCode" header={t('policy.partner_code', { defaultValue: 'Mã Đối Tác' })} sortable />
-          <Column field="partnerName" header={t('policy.partner_name', { defaultValue: 'Tên Đối Tác' })} sortable />
+          <Column field="id" header="#" style={{ width: '3.5rem', textAlign: 'center' }} />
+          <Column field="partnerCode" header={t('policy.partner_code', { defaultValue: 'Mã Đối Tác' })} sortable style={{ minWidth: '9rem' }} />
+          <Column field="partnerName" header={t('policy.partner_name', { defaultValue: 'Tên Đối Tác' })} sortable style={{ minWidth: '13rem' }} />
           <Column
             field="earnRate"
-            header={t('policy.earn_rate', { defaultValue: 'Tỷ lệ tích điểm' })}
+            header={<span title={t('policy.earn_rate_tooltip', { defaultValue: 'Tỷ lệ phần trăm tích điểm trên giá trị đơn hàng' })}>{t('policy.earn_rate', { defaultValue: 'Tỷ Lệ Tích' })}</span>}
             body={(row: PolicyRule) => `${row.earnRate}%`}
             sortable
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column
             field="maxBurnPercentage"
-            header={t('policy.max_burn', { defaultValue: 'Khấu trừ tối đa' })}
+            header={<span title={t('policy.max_burn_tooltip', { defaultValue: 'Tỷ lệ khấu trừ điểm tối đa trên tổng giá trị hóa đơn' })}>{t('policy.max_burn', { defaultValue: 'Khấu Trừ Tối Đa' })}</span>}
             body={burnPercentageTemplate}
             sortable
+            style={{ minWidth: '10rem', textAlign: 'center' }}
           />
           <Column
             field="exchangeRate"
-            header={t('policy.exchange_rate', { defaultValue: 'Quy đổi (1đ = ? HTG)' })}
+            header={<span title={t('policy.exchange_rate_tooltip', { defaultValue: 'Tỷ lệ quy đổi: 1 điểm tích lũy = bao nhiêu HTG' })}>{t('policy.exchange_rate', { defaultValue: 'Tỷ Giá Quy Đổi' })}</span>}
             body={(row: PolicyRule) => `${row.exchangeRate} HTG`}
             sortable
+            style={{ minWidth: '9.5rem', textAlign: 'center' }}
           />
-          <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={statusTemplate} sortable />
-          <Column field="updatedAt" header={t('common.updated_at', { defaultValue: 'Cập nhật' })} sortable />
-          <Column body={actionTemplate} exportable={false} style={{ minWidth: '8rem' }} />
+          <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="updatedAt" header={t('common.updated_at', { defaultValue: 'Cập Nhật' })} sortable style={{ minWidth: '9rem' }} />
+          <Column body={actionTemplate} exportable={false} style={{ width: '6rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 

@@ -289,40 +289,43 @@ export const CampaignMilestonesPage: React.FC = () => {
           emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chiến dịch cột mốc nào' })}
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
-          <Column field="campaignCode" header={t('milestone.code', { defaultValue: 'Mã Chiến dịch' })} sortable style={{ fontWeight: 'bold' }} />
-          <Column field="campaignName" header={t('milestone.name', { defaultValue: 'Tên Chiến dịch' })} sortable />
-          <Column field="milestoneStep" header={t('milestone.step', { defaultValue: 'Chặng #' })} sortable style={{ textAlign: 'center', width: '6rem' }} />
-          <Column field="targetMetric" header={t('milestone.metric', { defaultValue: 'Chỉ tiêu đo lường' })} body={(row: CampaignMilestoneItem) => metricLabelTemplate(row.targetMetric)} sortable />
+          <Column field="campaignCode" header={t('milestone.code', { defaultValue: 'Mã Chiến Dịch' })} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
+          <Column field="campaignName" header={t('milestone.name', { defaultValue: 'Tên Chiến Dịch' })} sortable style={{ minWidth: '13rem' }} />
+          <Column field="milestoneStep" header={<span title={t('milestone.step_tooltip', { defaultValue: 'Thứ tự chặng cột mốc' })}>{t('milestone.step', { defaultValue: 'Chặng #' })}</span>} sortable style={{ textAlign: 'center', width: '5.5rem' }} />
+          <Column field="targetMetric" header={<span title={t('milestone.metric_tooltip', { defaultValue: 'Chỉ tiêu điều kiện tích lũy để hoàn thành' })}>{t('milestone.metric', { defaultValue: 'Chỉ Tiêu' })}</span>} body={(row: CampaignMilestoneItem) => metricLabelTemplate(row.targetMetric)} sortable style={{ minWidth: '9rem' }} />
           <Column
             field="targetValue"
-            header={t('milestone.target_value', { defaultValue: 'Mục tiêu' })}
+            header={<span title={t('milestone.target_value_tooltip', { defaultValue: 'Ngưỡng giá trị mục tiêu cần đạt' })}>{t('milestone.target_value', { defaultValue: 'Mục Tiêu' })}</span>}
             body={(row: CampaignMilestoneItem) => `${row.targetValue.toLocaleString()}`}
             sortable
+            style={{ minWidth: '7.5rem', textAlign: 'center' }}
           />
           <Column
             field="rewardPoints"
-            header={t('milestone.reward_points', { defaultValue: 'Thưởng Điểm' })}
+            header={<span title={t('milestone.reward_points_tooltip', { defaultValue: 'Số điểm thưởng cộng vào tài khoản' })}>{t('milestone.reward_points', { defaultValue: 'Thưởng Điểm' })}</span>}
             body={(row: CampaignMilestoneItem) => (
-              <span className="font-bold text-orange-500">
-                <i className="pi pi-star-fill mr-1" />
+              <span className="text-orange-500 font-medium">
+                <i className="pi pi-star-fill mr-1 text-xs" />
                 +{row.rewardPoints}
               </span>
             )}
             sortable
+            style={{ minWidth: '7.5rem', textAlign: 'center' }}
           />
           <Column
             field="rewardGameTurns"
-            header={t('milestone.reward_turns', { defaultValue: 'Thưởng Lượt Game' })}
+            header={<span title={t('milestone.reward_turns_tooltip', { defaultValue: 'Số lượt chơi game may mắn được cộng thêm' })}>{t('milestone.reward_turns', { defaultValue: 'Thưởng Lượt' })}</span>}
             body={(row: CampaignMilestoneItem) => (
-              <span className="font-bold text-indigo-500">
-                <i className="pi pi-bolt mr-1" />
+              <span className="text-indigo-500 font-medium">
+                <i className="pi pi-bolt mr-1 text-xs" />
                 +{row.rewardGameTurns}
               </span>
             )}
             sortable
+            style={{ minWidth: '7.5rem', textAlign: 'center' }}
           />
-          <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={statusTemplate} sortable />
-          <Column body={actionTemplate} exportable={false} style={{ minWidth: '8rem' }} />
+          <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column body={actionTemplate} exportable={false} style={{ width: '6rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 

@@ -331,9 +331,9 @@ export const VoucherManagementPage: React.FC = () => {
 
   const discountBadgeTemplate = (rowData: VoucherItem) => {
     return rowData.discountType === DiscountType.PERCENTAGE ? (
-      <span className="font-bold text-primary">{rowData.discountValue}%</span>
+      <span className="text-primary font-medium">{rowData.discountValue}%</span>
     ) : (
-      <span className="font-bold text-primary">{rowData.discountValue} HTG</span>
+      <span className="text-primary font-medium">{rowData.discountValue} HTG</span>
     );
   };
 
@@ -378,35 +378,38 @@ export const VoucherManagementPage: React.FC = () => {
           emptyMessage={t('common.no_data', { defaultValue: 'Chưa có voucher nào' })}
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
-          <Column field="voucherCode" header={t('voucher.code', { defaultValue: 'Mã Voucher' })} sortable style={{ fontWeight: 'bold' }} />
-          <Column field="title" header={t('voucher.title_label', { defaultValue: 'Tên Phiếu' })} sortable />
-          <Column field="discountValue" header={t('voucher.discount_value', { defaultValue: 'Mức giảm' })} body={discountBadgeTemplate} sortable />
+          <Column field="voucherCode" header={t('voucher.code', { defaultValue: 'Mã Voucher' })} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
+          <Column field="title" header={t('voucher.title_label', { defaultValue: 'Tên Phiếu' })} sortable style={{ minWidth: '12rem' }} />
+          <Column field="discountValue" header={<span title={t('voucher.discount_tooltip', { defaultValue: 'Mức giảm giá trực tiếp hoặc theo phần trăm' })}>{t('voucher.discount_value', { defaultValue: 'Mức Giảm' })}</span>} body={discountBadgeTemplate} sortable style={{ minWidth: '7.5rem', textAlign: 'center' }} />
           <Column
             field="minOrderValue"
-            header={t('voucher.min_order', { defaultValue: 'Đơn tối thiểu' })}
+            header={<span title={t('voucher.min_order_tooltip', { defaultValue: 'Giá trị đơn hàng tối thiểu để áp dụng voucher' })}>{t('voucher.min_order', { defaultValue: 'Đơn Tối Thiểu' })}</span>}
             body={(row: VoucherItem) => `${row.minOrderValue} HTG`}
             sortable
+            style={{ minWidth: '9rem', textAlign: 'center' }}
           />
           <Column
             field="pointsRequired"
-            header={t('voucher.points_cost', { defaultValue: 'Điểm đổi' })}
+            header={<span title={t('voucher.points_cost_tooltip', { defaultValue: 'Số điểm cần tiêu để đổi phiếu voucher này' })}>{t('voucher.points_cost', { defaultValue: 'Điểm Đổi' })}</span>}
             body={(row: VoucherItem) => (
-              <span className="font-bold text-orange-500">
-                <i className="pi pi-star-fill mr-1" />
+              <span className="text-orange-500 font-medium">
+                <i className="pi pi-star-fill mr-1 text-xs" />
                 {row.pointsRequired}
               </span>
             )}
             sortable
+            style={{ minWidth: '7.5rem', textAlign: 'center' }}
           />
           <Column
             field="remainingQuantity"
-            header={t('voucher.inventory', { defaultValue: 'Kho / Tổng' })}
+            header={<span title={t('voucher.inventory_tooltip', { defaultValue: 'Số lượng còn trong kho / Tổng số lượng phát hành' })}>{t('voucher.inventory', { defaultValue: 'Kho / Tổng' })}</span>}
             body={(row: VoucherItem) => `${row.remainingQuantity} / ${row.totalQuantity}`}
             sortable
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
-          <Column field="partnerScope" header={t('voucher.partner_scope', { defaultValue: 'Phạm vi đối tác' })} sortable />
-          <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={statusTemplate} sortable />
-          <Column body={actionTemplate} exportable={false} style={{ minWidth: '8rem' }} />
+          <Column field="partnerScope" header={<span title={t('voucher.partner_scope_tooltip', { defaultValue: 'Phạm vi áp dụng đối tác liên minh' })}>{t('voucher.partner_scope', { defaultValue: 'Phạm Vi' })}</span>} sortable style={{ minWidth: '9rem' }} />
+          <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column body={actionTemplate} exportable={false} style={{ width: '6rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 

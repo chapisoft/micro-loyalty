@@ -569,52 +569,52 @@ export const GameManagementPage: React.FC = () => {
             field="gameCode"
             header={t('game.game_code', { defaultValue: 'Mã Game' })}
             sortable
-            style={{ minWidth: '10rem', fontWeight: 600 }}
+            style={{ minWidth: '9rem', fontWeight: 600 }}
           />
           <Column
             field="gameName"
-            header={t('game.game_name', { defaultValue: 'Tên Trò chơi' })}
+            header={t('game.game_name', { defaultValue: 'Tên Trò Chơi' })}
             sortable
-            style={{ minWidth: '15rem' }}
+            style={{ minWidth: '13rem' }}
           />
           <Column
             field="category"
-            header={t('game.category', { defaultValue: 'Thể loại' })}
+            header={t('game.category', { defaultValue: 'Thể Loại' })}
             sortable
-            style={{ minWidth: '9rem' }}
+            style={{ minWidth: '8rem' }}
           />
           <Column
             field="freeTurnsDaily"
-            header={t('game.free_turns_daily', { defaultValue: 'Lượt miễn phí/ngày' })}
-            body={(row: GameItem) => <span className="font-bold text-green-600">{row.freeTurnsDaily} lượt</span>}
+            header={<span title={t('game.free_turns_tooltip', { defaultValue: 'Số lượt chơi miễn phí mỗi ngày' })}>{t('game.free_turns_daily', { defaultValue: 'Lượt Miễn Phí' })}</span>}
+            body={(row: GameItem) => <span className="font-medium text-green-600">{row.freeTurnsDaily} lượt</span>}
             sortable
-            style={{ minWidth: '9rem', textAlign: 'center' }}
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column
             field="pricePerTurnHtg"
-            header={t('game.price_per_turn_htg', { defaultValue: 'Giá mua lượt (HTG)' })}
+            header={<span title={t('game.price_tooltip', { defaultValue: 'Giá tiền mua thêm 1 lượt chơi (HTG)' })}>{t('game.price_per_turn_htg', { defaultValue: 'Giá Mua Lượt' })}</span>}
             body={(row: GameItem) =>
               row.pricePerTurnHtg > 0 ? (
-                <span className="font-bold font-mono text-orange-600">{row.pricePerTurnHtg} HTG</span>
+                <span className="font-medium font-mono text-orange-600">{row.pricePerTurnHtg} HTG</span>
               ) : (
                 <Tag severity="info" value="Miễn phí" />
               )
             }
             sortable
-            style={{ minWidth: '9rem', textAlign: 'center' }}
+            style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
           <Column
             field="dailyBudgetLimit"
-            header={t('game.daily_budget_total', { defaultValue: 'Hạn mức ngày (HTG)' })}
+            header={<span title={t('game.budget_tooltip', { defaultValue: 'Hạn mức ngân sách giải thưởng tối đa trong ngày (HTG)' })}>{t('game.daily_budget_total', { defaultValue: 'Hạn Mức Ngày' })}</span>}
             body={(row: GameItem) =>
               row.dailyBudgetLimit > 0 ? (
-                <span className="font-mono">{row.dailyBudgetLimit.toLocaleString()} HTG</span>
+                <span className="font-mono text-700">{row.dailyBudgetLimit.toLocaleString()} HTG</span>
               ) : (
-                'Không giới hạn'
+                <span className="text-500 text-xs">Không giới hạn</span>
               )
             }
             sortable
-            style={{ minWidth: '10rem' }}
+            style={{ minWidth: '9rem', textAlign: 'center' }}
           />
           <Column
             field="status"

@@ -94,7 +94,7 @@ export const ClearingSettlementPage: React.FC = () => {
   const netAmountTemplate = (rowData: PartnerClearingItem) => {
     const isPositive = rowData.netSettlementAmount >= 0;
     return (
-      <span className={`font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+      <span className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
         {isPositive ? '+' : ''}{rowData.netSettlementAmount.toLocaleString()} HTG
       </span>
     );
@@ -142,8 +142,10 @@ export const ClearingSettlementPage: React.FC = () => {
         </div>
         <div className="col-12 md:col-4">
           <div className="card shadow-1 border-round surface-card p-4">
-            <span className="text-500 font-medium block mb-2">{t('clearing.net_amount', { defaultValue: 'Tổng công nợ ròng kỳ' })}</span>
-            <div className="text-green-600 font-bold text-2xl">+{totalNetSettlement.toLocaleString()} HTG</div>
+            <span className="text-500 font-medium block mb-2">{t('clearing.net_amount', { defaultValue: 'Tổng chênh lệch công nợ' })}</span>
+            <div className={`font-bold text-2xl ${totalNetSettlement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {totalNetSettlement >= 0 ? '+' : ''}{totalNetSettlement.toLocaleString()} HTG
+            </div>
           </div>
         </div>
       </div>
@@ -166,16 +168,16 @@ export const ClearingSettlementPage: React.FC = () => {
           <Column
             header={t('common.stt', { defaultValue: 'STT' })}
             body={(_, options) => options.rowIndex + 1}
-            style={{ width: '4rem', textAlign: 'center' }}
+            style={{ width: '3.5rem', textAlign: 'center' }}
           />
-          <Column field="partnerCode" header={t('partner.code', { defaultValue: 'Mã Đối tác' })} sortable style={{ minWidth: '10rem' }} />
-          <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Đơn vị Đối tác' })} sortable style={{ minWidth: '16rem' }} />
-          <Column field="totalTransactions" header={t('clearing.total_txs', { defaultValue: 'Số Giao dịch' })} sortable style={{ minWidth: '9rem', textAlign: 'center' }} />
-          <Column field="totalPointsRedeemed" header={t('clearing.total_points_redeemed', { defaultValue: 'Điểm tiêu dùng' })} body={(row: PartnerClearingItem) => row.totalPointsRedeemed.toLocaleString()} sortable style={{ minWidth: '10rem' }} />
-          <Column field="totalFiatReceivable" header={t('clearing.total_fiat_receivable', { defaultValue: 'Phải thu (HTG)' })} body={(row: PartnerClearingItem) => `${row.totalFiatReceivable.toLocaleString()} HTG`} sortable style={{ minWidth: '10rem' }} />
-          <Column field="totalFiatPayable" header={t('clearing.total_fiat_payable', { defaultValue: 'Phải trả (HTG)' })} body={(row: PartnerClearingItem) => `${row.totalFiatPayable.toLocaleString()} HTG`} sortable style={{ minWidth: '10rem' }} />
-          <Column field="netSettlementAmount" body={netAmountTemplate} header={t('clearing.net_amount', { defaultValue: 'Dư nợ ròng (HTG)' })} sortable style={{ minWidth: '11rem' }} />
-          <Column field="status" body={(row: PartnerClearingItem) => statusTemplate(row.status)} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem' }} />
+          <Column field="partnerCode" header={t('partner.code', { defaultValue: 'Mã Đối Tác' })} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
+          <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Tên Đối Tác' })} sortable style={{ minWidth: '13rem' }} />
+          <Column field="totalTransactions" header={<span title={t('clearing.total_txs_tooltip', { defaultValue: 'Tổng số giao dịch đối soát trong kỳ' })}>{t('clearing.total_txs', { defaultValue: 'Số GD' })}</span>} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
+          <Column field="totalPointsRedeemed" header={<span title={t('clearing.total_points_tooltip', { defaultValue: 'Tổng điểm tiêu dùng liên minh' })}>{t('clearing.total_points_redeemed', { defaultValue: 'Điểm Tiêu' })}</span>} body={(row: PartnerClearingItem) => row.totalPointsRedeemed.toLocaleString()} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+          <Column field="totalFiatReceivable" header={<span title={t('clearing.receivable_tooltip', { defaultValue: 'Tổng số tiền phải thu từ đối tác (HTG)' })}>{t('clearing.total_fiat_receivable', { defaultValue: 'Phải Thu' })}</span>} body={(row: PartnerClearingItem) => `${row.totalFiatReceivable.toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="totalFiatPayable" header={<span title={t('clearing.payable_tooltip', { defaultValue: 'Tổng số tiền phải thanh toán cho đối tác (HTG)' })}>{t('clearing.total_fiat_payable', { defaultValue: 'Phải Trả' })}</span>} body={(row: PartnerClearingItem) => `${row.totalFiatPayable.toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="netSettlementAmount" body={netAmountTemplate} header={<span title={t('clearing.net_amount_tooltip', { defaultValue: 'Số tiền chênh lệch bù trừ ròng (HTG)' })}>{t('clearing.net_amount', { defaultValue: 'Dư Nợ Ròng' })}</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
+          <Column field="status" body={(row: PartnerClearingItem) => statusTemplate(row.status)} header={t('common.status', { defaultValue: 'Trạng Thái' })} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 

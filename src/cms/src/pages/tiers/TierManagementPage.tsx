@@ -147,45 +147,45 @@ export const TierManagementPage: React.FC = () => {
   );
 
   const codeTemplate = (rowData: TierConfig) => (
-    <span className="font-bold text-800 font-mono" style={{ fontSize: '13px' }}>
+    <span className="font-medium text-700 font-mono" style={{ fontSize: '13px' }}>
       {rowData.code}
     </span>
   );
 
   const nameTemplate = (rowData: TierConfig) => (
-    <span className="font-bold text-900" style={{ fontSize: '13px' }}>
+    <span className="font-semibold text-900" style={{ fontSize: '13px' }}>
       {rowData.name}
     </span>
   );
 
   const levelTemplate = (rowData: TierConfig) => (
-    <span className="font-bold text-900 font-mono" style={{ fontSize: '13px' }}>
+    <span className="text-700 font-mono" style={{ fontSize: '13px' }}>
       {rowData.tierLevel}
     </span>
   );
 
   const pointsTemplate = (rowData: TierConfig) => (
-    <span className="font-bold font-mono text-900" style={{ fontSize: '13px' }}>
+    <span className="text-800 font-mono" style={{ fontSize: '13px' }}>
       {(rowData.minPoints ?? 0).toLocaleString()}{' '}
       <span className="text-500 font-normal text-xs">{t('tier.points_unit', { defaultValue: 'điểm' })}</span>
     </span>
   );
 
   const multiplierTemplate = (rowData: TierConfig) => (
-    <span className="font-black text-primary font-mono" style={{ fontSize: '13px' }}>
+    <span className="text-primary font-mono font-medium" style={{ fontSize: '13px' }}>
       ×{Number(rowData.pointMultiplier ?? 1.0).toFixed(2)}
     </span>
   );
 
   const turnsTemplate = (rowData: TierConfig) => (
-    <span className="font-bold font-mono text-900" style={{ fontSize: '13px' }}>
+    <span className="text-700 font-mono" style={{ fontSize: '13px' }}>
       {rowData.freeDailyTurns}{' '}
       <span className="text-500 font-normal text-xs">{t('tier.turns_unit', { defaultValue: 'lượt' })}</span>
     </span>
   );
 
   const descriptionTemplate = (rowData: TierConfig) => (
-    <span className="text-600 text-xs line-height-2" style={{ maxWidth: '20rem', display: 'inline-block' }}>
+    <span className="text-600 text-xs line-height-2" style={{ maxWidth: '16rem', display: 'inline-block' }}>
       {rowData.description || '—'}
     </span>
   );
@@ -261,7 +261,7 @@ export const TierManagementPage: React.FC = () => {
           <Column
             header={t('common.stt', { defaultValue: 'STT' })}
             body={(_, options) => options.rowIndex + 1}
-            style={{ width: '4rem', textAlign: 'center' }}
+            style={{ width: '3.5rem', textAlign: 'center' }}
           />
 
           {/* Cột 3: Thao tác */}
@@ -269,18 +269,18 @@ export const TierManagementPage: React.FC = () => {
             body={actionTemplate}
             exportable={false}
             header={t('common.actions', { defaultValue: 'Thao tác' })}
-            style={{ width: '5.5rem', textAlign: 'center' }}
+            style={{ width: '5rem', textAlign: 'center' }}
           />
 
           {/* Cột 4 trở đi: Dữ liệu từ DB */}
-          <Column field="code" body={codeTemplate} header={t('tier.code', { defaultValue: 'Mã Hạng' })} sortable style={{ minWidth: '8rem' }} />
-          <Column field="name" body={nameTemplate} header={t('tier.name', { defaultValue: 'Tên Hạng' })} sortable style={{ minWidth: '16rem' }} />
-          <Column field="tierLevel" body={levelTemplate} header={t('tier.level', { defaultValue: 'Cấp độ' })} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
-          <Column field="minPoints" body={pointsTemplate} header={t('tier.min_points', { defaultValue: 'Ngưỡng điểm xét hạng (chu kỳ 12 tháng)' })} sortable style={{ minWidth: '16rem' }} />
-          <Column field="pointMultiplier" body={multiplierTemplate} header={t('tier.multiplier', { defaultValue: 'Hệ số nhân điểm thưởng' })} sortable style={{ minWidth: '12rem', textAlign: 'center' }} />
-          <Column field="freeDailyTurns" body={turnsTemplate} header={t('tier.free_turns', { defaultValue: 'Lượt quay may mắn miễn phí/ngày' })} sortable style={{ minWidth: '13rem', textAlign: 'center' }} />
-          <Column field="description" body={descriptionTemplate} header={t('tier.description', { defaultValue: 'Mô tả quyền lợi' })} style={{ minWidth: '18rem' }} />
-          <Column field="status" body={statusTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem', textAlign: 'center' }} />
+          <Column field="code" body={codeTemplate} header={<span title={t('tier.code_tooltip', { defaultValue: 'Mã định danh hạng hội viên' })}>{t('tier.code', { defaultValue: 'Mã Hạng' })}</span>} sortable style={{ minWidth: '7rem' }} />
+          <Column field="name" body={nameTemplate} header={<span title={t('tier.name_tooltip', { defaultValue: 'Tên cấu hình hạng hội viên' })}>{t('tier.name', { defaultValue: 'Tên Hạng' })}</span>} sortable style={{ minWidth: '13rem' }} />
+          <Column field="tierLevel" body={levelTemplate} header={<span title={t('tier.level_tooltip', { defaultValue: 'Cấp độ phân hạng (1 đến 4)' })}>{t('tier.level', { defaultValue: 'Cấp Độ' })}</span>} sortable style={{ minWidth: '5.5rem', textAlign: 'center' }} />
+          <Column field="minPoints" body={pointsTemplate} header={<span title={t('tier.min_points_tooltip', { defaultValue: 'Ngưỡng điểm xét hạng tích lũy trong chu kỳ 12 tháng' })}>{t('tier.min_points', { defaultValue: 'Điểm Xét Hạng' })}</span>} sortable style={{ minWidth: '9.5rem' }} />
+          <Column field="pointMultiplier" body={multiplierTemplate} header={<span title={t('tier.multiplier_tooltip', { defaultValue: 'Hệ số nhân điểm thưởng khi tích điểm' })}>{t('tier.multiplier', { defaultValue: 'Hệ Số Điểm' })}</span>} sortable style={{ minWidth: '7.5rem', textAlign: 'center' }} />
+          <Column field="freeDailyTurns" body={turnsTemplate} header={<span title={t('tier.free_turns_tooltip', { defaultValue: 'Số lượt quay may mắn miễn phí mỗi ngày' })}>{t('tier.free_turns', { defaultValue: 'Lượt Quay/Ngày' })}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="description" body={descriptionTemplate} header={<span title={t('tier.description_tooltip', { defaultValue: 'Mô tả quyền lợi và chính sách hạng' })}>{t('tier.description', { defaultValue: 'Mô Tả' })}</span>} style={{ minWidth: '12rem' }} />
+          <Column field="status" body={statusTemplate} header={<span title={t('common.status_tooltip', { defaultValue: 'Trạng thái hoạt động' })}>{t('common.status', { defaultValue: 'Trạng Thái' })}</span>} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 

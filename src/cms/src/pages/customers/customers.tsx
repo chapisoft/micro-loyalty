@@ -147,37 +147,37 @@ export const Customers: React.FC = () => {
             body={(_, { rowIndex }) => rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
-          <Column field="externalUserId" header={t('customer.phone_number', { defaultValue: 'Số điện thoại / Mã' })} sortable style={{ minWidth: '11rem' }} />
-          <Column field="fullName" header={t('customer.full_name', { defaultValue: 'Họ và tên' })} sortable style={{ minWidth: '14rem' }} />
+          <Column field="externalUserId" header={<span title={t('customer.phone_tooltip', { defaultValue: 'Số điện thoại hoặc mã hội viên' })}>{t('customer.phone_number', { defaultValue: 'Số Điện Thoại' })}</span>} sortable style={{ minWidth: '9.5rem', fontWeight: 600 }} />
+          <Column field="fullName" header={t('customer.full_name', { defaultValue: 'Họ Và Tên' })} sortable style={{ minWidth: '12rem' }} />
           <Column
             field="currentPoints"
-            header={t('customer.current_points', { defaultValue: 'Điểm khả dụng' })}
+            header={<span title={t('customer.current_points_tooltip', { defaultValue: 'Số điểm khả dụng dùng để tiêu dùng hoặc đổi quà' })}>{t('customer.current_points', { defaultValue: 'Điểm Khả Dụng' })}</span>}
             body={(row: LoyaltyMemberAccount) => (
-              <span className="font-bold text-orange-600">
+              <span className="font-medium font-mono text-orange-600">
                 {row.currentPoints?.toLocaleString()} Điểm
               </span>
             )}
             sortable
-            style={{ minWidth: '11rem' }}
+            style={{ minWidth: '9.5rem', textAlign: 'center' }}
           />
           <Column
             field="tierPoints"
-            header={t('customer.tier_points', { defaultValue: 'Điểm phân hạng' })}
+            header={<span title={t('customer.tier_points_tooltip', { defaultValue: 'Điểm tích lũy dùng để xét phân hạng trong chu kỳ' })}>{t('customer.tier_points', { defaultValue: 'Điểm Xét Hạng' })}</span>}
             body={(row: LoyaltyMemberAccount) => (
-              <span className="font-semibold text-blue-600">
+              <span className="font-medium font-mono text-blue-600">
                 {row.tierPoints?.toLocaleString()} Điểm
               </span>
             )}
             sortable
-            style={{ minWidth: '11rem' }}
+            style={{ minWidth: '9.5rem', textAlign: 'center' }}
           />
           <Column
-            header={t('customer.tier_name', { defaultValue: 'Hạng hội viên' })}
+            header={t('customer.tier_name', { defaultValue: 'Hạng Hội Viên' })}
             body={tierBadgeTemplate}
-            style={{ minWidth: '11rem' }}
+            style={{ minWidth: '9rem', textAlign: 'center' }}
           />
-          <Column field="status" body={statusBodyTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem' }} />
-          <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Ngày tham gia' })} sortable style={{ minWidth: '12rem' }} />
+          <Column field="status" body={statusBodyTemplate} header={t('common.status', { defaultValue: 'Trạng Thái' })} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Ngày Tham Gia' })} sortable style={{ minWidth: '9.5rem' }} />
         </DataTable>
       </div>
     </div>
