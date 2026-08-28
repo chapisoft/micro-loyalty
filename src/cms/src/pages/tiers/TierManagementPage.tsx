@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -11,6 +11,7 @@ import { Toast } from 'primereact/toast';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
+import { TenantSelector } from '@/components/TenantSelector';
 import { TierLevel, CommonStatus } from '@/models';
 import { LoyaltyService } from '@/service/loyalty.service';
 
@@ -26,57 +27,13 @@ export interface TierConfig {
   status: CommonStatus;
 }
 
-const INITIAL_TIERS: TierConfig[] = [
-  {
-    id: 1,
-    code: TierLevel.SILVER,
-    name: 'Hạng Bạc (Silver)',
-    tierLevel: 1,
-    minPoints: 0,
-    pointMultiplier: 1.0,
-    freeDailyTurns: 1,
-    description: 'Hạng hội viên khởi đầu khi đăng ký tài khoản',
-    status: CommonStatus.ACTIVE,
-  },
-  {
-    id: 2,
-    code: TierLevel.GOLD,
-    name: 'Hạng Vàng (Gold)',
-    tierLevel: 2,
-    minPoints: 1000,
-    pointMultiplier: 1.2,
-    freeDailyTurns: 2,
-    description: 'Tích lũy từ 1.000 điểm trong chu kỳ 12 tháng',
-    status: CommonStatus.ACTIVE,
-  },
-  {
-    id: 3,
-    code: TierLevel.PLATINUM,
-    name: 'Hạng Bạch Kim (Platinum)',
-    tierLevel: 3,
-    minPoints: 5000,
-    pointMultiplier: 1.5,
-    freeDailyTurns: 3,
-    description: 'Tích lũy từ 5.000 điểm trong chu kỳ 12 tháng',
-    status: CommonStatus.ACTIVE,
-  },
-  {
-    id: 4,
-    code: TierLevel.DIAMOND,
-    name: 'Hạng Kim Cương (Diamond)',
-    tierLevel: 4,
-    minPoints: 20000,
-    pointMultiplier: 2.0,
-    freeDailyTurns: 5,
-    description: 'Hạng đặc quyền cao cấp nhất tích lũy từ 20.000 điểm',
-    status: CommonStatus.ACTIVE,
-  },
-];
-
 export const TierManagementPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const toastRef = useRef<Toast>(null);
-  const [tiers, setTiers] = useState<TierConfig[]>(INITIAL_TIERS);
+  const [selectedTenant, setSelectedTenant] = useState<string>(
+    localStorage.getItem('tenant_id') || 'TENANT_NATCASH'
+  );
+  const [tiers, setTiers] = useState<TierConfig[]>([]);
   const [selectedTiers, setSelectedTiers] = useState<TierConfig[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<TierConfig>>({});
@@ -90,13 +47,11 @@ export const TierManagementPage: React.FC = () => {
     [tiers, i18n.language]
   );
 
-  const selectedTenant = localStorage.getItem('tenant_id') || 'TENANT_NATCASH';
-
-  const fetchTiers = async () => {
+  const fetchTiers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await LoyaltyService.getTiers(selectedTenant);
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data)) {
         setTiers(
           data.map((item) => ({
             id: item.id,
@@ -107,20 +62,29 @@ export const TierManagementPage: React.FC = () => {
             pointMultiplier: item.pointMultiplier,
             freeDailyTurns: item.freeDailyTurns,
             description: item.description,
-            status: item.status as CommonStatus,
+            status: (item.status as CommonStatus) || CommonStatus.ACTIVE,
           }))
         );
+      } else {
+        setTiers([]);
       }
-    } catch {
-      // Fallback to INITIAL_TIERS
+    } catch (e) {
+      console.error('[fetchTiers] Error:', e);
+      setTiers([]);
+      toastRef.current?.show({
+        severity: 'error',
+        summary: t('toast.error', { defaultValue: 'Lỗi' }),
+        detail: t('tier.load_failed', { defaultValue: 'Không thể tải dữ liệu hạng hội viên từ máy chủ' }),
+        life: 3000,
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTenant, t]);
 
   useEffect(() => {
     fetchTiers();
-  }, [selectedTenant]);
+  }, [fetchTiers]);
 
   const editItem = (item: TierConfig) => {
     setFormData({ ...item });
@@ -189,24 +153,28 @@ export const TierManagementPage: React.FC = () => {
       PLATINUM: '#0D9488',
       DIAMOND: '#7C3AED',
     };
-    const localizedName = t(`tier.tier_${rowData.code?.toLowerCase()}`, { defaultValue: rowData.name });
     return (
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          backgroundColor: colorMap[rowData.code] || '#64748B',
-          color: '#ffffff',
-          padding: '5px 14px',
-          borderRadius: '9999px',
-          fontWeight: 700,
-          fontSize: '12px',
-          whiteSpace: 'nowrap',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-        }}
-      >
-        {localizedName}
-      </span>
+      <div className="flex align-items-center gap-2">
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            backgroundColor: colorMap[rowData.code] || '#64748B',
+            color: '#ffffff',
+            padding: '3px 10px',
+            borderRadius: '9999px',
+            fontWeight: 700,
+            fontSize: '11px',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+          }}
+        >
+          {rowData.code}
+        </span>
+        <span className="font-bold text-900" style={{ fontSize: '13px' }}>
+          {rowData.name}
+        </span>
+      </div>
     );
   };
 
@@ -225,7 +193,7 @@ export const TierManagementPage: React.FC = () => {
 
   const multiplierTemplate = (rowData: TierConfig) => (
     <span className="font-black text-primary font-mono" style={{ fontSize: '13px' }}>
-      ×{rowData.pointMultiplier?.toFixed(1) || '1.0'}
+      ×{Number(rowData.pointMultiplier ?? 1.0).toFixed(2)}
     </span>
   );
 
@@ -233,6 +201,12 @@ export const TierManagementPage: React.FC = () => {
     <span className="font-bold font-mono text-900" style={{ fontSize: '13px' }}>
       {rowData.freeDailyTurns}{' '}
       <span className="text-500 font-normal text-xs">{t('tier.turns_unit', { defaultValue: 'lượt' })}</span>
+    </span>
+  );
+
+  const descriptionTemplate = (rowData: TierConfig) => (
+    <span className="text-600 text-xs line-height-2" style={{ maxWidth: '20rem', display: 'inline-block' }}>
+      {rowData.description || '—'}
     </span>
   );
 
@@ -253,18 +227,30 @@ export const TierManagementPage: React.FC = () => {
   );
 
   const header = (
-    <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <h4 className="m-0 text-primary font-bold">
-        {t('tier.management_title', { defaultValue: 'Quản trị Hạng Hội Viên & Ma Trận Đặc Quyền' })}
-      </h4>
-      <Button
-        icon="pi pi-refresh"
-        rounded
-        outlined
-        severity="secondary"
-        onClick={fetchTiers}
-        tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
-      />
+    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
+      <div className="flex align-items-center gap-2">
+        <h4 className="m-0 text-primary font-bold">
+          {t('tier.management_title', { defaultValue: 'Quản trị Hạng Hội Viên & Ma Trận Đặc Quyền' })}
+        </h4>
+      </div>
+      <div className="flex flex-wrap align-items-center gap-2">
+        <TenantSelector
+          value={selectedTenant}
+          onChange={(newTenantId) => {
+            setSelectedTenant(newTenantId);
+            localStorage.setItem('tenant_id', newTenantId);
+          }}
+        />
+        <Button
+          icon="pi pi-refresh"
+          rounded
+          outlined
+          severity="secondary"
+          onClick={fetchTiers}
+          loading={loading}
+          tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+        />
+      </div>
     </div>
   );
 
@@ -275,7 +261,7 @@ export const TierManagementPage: React.FC = () => {
       <AppBreadcrumb items={[{ label: t('nav.tiers', { defaultValue: 'Hạng Hội Viên' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
-          key={i18n.language}
+          key={`${i18n.language}_${selectedTenant}`}
           value={displayTiers}
           selection={selectedTiers}
           onSelectionChange={(e: any) => setSelectedTiers(e.value || [])}
@@ -306,13 +292,14 @@ export const TierManagementPage: React.FC = () => {
             style={{ width: '5.5rem', textAlign: 'center' }}
           />
 
-          {/* Cột 4 trở đi: Dữ liệu */}
+          {/* Cột 4 trở đi: Dữ liệu từ DB */}
           <Column field="code" header={t('tier.code', { defaultValue: 'Mã Hạng' })} sortable style={{ minWidth: '8rem' }} />
-          <Column field="name" body={tierBadgeTemplate} header={t('tier.name', { defaultValue: 'Tên Hạng' })} sortable style={{ minWidth: '15rem' }} />
+          <Column field="name" body={tierBadgeTemplate} header={t('tier.name', { defaultValue: 'Tên Hạng' })} sortable style={{ minWidth: '16rem' }} />
           <Column field="tierLevel" body={levelTemplate} header={t('tier.level', { defaultValue: 'Cấp độ' })} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
           <Column field="minPoints" body={pointsTemplate} header={t('tier.min_points', { defaultValue: 'Ngưỡng điểm xét hạng (chu kỳ 12 tháng)' })} sortable style={{ minWidth: '16rem' }} />
           <Column field="pointMultiplier" body={multiplierTemplate} header={t('tier.multiplier', { defaultValue: 'Hệ số nhân điểm thưởng' })} sortable style={{ minWidth: '12rem', textAlign: 'center' }} />
           <Column field="freeDailyTurns" body={turnsTemplate} header={t('tier.free_turns', { defaultValue: 'Lượt quay may mắn miễn phí/ngày' })} sortable style={{ minWidth: '13rem', textAlign: 'center' }} />
+          <Column field="description" body={descriptionTemplate} header={t('tier.description', { defaultValue: 'Mô tả quyền lợi' })} style={{ minWidth: '18rem' }} />
           <Column field="status" body={statusTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ minWidth: '9rem', textAlign: 'center' }} />
         </DataTable>
       </div>
@@ -359,6 +346,14 @@ export const TierManagementPage: React.FC = () => {
             id="freeDailyTurns"
             value={formData.freeDailyTurns ?? 1}
             onValueChange={(e) => setFormData({ ...formData, freeDailyTurns: e.value ?? 1 })}
+          />
+        </div>
+        <div className="field mb-3">
+          <label htmlFor="tierDescription" className="font-bold">{t('tier.description', { defaultValue: 'Mô tả quyền lợi' })}</label>
+          <InputText
+            id="tierDescription"
+            value={formData.description || ''}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
         </div>
         <div className="field mb-3">

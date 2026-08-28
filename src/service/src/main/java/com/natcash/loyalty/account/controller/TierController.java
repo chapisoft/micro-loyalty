@@ -40,7 +40,7 @@ public class TierController {
     public ResponseEntity<List<TierResponse>> getTiers(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<LoyaltyTierEntity> entities = tierRepository.findByTenantId(tenantId);
+        List<LoyaltyTierEntity> entities = tierRepository.findByTenantIdOrderByTierLevelAsc(tenantId);
         List<TierResponse> responses = entities.stream().map(e -> TierResponse.builder()
                 .id(e.getId())
                 .code(e.getCode())

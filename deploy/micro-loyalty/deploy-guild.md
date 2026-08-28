@@ -173,7 +173,7 @@ chmod -R 755 /home/dip/micro-loyalty/deploy
 Tệp khởi tạo quyền và cơ sở dữ liệu `/home/dip/micro-loyalty/deploy/config/init-db.sql`:
 
 ```sql
-CREATE USER loyalty_app WITH PASSWORD 'Loyalty$SecureDB2026!';
+CREATE USER loyalty_app WITH PASSWORD 'Loyalty_SecureDB2026!';
 CREATE DATABASE loyalty_db OWNER loyalty_app ENCODING 'UTF8';
 GRANT ALL PRIVILEGES ON DATABASE loyalty_db TO loyalty_app;
 ```
@@ -184,7 +184,7 @@ GRANT ALL PRIVILEGES ON DATABASE loyalty_db TO loyalty_app;
 Tệp cấu hình `/home/dip/micro-loyalty/deploy/config/redis.conf`:
 
 ```ini
-requirepass Loyalty$RedisPass2026!
+requirepass Loyalty_RedisPass2026!
 maxmemory 256mb
 maxmemory-policy allkeys-lru
 appendonly yes
@@ -214,7 +214,7 @@ services:
     environment:
       POSTGRES_DB: loyalty_db
       POSTGRES_USER: loyalty_app
-      POSTGRES_PASSWORD: Loyalty$SecureDB2026!
+      POSTGRES_PASSWORD: Loyalty_SecureDB2026!
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
       - ./config/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -241,7 +241,7 @@ services:
     networks:
       - loyalty_net
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "Loyalty$RedisPass2026!", "ping"]
+      test: ["CMD", "redis-cli", "-a", "Loyalty_RedisPass2026!", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -264,10 +264,10 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_DB: loyalty_db
       POSTGRES_USER: loyalty_app
-      POSTGRES_PASSWORD: Loyalty$SecureDB2026!
+      POSTGRES_PASSWORD: Loyalty_SecureDB2026!
       REDIS_HOST: loyalty-redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: Loyalty$RedisPass2026!
+      REDIS_PASSWORD: Loyalty_RedisPass2026!
     volumes:
       - ./config/backend:/app/config:ro
       - ./locales:/app/locales:ro
