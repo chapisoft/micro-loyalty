@@ -40,9 +40,9 @@ public class PointLedgerController {
     @GetMapping("/ledger")
     public ResponseEntity<PointHistoryResponse> getLedgerGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId,
+            @RequestParam(value = "externalUserId", required = false) String externalUserId,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size) {
+            @RequestParam(value = "size", required = false, defaultValue = "50") int size) {
 
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         PointHistoryRequest request = PointHistoryRequest.builder()
@@ -57,9 +57,9 @@ public class PointLedgerController {
     @GetMapping("/point-history")
     public ResponseEntity<PointHistoryResponse> getPointHistoryGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId,
+            @RequestParam(value = "externalUserId", required = false) String externalUserId,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size) {
+            @RequestParam(value = "size", required = false, defaultValue = "50") int size) {
 
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         PointHistoryRequest request = PointHistoryRequest.builder()

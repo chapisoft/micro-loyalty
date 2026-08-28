@@ -67,7 +67,8 @@ export function Page(): React.JSX.Element {
     setLoading(true);
     changeProfileMutate.mutate(dataWithUserId, {
       onSuccess: (res: IChangeProfileResponse) => {
-        if (res.status === 0) {
+        const isSuccess = (res as any)?.status === 0 || (res as any)?.status === 200 || (res as any)?.code === 200 || (res as any)?.succeeded === true;
+        if (isSuccess) {
           showToast({
             code: 200,
             detail: res.message || t('update_successful'),

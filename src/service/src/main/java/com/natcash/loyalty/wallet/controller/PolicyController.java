@@ -4,6 +4,7 @@ import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.domain.enums.CommonStatus;
+import com.natcash.loyalty.domain.enums.PartnerType;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.tenant.TenantContext;
 import com.natcash.loyalty.wallet.entity.LoyaltyAcceptancePolicyEntity;
@@ -17,6 +18,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,10 +32,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
-@RequestMapping("/loyalty/v1/policies")
+@RequestMapping(value = {"/loyalty/v1/policies", "/policies", "/v1/policies", "/api/loyalty/v1/policies"})
 @Tag(name = "Policy Configuration API", description = "Quản lý Chính Sách Tích & Tiêu Điểm")
 public class PolicyController {
 
@@ -80,33 +87,56 @@ public class PolicyController {
             partner = partnerRepository.findByIdAndTenantId(request.getPartnerId(), tenantId)
                     .orElse(null);
         }
-        if (partner == null && request.getPartnerCode() != null) {
-            partner = partnerRepository.findByTenantIdAndPartnerCode(tenantId, request.getPartnerCode())
+        if (partner == null && request.getPartnerCode() != null && !request.getPartnerCode().trim().isEmpty()) {
+            partner = partnerRepository.findByTenantIdAndPartnerCode(tenantId, request.getPartnerCode().trim())
                     .orElse(null);
         }
         if (partner == null) {
-            // Auto-create or fetch default partner for consistency
-            partner = partnerRepository.findByTenantId(tenantId).stream().findFirst()
-                    .orElseGet(() -> partnerRepository.save(LoyaltyPartnerEntity.builder()
-                            .tenantId(tenantId)
-                            .partnerCode(request.getPartnerCode() != null ? request.getPartnerCode() : "PARTNER_" + System.currentTimeMillis())
-                            .partnerName(request.getPartnerName() != null ? request.getPartnerName() : "Đối Tác Mới")
-                            .apiKey("API_KEY_" + System.currentTimeMillis())
-                            .secretKey("SEC_KEY_" + System.currentTimeMillis())
-                            .status(CommonStatus.ACTIVE)
-                            .build()));
+            String partnerCode = request.getPartnerCode() != null && !request.getPartnerCode().trim().isEmpty()
+                    ? request.getPartnerCode().trim()
+                    : "PARTNER_" + System.currentTimeMillis();
+            String partnerName = request.getPartnerName() != null && !request.getPartnerName().trim().isEmpty()
+                    ? request.getPartnerName().trim()
+                    : "Đối Tác Mới";
+
+            // Check if partner code already exists
+            Optional<LoyaltyPartnerEntity> existingPartnerOpt = partnerRepository.findByTenantIdAndPartnerCode(tenantId, partnerCode);
+            if (existingPartnerOpt.isPresent()) {
+                partner = existingPartnerOpt.get();
+            } else {
+                partner = partnerRepository.save(LoyaltyPartnerEntity.builder()
+                        .tenantId(tenantId)
+                        .partnerCode(partnerCode)
+                        .partnerName(partnerName)
+                        .partnerType(PartnerType.RETAIL)
+                        .apiKey("API_KEY_" + System.currentTimeMillis())
+                        .secretKey("SEC_KEY_" + System.currentTimeMillis())
+                        .status(CommonStatus.ACTIVE)
+                        .build());
+            }
         }
 
-        LoyaltyAcceptancePolicyEntity entity = LoyaltyAcceptancePolicyEntity.builder()
-                .tenantId(tenantId)
-                .partner(partner)
-                .pointExchangeRate(request.getExchangeRate() != null ? request.getExchangeRate() : BigDecimal.ONE)
-                .maxBurnPercentage(request.getMaxBurnPercentage() != null ? request.getMaxBurnPercentage() : new BigDecimal("50.00"))
-                .minBurnPoints(request.getMinBillAmount() != null ? request.getMinBillAmount() : BigDecimal.TEN)
-                .maxBurnPointsPerDay(new BigDecimal("10000.00"))
-                .allowedPointTypes("ALL")
-                .status(request.getStatus() != null ? request.getStatus() : CommonStatus.ACTIVE)
-                .build();
+        // Check if policy already exists for this tenant and partner (Prevent Unique Constraint violation)
+        Optional<LoyaltyAcceptancePolicyEntity> existingPolicyOpt = policyRepository.findByTenantIdAndPartnerId(tenantId, partner.getId());
+        LoyaltyAcceptancePolicyEntity entity;
+        if (existingPolicyOpt.isPresent()) {
+            entity = existingPolicyOpt.get();
+            if (request.getExchangeRate() != null) entity.setPointExchangeRate(request.getExchangeRate());
+            if (request.getMaxBurnPercentage() != null) entity.setMaxBurnPercentage(request.getMaxBurnPercentage());
+            if (request.getMinBillAmount() != null) entity.setMinBurnPoints(request.getMinBillAmount());
+            if (request.getStatus() != null) entity.setStatus(request.getStatus());
+        } else {
+            entity = LoyaltyAcceptancePolicyEntity.builder()
+                    .tenantId(tenantId)
+                    .partner(partner)
+                    .pointExchangeRate(request.getExchangeRate() != null ? request.getExchangeRate() : BigDecimal.ONE)
+                    .maxBurnPercentage(request.getMaxBurnPercentage() != null ? request.getMaxBurnPercentage() : new BigDecimal("50.00"))
+                    .minBurnPoints(request.getMinBillAmount() != null ? request.getMinBillAmount() : BigDecimal.TEN)
+                    .maxBurnPointsPerDay(new BigDecimal("10000.00"))
+                    .allowedPointTypes("ALL")
+                    .status(request.getStatus() != null ? request.getStatus() : CommonStatus.ACTIVE)
+                    .build();
+        }
 
         LoyaltyAcceptancePolicyEntity saved = policyRepository.save(entity);
         return ResponseEntity.ok(mapEntityToResponse(saved));
@@ -153,20 +183,28 @@ public class PolicyController {
     }
 
     private PolicyResponse mapEntityToResponse(LoyaltyAcceptancePolicyEntity entity) {
+        String partnerCode = "N/A";
+        String partnerName = "N/A";
+        Long partnerId = null;
+        if (entity.getPartner() != null) {
+            partnerId = entity.getPartner().getId();
+            partnerCode = entity.getPartner().getPartnerCode() != null ? entity.getPartner().getPartnerCode() : "N/A";
+            partnerName = entity.getPartner().getPartnerName() != null ? entity.getPartner().getPartnerName() : "N/A";
+        }
         return PolicyResponse.builder()
                 .id(entity.getId())
                 .code("POLICY_" + entity.getId())
-                .name("Chính Sách Tiêu Điểm " + (entity.getPartner() != null ? entity.getPartner().getPartnerName() : ""))
-                .partnerId(entity.getPartner() != null ? entity.getPartner().getId() : null)
-                .partnerCode(entity.getPartner() != null ? entity.getPartner().getPartnerCode() : "N/A")
-                .partnerName(entity.getPartner() != null ? entity.getPartner().getPartnerName() : "N/A")
+                .name("Chính Sách Tiêu Điểm " + partnerName)
+                .partnerId(partnerId)
+                .partnerCode(partnerCode)
+                .partnerName(partnerName)
                 .type("BURN")
                 .earnRatePercent(BigDecimal.ONE)
-                .exchangeRate(entity.getPointExchangeRate())
-                .minBillAmount(entity.getMinBurnPoints())
-                .maxBurnPercentage(entity.getMaxBurnPercentage())
-                .status(entity.getStatus())
-                .description("Quy định khấu trừ tối đa " + entity.getMaxBurnPercentage() + "% hóa đơn")
+                .exchangeRate(entity.getPointExchangeRate() != null ? entity.getPointExchangeRate() : BigDecimal.ONE)
+                .minBillAmount(entity.getMinBurnPoints() != null ? entity.getMinBurnPoints() : BigDecimal.TEN)
+                .maxBurnPercentage(entity.getMaxBurnPercentage() != null ? entity.getMaxBurnPercentage() : new BigDecimal("50.00"))
+                .status(entity.getStatus() != null ? entity.getStatus() : CommonStatus.ACTIVE)
+                .description(entity.getMaxBurnPercentage() != null ? "Quy định khấu trừ tối đa " + entity.getMaxBurnPercentage() + "% hóa đơn" : "Chính sách điểm")
                 .build();
     }
 

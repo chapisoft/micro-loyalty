@@ -31,6 +31,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -109,23 +110,34 @@ public class VoucherService {
 
     @Transactional
     public VoucherResponse createVoucher(String tenantId, CreateVoucherRequest request) {
-        LoyaltyVoucherEntity entity = LoyaltyVoucherEntity.builder()
-                .tenantId(tenantId)
-                .partnerId(request.getPartnerId() != null ? request.getPartnerId() : 1L)
-                .voucherCode(request.getVoucherCode() != null ? request.getVoucherCode() : "VCH_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .discountType(request.getDiscountType() != null ? request.getDiscountType() : DiscountType.FIXED_AMOUNT)
-                .discountValue(request.getDiscountValue() != null ? request.getDiscountValue() : BigDecimal.ZERO)
-                .minBillAmount(request.getMinBillAmount() != null ? request.getMinBillAmount() : BigDecimal.ZERO)
-                .maxDiscountAmount(request.getMaxDiscountAmount())
-                .totalQuantity(request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000)
-                .availableQuantity(request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000)
-                .pointCost(request.getPointCost() != null ? request.getPointCost() : BigDecimal.ZERO)
-                .startDate(Instant.now())
-                .endDate(Instant.now().plusSeconds(90L * 86400L))
-                .status(VoucherStatus.ACTIVE)
-                .build();
+        String code = request.getVoucherCode() != null && !request.getVoucherCode().isBlank()
+                ? request.getVoucherCode().toUpperCase().trim()
+                : "VCH_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        Optional<LoyaltyVoucherEntity> existingOpt = voucherRepository.findByTenantIdAndVoucherCode(tenantId, code);
+        LoyaltyVoucherEntity entity;
+        if (existingOpt.isPresent()) {
+            entity = existingOpt.get();
+        } else {
+            entity = LoyaltyVoucherEntity.builder()
+                    .tenantId(tenantId)
+                    .voucherCode(code)
+                    .startDate(Instant.now())
+                    .endDate(Instant.now().plusSeconds(90L * 86400L))
+                    .status(VoucherStatus.ACTIVE)
+                    .build();
+        }
+
+        entity.setPartnerId(request.getPartnerId() != null ? request.getPartnerId() : 1L);
+        entity.setTitle(request.getTitle() != null ? request.getTitle() : code);
+        entity.setDescription(request.getDescription());
+        entity.setDiscountType(request.getDiscountType() != null ? request.getDiscountType() : DiscountType.FIXED_AMOUNT);
+        entity.setDiscountValue(request.getDiscountValue() != null ? request.getDiscountValue() : BigDecimal.ZERO);
+        entity.setMinBillAmount(request.getMinBillAmount() != null ? request.getMinBillAmount() : BigDecimal.ZERO);
+        entity.setMaxDiscountAmount(request.getMaxDiscountAmount());
+        entity.setTotalQuantity(request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000);
+        entity.setAvailableQuantity(request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000);
+        entity.setPointCost(request.getPointCost() != null ? request.getPointCost() : BigDecimal.ZERO);
 
         LoyaltyVoucherEntity saved = voucherRepository.save(entity);
         return mapToVoucherResponse(saved);
@@ -224,6 +236,18 @@ public class VoucherService {
         voucherRepository.findById(id)
                 .filter(v -> v.getTenantId().equals(tenantId))
                 .ifPresent(voucherRepository::delete);
+    }
+
+    @Transactional
+    public List<VoucherResponse> batchImportVouchers(String tenantId, List<CreateVoucherRequest> requests) {
+        List<VoucherResponse> responses = new ArrayList<>();
+        if (requests == null || requests.isEmpty()) {
+            return responses;
+        }
+        for (CreateVoucherRequest req : requests) {
+            responses.add(createVoucher(tenantId, req));
+        }
+        return responses;
     }
 
     private VoucherResponse mapToVoucherResponse(LoyaltyVoucherEntity v) {

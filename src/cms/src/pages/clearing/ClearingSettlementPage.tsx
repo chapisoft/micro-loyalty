@@ -68,11 +68,16 @@ export const ClearingSettlementPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const res = await LoyaltyService.settleClearingPeriod();
-      setSettleSuccessMsg(res?.message || 'Quyết toán kết chuyển kỳ bù trừ thành công!');
+      if (res && res.settlementBatchCode) {
+        setSettleSuccessMsg(`Quyết toán thành công! Mã lô kết chuyển: ${res.settlementBatchCode}`);
+      } else {
+        setSettleSuccessMsg(res?.message || 'Quyết toán kết chuyển kỳ bù trừ thành công!');
+      }
       setShowConfirmSettle(false);
       await fetchClearingData();
-    } catch (e) {
+    } catch (e: any) {
       console.error('[handleSettlePeriod] Error:', e);
+      alert('Không thể thực hiện quyết toán bù trừ: ' + (e?.message || 'Lỗi hệ thống'));
     } finally {
       setIsSubmitting(false);
     }

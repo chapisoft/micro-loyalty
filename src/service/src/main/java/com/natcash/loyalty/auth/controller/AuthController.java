@@ -1,6 +1,7 @@
 package com.natcash.loyalty.auth.controller;
 
 import com.natcash.loyalty.auth.dto.AuthDto.AuthSimpleResponse;
+import com.natcash.loyalty.auth.dto.AuthDto.ChangePasswordRequest;
 import com.natcash.loyalty.auth.dto.AuthDto.ForgotPasswordRequest;
 import com.natcash.loyalty.auth.dto.AuthDto.LoginRequest;
 import com.natcash.loyalty.auth.dto.AuthDto.LoginResponse;
@@ -57,6 +58,12 @@ public class AuthController {
     @PostMapping(value = {"/auth/reset-password", "/loyalty/auth/reset-password", "/api/auth/reset-password", "/cms/auth/reset-password"})
     public ResponseEntity<AuthSimpleResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         AuthSimpleResponse response = authService.resetPassword(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = {"/auth/change-password", "/loyalty/auth/change-password", "/api/auth/change-password", "/v1/sandbox/auth/change-password", "/cms/auth/change-password"})
+    public ResponseEntity<AuthSimpleResponse> changePassword(@RequestBody ChangePasswordRequest request) {
+        AuthSimpleResponse response = authService.changePassword(request);
         return ResponseEntity.ok(response);
     }
 

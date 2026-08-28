@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { Toast } from 'primereact/toast';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Tag } from 'primereact/tag';
@@ -32,6 +34,8 @@ export interface VoucherItem {
 
 export const VoucherManagementPage: React.FC = () => {
   const { t } = useTranslation();
+  const toastRef = useRef<Toast>(null);
+  const [selectedTenant, setSelectedTenant] = useState('TENANT_NATCASH');
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [selectedVouchers, setSelectedVouchers] = useState<VoucherItem[]>([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -102,21 +106,41 @@ export const VoucherManagementPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const deleteItem = async (item: VoucherItem) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa voucher ${item.voucherCode} (${item.title})?`)) {
-      setLoading(true);
-      try {
-        await LoyaltyService.deleteVoucher(item.id);
-        await fetchVouchers();
-      } catch (e) {
-        console.error('[deleteVoucher] Error:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const deleteItem = (item: VoucherItem) => {
+    confirmDialog({
+      message: `Bạn có chắc chắn muốn xóa voucher ${item.voucherCode} (${item.title}) khỏi hệ thống?`,
+      header: t('common.confirm_delete', { defaultValue: 'Xác nhận xóa voucher' }),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.yes', { defaultValue: 'Xác nhận xóa' }),
+      rejectLabel: t('common.no', { defaultValue: 'Hủy' }),
+      accept: async () => {
+        setLoading(true);
+        try {
+          await LoyaltyService.deleteVoucher(item.id);
+          toastRef.current?.show({
+            severity: 'success',
+            summary: t('common.success', { defaultValue: 'Thành công' }),
+            detail: `Đã xóa thành công voucher ${item.voucherCode}!`,
+            life: 3000,
+          });
+          await fetchVouchers();
+        } catch (e: any) {
+          console.error('[deleteVoucher] Error:', e);
+          toastRef.current?.show({
+            severity: 'error',
+            summary: t('common.error', { defaultValue: 'Lỗi' }),
+            detail: e?.message || 'Không thể xóa voucher, vui lòng thử lại sau!',
+            life: 4000,
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
-  const saveItem = async () => {
+  const handleSaveConfirmed = async () => {
     setIsSubmitting(true);
     try {
       if (isEdit && formData.id) {
@@ -130,6 +154,12 @@ export const VoucherManagementPage: React.FC = () => {
           pointCost: formData.pointsRequired,
           totalQuantity: formData.totalQuantity,
         });
+        toastRef.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: `Cập nhật thành công voucher ${formData.voucherCode || ''}!`,
+          life: 3000,
+        });
       } else {
         await LoyaltyService.createVoucher({
           voucherCode: formData.voucherCode || 'VCH_' + Date.now(),
@@ -141,23 +171,131 @@ export const VoucherManagementPage: React.FC = () => {
           pointCost: formData.pointsRequired || 50,
           totalQuantity: formData.totalQuantity || 1000,
         });
+        toastRef.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: 'Thêm mới voucher vào kho thành công!',
+          life: 3000,
+        });
       }
       setShowDialog(false);
       await fetchVouchers();
-    } catch (e) {
+    } catch (e: any) {
       console.error('[saveVoucher] Error:', e);
+      toastRef.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: e?.message || 'Không thể lưu voucher, vui lòng thử lại sau!',
+        life: 4000,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleImportCsv = () => {
+  const saveItem = () => {
+    if (isEdit) {
+      confirmDialog({
+        message: `Bạn có chắc chắn muốn cập nhật thay đổi cho voucher ${formData.voucherCode || ''}?`,
+        header: t('common.confirm_update', { defaultValue: 'Xác nhận cập nhật voucher' }),
+        icon: 'pi pi-info-circle',
+        acceptLabel: t('common.save', { defaultValue: 'Lưu thay đổi' }),
+        rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+        accept: handleSaveConfirmed,
+      });
+    } else {
+      handleSaveConfirmed();
+    }
+  };
+
+  const downloadSampleCsv = () => {
+    const csvContent =
+      'CODE,TITLE,DISCOUNT_VAL,POINTS_COST,TOTAL_QTY,DISCOUNT_TYPE\n' +
+      'NATCASH_SUMMER50,Voucher Mùa Hè 50 HTG,50,50,500,FIXED_AMOUNT\n' +
+      'DELIMART_DISCOUNT10,Giảm 10% Siêu Thị Delimart,10,100,1000,PERCENTAGE\n' +
+      'NATCOM_DATA4G,Gói Data 4G Natcom 1GB,30,40,2000,FIXED_AMOUNT\n' +
+      'FAHASA_BOOK20K,Phiếu Mua Sách Fahasa 20 HTG,20,30,800,FIXED_AMOUNT\n' +
+      'HIGHLANDS_COFFEE50,Voucher Cà Phê Highlands 50 HTG,50,60,600,FIXED_AMOUNT\n';
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'voucher_import_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCsv = async (event: any) => {
+    const file = event.files?.[0];
+    if (!file) return;
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((l: string) => l.trim().length > 0);
+      if (lines.length <= 1) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
+          detail: t('voucher.csv_empty', { defaultValue: 'Tệp CSV không có dữ liệu' }),
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const startIndex = lines[0].toUpperCase().includes('CODE') ? 1 : 0;
+      const voucherList: any[] = [];
+
+      for (let i = startIndex; i < lines.length; i++) {
+        const parts = lines[i].split(',').map((p: string) => p.trim().replace(/^["']|["']$/g, ''));
+        if (parts.length >= 2 && parts[0]) {
+          const code = parts[0];
+          const title = parts[1] || `Voucher ${code}`;
+          const discountVal = parseFloat(parts[2]) || 50;
+          const pointsCost = parseFloat(parts[3]) || 50;
+          const totalQty = parseInt(parts[4]) || 1000;
+          const discountType = parts[5]?.toUpperCase() === 'PERCENTAGE' ? 'PERCENTAGE' : 'FIXED_AMOUNT';
+
+          voucherList.push({
+            voucherCode: code,
+            title: title,
+            description: `Voucher ưu đãi ${title}`,
+            discountValue: discountVal,
+            discountType: discountType,
+            pointCost: pointsCost,
+            totalQuantity: totalQty,
+            minBillAmount: 0,
+            status: 'ACTIVE',
+          });
+        }
+      }
+
+      if (voucherList.length > 0) {
+        await LoyaltyService.batchImportVouchers(voucherList, selectedTenant);
+        toastRef.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: t('voucher.import_success', {
+            defaultValue: `Đã nhập thành công ${voucherList.length} mã voucher từ CSV`,
+            count: voucherList.length,
+          }),
+        });
+        setShowImportDialog(false);
+        await fetchVouchers();
+      }
+    } catch (e: any) {
+      console.error('[handleImportCsv] Error:', e);
+      toastRef.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể đọc hoặc xử lý tệp CSV' }),
+      });
+    } finally {
       setIsSubmitting(false);
-      setShowImportDialog(false);
-      fetchVouchers();
-    }, 500);
+    }
   };
 
   const actionTemplate = (rowData: VoucherItem) => (
@@ -222,6 +360,8 @@ export const VoucherManagementPage: React.FC = () => {
 
   return (
     <div>
+      <Toast ref={toastRef} position="top-center" />
+      <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.vouchers', { defaultValue: 'Kho Voucher' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
@@ -366,28 +506,47 @@ export const VoucherManagementPage: React.FC = () => {
 
       <Dialog
         visible={showImportDialog}
-        style={{ width: '450px' }}
+        style={{ width: '480px' }}
         header={t('voucher.import_csv_title', { defaultValue: 'Nhập lô Voucher từ CSV' })}
         modal
         onHide={() => setShowImportDialog(false)}
       >
         <div className="p-fluid">
-          <p className="text-secondary mb-3">
+          <p className="text-secondary mb-2">
             {t('voucher.import_instruction', {
-              defaultValue: 'Tải lên tệp CSV chứa danh sách mã voucher (Cột: CODE, TITLE, DISCOUNT_VAL, POINTS_COST, TOTAL_QTY)',
+              defaultValue: 'Tải lên tệp CSV chứa danh sách mã voucher (Cột: CODE, TITLE, DISCOUNT_VAL, POINTS_COST, TOTAL_QTY, DISCOUNT_TYPE)',
             })}
           </p>
+
+          <div className="mb-3 flex justify-content-between align-items-center surface-100 p-2 border-round">
+            <span className="text-xs text-600 font-semibold">Tệp mẫu chuẩn (.csv):</span>
+            <Button
+              label="Tải file mẫu CSV"
+              icon="pi pi-download"
+              size="small"
+              outlined
+              severity="help"
+              onClick={downloadSampleCsv}
+              type="button"
+            />
+          </div>
+
           <FileUpload
             mode="basic"
             name="file"
-            accept=".csv"
-            maxFileSize={1000000}
+            accept=".csv, text/csv, application/vnd.ms-excel, text/plain, application/csv, text/x-csv, text/comma-separated-values, *"
+            maxFileSize={10000000}
             customUpload
             uploadHandler={handleImportCsv}
             auto
-            chooseLabel={t('common.choose_file', { defaultValue: 'Chọn tệp CSV' })}
+            chooseLabel={t('common.choose_file', { defaultValue: 'Chọn tệp CSV từ máy tính' })}
           />
-          {isSubmitting && <div className="mt-2 text-center text-primary font-semibold">Đang xử lý nhập dữ liệu...</div>}
+          {isSubmitting && (
+            <div className="mt-3 text-center text-primary font-semibold">
+              <i className="pi pi-spin pi-spinner mr-2" />
+              Đang xử lý nhập dữ liệu vào kho...
+            </div>
+          )}
         </div>
       </Dialog>
     </div>

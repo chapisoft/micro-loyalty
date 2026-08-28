@@ -13,7 +13,12 @@ public enum PartnerType {
     TELECOM("TELECOM", "enum.partner_type.telecom"),
     BANKING("BANKING", "enum.partner_type.banking"),
     F_AND_B("F_AND_B", "enum.partner_type.f_and_b"),
-    FUEL("FUEL", "enum.partner_type.fuel");
+    FUEL("FUEL", "enum.partner_type.fuel"),
+    UTILITIES("UTILITIES", "enum.partner_type.utilities"),
+    ENTERTAINMENT("ENTERTAINMENT", "enum.partner_type.entertainment"),
+    HEALTHCARE("HEALTHCARE", "enum.partner_type.healthcare"),
+    HOTEL("HOTEL", "enum.partner_type.hotel"),
+    OTHER("OTHER", "enum.partner_type.other");
 
     @JsonValue
     private final String code;
@@ -38,6 +43,6 @@ public enum PartnerType {
                 return type;
             }
         }
-        return null;
+        return OTHER;
     }
 }

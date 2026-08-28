@@ -59,7 +59,8 @@ export function Page(): React.JSX.Element {
   const onSubmit = (formData: IChangePasswordParams) => {
     changePasswordMutate.mutate(formData, {
       onSuccess: (res: IChangePasswordResponse) => {
-        if (res.status === 0) {
+        const isSuccess = (res as any)?.status === 0 || (res as any)?.status === 200 || (res as any)?.code === 200 || (res as any)?.succeeded === true;
+        if (isSuccess) {
           reset();
           showToast({
             code: 200,

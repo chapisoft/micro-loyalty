@@ -247,6 +247,9 @@ public final class GameHubDto {
         private Boolean allowPointsSpin;
         private String gameUrl;
         private String iconUrl;
+        private String bannerUrl;
+        private String description;
+        private String rulesText;
         private GameStatus status;
         private String gameParams;
         // Third-Party Game Studio Config

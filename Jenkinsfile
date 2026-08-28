@@ -92,6 +92,12 @@ pipeline {
         }
 
         stage('4. 🐳 Deploy & Rolling Update') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                }
+            }
             steps {
                 script {
                     echo "Triển khai trực tiếp lên máy chủ SaaS qua Docker Daemon..."
@@ -115,6 +121,12 @@ pipeline {
         }
 
         stage('5. 🔍 Health Check Verification') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                }
+            }
             steps {
                 script {
                     echo "Kiểm tra trạng thái sức khỏe dịch vụ Micro-Loyalty SaaS..."
@@ -184,14 +196,15 @@ def sendTelegramAlert(String status, String extraInfo = '') {
     def buildUrl  = env.BUILD_URL ?: 'http://jenkins.dip.io.vn/jenkins/job/Micro-Loyalty/'
     def duration  = currentBuild.durationString ?: ''
     
+    def isMainBranch = (branch == 'main' || branch == 'master')
     def icon = 'ℹ️'
-    def header = 'THÔNG BÁO HỆ THỐNG'
+    def header = isMainBranch ? 'THÔNG BÁO TRIỂN KHAI' : 'THÔNG BÁO KIỂM TRA CI'
     if (status == 'SUCCESS') {
-        icon = '🎉'
-        header = 'TRIỂN KHAI THÀNH CÔNG'
+        icon = isMainBranch ? '🎉' : '✅'
+        header = isMainBranch ? 'TRIỂN KHAI THÀNH CÔNG (CD)' : 'KIỂM TRA MÃ NGUỒN THÀNH CÔNG (CI PASS)'
     } else if (status == 'FAILED') {
         icon = '🚨'
-        header = 'DEPLOYMENT THẤT BẠI'
+        header = isMainBranch ? 'TRIỂN KHAI THẤT BẠI (CD)' : 'KIỂM TRA MÃ NGUỒN THẤT BẠI (CI FAIL)'
     } else if (status == 'UNSTABLE') {
         icon = '⚠️'
         header = 'CẢNH BÁO HEALTH CHECK'

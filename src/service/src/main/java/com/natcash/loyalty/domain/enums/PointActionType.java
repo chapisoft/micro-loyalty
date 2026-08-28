@@ -14,7 +14,10 @@ public enum PointActionType {
     REFUND("REFUND", "enum.point_action_type.refund"),
     EXPIRE("EXPIRE", "enum.point_action_type.expire"),
     ADJUST("ADJUST", "enum.point_action_type.adjust"),
-    CASHBACK("CASHBACK", "enum.point_action_type.cashback");
+    CASHBACK("CASHBACK", "enum.point_action_type.cashback"),
+    REWARD("REWARD", "enum.point_action_type.reward"),
+    SPIN("SPIN", "enum.point_action_type.spin"),
+    VOUCHER("VOUCHER", "enum.point_action_type.voucher");
 
     @JsonValue
     private final String code;

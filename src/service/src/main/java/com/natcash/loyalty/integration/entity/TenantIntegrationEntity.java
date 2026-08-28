@@ -16,6 +16,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -56,9 +58,11 @@ public class TenantIntegrationEntity implements Serializable {
     private String authType = "NONE";
 
     @Column(name = "auth_credentials", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String authCredentials;
 
     @Column(name = "additional_params", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String additionalParams;
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -326,7 +326,17 @@ public class LuckyWheelService {
     public WheelPrizeAdminDto savePrizeAdmin(String tenantId, String wheelCode, WheelPrizeAdminDto dto) {
         String effectiveWheelCode = wheelCode != null && !wheelCode.isBlank() ? wheelCode : "DEFAULT_LUCKY_WHEEL";
         LuckyWheelEntity wheel = wheelRepository.findByTenantIdAndWheelCode(tenantId, effectiveWheelCode)
-                .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy vòng quay"));
+                .orElseGet(() -> wheelRepository.findAll().stream().filter(w -> tenantId.equals(w.getTenantId())).findFirst()
+                        .orElseGet(() -> {
+                            LuckyWheelEntity newWheel = LuckyWheelEntity.builder()
+                                    .tenantId(tenantId)
+                                    .wheelCode(effectiveWheelCode)
+                                    .wheelName("Vòng Quay May Mắn")
+                                    .status(CommonStatus.ACTIVE)
+                                    .createdAt(Instant.now())
+                                    .build();
+                            return wheelRepository.save(newWheel);
+                        }));
 
         LuckyWheelPrizeEntity entity;
         if (dto.getId() != null) {
@@ -340,13 +350,16 @@ public class LuckyWheelService {
         }
 
         entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 1);
-        entity.setPrizeName(dto.getPrizeName());
-        entity.setNameVi(dto.getNameVi() != null ? dto.getNameVi() : dto.getPrizeName());
+        String name = dto.getPrizeName() != null && !dto.getPrizeName().isBlank()
+                ? dto.getPrizeName()
+                : (dto.getNameVi() != null && !dto.getNameVi().isBlank() ? dto.getNameVi() : "Ô Thưởng " + entity.getDisplayOrder());
+        entity.setPrizeName(name);
+        entity.setNameVi(dto.getNameVi() != null ? dto.getNameVi() : name);
         entity.setNameEn(dto.getNameEn());
         entity.setNameFr(dto.getNameFr());
         entity.setNameHt(dto.getNameHt());
         try {
-            entity.setPrizeType(dto.getPrizeType() != null ? PrizeType.valueOf(dto.getPrizeType()) : PrizeType.POINTS);
+            entity.setPrizeType(dto.getPrizeType() != null ? PrizeType.valueOf(dto.getPrizeType().toUpperCase().trim()) : PrizeType.POINTS);
         } catch (Exception e) {
             entity.setPrizeType(PrizeType.POINTS);
         }

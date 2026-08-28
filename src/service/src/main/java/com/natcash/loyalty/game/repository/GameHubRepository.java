@@ -19,4 +19,6 @@ public interface GameHubRepository extends JpaRepository<GameHubEntity, Long> {
     Optional<GameHubEntity> findByTenantIdAndGameCode(String tenantId, String gameCode);
 
     Optional<GameHubEntity> findByTenantIdAndId(String tenantId, Long id);
+
+    Optional<GameHubEntity> findByGameCode(String gameCode);
 }

@@ -90,6 +90,16 @@ public final class AuthDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class ChangePasswordRequest {
+        private String oldPassword;
+        private String newPassword;
+        private String confirmPassword;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AuthSimpleResponse {
         @Builder.Default
