@@ -9,12 +9,9 @@ spring:
   application:
     name: loyalty-service
   datasource:
-    # Cũ: url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
-    # Cũ: username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    # Cũ: password: ${SPRING_DATASOURCE_PASSWORD:T3st$2025}
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:15435}/loyalty_db}
-    username: ${SPRING_DATASOURCE_USERNAME:loyalty_app}
-    password: ${SPRING_DATASOURCE_PASSWORD:Loyalty_SecureDB2026!}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:T3st$2025}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: LoyaltyHikariCP
@@ -38,11 +35,9 @@ spring:
     locations: classpath:db/migration
   data:
     redis:
-      # Cũ: port: ${REDIS_PORT:6380}
-      # Cũ: password: ${REDIS_PASSWORD:NatCash2022}
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:16385}
-      password: ${REDIS_PASSWORD:Loyalty_RedisPass2026!}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:NatCash2022}
       timeout: 3000ms
 
 # Cấu hình bảo mật HMAC & Khóa Kép

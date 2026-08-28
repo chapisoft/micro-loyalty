@@ -36,21 +36,42 @@ export const Transactions: React.FC = () => {
   }, [selectedTenant]);
 
   const partnerOptions = useMemo(() => {
-    const uniquePartners = Array.from(new Set(items.map((i) => i.partnerCode).filter(Boolean)));
+    const catalogCodes = [
+      'NATCASH_WALLET',
+      'DELIMART_RETAIL',
+      'NATCOM_TELCO',
+      'EDH_POWER',
+      'FAHASA_BOOKSTORE',
+      'HIGHLANDS_COFFEE',
+      'CGV_CINEMAS',
+      'RINGME',
+    ];
+    const itemCodes = items.map((i) => i.partnerCode).filter(Boolean);
+    const allCodes = Array.from(new Set([...catalogCodes, ...itemCodes]));
+
     return [
       { label: t('common.all_partners', { defaultValue: 'Tất cả Đối tác' }), value: 'ALL' },
-      ...uniquePartners.map((p) => ({ label: p, value: p })),
+      ...allCodes.map((code) => {
+        const partnerName = t(`alliance_partners.${code}`, { defaultValue: code });
+        return {
+          label: partnerName !== code ? `${code} — ${partnerName}` : code,
+          value: code,
+        };
+      }),
     ];
   }, [items, t]);
 
-  const actionTypeOptions = [
+  const actionTypeOptions = useMemo(() => [
     { label: t('common.all_actions', { defaultValue: 'Tất cả Loại GD' }), value: 'ALL' },
-    { label: 'TÍCH ĐIỂM (EARN)', value: 'EARN' },
-    { label: 'TIÊU ĐIỂM (BURN)', value: 'BURN' },
-    { label: 'THƯỞNG CỘT MỐC (REWARD)', value: 'REWARD' },
-    { label: 'VÒNG QUAY (SPIN)', value: 'SPIN' },
-    { label: 'ĐỔI VOUCHER (VOUCHER)', value: 'VOUCHER' },
-  ];
+    { label: t('action_type.earn', { defaultValue: 'TÍCH ĐIỂM (EARN)' }), value: 'EARN' },
+    { label: t('action_type.burn', { defaultValue: 'TIÊU ĐIỂM (BURN)' }), value: 'BURN' },
+    { label: t('action_type.reward', { defaultValue: 'THƯỞNG CỘT MỐC (REWARD)' }), value: 'REWARD' },
+    { label: t('action_type.spin', { defaultValue: 'VÒNG QUAY (SPIN)' }), value: 'SPIN' },
+    { label: t('action_type.voucher', { defaultValue: 'ĐỔI VOUCHER (VOUCHER)' }), value: 'VOUCHER' },
+    { label: t('action_type.refund', { defaultValue: 'HOÀN ĐIỂM (REFUND)' }), value: 'REFUND' },
+    { label: t('action_type.expire', { defaultValue: 'HẾT HẠN (EXPIRE)' }), value: 'EXPIRE' },
+    { label: t('action_type.adjust', { defaultValue: 'ĐIỀU CHỈNH (ADJUST)' }), value: 'ADJUST' },
+  ], [t]);
 
   const filteredItems = useMemo(() => {
     const rawQuery = globalFilter.trim().toLowerCase();

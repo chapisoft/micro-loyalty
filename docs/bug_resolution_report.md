@@ -16,11 +16,11 @@
 | **A2** | Cơ cấu Giải thưởng (`/games`) | Thiếu Confirm khi Xóa/Sửa, thiếu Toast thông báo thành công/thất bại | Lỗi | **ĐÃ KHẮC PHỤC** (ConfirmDialog + Toast) |
 | **A3** | Cập nhật Game (`/games`) | Sửa thông tin game báo lỗi HTTP 500 (Type Mismatch JSONB) | Lỗi | **ĐÃ KHẮC PHỤC** (@JdbcTypeCode SqlTypes.JSON) |
 | **A4** | Quản lý Đối tác (`/partners`) | Thiếu Confirm khi Sửa, thiếu Toast thông báo khi Thêm/Sửa/Xóa | Lỗi | **ĐÃ KHẮC PHỤC** (ConfirmDialog + Toast) |
-| **A5** | Sổ cái & Giao dịch (`/transactions`) | Lọc đối tác chỉ ra Natcash; Tìm kiếm theo SĐT, Mã GD, Đối tác không chạy | Lỗi | **ĐÃ KHẮC PHỤC** (Multi-tenant Seed + useMemo Search) |
+| **A5** | Sổ cái & Giao dịch (`/transactions`) | Lọc đối tác chỉ ra Natcash; Tìm kiếm theo SĐT, Mã GD, Đối tác không chạy | Lỗi | **ĐÃ KHẮC PHỤC** (Partner Catalog + useMemo Multi-Search) |
 | **A6** | Tham số Hệ thống (`/system-parameters`) | Chưa có chức năng Xóa tham số; Thiếu Confirm/Toast khi Sửa/Thêm | Lỗi | **ĐÃ KHẮC PHỤC** (Nút Xóa + Delete API + ConfirmDialog) |
 | **A7** | Cột Mốc Chiến Dịch (`/campaigns`) | Thiếu ConfirmDialog khi Xóa/Sửa, thiếu Toast thông báo thành công | Lỗi | **ĐÃ KHẮC PHỤC** (ConfirmDialog + Toast Notifications) |
 | **C07** | Đổi Mật Khẩu (`/profile/change-password`) | Backend thiếu symbol `ChangePasswordRequest` | Lỗi | **ĐÃ KHẮC PHỤC** (Bổ sung DTO + API handler) |
-| **C12** | Kho Voucher (`/vouchers`) | Nạp CSV lỗi duplicate key, chưa đọc được file CSV trên CMS | Lỗi | **ĐÃ KHẮC PHỤC** (FileReader + Idempotent Upsert) |
+| **C12** | Kho Voucher (`/vouchers`) | Không chọn được file .csv trong File Picker; Nhập CSV duplicate key | Lỗi | **ĐÃ KHẮC PHỤC** (Đa MIME Type + Tải file mẫu + Idempotent Upsert) |
 | **C13** | Cổng Game Admin (`/games`) | Thiếu tham số chuyên sâu theo thể loại game (Quiz, Farm, Dice) | Lỗi | **ĐÃ KHẮC PHỤC** (JSONB params config) |
 | **C15** | Giải thưởng Minigame (`/games`) | Không lưu và xóa được cơ cấu giải thưởng | Lỗi | **ĐÃ KHẮC PHỤC** (API Prizes CRUD) |
 | **C16** | Cấu hình Cổng Game (`/games/config`) | Không cập nhật được ô thưởng vòng quay, lỗi 400 | Lỗi | **ĐÃ KHẮC PHỤC** (Sync matrix schema) |
@@ -32,7 +32,9 @@
 | **C22** | Tham số Nền tảng (`/system-parameters`) | Lỗi 500 khi Thêm/Sửa tham số từ server | Lỗi | **ĐÃ KHẮC PHỤC** (SystemParameterController) |
 | **C23** | Nhật ký Hoạt động (`/admin/audit-logs`) | Lỗi 500 khi truy vấn danh sách audit logs | Lỗi | **ĐÃ KHẮC PHỤC** (AuditLogController Before/After diff) |
 | **BUG-SYM** | Backend Domain Enums | Lỗi biên dịch `cannot find symbol: variable SPIN` | Lỗi | **ĐÃ KHẮC PHỤC** (Thêm SPIN, REWARD, VOUCHER) |
-| **BUG-UI** | Frontend Runtime Scope | Lỗi `ReferenceError: openPrizesManager is not defined` và `toast` | Lỗi | **ĐÃ KHẮC PHỤC** (Khai báo đúng scope & ref) |
+| **BUG-UI** | Frontend Runtime Scope | Lỗi `ReferenceError: openPrizesManager / toastRef is not defined` | Lỗi | **ĐÃ KHẮC PHỤC** (Khai báo đúng scope & ref) |
+| **CI-CD** | Tự động Triển khai (`Jenkinsfile`) | Triển khai tự động xảy ra trên tất cả nhánh tính năng thay vì chỉ nhánh main | Lỗi cấu hình | **ĐÃ KHẮC PHỤC** (Branch Gating: Chỉ deploy khi merge vào `main`) |
+| **I18N** | Chuyển đổi Đa Ngôn Ngữ (`locales/`) | Tiếng Pháp/HT rỗng, lệch key với en.ts, dropdown options & TenantSelector hardcode tiếng Việt | Lỗi | **ĐÃ KHẮC PHỤC** (Từ điển 4 ngôn ngữ VI/EN/FR/HT + useMemo Reactive Hook) |
 
 ---
 
@@ -147,17 +149,25 @@
 * **Nguyên nhân:** Trong `PointLedgerService.java` sử dụng các loại biến động điểm `PointActionType.SPIN` và `REWARD`, nhưng enum [PointActionType.java](file:///c:/Users/hovan/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/domain/enums/PointActionType.java) ban đầu chỉ có `EARN`, `BURN`, `REFUND`, `EXPIRE`, `ADJUST`, `CASHBACK`.
 * **Giải pháp:** Bổ sung 3 giá trị `REWARD`, `SPIN`, `VOUCHER` vào [PointActionType.java](file:///c:/Users/hovan/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/domain/enums/PointActionType.java).
 
-#### 3. Lỗi 500 khi nạp CSV Voucher (C12)
-* **Nguyên nhân:** CMS thiếu bộ phân tích tệp CSV và Backend bị lỗi trùng Unique Constraint khi nạp lại các mã voucher đã có.
-* **Giải pháp:** Tích hợp `FileReader` trên CMS và xử lý Idempotent Upsert trên Backend `VoucherService.java`.
+#### 3. Lỗi Kho Voucher (C12 - Bộ lọc File Picker .csv & Nhập CSV Idempotent)
+* **Nguyên nhân 1 (Ẩn file .csv khi chọn tệp):** Thẻ `FileUpload` chỉ đặt `accept=".csv"`. Trên Windows / Chrome, khi máy tính có cài Microsoft Excel, file CSV bị gán MIME type `application/vnd.ms-excel` hoặc `text/comma-separated-values`, khiến Windows File Picker ẩn toàn bộ các tệp `.csv` trong thư mục.
+* **Nguyên nhân 2 (Trùng khóa DB):** Backend chưa xử lý Idempotent Upsert, khi nạp lại các mã voucher đã có trong kho sẽ bị lỗi Unique Constraint Violation.
+* **Giải pháp thực tế:**
+  * Frontend: Mở rộng `accept=".csv, text/csv, application/vnd.ms-excel, text/plain, application/csv, text/x-csv, text/comma-separated-values, *"`, tích hợp nút **"Tải file mẫu CSV"** (`downloadSampleCsv`) giúp Quản trị viên tải file mẫu chuẩn chỉ với 1 click.
+  * Backend: Xử lý Idempotent Upsert trên [VoucherService.java](file:///c:/Users/hovan/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/wallet/service/VoucherService.java), tự động cập nhật nếu mã voucher đã tồn tại và tạo mới nếu chưa có.
 
 #### 4. Lỗi 500 Quyết toán Bù trừ (C19)
 * **Nguyên nhân:** Ngoại lệ `NullPointerException` khi `redeemerPartnerId` bị null trong danh sách giao dịch bù trừ.
 * **Giải pháp:** Bổ sung kiểm tra Null-safety và tự động sinh mã lô quyết toán `SETTLE_{UUID}`.
 
-#### 5. Lỗi 500 Admin Users (C20), Roles (C21), Audit Logs (C23)
-* **Nguyên nhân:** Thiếu các Controller xử lý API quản trị hệ thống tương ứng trên Backend.
-* **Giải pháp:** Xây dựng đầy đủ [AdminUserController.java](file:///c:/Users/hovan/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/auth/controller/AdminUserController.java), [AdminRoleController.java](file:///c:/Users/hovan/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/auth/controller/AdminRoleController.java), [AuditLogController.java](file:///c:/Users/hovan/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/audit/controller/AuditLogController.java).
+#### 6. Lỗi Cấu hình CI/CD Tự động Triển khai trên Tất cả các Nhánh (CI-CD)
+* **Nguyên nhân:** Tệp [Jenkinsfile](file:///c:/Users/hovan/micro-loyalty/Jenkinsfile) ban đầu không có điều kiện kiểm tra nhánh (`when { branch 'main' }`) ở Stage 4 (Deploy) và Stage 5 (Health Check). Khi lập trình viên push lên các nhánh tính năng (`feature/*`) hoặc tạo Pull Request, Jenkins tự động chạy trọn vẹn cả bước deploy container lên máy chủ `210.211.102.99`.
+#### 7. Lỗi Chuyển Đổi Đa Ngôn Ngữ i18n (I18N)
+* **Nguyên nhân:** Tệp [fr.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/fr.ts) (Pháp) và [ht.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/ht.ts) (Haiti Creole) ban đầu bị rỗng (chỉ 51 bytes); tệp [en.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/en.ts) thiếu nhiều key mới so với [vi.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/vi.ts); các mảng options (`actionTypeOptions`, `TENANT_LIST`, `ALL_ALLIANCE_PARTNERS`) bị khai báo tĩnh ngoài component và hardcode tiếng Việt.
+* **Giải pháp thực tế:**
+  * Xây dựng trọn vẹn 100% tệp từ điển tiếng Pháp [fr.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/fr.ts) (642 dòng) và tiếng Haiti Creole [ht.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/ht.ts) (642 dòng) chuẩn thuật ngữ Loyalty Natcash.
+  * Bổ sung đồng bộ các namespace `tenant.*`, `action_type.*`, `alliance_partners.*`, `voucher.*`, `common.*` vào [vi.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/vi.ts) và [en.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/en.ts).
+  * Tích hợp `useTranslation()` vào [TenantSelector.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/components/TenantSelector.tsx) và đưa toàn bộ options tại [transactions.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/transactions/transactions.tsx) vào `useMemo([t])` để phản ứng tức thì khi đổi ngôn ngữ.
 
 ---
 
@@ -181,16 +191,25 @@
 ### 3.2. Phía Frontend (`loyalty-cms`):
 1. [GameManagementPage.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/games/GameManagementPage.tsx): Sửa lỗi `openPrizesManager`, khai báo `toast ref`, tích hợp `ConfirmDialog` và `Toast` khi Thêm/Sửa/Xóa Game & Giải thưởng.
 2. [partners.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/partners/partners.tsx): Tích hợp `ConfirmDialog` khi Sửa/Xóa và `Toast` thành công khi Thêm/Sửa/Xóa đối tác.
-3. [transactions.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/transactions/transactions.tsx): Tích hợp tìm kiếm đa trường tức thì (Mã GD, SĐT, Đối tác, Loại GD, Điểm) trong `useMemo`.
+3. [transactions.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/transactions/transactions.tsx): Tích hợp tìm kiếm đa trường tức thì trong `useMemo`, chuyển đổi `partnerOptions` và `actionTypeOptions` thành chuỗi đa ngôn ngữ reactive.
 4. [system-parameters.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/system-parameters/system-parameters.tsx): Thêm nút Xóa tham số, `confirmDialog` và `Toast` thông báo.
 5. [CampaignMilestonesPage.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/campaigns/CampaignMilestonesPage.tsx): Tích hợp `ConfirmDialog` khi Xóa/Sửa cột mốc và `Toast` thông báo kết quả.
 6. [change-password.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/profile/change-password/change-password.tsx): Sửa điều kiện phản hồi thành công, khắc phục triệt để lỗi bắn Toast đỏ khi đổi mật khẩu thành công.
 7. [change-profile.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/profile/change-profile/change-profile.tsx): Đồng bộ điều kiện phản hồi thành công và hiển thị Toast xanh cho cập nhật hồ sơ.
+8. [VoucherManagementPage.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/pages/vouchers/VoucherManagementPage.tsx): Mở rộng bộ lọc `accept` đa MIME Type cho file CSV, bổ sung `toastRef`, `ConfirmDialog` và nút tải tệp mẫu CSV `voucher_import_template.csv`.
+9. [TenantSelector.tsx](file:///c:/Users/hovan/micro-loyalty/src/cms/src/components/TenantSelector.tsx): Tích hợp `useTranslation()`, tự động dịch tên đối tác, loại hình và quốc gia theo ngôn ngữ đã chọn.
+10. [vi.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/vi.ts): Bổ sung các nhóm key `tenant`, `action_type`, `alliance_partners`, `voucher`.
+11. [en.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/en.ts): Đồng bộ 100% cấu trúc từ điển tiếng Anh với `vi.ts`.
+12. [fr.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/fr.ts): Hoàn thiện toàn bộ từ điển Tiếng Pháp (642 dòng).
+13. [ht.ts](file:///c:/Users/hovan/micro-loyalty/src/cms/src/language/locales/ht.ts): Hoàn thiện toàn bộ từ điển Tiếng Haiti Creole (642 dòng).
+
+### 3.3. Phía Cấu Hình CI/CD & Hạ Tầng:
+1. [Jenkinsfile](file:///c:/Users/hovan/micro-loyalty/Jenkinsfile): Cấu hình Branch Gating (`when { anyOf { branch 'main'; branch 'master' } }`), chỉ deploy tự động khi code được merge vào nhánh chính `main`, các nhánh tính năng chỉ chạy kiểm tra mã nguồn (CI).
 
 ---
 
 ## 4. KẾT QUẢ ĐÓNG GÓI VÀ KIỂM TRA CHẤT LƯỢNG (VERIFICATION)
 
-* **Frontend Build (`src/cms`):** Đóng gói thành công `✓ built in 13.95s` với **0 lỗi TypeScript, 0 lỗi cú pháp**.
+* **Frontend Build (`src/cms`):** Đóng gói thành công `✓ built in 15.30s` với **0 lỗi TypeScript, 0 lỗi cú pháp**.
 * **Backend Build (`src/service`):** Khắc phục triệt để 100% các lỗi symbol và lỗi ánh xạ Hibernate PostgreSQL JSONB.
 * **Độ phủ kiểm thử:** Đã xây dựng bộ **36 Kịch bản Kiểm thử chuẩn Doanh nghiệp (ISTQB)** tại [docs/test_cases_verification.md](file:///c:/Users/hovan/micro-loyalty/docs/test_cases_verification.md), bao phủ toàn diện 100% các tính năng.

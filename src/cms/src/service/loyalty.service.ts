@@ -130,6 +130,18 @@ export const LoyaltyService = {
     }
   },
 
+  async saveTier(tier: Partial<TierConfigModel>, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    try {
+      const response: any = await apiClient.post('/loyalty/v1/tiers', tier, {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return response?.data || response;
+    } catch (err) {
+      console.error('Error saving tier:', err);
+      throw err;
+    }
+  },
+
   // 2. Quản lý Chính sách Tích/Tiêu điểm (CRUD)
   async getPolicies(tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel[]> {
     try {

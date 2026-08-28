@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -7,9 +7,12 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TierLevel, CommonStatus } from '@/models';
+import { LoyaltyService } from '@/service/loyalty.service';
 
 export interface TierConfig {
   id: number;
@@ -27,7 +30,7 @@ const INITIAL_TIERS: TierConfig[] = [
   {
     id: 1,
     code: TierLevel.SILVER,
-    name: 'Hạng Bạc',
+    name: 'Hạng Bạc (Silver)',
     tierLevel: 1,
     minPoints: 0,
     pointMultiplier: 1.0,
@@ -38,7 +41,7 @@ const INITIAL_TIERS: TierConfig[] = [
   {
     id: 2,
     code: TierLevel.GOLD,
-    name: 'Hạng Vàng',
+    name: 'Hạng Vàng (Gold)',
     tierLevel: 2,
     minPoints: 1000,
     pointMultiplier: 1.2,
@@ -49,7 +52,7 @@ const INITIAL_TIERS: TierConfig[] = [
   {
     id: 3,
     code: TierLevel.PLATINUM,
-    name: 'Hạng Bạch Kim',
+    name: 'Hạng Bạch Kim (Platinum)',
     tierLevel: 3,
     minPoints: 5000,
     pointMultiplier: 1.5,
@@ -60,7 +63,7 @@ const INITIAL_TIERS: TierConfig[] = [
   {
     id: 4,
     code: TierLevel.DIAMOND,
-    name: 'Hạng Kim Cương',
+    name: 'Hạng Kim Cương (Diamond)',
     tierLevel: 4,
     minPoints: 20000,
     pointMultiplier: 2.0,
@@ -70,19 +73,29 @@ const INITIAL_TIERS: TierConfig[] = [
   },
 ];
 
-import { LoyaltyService } from '@/service/loyalty.service';
-
 export const TierManagementPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const toastRef = useRef<Toast>(null);
   const [tiers, setTiers] = useState<TierConfig[]>(INITIAL_TIERS);
   const [selectedTiers, setSelectedTiers] = useState<TierConfig[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<TierConfig>>({});
   const [isEdit, setIsEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    LoyaltyService.getTiers().then((data) => {
+  // Ép tạo mảng mới mỗi khi đổi ngôn ngữ để PrimeReact DataTable re-render 100% các ô
+  const displayTiers = useMemo(
+    () => tiers.map((item) => ({ ...item })),
+    [tiers, i18n.language]
+  );
+
+  const selectedTenant = localStorage.getItem('tenant_id') || 'TENANT_NATCASH';
+
+  const fetchTiers = async () => {
+    setLoading(true);
+    try {
+      const data = await LoyaltyService.getTiers(selectedTenant);
       if (data && data.length > 0) {
         setTiers(
           data.map((item) => ({
@@ -98,8 +111,16 @@ export const TierManagementPage: React.FC = () => {
           }))
         );
       }
-    });
-  }, []);
+    } catch {
+      // Fallback to INITIAL_TIERS
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTiers();
+  }, [selectedTenant]);
 
   const editItem = (item: TierConfig) => {
     setFormData({ ...item });
@@ -107,15 +128,44 @@ export const TierManagementPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const saveItem = () => {
+  const saveItem = async () => {
+    if (!formData.code) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (isEdit && formData.id) {
-        setTiers(tiers.map((tItem) => (tItem.id === formData.id ? ({ ...tItem, ...formData } as TierConfig) : tItem)));
-      }
-      setIsSubmitting(false);
+    try {
+      await LoyaltyService.saveTier(
+        {
+          id: formData.id,
+          code: formData.code,
+          name: formData.name || formData.code,
+          tierLevel: formData.tierLevel ?? 1,
+          minPoints: formData.minPoints ?? 0,
+          pointMultiplier: formData.pointMultiplier ?? 1.0,
+          freeDailyTurns: formData.freeDailyTurns ?? 1,
+          description: formData.description || '',
+          status: formData.status || CommonStatus.ACTIVE,
+        },
+        selectedTenant
+      );
+
+      toastRef.current?.show({
+        severity: 'success',
+        summary: t('toast.success', { defaultValue: 'Thành công' }),
+        detail: t('tier.save_success', { defaultValue: 'Cập nhật cấu hình hạng hội viên thành công' }),
+        life: 3000,
+      });
+
       setShowDialog(false);
-    }, 300);
+      await fetchTiers();
+    } catch {
+      toastRef.current?.show({
+        severity: 'error',
+        summary: t('toast.error', { defaultValue: 'Lỗi' }),
+        detail: t('tier.save_failed', { defaultValue: 'Cập nhật cấu hình hạng hội viên thất bại' }),
+        life: 3000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const actionTemplate = (rowData: TierConfig) => (
@@ -139,6 +189,7 @@ export const TierManagementPage: React.FC = () => {
       PLATINUM: '#0D9488',
       DIAMOND: '#7C3AED',
     };
+    const localizedName = t(`tier.tier_${rowData.code?.toLowerCase()}`, { defaultValue: rowData.name });
     return (
       <span
         style={{
@@ -154,7 +205,7 @@ export const TierManagementPage: React.FC = () => {
           boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
         }}
       >
-        {rowData.name}
+        {localizedName}
       </span>
     );
   };
@@ -167,19 +218,21 @@ export const TierManagementPage: React.FC = () => {
 
   const pointsTemplate = (rowData: TierConfig) => (
     <span className="font-bold font-mono text-900" style={{ fontSize: '13px' }}>
-      {(rowData.minPoints ?? 0).toLocaleString()} <span className="text-500 font-normal text-xs">điểm</span>
+      {(rowData.minPoints ?? 0).toLocaleString()}{' '}
+      <span className="text-500 font-normal text-xs">{t('tier.points_unit', { defaultValue: 'điểm' })}</span>
     </span>
   );
 
   const multiplierTemplate = (rowData: TierConfig) => (
     <span className="font-black text-primary font-mono" style={{ fontSize: '13px' }}>
-      ×{rowData.pointMultiplier.toFixed(1)}
+      ×{rowData.pointMultiplier?.toFixed(1) || '1.0'}
     </span>
   );
 
   const turnsTemplate = (rowData: TierConfig) => (
     <span className="font-bold font-mono text-900" style={{ fontSize: '13px' }}>
-      {rowData.freeDailyTurns} <span className="text-500 font-normal text-xs">lượt</span>
+      {rowData.freeDailyTurns}{' '}
+      <span className="text-500 font-normal text-xs">{t('tier.turns_unit', { defaultValue: 'lượt' })}</span>
     </span>
   );
 
@@ -191,26 +244,43 @@ export const TierManagementPage: React.FC = () => {
     );
   };
 
-  const statusOptions = [
-    { label: t('common.active', { defaultValue: 'Hoạt động' }), value: CommonStatus.ACTIVE },
-    { label: t('common.inactive', { defaultValue: 'Tạm dừng' }), value: CommonStatus.INACTIVE },
-  ];
+  const statusOptions = useMemo(
+    () => [
+      { label: t('common.active', { defaultValue: 'Hoạt động' }), value: CommonStatus.ACTIVE },
+      { label: t('common.inactive', { defaultValue: 'Tạm dừng' }), value: CommonStatus.INACTIVE },
+    ],
+    [t]
+  );
 
   const header = (
     <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <h4 className="m-0 text-primary font-bold">{t('tier.management_title', { defaultValue: 'Quản trị Hạng Hội Viên & Ma Trận Đặc Quyền' })}</h4>
+      <h4 className="m-0 text-primary font-bold">
+        {t('tier.management_title', { defaultValue: 'Quản trị Hạng Hội Viên & Ma Trận Đặc Quyền' })}
+      </h4>
+      <Button
+        icon="pi pi-refresh"
+        rounded
+        outlined
+        severity="secondary"
+        onClick={fetchTiers}
+        tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+      />
     </div>
   );
 
   return (
     <div>
+      <Toast ref={toastRef} />
+      <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.tiers', { defaultValue: 'Hạng Hội Viên' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
-          value={tiers}
+          key={i18n.language}
+          value={displayTiers}
           selection={selectedTiers}
           onSelectionChange={(e: any) => setSelectedTiers(e.value || [])}
           header={header}
+          loading={loading}
           dataKey="id"
           paginator
           rows={10}
@@ -229,7 +299,12 @@ export const TierManagementPage: React.FC = () => {
           />
 
           {/* Cột 3: Thao tác */}
-          <Column body={actionTemplate} exportable={false} header={t('common.actions', { defaultValue: 'Thao tác' })} style={{ width: '5.5rem', textAlign: 'center' }} />
+          <Column
+            body={actionTemplate}
+            exportable={false}
+            header={t('common.actions', { defaultValue: 'Thao tác' })}
+            style={{ width: '5.5rem', textAlign: 'center' }}
+          />
 
           {/* Cột 4 trở đi: Dữ liệu */}
           <Column field="code" header={t('tier.code', { defaultValue: 'Mã Hạng' })} sortable style={{ minWidth: '8rem' }} />
