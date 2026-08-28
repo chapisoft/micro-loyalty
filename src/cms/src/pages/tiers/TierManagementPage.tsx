@@ -146,37 +146,17 @@ export const TierManagementPage: React.FC = () => {
     </div>
   );
 
-  const tierBadgeTemplate = (rowData: TierConfig) => {
-    const colorMap: Record<string, string> = {
-      SILVER: '#64748B',
-      GOLD: '#D97706',
-      PLATINUM: '#0D9488',
-      DIAMOND: '#7C3AED',
-    };
-    return (
-      <div className="flex align-items-center gap-2">
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            backgroundColor: colorMap[rowData.code] || '#64748B',
-            color: '#ffffff',
-            padding: '3px 10px',
-            borderRadius: '9999px',
-            fontWeight: 700,
-            fontSize: '11px',
-            whiteSpace: 'nowrap',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-          }}
-        >
-          {rowData.code}
-        </span>
-        <span className="font-bold text-900" style={{ fontSize: '13px' }}>
-          {rowData.name}
-        </span>
-      </div>
-    );
-  };
+  const codeTemplate = (rowData: TierConfig) => (
+    <span className="font-bold text-800 font-mono" style={{ fontSize: '13px' }}>
+      {rowData.code}
+    </span>
+  );
+
+  const nameTemplate = (rowData: TierConfig) => (
+    <span className="font-bold text-900" style={{ fontSize: '13px' }}>
+      {rowData.name}
+    </span>
+  );
 
   const levelTemplate = (rowData: TierConfig) => (
     <span className="font-bold text-900 font-mono" style={{ fontSize: '13px' }}>
@@ -293,8 +273,8 @@ export const TierManagementPage: React.FC = () => {
           />
 
           {/* Cột 4 trở đi: Dữ liệu từ DB */}
-          <Column field="code" header={t('tier.code', { defaultValue: 'Mã Hạng' })} sortable style={{ minWidth: '8rem' }} />
-          <Column field="name" body={tierBadgeTemplate} header={t('tier.name', { defaultValue: 'Tên Hạng' })} sortable style={{ minWidth: '16rem' }} />
+          <Column field="code" body={codeTemplate} header={t('tier.code', { defaultValue: 'Mã Hạng' })} sortable style={{ minWidth: '8rem' }} />
+          <Column field="name" body={nameTemplate} header={t('tier.name', { defaultValue: 'Tên Hạng' })} sortable style={{ minWidth: '16rem' }} />
           <Column field="tierLevel" body={levelTemplate} header={t('tier.level', { defaultValue: 'Cấp độ' })} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
           <Column field="minPoints" body={pointsTemplate} header={t('tier.min_points', { defaultValue: 'Ngưỡng điểm xét hạng (chu kỳ 12 tháng)' })} sortable style={{ minWidth: '16rem' }} />
           <Column field="pointMultiplier" body={multiplierTemplate} header={t('tier.multiplier', { defaultValue: 'Hệ số nhân điểm thưởng' })} sortable style={{ minWidth: '12rem', textAlign: 'center' }} />
