@@ -65,7 +65,6 @@ public final class PointLedgerDto {
     public static class PointHistoryRequest implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        @NotBlank(message = "Mã người dùng không được để trống")
         private String externalUserId;
 
         @Builder.Default
@@ -83,10 +82,12 @@ public final class PointLedgerDto {
         private static final long serialVersionUID = 1L;
 
         private Long id;
+        private String externalUserId;
         private BigDecimal pointChange;
         private BigDecimal balanceAfter;
         private PointActionType changeType;
         private String referenceCode;
+        private String partnerCode;
         private String description;
         private Instant createdAt;
     }
@@ -99,6 +100,7 @@ public final class PointLedgerDto {
         private static final long serialVersionUID = 1L;
 
         private List<PointTransactionItem> items;
+        private List<PointTransactionItem> content;
         private long totalElements;
         private int totalPages;
         private int currentPage;

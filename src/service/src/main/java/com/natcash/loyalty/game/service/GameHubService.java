@@ -560,27 +560,53 @@ public class GameHubService {
 
     @Transactional
     public GameAdminDto saveGameAdmin(String tenantId, GameAdminDto dto) {
-        GameHubEntity entity;
-        if (dto.getId() != null) {
-            entity = gameRepository.findByTenantIdAndId(tenantId, dto.getId())
-                    .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Không tìm thấy trò chơi để cập nhật"));
-        } else {
-            entity = GameHubEntity.builder()
-                    .tenantId(tenantId)
-                    .gameCode(dto.getGameCode())
-                    .createdAt(Instant.now())
-                    .build();
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId : "TENANT_NATCASH";
+
+        GameHubEntity entity = null;
+        if (dto.getId() != null && dto.getId() > 0) {
+            entity = gameRepository.findByTenantIdAndId(effectiveTenantId, dto.getId())
+                    .or(() -> gameRepository.findById(dto.getId()))
+                    .orElse(null);
         }
 
-        entity.setGameName(dto.getGameName());
-        entity.setCategory(dto.getCategory() != null ? dto.getCategory() : "LUCKY_DRAW");
+        String code = (dto.getGameCode() != null && !dto.getGameCode().isBlank())
+                ? dto.getGameCode().toUpperCase().trim()
+                : (entity != null && entity.getGameCode() != null ? entity.getGameCode() : "GAME_" + System.currentTimeMillis());
+
+        if (entity == null) {
+            entity = gameRepository.findByTenantIdAndGameCode(effectiveTenantId, code)
+                    .or(() -> gameRepository.findByGameCode(code))
+                    .orElseGet(() -> GameHubEntity.builder()
+                            .tenantId(effectiveTenantId)
+                            .gameCode(code)
+                            .createdAt(Instant.now())
+                            .status(GameStatus.ACTIVE)
+                            .category("LUCKY_DRAW")
+                            .build());
+        }
+
+        if (entity.getTenantId() == null) entity.setTenantId(effectiveTenantId);
+        if (entity.getGameCode() == null) entity.setGameCode(code);
+        if (entity.getCreatedAt() == null) entity.setCreatedAt(Instant.now());
+
+        String name = (dto.getGameName() != null && !dto.getGameName().isBlank())
+                ? dto.getGameName()
+                : (entity.getGameName() != null ? entity.getGameName() : code);
+        entity.setGameName(name);
+
+        if (dto.getCategory() != null && !dto.getCategory().isBlank()) entity.setCategory(dto.getCategory());
+        else if (entity.getCategory() == null) entity.setCategory("LUCKY_DRAW");
+
         entity.setPricePerTurn(dto.getPricePerTurnHtg() != null ? dto.getPricePerTurnHtg() : (dto.getPricePerTurn() != null ? dto.getPricePerTurn() : BigDecimal.ZERO));
-        entity.setFreeTurnsDaily(dto.getFreeTurnsDaily() != null ? dto.getFreeTurnsDaily() : 1);
-        entity.setDailyBudgetLimit(dto.getDailyBudgetLimit() != null ? dto.getDailyBudgetLimit() : new BigDecimal("50000.00"));
-        entity.setAllowPointsSpin(dto.getAllowPointsSpin() != null ? dto.getAllowPointsSpin() : true);
-        entity.setGameUrl(dto.getGameUrl());
-        entity.setIconUrl(dto.getIconUrl());
-        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : GameStatus.ACTIVE);
+        entity.setFreeTurnsDaily(dto.getFreeTurnsDaily() != null ? dto.getFreeTurnsDaily() : (entity.getFreeTurnsDaily() != null ? entity.getFreeTurnsDaily() : 1));
+        entity.setDailyBudgetLimit(dto.getDailyBudgetLimit() != null ? dto.getDailyBudgetLimit() : (entity.getDailyBudgetLimit() != null ? entity.getDailyBudgetLimit() : new BigDecimal("50000.00")));
+        entity.setAllowPointsSpin(dto.getAllowPointsSpin() != null ? dto.getAllowPointsSpin() : (entity.getAllowPointsSpin() != null ? entity.getAllowPointsSpin() : true));
+        if (dto.getGameUrl() != null) entity.setGameUrl(dto.getGameUrl());
+        if (dto.getIconUrl() != null) entity.setIconUrl(dto.getIconUrl());
+        if (dto.getBannerUrl() != null) entity.setBannerUrl(dto.getBannerUrl());
+        if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
+        if (dto.getRulesText() != null) entity.setRulesText(dto.getRulesText());
+        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : (entity.getStatus() != null ? entity.getStatus() : GameStatus.ACTIVE));
 
         // Serialize specialized game parameters & Third-Party Game Studio Config
         Map<String, Object> params = parseGameParams(entity.getGameParams());
@@ -675,6 +701,9 @@ public class GameHubService {
                 .gameCode(entity.getGameCode())
                 .gameName(entity.getGameName())
                 .category(entity.getCategory())
+                .description(entity.getDescription())
+                .rulesText(entity.getRulesText())
+                .bannerUrl(entity.getBannerUrl())
                 .pricePerTurn(entity.getPricePerTurn())
                 .pricePerTurnHtg(entity.getPricePerTurn())
                 .freeTurnsDaily(entity.getFreeTurnsDaily())
@@ -1191,7 +1220,8 @@ public class GameHubService {
         GamePrizeEntity entity;
         if (dto.getId() != null) {
             entity = gamePrizeRepository.findByIdAndTenantId(dto.getId(), tenantId)
-                    .orElseThrow(() -> new LoyaltyException(ErrorCode.SYSTEM_ERROR, "Không tìm thấy giải thưởng"));
+                    .or(() -> gamePrizeRepository.findById(dto.getId()))
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.SYSTEM_ERROR, "Không tìm thấy giải thưởng #" + dto.getId()));
         } else {
             entity = GamePrizeEntity.builder()
                     .tenantId(tenantId)
@@ -1257,7 +1287,8 @@ public class GameHubService {
     @Transactional
     public void deleteGamePrizeAdmin(String tenantId, Long prizeId) {
         GamePrizeEntity entity = gamePrizeRepository.findByIdAndTenantId(prizeId, tenantId)
-                .orElseThrow(() -> new LoyaltyException(ErrorCode.SYSTEM_ERROR, "Không tìm thấy giải thưởng"));
+                .or(() -> gamePrizeRepository.findById(prizeId))
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.SYSTEM_ERROR, "Không tìm thấy giải thưởng #" + prizeId));
         gamePrizeRepository.delete(entity);
     }
 

@@ -94,4 +94,14 @@ public class VoucherController {
         UserVoucherResponse response = voucherService.redeemVoucher(tenantId, request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/batch-import")
+    @Operation(summary = "Import hàng loạt voucher bằng CSV/JSON", description = "Dành cho Quản trị viên CMS import danh sách voucher")
+    public ResponseEntity<List<VoucherResponse>> batchImportVouchers(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody List<CreateVoucherRequest> requests) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        List<VoucherResponse> response = voucherService.batchImportVouchers(tenantId, requests);
+        return ResponseEntity.ok(response);
+    }
 }

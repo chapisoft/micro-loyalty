@@ -1,5 +1,11 @@
 package com.natcash.loyalty.wallet.controller;
 
+import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
+import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.domain.enums.CommonStatus;
+import com.natcash.loyalty.domain.enums.PartnerType;
+import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.tenant.TenantContext;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,152 +15,239 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/loyalty/v1/partners")
-@Tag(name = "Partner Management API", description = "Quản lý Đối Tác Liên Minh")
+@RequestMapping(value = {"/loyalty/v1/partners", "/api/v1/partners", "/partners"})
+@Tag(name = "Partner Management API", description = "Quản lý Đối Tác Liên Minh (CRUD)")
 public class PartnerController {
 
+    private final LoyaltyPartnerRepository partnerRepository;
+
+    public PartnerController(LoyaltyPartnerRepository partnerRepository) {
+        this.partnerRepository = partnerRepository;
+    }
+
     @GetMapping
-    @Operation(summary = "Lấy danh sách đối tác liên minh", description = "Trả về danh sách các đối tác bán lẻ, viễn thông, thanh toán trong hệ sinh thái")
+    @Operation(summary = "Lấy danh sách đối tác liên minh", description = "Trả về danh sách đối tác từ DB theo tenant")
+    @Transactional
     public ResponseEntity<List<PartnerResponse>> getPartners(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<PartnerResponse> partners = new ArrayList<>();
+        List<LoyaltyPartnerEntity> list = partnerRepository.findByTenantId(tenantId);
 
-        if ("TENANT_NATCASH".equalsIgnoreCase(tenantId)) {
-            partners.add(PartnerResponse.builder()
-                    .id(1L)
-                    .partnerCode("NATCASH_WALLET")
-                    .partnerName("Ví Điện Tử Natcash Haïti")
-                    .partnerType("BANKING")
-                    .status("ACTIVE")
-                    .description("Dịch vụ ví điện tử, chuyển tiền P2P và thanh toán số")
-                    .shortCode("NCW")
-                    .earnPolicyText("Hoàn tiền hóa đơn • Đổi data")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(2L)
-                    .partnerCode("NATCOM_TELCO")
-                    .partnerName("Tổng Công Ty Viễn Thông Natcom")
-                    .partnerType("TELECOM")
-                    .status("ACTIVE")
-                    .description("Nạp thẻ di động, data 4G/5G và dịch vụ viễn thông")
-                    .shortCode("NTC")
-                    .earnPolicyText("Nạp thẻ • Đổi gói cước 4G")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(3L)
-                    .partnerCode("EDH_POWER")
-                    .partnerName("Tổng Công Ty Điện Lực Quốc Gia Haïti")
-                    .partnerType("UTILITIES")
-                    .status("ACTIVE")
-                    .description("Thanh toán tiền điện sinh hoạt và doanh nghiệp")
-                    .shortCode("EDH")
-                    .earnPolicyText("Thanh toán hóa đơn điện")
-                    .build());
-        } else if ("TENANT_MICRO_CRM".equalsIgnoreCase(tenantId)) {
-            partners.add(PartnerResponse.builder()
-                    .id(1L)
-                    .partnerCode("DELIMART_RETAIL")
-                    .partnerName("Hệ Thống Siêu Thị Delimart")
-                    .partnerType("RETAIL")
-                    .status("ACTIVE")
-                    .description("Chuỗi siêu thị bán lẻ Delimart toàn quốc")
-                    .shortCode("DLM")
-                    .earnPolicyText("Tích 1% • Tiêu tối đa 50% bill")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(2L)
-                    .partnerCode("FAHASA_BOOKSTORE")
-                    .partnerName("Nhà Sách Fahasa & Văn Phòng Phẩm")
-                    .partnerType("RETAIL")
-                    .status("ACTIVE")
-                    .description("Hệ thống nhà sách và thiết bị giáo dục")
-                    .shortCode("FHS")
-                    .earnPolicyText("Giảm 20% đơn sách")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(3L)
-                    .partnerCode("HIGHLANDS_COFFEE")
-                    .partnerName("Chuỗi Cà Phê Highlands Coffee")
-                    .partnerType("F_AND_B")
-                    .status("ACTIVE")
-                    .description("Đồ uống cà phê, trà và bánh ngọt")
-                    .shortCode("HLC")
-                    .earnPolicyText("Tích điểm • Đổi đồ uống miễn phí")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(4L)
-                    .partnerCode("CGV_CINEMAS")
-                    .partnerName("Cụm Rạp Chiếu Phim CGV Cinemas")
-                    .partnerType("ENTERTAINMENT")
-                    .status("ACTIVE")
-                    .description("Vé xem phim 2D/3D/IMAX")
-                    .shortCode("CGV")
-                    .earnPolicyText("Giảm giá vé cuối tuần")
-                    .build());
-        } else {
-            partners.add(PartnerResponse.builder()
-                    .id(1L)
-                    .partnerCode("DELIMART")
-                    .partnerName("Siêu Thị Delimart Supermarket")
-                    .partnerType("RETAIL")
-                    .status("ACTIVE")
-                    .description("Chuỗi siêu thị bán lẻ Delimart toàn quốc")
-                    .shortCode("DLM")
-                    .earnPolicyText("Tích 1% • Tiêu tối đa 50% bill")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(2L)
-                    .partnerCode("NATCOM")
-                    .partnerName("Tổng Công Ty Viễn Thông Natcom")
-                    .partnerType("TELECOM")
-                    .status("ACTIVE")
-                    .description("Mạng viễn thông và dịch vụ dữ liệu 4G Natcom")
-                    .shortCode("NTC")
-                    .earnPolicyText("Nạp thẻ • Đổi gói cước 4G")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(3L)
-                    .partnerCode("RINGME")
-                    .partnerName("Cổng Dịch Vụ Số Ringme Entertainment")
-                    .partnerType("ENTERTAINMENT")
-                    .status("ACTIVE")
-                    .description("Cổng dịch vụ số, xem phim và giải trí trực tuyến")
-                    .shortCode("RGM")
-                    .earnPolicyText("GameHub • Xem phim • Trúng thưởng")
-                    .build());
-            partners.add(PartnerResponse.builder()
-                    .id(4L)
-                    .partnerCode("NATCASH_WALLET")
-                    .partnerName("Ví Điện Tử Natcash Haïti")
-                    .partnerType("BANKING")
-                    .status("ACTIVE")
-                    .description("Ví điện tử và thanh toán số hàng đầu Haïti")
-                    .shortCode("NCW")
-                    .earnPolicyText("Thanh toán ví • Hoàn tiền")
-                    .build());
+        // Seed default partners if empty
+        if (list.isEmpty()) {
+            list = seedDefaultPartners(tenantId);
         }
 
-        return ResponseEntity.ok(partners);
+        List<PartnerResponse> responses = list.stream().map(this::mapToResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Lấy chi tiết đối tác", description = "Tra cứu thông tin đối tác theo ID")
+    @Transactional(readOnly = true)
+    public ResponseEntity<PartnerResponse> getPartnerById(
+            @PathVariable("id") Long id,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        LoyaltyPartnerEntity entity = partnerRepository.findById(id)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy đối tác #" + id));
+        return ResponseEntity.ok(mapToResponse(entity));
     }
 
     @PostMapping
-    @Operation(summary = "Cập nhật hoặc thêm đối tác liên minh mới", description = "Dành cho Quản trị viên CMS")
-    public ResponseEntity<PartnerResponse> savePartner(
+    @Operation(summary = "Thêm đối tác liên minh mới", description = "Dành cho Quản trị viên CMS tạo đối tác mới")
+    @Transactional
+    public ResponseEntity<PartnerResponse> createPartner(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestBody PartnerResponse request) {
-        return ResponseEntity.ok(request);
+            @RequestBody PartnerRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+
+        String partnerCode = request.getPartnerCode() != null && !request.getPartnerCode().isBlank()
+                ? request.getPartnerCode().toUpperCase().trim()
+                : "PARTNER_" + System.currentTimeMillis();
+
+        String apiKey = request.getApiKey() != null && !request.getApiKey().isBlank()
+                ? request.getApiKey()
+                : "pk_live_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+
+        String secretKey = request.getSecretKey() != null && !request.getSecretKey().isBlank()
+                ? request.getSecretKey()
+                : "sk_live_" + UUID.randomUUID().toString().replace("-", "");
+
+        PartnerType pType = PartnerType.RETAIL;
+        if (request.getPartnerType() != null) {
+            try {
+                pType = PartnerType.valueOf(request.getPartnerType().toUpperCase().trim());
+            } catch (Exception ignored) {}
+        }
+
+        CommonStatus status = CommonStatus.ACTIVE;
+        if (request.getStatus() != null) {
+            String s = String.valueOf(request.getStatus()).trim();
+            if ("0".equals(s) || "INACTIVE".equalsIgnoreCase(s)) {
+                status = CommonStatus.INACTIVE;
+            }
+        }
+
+        LoyaltyPartnerEntity entity = LoyaltyPartnerEntity.builder()
+                .tenantId(tenantId)
+                .partnerCode(partnerCode)
+                .partnerName(request.getPartnerName() != null ? request.getPartnerName() : partnerCode)
+                .partnerType(pType)
+                .apiKey(apiKey)
+                .secretKey(secretKey)
+                .webhookUrl(request.getWebhookUrl())
+                .webhookSecret(request.getWebhookSecret())
+                .ipWhitelist(request.getIpWhitelist() != null ? request.getIpWhitelist() : "0.0.0.0/0")
+                .status(status)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        LoyaltyPartnerEntity saved = partnerRepository.save(entity);
+        return ResponseEntity.ok(mapToResponse(saved));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Cập nhật thông tin đối tác liên minh", description = "Dành cho Quản trị viên CMS")
+    @Transactional
+    public ResponseEntity<PartnerResponse> updatePartner(
+            @PathVariable("id") Long id,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody PartnerRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        LoyaltyPartnerEntity entity = partnerRepository.findById(id)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy đối tác #" + id));
+
+        if (request.getPartnerName() != null) entity.setPartnerName(request.getPartnerName());
+        if (request.getPartnerCode() != null) entity.setPartnerCode(request.getPartnerCode().toUpperCase().trim());
+        if (request.getApiKey() != null && !request.getApiKey().isBlank()) entity.setApiKey(request.getApiKey());
+        if (request.getSecretKey() != null && !request.getSecretKey().isBlank()) entity.setSecretKey(request.getSecretKey());
+        if (request.getWebhookUrl() != null) entity.setWebhookUrl(request.getWebhookUrl());
+        if (request.getWebhookSecret() != null) entity.setWebhookSecret(request.getWebhookSecret());
+        if (request.getIpWhitelist() != null) entity.setIpWhitelist(request.getIpWhitelist());
+
+        if (request.getPartnerType() != null) {
+            try {
+                entity.setPartnerType(PartnerType.valueOf(request.getPartnerType().toUpperCase().trim()));
+            } catch (Exception ignored) {}
+        }
+
+        if (request.getStatus() != null) {
+            String s = String.valueOf(request.getStatus()).trim();
+            if ("0".equals(s) || "INACTIVE".equalsIgnoreCase(s)) {
+                entity.setStatus(CommonStatus.INACTIVE);
+            } else {
+                entity.setStatus(CommonStatus.ACTIVE);
+            }
+        }
+
+        entity.setUpdatedAt(Instant.now());
+        LoyaltyPartnerEntity saved = partnerRepository.save(entity);
+        return ResponseEntity.ok(mapToResponse(saved));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa đối tác", description = "Xóa hoặc vô hiệu hóa đối tác")
+    @Transactional
+    public ResponseEntity<Void> deletePartner(
+            @PathVariable("id") Long id,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        partnerRepository.findById(id).ifPresent(partnerRepository::delete);
+        return ResponseEntity.noContent().build();
+    }
+
+    private PartnerResponse mapToResponse(LoyaltyPartnerEntity p) {
+        return PartnerResponse.builder()
+                .id(p.getId())
+                .partnerCode(p.getPartnerCode())
+                .partnerName(p.getPartnerName())
+                .partnerType(p.getPartnerType() != null ? p.getPartnerType().name() : "RETAIL")
+                .apiKey(p.getApiKey())
+                .secretKey(p.getSecretKey())
+                .webhookUrl(p.getWebhookUrl())
+                .webhookSecret(p.getWebhookSecret())
+                .ipWhitelist(p.getIpWhitelist())
+                .status(p.getStatus() != null ? p.getStatus().name() : "ACTIVE")
+                .createdAt(p.getCreatedAt() != null ? p.getCreatedAt().toString() : null)
+                .updatedAt(p.getUpdatedAt() != null ? p.getUpdatedAt().toString() : null)
+                .build();
+    }
+
+    private List<LoyaltyPartnerEntity> seedDefaultPartners(String tenantId) {
+        List<LoyaltyPartnerEntity> defaults = new ArrayList<>();
+        defaults.add(LoyaltyPartnerEntity.builder()
+                .tenantId(tenantId)
+                .partnerCode("DELIMART_RETAIL")
+                .partnerName("Hệ Thống Siêu Thị Delimart")
+                .partnerType(PartnerType.RETAIL)
+                .apiKey("pk_live_delimart_01")
+                .secretKey("sk_live_delimart_secret_01")
+                .ipWhitelist("0.0.0.0/0")
+                .status(CommonStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build());
+        defaults.add(LoyaltyPartnerEntity.builder()
+                .tenantId(tenantId)
+                .partnerCode("NATCOM_TELCO")
+                .partnerName("Tổng Công Ty Viễn Thông Natcom")
+                .partnerType(PartnerType.TELECOM)
+                .apiKey("pk_live_natcom_01")
+                .secretKey("sk_live_natcom_secret_01")
+                .ipWhitelist("0.0.0.0/0")
+                .status(CommonStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build());
+        defaults.add(LoyaltyPartnerEntity.builder()
+                .tenantId(tenantId)
+                .partnerCode("NATCASH_WALLET")
+                .partnerName("Ví Điện Tử Natcash Haïti")
+                .partnerType(PartnerType.BANKING)
+                .apiKey("pk_live_natcash_01")
+                .secretKey("sk_live_natcash_secret_01")
+                .ipWhitelist("0.0.0.0/0")
+                .status(CommonStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build());
+        return partnerRepository.saveAll(defaults);
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PartnerRequest {
+        private String partnerCode;
+        private String partnerName;
+        private String partnerType;
+        private String apiKey;
+        private String secretKey;
+        private String webhookUrl;
+        private String webhookSecret;
+        private String ipWhitelist;
+        private Object status;
     }
 
     @Data
@@ -166,9 +259,13 @@ public class PartnerController {
         private String partnerCode;
         private String partnerName;
         private String partnerType;
+        private String apiKey;
+        private String secretKey;
+        private String webhookUrl;
+        private String webhookSecret;
+        private String ipWhitelist;
         private String status;
-        private String description;
-        private String shortCode;
-        private String earnPolicyText;
+        private String createdAt;
+        private String updatedAt;
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -11,6 +11,8 @@ import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { InputSwitch } from 'primereact/inputswitch';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { AppBreadcrumb } from 'components';
 import { CommonStatus } from '@/models';
 import { LoyaltyService } from '@/service/loyalty.service';
@@ -100,6 +102,7 @@ export const GameManagementPage: React.FC = () => {
   const [isPrizesLoading, setIsPrizesLoading] = useState(false);
   const [prizeFormData, setPrizeFormData] = useState<Partial<GamePrizeItem>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useRef<Toast>(null);
 
   // 1. Tải danh mục trò chơi từ Backend
   const loadGames = useCallback(async () => {
@@ -122,7 +125,7 @@ export const GameManagementPage: React.FC = () => {
     loadGames();
   }, [loadGames]);
 
-  // 2. Tải ma trận giải thưởng của 1 game
+  // 2. Tải danh sách ô giải thưởng của trò chơi
   const loadGamePrizes = async (gameCode: string) => {
     setIsPrizesLoading(true);
     try {
@@ -138,18 +141,19 @@ export const GameManagementPage: React.FC = () => {
 
   const openPrizesManager = (game: GameItem) => {
     setSelectedGameForPrizes(game);
-    setShowPrizeDialog(true);
     loadGamePrizes(game.gameCode);
+    setShowPrizeDialog(true);
   };
+  const openPrizeManager = openPrizesManager;
 
   const openNewPrize = () => {
     setPrizeFormData({
-      gameCode: selectedGameForPrizes?.gameCode,
-      prizeCode: `${selectedGameForPrizes?.gameCode}_PRIZE_${prizesList.length + 1}`,
+      prizeCode: 'PRIZE_' + (prizesList.length + 1),
       prizeName: '',
       prizeType: 'POINTS',
-      prizeValue: 50,
-      probabilityWeight: 100,
+      prizeValue: 100,
+      probabilityWeight: 10,
+      dailyBudgetLimit: 5000,
       colorCode: '#F59E0B',
       iconSymbol: '🎁',
       displayOrder: prizesList.length + 1,
@@ -165,30 +169,72 @@ export const GameManagementPage: React.FC = () => {
 
   const savePrize = async () => {
     if (!selectedGameForPrizes) return;
-    setIsSubmitting(true);
-    try {
-      await LoyaltyService.saveGamePrize(selectedGameForPrizes.gameCode, prizeFormData, selectedTenant);
-      await loadGamePrizes(selectedGameForPrizes.gameCode);
-      setShowPrizeFormDialog(false);
-    } catch (e) {
-      console.error('[savePrize] Error:', e);
-    } finally {
-      setIsSubmitting(false);
-    }
+    confirmDialog({
+      message: `Bạn có chắc chắn muốn lưu hạng giải thưởng "${prizeFormData.prizeName || 'Mới'}" không?`,
+      header: t('common.confirm_save', { defaultValue: 'Xác nhận Lưu Giải Thưởng' }),
+      icon: 'pi pi-question-circle',
+      acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),
+      rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+      accept: async () => {
+        setIsSubmitting(true);
+        try {
+          await LoyaltyService.saveGamePrize(selectedGameForPrizes.gameCode, prizeFormData, selectedTenant);
+          await loadGamePrizes(selectedGameForPrizes.gameCode);
+          setShowPrizeFormDialog(false);
+          toast.current?.show({
+            severity: 'success',
+            summary: t('common.success', { defaultValue: 'Thành công' }),
+            detail: 'Lưu hạng giải thưởng thành công!',
+            life: 3000,
+          });
+        } catch (e: any) {
+          console.error('[savePrize] Error:', e);
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error', { defaultValue: 'Lỗi' }),
+            detail: 'Lưu giải thưởng thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            life: 4000,
+          });
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    });
   };
 
   const deletePrize = async (prize: GamePrizeItem) => {
     if (!selectedGameForPrizes || !prize.id) return;
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa giải "${prize.prizeName}"?`)) return;
-    setIsSubmitting(true);
-    try {
-      await LoyaltyService.deleteGamePrize(prize.id, selectedTenant);
-      await loadGamePrizes(selectedGameForPrizes.gameCode);
-    } catch (e) {
-      console.error('[deletePrize] Error:', e);
-    } finally {
-      setIsSubmitting(false);
-    }
+    confirmDialog({
+      message: `Bạn có chắc chắn muốn xóa giải thưởng "${prize.prizeName}" khỏi ma trận không?`,
+      header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Giải Thưởng' }),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.delete', { defaultValue: 'Xóa' }),
+      rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+      accept: async () => {
+        setIsSubmitting(true);
+        try {
+          await LoyaltyService.deleteGamePrize(prize.id!, selectedTenant);
+          await loadGamePrizes(selectedGameForPrizes.gameCode);
+          toast.current?.show({
+            severity: 'success',
+            summary: t('common.success', { defaultValue: 'Thành công' }),
+            detail: 'Đã xóa giải thưởng thành công!',
+            life: 3000,
+          });
+        } catch (e: any) {
+          console.error('[deletePrize] Error:', e);
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error', { defaultValue: 'Lỗi' }),
+            detail: 'Xóa giải thưởng thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            life: 4000,
+          });
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    });
   };
 
   const autoBalancePrizes = async () => {
@@ -197,8 +243,20 @@ export const GameManagementPage: React.FC = () => {
     try {
       const updated = await LoyaltyService.autoBalanceGamePrizes(selectedGameForPrizes.gameCode, selectedTenant);
       setPrizesList(Array.isArray(updated) ? updated : []);
-    } catch (e) {
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: 'Đã tự động cân bằng tổng xác suất 100% thành công!',
+        life: 3000,
+      });
+    } catch (e: any) {
       console.error('[autoBalancePrizes] Error:', e);
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: 'Cân bằng xác suất thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        life: 4000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -238,8 +296,20 @@ export const GameManagementPage: React.FC = () => {
       await LoyaltyService.saveGame(gameFormData, selectedTenant);
       await loadGames();
       setShowGameDialog(false);
-    } catch (e) {
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: gameFormData.id ? 'Cập nhật trò chơi thành công!' : 'Thêm mới trò chơi thành công!',
+        life: 3000,
+      });
+    } catch (e: any) {
       console.error('[saveGame] Error:', e);
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: 'Không thể lưu trò chơi: ' + (e?.message || 'Lỗi hệ thống'),
+        life: 4000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -251,8 +321,20 @@ export const GameManagementPage: React.FC = () => {
       await LoyaltyService.saveGame(paramsFormData, selectedTenant);
       await loadGames();
       setShowParamsDialog(false);
-    } catch (e) {
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: 'Cập nhật tham số cấu hình nâng cao thành công!',
+        life: 3000,
+      });
+    } catch (e: any) {
       console.error('[saveParamsConfig] Error:', e);
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: 'Lưu tham số thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        life: 4000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -288,6 +370,8 @@ export const GameManagementPage: React.FC = () => {
 
   return (
     <div className="game-management-page">
+      <Toast ref={toast} position="top-right" />
+      <ConfirmDialog />
       <AppBreadcrumb
         items={[
           { label: t('nav.rewards_games', { defaultValue: 'Khuyến mãi & Game' }) },

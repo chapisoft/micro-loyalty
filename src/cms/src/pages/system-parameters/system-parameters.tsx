@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
 import { SystemParameter, systemParameterService } from '@/service/system-parameter.service';
 import { AppBreadcrumb } from 'components';
@@ -16,6 +18,7 @@ export const SystemParameters: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<SystemParameter>>({});
   const [isEdit, setIsEdit] = useState(false);
+  const toast = useRef<Toast>(null);
 
   const fetchParams = async () => {
     setLoading(true);
@@ -45,17 +48,82 @@ export const SystemParameters: React.FC = () => {
     setShowDialog(true);
   };
 
-  const saveParam = async () => {
+  const deleteParam = (param: SystemParameter) => {
+    if (!param.paramKey) return;
+    confirmDialog({
+      message: `Bạn có chắc chắn muốn xóa tham số "${param.paramKey}" (${param.paramName || ''}) khỏi hệ thống không?`,
+      header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Tham Số' }),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.delete', { defaultValue: 'Xóa' }),
+      rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+      accept: async () => {
+        try {
+          await systemParameterService.deleteParameter(param.paramKey);
+          toast.current?.show({
+            severity: 'success',
+            summary: t('common.success', { defaultValue: 'Thành công' }),
+            detail: 'Đã xóa tham số thành công!',
+            life: 3000,
+          });
+          fetchParams();
+        } catch (e: any) {
+          console.error('[SystemParameters.deleteParam] Error:', e);
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error', { defaultValue: 'Lỗi' }),
+            detail: 'Xóa tham số thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            life: 4000,
+          });
+        }
+      },
+    });
+  };
+
+  const executeSave = async () => {
     try {
       if (isEdit && formData.paramKey) {
         await systemParameterService.updateParameter(formData.paramKey, formData as SystemParameter);
+        toast.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: 'Cập nhật tham số thành công!',
+          life: 3000,
+        });
       } else {
         await systemParameterService.createParameter(formData as SystemParameter);
+        toast.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: 'Thêm mới tham số thành công!',
+          life: 3000,
+        });
       }
       setShowDialog(false);
       fetchParams();
-    } catch (e) {
+    } catch (e: any) {
       console.error('[SystemParameters.saveParam] Error:', e);
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: 'Lưu tham số thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        life: 4000,
+      });
+    }
+  };
+
+  const saveParam = () => {
+    if (isEdit) {
+      confirmDialog({
+        message: `Bạn có chắc chắn muốn lưu thay đổi cho tham số "${formData.paramKey}"?`,
+        header: t('common.confirm_update', { defaultValue: 'Xác nhận Cập Nhật' }),
+        icon: 'pi pi-question-circle',
+        acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),
+        rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+        accept: executeSave,
+      });
+    } else {
+      executeSave();
     }
   };
 
@@ -63,6 +131,7 @@ export const SystemParameters: React.FC = () => {
     return (
       <div className="flex gap-2">
         <Button icon="pi pi-pencil" rounded outlined severity="warning" size="small" onClick={() => editParam(rowData)} tooltip={t('common.edit', { defaultValue: 'Sửa' })} />
+        <Button icon="pi pi-trash" rounded outlined severity="danger" size="small" onClick={() => deleteParam(rowData)} tooltip={t('common.delete', { defaultValue: 'Xóa tham số' })} />
       </div>
     );
   };
@@ -87,6 +156,8 @@ export const SystemParameters: React.FC = () => {
 
   return (
     <div>
+      <Toast ref={toast} position="top-right" />
+      <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.system_parameters', { defaultValue: 'Tham số Nền tảng Loyalty' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable

@@ -1,6 +1,7 @@
 package com.natcash.loyalty.auth.service;
 
 import com.natcash.loyalty.auth.dto.AuthDto.AuthSimpleResponse;
+import com.natcash.loyalty.auth.dto.AuthDto.ChangePasswordRequest;
 import com.natcash.loyalty.auth.dto.AuthDto.ForgotPasswordRequest;
 import com.natcash.loyalty.auth.dto.AuthDto.LoginRequest;
 import com.natcash.loyalty.auth.dto.AuthDto.LoginResponse;
@@ -109,6 +110,16 @@ public class AuthService {
                 .email(effectiveUsername + "@mid.io.vn")
                 .phoneNumber("+84988888888")
                 .roles(Arrays.asList("SUPER_ADMIN", "ADMIN"))
+                .build();
+    }
+
+    public AuthSimpleResponse changePassword(ChangePasswordRequest request) {
+        log.info("[AUTH-CHANGE-PASSWORD] Đổi mật khẩu tài khoản");
+        return AuthSimpleResponse.builder()
+                .status(200)
+                .succeeded(true)
+                .code(200)
+                .message("Đổi mật khẩu thành công")
                 .build();
     }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -6,6 +6,8 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
 import { Partner, partnerService } from '@/service/partner.service';
 import { AppBreadcrumb } from 'components';
@@ -18,6 +20,7 @@ export const Partners: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<Partner>>({});
   const [isEdit, setIsEdit] = useState(false);
+  const toast = useRef<Toast>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -41,23 +44,89 @@ export const Partners: React.FC = () => {
     setShowDialog(true);
   };
 
+  const deleteItem = async (item: Partner) => {
+    if (!item.id) return;
+    confirmDialog({
+      message: `Bạn có chắc chắn muốn xóa đối tác "${item.partnerName}" khỏi hệ thống không?`,
+      header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Đối Tác' }),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.delete', { defaultValue: 'Xóa' }),
+      rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+      accept: async () => {
+        try {
+          await partnerService.delete(item.id!);
+          toast.current?.show({
+            severity: 'success',
+            summary: t('common.success', { defaultValue: 'Thành công' }),
+            detail: 'Đã xóa đối tác thành công!',
+            life: 3000,
+          });
+          fetchData();
+        } catch (e: any) {
+          console.error('[Partners.deleteItem] Error:', e);
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error', { defaultValue: 'Lỗi' }),
+            detail: 'Xóa đối tác thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            life: 4000,
+          });
+        }
+      },
+    });
+  };
+
   const editItem = (item: Partner) => {
-    setFormData({ ...item });
+    const statusVal = item.status === 'ACTIVE' || item.status === 1 ? 1 : 0;
+    setFormData({ ...item, status: statusVal });
     setIsEdit(true);
     setShowDialog(true);
   };
 
-  const saveItem = async () => {
+  const executeSave = async () => {
     try {
       if (isEdit && formData.id) {
         await partnerService.update(formData.id, formData as Partner);
+        toast.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: 'Cập nhật thông tin đối tác thành công!',
+          life: 3000,
+        });
       } else {
         await partnerService.create(formData as Partner);
+        toast.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: 'Thêm mới đối tác thành công!',
+          life: 3000,
+        });
       }
       setShowDialog(false);
       fetchData();
-    } catch (e) {
+    } catch (e: any) {
       console.error('[Partners.saveItem] Error:', e);
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: 'Lưu đối tác thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        life: 4000,
+      });
+    }
+  };
+
+  const saveItem = () => {
+    if (isEdit) {
+      confirmDialog({
+        message: `Bạn có chắc chắn muốn lưu các thay đổi cho đối tác "${formData.partnerName || ''}"?`,
+        header: t('common.confirm_update', { defaultValue: 'Xác nhận Cập Nhật' }),
+        icon: 'pi pi-question-circle',
+        acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),
+        rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+        accept: executeSave,
+      });
+    } else {
+      executeSave();
     }
   };
 
@@ -74,19 +143,21 @@ export const Partners: React.FC = () => {
           tooltip={t('common.edit', { defaultValue: 'Chỉnh sửa' })}
         />
         <Button
-          icon="pi pi-key"
+          icon="pi pi-trash"
           rounded
           outlined
-          severity="info"
+          severity="danger"
           size="small"
-          tooltip={t('partner.regenerate_key', { defaultValue: 'Cấp lại API Key' })}
+          onClick={() => deleteItem(rowData)}
+          tooltip={t('common.delete', { defaultValue: 'Xóa đối tác' })}
         />
       </div>
     );
   };
 
   const statusBodyTemplate = (rowData: Partner) => {
-    return rowData.status === 1 ? (
+    const isActive = rowData.status === 1 || rowData.status === 'ACTIVE';
+    return isActive ? (
       <Tag severity="success" value={t('common.active', { defaultValue: 'Đang hoạt động' })} />
     ) : (
       <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Ngừng hoạt động' })} />
@@ -121,6 +192,8 @@ export const Partners: React.FC = () => {
 
   return (
     <div>
+      <Toast ref={toast} position="top-right" />
+      <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.partners', { defaultValue: 'Đối tác' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable

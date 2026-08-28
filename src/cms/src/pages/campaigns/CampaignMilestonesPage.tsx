@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { Toast } from 'primereact/toast';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Tag } from 'primereact/tag';
@@ -35,6 +37,7 @@ export interface CampaignMilestoneItem {
 
 export const CampaignMilestonesPage: React.FC = () => {
   const { t } = useTranslation();
+  const toast = useRef<Toast>(null);
   const [campaigns, setCampaigns] = useState<CampaignMilestoneItem[]>([]);
   const [selectedCampaigns, setSelectedCampaigns] = useState<CampaignMilestoneItem[]>([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -98,21 +101,41 @@ export const CampaignMilestonesPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const deleteItem = async (item: CampaignMilestoneItem) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa cột mốc ${item.campaignCode} (${item.campaignName})?`)) {
-      setLoading(true);
-      try {
-        await LoyaltyService.deleteMilestone(item.id);
-        await fetchMilestones();
-      } catch (e) {
-        console.error('[deleteMilestone] Error:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const deleteItem = (item: CampaignMilestoneItem) => {
+    confirmDialog({
+      message: `Bạn có chắc chắn muốn xóa cột mốc ${item.campaignCode} (${item.campaignName}) khỏi hệ thống?`,
+      header: t('common.confirm_delete', { defaultValue: 'Xác nhận xóa cột mốc' }),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.yes', { defaultValue: 'Xác nhận xóa' }),
+      rejectLabel: t('common.no', { defaultValue: 'Hủy' }),
+      accept: async () => {
+        setLoading(true);
+        try {
+          await LoyaltyService.deleteMilestone(item.id);
+          toast.current?.show({
+            severity: 'success',
+            summary: t('common.success', { defaultValue: 'Thành công' }),
+            detail: `Đã xóa thành công cột mốc ${item.campaignCode}!`,
+            life: 3000,
+          });
+          await fetchMilestones();
+        } catch (e: any) {
+          console.error('[deleteMilestone] Error:', e);
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error', { defaultValue: 'Lỗi' }),
+            detail: e?.message || 'Không thể xóa cột mốc, vui lòng thử lại sau!',
+            life: 4000,
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
-  const saveItem = async () => {
+  const handleSaveConfirmed = async () => {
     setIsSubmitting(true);
     try {
       if (isEdit && formData.id) {
@@ -123,6 +146,12 @@ export const CampaignMilestonesPage: React.FC = () => {
           rewardPoints: formData.rewardPoints,
           rewardGameTurns: formData.rewardGameTurns,
           status: formData.status,
+        });
+        toast.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: `Cập nhật thành công cột mốc ${formData.campaignCode || ''}!`,
+          life: 3000,
         });
       } else {
         await LoyaltyService.createMilestone({
@@ -135,13 +164,40 @@ export const CampaignMilestonesPage: React.FC = () => {
           rewardGameTurns: formData.rewardGameTurns || 0,
           status: formData.status || CommonStatus.ACTIVE,
         });
+        toast.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: 'Thêm mới cột mốc chiến dịch thành công!',
+          life: 3000,
+        });
       }
       setShowDialog(false);
       await fetchMilestones();
-    } catch (e) {
+    } catch (e: any) {
       console.error('[saveMilestone] Error:', e);
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: e?.message || 'Không thể lưu cột mốc chiến dịch, vui lòng thử lại sau!',
+        life: 4000,
+      });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const saveItem = () => {
+    if (isEdit) {
+      confirmDialog({
+        message: `Bạn có chắc chắn muốn cập nhật thay đổi cho cột mốc ${formData.campaignCode || ''}?`,
+        header: t('common.confirm_update', { defaultValue: 'Xác nhận cập nhật cột mốc' }),
+        icon: 'pi pi-info-circle',
+        acceptLabel: t('common.save', { defaultValue: 'Lưu thay đổi' }),
+        rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+        accept: handleSaveConfirmed,
+      });
+    } else {
+      handleSaveConfirmed();
     }
   };
 
@@ -215,6 +271,8 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   return (
     <div>
+      <Toast ref={toast} position="top-center" />
+      <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.milestones', { defaultValue: 'Cột mốc Chiến dịch' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>

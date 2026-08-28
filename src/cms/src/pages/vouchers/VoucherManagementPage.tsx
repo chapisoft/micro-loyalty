@@ -151,13 +151,74 @@ export const VoucherManagementPage: React.FC = () => {
     }
   };
 
-  const handleImportCsv = () => {
+  const handleImportCsv = async (event: any) => {
+    const file = event.files?.[0];
+    if (!file) return;
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((l: string) => l.trim().length > 0);
+      if (lines.length <= 1) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
+          detail: t('voucher.csv_empty', { defaultValue: 'Tệp CSV không có dữ liệu' }),
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const startIndex = lines[0].toUpperCase().includes('CODE') ? 1 : 0;
+      const voucherList: any[] = [];
+
+      for (let i = startIndex; i < lines.length; i++) {
+        const parts = lines[i].split(',').map((p: string) => p.trim().replace(/^["']|["']$/g, ''));
+        if (parts.length >= 2 && parts[0]) {
+          const code = parts[0];
+          const title = parts[1] || `Voucher ${code}`;
+          const discountVal = parseFloat(parts[2]) || 50;
+          const pointsCost = parseFloat(parts[3]) || 50;
+          const totalQty = parseInt(parts[4]) || 1000;
+          const discountType = parts[5]?.toUpperCase() === 'PERCENTAGE' ? 'PERCENTAGE' : 'FIXED_AMOUNT';
+
+          voucherList.push({
+            voucherCode: code,
+            title: title,
+            description: `Voucher ưu đãi ${title}`,
+            discountValue: discountVal,
+            discountType: discountType,
+            pointCost: pointsCost,
+            totalQuantity: totalQty,
+            minBillAmount: 0,
+            status: 'ACTIVE',
+          });
+        }
+      }
+
+      if (voucherList.length > 0) {
+        await LoyaltyService.batchImportVouchers(voucherList, selectedTenant);
+        toastRef.current?.show({
+          severity: 'success',
+          summary: t('common.success', { defaultValue: 'Thành công' }),
+          detail: t('voucher.import_success', {
+            defaultValue: `Đã nhập thành công ${voucherList.length} mã voucher từ CSV`,
+            count: voucherList.length,
+          }),
+        });
+        setShowImportDialog(false);
+        await fetchVouchers();
+      }
+    } catch (e: any) {
+      console.error('[handleImportCsv] Error:', e);
+      toastRef.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể đọc hoặc xử lý tệp CSV' }),
+      });
+    } finally {
       setIsSubmitting(false);
-      setShowImportDialog(false);
-      fetchVouchers();
-    }, 500);
+    }
   };
 
   const actionTemplate = (rowData: VoucherItem) => (

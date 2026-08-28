@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
@@ -15,6 +16,8 @@ export const Transactions: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
   const [selectedTenant, setSelectedTenant] = useState('TENANT_NATCASH');
+  const [selectedPartner, setSelectedPartner] = useState<string>('ALL');
+  const [selectedActionType, setSelectedActionType] = useState<string>('ALL');
 
   const fetchData = async () => {
     setLoading(true);
@@ -31,6 +34,55 @@ export const Transactions: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [selectedTenant]);
+
+  const partnerOptions = useMemo(() => {
+    const uniquePartners = Array.from(new Set(items.map((i) => i.partnerCode).filter(Boolean)));
+    return [
+      { label: t('common.all_partners', { defaultValue: 'Tất cả Đối tác' }), value: 'ALL' },
+      ...uniquePartners.map((p) => ({ label: p, value: p })),
+    ];
+  }, [items, t]);
+
+  const actionTypeOptions = [
+    { label: t('common.all_actions', { defaultValue: 'Tất cả Loại GD' }), value: 'ALL' },
+    { label: 'TÍCH ĐIỂM (EARN)', value: 'EARN' },
+    { label: 'TIÊU ĐIỂM (BURN)', value: 'BURN' },
+    { label: 'THƯỞNG CỘT MỐC (REWARD)', value: 'REWARD' },
+    { label: 'VÒNG QUAY (SPIN)', value: 'SPIN' },
+    { label: 'ĐỔI VOUCHER (VOUCHER)', value: 'VOUCHER' },
+  ];
+
+  const filteredItems = useMemo(() => {
+    const rawQuery = globalFilter.trim().toLowerCase();
+    const cleanQuery = rawQuery.replace(/[\s\-_+()]/g, '');
+
+    return items.filter((item) => {
+      const matchPartner = selectedPartner === 'ALL' || item.partnerCode === selectedPartner;
+      const matchAction = selectedActionType === 'ALL' || item.actionType === selectedActionType;
+      if (!matchPartner || !matchAction) return false;
+
+      if (!rawQuery) return true;
+
+      const txId = (item.transactionId || '').toLowerCase();
+      const userId = (item.externalUserId || '').toLowerCase();
+      const cleanUserId = userId.replace(/[\s\-_+()]/g, '');
+      const partner = (item.partnerCode || '').toLowerCase();
+      const action = (item.actionType || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      const points = String(item.points || '');
+
+      return (
+        txId.includes(rawQuery) ||
+        txId.includes(cleanQuery) ||
+        userId.includes(rawQuery) ||
+        cleanUserId.includes(cleanQuery) ||
+        partner.includes(rawQuery) ||
+        action.includes(rawQuery) ||
+        desc.includes(rawQuery) ||
+        points.includes(rawQuery)
+      );
+    });
+  }, [items, selectedPartner, selectedActionType, globalFilter]);
 
   const actionTypeTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
@@ -78,14 +130,28 @@ export const Transactions: React.FC = () => {
   };
 
   const header = (
-    <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <div className="flex align-items-center gap-3">
+    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
+      <div className="flex flex-wrap align-items-center gap-3">
         <h4 className="m-0 text-primary font-bold">
           {t('transaction.management_title', { defaultValue: 'Nhật ký Biến động Sổ cái Điểm & Giao dịch Loyalty' })}
         </h4>
         <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 align-items-center">
+        <Dropdown
+          value={selectedPartner}
+          options={partnerOptions}
+          onChange={(e) => setSelectedPartner(e.value)}
+          placeholder={t('transaction.filter_partner', { defaultValue: 'Đối tác' })}
+          className="w-11rem"
+        />
+        <Dropdown
+          value={selectedActionType}
+          options={actionTypeOptions}
+          onChange={(e) => setSelectedActionType(e.value)}
+          placeholder={t('transaction.filter_action', { defaultValue: 'Loại GD' })}
+          className="w-12rem"
+        />
         <span className="p-input-icon-left">
           <i className="pi pi-search" />
           <InputText
@@ -93,6 +159,7 @@ export const Transactions: React.FC = () => {
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder={t('transaction.search_placeholder', { defaultValue: 'Tìm theo Mã GD, SĐT, Đối tác...' })}
+            className="w-14rem md:w-18rem"
           />
         </span>
         <Button icon="pi pi-refresh" rounded outlined onClick={fetchData} tooltip={t('common.refresh', { defaultValue: 'Làm mới' })} />
@@ -105,15 +172,16 @@ export const Transactions: React.FC = () => {
       <AppBreadcrumb items={[{ label: t('nav.transactions', { defaultValue: 'Sổ Cái & Giao Dịch' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable
-          value={items}
+          value={filteredItems}
           loading={loading}
           header={header}
           globalFilter={globalFilter}
+          globalFilterFields={['transactionId', 'externalUserId', 'partnerCode', 'actionType', 'description']}
           dataKey="id"
           paginator
           rows={15}
           rowsPerPageOptions={[15, 30, 50]}
-          emptyMessage={t('common.no_data', { defaultValue: 'Chưa có biến động giao dịch điểm nào' })}
+          emptyMessage={t('common.no_data', { defaultValue: 'Chưa có biến động giao dịch điểm nào phù hợp với bộ lọc' })}
           stripedRows
           responsiveLayout="scroll"
         >
@@ -127,7 +195,7 @@ export const Transactions: React.FC = () => {
           <Column field="actionType" body={actionTypeTemplate} header={t('transaction.action_type', { defaultValue: 'Loại Giao dịch' })} sortable style={{ minWidth: '13rem' }} />
           <Column field="points" body={pointsTemplate} header={t('transaction.amount', { defaultValue: 'Biến động Điểm' })} sortable style={{ minWidth: '11rem' }} />
           <Column field="balanceAfter" body={balanceAfterTemplate} header={t('transaction.balance_after', { defaultValue: 'Số dư sau GD' })} sortable style={{ minWidth: '10rem' }} />
-          <Column field="partnerCode" header={t('transaction.partner', { defaultValue: 'Đối tác' })} sortable style={{ minWidth: '10rem' }} />
+          <Column field="partnerCode" header={t('transaction.partner', { defaultValue: 'Đối tác' })} sortable style={{ minWidth: '11rem' }} />
           <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Thời gian' })} sortable style={{ minWidth: '12rem' }} />
           <Column
             header={t('common.status', { defaultValue: 'Trạng thái' })}

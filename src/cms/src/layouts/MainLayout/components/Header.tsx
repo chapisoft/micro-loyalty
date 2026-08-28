@@ -251,6 +251,30 @@ const Header: React.FC = () => {
     </div>
   );
 
+  const currentUser = React.useMemo(() => {
+    if (user && (user.fullName || user.userName || (user as any)?.username)) {
+      return user;
+    }
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return user;
+  }, [user]);
+
+  const rawName = currentUser?.fullName || currentUser?.userName || (currentUser as any)?.username;
+  const displayName = React.useMemo(() => {
+    if (!rawName) return 'Quản Trị Viên';
+    if (rawName.toLowerCase() === 'admin') return 'Quản Trị Viên Hệ Thống';
+    return rawName;
+  }, [rawName]);
+
+  const userEmail = currentUser?.email || (currentUser?.userName ? `${currentUser.userName}@mid.io.vn` : 'admin@mid.io.vn');
+
   const end = (
     <div className="flex align-items-center gap-3 pl-2">
       {/* Language Hover Dropdown */}
@@ -299,11 +323,15 @@ const Header: React.FC = () => {
         <button type="button" className="user-profile-pill flex align-items-center gap-2 cursor-pointer">
           <span className="user-avatar-circle flex align-items-center justify-content-center">
             <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-              {(user?.fullName || user?.userName || (user as any)?.username || 'Admin').charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </span>
           </span>
-          <span className="user-name text-sm" style={{ fontWeight: 550 }}>
-            {user?.fullName || user?.userName || (user as any)?.username || 'Super Admin'}
+          <span
+            className="user-name text-sm"
+            style={{ fontWeight: 550 }}
+            title={displayName}
+          >
+            {displayName}
           </span>
           <i className={`pi pi-chevron-${isProfileOpen ? 'up' : 'down'} text-xs chevron-icon ml-1`} />
         </button>
@@ -316,9 +344,11 @@ const Header: React.FC = () => {
           >
             <div className="px-3 py-2 border-bottom-1 surface-border">
               <div className="text-900 text-sm" style={{ fontWeight: 600 }}>
-                {user?.fullName || user?.userName || (user as any)?.username || 'Super Administrator'}
+                {displayName}
               </div>
-              <div className="text-500 text-xs">{(user as any)?.email || 'admin@miotp.io.vn'}</div>
+              <div className="text-500 text-xs">
+                {userEmail}
+              </div>
             </div>
             <div
               className="custom-dropdown-item"

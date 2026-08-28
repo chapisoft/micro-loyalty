@@ -232,6 +232,13 @@ export const LoyaltyService = {
     });
   },
 
+  async batchImportVouchers(data: Partial<VoucherItemModel>[], tenantId: string = 'TENANT_NATCASH'): Promise<VoucherItemModel[]> {
+    const response: any = await apiClient.post('/loyalty/v1/vouchers/batch-import', data, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return response?.data || response;
+  },
+
   // 4. Quản lý Cột Mốc Chiến Dịch (Milestones CRUD)
   async getMilestones(tenantId: string = 'TENANT_NATCASH'): Promise<MilestoneItemModel[]> {
     try {
@@ -367,12 +374,22 @@ export const LoyaltyService = {
       const response: any = await apiClient.get('/loyalty/v1/ledger?page=0&size=50', {
         headers: { 'X-Tenant-Id': tenantId },
       });
-      if (response && response.content && Array.isArray(response.content)) {
-        return response.content;
-      }
-      if (Array.isArray(response)) return response;
-      if (response && Array.isArray(response.data)) return response.data;
-      return [];
+      const rawList = Array.isArray(response)
+        ? response
+        : (response?.items || response?.content || response?.data || []);
+
+      return rawList.map((item: any) => ({
+        id: item.id,
+        transactionId: item.referenceCode || item.transactionId || `TX_${item.id}`,
+        externalUserId: item.externalUserId || 'Khách hàng',
+        actionType: item.changeType || item.actionType || 'EARN',
+        points: item.pointChange != null ? Math.abs(Number(item.pointChange)) : (item.points || 0),
+        balanceAfter: item.balanceAfter != null ? Number(item.balanceAfter) : (item.points || 0),
+        partnerCode: item.partnerCode || 'NATCASH',
+        referenceId: item.referenceCode,
+        description: item.description || '',
+        createdAt: item.createdAt || new Date().toISOString(),
+      }));
     } catch (e) {
       console.error('[getPointLedger] Error:', e);
       return [];

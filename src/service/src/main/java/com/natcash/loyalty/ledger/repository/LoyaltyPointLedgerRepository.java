@@ -15,6 +15,9 @@ public interface LoyaltyPointLedgerRepository extends JpaRepository<LoyaltyPoint
     Page<LoyaltyPointLedgerEntity> findByTenantIdAndAccount_ExternalUserIdOrderByCreatedAtDesc(
             String tenantId, String externalUserId, Pageable pageable);
 
+    Page<LoyaltyPointLedgerEntity> findByTenantIdOrderByCreatedAtDesc(
+            String tenantId, Pageable pageable);
+
     Optional<LoyaltyPointLedgerEntity> findByTenantIdAndReferenceCode(String tenantId, String referenceCode);
 
     boolean existsByTenantIdAndReferenceCode(String tenantId, String referenceCode);

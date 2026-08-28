@@ -64,7 +64,8 @@ public class ClearingSettlementService {
             grandTotalPoints = grandTotalPoints.add(tx.getPointsRedeemed() != null ? tx.getPointsRedeemed() : BigDecimal.ZERO);
             grandTotalFiat = grandTotalFiat.add(tx.getFiatAmount() != null ? tx.getFiatAmount() : BigDecimal.ZERO);
 
-            redeemerMap.computeIfAbsent(tx.getRedeemerPartnerId(), k -> new ArrayList<>()).add(tx);
+            Long partnerId = tx.getRedeemerPartnerId() != null ? tx.getRedeemerPartnerId() : 1L;
+            redeemerMap.computeIfAbsent(partnerId, k -> new ArrayList<>()).add(tx);
         }
 
         List<PartnerClearingSummaryDto> summaries = new ArrayList<>();

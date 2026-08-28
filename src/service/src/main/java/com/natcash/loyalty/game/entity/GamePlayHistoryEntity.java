@@ -15,6 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -67,6 +69,7 @@ public class GamePlayHistoryEntity {
     private String voucherCode;
 
     @Column(name = "details", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String details;
 
     @Column(name = "status", nullable = false, length = 30)
