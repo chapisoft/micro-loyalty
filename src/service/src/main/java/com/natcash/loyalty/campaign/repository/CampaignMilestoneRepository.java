@@ -8,13 +8,22 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CampaignMilestoneRepository extends JpaRepository<CampaignMilestoneEntity, Long> {
+
+    List<CampaignMilestoneEntity> findByTenantIdOrderByCampaignCodeAscMilestoneStepAsc(String tenantId);
 
     List<CampaignMilestoneEntity> findByTenantIdAndStatusAndStartDateBeforeAndEndDateAfterOrderByCampaignCodeAscMilestoneStepAsc(
             String tenantId, CommonStatus status, Instant now1, Instant now2);
 
     List<CampaignMilestoneEntity> findByTenantIdAndCampaignCodeOrderByMilestoneStepAsc(
             String tenantId, String campaignCode);
+
+    Optional<CampaignMilestoneEntity> findByTenantIdAndCampaignCodeAndMilestoneStep(
+            String tenantId, String campaignCode, Integer milestoneStep);
+
+    Optional<CampaignMilestoneEntity> findByIdAndTenantId(Long id, String tenantId);
 }
+

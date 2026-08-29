@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -55,16 +56,14 @@ public class PolicyController {
 
     @GetMapping
     @Operation(summary = "Lấy danh sách chính sách tích tiêu điểm", description = "Trả về danh sách chính sách tích lũy và khấu trừ điểm tại các điểm bán")
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<List<PolicyResponse>> getPolicies(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         List<LoyaltyAcceptancePolicyEntity> entities = policyRepository.findByTenantId(tenantId);
 
         if (entities.isEmpty()) {
-            // Fallback default policies if DB is not seeded for this tenant yet
-            List<PolicyResponse> fallbackList = getFallbackPolicies(tenantId);
-            return ResponseEntity.ok(fallbackList);
+            entities = seedDefaultPolicies(tenantId);
         }
 
         List<PolicyResponse> responses = entities.stream()
@@ -125,6 +124,7 @@ public class PolicyController {
             if (request.getMaxBurnPercentage() != null) entity.setMaxBurnPercentage(request.getMaxBurnPercentage());
             if (request.getMinBillAmount() != null) entity.setMinBurnPoints(request.getMinBillAmount());
             if (request.getStatus() != null) entity.setStatus(request.getStatus());
+            entity.setUpdatedAt(Instant.now());
         } else {
             entity = LoyaltyAcceptancePolicyEntity.builder()
                     .tenantId(tenantId)
@@ -135,6 +135,8 @@ public class PolicyController {
                     .maxBurnPointsPerDay(new BigDecimal("10000.00"))
                     .allowedPointTypes("ALL")
                     .status(request.getStatus() != null ? request.getStatus() : CommonStatus.ACTIVE)
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
                     .build();
         }
 
@@ -166,6 +168,7 @@ public class PolicyController {
         if (request.getStatus() != null) {
             entity.setStatus(request.getStatus());
         }
+        entity.setUpdatedAt(Instant.now());
 
         LoyaltyAcceptancePolicyEntity updated = policyRepository.save(entity);
         return ResponseEntity.ok(mapEntityToResponse(updated));
@@ -205,71 +208,58 @@ public class PolicyController {
                 .maxBurnPercentage(entity.getMaxBurnPercentage() != null ? entity.getMaxBurnPercentage() : new BigDecimal("50.00"))
                 .status(entity.getStatus() != null ? entity.getStatus() : CommonStatus.ACTIVE)
                 .description(entity.getMaxBurnPercentage() != null ? "Quy định khấu trừ tối đa " + entity.getMaxBurnPercentage() + "% hóa đơn" : "Chính sách điểm")
+                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : Instant.now().toString())
+                .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().toString() : Instant.now().toString())
                 .build();
     }
 
-    private List<PolicyResponse> getFallbackPolicies(String tenantId) {
-        List<PolicyResponse> policies = new ArrayList<>();
-        if ("TENANT_NATCASH".equalsIgnoreCase(tenantId)) {
-            policies.add(PolicyResponse.builder()
-                    .id(1L)
-                    .code("EARN_TELCO_TOPUP")
-                    .name("Chính Sách Tích Điểm Nạp Cước Natcom")
+    private List<LoyaltyAcceptancePolicyEntity> seedDefaultPolicies(String tenantId) {
+        List<LoyaltyPartnerEntity> partners = partnerRepository.findByTenantId(tenantId);
+        if (partners.isEmpty()) {
+            partners = new ArrayList<>();
+            partners.add(partnerRepository.save(LoyaltyPartnerEntity.builder()
+                    .tenantId(tenantId)
+                    .partnerCode("DELIMART_RETAIL")
+                    .partnerName("Hệ Thống Siêu Thị Delimart")
+                    .partnerType(PartnerType.RETAIL)
+                    .apiKey("pk_live_delimart_" + System.currentTimeMillis())
+                    .secretKey("sk_live_delimart_secret")
+                    .status(CommonStatus.ACTIVE)
+                    .build()));
+            partners.add(partnerRepository.save(LoyaltyPartnerEntity.builder()
+                    .tenantId(tenantId)
                     .partnerCode("NATCOM_TELCO")
-                    .partnerName("Viễn Thông Natcom")
-                    .type("EARN")
-                    .earnRatePercent(new BigDecimal("2.00"))
-                    .exchangeRate(new BigDecimal("1.0000"))
-                    .minBillAmount(new BigDecimal("50.00"))
-                    .maxBurnPercentage(new BigDecimal("100.00"))
+                    .partnerName("Tổng Công Ty Viễn Thông Natcom")
+                    .partnerType(PartnerType.TELECOM)
+                    .apiKey("pk_live_natcom_" + System.currentTimeMillis())
+                    .secretKey("sk_live_natcom_secret")
                     .status(CommonStatus.ACTIVE)
-                    .description("Tích 2% cho mỗi giao dịch nạp tiền trực tuyến hoặc nạp thẻ cào")
-                    .build());
-            policies.add(PolicyResponse.builder()
-                    .id(2L)
-                    .code("BURN_NATCASH_PAYMENT")
-                    .name("Chính Sách Khấu Trừ Điểm Thanh Toán Ví")
-                    .partnerCode("NATCASH_WALLET")
-                    .partnerName("Ví Điện Tử Natcash")
-                    .type("BURN")
-                    .earnRatePercent(BigDecimal.ZERO)
-                    .exchangeRate(new BigDecimal("1.0000"))
-                    .minBillAmount(new BigDecimal("10.00"))
-                    .maxBurnPercentage(new BigDecimal("100.00"))
-                    .status(CommonStatus.ACTIVE)
-                    .description("Khấu trừ tối đa 100% khi thanh toán cước, data 4G và hóa đơn dịch vụ")
-                    .build());
-        } else {
-            policies.add(PolicyResponse.builder()
-                    .id(1L)
-                    .code("EARN_RETAIL_DEFAULT")
-                    .name("Chính Sách Tích Điểm Bán Lẻ Siêu Thị")
-                    .partnerCode("DELIMART")
-                    .partnerName("Siêu Thị Delimart")
-                    .type("EARN")
-                    .earnRatePercent(new BigDecimal("1.00"))
-                    .exchangeRate(new BigDecimal("1.0000"))
-                    .minBillAmount(new BigDecimal("50.00"))
-                    .maxBurnPercentage(new BigDecimal("50.00"))
-                    .status(CommonStatus.ACTIVE)
-                    .description("Tích 1% giá trị hóa đơn cho mỗi giao dịch mua sắm")
-                    .build());
-            policies.add(PolicyResponse.builder()
-                    .id(2L)
-                    .code("BURN_RETAIL_DEFAULT")
-                    .name("Chính Sách Tiêu Điểm Tại Quầy Thu Ngân")
-                    .partnerCode("DELIMART")
-                    .partnerName("Siêu Thị Delimart")
-                    .type("BURN")
-                    .earnRatePercent(BigDecimal.ZERO)
-                    .exchangeRate(new BigDecimal("1.0000"))
-                    .minBillAmount(new BigDecimal("10.00"))
-                    .maxBurnPercentage(new BigDecimal("50.00"))
-                    .status(CommonStatus.ACTIVE)
-                    .description("Khấu trừ tối đa 50% tổng giá trị hóa đơn thanh toán")
-                    .build());
+                    .build()));
         }
-        return policies;
+
+        List<LoyaltyAcceptancePolicyEntity> defaults = new ArrayList<>();
+        for (LoyaltyPartnerEntity partner : partners) {
+            Optional<LoyaltyAcceptancePolicyEntity> exist = policyRepository.findByTenantIdAndPartnerId(tenantId, partner.getId());
+            if (exist.isEmpty()) {
+                BigDecimal maxBurn = "NATCOM_TELCO".equalsIgnoreCase(partner.getPartnerCode()) ? new BigDecimal("100.00") : new BigDecimal("50.00");
+                defaults.add(LoyaltyAcceptancePolicyEntity.builder()
+                        .tenantId(tenantId)
+                        .partner(partner)
+                        .pointExchangeRate(BigDecimal.ONE)
+                        .maxBurnPercentage(maxBurn)
+                        .minBurnPoints(new BigDecimal("10.00"))
+                        .maxBurnPointsPerDay(new BigDecimal("10000.00"))
+                        .allowedPointTypes("ALL")
+                        .status(CommonStatus.ACTIVE)
+                        .createdAt(Instant.now())
+                        .updatedAt(Instant.now())
+                        .build());
+            }
+        }
+        if (!defaults.isEmpty()) {
+            return policyRepository.saveAll(defaults);
+        }
+        return policyRepository.findByTenantId(tenantId);
     }
 
     @Data
@@ -306,5 +296,7 @@ public class PolicyController {
         private BigDecimal maxBurnPercentage;
         private CommonStatus status;
         private String description;
+        private String createdAt;
+        private String updatedAt;
     }
 }

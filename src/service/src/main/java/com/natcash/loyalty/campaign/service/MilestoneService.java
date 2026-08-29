@@ -12,6 +12,7 @@ import com.natcash.loyalty.campaign.entity.UserMilestoneEntity;
 import com.natcash.loyalty.campaign.repository.CampaignMilestoneRepository;
 import com.natcash.loyalty.campaign.repository.UserMilestoneRepository;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
 import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.MilestoneStatus;
 import com.natcash.loyalty.domain.enums.PointActionType;
@@ -27,10 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -181,42 +179,131 @@ public class MilestoneService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<CampaignMilestoneEntity> getAllMilestones(String tenantId) {
-        return campaignRepository.findAll().stream()
-                .filter(m -> m.getTenantId().equals(tenantId))
-                .collect(Collectors.toList());
+        List<CampaignMilestoneEntity> list = campaignRepository.findByTenantIdOrderByCampaignCodeAscMilestoneStepAsc(tenantId);
+        if (list.isEmpty()) {
+            list = seedDefaultMilestones(tenantId);
+        }
+        return list;
     }
 
     @Transactional
     public CampaignMilestoneEntity createMilestone(String tenantId, CampaignMilestoneEntity request) {
         request.setTenantId(tenantId);
+        if (request.getCampaignCode() == null || request.getCampaignCode().trim().isEmpty()) {
+            request.setCampaignCode("CAMP_" + System.currentTimeMillis());
+        } else {
+            request.setCampaignCode(request.getCampaignCode().trim().toUpperCase());
+        }
+        if (request.getMilestoneStep() == null || request.getMilestoneStep() < 1) {
+            request.setMilestoneStep(1);
+        }
+
+        // Kiểm tra trùng chặng cột mốc trong cùng chiến dịch
+        Optional<CampaignMilestoneEntity> duplicate = campaignRepository
+                .findByTenantIdAndCampaignCodeAndMilestoneStep(tenantId, request.getCampaignCode(), request.getMilestoneStep());
+        if (duplicate.isPresent()) {
+            throw new LoyaltyException(ErrorCode.POLICY_VIOLATION,
+                    "Chặng " + request.getMilestoneStep() + " của chiến dịch " + request.getCampaignCode() + " đã tồn tại!");
+        }
+
         if (request.getStartDate() == null) request.setStartDate(Instant.now());
         if (request.getEndDate() == null) request.setEndDate(Instant.now().plusSeconds(90L * 86400L));
         if (request.getStatus() == null) request.setStatus(CommonStatus.ACTIVE);
+        if (request.getRewardPoints() == null) request.setRewardPoints(BigDecimal.ZERO);
+        if (request.getRewardGameTurns() == null) request.setRewardGameTurns(0);
+
         return campaignRepository.save(request);
     }
 
     @Transactional
     public CampaignMilestoneEntity updateMilestone(String tenantId, Long id, CampaignMilestoneEntity request) {
-        CampaignMilestoneEntity entity = campaignRepository.findById(id)
-                .filter(m -> m.getTenantId().equals(tenantId))
+        CampaignMilestoneEntity entity = campaignRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy cột mốc #" + id));
 
         if (request.getCampaignName() != null) entity.setCampaignName(request.getCampaignName());
+        if (request.getCampaignCode() != null) entity.setCampaignCode(request.getCampaignCode().trim().toUpperCase());
+        if (request.getMilestoneStep() != null) entity.setMilestoneStep(request.getMilestoneStep());
         if (request.getTargetMetric() != null) entity.setTargetMetric(request.getTargetMetric());
         if (request.getTargetValue() != null) entity.setTargetValue(request.getTargetValue());
         if (request.getRewardPoints() != null) entity.setRewardPoints(request.getRewardPoints());
+        if (request.getRewardVoucherId() != null) entity.setRewardVoucherId(request.getRewardVoucherId());
         if (request.getRewardGameTurns() != null) entity.setRewardGameTurns(request.getRewardGameTurns());
+        if (request.getStartDate() != null) entity.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) entity.setEndDate(request.getEndDate());
         if (request.getStatus() != null) entity.setStatus(request.getStatus());
+        entity.setUpdatedAt(Instant.now());
 
         return campaignRepository.save(entity);
     }
 
     @Transactional
     public void deleteMilestone(String tenantId, Long id) {
-        campaignRepository.findById(id)
-                .filter(m -> m.getTenantId().equals(tenantId))
-                .ifPresent(campaignRepository::delete);
+        campaignRepository.findByIdAndTenantId(id, tenantId).ifPresent(campaignRepository::delete);
+    }
+
+    private List<CampaignMilestoneEntity> seedDefaultMilestones(String tenantId) {
+        List<CampaignMilestoneEntity> defaults = new ArrayList<>();
+        Instant now = Instant.now();
+        Instant end = now.plusSeconds(180L * 86400L);
+
+        defaults.add(CampaignMilestoneEntity.builder()
+                .tenantId(tenantId)
+                .campaignCode("TOPUP_FESTIVAL_2026")
+                .campaignName("Tuần Lễ Vàng Nạp Cước Viễn Thông")
+                .milestoneStep(1)
+                .targetMetric(CampaignMetric.BILL_AMOUNT)
+                .targetValue(new BigDecimal("500.00"))
+                .rewardPoints(new BigDecimal("50.00"))
+                .rewardGameTurns(1)
+                .startDate(now)
+                .endDate(end)
+                .status(CommonStatus.ACTIVE)
+                .build());
+
+        defaults.add(CampaignMilestoneEntity.builder()
+                .tenantId(tenantId)
+                .campaignCode("TOPUP_FESTIVAL_2026")
+                .campaignName("Tuần Lễ Vàng Nạp Cước Viễn Thông")
+                .milestoneStep(2)
+                .targetMetric(CampaignMetric.BILL_AMOUNT)
+                .targetValue(new BigDecimal("1500.00"))
+                .rewardPoints(new BigDecimal("200.00"))
+                .rewardGameTurns(3)
+                .startDate(now)
+                .endDate(end)
+                .status(CommonStatus.ACTIVE)
+                .build());
+
+        defaults.add(CampaignMilestoneEntity.builder()
+                .tenantId(tenantId)
+                .campaignCode("RETAIL_SHOPPING_SPREE")
+                .campaignName("Hành Trình Mua Sắm Siêu Thị Không Tiền Mặt")
+                .milestoneStep(1)
+                .targetMetric(CampaignMetric.TRANSACTION_COUNT)
+                .targetValue(new BigDecimal("3.00"))
+                .rewardPoints(new BigDecimal("100.00"))
+                .rewardGameTurns(2)
+                .startDate(now)
+                .endDate(end)
+                .status(CommonStatus.ACTIVE)
+                .build());
+
+        defaults.add(CampaignMilestoneEntity.builder()
+                .tenantId(tenantId)
+                .campaignCode("RETAIL_SHOPPING_SPREE")
+                .campaignName("Hành Trình Mua Sắm Siêu Thị Không Tiền Mặt")
+                .milestoneStep(2)
+                .targetMetric(CampaignMetric.TRANSACTION_COUNT)
+                .targetValue(new BigDecimal("8.00"))
+                .rewardPoints(new BigDecimal("300.00"))
+                .rewardGameTurns(5)
+                .startDate(now)
+                .endDate(end)
+                .status(CommonStatus.ACTIVE)
+                .build());
+
+        return campaignRepository.saveAll(defaults);
     }
 }

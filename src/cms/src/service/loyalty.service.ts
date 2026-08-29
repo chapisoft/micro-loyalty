@@ -148,21 +148,30 @@ export const LoyaltyService = {
       const response: any = await apiClient.get('/loyalty/v1/policies', {
         headers: { 'X-Tenant-Id': tenantId },
       });
-      const data = Array.isArray(response) ? response : (response?.data || []);
+      const data = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.content)
+        ? response.content
+        : [];
       return data.map((p: any) => ({
         id: p.id,
         policyCode: p.code || `POL_${p.id}`,
+        partnerId: p.partnerId,
         partnerCode: p.partnerCode || 'DELIMART',
         partnerName: p.partnerName || 'Siêu Thị Delimart',
         type: p.type || 'BURN',
-        earnRate: p.earnRatePercent || 1,
-        earnRatePercent: p.earnRatePercent || 1,
-        exchangeRate: p.exchangeRate || 1,
-        maxBurnPercent: p.maxBurnPercentage || 50,
-        maxBurnPercentage: p.maxBurnPercentage || 50,
-        minBillAmount: p.minBillAmount || 10,
+        earnRate: p.earnRatePercent !== undefined ? p.earnRatePercent : 1,
+        earnRatePercent: p.earnRatePercent !== undefined ? p.earnRatePercent : 1,
+        exchangeRate: p.exchangeRate !== undefined ? p.exchangeRate : 1,
+        maxBurnPercent: p.maxBurnPercentage !== undefined ? p.maxBurnPercentage : 50,
+        maxBurnPercentage: p.maxBurnPercentage !== undefined ? p.maxBurnPercentage : 50,
+        minBillAmount: p.minBillAmount !== undefined ? p.minBillAmount : 10,
         status: p.status || 'ACTIVE',
-        effectiveDate: '01/01/2026',
+        effectiveDate: p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : new Date().toLocaleDateString('vi-VN'),
         description: p.description || '',
       }));
     } catch {
@@ -170,8 +179,28 @@ export const LoyaltyService = {
     }
   },
 
+  async getPartners(tenantId: string = 'TENANT_NATCASH'): Promise<any[]> {
+    try {
+      const response: any = await apiClient.get('/loyalty/v1/partners', {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      const data = Array.isArray(response) ? response : (response?.data || []);
+      return data.map((p: any) => ({
+        id: p.id,
+        partnerCode: p.partnerCode,
+        partnerName: p.partnerName,
+        partnerType: p.partnerType || 'RETAIL',
+        status: p.status || 'ACTIVE',
+      }));
+    } catch (e) {
+      console.error('[getPartners] Error:', e);
+      return [];
+    }
+  },
+
   async createPolicy(data: Partial<PolicyRuleModel>, tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel> {
     const payload = {
+      partnerId: data.partnerId,
       partnerCode: data.partnerCode,
       partnerName: data.partnerName,
       earnRatePercent: data.earnRate || data.earnRatePercent || 1,
@@ -189,6 +218,7 @@ export const LoyaltyService = {
 
   async updatePolicy(id: number, data: Partial<PolicyRuleModel>, tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel> {
     const payload = {
+      partnerId: data.partnerId,
       partnerCode: data.partnerCode,
       partnerName: data.partnerName,
       earnRatePercent: data.earnRate || data.earnRatePercent,
@@ -257,9 +287,29 @@ export const LoyaltyService = {
       const response: any = await apiClient.get('/loyalty/v1/milestones/admin-list', {
         headers: { 'X-Tenant-Id': tenantId },
       });
-      if (Array.isArray(response)) return response;
-      if (response && Array.isArray(response.data)) return response.data;
-      return [];
+      const data = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.content)
+        ? response.content
+        : [];
+      return data.map((m: any) => ({
+        id: m.id,
+        campaignCode: m.campaignCode,
+        campaignName: m.campaignName,
+        milestoneStep: m.milestoneStep || 1,
+        targetMetric: m.targetMetric || 'BILL_AMOUNT',
+        targetValue: m.targetValue || 0,
+        rewardPoints: m.rewardPoints || 0,
+        rewardVoucherId: m.rewardVoucherId,
+        rewardGameTurns: m.rewardGameTurns || 0,
+        startDate: m.startDate,
+        endDate: m.endDate,
+        status: m.status || 'ACTIVE',
+      }));
     } catch {
       return [];
     }
@@ -363,20 +413,6 @@ export const LoyaltyService = {
         clearingSettledAmount: 12500000,
         uptimePercent: 99.98,
       };
-    }
-  },
-
-  // 7. Danh sách đối tác liên minh
-  async getPartners(tenantId: string = 'TENANT_NATCASH'): Promise<any[]> {
-    try {
-      const response: any = await apiClient.get('/loyalty/v1/partners', {
-        headers: { 'X-Tenant-Id': tenantId },
-      });
-      if (Array.isArray(response)) return response;
-      if (response && Array.isArray(response.data)) return response.data;
-      return [];
-    } catch {
-      return [];
     }
   },
 

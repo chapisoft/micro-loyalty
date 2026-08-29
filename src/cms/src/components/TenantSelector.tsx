@@ -209,6 +209,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
         className="w-full shadow-1 border-round-xl"
         panelClassName="border-round-xl shadow-4"
         style={{ minWidth: '19rem', maxWidth: '25rem' }}
+        appendTo="self"
       />
     </div>
   );
