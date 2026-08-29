@@ -177,9 +177,10 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
         filter
         filterBy="name,code,country"
         placeholder={t('tenant.placeholder', { defaultValue: 'Chọn đối tác thuê bao...' })}
-        className="w-full md:w-20rem shadow-1 border-round-xl"
+        className="w-full shadow-1 border-round-xl"
         panelClassName="border-round-xl shadow-4"
-        style={{ minWidth: '16rem' }}
+        style={{ minWidth: '19rem', maxWidth: '25rem' }}
+        appendTo="self"
       />
     </div>
   );

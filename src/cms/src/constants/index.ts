@@ -2,11 +2,13 @@ const origin = typeof window !== 'undefined' && window.location && window.locati
 const defaultApiUrl = 'https://api.mid.io.vn';
 const defaultAuthUrl = 'https://api.mid.io.vn';
 
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 export const envVariables = {
   MODE: window.__ENV__?.VITE_MODE ?? import.meta.env.VITE_MODE ?? 'production',
-  API_URL: window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || defaultApiUrl,
-  API_AUTH_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || defaultAuthUrl,
-  CMS_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || defaultAuthUrl,
+  API_URL: window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:8080/loyalty-service' : defaultApiUrl),
+  API_AUTH_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || (isLocal ? 'http://localhost:8080/loyalty-service' : defaultAuthUrl),
+  CMS_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || (isLocal ? 'http://localhost:8080/loyalty-service' : defaultAuthUrl),
   ACCESS_TOKEN: window.__ENV__?.VITE_ACCESS_TOKEN ?? import.meta.env.VITE_ACCESS_TOKEN ?? '',
   CONTEXT_PATH: window.__ENV__?.VITE_CONTEXT_PATH ?? import.meta.env.VITE_CONTEXT_PATH ?? '/',
   IMAGE_URL: window.__ENV__?.VITE_IMAGE_URL || import.meta.env.VITE_IMAGE_URL || (origin ? `${origin}/` : 'https://cms.mid.io.vn/'),
@@ -31,7 +33,7 @@ export enum MutationKey {
   FORGOT_PASSWORD = 'FORGOT_PASSWORD',
   REGISTER_ACCOUNT = 'REGISTER_ACCOUNT',
   LOG_IN_OTP = 'LOGIN_OTP',
-  RESET_PASSWORD = 'RESET_PASSWORD',  
+  RESET_PASSWORD = 'RESET_PASSWORD',
   RESEND_OTP = 'RESEND_OTP',
 
   // Profile
@@ -107,11 +109,11 @@ export enum ELanguages {
 export const DEFAULT_PAGE_SIZE = 50;
 
 export const STATUS = {
-  NEW:      0,
-  ACTIVE:   1,
-  PENDING:  2,
+  NEW: 0,
+  ACTIVE: 1,
+  PENDING: 2,
   REJECTED: -1,
-  LOCKED:   -2,
+  LOCKED: -2,
 } as const;
 
 export type StatusValue = typeof STATUS[keyof typeof STATUS];
