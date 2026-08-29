@@ -108,24 +108,24 @@ export const Transactions: React.FC = () => {
   const actionTypeTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value="TÍCH ĐIỂM (EARN)" icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value="Tích Điểm" icon="pi pi-arrow-up-right" />;
       case 'BURN':
-        return <Tag severity="danger" value="TIÊU ĐIỂM (BURN)" icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value="Tiêu Điểm" icon="pi pi-arrow-down-left" />;
       case 'REWARD':
-        return <Tag severity="info" value="THƯỞNG CỘT MỐC" icon="pi pi-gift" />;
+        return <Tag severity="info" value="Thưởng Cột Mốc" icon="pi pi-gift" />;
       case 'SPIN':
-        return <Tag severity="warning" value="VÒNG QUAY" icon="pi pi-compass" />;
+        return <Tag severity="warning" value="Vòng Quay" icon="pi pi-compass" />;
       case 'VOUCHER':
-        return <Tag severity="info" value="ĐỔI VOUCHER" icon="pi pi-ticket" />;
+        return <Tag severity="info" value="Đổi Voucher" icon="pi pi-ticket" />;
       default:
-        return <Tag severity="secondary" value={rowData.actionType || 'GIAO DỊCH'} />;
+        return <Tag severity="secondary" value={rowData.actionType || 'Giao Dịch'} />;
     }
   };
 
   const pointsTemplate = (rowData: PointLedgerItem) => {
     const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
     return (
-      <span className={`font-bold ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
+      <span className={`font-medium font-mono ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
         {isPositive ? `+${rowData.points}` : `-${rowData.points}`} Điểm
       </span>
     );
@@ -133,7 +133,7 @@ export const Transactions: React.FC = () => {
 
   const balanceAfterTemplate = (rowData: PointLedgerItem) => {
     return (
-      <span className="font-semibold text-800">
+      <span className="font-normal font-mono text-700">
         {rowData.balanceAfter?.toLocaleString() || rowData.points?.toLocaleString() || 0} Điểm
       </span>
     );
@@ -211,17 +211,17 @@ export const Transactions: React.FC = () => {
             body={(_, { rowIndex }) => rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
-          <Column field="transactionId" header={t('transaction.id', { defaultValue: 'Mã Giao dịch' })} sortable style={{ minWidth: '13rem' }} />
-          <Column field="externalUserId" header={t('transaction.phone', { defaultValue: 'Hội viên / SĐT' })} sortable style={{ minWidth: '11rem' }} />
-          <Column field="actionType" body={actionTypeTemplate} header={t('transaction.action_type', { defaultValue: 'Loại Giao dịch' })} sortable style={{ minWidth: '13rem' }} />
-          <Column field="points" body={pointsTemplate} header={t('transaction.amount', { defaultValue: 'Biến động Điểm' })} sortable style={{ minWidth: '11rem' }} />
-          <Column field="balanceAfter" body={balanceAfterTemplate} header={t('transaction.balance_after', { defaultValue: 'Số dư sau GD' })} sortable style={{ minWidth: '10rem' }} />
-          <Column field="partnerCode" header={t('transaction.partner', { defaultValue: 'Đối tác' })} sortable style={{ minWidth: '11rem' }} />
-          <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Thời gian' })} sortable style={{ minWidth: '12rem' }} />
+          <Column field="transactionId" header={<span title={t('transaction.id_tooltip', { defaultValue: 'Mã định danh giao dịch sổ cái duy nhất' })}>{t('transaction.id', { defaultValue: 'Mã GD' })}</span>} sortable style={{ minWidth: '10rem', fontWeight: 600 }} />
+          <Column field="externalUserId" header={<span title={t('transaction.phone_tooltip', { defaultValue: 'Số điện thoại hoặc mã định danh hội viên' })}>{t('transaction.phone', { defaultValue: 'Số Điện Thoại' })}</span>} sortable style={{ minWidth: '9.5rem' }} />
+          <Column field="actionType" body={actionTypeTemplate} header={<span title={t('transaction.action_tooltip', { defaultValue: 'Loại biến động điểm trong hệ thống' })}>{t('transaction.action_type', { defaultValue: 'Loại GD' })}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="points" body={pointsTemplate} header={<span title={t('transaction.amount_tooltip', { defaultValue: 'Số lượng điểm cộng hoặc trừ' })}>{t('transaction.amount', { defaultValue: 'Biến Động' })}</span>} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+          <Column field="balanceAfter" body={balanceAfterTemplate} header={<span title={t('transaction.balance_after_tooltip', { defaultValue: 'Số dư khả dụng của hội viên sau giao dịch' })}>{t('transaction.balance_after', { defaultValue: 'Số Dư Sau' })}</span>} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+          <Column field="partnerCode" header={t('transaction.partner', { defaultValue: 'Đối Tác' })} sortable style={{ minWidth: '9rem' }} />
+          <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Thời Gian' })} sortable style={{ minWidth: '10rem' }} />
           <Column
-            header={t('common.status', { defaultValue: 'Trạng thái' })}
+            header={t('common.status', { defaultValue: 'Trạng Thái' })}
             body={() => <Tag severity="success" value="Hoàn tất" />}
-            style={{ width: '8rem' }}
+            style={{ width: '7rem', textAlign: 'center' }}
           />
         </DataTable>
       </div>

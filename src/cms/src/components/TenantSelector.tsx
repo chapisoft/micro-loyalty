@@ -124,39 +124,68 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
   const valueTemplate = (option: TenantOption) => {
     if (!option) return <span>{t('tenant.choose_partner', { defaultValue: 'Chọn đối tác...' })}</span>;
     return (
-      <div className="flex align-items-center gap-2">
+      <div className="flex align-items-center" style={{ gap: '8px', minWidth: 0, width: '100%' }}>
         <div
-          className="flex align-items-center justify-content-center border-round-md text-white font-bold"
-          style={{ width: '1.5rem', height: '1.5rem', backgroundColor: option.badgeColor, fontSize: '10px' }}
+          className="flex align-items-center justify-content-center text-white font-bold flex-shrink-0"
+          style={{
+            width: '22px',
+            height: '22px',
+            minWidth: '22px',
+            minHeight: '22px',
+            backgroundColor: option.badgeColor,
+            borderRadius: '6px',
+            flexShrink: 0,
+          }}
         >
           <i className={option.icon} style={{ fontSize: '11px' }} />
         </div>
-        <span className="font-bold text-900" style={{ fontSize: '13px' }}>
+        <span
+          className="font-bold text-900 white-space-nowrap overflow-hidden text-overflow-ellipsis"
+          style={{ fontSize: '13px', flex: '1 1 auto', minWidth: 0 }}
+        >
           {option.name}
         </span>
-        <Tag value={option.code} severity="info" style={{ fontSize: '10px', padding: '2px 6px' }} />
+        <Tag
+          value={option.code}
+          severity="info"
+          className="flex-shrink-0"
+          style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}
+        />
       </div>
     );
   };
 
   const itemTemplate = (option: TenantOption) => {
     return (
-      <div className="flex align-items-center justify-content-between py-1" style={{ width: '100%' }}>
-        <div className="flex align-items-center gap-2.5">
+      <div className="flex align-items-center justify-content-between py-1 px-1" style={{ width: '100%', gap: '12px' }}>
+        <div className="flex align-items-center" style={{ gap: '12px', minWidth: 0 }}>
           <div
-            className="flex align-items-center justify-content-center border-round-lg text-white"
-            style={{ width: '2rem', height: '2rem', backgroundColor: option.badgeColor }}
+            className="flex align-items-center justify-content-center text-white flex-shrink-0"
+            style={{
+              width: '32px',
+              height: '32px',
+              minWidth: '32px',
+              minHeight: '32px',
+              backgroundColor: option.badgeColor,
+              borderRadius: '8px',
+              flexShrink: 0,
+            }}
           >
-            <i className={option.icon} style={{ fontSize: '13px' }} />
+            <i className={option.icon} style={{ fontSize: '14px' }} />
           </div>
-          <div>
-            <div className="font-bold text-900" style={{ fontSize: '13px' }}>
+          <div style={{ minWidth: 0 }}>
+            <div className="font-bold text-900 white-space-nowrap overflow-hidden text-overflow-ellipsis" style={{ fontSize: '13px' }}>
               {option.name}
             </div>
-            <div className="text-500 text-xs">{option.country}</div>
+            <div className="text-500 text-xs mt-1">{option.country}</div>
           </div>
         </div>
-        <Tag value={option.code} severity="secondary" style={{ fontSize: '10px', padding: '2px 6px' }} />
+        <Tag
+          value={option.code}
+          severity="secondary"
+          className="flex-shrink-0"
+          style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}
+        />
       </div>
     );
   };

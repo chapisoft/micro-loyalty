@@ -67,7 +67,7 @@ public class PartnerController {
             @PathVariable("id") Long id,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        LoyaltyPartnerEntity entity = partnerRepository.findById(id)
+        LoyaltyPartnerEntity entity = partnerRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy đối tác #" + id));
         return ResponseEntity.ok(mapToResponse(entity));
     }
@@ -134,7 +134,7 @@ public class PartnerController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestBody PartnerRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        LoyaltyPartnerEntity entity = partnerRepository.findById(id)
+        LoyaltyPartnerEntity entity = partnerRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy đối tác #" + id));
 
         if (request.getPartnerName() != null) entity.setPartnerName(request.getPartnerName());
@@ -172,7 +172,7 @@ public class PartnerController {
             @PathVariable("id") Long id,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        partnerRepository.findById(id).ifPresent(partnerRepository::delete);
+        partnerRepository.findByIdAndTenantId(id, tenantId).ifPresent(partnerRepository::delete);
         return ResponseEntity.noContent().build();
     }
 

@@ -103,8 +103,10 @@ pipeline {
                     echo "Triển khai trực tiếp lên máy chủ SaaS qua Docker Daemon..."
                     dir('deploy/micro-loyalty') {
                         sh '''
-                            # 1. Đồng bộ cấu hình .env nếu chưa có
-                            if [ ! -f ".env" ]; then
+                            # 1. Đồng bộ cấu hình .env từ máy chủ nếu có, hoặc dùng .env.example
+                            if [ -f "/home/dip/micro-loyalty/deploy/.env" ]; then
+                                cp /home/dip/micro-loyalty/deploy/.env .env
+                            elif [ ! -f ".env" ]; then
                                 cp .env.example .env
                             fi
 

@@ -435,6 +435,7 @@ export const PolicyConfigurationPage: React.FC = () => {
             }
             body={(row: PolicyRule) => <span className="font-mono">{row.earnRate}%</span>}
             sortable
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column
             field="maxBurnPercentage"
