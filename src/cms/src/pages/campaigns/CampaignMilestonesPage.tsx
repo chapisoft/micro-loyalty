@@ -132,7 +132,7 @@ export const CampaignMilestonesPage: React.FC = () => {
     return [
       { label: `-- ${t('milestone.reward_voucher_placeholder', { defaultValue: 'Không tặng voucher' })} --`, value: null },
       ...vouchers.map((v) => ({
-        label: `[${v.code}] ${v.title} (${v.discountValue} ${v.discountType === 'PERCENT' ? '%' : 'HTG'})`,
+        label: `[${v.voucherCode}] ${v.title} (${v.discountValue} ${v.discountType === 'PERCENT' ? '%' : 'HTG'})`,
         value: v.id,
       })),
     ];
@@ -213,7 +213,7 @@ export const CampaignMilestonesPage: React.FC = () => {
           toast.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: e?.message || 'Không thể xóa cột mốc, vui lòng thử lại sau!',
+            detail: e?.message || t('milestone.delete_failed', { defaultValue: 'Không thể xóa cột mốc, vui lòng thử lại sau!' }),
             life: 4000,
           });
         } finally {
@@ -265,7 +265,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || 'Không thể lưu cột mốc chiến dịch, vui lòng thử lại sau!',
+        detail: e?.message || t('milestone.save_failed', { defaultValue: 'Không thể lưu cột mốc chiến dịch, vui lòng thử lại sau!' }),
         life: 4000,
       });
     } finally {
@@ -278,7 +278,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       toast.current?.show({
         severity: 'warn',
         summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
-        detail: 'Vui lòng nhập đầy đủ Mã chiến dịch và Tên chiến dịch!',
+        detail: t('milestone.code_name_required', { defaultValue: 'Vui lòng nhập đầy đủ Mã chiến dịch và Tên chiến dịch!' }),
         life: 3000,
       });
       return;
@@ -286,7 +286,11 @@ export const CampaignMilestonesPage: React.FC = () => {
 
     if (isEdit) {
       confirmDialog({
-        message: `Bạn có chắc chắn muốn cập nhật thay đổi cho chặng ${formData.milestoneStep} của chiến dịch "${formData.campaignName}"?`,
+        message: t('milestone.confirm_update_msg', {
+          step: formData.milestoneStep,
+          name: formData.campaignName,
+          defaultValue: `Bạn có chắc chắn muốn cập nhật thay đổi cho chặng ${formData.milestoneStep} của chiến dịch "${formData.campaignName}"?`,
+        }),
         header: t('milestone.edit_title', { defaultValue: 'Chỉnh sửa Cột mốc' }),
         icon: 'pi pi-info-circle',
         acceptLabel: t('common.save', { defaultValue: 'Lưu thay đổi' }),
@@ -346,17 +350,17 @@ export const CampaignMilestonesPage: React.FC = () => {
       case CampaignMetric.TRANSACTION_COUNT:
         icon = 'pi pi-sync';
         label = t('milestone.metric_tx_count', { defaultValue: 'Số giao dịch' });
-        unit = 'lần';
+        unit = t('milestone.unit_times', { defaultValue: 'lần' });
         break;
       case CampaignMetric.EARN_POINTS:
         icon = 'pi pi-star';
         label = t('milestone.metric_points', { defaultValue: 'Điểm tích lũy' });
-        unit = 'điểm';
+        unit = t('common.points', { defaultValue: 'điểm' });
         break;
       case CampaignMetric.GAME_SPINS:
         icon = 'pi pi-bolt';
         label = t('milestone.metric_spins', { defaultValue: 'Lượt quay game' });
-        unit = 'lượt';
+        unit = t('common.spins', { defaultValue: 'lượt' });
         break;
     }
 
@@ -399,7 +403,7 @@ export const CampaignMilestonesPage: React.FC = () => {
           <Tag
             severity="success"
             icon="pi pi-ticket"
-            value={voucher.code}
+            value={voucher.voucherCode}
             title={`${voucher.title} (${voucher.discountValue} ${voucher.discountType === 'PERCENT' ? '%' : 'HTG'})`}
           />
         )}
@@ -489,7 +493,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             header={<span title={t('milestone.step_tooltip', { defaultValue: 'Thứ tự chặng cột mốc liên tiếp trong chiến dịch' })}>{t('milestone.step', { defaultValue: 'Chặng #' })}</span>}
             body={(row: CampaignMilestoneItem) => (
               <Tag
-                value={`Chặng ${row.milestoneStep}`}
+                value={t('milestone.step_label', { step: row.milestoneStep, defaultValue: `Chặng ${row.milestoneStep}` })}
                 severity={row.milestoneStep === 1 ? 'info' : row.milestoneStep === 2 ? 'warning' : 'danger'}
                 rounded
               />

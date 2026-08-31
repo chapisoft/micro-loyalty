@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -9,6 +10,7 @@ import { Checkbox } from 'primereact/checkbox';
 import { sandboxAdminService, SandboxGroup, SandboxMenu } from '@/service/sandbox.service';
 
 export function SandboxGroupsPage() {
+  const { t } = useTranslation();
   const toast = useRef<Toast>(null);
 
   const [groups, setGroups] = useState<SandboxGroup[]>([]);
@@ -64,8 +66,8 @@ export function SandboxGroupsPage() {
       await sandboxAdminService.assignGroupMenus(selectedGroup.id, selectedMenuIds);
       toast.current?.show({
         severity: 'success',
-        summary: 'Thành công',
-        detail: 'Đã lưu phân quyền menu bài viết cho nhóm đối tác',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: t('sandbox.save_permissions_success', { defaultValue: 'Đã lưu phân quyền menu bài viết cho nhóm đối tác' }),
         life: 2500,
       });
       setShowPermissionDialog(false);
@@ -73,8 +75,8 @@ export function SandboxGroupsPage() {
     } catch (e) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Lỗi',
-        detail: 'Không thể lưu phân quyền',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: t('sandbox.save_permissions_failed', { defaultValue: 'Không thể lưu phân quyền' }),
         life: 2500,
       });
     }
@@ -84,8 +86,8 @@ export function SandboxGroupsPage() {
     if (!formData.name) {
       toast.current?.show({
         severity: 'warn',
-        summary: 'Thiếu thông tin',
-        detail: 'Vui lòng nhập tên nhóm đối tác',
+        summary: t('common.warning', { defaultValue: 'Thiếu thông tin' }),
+        detail: t('sandbox.enter_group_name', { defaultValue: 'Vui lòng nhập tên nhóm đối tác' }),
         life: 2500,
       });
       return;
@@ -95,8 +97,8 @@ export function SandboxGroupsPage() {
       await sandboxAdminService.createGroup(formData as SandboxGroup);
       toast.current?.show({
         severity: 'success',
-        summary: 'Thành công',
-        detail: 'Đã tạo nhóm đối tác mới',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: t('sandbox.create_group_success', { defaultValue: 'Đã tạo nhóm đối tác mới' }),
         life: 2500,
       });
       setShowCreateDialog(false);
@@ -104,8 +106,8 @@ export function SandboxGroupsPage() {
     } catch (e) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Lỗi',
-        detail: 'Không thể tạo nhóm',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: t('sandbox.create_group_failed', { defaultValue: 'Không thể tạo nhóm' }),
         life: 2500,
       });
     }
@@ -118,15 +120,15 @@ export function SandboxGroupsPage() {
       {/* Header */}
       <div className="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-900 m-0">Quản Lý Nhóm & Phân Quyền Sandbox</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-900 m-0">{t('sandbox.groups_title', { defaultValue: 'Quản Lý Nhóm & Phân Quyền Sandbox' })}</h1>
           <p className="text-xs text-500 m-0 mt-1 font-medium">
-            Tạo nhóm đối tác và phân quyền xem các danh mục menu & bài viết hướng dẫn
+            {t('sandbox.groups_subtitle', { defaultValue: 'Tạo nhóm đối tác và phân quyền xem các danh mục menu & bài viết hướng dẫn' })}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button label="Làm mới" icon="pi pi-refresh" outlined onClick={loadData} className="p-button-sm font-medium" />
+          <Button label={t('common.refresh', { defaultValue: 'Làm mới' })} icon="pi pi-refresh" outlined onClick={loadData} className="p-button-sm font-medium" />
           <Button
-            label="Tạo Nhóm Mới"
+            label={t('sandbox.create_group_btn', { defaultValue: 'Tạo Nhóm Mới' })}
             icon="pi pi-plus"
             onClick={() => {
               setFormData({ name: '', description: '' });
@@ -140,18 +142,18 @@ export function SandboxGroupsPage() {
 
       {/* Table */}
       <div className="surface-card p-4 border-round-2xl border-1 surface-border shadow-1">
-        <DataTable value={groups} loading={loading} paginator rows={10} emptyMessage="Chưa có nhóm nào" className="p-datatable-sm">
-          <Column field="name" header="Tên nhóm đối tác" body={(r: SandboxGroup) => <span className="font-semibold text-900">{r.name}</span>} />
-          <Column field="description" header="Mô tả" />
+        <DataTable value={groups} loading={loading} paginator rows={10} emptyMessage={t('sandbox.no_groups', { defaultValue: 'Chưa có nhóm nào' })} className="p-datatable-sm">
+          <Column field="name" header={t('sandbox.group_name', { defaultValue: 'Tên nhóm đối tác' })} body={(r: SandboxGroup) => <span className="font-semibold text-900">{r.name}</span>} />
+          <Column field="description" header={t('common.description', { defaultValue: 'Mô tả' })} />
           <Column
-            header="Số Menu Phân Quyền"
-            body={(r: SandboxGroup) => <span className="font-mono font-semibold text-orange-600">{(r.menuIds || []).length} Menu</span>}
+            header={t('sandbox.assigned_menus_count', { defaultValue: 'Số Menu Phân Quyền' })}
+            body={(r: SandboxGroup) => <span className="font-mono font-semibold text-orange-600">{(r.menuIds || []).length} {t('sandbox.menus_unit', { defaultValue: 'Menu' })}</span>}
           />
           <Column
-            header="Thao tác"
+            header={t('common.actions', { defaultValue: 'Thao tác' })}
             body={(r: SandboxGroup) => (
               <Button
-                label="Phân quyền Menu"
+                label={t('sandbox.assign_menu_btn', { defaultValue: 'Phân quyền Menu' })}
                 icon="pi pi-shield"
                 size="small"
                 outlined
@@ -164,15 +166,15 @@ export function SandboxGroupsPage() {
 
       {/* Permission Assignment Dialog */}
       <Dialog
-        header={`Phân Quyền Menu Bài Viết Cho Nhóm: ${selectedGroup?.name}`}
+        header={t('sandbox.permission_dialog_header', { name: selectedGroup?.name || '', defaultValue: `Phân Quyền Menu Bài Viết Cho Nhóm: ${selectedGroup?.name}` })}
         visible={showPermissionDialog}
         style={{ width: '560px' }}
         onHide={() => setShowPermissionDialog(false)}
         footer={
           <div className="flex justify-content-end gap-2">
-            <Button label="Hủy" severity="secondary" outlined onClick={() => setShowPermissionDialog(false)} />
+            <Button label={t('common.cancel', { defaultValue: 'Hủy' })} severity="secondary" outlined onClick={() => setShowPermissionDialog(false)} />
             <Button
-              label="Lưu Phân Quyền"
+              label={t('sandbox.save_permissions_btn', { defaultValue: 'Lưu Phân Quyền' })}
               icon="pi pi-check"
               onClick={handleSavePermissions}
               style={{ background: '#FF6B00', borderColor: '#FF6B00', color: '#ffffff' }}
@@ -180,7 +182,7 @@ export function SandboxGroupsPage() {
           </div>
         }
       >
-        <p className="text-xs text-500 mb-3 font-medium">Chọn các danh mục tài liệu & menu mà đối tác trong nhóm này được phép xem:</p>
+        <p className="text-xs text-500 mb-3 font-medium">{t('sandbox.select_menus_hint', { defaultValue: 'Chọn các danh mục tài liệu & menu mà đối tác trong nhóm này được phép xem:' })}</p>
         <div className="flex flex-column gap-2 max-h-20rem overflow-y-auto border-1 surface-border p-3 border-round-xl">
           {menus.map((m) => {
             const isChecked = selectedMenuIds.includes(m.id || 0);
@@ -203,15 +205,15 @@ export function SandboxGroupsPage() {
 
       {/* Create Group Dialog */}
       <Dialog
-        header="Tạo Mới Nhóm Đối Tác"
+        header={t('sandbox.create_group_dialog_header', { defaultValue: 'Tạo Mới Nhóm Đối Tác' })}
         visible={showCreateDialog}
         style={{ width: '480px' }}
         onHide={() => setShowCreateDialog(false)}
         footer={
           <div className="flex justify-content-end gap-2">
-            <Button label="Hủy" severity="secondary" outlined onClick={() => setShowCreateDialog(false)} />
+            <Button label={t('common.cancel', { defaultValue: 'Hủy' })} severity="secondary" outlined onClick={() => setShowCreateDialog(false)} />
             <Button
-              label="Tạo Nhóm"
+              label={t('sandbox.create_group_submit', { defaultValue: 'Tạo Nhóm' })}
               icon="pi pi-check"
               onClick={handleSaveGroup}
               style={{ background: '#FF6B00', borderColor: '#FF6B00', color: '#ffffff' }}
@@ -221,7 +223,7 @@ export function SandboxGroupsPage() {
       >
         <div className="flex flex-column gap-3 mt-2">
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Tên nhóm *</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('sandbox.group_name_label', { defaultValue: 'Tên nhóm *' })}</label>
             <InputText
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -230,11 +232,11 @@ export function SandboxGroupsPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Mô tả nhóm</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('sandbox.group_desc_label', { defaultValue: 'Mô tả nhóm' })}</label>
             <InputText
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Mô tả phạm vi hoặc phân khúc đối tác..."
+              placeholder={t('sandbox.group_desc_placeholder', { defaultValue: 'Mô tả phạm vi hoặc phân khúc đối tác...' })}
               className="w-full p-inputtext-sm"
             />
           </div>

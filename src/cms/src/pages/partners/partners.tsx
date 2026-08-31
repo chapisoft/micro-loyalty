@@ -47,7 +47,7 @@ export const Partners: React.FC = () => {
   const deleteItem = async (item: Partner) => {
     if (!item.id) return;
     confirmDialog({
-      message: `Bạn có chắc chắn muốn xóa đối tác "${item.partnerName}" khỏi hệ thống không?`,
+      message: t('partner.confirm_delete_msg', { name: item.partnerName, defaultValue: `Bạn có chắc chắn muốn xóa đối tác "${item.partnerName}" khỏi hệ thống không?` }),
       header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Đối Tác' }),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
@@ -59,7 +59,7 @@ export const Partners: React.FC = () => {
           toast.current?.show({
             severity: 'success',
             summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: 'Đã xóa đối tác thành công!',
+            detail: t('partner.delete_success', { defaultValue: 'Đã xóa đối tác thành công!' }),
             life: 3000,
           });
           fetchData();
@@ -68,7 +68,7 @@ export const Partners: React.FC = () => {
           toast.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: 'Xóa đối tác thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            detail: t('partner.delete_failed', { defaultValue: 'Xóa đối tác thất bại' }) + ': ' + (e?.message || ''),
             life: 4000,
           });
         }
@@ -77,7 +77,7 @@ export const Partners: React.FC = () => {
   };
 
   const editItem = (item: Partner) => {
-    const statusVal = item.status === 'ACTIVE' || item.status === 1 ? 1 : 0;
+    const statusVal = Number(item.status) === 1 || String(item.status) === 'ACTIVE' ? 1 : 0;
     setFormData({ ...item, status: statusVal });
     setIsEdit(true);
     setShowDialog(true);
@@ -90,7 +90,7 @@ export const Partners: React.FC = () => {
         toast.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: 'Cập nhật thông tin đối tác thành công!',
+          detail: t('partner.update_success', { defaultValue: 'Cập nhật thông tin đối tác thành công!' }),
           life: 3000,
         });
       } else {
@@ -98,7 +98,7 @@ export const Partners: React.FC = () => {
         toast.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: 'Thêm mới đối tác thành công!',
+          detail: t('partner.create_success', { defaultValue: 'Thêm mới đối tác thành công!' }),
           life: 3000,
         });
       }
@@ -109,7 +109,7 @@ export const Partners: React.FC = () => {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: 'Lưu đối tác thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        detail: t('partner.save_failed', { defaultValue: 'Lưu đối tác thất bại' }) + ': ' + (e?.message || ''),
         life: 4000,
       });
     }
@@ -118,7 +118,7 @@ export const Partners: React.FC = () => {
   const saveItem = () => {
     if (isEdit) {
       confirmDialog({
-        message: `Bạn có chắc chắn muốn lưu các thay đổi cho đối tác "${formData.partnerName || ''}"?`,
+        message: t('partner.confirm_update_msg', { name: formData.partnerName || '', defaultValue: `Bạn có chắc chắn muốn lưu các thay đổi cho đối tác "${formData.partnerName || ''}"?` }),
         header: t('common.confirm_update', { defaultValue: 'Xác nhận Cập Nhật' }),
         icon: 'pi pi-question-circle',
         acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),
@@ -156,7 +156,7 @@ export const Partners: React.FC = () => {
   };
 
   const statusBodyTemplate = (rowData: Partner) => {
-    const isActive = rowData.status === 1 || rowData.status === 'ACTIVE';
+    const isActive = Number(rowData.status) === 1 || String(rowData.status) === 'ACTIVE';
     return isActive ? (
       <Tag severity="success" value={t('common.active', { defaultValue: 'Đang hoạt động' })} />
     ) : (
@@ -196,10 +196,10 @@ export const Partners: React.FC = () => {
       <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.partners', { defaultValue: 'Đối tác' }) }]} />
       <div className="card shadow-1 border-round surface-card p-4">
-        <DataTable
+        <DataTable<any>
           value={items}
           selection={selectedItems}
-          onSelectionChange={(e) => setSelectedItems(e.value as Partner[])}
+          onSelectionChange={(e: any) => setSelectedItems(e.value || [])}
           loading={loading}
           header={header}
           dataKey="id"

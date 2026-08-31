@@ -268,10 +268,10 @@ const Header: React.FC = () => {
 
   const rawName = currentUser?.fullName || currentUser?.userName || (currentUser as any)?.username;
   const displayName = React.useMemo(() => {
-    if (!rawName) return 'Quản Trị Viên';
-    if (rawName.toLowerCase() === 'admin') return 'Quản Trị Viên Hệ Thống';
+    if (!rawName) return t('common.administrator', { defaultValue: 'Quản Trị Viên' });
+    if (rawName.toLowerCase() === 'admin') return t('common.system_admin', { defaultValue: 'Quản Trị Viên Hệ Thống' });
     return rawName;
-  }, [rawName]);
+  }, [rawName, t]);
 
   const userEmail = currentUser?.email || (currentUser?.userName ? `${currentUser.userName}@mid.io.vn` : 'admin@mid.io.vn');
 

@@ -362,11 +362,15 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
                     onClick={revealOneLetterHint}
                     className="text-[10px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md hover:bg-amber-400 transition"
                   >
-                    💡 Mở khóa 1 chữ cái ngẫu nhiên
+                    {t('games.wordle.unlock_letter_btn', { defaultValue: '💡 Mở khóa 1 chữ cái ngẫu nhiên' })}
                   </button>
                 ) : (
                   <p className="text-[11px] text-emerald-400 font-bold">
-                    ✓ Chữ cái ở vị trí thứ {revealedLetterIdx + 1} là: &quot;{secretWord[revealedLetterIdx]}&quot;
+                    {t('games.wordle.revealed_letter_info', {
+                      pos: revealedLetterIdx + 1,
+                      letter: secretWord[revealedLetterIdx],
+                      defaultValue: `✓ Chữ cái ở vị trí thứ ${revealedLetterIdx + 1} là: "${secretWord[revealedLetterIdx]}"`,
+                    })}
                   </p>
                 )}
               </div>

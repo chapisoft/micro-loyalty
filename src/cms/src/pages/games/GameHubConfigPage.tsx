@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { DataTable } from 'primereact/datatable';
@@ -189,16 +189,17 @@ export const GameHubConfigPage: React.FC = () => {
     (g) => g.status === CommonStatus.ACTIVE || g.status === 'ACTIVE'
   ).length;
 
-  const multiplierOptions = [
-    { label: 'x2 Lượt chơi (Gấp đôi)', value: 2 },
-    { label: 'x3 Lượt chơi (Gấp ba)', value: 3 },
-    { label: 'x5 Lượt chơi (Đặc biệt)', value: 5 },
-  ];
+  const multiplierOptions = useMemo(() => [
+    { label: t('game_hub.multiplier_2x', { defaultValue: 'x2 Lượt chơi (Gấp đôi)' }), value: 2 },
+    { label: t('game_hub.multiplier_3x', { defaultValue: 'x3 Lượt chơi (Gấp ba)' }), value: 3 },
+    { label: t('game_hub.multiplier_5x', { defaultValue: 'x5 Lượt chơi (Đặc biệt)' }), value: 5 },
+  ], [t]);
 
   // Render text thuần cho thể loại không dùng style màu mè
   const categoryTextTemplate = (rowData: GameItem) => {
-    const text = CATEGORY_NAMES[rowData.category] || rowData.category || '-';
-    return <span className="text-700">{text}</span>;
+    const key = `game.cat_${(rowData.category || '').toLowerCase()}`;
+    const fallback = CATEGORY_NAMES[rowData.category] || rowData.category || '-';
+    return <span className="text-700">{t(key, { defaultValue: fallback })}</span>;
   };
 
   // Render text thuần cho thứ tự sảnh
@@ -215,17 +216,17 @@ export const GameHubConfigPage: React.FC = () => {
       return <span className="text-blue-600 font-bold text-xs">NEW</span>;
     }
     if (rowData.lobbyBadge === 'EVENT') {
-      return <span className="text-orange-600 font-bold text-xs">Sự kiện</span>;
+      return <span className="text-orange-600 font-bold text-xs">{t('game_hub.badge_event', { defaultValue: 'Sự kiện' })}</span>;
     }
-    return <span className="text-400 text-xs">Bình thường</span>;
+    return <span className="text-400 text-xs">{t('game_hub.badge_normal', { defaultValue: 'Bình thường' })}</span>;
   };
 
   // Render text thuần cho trạng thái hiển thị
   const lobbyVisibilityTemplate = (rowData: GameItem) => {
     return rowData.lobbyVisible ? (
-      <span className="text-green-600 font-medium text-xs">Đang hiển thị</span>
+      <span className="text-green-600 font-medium text-xs">{t('game_hub.visibility_visible', { defaultValue: 'Đang hiển thị' })}</span>
     ) : (
-      <span className="text-500 text-xs">Tạm ẩn</span>
+      <span className="text-500 text-xs">{t('game_hub.visibility_hidden', { defaultValue: 'Tạm ẩn' })}</span>
     );
   };
 
@@ -408,7 +409,7 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
             </div>
             <span className="text-500 text-xs">
-              Cầu nối JSBridge & Webview Live
+              {t('game_hub.jsbridge_status', { defaultValue: 'Cầu nối JSBridge & Webview Live' })}
             </span>
           </div>
         </div>

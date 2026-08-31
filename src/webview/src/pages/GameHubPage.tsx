@@ -456,7 +456,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               <p className="text-[10px] sm:text-[11px] text-slate-500">{t('gamehub.turn_shop_subtitle')}</p>
             </div>
             <span className="text-[9px] sm:text-[10px] bg-amber-50 text-amber-900 font-bold px-2 py-0.5 rounded-full border border-amber-200">
-              Ví Phần Thưởng
+              {t('common.reward_wallet', { defaultValue: 'Ví Phần Thưởng' })}
             </span>
           </div>
 
@@ -507,7 +507,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
               <p className="text-[10px] sm:text-[11px] text-slate-500">{t('gamehub.leaderboard_subtitle')}</p>
             </div>
             <span className="text-[9px] sm:text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-              <Award className="w-3 h-3" /> Tuần Này
+              <Award className="w-3 h-3" /> {t('gamehub.this_week', { defaultValue: 'Tuần Này' })}
             </span>
           </div>
 
@@ -532,9 +532,9 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
 
                 <div className="text-right">
                   <div className="font-black text-amber-600 font-mono text-[11px] sm:text-xs">
-                    +{user.points.toLocaleString()}đ
+                    +{user.points.toLocaleString()}{t('common.points_short', { defaultValue: 'đ' })}
                   </div>
-                  <span className="text-[8px] sm:text-[9px] text-slate-400">Điểm Thưởng</span>
+                  <span className="text-[8px] sm:text-[9px] text-slate-400">{t('common.bonus_points', { defaultValue: 'Điểm Thưởng' })}</span>
                 </div>
               </div>
             ))}

@@ -78,16 +78,16 @@ export const DeadLetterPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div>
           <h1 className="text-xl font-bold text-gray-800">
-            {t('nav.dead_letter')}
+            {t('nav.dead_letter', { defaultValue: 'Lỗi Webhook (Dead-Letter)' })}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Theo dõi và bơm gửi bù các sự kiện Webhook lỗi mạng sau 5 lần thử lại lũy thừa
+            {t('dead_letter.subtitle', { defaultValue: 'Theo dõi và bơm gửi bù các sự kiện Webhook lỗi mạng sau 5 lần thử lại lũy thừa' })}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Button
-            label="Bơm gửi bù toàn bộ (Batch Re-trigger)"
+            label={t('dead_letter.batch_retrigger', { defaultValue: 'Bơm gửi bù toàn bộ (Batch Re-trigger)' })}
             icon="pi pi-replay"
             severity="danger"
             disabled={deadLetters.length === 0 || isSubmitting}
@@ -99,7 +99,7 @@ export const DeadLetterPage: React.FC = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <DataTable
           value={deadLetters}
-          emptyMessage={t('common.no_data')}
+          emptyMessage={t('common.no_data', { defaultValue: 'Không có dữ liệu hiển thị' })}
           paginator
           rows={10}
           className="p-datatable-sm"
@@ -110,7 +110,7 @@ export const DeadLetterPage: React.FC = () => {
             style={{ width: '60px', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions')}
+            header={t('common.actions', { defaultValue: 'Thao tác' })}
             body={(rowData: DeadLetterItem) => (
               <div className="flex items-center gap-2">
                 <Button
@@ -118,7 +118,7 @@ export const DeadLetterPage: React.FC = () => {
                   rounded
                   text
                   severity="info"
-                  tooltip="Xem Payload JSON"
+                  tooltip={t('dead_letter.view_payload', { defaultValue: 'Xem Payload JSON' })}
                   onClick={() => {
                     setSelectedItem(rowData);
                     setShowPayloadModal(true);
@@ -129,7 +129,7 @@ export const DeadLetterPage: React.FC = () => {
                   rounded
                   text
                   severity="warning"
-                  tooltip="Gửi lại sự kiện này"
+                  tooltip={t('dead_letter.retrigger_single', { defaultValue: 'Gửi lại sự kiện này' })}
                   loading={isSubmitting}
                   onClick={() => handleRetrigger(rowData)}
                 />
@@ -137,24 +137,24 @@ export const DeadLetterPage: React.FC = () => {
             )}
             style={{ width: '120px' }}
           />
-          <Column field="eventType" header="Tên Sự Kiện" style={{ fontWeight: 600 }} />
+          <Column field="eventType" header={t('dead_letter.event_type', { defaultValue: 'Tên Sự Kiện' })} style={{ fontWeight: 600 }} />
           <Column field="tenantId" header="Tenant" style={{ width: '150px' }} />
           <Column
             field="retryCount"
-            header="Số lần thử"
+            header={t('dead_letter.retry_count', { defaultValue: 'Số lần thử' })}
             body={(row: DeadLetterItem) => (
               <Tag value={`${row.retryCount} / 5`} severity="danger" />
             )}
             style={{ width: '110px', textAlign: 'center' }}
           />
-          <Column field="errorMessage" header="Lý do lỗi mạng" style={{ color: '#ef4444' }} />
-          <Column field="failedAt" header="Thời điểm thất bại" style={{ width: '170px' }} />
+          <Column field="errorMessage" header={t('dead_letter.error_message', { defaultValue: 'Lý do lỗi mạng' })} style={{ color: '#ef4444' }} />
+          <Column field="failedAt" header={t('dead_letter.failed_at', { defaultValue: 'Thời điểm thất bại' })} style={{ width: '170px' }} />
         </DataTable>
       </div>
 
       {/* Modal Xem Payload JSON */}
       <Dialog
-        header={`Chi tiết Payload sự kiện #${selectedItem?.id}`}
+        header={t('dead_letter.payload_detail', { id: selectedItem?.id, defaultValue: `Chi tiết Payload sự kiện #${selectedItem?.id}` })}
         visible={showPayloadModal}
         style={{ width: '600px' }}
         onHide={() => setShowPayloadModal(false)}
@@ -175,23 +175,23 @@ export const DeadLetterPage: React.FC = () => {
 
       {/* Modal Xác nhận Bơm gửi bù hàng loạt */}
       <Dialog
-        header="Xác nhận Bơm gửi bù Hàng loạt"
+        header={t('deadletter.batch_confirm_title', { defaultValue: 'Xác nhận Bơm gửi bù Hàng loạt' })}
         visible={showBatchConfirm}
         style={{ width: '480px' }}
         onHide={() => setShowBatchConfirm(false)}
         footer={
           <div className="flex justify-end gap-2">
-            <Button label={t('common.cancel')} text severity="secondary" onClick={() => setShowBatchConfirm(false)} />
-            <Button label="Xác nhận Bơm lại" severity="danger" icon="pi pi-check" loading={isSubmitting} onClick={handleBatchRetrigger} />
+            <Button label={t('common.cancel', { defaultValue: 'Hủy' })} text severity="secondary" onClick={() => setShowBatchConfirm(false)} />
+            <Button label={t('deadletter.batch_confirm_btn', { defaultValue: 'Xác nhận Bơm lại' })} severity="danger" icon="pi pi-check" loading={isSubmitting} onClick={handleBatchRetrigger} />
           </div>
         }
       >
         <div className="flex items-start gap-3">
           <i className="pi pi-exclamation-triangle text-3xl text-yellow-500" />
           <div>
-            <p className="font-semibold text-gray-800">Bạn có chắc chắn muốn phát lại toàn bộ sự kiện Dead-Letter?</p>
+            <p className="font-semibold text-gray-800">{t('deadletter.batch_confirm_question', { defaultValue: 'Bạn có chắc chắn muốn phát lại toàn bộ sự kiện Dead-Letter?' })}</p>
             <p className="text-sm text-gray-600 mt-1">
-              Toàn bộ {deadLetters.length} sự kiện sẽ được chuyển về hàng đợi Outbox để tiến trình nền thực hiện gửi lại cho đối tác với chữ ký bảo mật HMAC-SHA256.
+              {t('deadletter.batch_confirm_desc', { count: deadLetters.length, defaultValue: `Toàn bộ ${deadLetters.length} sự kiện sẽ được chuyển về hàng đợi Outbox để tiến trình nền thực hiện gửi lại cho đối tác với chữ ký bảo mật HMAC-SHA256.` })}
             </p>
           </div>
         </div>

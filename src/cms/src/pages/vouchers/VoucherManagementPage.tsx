@@ -83,7 +83,7 @@ export const VoucherManagementPage: React.FC = () => {
   const openNew = () => {
     setFormData({
       voucherCode: 'VCH_' + Math.floor(Math.random() * 100000),
-      title: 'Phiếu giảm giá ưu đãi',
+      title: t('voucher.default_title', { defaultValue: 'Phiếu giảm giá ưu đãi' }),
       discountType: DiscountType.FIXED_AMOUNT,
       discountValue: 50,
       minOrderValue: 100,
@@ -108,7 +108,7 @@ export const VoucherManagementPage: React.FC = () => {
 
   const deleteItem = (item: VoucherItem) => {
     confirmDialog({
-      message: `Bạn có chắc chắn muốn xóa voucher ${item.voucherCode} (${item.title}) khỏi hệ thống?`,
+      message: t('voucher.confirm_delete_msg', { code: item.voucherCode, title: item.title, defaultValue: `Bạn có chắc chắn muốn xóa voucher ${item.voucherCode} (${item.title}) khỏi hệ thống?` }),
       header: t('common.confirm_delete', { defaultValue: 'Xác nhận xóa voucher' }),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
@@ -121,7 +121,7 @@ export const VoucherManagementPage: React.FC = () => {
           toastRef.current?.show({
             severity: 'success',
             summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: `Đã xóa thành công voucher ${item.voucherCode}!`,
+            detail: t('voucher.delete_success', { code: item.voucherCode, defaultValue: `Đã xóa thành công voucher ${item.voucherCode}!` }),
             life: 3000,
           });
           await fetchVouchers();
@@ -130,7 +130,7 @@ export const VoucherManagementPage: React.FC = () => {
           toastRef.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: e?.message || 'Không thể xóa voucher, vui lòng thử lại sau!',
+            detail: e?.message || t('voucher.delete_failed', { defaultValue: 'Không thể xóa voucher, vui lòng thử lại sau!' }),
             life: 4000,
           });
         } finally {
@@ -157,13 +157,13 @@ export const VoucherManagementPage: React.FC = () => {
         toastRef.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: `Cập nhật thành công voucher ${formData.voucherCode || ''}!`,
+          detail: t('voucher.update_success', { code: formData.voucherCode || '', defaultValue: `Cập nhật thành công voucher ${formData.voucherCode || ''}!` }),
           life: 3000,
         });
       } else {
         await LoyaltyService.createVoucher({
           voucherCode: formData.voucherCode || 'VCH_' + Date.now(),
-          title: formData.title || 'Phiếu ưu đãi mới',
+          title: formData.title || t('voucher.new_title', { defaultValue: 'Phiếu ưu đãi mới' }),
           discountType: formData.discountType || DiscountType.FIXED_AMOUNT,
           discountValue: formData.discountValue || 50,
           minBillAmount: formData.minOrderValue || 100,
@@ -174,7 +174,7 @@ export const VoucherManagementPage: React.FC = () => {
         toastRef.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: 'Thêm mới voucher vào kho thành công!',
+          detail: t('voucher.create_success', { defaultValue: 'Thêm mới voucher vào kho thành công!' }),
           life: 3000,
         });
       }
@@ -185,7 +185,7 @@ export const VoucherManagementPage: React.FC = () => {
       toastRef.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || 'Không thể lưu voucher, vui lòng thử lại sau!',
+        detail: e?.message || t('voucher.save_failed', { defaultValue: 'Không thể lưu voucher, vui lòng thử lại sau!' }),
         life: 4000,
       });
     } finally {
@@ -196,7 +196,7 @@ export const VoucherManagementPage: React.FC = () => {
   const saveItem = () => {
     if (isEdit) {
       confirmDialog({
-        message: `Bạn có chắc chắn muốn cập nhật thay đổi cho voucher ${formData.voucherCode || ''}?`,
+        message: t('voucher.confirm_update_msg', { code: formData.voucherCode || '', defaultValue: `Bạn có chắc chắn muốn cập nhật thay đổi cho voucher ${formData.voucherCode || ''}?` }),
         header: t('common.confirm_update', { defaultValue: 'Xác nhận cập nhật voucher' }),
         icon: 'pi pi-info-circle',
         acceptLabel: t('common.save', { defaultValue: 'Lưu thay đổi' }),
@@ -522,9 +522,9 @@ export const VoucherManagementPage: React.FC = () => {
           </p>
 
           <div className="mb-3 flex justify-content-between align-items-center surface-100 p-2 border-round">
-            <span className="text-xs text-600 font-semibold">Tệp mẫu chuẩn (.csv):</span>
+            <span className="text-xs text-600 font-semibold">{t('voucher.sample_csv_label', { defaultValue: 'Tệp mẫu chuẩn (.csv):' })}</span>
             <Button
-              label="Tải file mẫu CSV"
+              label={t('voucher.download_sample_csv', { defaultValue: 'Tải file mẫu CSV' })}
               icon="pi pi-download"
               size="small"
               outlined
@@ -547,7 +547,7 @@ export const VoucherManagementPage: React.FC = () => {
           {isSubmitting && (
             <div className="mt-3 text-center text-primary font-semibold">
               <i className="pi pi-spin pi-spinner mr-2" />
-              Đang xử lý nhập dữ liệu vào kho...
+              {t('voucher.importing_csv_notice', { defaultValue: 'Đang xử lý nhập dữ liệu vào kho...' })}
             </div>
           )}
         </div>

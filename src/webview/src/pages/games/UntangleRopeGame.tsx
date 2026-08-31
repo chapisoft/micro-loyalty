@@ -156,7 +156,7 @@ function generateProceduralLevel(levelNum: number): { totalPegs: number; name: s
 
   return {
     totalPegs,
-    name: `Màn ${levelNum}: ${totalPegs} Chốt • ${initialRopes.length} Dây`,
+    name: `Lvl ${levelNum}: ${totalPegs}P • ${initialRopes.length}R`,
     ropes: initialRopes,
   };
 }
@@ -172,7 +172,7 @@ export const UntangleRopeGame: React.FC<UntangleRopeGameProps> = ({ onBack, onCl
       return 0;
     }
   });
-  const [levelName, setLevelName] = useState<string>('Khởi Động');
+  const [levelName, setLevelName] = useState<string>('');
   const [pegs, setPegs] = useState<Peg[]>([]);
   const [ropes, setRopes] = useState<Rope[]>([]);
   const [selectedEndpoint, setSelectedEndpoint] = useState<{ ropeId: number; isStart: boolean } | null>(null);
@@ -357,7 +357,7 @@ export const UntangleRopeGame: React.FC<UntangleRopeGameProps> = ({ onBack, onCl
             >
               {totalCrossings > 0
                 ? t('games.untangle.crossings', { count: totalCrossings })
-                : '✨ 0 GIAO ĐIỂM (HOÀN THÀNH)'}
+                : t('games.untangle.completed_no_crossings', { defaultValue: '✨ 0 GIAO ĐIỂM (HOÀN THÀNH)' })}
             </span>
           </div>
 

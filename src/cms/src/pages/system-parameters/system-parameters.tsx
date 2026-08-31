@@ -51,7 +51,11 @@ export const SystemParameters: React.FC = () => {
   const deleteParam = (param: SystemParameter) => {
     if (!param.paramKey) return;
     confirmDialog({
-      message: `Bạn có chắc chắn muốn xóa tham số "${param.paramKey}" (${param.paramName || ''}) khỏi hệ thống không?`,
+      message: t('system_parameter.confirm_delete_msg', {
+        key: param.paramKey,
+        name: param.description || '',
+        defaultValue: `Bạn có chắc chắn muốn xóa tham số "${param.paramKey}" (${param.description || ''}) khỏi hệ thống không?`,
+      }),
       header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Tham Số' }),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
@@ -63,7 +67,7 @@ export const SystemParameters: React.FC = () => {
           toast.current?.show({
             severity: 'success',
             summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: 'Đã xóa tham số thành công!',
+            detail: t('system_parameter.delete_success', { defaultValue: 'Đã xóa tham số thành công!' }),
             life: 3000,
           });
           fetchParams();
@@ -72,7 +76,7 @@ export const SystemParameters: React.FC = () => {
           toast.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: 'Xóa tham số thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            detail: t('system_parameter.delete_failed', { defaultValue: 'Xóa tham số thất bại' }) + ': ' + (e?.message || ''),
             life: 4000,
           });
         }
@@ -87,7 +91,7 @@ export const SystemParameters: React.FC = () => {
         toast.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: 'Cập nhật tham số thành công!',
+          detail: t('system_parameter.update_success', { defaultValue: 'Cập nhật tham số thành công!' }),
           life: 3000,
         });
       } else {
@@ -95,7 +99,7 @@ export const SystemParameters: React.FC = () => {
         toast.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: 'Thêm mới tham số thành công!',
+          detail: t('system_parameter.create_success', { defaultValue: 'Thêm mới tham số thành công!' }),
           life: 3000,
         });
       }
@@ -106,7 +110,7 @@ export const SystemParameters: React.FC = () => {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: 'Lưu tham số thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        detail: t('system_parameter.save_failed', { defaultValue: 'Lưu tham số thất bại' }) + ': ' + (e?.message || ''),
         life: 4000,
       });
     }
@@ -115,7 +119,10 @@ export const SystemParameters: React.FC = () => {
   const saveParam = () => {
     if (isEdit) {
       confirmDialog({
-        message: `Bạn có chắc chắn muốn lưu thay đổi cho tham số "${formData.paramKey}"?`,
+        message: t('system_parameter.confirm_update_msg', {
+          key: formData.paramKey,
+          defaultValue: `Bạn có chắc chắn muốn lưu thay đổi cho tham số "${formData.paramKey}"?`,
+        }),
         header: t('common.confirm_update', { defaultValue: 'Xác nhận Cập Nhật' }),
         icon: 'pi pi-question-circle',
         acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),

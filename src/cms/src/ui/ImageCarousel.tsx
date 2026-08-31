@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppCarousel, AppImage } from 'components';
+import { useTranslation } from 'react-i18next';
 
 type MediaFile = {
   path: string;
@@ -21,6 +22,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   numVisible = 3,
   numScroll = 1,
 }) => {
+  const { t } = useTranslation();
   const isImage = (path: string) => {
     return /\.(png|gif|jpg|jpeg)$/i.test(path);
   };
@@ -61,7 +63,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
             {item.isVideoView && (
               <video width="100%" height={height} controls>
                 <source src={item.path} type="video/mp4" />
-                Trình duyệt của bạn không hỗ trợ thẻ video.
+                {t('common.video_not_supported', { defaultValue: 'Trình duyệt của bạn không hỗ trợ thẻ video.' })}
               </video>
             )}
             {item.isVideoDownload && (
