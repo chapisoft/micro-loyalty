@@ -2,8 +2,10 @@ package com.natcash.loyalty.ledger.service;
 
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileRequest;
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
+import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.RedisKeys;
@@ -32,7 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,17 +46,20 @@ public class PointLedgerService {
 
     private final LoyaltyPointLedgerRepository ledgerRepository;
     private final LoyaltyAccountRepository accountRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
     private final AccountService accountService;
     private final DistributedLockHelper lockHelper;
     private final LoyaltyStreamProducer streamProducer;
 
     public PointLedgerService(LoyaltyPointLedgerRepository ledgerRepository,
                               LoyaltyAccountRepository accountRepository,
+                              LoyaltyPartnerRepository partnerRepository,
                               AccountService accountService,
                               DistributedLockHelper lockHelper,
                               LoyaltyStreamProducer streamProducer) {
         this.ledgerRepository = ledgerRepository;
         this.accountRepository = accountRepository;
+        this.partnerRepository = partnerRepository;
         this.accountService = accountService;
         this.lockHelper = lockHelper;
         this.streamProducer = streamProducer;
@@ -95,6 +102,8 @@ public class PointLedgerService {
             account.setTierPoints(tierPoints);
             accountRepository.save(account);
 
+            Long resolvedPartnerId = resolvePartnerId(tenantId, request.getPartnerCode());
+
             // 5. Ghi nhận giao dịch vào Sổ cái điểm bất biến
             LoyaltyPointLedgerEntity ledger = LoyaltyPointLedgerEntity.builder()
                     .tenantId(tenantId)
@@ -103,6 +112,7 @@ public class PointLedgerService {
                     .balanceAfter(currentPoints)
                     .changeType(PointActionType.EARN)
                     .referenceCode(txCode)
+                    .partnerId(resolvedPartnerId)
                     .description(request.getDescription() != null ? request.getDescription() : "Tích điểm mua hàng")
                     .createdAt(Instant.now())
                     .build();
@@ -142,63 +152,78 @@ public class PointLedgerService {
     public PointHistoryResponse getPointHistory(String tenantId, PointHistoryRequest request) {
         String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : "TENANT_NATCASH";
         int page = Math.max(request.getPage(), 0);
-        int size = request.getSize() > 0 ? Math.min(request.getSize(), 100) : 10;
+        int size = request.getSize() > 0 ? Math.min(request.getSize(), 100) : 15;
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<LoyaltyPointLedgerEntity> pageResult;
-        if (request.getExternalUserId() != null && !request.getExternalUserId().isBlank()) {
-            pageResult = ledgerRepository.findByTenantIdAndAccount_ExternalUserIdOrderByCreatedAtDesc(
-                    effectiveTenant, request.getExternalUserId(), pageable);
-        } else {
-            pageResult = ledgerRepository.findByTenantIdOrderByCreatedAtDesc(effectiveTenant, pageable);
+        Long partnerId = request.getPartnerId();
+        if (partnerId == null && partnerRepository != null && request.getPartnerCode() != null && !request.getPartnerCode().isBlank() && !"ALL".equalsIgnoreCase(request.getPartnerCode())) {
+            partnerId = partnerRepository.findByTenantIdAndPartnerCode(effectiveTenant, request.getPartnerCode().trim())
+                    .map(LoyaltyPartnerEntity::getId)
+                    .orElse(null);
         }
+
+        Page<LoyaltyPointLedgerEntity> pageResult = ledgerRepository.findLedgerWithFilters(
+                effectiveTenant,
+                request.getExternalUserId(),
+                request.getActionType(),
+                partnerId,
+                request.getKeyword(),
+                pageable);
 
         List<PointTransactionItem> items;
         if (pageResult != null && !pageResult.isEmpty()) {
             items = pageResult.getContent().stream()
                     .map(entity -> {
-                        String partner = "TENANT_MICRO_CRM".equalsIgnoreCase(effectiveTenant) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
-                        if (entity.getReferenceCode() != null) {
-                            if (entity.getReferenceCode().contains("DELIMART")) partner = "DELIMART_RETAIL";
-                            else if (entity.getReferenceCode().contains("NATCOM")) partner = "NATCOM_TELCO";
-                            else if (entity.getReferenceCode().contains("EDH")) partner = "EDH_POWER";
-                            else if (entity.getReferenceCode().contains("FAHASA")) partner = "FAHASA_BOOKSTORE";
-                            else if (entity.getReferenceCode().contains("HIGHLANDS")) partner = "HIGHLANDS_COFFEE";
-                            else if (entity.getReferenceCode().contains("CGV")) partner = "CGV_CINEMAS";
-                            else if (entity.getReferenceCode().contains("RINGME")) partner = "RINGME";
+                        BigDecimal pointChange = entity.getPointChange() != null ? entity.getPointChange() : BigDecimal.ZERO;
+                        BigDecimal balanceAfter = entity.getBalanceAfter() != null ? entity.getBalanceAfter() : BigDecimal.ZERO;
+                        BigDecimal balanceBefore = balanceAfter.subtract(pointChange);
+
+                        Long pId = entity.getPartnerId();
+                        String pCode = "TENANT_MICRO_CRM".equalsIgnoreCase(effectiveTenant) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+                        String pName = "TENANT_MICRO_CRM".equalsIgnoreCase(effectiveTenant) ? "Siêu thị Delimart" : "Ví Natcash";
+                        String pType = "TENANT_MICRO_CRM".equalsIgnoreCase(effectiveTenant) ? "RETAIL" : "BANKING";
+
+                        if (pId != null) {
+                            Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findById(pId);
+                            if (partnerOpt.isPresent()) {
+                                LoyaltyPartnerEntity pe = partnerOpt.get();
+                                pCode = pe.getPartnerCode();
+                                pName = pe.getPartnerName();
+                                pType = pe.getPartnerType() != null ? pe.getPartnerType().name() : "OTHER";
+                            }
                         }
+
+                        String status = "COMPLETED";
+                        if (entity.getChangeType() == PointActionType.REFUND) {
+                            status = "REFUNDED";
+                        } else if (entity.getChangeType() == PointActionType.EXPIRE) {
+                            status = "EXPIRED";
+                        }
+
                         return PointTransactionItem.builder()
                                 .id(entity.getId())
-                                .externalUserId(entity.getAccount() != null ? entity.getAccount().getExternalUserId() : "84988888888")
-                                .pointChange(entity.getPointChange())
-                                .balanceAfter(entity.getBalanceAfter())
+                                .externalUserId(entity.getAccount() != null ? entity.getAccount().getExternalUserId() : "")
+                                .pointChange(pointChange)
+                                .balanceBefore(balanceBefore)
+                                .balanceAfter(balanceAfter)
                                 .changeType(entity.getChangeType())
                                 .referenceCode(entity.getReferenceCode())
-                                .partnerCode(partner)
+                                .partnerId(pId)
+                                .partnerCode(pCode)
+                                .partnerName(pName)
+                                .partnerType(pType)
                                 .description(entity.getDescription())
+                                .status(status)
                                 .createdAt(entity.getCreatedAt())
                                 .build();
                     })
                     .collect(Collectors.toList());
         } else {
-            // Dữ liệu hạt giống phong phú theo từng Tenant đối tác
-            items = new java.util.ArrayList<>();
-            Instant now = Instant.now();
-            if ("TENANT_MICRO_CRM".equalsIgnoreCase(effectiveTenant)) {
-                items.add(PointTransactionItem.builder().id(101L).externalUserId("+84 988 888 888").pointChange(new BigDecimal("150.00")).balanceAfter(new BigDecimal("1450.00")).changeType(PointActionType.EARN).referenceCode("TX_DELIMART_8891").partnerCode("DELIMART_RETAIL").description("Tích điểm mua sắm tại Siêu thị Delimart").createdAt(now.minusSeconds(300)).build());
-                items.add(PointTransactionItem.builder().id(102L).externalUserId("+84 912 345 678").pointChange(new BigDecimal("200.00")).balanceAfter(new BigDecimal("800.00")).changeType(PointActionType.BURN).referenceCode("TX_FAHASA_4312").partnerCode("FAHASA_BOOKSTORE").description("Tiêu điểm đổi sách tại Nhà sách Fahasa").createdAt(now.minusSeconds(1800)).build());
-                items.add(PointTransactionItem.builder().id(103L).externalUserId("+84 987 654 321").pointChange(new BigDecimal("50.00")).balanceAfter(new BigDecimal("550.00")).changeType(PointActionType.SPIN).referenceCode("TX_SPIN_9901").partnerCode("HIGHLANDS_COFFEE").description("Trúng thưởng Vòng quay Highlands Coffee").createdAt(now.minusSeconds(3600)).build());
-                items.add(PointTransactionItem.builder().id(104L).externalUserId("+84 903 112 233").pointChange(new BigDecimal("300.00")).balanceAfter(new BigDecimal("2100.00")).changeType(PointActionType.EARN).referenceCode("TX_CGV_7712").partnerCode("CGV_CINEMAS").description("Tích điểm xem phim CGV Cinemas").createdAt(now.minusSeconds(7200)).build());
-            } else {
-                items.add(PointTransactionItem.builder().id(201L).externalUserId("+509 3412 8888").pointChange(new BigDecimal("100.00")).balanceAfter(new BigDecimal("2300.00")).changeType(PointActionType.EARN).referenceCode("TX_NATCASH_5521").partnerCode("NATCASH_WALLET").description("Nạp tiền vào Ví Natcash").createdAt(now.minusSeconds(200)).build());
-                items.add(PointTransactionItem.builder().id(202L).externalUserId("+509 4712 9999").pointChange(new BigDecimal("80.00")).balanceAfter(new BigDecimal("620.00")).changeType(PointActionType.EARN).referenceCode("TX_NATCOM_1102").partnerCode("NATCOM_TELCO").description("Nạp gói cước Data 4G Natcom").createdAt(now.minusSeconds(1200)).build());
-                items.add(PointTransactionItem.builder().id(203L).externalUserId("+509 3888 1234").pointChange(new BigDecimal("250.00")).balanceAfter(new BigDecimal("1750.00")).changeType(PointActionType.BURN).referenceCode("TX_EDH_3391").partnerCode("EDH_POWER").description("Thanh toán hóa đơn điện lực EDH").createdAt(now.minusSeconds(4500)).build());
-                items.add(PointTransactionItem.builder().id(204L).externalUserId("+509 3412 8888").pointChange(new BigDecimal("500.00")).balanceAfter(new BigDecimal("2800.00")).changeType(PointActionType.REWARD).referenceCode("TX_REWARD_GOLD").partnerCode("NATCASH_WALLET").description("Thưởng nóng thăng hạng Vàng (Gold Tier)").createdAt(now.minusSeconds(86400)).build());
-            }
+            items = Collections.emptyList();
         }
 
-        long total = (pageResult != null && !pageResult.isEmpty()) ? pageResult.getTotalElements() : items.size();
-        int totalPages = (pageResult != null && !pageResult.isEmpty()) ? pageResult.getTotalPages() : 1;
+        long total = pageResult != null ? pageResult.getTotalElements() : 0;
+        int totalPages = pageResult != null ? pageResult.getTotalPages() : 0;
 
         return PointHistoryResponse.builder()
                 .items(items)
@@ -208,5 +233,21 @@ public class PointLedgerService {
                 .currentPage(page)
                 .pageSize(size)
                 .build();
+    }
+
+    public Long resolvePartnerId(String tenantId, String partnerCode) {
+        if (partnerRepository == null) {
+            return null;
+        }
+        if (partnerCode != null && !partnerCode.isBlank()) {
+            Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findByTenantIdAndPartnerCode(tenantId, partnerCode.trim());
+            if (partnerOpt.isPresent()) {
+                return partnerOpt.get().getId();
+            }
+        }
+        String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+        return partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
+                .map(LoyaltyPartnerEntity::getId)
+                .orElse(null);
     }
 }

@@ -1,7 +1,9 @@
 package com.natcash.loyalty.campaign.service;
 
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
+import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.campaign.dto.CampaignMilestoneDto.ActiveCampaignsResponse;
 import com.natcash.loyalty.campaign.dto.CampaignMilestoneDto.ClaimRewardRequest;
@@ -40,16 +42,19 @@ public class MilestoneService {
     private final UserMilestoneRepository userMilestoneRepository;
     private final LoyaltyAccountRepository accountRepository;
     private final LoyaltyPointLedgerRepository ledgerRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
     private final AccountService accountService;
 
     public MilestoneService(CampaignMilestoneRepository campaignRepository,
                             UserMilestoneRepository userMilestoneRepository,
                             LoyaltyAccountRepository accountRepository,
+                            LoyaltyPartnerRepository partnerRepository,
                             LoyaltyPointLedgerRepository ledgerRepository,
                             AccountService accountService) {
         this.campaignRepository = campaignRepository;
         this.userMilestoneRepository = userMilestoneRepository;
         this.accountRepository = accountRepository;
+        this.partnerRepository = partnerRepository;
         this.ledgerRepository = ledgerRepository;
         this.accountService = accountService;
     }
@@ -144,14 +149,16 @@ public class MilestoneService {
             account.setCurrentPoints(newTotalPoints);
             accountRepository.save(account);
 
+            Long defaultPartnerId = getDefaultPartnerId(tenantId);
             String refCode = "CLAIM_MS_" + milestone.getCampaignCode() + "_" + milestone.getMilestoneStep() + "_" + UUID.randomUUID().toString().substring(0, 8);
             LoyaltyPointLedgerEntity ledger = LoyaltyPointLedgerEntity.builder()
                     .tenantId(tenantId)
                     .account(account)
                     .pointChange(rewardPoints)
                     .balanceAfter(newTotalPoints)
-                    .changeType(PointActionType.EARN)
+                    .changeType(PointActionType.REWARD)
                     .referenceCode(refCode)
+                    .partnerId(defaultPartnerId)
                     .description("Nhận thưởng cột mốc chiến dịch: " + milestone.getCampaignName())
                     .createdAt(Instant.now())
                     .build();
@@ -305,5 +312,15 @@ public class MilestoneService {
                 .build());
 
         return campaignRepository.saveAll(defaults);
+    }
+
+    private Long getDefaultPartnerId(String tenantId) {
+        if (partnerRepository == null) {
+            return null;
+        }
+        String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+        return partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
+                .map(LoyaltyPartnerEntity::getId)
+                .orElse(null);
     }
 }

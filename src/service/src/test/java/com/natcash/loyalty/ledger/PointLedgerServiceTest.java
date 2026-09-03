@@ -3,6 +3,7 @@ package com.natcash.loyalty.ledger;
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.TierLevel;
@@ -47,6 +48,9 @@ class PointLedgerServiceTest {
     private LoyaltyAccountRepository accountRepository;
 
     @Mock
+    private LoyaltyPartnerRepository partnerRepository;
+
+    @Mock
     private AccountService accountService;
 
     @Mock
@@ -62,6 +66,7 @@ class PointLedgerServiceTest {
         pointLedgerService = new PointLedgerService(
                 ledgerRepository,
                 accountRepository,
+                partnerRepository,
                 accountService,
                 lockHelper,
                 streamProducer
@@ -156,8 +161,8 @@ class PointLedgerServiceTest {
                 .build();
 
         Page<LoyaltyPointLedgerEntity> page = new PageImpl<>(List.of(item1));
-        when(ledgerRepository.findByTenantIdAndAccount_ExternalUserIdOrderByCreatedAtDesc(
-                eq("TENANT_DELIMART"), eq("USER_001"), any(Pageable.class)))
+        when(ledgerRepository.findLedgerWithFilters(
+                eq("TENANT_DELIMART"), eq("USER_001"), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(page);
 
         PointHistoryRequest request = PointHistoryRequest.builder()

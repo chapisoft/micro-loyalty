@@ -63,9 +63,8 @@ export const Dashboard = () => {
       if (statsData) {
         setStats(statsData);
       }
-      if (Array.isArray(ledgerData)) {
-        setRecentTransactions(ledgerData.slice(0, 6));
-      }
+      const ledgerList = Array.isArray(ledgerData) ? ledgerData : ((ledgerData as any)?.items || []);
+      setRecentTransactions(ledgerList.slice(0, 6));
     } catch (e) {
       console.error('[Dashboard.fetchData] Error:', e);
     }

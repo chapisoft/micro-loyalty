@@ -14,6 +14,7 @@ import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportResponse;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodResponse;
+import com.natcash.loyalty.clearing.repository.LoyaltyClearinghouseSettlementRepository;
 import com.natcash.loyalty.clearing.service.ClearingSettlementService;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.CommonStatus;
@@ -66,6 +67,8 @@ class FullLifecycleE2ETest {
     @Mock
     private ClearingTransactionRepository clearingRepository;
     @Mock
+    private LoyaltyClearinghouseSettlementRepository settlementRepository;
+    @Mock
     private LoyaltyStreamProducer streamProducer;
     @Mock
     private RedissonClient redissonClient;
@@ -94,7 +97,7 @@ class FullLifecycleE2ETest {
         };
 
         accountService = new AccountService(accountRepository, tierRepository, streamProducer);
-        clearingService = new ClearingSettlementService(clearingRepository, partnerRepository);
+        clearingService = new ClearingSettlementService(clearingRepository, partnerRepository, settlementRepository);
         pointExpirationJob = new PointExpirationJob(accountRepository, ledgerRepository, lockHelper);
     }
 

@@ -41,7 +41,9 @@ public final class ClearingDto {
         private static final long serialVersionUID = 1L;
 
         private Long partnerId;
+        private String partnerCode;
         private String partnerName;
+        private String partnerType;
         private long totalTransactions;
         private BigDecimal totalPointsIssued;
         private BigDecimal totalPointsRedeemed;
@@ -61,8 +63,12 @@ public final class ClearingDto {
         private Instant periodFrom;
         private Instant periodTo;
         private long grandTotalTransactions;
+        private BigDecimal grandTotalPointsIssued;
         private BigDecimal grandTotalPointsRedeemed;
-        private BigDecimal grandTotalFiatAmount;
+        private BigDecimal grandTotalFiatPayable;
+        private BigDecimal grandTotalFiatReceivable;
+        private BigDecimal grandTotalNetSettlement;
+        private BigDecimal grandTotalFiatAmount; // Tương thích ngược với test & legacy callers
         private List<PartnerClearingSummaryDto> partnerSummaries;
         private Instant generatedAt;
     }
@@ -91,10 +97,46 @@ public final class ClearingDto {
         private static final long serialVersionUID = 1L;
 
         private String settlementBatchCode;
+        private String period;
         private int settledTransactionCount;
         private BigDecimal totalSettledAmount;
         private ClearingStatus status;
         private String message;
         private Instant settledAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PartnerClearingTransactionDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String transactionCode;
+        private String externalUserId;
+        private BigDecimal pointsRedeemed;
+        private BigDecimal fiatAmount;
+        private BigDecimal exchangeRate;
+        private String role; // "REDEEMER" (Thu hồi) hoặc "ISSUER" (Phát hành)
+        private ClearingStatus status;
+        private Instant settledAt;
+        private Instant createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PartnerTransactionsResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long partnerId;
+        private String partnerCode;
+        private String partnerName;
+        private long totalTransactions;
+        private BigDecimal totalPoints;
+        private BigDecimal totalFiat;
+        private List<PartnerClearingTransactionDto> transactions;
     }
 }

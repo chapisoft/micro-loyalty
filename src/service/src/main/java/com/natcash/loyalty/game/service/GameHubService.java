@@ -3,7 +3,9 @@ package com.natcash.loyalty.game.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
+import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.RedisKeys;
@@ -96,6 +98,7 @@ public class GameHubService {
     private final RedissonClient redissonClient;
     private final WheelThemeRepository wheelThemeRepository;
     private final GamePrizeRepository gamePrizeRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
 
     public GameHubService(GameHubRepository gameRepository,
                           GameSessionRepository sessionRepository,
@@ -108,7 +111,8 @@ public class GameHubService {
                           DistributedLockHelper lockHelper,
                           RedissonClient redissonClient,
                           WheelThemeRepository wheelThemeRepository,
-                          GamePrizeRepository gamePrizeRepository) {
+                          GamePrizeRepository gamePrizeRepository,
+                          LoyaltyPartnerRepository partnerRepository) {
         this.gameRepository = gameRepository;
         this.sessionRepository = sessionRepository;
         this.historyRepository = historyRepository;
@@ -121,6 +125,7 @@ public class GameHubService {
         this.redissonClient = redissonClient;
         this.wheelThemeRepository = wheelThemeRepository;
         this.gamePrizeRepository = gamePrizeRepository;
+        this.partnerRepository = partnerRepository;
     }
 
     @Transactional(readOnly = true)
@@ -378,6 +383,7 @@ public class GameHubService {
                         .balanceAfter(currentPoints)
                         .changeType(PointActionType.EARN)
                         .referenceCode(txRef)
+                        .partnerId(getDefaultPartnerId(tenantId))
                         .description("Thưởng minigame: " + game.getGameName() + " (Điểm: " + score + ")")
                         .createdAt(Instant.now())
                         .build();
@@ -472,6 +478,7 @@ public class GameHubService {
                     .balanceAfter(remainingBalance)
                     .changeType(PointActionType.BURN)
                     .referenceCode(txCode)
+                    .partnerId(getDefaultPartnerId(tenantId))
                     .description("Thanh toán mua " + turnsToBuy + " lượt chơi game: " + session.getGame().getGameName())
                     .createdAt(Instant.now())
                     .build();
@@ -1084,6 +1091,7 @@ public class GameHubService {
                         .balanceAfter(currentPoints)
                         .changeType(PointActionType.EARN)
                         .referenceCode(txRef)
+                        .partnerId(getDefaultPartnerId(tenantId))
                         .description("Thưởng trò chơi: " + game.getGameName() + " (" + outcome + ")")
                         .createdAt(Instant.now())
                         .build();
@@ -1315,6 +1323,16 @@ public class GameHubService {
             }
         }
         return getGamePrizesAdmin(tenantId, gameCode);
+    }
+
+    private Long getDefaultPartnerId(String tenantId) {
+        if (partnerRepository == null) {
+            return null;
+        }
+        String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+        return partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
+                .map(LoyaltyPartnerEntity::getId)
+                .orElse(null);
     }
 }
 

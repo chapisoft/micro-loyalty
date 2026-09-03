@@ -216,8 +216,11 @@ scratch/
 .tg_alert.tmp
 notification-templates/
 
-# Báo cáo rà soát nội bộ (Audit Reports)
+# Báo cáo rà soát nội bộ & Tài liệu AI (Audit Reports & AI Generated Docs)
 plan/audit/
 **/plan/audit/
 docs/dev/audit/
 **/audit/
+docs/AI_gen_docs/
+**/docs/AI_gen_docs/
+AI_gen_docs/
