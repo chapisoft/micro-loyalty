@@ -1,7 +1,9 @@
 package com.natcash.loyalty.wallet.service;
 
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
+import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.DiscountType;
@@ -44,24 +46,30 @@ public class VoucherService {
     private final LoyaltyVoucherRepository voucherRepository;
     private final LoyaltyVoucherRedemptionRepository redemptionRepository;
     private final LoyaltyAccountRepository accountRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
     private final LoyaltyPointLedgerRepository ledgerRepository;
     private final DistributedLockHelper lockHelper;
 
     public VoucherService(LoyaltyVoucherRepository voucherRepository,
                           LoyaltyVoucherRedemptionRepository redemptionRepository,
                           LoyaltyAccountRepository accountRepository,
+                          LoyaltyPartnerRepository partnerRepository,
                           LoyaltyPointLedgerRepository ledgerRepository,
                           DistributedLockHelper lockHelper) {
         this.voucherRepository = voucherRepository;
         this.redemptionRepository = redemptionRepository;
         this.accountRepository = accountRepository;
+        this.partnerRepository = partnerRepository;
         this.ledgerRepository = ledgerRepository;
         this.lockHelper = lockHelper;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<VoucherResponse> getAllVouchers(String tenantId) {
         List<LoyaltyVoucherEntity> vouchers = voucherRepository.findByTenantId(tenantId);
+        if (vouchers.isEmpty()) {
+            vouchers = seedDefaultVouchers(tenantId);
+        }
         return vouchers.stream().map(this::mapToVoucherResponse).collect(Collectors.toList());
     }
 
@@ -85,12 +93,16 @@ public class VoucherService {
                             ? (v.getDiscountType() == DiscountType.PERCENTAGE ? v.getDiscountValue() + "%" : v.getDiscountValue() + " HTG")
                             : "Ưu đãi";
                     String minOrder = v != null ? "Áp dụng cho hóa đơn từ " + v.getMinBillAmount() + " HTG" : "Không giới hạn";
-                    String partnerName = v != null && v.getVoucherCode().contains("DELIMART")
-                            ? "Delimart Supermarket"
-                            : (v != null && v.getVoucherCode().contains("NATCOM") ? "Natcom Telecom" : "Đối tác Liên Minh");
-                    String category = v != null && v.getVoucherCode().contains("DELIMART")
-                            ? "DELIMART"
-                            : (v != null && v.getVoucherCode().contains("NATCOM") ? "NATCOM" : "ENTERTAINMENT");
+                    
+                    String partnerName = "Toàn Hệ Sinh Thái";
+                    String category = "ALLIANCE";
+                    if (v != null && v.getPartnerId() != null) {
+                        Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findById(v.getPartnerId());
+                        if (partnerOpt.isPresent()) {
+                            partnerName = partnerOpt.get().getPartnerName();
+                            category = partnerOpt.get().getPartnerCode();
+                        }
+                    }
 
                     return UserVoucherResponse.builder()
                             .id(r.getId())
@@ -119,25 +131,38 @@ public class VoucherService {
         if (existingOpt.isPresent()) {
             entity = existingOpt.get();
         } else {
+            Instant start = request.getStartDate() != null ? request.getStartDate() : Instant.now();
+            Instant end = request.getEndDate() != null ? request.getEndDate() : Instant.now().plusSeconds(90L * 86400L);
             entity = LoyaltyVoucherEntity.builder()
                     .tenantId(tenantId)
                     .voucherCode(code)
-                    .startDate(Instant.now())
-                    .endDate(Instant.now().plusSeconds(90L * 86400L))
-                    .status(VoucherStatus.ACTIVE)
+                    .startDate(start)
+                    .endDate(end)
+                    .status(request.getStatus() != null ? request.getStatus() : VoucherStatus.ACTIVE)
                     .build();
         }
 
-        entity.setPartnerId(request.getPartnerId() != null ? request.getPartnerId() : 1L);
+        // Xử lý an toàn partnerId: Không gán cứng, kiểm tra tính hợp lệ
+        Long partnerId = resolvePartnerId(tenantId, request.getPartnerId(), request.getPartnerCode());
+        entity.setPartnerId(partnerId);
+
         entity.setTitle(request.getTitle() != null ? request.getTitle() : code);
         entity.setDescription(request.getDescription());
         entity.setDiscountType(request.getDiscountType() != null ? request.getDiscountType() : DiscountType.FIXED_AMOUNT);
         entity.setDiscountValue(request.getDiscountValue() != null ? request.getDiscountValue() : BigDecimal.ZERO);
         entity.setMinBillAmount(request.getMinBillAmount() != null ? request.getMinBillAmount() : BigDecimal.ZERO);
         entity.setMaxDiscountAmount(request.getMaxDiscountAmount());
-        entity.setTotalQuantity(request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000);
-        entity.setAvailableQuantity(request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000);
+        
+        int totalQty = request.getTotalQuantity() != null ? request.getTotalQuantity() : 1000;
+        entity.setTotalQuantity(totalQty);
+        if (existingOpt.isEmpty() || entity.getAvailableQuantity() == null || entity.getAvailableQuantity() == 0) {
+            entity.setAvailableQuantity(totalQty);
+        }
+        
         entity.setPointCost(request.getPointCost() != null ? request.getPointCost() : BigDecimal.ZERO);
+        if (request.getStartDate() != null) entity.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) entity.setEndDate(request.getEndDate());
+        if (request.getStatus() != null) entity.setStatus(request.getStatus());
 
         LoyaltyVoucherEntity saved = voucherRepository.save(entity);
         return mapToVoucherResponse(saved);
@@ -214,6 +239,12 @@ public class VoucherService {
                 .filter(v -> v.getTenantId().equals(tenantId))
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy voucher #" + id));
 
+        // Cập nhật partnerId nếu được cung cấp
+        if (request.getPartnerId() != null || request.getPartnerCode() != null) {
+            Long partnerId = resolvePartnerId(tenantId, request.getPartnerId(), request.getPartnerCode());
+            entity.setPartnerId(partnerId);
+        }
+
         if (request.getTitle() != null) entity.setTitle(request.getTitle());
         if (request.getDescription() != null) entity.setDescription(request.getDescription());
         if (request.getDiscountType() != null) entity.setDiscountType(request.getDiscountType());
@@ -221,6 +252,10 @@ public class VoucherService {
         if (request.getMinBillAmount() != null) entity.setMinBillAmount(request.getMinBillAmount());
         if (request.getMaxDiscountAmount() != null) entity.setMaxDiscountAmount(request.getMaxDiscountAmount());
         if (request.getPointCost() != null) entity.setPointCost(request.getPointCost());
+        if (request.getStartDate() != null) entity.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) entity.setEndDate(request.getEndDate());
+        if (request.getStatus() != null) entity.setStatus(request.getStatus());
+
         if (request.getTotalQuantity() != null) {
             int diff = request.getTotalQuantity() - entity.getTotalQuantity();
             entity.setTotalQuantity(request.getTotalQuantity());
@@ -250,14 +285,48 @@ public class VoucherService {
         return responses;
     }
 
+    private Long resolvePartnerId(String tenantId, Long partnerId, String partnerCode) {
+        if (partnerId != null) {
+            Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findById(partnerId);
+            if (partnerOpt.isPresent()) {
+                return partnerOpt.get().getId();
+            }
+            throw new LoyaltyException(ErrorCode.NOT_FOUND, "Đối tác liên minh #" + partnerId + " không tồn tại");
+        }
+
+        if (partnerCode != null && !partnerCode.isBlank() && !"ALL".equalsIgnoreCase(partnerCode.trim())) {
+            Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findByTenantIdAndPartnerCode(tenantId, partnerCode.trim().toUpperCase());
+            if (partnerOpt.isPresent()) {
+                return partnerOpt.get().getId();
+            }
+        }
+
+        return null; // Voucher toàn hệ sinh thái (Áp dụng tất cả đối tác trong liên minh)
+    }
+
     private VoucherResponse mapToVoucherResponse(LoyaltyVoucherEntity v) {
+        String partnerName = "Toàn Hệ Sinh Thái (Tất cả đối tác)";
+        String partnerCode = "ALL";
+
+        if (v.getPartnerId() != null) {
+            Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findById(v.getPartnerId());
+            if (partnerOpt.isPresent()) {
+                partnerName = partnerOpt.get().getPartnerName();
+                partnerCode = partnerOpt.get().getPartnerCode();
+            } else {
+                partnerName = "Đối tác #" + v.getPartnerId();
+                partnerCode = "PARTNER_" + v.getPartnerId();
+            }
+        }
+
         return VoucherResponse.builder()
                 .id(v.getId())
                 .voucherCode(v.getVoucherCode())
                 .title(v.getTitle())
                 .description(v.getDescription())
                 .partnerId(v.getPartnerId())
-                .partnerName(v.getVoucherCode().contains("DELIMART") ? "Siêu Thị Delimart" : "Natcom Telecom")
+                .partnerCode(partnerCode)
+                .partnerName(partnerName)
                 .discountType(v.getDiscountType())
                 .discountValue(v.getDiscountValue())
                 .minBillAmount(v.getMinBillAmount())
@@ -269,5 +338,79 @@ public class VoucherService {
                 .endDate(v.getEndDate())
                 .status(v.getStatus())
                 .build();
+    }
+
+    private List<LoyaltyVoucherEntity> seedDefaultVouchers(String tenantId) {
+        List<LoyaltyPartnerEntity> partners = partnerRepository.findByTenantId(tenantId);
+        Long delimartId = null;
+        Long natcomId = null;
+        Long natcashId = null;
+
+        for (LoyaltyPartnerEntity p : partners) {
+            if (p.getPartnerCode().contains("DELIMART")) delimartId = p.getId();
+            else if (p.getPartnerCode().contains("NATCOM")) natcomId = p.getId();
+            else if (p.getPartnerCode().contains("NATCASH")) natcashId = p.getId();
+        }
+
+        Instant now = Instant.now();
+        Instant end90 = now.plusSeconds(90L * 86400L);
+
+        List<LoyaltyVoucherEntity> list = new ArrayList<>();
+
+        list.add(LoyaltyVoucherEntity.builder()
+                .tenantId(tenantId)
+                .partnerId(delimartId)
+                .voucherCode("DELIMART_GIAM_50K")
+                .title("Phiếu Mua Hàng 50 HTG Siêu Thị Delimart")
+                .description("Áp dụng cho hóa đơn từ 200 HTG khi mua sắm tại Siêu thị Delimart.")
+                .discountType(DiscountType.FIXED_AMOUNT)
+                .discountValue(new BigDecimal("50.00"))
+                .minBillAmount(new BigDecimal("200.00"))
+                .maxDiscountAmount(new BigDecimal("50.00"))
+                .totalQuantity(500)
+                .availableQuantity(480)
+                .pointCost(new BigDecimal("50.00"))
+                .startDate(now)
+                .endDate(end90)
+                .status(VoucherStatus.ACTIVE)
+                .build());
+
+        list.add(LoyaltyVoucherEntity.builder()
+                .tenantId(tenantId)
+                .partnerId(natcomId)
+                .voucherCode("NATCOM_DATA_1GB")
+                .title("Gói Cước Data 4G Natcom 1GB (24h)")
+                .description("Đổi 30 điểm nhận ngay 1GB Data tốc độ cao lướt web trong 24 giờ.")
+                .discountType(DiscountType.FIXED_AMOUNT)
+                .discountValue(new BigDecimal("30.00"))
+                .minBillAmount(BigDecimal.ZERO)
+                .maxDiscountAmount(new BigDecimal("30.00"))
+                .totalQuantity(1000)
+                .availableQuantity(950)
+                .pointCost(new BigDecimal("30.00"))
+                .startDate(now)
+                .endDate(end90)
+                .status(VoucherStatus.ACTIVE)
+                .build());
+
+        list.add(LoyaltyVoucherEntity.builder()
+                .tenantId(tenantId)
+                .partnerId(null) // Voucher toàn hệ sinh thái
+                .voucherCode("ALLIANCE_CHAO_BAN_MOI")
+                .title("Voucher Chào Mừng Hội Viên Mới Giảm 10%")
+                .description("Áp dụng giảm 10% tối đa 100 HTG tại toàn bộ các điểm bán thuộc liên minh.")
+                .discountType(DiscountType.PERCENTAGE)
+                .discountValue(new BigDecimal("10.00"))
+                .minBillAmount(new BigDecimal("100.00"))
+                .maxDiscountAmount(new BigDecimal("100.00"))
+                .totalQuantity(2000)
+                .availableQuantity(1980)
+                .pointCost(BigDecimal.ZERO)
+                .startDate(now)
+                .endDate(end90)
+                .status(VoucherStatus.ACTIVE)
+                .build());
+
+        return voucherRepository.saveAll(list);
     }
 }

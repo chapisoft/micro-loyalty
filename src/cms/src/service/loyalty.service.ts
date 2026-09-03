@@ -39,8 +39,9 @@ export interface VoucherItemModel {
   voucherCode: string;
   title: string;
   description?: string;
-  partnerName: string;
+  partnerName?: string;
   partnerId?: number;
+  partnerCode?: string;
   discountType: string;
   discountValue: number;
   minBillAmount: number;
