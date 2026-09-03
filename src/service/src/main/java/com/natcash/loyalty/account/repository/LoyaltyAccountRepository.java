@@ -1,6 +1,7 @@
 package com.natcash.loyalty.account.repository;
 
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -21,7 +22,14 @@ public interface LoyaltyAccountRepository extends JpaRepository<LoyaltyAccountEn
 
     long countByTenantId(String tenantId);
 
-    long countByTenantIdAndStatus(String tenantId, com.natcash.loyalty.domain.enums.CommonStatus status);
+    long countByTenantIdAndStatus(String tenantId, CommonStatus status);
+
+    @Query("SELECT a.tier.id, a.tier.code, a.tier.name, a.tier.tierLevel, a.tier.pointMultiplier, COUNT(a.id) " +
+           "FROM LoyaltyAccountEntity a " +
+           "WHERE a.tenantId = :tenantId AND a.tier IS NOT NULL " +
+           "GROUP BY a.tier.id, a.tier.code, a.tier.name, a.tier.tierLevel, a.tier.pointMultiplier " +
+           "ORDER BY a.tier.tierLevel ASC")
+    List<Object[]> countMembersByTier(@Param("tenantId") String tenantId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM LoyaltyAccountEntity a WHERE a.tenantId = :tenantId AND a.externalUserId = :externalUserId")

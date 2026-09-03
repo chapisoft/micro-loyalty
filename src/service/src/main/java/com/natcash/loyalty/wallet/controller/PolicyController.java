@@ -2,6 +2,8 @@ package com.natcash.loyalty.wallet.controller;
 
 import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
+import com.natcash.loyalty.audit.event.AuditLogEvent;
+import com.natcash.loyalty.audit.service.SystemAuditLogService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.PartnerType;
@@ -17,6 +19,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,11 +51,14 @@ public class PolicyController {
 
     private final LoyaltyAcceptancePolicyRepository policyRepository;
     private final LoyaltyPartnerRepository partnerRepository;
+    private final SystemAuditLogService auditLogService;
 
     public PolicyController(LoyaltyAcceptancePolicyRepository policyRepository,
-                            LoyaltyPartnerRepository partnerRepository) {
+                            LoyaltyPartnerRepository partnerRepository,
+                            SystemAuditLogService auditLogService) {
         this.policyRepository = policyRepository;
         this.partnerRepository = partnerRepository;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping
@@ -60,23 +67,32 @@ public class PolicyController {
     public ResponseEntity<List<PolicyResponse>> getPolicies(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<LoyaltyAcceptancePolicyEntity> entities = policyRepository.findByTenantId(tenantId);
+        List<LoyaltyAcceptancePolicyEntity> list = policyRepository.findByTenantId(tenantId);
 
-        if (entities.isEmpty()) {
-            entities = seedDefaultPolicies(tenantId);
+        if (list.isEmpty()) {
+            list = seedDefaultPolicies(tenantId);
         }
 
-        List<PolicyResponse> responses = entities.stream()
-                .map(this::mapEntityToResponse)
-                .collect(Collectors.toList());
-
+        List<PolicyResponse> responses = list.stream().map(this::mapEntityToResponse).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Lấy chi tiết chính sách", description = "Tra cứu thông tin chính sách theo ID")
+    @Transactional(readOnly = true)
+    public ResponseEntity<PolicyResponse> getPolicyById(
+            @PathVariable("id") Long id,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        LoyaltyAcceptancePolicyEntity entity = policyRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy chính sách #" + id));
+        return ResponseEntity.ok(mapEntityToResponse(entity));
+    }
+
     @PostMapping
-    @Operation(summary = "Tạo mới chính sách tích tiêu điểm", description = "Thêm mới chính sách tích/tiêu điểm lưu trực tiếp vào cơ sở dữ liệu")
+    @Operation(summary = "Tạo mới hoặc cập nhật chính sách theo đối tác", description = "Áp dụng cấu hình tích tiêu cho đối tác cụ thể")
     @Transactional
-    public ResponseEntity<PolicyResponse> createPolicy(
+    public ResponseEntity<PolicyResponse> savePolicy(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestBody PolicyRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
@@ -84,42 +100,24 @@ public class PolicyController {
         LoyaltyPartnerEntity partner = null;
         if (request.getPartnerId() != null) {
             partner = partnerRepository.findByIdAndTenantId(request.getPartnerId(), tenantId)
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy đối tác #" + request.getPartnerId()));
+        } else if (request.getPartnerCode() != null) {
+            partner = partnerRepository.findByTenantIdAndPartnerCode(tenantId, request.getPartnerCode())
                     .orElse(null);
         }
-        if (partner == null && request.getPartnerCode() != null && !request.getPartnerCode().trim().isEmpty()) {
-            partner = partnerRepository.findByTenantIdAndPartnerCode(tenantId, request.getPartnerCode().trim())
-                    .orElse(null);
-        }
-        if (partner == null) {
-            String partnerCode = request.getPartnerCode() != null && !request.getPartnerCode().trim().isEmpty()
-                    ? request.getPartnerCode().trim()
-                    : "PARTNER_" + System.currentTimeMillis();
-            String partnerName = request.getPartnerName() != null && !request.getPartnerName().trim().isEmpty()
-                    ? request.getPartnerName().trim()
-                    : "Đối Tác Mới";
 
-            // Check if partner code already exists
-            Optional<LoyaltyPartnerEntity> existingPartnerOpt = partnerRepository.findByTenantIdAndPartnerCode(tenantId, partnerCode);
-            if (existingPartnerOpt.isPresent()) {
-                partner = existingPartnerOpt.get();
-            } else {
-                partner = partnerRepository.save(LoyaltyPartnerEntity.builder()
-                        .tenantId(tenantId)
-                        .partnerCode(partnerCode)
-                        .partnerName(partnerName)
-                        .partnerType(PartnerType.RETAIL)
-                        .apiKey("API_KEY_" + System.currentTimeMillis())
-                        .secretKey("SEC_KEY_" + System.currentTimeMillis())
-                        .status(CommonStatus.ACTIVE)
-                        .build());
-            }
+        Optional<LoyaltyAcceptancePolicyEntity> existingPolicyOpt = Optional.empty();
+        if (partner != null) {
+            existingPolicyOpt = policyRepository.findByTenantIdAndPartnerId(tenantId, partner.getId());
         }
 
-        // Check if policy already exists for this tenant and partner (Prevent Unique Constraint violation)
-        Optional<LoyaltyAcceptancePolicyEntity> existingPolicyOpt = policyRepository.findByTenantIdAndPartnerId(tenantId, partner.getId());
         LoyaltyAcceptancePolicyEntity entity;
+        String beforeJson = null;
+        String operation = "INSERT";
         if (existingPolicyOpt.isPresent()) {
             entity = existingPolicyOpt.get();
+            beforeJson = toPolicyJson(entity);
+            operation = "UPDATE";
             if (request.getExchangeRate() != null) entity.setPointExchangeRate(request.getExchangeRate());
             if (request.getMaxBurnPercentage() != null) entity.setMaxBurnPercentage(request.getMaxBurnPercentage());
             if (request.getMinBillAmount() != null) entity.setMinBurnPoints(request.getMinBillAmount());
@@ -141,6 +139,21 @@ public class PolicyController {
         }
 
         LoyaltyAcceptancePolicyEntity saved = policyRepository.save(entity);
+
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("POLICY")
+                .tableName("loyalty_acceptance_policies")
+                .operation(operation)
+                .entityId("POL_" + saved.getId())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(beforeJson)
+                .afterData(toPolicyJson(saved))
+                .description("Cấu hình chính sách tích/tiêu điểm đối tác #" + (partner != null ? partner.getPartnerName() : "ALL"))
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(mapEntityToResponse(saved));
     }
 
@@ -155,6 +168,8 @@ public class PolicyController {
 
         LoyaltyAcceptancePolicyEntity entity = policyRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy chính sách #" + id));
+
+        String beforeJson = toPolicyJson(entity);
 
         if (request.getMaxBurnPercentage() != null) {
             entity.setMaxBurnPercentage(request.getMaxBurnPercentage());
@@ -171,6 +186,21 @@ public class PolicyController {
         entity.setUpdatedAt(Instant.now());
 
         LoyaltyAcceptancePolicyEntity updated = policyRepository.save(entity);
+
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("POLICY")
+                .tableName("loyalty_acceptance_policies")
+                .operation("UPDATE")
+                .entityId("POL_" + updated.getId())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(beforeJson)
+                .afterData(toPolicyJson(updated))
+                .description("Cập nhật chính sách tích/tiêu điểm #" + updated.getId())
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(mapEntityToResponse(updated));
     }
 
@@ -181,8 +211,44 @@ public class PolicyController {
             @PathVariable("id") Long id,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        policyRepository.findByIdAndTenantId(id, tenantId).ifPresent(policyRepository::delete);
+        policyRepository.findByIdAndTenantId(id, tenantId).ifPresent(pol -> {
+            policyRepository.delete(pol);
+            auditLogService.recordActionAsync(AuditLogEvent.builder()
+                    .tenantId(tenantId)
+                    .module("POLICY")
+                    .tableName("loyalty_acceptance_policies")
+                    .operation("DELETE")
+                    .entityId("POL_" + pol.getId())
+                    .actorUsername(getActorUsername())
+                    .actorRole("ADMIN")
+                    .beforeData(toPolicyJson(pol))
+                    .afterData(null)
+                    .description("Xóa chính sách tích/tiêu điểm #" + pol.getId())
+                    .status("SUCCESS")
+                    .build());
+        });
         return ResponseEntity.ok().build();
+    }
+
+    private String getActorUsername() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+                return auth.getName();
+            }
+        } catch (Exception ignored) {}
+        return "admin";
+    }
+
+    private String toPolicyJson(LoyaltyAcceptancePolicyEntity p) {
+        if (p == null) return null;
+        return String.format(
+                "{\"id\":%d,\"exchangeRate\":%s,\"maxBurnPercentage\":%s,\"status\":\"%s\"}",
+                p.getId(),
+                p.getPointExchangeRate() != null ? p.getPointExchangeRate().toString() : "1.0",
+                p.getMaxBurnPercentage() != null ? p.getMaxBurnPercentage().toString() : "50.0",
+                p.getStatus() != null ? p.getStatus().name() : "ACTIVE"
+        );
     }
 
     private PolicyResponse mapEntityToResponse(LoyaltyAcceptancePolicyEntity entity) {
