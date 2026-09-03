@@ -286,6 +286,7 @@ public class RewardWalletService {
                 .balanceAfter(newBalance)
                 .changeType(PointActionType.REFUND)
                 .referenceCode(refundTx)
+                .partnerId(clearing.getRedeemerPartnerId())
                 .description("Hoàn điểm hủy hóa đơn giao dịch: " + originalTx)
                 .createdAt(Instant.now())
                 .build();

@@ -93,8 +93,10 @@ export const TENANT_LIST: TenantOption[] = RAW_TENANTS.map((t) => ({
 }));
 
 interface TenantSelectorProps {
-  value: string;
-  onChange: (tenantId: string) => void;
+  value?: string;
+  onChange?: (tenantId: string) => void;
+  selectedTenant?: string;
+  onTenantChange?: (tenantId: string) => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -102,10 +104,25 @@ interface TenantSelectorProps {
 export const TenantSelector: React.FC<TenantSelectorProps> = ({
   value,
   onChange,
+  selectedTenant,
+  onTenantChange,
   className = '',
   style,
 }) => {
   const { t } = useTranslation();
+
+  const effectiveTenantId = value || selectedTenant || localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH';
+
+  const handleSelect = (newId: string) => {
+    localStorage.setItem('selected_tenant_id', newId);
+    localStorage.setItem('tenant_id', newId);
+    if (typeof onChange === 'function') {
+      onChange(newId);
+    }
+    if (typeof onTenantChange === 'function') {
+      onTenantChange(newId);
+    }
+  };
 
   const localizedTenants = useMemo<TenantOption[]>(() => {
     return RAW_TENANTS.map((item) => ({
@@ -119,7 +136,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
     }));
   }, [t]);
 
-  const selectedOption = localizedTenants.find((tOpt) => tOpt.id === value) || localizedTenants[0];
+  const selectedOption = localizedTenants.find((tOpt) => tOpt.id === effectiveTenantId) || localizedTenants[0];
 
   const valueTemplate = (option: TenantOption) => {
     if (!option) return <span>{t('tenant.choose_partner', { defaultValue: 'Chọn đối tác...' })}</span>;
@@ -199,7 +216,12 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
       <Dropdown
         value={selectedOption}
         options={localizedTenants}
-        onChange={(e: DropdownChangeEvent) => onChange(e.value.id)}
+        onChange={(e: DropdownChangeEvent) => {
+          const selectedId = e.value?.id || (typeof e.value === 'string' ? e.value : null);
+          if (selectedId) {
+            handleSelect(selectedId);
+          }
+        }}
         optionLabel="name"
         valueTemplate={valueTemplate}
         itemTemplate={itemTemplate}

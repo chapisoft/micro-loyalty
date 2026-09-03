@@ -270,8 +270,6 @@ Hệ thống tự động tính toán dữ liệu hành vi của từng khách h
 * **Ưu tiên hiển thị thông điệp âm thầm trong ứng dụng:** Các thông điệp gợi nhắc nâng hạng hoặc tiến độ cột mốc được hiển thị tinh tế dưới dạng thẻ thông tin nhỏ trên trang chủ Trung tâm Loyalty, không phát sinh âm thanh hoặc rung làm phiền khi người dùng chưa mở ứng dụng.
 * **Khung giờ gửi thân thiện:** Tuyệt đối không gửi thông báo đẩy ngoài khung giờ từ 8h00 sáng đến 20h00 tối.
 
----
-
 ## 7. MÔ HÌNH NGHIỆP VỤ CỔNG GAME VÀ KINH TẾ TRÒ CHƠI
 
 Cổng Game (GameHub) là phân hệ giải trí, giữ chân khách hàng và trò chơi hóa (Gamification) độc lập trực thuộc hệ sinh thái Khách hàng thân thiết:

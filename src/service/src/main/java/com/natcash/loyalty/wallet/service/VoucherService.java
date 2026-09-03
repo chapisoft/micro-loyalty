@@ -190,6 +190,14 @@ public class VoucherService {
             account.setCurrentPoints(account.getCurrentPoints().subtract(voucher.getPointCost()));
             accountRepository.save(account);
 
+            Long partnerId = voucher.getPartnerId();
+            if (partnerId == null) {
+                String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+                partnerId = partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
+                        .map(LoyaltyPartnerEntity::getId)
+                        .orElse(null);
+            }
+
             // Record point ledger
             LoyaltyPointLedgerEntity ledger = LoyaltyPointLedgerEntity.builder()
                     .tenantId(tenantId)
@@ -198,6 +206,7 @@ public class VoucherService {
                     .balanceAfter(account.getCurrentPoints())
                     .changeType(PointActionType.BURN)
                     .referenceCode("REDEEM_VCH_" + UUID.randomUUID().toString().substring(0, 8))
+                    .partnerId(partnerId)
                     .description("Đổi điểm nhận voucher: " + voucher.getTitle())
                     .build();
             ledgerRepository.save(ledger);

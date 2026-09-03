@@ -88,15 +88,38 @@ export interface PointLedgerItem {
   points: number;
   balanceBefore?: number;
   balanceAfter?: number;
+  partnerId?: number;
   partnerCode: string;
+  partnerName?: string;
+  partnerType?: string;
   referenceId?: string;
   description?: string;
+  status?: string;
   createdAt: string;
+}
+
+export interface PointLedgerQueryParams {
+  page?: number;
+  size?: number;
+  actionType?: string;
+  partnerCode?: string;
+  partnerId?: number;
+  keyword?: string;
+}
+
+export interface PointLedgerResponse {
+  items: PointLedgerItem[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
 }
 
 export interface ClearingSummaryModel {
   partnerId: number;
+  partnerCode?: string;
   partnerName: string;
+  partnerType?: string;
   totalTransactions: number;
   totalPointsIssued: number;
   totalPointsRedeemed: number;
@@ -110,10 +133,36 @@ export interface ClearingReportModel {
   periodFrom: string;
   periodTo: string;
   grandTotalTransactions: number;
+  grandTotalPointsIssued?: number;
   grandTotalPointsRedeemed: number;
-  grandTotalFiatAmount: number;
+  grandTotalFiatPayable?: number;
+  grandTotalFiatReceivable?: number;
+  grandTotalNetSettlement?: number;
   partnerSummaries: ClearingSummaryModel[];
   generatedAt: string;
+}
+
+export interface PartnerTransactionItemModel {
+  id: number;
+  transactionCode: string;
+  externalUserId: string;
+  pointsRedeemed: number;
+  fiatAmount: number;
+  exchangeRate: number;
+  role: 'REDEEMER' | 'ISSUER';
+  status: string;
+  settledAt?: string;
+  createdAt: string;
+}
+
+export interface PartnerTransactionsResponseModel {
+  partnerId: number;
+  partnerCode: string;
+  partnerName: string;
+  totalTransactions: number;
+  totalPoints: number;
+  totalFiat: number;
+  transactions: PartnerTransactionItemModel[];
 }
 
 export const LoyaltyService = {
@@ -337,8 +386,8 @@ export const LoyaltyService = {
   },
 
   // 5. Bù Trừ & Quyết Toán Đối Soát Tài Chính
-  async getClearingReport(fromDate?: string, toDate?: string, tenantId: string = 'TENANT_NATCASH'): Promise<ClearingReportModel> {
-    const from = fromDate || new Date(Date.now() - 7 * 86400000).toISOString();
+  async getClearingReport(tenantId: string = 'TENANT_NATCASH', fromDate?: string, toDate?: string): Promise<ClearingReportModel> {
+    const from = fromDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const to = toDate || new Date().toISOString();
     try {
       const response: any = await apiClient.post(
@@ -352,46 +401,34 @@ export const LoyaltyService = {
       return {
         periodFrom: from,
         periodTo: to,
-        grandTotalTransactions: 231,
-        grandTotalPointsRedeemed: 46600,
-        grandTotalFiatAmount: 46600,
-        partnerSummaries: [
-          {
-            partnerId: 1,
-            partnerName: 'Siêu Thị Delimart',
-            totalTransactions: 142,
-            totalPointsIssued: 12500,
-            totalPointsRedeemed: 28400,
-            totalFiatPayable: 12500,
-            totalFiatReceivable: 28400,
-            netSettlementAmount: 15900,
-            status: 'PENDING',
-          },
-          {
-            partnerId: 2,
-            partnerName: 'Tổng Công Ty Natcom',
-            totalTransactions: 89,
-            totalPointsIssued: 35000,
-            totalPointsRedeemed: 18200,
-            totalFiatPayable: 35000,
-            totalFiatReceivable: 18200,
-            netSettlementAmount: -16800,
-            status: 'PENDING',
-          },
-        ],
+        grandTotalTransactions: 0,
+        grandTotalPointsIssued: 0,
+        grandTotalPointsRedeemed: 0,
+        grandTotalFiatPayable: 0,
+        grandTotalFiatReceivable: 0,
+        grandTotalNetSettlement: 0,
+        partnerSummaries: [],
         generatedAt: new Date().toISOString(),
       };
     }
   },
 
-  async settleClearingPeriod(fromDate?: string, toDate?: string, remarks?: string, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
-    const from = fromDate || new Date(Date.now() - 7 * 86400000).toISOString();
+  async settleClearingPeriod(tenantId: string = 'TENANT_NATCASH', fromDate?: string, toDate?: string, remarks?: string): Promise<any> {
+    const from = fromDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const to = toDate || new Date().toISOString();
     const response: any = await apiClient.post(
       '/loyalty/v1/clearinghouse/settle-period',
       { fromDate: from, toDate: to, remarks: remarks || 'Quyết toán bù trừ định kỳ' },
       { headers: { 'X-Tenant-Id': tenantId } }
     );
+    return response?.data || response;
+  },
+
+  async getPartnerClearingTransactions(tenantId: string = 'TENANT_NATCASH', partnerId: number, fromDate: string, toDate: string): Promise<PartnerTransactionsResponseModel> {
+    const response: any = await apiClient.get('/loyalty/v1/clearinghouse/partner-transactions', {
+      params: { partnerId, fromDate, toDate },
+      headers: { 'X-Tenant-Id': tenantId },
+    });
     return response?.data || response;
   },
 
@@ -418,30 +455,81 @@ export const LoyaltyService = {
   },
 
   // 8. Sổ cái biến động điểm
-  async getPointLedger(tenantId: string = 'TENANT_NATCASH'): Promise<PointLedgerItem[]> {
+  async getPointLedger(
+    tenantId: string = 'TENANT_NATCASH',
+    params?: PointLedgerQueryParams
+  ): Promise<PointLedgerItem[] & PointLedgerResponse> {
     try {
-      const response: any = await apiClient.get('/loyalty/v1/ledger?page=0&size=50', {
+      const page = params?.page ?? 0;
+      const size = params?.size ?? 15;
+      const query = new URLSearchParams();
+      query.append('page', String(page));
+      query.append('size', String(size));
+
+      if (params?.actionType && params.actionType !== 'ALL') {
+        query.append('actionType', params.actionType);
+      }
+      if (params?.partnerCode && params.partnerCode !== 'ALL') {
+        query.append('partnerCode', params.partnerCode);
+      }
+      if (params?.partnerId) {
+        query.append('partnerId', String(params.partnerId));
+      }
+      if (params?.keyword && params.keyword.trim()) {
+        query.append('keyword', params.keyword.trim());
+      }
+
+      const response: any = await apiClient.get(`/loyalty/v1/ledger?${query.toString()}`, {
         headers: { 'X-Tenant-Id': tenantId },
       });
+
       const rawList = Array.isArray(response)
         ? response
         : (response?.items || response?.content || response?.data || []);
 
-      return rawList.map((item: any) => ({
+      const totalElements = typeof response?.totalElements === 'number'
+        ? response.totalElements
+        : rawList.length;
+
+      const totalPages = typeof response?.totalPages === 'number'
+        ? response.totalPages
+        : Math.ceil(totalElements / size);
+
+      const mappedItems: PointLedgerItem[] = rawList.map((item: any) => ({
         id: item.id,
         transactionId: item.referenceCode || item.transactionId || `TX_${item.id}`,
         externalUserId: item.externalUserId || 'Khách hàng',
         actionType: item.changeType || item.actionType || 'EARN',
         points: item.pointChange != null ? Math.abs(Number(item.pointChange)) : (item.points || 0),
+        balanceBefore: item.balanceBefore != null ? Number(item.balanceBefore) : undefined,
         balanceAfter: item.balanceAfter != null ? Number(item.balanceAfter) : (item.points || 0),
+        partnerId: item.partnerId,
         partnerCode: item.partnerCode || 'NATCASH',
+        partnerName: item.partnerName,
+        partnerType: item.partnerType,
         referenceId: item.referenceCode,
         description: item.description || '',
+        status: item.status || 'COMPLETED',
         createdAt: item.createdAt || new Date().toISOString(),
       }));
+
+      const result: any = mappedItems;
+      result.items = mappedItems;
+      result.totalElements = totalElements;
+      result.totalPages = totalPages;
+      result.currentPage = page;
+      result.pageSize = size;
+
+      return result;
     } catch (e) {
       console.error('[getPointLedger] Error:', e);
-      return [];
+      const emptyArr: any = [];
+      emptyArr.items = [];
+      emptyArr.totalElements = 0;
+      emptyArr.totalPages = 0;
+      emptyArr.currentPage = 0;
+      emptyArr.pageSize = params?.size || 15;
+      return emptyArr;
     }
   },
 
