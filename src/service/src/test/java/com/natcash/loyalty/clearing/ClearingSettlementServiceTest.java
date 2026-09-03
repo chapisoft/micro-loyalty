@@ -10,6 +10,7 @@ import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
 import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
 
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
+import com.natcash.loyalty.clearing.repository.LoyaltyClearinghouseSettlementRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,9 @@ class ClearingSettlementServiceTest {
 
     @Mock
     private LoyaltyPartnerRepository partnerRepository;
+
+    @Mock
+    private LoyaltyClearinghouseSettlementRepository settlementRepository;
 
     @InjectMocks
     private ClearingSettlementService clearingService;
@@ -69,7 +73,7 @@ class ClearingSettlementServiceTest {
         assertEquals(1, response.getGrandTotalTransactions());
         assertEquals(new BigDecimal("100.00"), response.getGrandTotalPointsRedeemed());
         assertEquals(new BigDecimal("100.00"), response.getGrandTotalFiatAmount());
-        assertEquals(1, response.getPartnerSummaries().size());
+        assertEquals(2, response.getPartnerSummaries().size());
     }
 
     @Test

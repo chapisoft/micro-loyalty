@@ -161,6 +161,7 @@ public class ClearingSettlementService {
                 .grandTotalFiatPayable(grandTotalFiatPayable)
                 .grandTotalFiatReceivable(grandTotalFiatReceivable)
                 .grandTotalNetSettlement(grandTotalNetSettlement)
+                .grandTotalFiatAmount(grandTotalFiatReceivable)
                 .partnerSummaries(summaries)
                 .generatedAt(Instant.now())
                 .build();

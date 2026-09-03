@@ -191,7 +191,7 @@ public class VoucherService {
             accountRepository.save(account);
 
             Long partnerId = voucher.getPartnerId();
-            if (partnerId == null) {
+            if (partnerId == null && partnerRepository != null) {
                 String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
                 partnerId = partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
                         .map(LoyaltyPartnerEntity::getId)
@@ -303,7 +303,7 @@ public class VoucherService {
             throw new LoyaltyException(ErrorCode.NOT_FOUND, "Đối tác liên minh #" + partnerId + " không tồn tại");
         }
 
-        if (partnerCode != null && !partnerCode.isBlank() && !"ALL".equalsIgnoreCase(partnerCode.trim())) {
+        if (partnerRepository != null && partnerCode != null && !partnerCode.isBlank() && !"ALL".equalsIgnoreCase(partnerCode.trim())) {
             Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findByTenantIdAndPartnerCode(tenantId, partnerCode.trim().toUpperCase());
             if (partnerOpt.isPresent()) {
                 return partnerOpt.get().getId();

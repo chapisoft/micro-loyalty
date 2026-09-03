@@ -68,6 +68,7 @@ public final class ClearingDto {
         private BigDecimal grandTotalFiatPayable;
         private BigDecimal grandTotalFiatReceivable;
         private BigDecimal grandTotalNetSettlement;
+        private BigDecimal grandTotalFiatAmount; // Tương thích ngược với test & legacy callers
         private List<PartnerClearingSummaryDto> partnerSummaries;
         private Instant generatedAt;
     }

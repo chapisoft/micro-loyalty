@@ -156,7 +156,7 @@ public class PointLedgerService {
         Pageable pageable = PageRequest.of(page, size);
 
         Long partnerId = request.getPartnerId();
-        if (partnerId == null && request.getPartnerCode() != null && !request.getPartnerCode().isBlank() && !"ALL".equalsIgnoreCase(request.getPartnerCode())) {
+        if (partnerId == null && partnerRepository != null && request.getPartnerCode() != null && !request.getPartnerCode().isBlank() && !"ALL".equalsIgnoreCase(request.getPartnerCode())) {
             partnerId = partnerRepository.findByTenantIdAndPartnerCode(effectiveTenant, request.getPartnerCode().trim())
                     .map(LoyaltyPartnerEntity::getId)
                     .orElse(null);
@@ -236,6 +236,9 @@ public class PointLedgerService {
     }
 
     public Long resolvePartnerId(String tenantId, String partnerCode) {
+        if (partnerRepository == null) {
+            return null;
+        }
         if (partnerCode != null && !partnerCode.isBlank()) {
             Optional<LoyaltyPartnerEntity> partnerOpt = partnerRepository.findByTenantIdAndPartnerCode(tenantId, partnerCode.trim());
             if (partnerOpt.isPresent()) {

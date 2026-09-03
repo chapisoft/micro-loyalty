@@ -1326,6 +1326,9 @@ public class GameHubService {
     }
 
     private Long getDefaultPartnerId(String tenantId) {
+        if (partnerRepository == null) {
+            return null;
+        }
         String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
         return partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
                 .map(LoyaltyPartnerEntity::getId)
