@@ -220,7 +220,8 @@ notification-templates/
 plan/audit/
 **/plan/audit/
 docs/dev/audit/
-**/audit/
+docs/**/audit/
+!src/**/audit/
 docs/AI_gen_docs/
 **/docs/AI_gen_docs/
 AI_gen_docs/

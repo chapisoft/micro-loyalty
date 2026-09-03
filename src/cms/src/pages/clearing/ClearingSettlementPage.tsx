@@ -11,6 +11,7 @@ import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { ClearingStatus } from '@/models';
 import { LoyaltyService, ClearingSummaryModel, PartnerTransactionItemModel, PartnerTransactionsResponseModel } from '@/service/loyalty.service';
+import * as XLSX from 'xlsx';
 
 // Hàm format ngày địa phương an toàn (chống Timezone Drift)
 const formatLocalDate = (date: Date): string => {
@@ -196,6 +197,56 @@ export const ClearingSettlementPage: React.FC = () => {
     </div>
   );
 
+  const exportToExcel = () => {
+    const fromStr = fromDate ? fromDate.trim() : 'ALL';
+    const toStr = toDate ? toDate.trim() : 'ALL';
+    const fileName = `Bao_Cao_Doi_Soat_Bu_Tru_${selectedTenant}_${fromStr}_${toStr}.xlsx`;
+
+    const dataToExport = (selectedItems.length > 0 ? selectedItems : clearingList).map((item, index) => ({
+      [t('common.no_order', { defaultValue: 'STT' })]: index + 1,
+      [t('clearing.partner_code', { defaultValue: 'Mã Đối Tác' })]: item.partnerCode || '',
+      [t('clearing.partner_name', { defaultValue: 'Tên Đối Tác' })]: item.partnerName || '',
+      [t('clearing.partner_type', { defaultValue: 'Loại Đối Tác' })]: item.partnerType || '',
+      [t('clearing.total_txs', { defaultValue: 'Số GD Đối Soát' })]: Number(item.totalTransactions || 0),
+      [t('clearing.total_points_issued', { defaultValue: 'Điểm Phát Hành' })]: Number(item.totalPointsIssued || 0),
+      [t('clearing.total_points_redeemed', { defaultValue: 'Điểm Thu Hồi' })]: Number(item.totalPointsRedeemed || 0),
+      [t('clearing.total_fiat_payable', { defaultValue: 'Phải Trả Quỹ (HTG)' })]: Number(item.totalFiatPayable || 0),
+      [t('clearing.total_fiat_receivable', { defaultValue: 'Phải Thu Quỹ (HTG)' })]: Number(item.totalFiatReceivable || 0),
+      [t('clearing.net_amount', { defaultValue: 'Dư Nợ Ròng (HTG)' })]: Number(item.netSettlementAmount || 0),
+      [t('common.status', { defaultValue: 'Trạng Thái' })]: item.status === 'SETTLED' ? t('clearing.settled', { defaultValue: 'Đã Quyết Toán' }) : t('clearing.pending', { defaultValue: 'Chờ Quyết Toán' }),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+    worksheet['!cols'] = [
+      { wch: 6 },
+      { wch: 18 },
+      { wch: 30 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 22 },
+      { wch: 18 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Doi_Soat_Bu_Tru');
+    XLSX.writeFile(workbook, fileName);
+
+    toast.current?.show({
+      severity: 'success',
+      summary: t('common.success', { defaultValue: 'Thành Công' }),
+      detail: t('clearing.export_success', {
+        name: fileName,
+        defaultValue: `Đã xuất báo cáo thành công: ${fileName}`,
+      }),
+      life: 3000,
+    });
+  };
+
   const header = (
     <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
       <div className="flex flex-wrap gap-2 align-items-center">
@@ -219,8 +270,8 @@ export const ClearingSettlementPage: React.FC = () => {
           icon="pi pi-file-excel"
           severity="success"
           outlined
-          onClick={() => dt.current?.exportCSV()}
-          tooltip={t('clearing.export_excel_tooltip', { defaultValue: 'Xuất dữ liệu bảng đối soát ra file CSV/Excel' })}
+          onClick={exportToExcel}
+          tooltip={t('clearing.export_excel_tooltip', { defaultValue: 'Xuất dữ liệu bảng đối soát ra file Excel (.xlsx)' })}
         />
         <Button
           label={t('clearing.settle_period', { defaultValue: 'Kết Chuyển Kỳ Quyết Toán' })}
@@ -357,6 +408,7 @@ export const ClearingSettlementPage: React.FC = () => {
           onSelectionChange={(e: any) => setSelectedItems(e.value || [])}
           header={header}
           dataKey="partnerId"
+          exportFilename={`Bao_Cao_Doi_Soat_Bu_Tru_${selectedTenant}_${fromDate ? fromDate.trim() : 'ALL'}_${toDate ? toDate.trim() : 'ALL'}`}
           paginator
           rows={10}
           loading={loading}

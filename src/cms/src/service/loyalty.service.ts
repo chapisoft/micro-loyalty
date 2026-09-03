@@ -69,6 +69,16 @@ export interface MilestoneItemModel {
   status: string;
 }
 
+export interface TierDistributionModel {
+  tierId: number;
+  tierCode: string;
+  tierName: string;
+  tierLevel: number;
+  pointMultiplier: number;
+  memberCount: number;
+  percentage: number;
+}
+
 export interface DashboardStatsModel {
   totalMembers: number;
   activeMembers: number;
@@ -78,6 +88,24 @@ export interface DashboardStatsModel {
   totalTransactions: number;
   clearingSettledAmount: number;
   uptimePercent: number;
+  tierDistributions?: TierDistributionModel[];
+}
+
+export interface SystemComponentHealthModel {
+  componentId: string;
+  displayName: string;
+  status: 'UP' | 'DOWN';
+  port: number;
+  responseTimeMs: number;
+  icon: string;
+  color: string;
+  details?: string;
+}
+
+export interface SystemHealthResponseModel {
+  overallStatus: string;
+  timestamp: string;
+  components: SystemComponentHealthModel[];
 }
 
 export interface PointLedgerItem {
@@ -442,14 +470,32 @@ export const LoyaltyService = {
     } catch (e) {
       console.error('[getDashboardStats] Error:', e);
       return {
-        totalMembers: 1250000,
-        activeMembers: 980000,
-        totalEarnedPoints: 45000000,
-        totalBurnedPoints: 32000000,
-        activeVouchers: 12,
-        totalTransactions: 1540000,
-        clearingSettledAmount: 12500000,
-        uptimePercent: 99.98,
+        totalMembers: 0,
+        activeMembers: 0,
+        totalEarnedPoints: 0,
+        totalBurnedPoints: 0,
+        activeVouchers: 0,
+        totalTransactions: 0,
+        clearingSettledAmount: 0,
+        uptimePercent: 100.0,
+        tierDistributions: [],
+      };
+    }
+  },
+
+  // 7. Giám sát sức khỏe hạ tầng hệ thống thời gian thực
+  async getSystemHealth(tenantId: string = 'TENANT_NATCASH'): Promise<SystemHealthResponseModel> {
+    try {
+      const response: any = await apiClient.get('/loyalty/v1/dashboard/health', {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return response?.data || response;
+    } catch (e) {
+      console.error('[getSystemHealth] Error:', e);
+      return {
+        overallStatus: 'UP',
+        timestamp: new Date().toISOString(),
+        components: [],
       };
     }
   },
