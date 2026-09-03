@@ -326,7 +326,7 @@ const FormField: React.FC<FormFieldProps> = ({
                     id={name}
                     value={field.value}
                     options={options || []}
-                    placeholder={placeholder || 'Lựa chọn'}
+                    placeholder={placeholder || t('select')}
                     showClear
                     label={label}
                     filter={filter}
@@ -373,15 +373,15 @@ const FormField: React.FC<FormFieldProps> = ({
                     id={name}
                     value={field.value}
                     options={options || []}
-                    placeholder={placeholder || 'Lựa chọn'}
+                    placeholder={placeholder || t('select')}
                     label={label}
                     filter={true}
                     display={'chip'}
                     showClear
                     resetFilterOnHide
                     autoFocus={autoFocus}
-                    emptyMessage="Không có dữ liệu"
-                    emptyFilterMessage="Không có dữ liệu"
+                    emptyMessage={t('no_data_available')}
+                    emptyFilterMessage={t('no_data_available')}
                     panelStyle={{
                       maxWidth: 300,
                     }}
@@ -405,7 +405,7 @@ const FormField: React.FC<FormFieldProps> = ({
                     selectionMode="single"
                     label={label}
                     filter
-                    placeholder={placeholder || 'Lựa chọn'}
+                    placeholder={placeholder || t('select')}
                     filterTemplate={headerTemplate}
                     autoFocus={autoFocus}
                     style={{

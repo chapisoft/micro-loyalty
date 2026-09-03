@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FieldType } from '@/constants';
 import { AppCalendar, AppInputText, AppSelect, AppTreeSelect } from 'components';
 import { AutoComplete, AutoCompleteCompleteEvent } from 'primereact/autocomplete';
@@ -74,6 +75,7 @@ export const FieldTemplate: React.FC<FieldTemplateProps> = ({
   selectProps,
   style,
 }): React.ReactElement => {
+  const { t } = useTranslation();
   const inputContainerRef = React.useRef<HTMLDivElement>(null);
 
   const nameRef = name || `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
@@ -228,14 +230,14 @@ export const FieldTemplate: React.FC<FieldTemplateProps> = ({
             inputId={nameRef}
             id={nameRef}
             value={value}
-            placeholder={placeholder || 'Lựa chọn'}
+            placeholder={placeholder || t('select')}
             options={mergedSelectProps.options || []}
             label={label}
             filter
             showFilterClear
             autoFocus={autoFocus}
-            emptyMessage="Không có dữ liệu"
-            emptyFilterMessage="Không có dữ liệu"
+            emptyMessage={t('no_data_available')}
+            emptyFilterMessage={t('no_data_available')}
             resetFilterOnHide
             required={required}
             disabled={disabled}
@@ -294,13 +296,13 @@ export const FieldTemplate: React.FC<FieldTemplateProps> = ({
             options={selectOptions || []}
             expandedKeys={expandedKeys}
             label={label}
-            placeholder={placeholder || 'Lựa chọn'}
+            placeholder={placeholder || t('select')}
             filter
             autoFocus={autoFocus}
             panelClassName={'field-template-tree-select'}
             filterValue={filterValue}
             filterTemplate={headerTemplate}
-            emptyMessage={'Không có dữ liệu'}
+            emptyMessage={t('no_data_available')}
             style={{ boxSizing: 'border-box', content: 'none', alignItems: 'center' }}
             onChange={(e) => {
               if (setValue) {

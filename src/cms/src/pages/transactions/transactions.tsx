@@ -108,17 +108,17 @@ export const Transactions: React.FC = () => {
   const actionTypeTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value="Tích Điểm" icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value={t('action_type.earn', { defaultValue: 'Tích Điểm' })} icon="pi pi-arrow-up-right" />;
       case 'BURN':
-        return <Tag severity="danger" value="Tiêu Điểm" icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value={t('action_type.burn', { defaultValue: 'Tiêu Điểm' })} icon="pi pi-arrow-down-left" />;
       case 'REWARD':
-        return <Tag severity="info" value="Thưởng Cột Mốc" icon="pi pi-gift" />;
+        return <Tag severity="info" value={t('action_type.reward', { defaultValue: 'Thưởng Cột Mốc' })} icon="pi pi-gift" />;
       case 'SPIN':
-        return <Tag severity="warning" value="Vòng Quay" icon="pi pi-compass" />;
+        return <Tag severity="warning" value={t('action_type.spin', { defaultValue: 'Vòng Quay' })} icon="pi pi-compass" />;
       case 'VOUCHER':
-        return <Tag severity="info" value="Đổi Voucher" icon="pi pi-ticket" />;
+        return <Tag severity="info" value={t('action_type.voucher', { defaultValue: 'Đổi Voucher' })} icon="pi pi-ticket" />;
       default:
-        return <Tag severity="secondary" value={rowData.actionType || 'Giao Dịch'} />;
+        return <Tag severity="secondary" value={rowData.actionType || t('common.actions', { defaultValue: 'Giao Dịch' })} />;
     }
   };
 
@@ -126,7 +126,7 @@ export const Transactions: React.FC = () => {
     const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
     return (
       <span className={`font-medium font-mono ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
-        {isPositive ? `+${rowData.points}` : `-${rowData.points}`} Điểm
+        {isPositive ? `+${rowData.points}` : `-${rowData.points}`} {t('common.points', { defaultValue: 'Điểm' })}
       </span>
     );
   };
@@ -134,7 +134,7 @@ export const Transactions: React.FC = () => {
   const balanceAfterTemplate = (rowData: PointLedgerItem) => {
     return (
       <span className="font-normal font-mono text-700">
-        {rowData.balanceAfter?.toLocaleString() || rowData.points?.toLocaleString() || 0} Điểm
+        {rowData.balanceAfter?.toLocaleString() || rowData.points?.toLocaleString() || 0} {t('common.points', { defaultValue: 'Điểm' })}
       </span>
     );
   };
@@ -220,7 +220,7 @@ export const Transactions: React.FC = () => {
           <Column field="createdAt" body={dateTemplate} header={t('common.created_at', { defaultValue: 'Thời Gian' })} sortable style={{ minWidth: '10rem' }} />
           <Column
             header={t('common.status', { defaultValue: 'Trạng Thái' })}
-            body={() => <Tag severity="success" value="Hoàn tất" />}
+            body={() => <Tag severity="success" value={t('common.completed', { defaultValue: 'Hoàn tất' })} />}
             style={{ width: '7rem', textAlign: 'center' }}
           />
         </DataTable>

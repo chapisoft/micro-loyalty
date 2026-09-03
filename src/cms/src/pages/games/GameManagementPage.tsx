@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -71,15 +71,6 @@ interface GamePrizeItem {
   status: string;
 }
 
-const PRIZE_TYPES = [
-  { label: 'Điểm Thưởng (POINTS)', value: 'POINTS' },
-  { label: 'Mã Giảm Giá (VOUCHER)', value: 'VOUCHER' },
-  { label: 'Hoàn Tiền Mặt (CASHBACK)', value: 'CASHBACK' },
-  { label: 'Hệ Số Nhân (MULTIPLIER)', value: 'MULTIPLIER' },
-  { label: 'Lượt Chơi Thêm (TURNS)', value: 'TURNS' },
-  { label: 'Chúc May Mắn (NO_LUCK)', value: 'NO_LUCK' },
-];
-
 export const GameManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const [selectedTenant, setSelectedTenant] = useState('TENANT_NATCASH');
@@ -87,6 +78,15 @@ export const GameManagementPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGames, setSelectedGames] = useState<GameItem[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+
+  const prizeTypes = useMemo(() => [
+    { label: t('game.prize_type_points', { defaultValue: 'Điểm Thưởng (POINTS)' }), value: 'POINTS' },
+    { label: t('game.prize_type_voucher', { defaultValue: 'Mã Giảm Giá (VOUCHER)' }), value: 'VOUCHER' },
+    { label: t('game.prize_type_cashback', { defaultValue: 'Hoàn Tiền Mặt (CASHBACK)' }), value: 'CASHBACK' },
+    { label: t('game.prize_type_multiplier', { defaultValue: 'Hệ Số Nhân (MULTIPLIER)' }), value: 'MULTIPLIER' },
+    { label: t('game.prize_type_turns', { defaultValue: 'Lượt Chơi Thêm (TURNS)' }), value: 'TURNS' },
+    { label: t('game.prize_type_no_luck', { defaultValue: 'Chúc May Mắn (NO_LUCK)' }), value: 'NO_LUCK' },
+  ], [t]);
 
   // Dialog States
   const [showGameDialog, setShowGameDialog] = useState(false);
@@ -170,7 +170,10 @@ export const GameManagementPage: React.FC = () => {
   const savePrize = async () => {
     if (!selectedGameForPrizes) return;
     confirmDialog({
-      message: `Bạn có chắc chắn muốn lưu hạng giải thưởng "${prizeFormData.prizeName || 'Mới'}" không?`,
+      message: t('game.confirm_save_prize', {
+        name: prizeFormData.prizeName || 'Mới',
+        defaultValue: `Bạn có chắc chắn muốn lưu hạng giải thưởng "${prizeFormData.prizeName || 'Mới'}" không?`,
+      }),
       header: t('common.confirm_save', { defaultValue: 'Xác nhận Lưu Giải Thưởng' }),
       icon: 'pi pi-question-circle',
       acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),
@@ -184,7 +187,7 @@ export const GameManagementPage: React.FC = () => {
           toast.current?.show({
             severity: 'success',
             summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: 'Lưu hạng giải thưởng thành công!',
+            detail: t('game.save_prize_success', { defaultValue: 'Lưu hạng giải thưởng thành công!' }),
             life: 3000,
           });
         } catch (e: any) {
@@ -192,7 +195,7 @@ export const GameManagementPage: React.FC = () => {
           toast.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: 'Lưu giải thưởng thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            detail: t('game.save_prize_failed', { defaultValue: 'Lưu giải thưởng thất bại' }) + ': ' + (e?.message || ''),
             life: 4000,
           });
         } finally {
@@ -205,7 +208,10 @@ export const GameManagementPage: React.FC = () => {
   const deletePrize = async (prize: GamePrizeItem) => {
     if (!selectedGameForPrizes || !prize.id) return;
     confirmDialog({
-      message: `Bạn có chắc chắn muốn xóa giải thưởng "${prize.prizeName}" khỏi ma trận không?`,
+      message: t('game.confirm_delete_prize', {
+        name: prize.prizeName,
+        defaultValue: `Bạn có chắc chắn muốn xóa giải thưởng "${prize.prizeName}" khỏi ma trận không?`,
+      }),
       header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Giải Thưởng' }),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
@@ -219,7 +225,7 @@ export const GameManagementPage: React.FC = () => {
           toast.current?.show({
             severity: 'success',
             summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: 'Đã xóa giải thưởng thành công!',
+            detail: t('game.delete_prize_success', { defaultValue: 'Đã xóa giải thưởng thành công!' }),
             life: 3000,
           });
         } catch (e: any) {
@@ -227,7 +233,7 @@ export const GameManagementPage: React.FC = () => {
           toast.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: 'Xóa giải thưởng thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+            detail: t('game.delete_prize_failed', { defaultValue: 'Xóa giải thưởng thất bại' }) + ': ' + (e?.message || ''),
             life: 4000,
           });
         } finally {
@@ -246,7 +252,7 @@ export const GameManagementPage: React.FC = () => {
       toast.current?.show({
         severity: 'success',
         summary: t('common.success', { defaultValue: 'Thành công' }),
-        detail: 'Đã tự động cân bằng tổng xác suất 100% thành công!',
+        detail: t('game.rebalance_success', { defaultValue: 'Đã tự động cân bằng tổng xác suất 100% thành công!' }),
         life: 3000,
       });
     } catch (e: any) {
@@ -254,7 +260,7 @@ export const GameManagementPage: React.FC = () => {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: 'Cân bằng xác suất thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        detail: t('game.rebalance_failed', { defaultValue: 'Cân bằng xác suất thất bại' }) + ': ' + (e?.message || ''),
         life: 4000,
       });
     } finally {
@@ -299,7 +305,9 @@ export const GameManagementPage: React.FC = () => {
       toast.current?.show({
         severity: 'success',
         summary: t('common.success', { defaultValue: 'Thành công' }),
-        detail: gameFormData.id ? 'Cập nhật trò chơi thành công!' : 'Thêm mới trò chơi thành công!',
+        detail: gameFormData.id
+          ? t('game.update_game_success', { defaultValue: 'Cập nhật trò chơi thành công!' })
+          : t('game.create_game_success', { defaultValue: 'Thêm mới trò chơi thành công!' }),
         life: 3000,
       });
     } catch (e: any) {
@@ -307,7 +315,7 @@ export const GameManagementPage: React.FC = () => {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: 'Không thể lưu trò chơi: ' + (e?.message || 'Lỗi hệ thống'),
+        detail: t('game.save_game_failed', { defaultValue: 'Không thể lưu trò chơi' }) + ': ' + (e?.message || ''),
         life: 4000,
       });
     } finally {
@@ -324,7 +332,7 @@ export const GameManagementPage: React.FC = () => {
       toast.current?.show({
         severity: 'success',
         summary: t('common.success', { defaultValue: 'Thành công' }),
-        detail: 'Cập nhật tham số cấu hình nâng cao thành công!',
+        detail: t('game.update_params_success', { defaultValue: 'Cập nhật tham số cấu hình nâng cao thành công!' }),
         life: 3000,
       });
     } catch (e: any) {
@@ -332,7 +340,7 @@ export const GameManagementPage: React.FC = () => {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: 'Lưu tham số thất bại: ' + (e?.message || 'Lỗi hệ thống'),
+        detail: t('game.save_params_failed', { defaultValue: 'Lưu tham số thất bại' }) + ': ' + (e?.message || ''),
         life: 4000,
       });
     } finally {
@@ -348,15 +356,15 @@ export const GameManagementPage: React.FC = () => {
     );
   };
 
-  const categoryOptions = [
-    { label: 'Vòng Quay May Mắn (LUCKY_DRAW)', value: 'LUCKY_DRAW' },
-    { label: 'Vé Cào Trúng Liền (INSTANT_WIN)', value: 'INSTANT_WIN' },
-    { label: 'Thể Thao & Hành Động (ACTION)', value: 'ACTION' },
-    { label: 'Phiêu Lưu Leo Tháp (ADVENTURE)', value: 'ADVENTURE' },
-    { label: 'Bàn Cờ 3D & Xúc Xắc (BOARD_3D)', value: 'BOARD_3D' },
-    { label: 'Đố Vui Trí Tuệ (QUIZ)', value: 'QUIZ' },
-    { label: 'Vật Lý & Thả Bi (CASUAL)', value: 'CASUAL' },
-  ];
+  const categoryOptions = useMemo(() => [
+    { label: t('game.cat_lucky_draw', { defaultValue: 'Vòng Quay May Mắn (LUCKY_DRAW)' }), value: 'LUCKY_DRAW' },
+    { label: t('game.cat_instant_win', { defaultValue: 'Vé Cào Trúng Liền (INSTANT_WIN)' }), value: 'INSTANT_WIN' },
+    { label: t('game.cat_action', { defaultValue: 'Thể Thao & Hành Động (ACTION)' }), value: 'ACTION' },
+    { label: t('game.cat_adventure', { defaultValue: 'Phiêu Lưu Leo Tháp (ADVENTURE)' }), value: 'ADVENTURE' },
+    { label: t('game.cat_board_3d', { defaultValue: 'Bàn Cờ 3D & Xúc Xắc (BOARD_3D)' }), value: 'BOARD_3D' },
+    { label: t('game.cat_quiz', { defaultValue: 'Đố Vui Trí Tuệ (QUIZ)' }), value: 'QUIZ' },
+    { label: t('game.cat_casual', { defaultValue: 'Vật Lý & Thả Bi (CASUAL)' }), value: 'CASUAL' },
+  ], [t]);
 
   const statusOptions = [
     { label: t('common.active', { defaultValue: 'Đang áp dụng' }), value: CommonStatus.ACTIVE },
@@ -402,7 +410,7 @@ export const GameManagementPage: React.FC = () => {
               </div>
             </div>
             <span className="text-green-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-check text-xs font-bold" /> 100% Sẵn sàng Webview & DB
+              <i className="pi pi-check text-xs font-bold" /> {t('game.ready_status', { defaultValue: '100% Sẵn sàng Webview & DB' })}
             </span>
           </div>
         </div>
@@ -414,7 +422,7 @@ export const GameManagementPage: React.FC = () => {
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.today_spins', { defaultValue: 'Tổng lượt chơi hôm nay' })}
                 </span>
-                <div className="text-900 font-black text-2xl font-mono tracking-tight text-orange-600">390 Lượt</div>
+                <div className="text-900 font-black text-2xl font-mono tracking-tight text-orange-600">390 {t('common.spins', { defaultValue: 'Lượt' })}</div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -428,7 +436,7 @@ export const GameManagementPage: React.FC = () => {
               </div>
             </div>
             <span className="text-orange-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-arrow-up text-xs font-bold" /> +18.4% so với hôm qua
+              <i className="pi pi-arrow-up text-xs font-bold" /> {t('game.vs_yesterday', { defaultValue: '+18.4% so với hôm qua' })}
             </span>
           </div>
         </div>
@@ -453,7 +461,7 @@ export const GameManagementPage: React.FC = () => {
                 <i className="pi pi-wallet text-white text-2xl font-bold" />
               </div>
             </div>
-            <span className="text-600 font-medium text-xs">Hạn mức: 50,000 HTG (12%)</span>
+            <span className="text-600 font-medium text-xs">{t('game.budget_limit_note', { defaultValue: 'Hạn mức: 50,000 HTG (12%)' })}</span>
           </div>
         </div>
 
@@ -461,7 +469,7 @@ export const GameManagementPage: React.FC = () => {
           <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-purple-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
-                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">Cơ Chế Khóa & Sổ Cái</span>
+                <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.lock_ledger_mechanism', { defaultValue: 'Cơ Chế Khóa & Sổ Cái' })}</span>
                 <div className="text-900 font-black text-2xl tracking-tight text-purple-600">Redisson RLock</div>
               </div>
               <div
@@ -476,7 +484,7 @@ export const GameManagementPage: React.FC = () => {
               </div>
             </div>
             <span className="text-purple-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-check text-xs font-bold" /> Toàn vẹn tài chính 100%
+              <i className="pi pi-check text-xs font-bold" /> {t('game.integrity_status', { defaultValue: 'Toàn vẹn tài chính 100%' })}
             </span>
           </div>
         </div>
@@ -490,7 +498,7 @@ export const GameManagementPage: React.FC = () => {
               {t('game.management_title', { defaultValue: 'Danh mục Trò chơi & Cấu hình Giải thưởng Thương mại' })}
             </h4>
             <p className="text-500 text-xs mt-1 mb-0">
-              Quản trị ma trận giải thưởng động, tỷ lệ trúng thưởng, giá lượt chơi HTG và tham số nghiệp vụ từng game.
+              {t('game.management_description', { defaultValue: 'Quản trị ma trận giải thưởng động, tỷ lệ trúng thưởng, giá lượt chơi HTG và tham số nghiệp vụ từng game.' })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -540,7 +548,7 @@ export const GameManagementPage: React.FC = () => {
                   severity="warning"
                   size="small"
                   onClick={() => openPrizesManager(rowData)}
-                  tooltip="Cơ cấu giải thưởng động (DB Prizes)"
+                  tooltip={t('game.dynamic_prizes_tooltip', { defaultValue: 'Cơ cấu giải thưởng động (DB Prizes)' })}
                 />
                 <Button
                   icon="pi pi-cog"
@@ -586,7 +594,7 @@ export const GameManagementPage: React.FC = () => {
           <Column
             field="freeTurnsDaily"
             header={<span title={t('game.free_turns_tooltip', { defaultValue: 'Số lượt chơi miễn phí mỗi ngày' })}>{t('game.free_turns_daily', { defaultValue: 'Lượt Miễn Phí' })}</span>}
-            body={(row: GameItem) => <span className="font-medium text-green-600">{row.freeTurnsDaily} lượt</span>}
+            body={(row: GameItem) => <span className="font-medium text-green-600">{row.freeTurnsDaily} {t('common.spins', { defaultValue: 'lượt' })}</span>}
             sortable
             style={{ minWidth: '8rem', textAlign: 'center' }}
           />
@@ -597,7 +605,7 @@ export const GameManagementPage: React.FC = () => {
               row.pricePerTurnHtg > 0 ? (
                 <span className="font-medium font-mono text-orange-600">{row.pricePerTurnHtg} HTG</span>
               ) : (
-                <Tag severity="info" value="Miễn phí" />
+                <Tag severity="info" value={t('common.free', { defaultValue: 'Miễn phí' })} />
               )
             }
             sortable
@@ -610,7 +618,7 @@ export const GameManagementPage: React.FC = () => {
               row.dailyBudgetLimit > 0 ? (
                 <span className="font-mono text-700">{row.dailyBudgetLimit.toLocaleString()} HTG</span>
               ) : (
-                <span className="text-500 text-xs">Không giới hạn</span>
+                <span className="text-500 text-xs">{t('common.unlimited', { defaultValue: 'Không giới hạn' })}</span>
               )
             }
             sortable
@@ -634,7 +642,11 @@ export const GameManagementPage: React.FC = () => {
           <div className="flex align-items-center gap-2">
             <i className="pi pi-gift text-orange-500 font-bold text-xl" />
             <span className="font-bold">
-              Quản lý Cơ cấu Giải thưởng: {selectedGameForPrizes?.gameName} ({selectedGameForPrizes?.gameCode})
+              {t('game.prizes_manager_title', {
+                name: selectedGameForPrizes?.gameName || '',
+                code: selectedGameForPrizes?.gameCode || '',
+                defaultValue: `Quản lý Cơ cấu Giải thưởng: ${selectedGameForPrizes?.gameName} (${selectedGameForPrizes?.gameCode})`,
+              })}
             </span>
           </div>
         }
@@ -646,31 +658,31 @@ export const GameManagementPage: React.FC = () => {
         <div className="grid mb-3">
           <div className="col-12 md:col-4">
             <div className="p-3 surface-100 border-round-xl text-center">
-              <span className="text-xs text-500 font-bold uppercase block mb-1">Số Hạng Giải Đang Mở</span>
-              <span className="text-xl font-bold text-900">{prizesList.length} Giải Thưởng</span>
+              <span className="text-xs text-500 font-bold uppercase block mb-1">{t('game.active_prizes_count', { defaultValue: 'Số Hạng Giải Đang Mở' })}</span>
+              <span className="text-xl font-bold text-900">{prizesList.length} {t('game.prizes_unit', { defaultValue: 'Giải Thưởng' })}</span>
             </div>
           </div>
           <div className="col-12 md:col-4">
             <div className="p-3 surface-100 border-round-xl text-center">
-              <span className="text-xs text-500 font-bold uppercase block mb-1">Tổng Trọng Số Xác Suất (Σ W)</span>
+              <span className="text-xs text-500 font-bold uppercase block mb-1">{t('game.total_probability_weight', { defaultValue: 'Tổng Trọng Số Xác Suất (Σ W)' })}</span>
               <span className="text-xl font-bold font-mono text-blue-600">{totalPrizeWeight}</span>
             </div>
           </div>
           <div className="col-12 md:col-4">
             <div className="p-3 surface-100 border-round-xl text-center">
-              <span className="text-xs text-500 font-bold uppercase block mb-1">Trạng Thái Cân Bằng</span>
-              <span className="text-xl font-bold text-green-600">Đã Chuẩn Hóa RNG</span>
+              <span className="text-xs text-500 font-bold uppercase block mb-1">{t('game.balance_status', { defaultValue: 'Trạng Thái Cân Bằng' })}</span>
+              <span className="text-xl font-bold text-green-600">{t('game.rng_normalized', { defaultValue: 'Đã Chuẩn Hóa RNG' })}</span>
             </div>
           </div>
         </div>
 
         <div className="flex justify-content-between align-items-center mb-3">
           <span className="text-xs text-600">
-            * Tỷ lệ trúng giải được tính toán tự động qua thuật toán Weighted Random Sampling bảo mật tại Backend.
+            {t('game.prizes_note', { defaultValue: '* Tỷ lệ trúng giải được tính toán tự động qua thuật toán Weighted Random Sampling bảo mật tại Backend.' })}
           </span>
           <div className="flex gap-2">
             <Button
-              label="Tự Động Cân Bằng (1000)"
+              label={t('game.auto_balance_btn', { defaultValue: 'Tự Động Cân Bằng (1000)' })}
               icon="pi pi-sliders-h"
               severity="secondary"
               outlined
@@ -679,7 +691,7 @@ export const GameManagementPage: React.FC = () => {
               loading={isSubmitting}
             />
             <Button
-              label="Thêm Hạng Giải Mới"
+              label={t('game.add_prize_btn', { defaultValue: 'Thêm Hạng Giải Mới' })}
               icon="pi pi-plus"
               severity="warning"
               size="small"
@@ -694,37 +706,37 @@ export const GameManagementPage: React.FC = () => {
           stripedRows
           responsiveLayout="scroll"
           loading={isPrizesLoading}
-          emptyMessage="Chưa có giải thưởng nào được cấu hình cho trò chơi này."
+          emptyMessage={t('game.no_prizes_configured', { defaultValue: 'Chưa có giải thưởng nào được cấu hình cho trò chơi này.' })}
         >
-          <Column field="displayOrder" header="STT" style={{ width: '4rem', textAlign: 'center' }} />
+          <Column field="displayOrder" header={t('common.stt', { defaultValue: 'STT' })} style={{ width: '4rem', textAlign: 'center' }} />
           <Column
             field="iconSymbol"
             header="Icon"
             body={(row: GamePrizeItem) => <span className="text-xl">{row.iconSymbol || '🎁'}</span>}
             style={{ width: '4rem', textAlign: 'center' }}
           />
-          <Column field="prizeCode" header="Mã Giải" sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
-          <Column field="prizeName" header="Tên Giải Thưởng" sortable style={{ minWidth: '12rem' }} />
+          <Column field="prizeCode" header={t('game.prize_code', { defaultValue: 'Mã Giải' })} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
+          <Column field="prizeName" header={t('game.prize_name', { defaultValue: 'Tên Giải Thưởng' })} sortable style={{ minWidth: '12rem' }} />
           <Column
             field="prizeType"
-            header="Loại Thưởng"
+            header={t('game.prize_type', { defaultValue: 'Loại Thưởng' })}
             body={(row: GamePrizeItem) => <Tag severity="info" value={row.prizeType} />}
             style={{ minWidth: '8rem' }}
           />
           <Column
             field="prizeValue"
-            header="Giá Trị"
+            header={t('game.prize_value', { defaultValue: 'Giá Trị' })}
             body={(row: GamePrizeItem) => <span className="font-bold text-orange-600">+{row.prizeValue}</span>}
             style={{ minWidth: '6rem', textAlign: 'right' }}
           />
           <Column
             field="probabilityWeight"
-            header="Trọng Số"
+            header={t('game.probability_weight', { defaultValue: 'Trọng Số' })}
             body={(row: GamePrizeItem) => <span className="font-mono">{row.probabilityWeight}</span>}
             style={{ minWidth: '6rem', textAlign: 'center' }}
           />
           <Column
-            header="Tỷ Lệ %"
+            header={t('game.probability_pct', { defaultValue: 'Tỷ Lệ %' })}
             body={(row: GamePrizeItem) => {
               const pct = totalPrizeWeight > 0 ? (row.probabilityWeight / totalPrizeWeight) * 100 : 0;
               return (
@@ -738,7 +750,7 @@ export const GameManagementPage: React.FC = () => {
           />
           <Column
             field="status"
-            header="Trạng Thái"
+            header={t('common.status', { defaultValue: 'Trạng Thái' })}
             body={(row: GamePrizeItem) => statusTemplate(row.status)}
             style={{ minWidth: '7rem' }}
           />
@@ -758,15 +770,15 @@ export const GameManagementPage: React.FC = () => {
       <Dialog
         visible={showPrizeFormDialog}
         style={{ width: '640px' }}
-        header={prizeFormData.id ? 'Sửa Hạng Giải Thưởng Minigame' : 'Thêm Hạng Giải Thưởng Mới'}
+        header={prizeFormData.id ? t('game.edit_prize_title', { defaultValue: 'Sửa Hạng Giải Thưởng Minigame' }) : t('game.add_prize_title', { defaultValue: 'Thêm Hạng Giải Thưởng Mới' })}
         modal
         className="p-fluid"
         onHide={() => setShowPrizeFormDialog(false)}
       >
         <div className="surface-100 p-3 border-round-lg mb-3">
-          <div className="font-bold text-sm mb-2 text-primary">1. Thông tin Giải Thưởng & Đa Ngôn Ngữ</div>
+          <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_1', { defaultValue: '1. Thông tin Giải Thưởng & Đa Ngôn Ngữ' })}</div>
           <div className="field mb-2">
-            <label htmlFor="prizeCode" className="font-bold text-xs">Mã Giải Thưởng (Unique Code)</label>
+            <label htmlFor="prizeCode" className="font-bold text-xs">{t('game.prize_code_label', { defaultValue: 'Mã Giải Thưởng (Unique Code)' })}</label>
             <InputText
               id="prizeCode"
               value={prizeFormData.prizeCode || ''}
@@ -778,7 +790,7 @@ export const GameManagementPage: React.FC = () => {
 
           <div className="grid">
             <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameVi" className="font-bold text-xs">Tên Tiếng Việt (Mặc định)</label>
+              <label htmlFor="nameVi" className="font-bold text-xs">{t('game.name_vi_label', { defaultValue: 'Tên Tiếng Việt (Mặc định)' })}</label>
               <InputText
                 id="nameVi"
                 value={prizeFormData.nameVi || prizeFormData.prizeName || ''}
@@ -788,7 +800,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameEn" className="font-bold text-xs">English (Tiếng Anh)</label>
+              <label htmlFor="nameEn" className="font-bold text-xs">{t('game.name_en_label', { defaultValue: 'English (Tiếng Anh)' })}</label>
               <InputText
                 id="nameEn"
                 value={prizeFormData.nameEn || ''}
@@ -797,7 +809,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameFr" className="font-bold text-xs">Français (Tiếng Pháp)</label>
+              <label htmlFor="nameFr" className="font-bold text-xs">{t('game.name_fr_label', { defaultValue: 'Français (Tiếng Pháp)' })}</label>
               <InputText
                 id="nameFr"
                 value={prizeFormData.nameFr || ''}
@@ -806,7 +818,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameHt" className="font-bold text-xs">Kreyòl Ayisyen (Haiti Creole)</label>
+              <label htmlFor="nameHt" className="font-bold text-xs">{t('game.name_ht_label', { defaultValue: 'Kreyòl Ayisyen (Haiti Creole)' })}</label>
               <InputText
                 id="nameHt"
                 value={prizeFormData.nameHt || ''}
@@ -818,19 +830,19 @@ export const GameManagementPage: React.FC = () => {
         </div>
 
         <div className="surface-100 p-3 border-round-lg mb-3">
-          <div className="font-bold text-sm mb-2 text-primary">2. Loại Quà, Giá Trị & Xác Suất</div>
+          <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_2', { defaultValue: '2. Loại Quà, Giá Trị & Xác Suất' })}</div>
           <div className="grid">
             <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="prizeType" className="font-bold text-xs">Loại Phần Thưởng</label>
+              <label htmlFor="prizeType" className="font-bold text-xs">{t('game.prize_type_label', { defaultValue: 'Loại Phần Thưởng' })}</label>
               <Dropdown
                 id="prizeType"
                 value={prizeFormData.prizeType || 'POINTS'}
-                options={PRIZE_TYPES}
+                options={prizeTypes}
                 onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })}
               />
             </div>
             <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="prizeValue" className="font-bold text-xs">Giá Trị Phần Thưởng</label>
+              <label htmlFor="prizeValue" className="font-bold text-xs">{t('game.prize_value_label', { defaultValue: 'Giá Trị Phần Thưởng' })}</label>
               <InputNumber
                 id="prizeValue"
                 value={prizeFormData.prizeValue || 0}
@@ -842,7 +854,7 @@ export const GameManagementPage: React.FC = () => {
 
           <div className="grid">
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="probabilityWeight" className="font-bold text-xs">Trọng Số Xác Suất</label>
+              <label htmlFor="probabilityWeight" className="font-bold text-xs">{t('game.probability_weight_label', { defaultValue: 'Trọng Số Xác Suất' })}</label>
               <InputNumber
                 id="probabilityWeight"
                 value={prizeFormData.probabilityWeight || 100}
@@ -851,7 +863,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="displayOrder" className="font-bold text-xs">Thứ Tự Hiển Thị</label>
+              <label htmlFor="displayOrder" className="font-bold text-xs">{t('game.display_order_label', { defaultValue: 'Thứ Tự Hiển Thị' })}</label>
               <InputNumber
                 id="displayOrder"
                 value={prizeFormData.displayOrder || 1}
@@ -860,7 +872,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="iconSymbol" className="font-bold text-xs">Biểu Tượng (Icon)</label>
+              <label htmlFor="iconSymbol" className="font-bold text-xs">{t('game.icon_symbol_label', { defaultValue: 'Biểu Tượng (Icon)' })}</label>
               <InputText
                 id="iconSymbol"
                 value={prizeFormData.iconSymbol || '🎁'}
@@ -872,10 +884,10 @@ export const GameManagementPage: React.FC = () => {
         </div>
 
         <div className="surface-100 p-3 border-round-lg mb-3">
-          <div className="font-bold text-sm mb-2 text-primary">3. Hạn Mức Ngân Sách & Giới Hạn Trúng (Ngày / Tuần / Tháng)</div>
+          <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_3', { defaultValue: '3. Hạn Mức Ngân Sách & Giới Hạn Trúng (Ngày / Tuần / Tháng)' })}</div>
           <div className="grid">
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="dailyBudgetLimit" className="font-bold text-xs">Hạn mức Ngày (HTG)</label>
+              <label htmlFor="dailyBudgetLimit" className="font-bold text-xs">{t('game.daily_budget_label', { defaultValue: 'Hạn mức Ngày (HTG)' })}</label>
               <InputNumber
                 id="dailyBudgetLimit"
                 value={prizeFormData.dailyBudgetLimit || 0}
@@ -884,7 +896,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="weeklyBudgetLimit" className="font-bold text-xs">Hạn mức Tuần (HTG)</label>
+              <label htmlFor="weeklyBudgetLimit" className="font-bold text-xs">{t('game.weekly_budget_label', { defaultValue: 'Hạn mức Tuần (HTG)' })}</label>
               <InputNumber
                 id="weeklyBudgetLimit"
                 value={prizeFormData.weeklyBudgetLimit || 0}
@@ -893,7 +905,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="monthlyBudgetLimit" className="font-bold text-xs">Hạn mức Tháng (HTG)</label>
+              <label htmlFor="monthlyBudgetLimit" className="font-bold text-xs">{t('game.monthly_budget_label', { defaultValue: 'Hạn mức Tháng (HTG)' })}</label>
               <InputNumber
                 id="monthlyBudgetLimit"
                 value={prizeFormData.monthlyBudgetLimit || 0}
@@ -903,7 +915,7 @@ export const GameManagementPage: React.FC = () => {
             </div>
 
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="dailyMaxWinners" className="font-bold text-xs">Tối đa người trúng / Ngày</label>
+              <label htmlFor="dailyMaxWinners" className="font-bold text-xs">{t('game.daily_max_winners_label', { defaultValue: 'Tối đa người trúng / Ngày' })}</label>
               <InputNumber
                 id="dailyMaxWinners"
                 value={prizeFormData.dailyMaxWinners || 0}
@@ -912,7 +924,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="weeklyMaxWinners" className="font-bold text-xs">Tối đa người trúng / Tuần</label>
+              <label htmlFor="weeklyMaxWinners" className="font-bold text-xs">{t('game.weekly_max_winners_label', { defaultValue: 'Tối đa người trúng / Tuần' })}</label>
               <InputNumber
                 id="weeklyMaxWinners"
                 value={prizeFormData.weeklyMaxWinners || 0}
@@ -921,7 +933,7 @@ export const GameManagementPage: React.FC = () => {
               />
             </div>
             <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="monthlyMaxWinners" className="font-bold text-xs">Tối đa người trúng / Tháng</label>
+              <label htmlFor="monthlyMaxWinners" className="font-bold text-xs">{t('game.monthly_max_winners_label', { defaultValue: 'Tối đa người trúng / Tháng' })}</label>
               <InputNumber
                 id="monthlyMaxWinners"
                 value={prizeFormData.monthlyMaxWinners || 0}
@@ -933,7 +945,7 @@ export const GameManagementPage: React.FC = () => {
         </div>
 
         <div className="field mb-3">
-          <label htmlFor="prizeStatus" className="font-bold">Trạng Thái</label>
+          <label htmlFor="prizeStatus" className="font-bold">{t('common.status', { defaultValue: 'Trạng Thái' })}</label>
           <Dropdown
             id="prizeStatus"
             value={prizeFormData.status || 'ACTIVE'}
@@ -1049,7 +1061,7 @@ export const GameManagementPage: React.FC = () => {
           </div>
         </div>
         <div className="field mb-3">
-          <label htmlFor="description" className="font-bold">Mô tả Trò chơi</label>
+          <label htmlFor="description" className="font-bold">{t('game.description_label', { defaultValue: 'Mô tả Trò chơi' })}</label>
           <InputTextarea
             id="description"
             rows={2}
@@ -1059,7 +1071,7 @@ export const GameManagementPage: React.FC = () => {
           />
         </div>
         <div className="field mb-3">
-          <label htmlFor="rulesText" className="font-bold">Quy tắc & Thể lệ Chi tiết</label>
+          <label htmlFor="rulesText" className="font-bold">{t('game.rules_text_label', { defaultValue: 'Quy tắc & Thể lệ Chi tiết' })}</label>
           <InputTextarea
             id="rulesText"
             rows={3}
@@ -1101,7 +1113,10 @@ export const GameManagementPage: React.FC = () => {
       <Dialog
         visible={showParamsDialog}
         style={{ width: '650px' }}
-        header={`Cấu hình tham số chi tiết: ${paramsFormData.gameName || ''}`}
+        header={t('game.params_config_title', {
+          name: paramsFormData.gameName || '',
+          defaultValue: `Cấu hình tham số chi tiết: ${paramsFormData.gameName || ''}`,
+        })}
         modal
         className="p-fluid"
         onHide={() => setShowParamsDialog(false)}
@@ -1109,10 +1124,10 @@ export const GameManagementPage: React.FC = () => {
         <div className="p-3 bg-blue-50 border-1 border-blue-200 border-round-xl mb-4 text-blue-900">
           <div className="flex align-items-center gap-2 mb-1">
             <i className="pi pi-info-circle text-blue-600 font-bold" />
-            <span className="font-bold">Mã trò chơi: {paramsFormData.gameCode}</span>
+            <span className="font-bold">{t('game.game_code_label', { defaultValue: 'Mã trò chơi' })}: {paramsFormData.gameCode}</span>
           </div>
           <span className="text-xs">
-            Tham số dưới đây sẽ được nạp động vào Webview Game khi hội viên bắt đầu phiên chơi.
+            {t('game.params_note', { defaultValue: 'Tham số dưới đây sẽ được nạp động vào Webview Game khi hội viên bắt đầu phiên chơi.' })}
           </span>
         </div>
 
@@ -1120,7 +1135,7 @@ export const GameManagementPage: React.FC = () => {
         {paramsFormData.category === 'QUIZ' && (
           <div className="grid">
             <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="quizQuestionCount" className="font-bold">Số lượng câu hỏi mỗi phiên</label>
+              <label htmlFor="quizQuestionCount" className="font-bold">{t('game.quiz_question_count_label', { defaultValue: 'Số lượng câu hỏi mỗi phiên' })}</label>
               <InputNumber
                 id="quizQuestionCount"
                 value={paramsFormData.quizQuestionCount || 5}
@@ -1128,10 +1143,10 @@ export const GameManagementPage: React.FC = () => {
                 max={20}
                 onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizQuestionCount: e.value || 5 })}
               />
-              <small className="text-500">Số câu hỏi người chơi cần trả lời liên tiếp.</small>
+              <small className="text-500">{t('game.quiz_question_count_desc', { defaultValue: 'Số câu hỏi người chơi cần trả lời liên tiếp.' })}</small>
             </div>
             <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="quizCountdownSec" className="font-bold">Thời gian trả lời (Giây/câu)</label>
+              <label htmlFor="quizCountdownSec" className="font-bold">{t('game.quiz_countdown_label', { defaultValue: 'Thời gian trả lời (Giây/câu)' })}</label>
               <InputNumber
                 id="quizCountdownSec"
                 value={paramsFormData.quizCountdownSec || 20}
@@ -1139,10 +1154,10 @@ export const GameManagementPage: React.FC = () => {
                 max={60}
                 onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizCountdownSec: e.value || 20 })}
               />
-              <small className="text-500">Thời gian đếm ngược cho mỗi câu hỏi.</small>
+              <small className="text-500">{t('game.quiz_countdown_desc', { defaultValue: 'Thời gian đếm ngược cho mỗi câu hỏi.' })}</small>
             </div>
             <div className="col-12 field mb-3">
-              <label htmlFor="quizRewardPoints" className="font-bold">Điểm thưởng khi trả lời đúng 100%</label>
+              <label htmlFor="quizRewardPoints" className="font-bold">{t('game.quiz_reward_points_label', { defaultValue: 'Điểm thưởng khi trả lời đúng 100%' })}</label>
               <InputNumber
                 id="quizRewardPoints"
                 value={paramsFormData.quizRewardPoints || 150}
@@ -1155,7 +1170,7 @@ export const GameManagementPage: React.FC = () => {
 
         <div className="field mb-3 mt-3">
           <div className="flex align-items-center justify-content-between p-2 border-1 surface-border border-round">
-            <span className="font-bold text-sm">Cho phép dùng Điểm thưởng để quay/chơi</span>
+            <span className="font-bold text-sm">{t('game.allow_points_spin_label', { defaultValue: 'Cho phép dùng Điểm thưởng để quay/chơi' })}</span>
             <InputSwitch
               checked={paramsFormData.allowPointsSpin ?? true}
               onChange={(e) => setParamsFormData({ ...paramsFormData, allowPointsSpin: e.value })}

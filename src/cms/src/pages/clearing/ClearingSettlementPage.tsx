@@ -69,15 +69,15 @@ export const ClearingSettlementPage: React.FC = () => {
     try {
       const res = await LoyaltyService.settleClearingPeriod();
       if (res && res.settlementBatchCode) {
-        setSettleSuccessMsg(`Quyết toán thành công! Mã lô kết chuyển: ${res.settlementBatchCode}`);
+        setSettleSuccessMsg(t('clearing.batch_success', { code: res.settlementBatchCode, defaultValue: `Quyết toán thành công! Mã lô kết chuyển: ${res.settlementBatchCode}` }));
       } else {
-        setSettleSuccessMsg(res?.message || 'Quyết toán kết chuyển kỳ bù trừ thành công!');
+        setSettleSuccessMsg(res?.message || t('clearing.settle_success', { defaultValue: 'Quyết toán kết chuyển kỳ bù trừ thành công!' }));
       }
       setShowConfirmSettle(false);
       await fetchClearingData();
     } catch (e: any) {
       console.error('[handleSettlePeriod] Error:', e);
-      alert('Không thể thực hiện quyết toán bù trừ: ' + (e?.message || 'Lỗi hệ thống'));
+      alert(t('clearing.settle_error', { error: e?.message || '', defaultValue: 'Không thể thực hiện quyết toán bù trừ: ' + (e?.message || '') }));
     } finally {
       setIsSubmitting(false);
     }
@@ -137,7 +137,7 @@ export const ClearingSettlementPage: React.FC = () => {
         <div className="col-12 md:col-4">
           <div className="card shadow-1 border-round surface-card p-4">
             <span className="text-500 font-medium block mb-2">{t('clearing.total_points_redeemed', { defaultValue: 'Tổng điểm tiêu dùng liên minh' })}</span>
-            <div className="text-primary font-bold text-2xl">{totalPointsRedeemed.toLocaleString()} Điểm</div>
+            <div className="text-primary font-bold text-2xl">{totalPointsRedeemed.toLocaleString()} {t('common.points', { defaultValue: 'Điểm' })}</div>
           </div>
         </div>
         <div className="col-12 md:col-4">

@@ -161,17 +161,17 @@ export const Dashboard = () => {
   const actionTypeBodyTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value="TÍCH ĐIỂM (EARN)" icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value={t('action_type.earn', { defaultValue: 'TÍCH ĐIỂM (EARN)' })} icon="pi pi-arrow-up-right" />;
       case 'BURN':
-        return <Tag severity="danger" value="TIÊU ĐIỂM (BURN)" icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value={t('action_type.burn', { defaultValue: 'TIÊU ĐIỂM (BURN)' })} icon="pi pi-arrow-down-left" />;
       case 'REWARD':
-        return <Tag severity="info" value="THƯỞNG CỘT MỐC" icon="pi pi-gift" />;
+        return <Tag severity="info" value={t('action_type.reward', { defaultValue: 'THƯỞNG CỘT MỐC' })} icon="pi pi-gift" />;
       case 'SPIN':
-        return <Tag severity="warning" value="VÒNG QUAY" icon="pi pi-compass" />;
+        return <Tag severity="warning" value={t('action_type.spin', { defaultValue: 'VÒNG QUAY' })} icon="pi pi-compass" />;
       case 'VOUCHER':
-        return <Tag severity="info" value="ĐỔI VOUCHER" icon="pi pi-ticket" />;
+        return <Tag severity="info" value={t('action_type.voucher', { defaultValue: 'ĐỔI VOUCHER' })} icon="pi pi-ticket" />;
       default:
-        return <Tag severity="secondary" value={rowData.actionType || 'GIAO DỊCH'} />;
+        return <Tag severity="secondary" value={rowData.actionType || t('common.actions', { defaultValue: 'GIAO DỊCH' })} />;
     }
   };
 
@@ -179,7 +179,7 @@ export const Dashboard = () => {
     const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
     return (
       <span className={`font-bold ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
-        {isPositive ? `+${rowData.points}` : `-${rowData.points}`} Điểm
+        {isPositive ? `+${rowData.points}` : `-${rowData.points}`} {t('common.points', { defaultValue: 'Điểm' })}
       </span>
     );
   };
@@ -367,9 +367,9 @@ export const Dashboard = () => {
             <div>
               <div className="flex justify-content-between mb-1">
                 <span className="font-semibold text-sm text-slate-700 flex align-items-center gap-2">
-                  <i className="pi pi-circle-fill text-slate-400 text-xs" /> Hạng Đồng (Bronze)
+                  <i className="pi pi-circle-fill text-slate-400 text-xs" /> {t('tier.tier_bronze', { defaultValue: 'Hạng Đồng (Bronze)' })}
                 </span>
-                <span className="text-sm font-bold text-slate-900">Chuẩn Hội Viên (1.0x)</span>
+                <span className="text-sm font-bold text-slate-900">{t('dashboard.tier_bronze_desc', { defaultValue: 'Chuẩn Hội Viên (1.0x)' })}</span>
               </div>
               <ProgressBar value={60} showValue={false} style={{ height: '8px' }} color="#94a3b8" />
             </div>
@@ -377,9 +377,9 @@ export const Dashboard = () => {
             <div>
               <div className="flex justify-content-between mb-1">
                 <span className="font-semibold text-sm text-blue-700 flex align-items-center gap-2">
-                  <i className="pi pi-circle-fill text-blue-500 text-xs" /> Hạng Bạc (Silver)
+                  <i className="pi pi-circle-fill text-blue-500 text-xs" /> {t('tier.tier_silver', { defaultValue: 'Hạng Bạc (Silver)' })}
                 </span>
-                <span className="text-sm font-bold text-blue-900">Từ 1.000 Điểm (1.2x)</span>
+                <span className="text-sm font-bold text-blue-900">{t('dashboard.tier_silver_desc', { defaultValue: 'Từ 1.000 Điểm (1.2x)' })}</span>
               </div>
               <ProgressBar value={25} showValue={false} style={{ height: '8px' }} color="#3b82f6" />
             </div>
@@ -387,9 +387,9 @@ export const Dashboard = () => {
             <div>
               <div className="flex justify-content-between mb-1">
                 <span className="font-semibold text-sm text-amber-700 flex align-items-center gap-2">
-                  <i className="pi pi-circle-fill text-amber-500 text-xs" /> Hạng Vàng (Gold)
+                  <i className="pi pi-circle-fill text-amber-500 text-xs" /> {t('tier.tier_gold', { defaultValue: 'Hạng Vàng (Gold)' })}
                 </span>
-                <span className="text-sm font-bold text-amber-900">Từ 5.000 Điểm (1.5x)</span>
+                <span className="text-sm font-bold text-amber-900">{t('dashboard.tier_gold_desc', { defaultValue: 'Từ 5.000 Điểm (1.5x)' })}</span>
               </div>
               <ProgressBar value={10} showValue={false} style={{ height: '8px' }} color="#f59e0b" />
             </div>
@@ -397,9 +397,9 @@ export const Dashboard = () => {
             <div>
               <div className="flex justify-content-between mb-1">
                 <span className="font-semibold text-sm text-cyan-700 flex align-items-center gap-2">
-                  <i className="pi pi-circle-fill text-cyan-500 text-xs" /> Hạng Bạch Kim (Platinum VIP)
+                  <i className="pi pi-circle-fill text-cyan-500 text-xs" /> {t('tier.tier_platinum', { defaultValue: 'Hạng Bạch Kim (Platinum VIP)' })}
                 </span>
-                <span className="text-sm font-bold text-cyan-900">Từ 15.000 Điểm (2.0x)</span>
+                <span className="text-sm font-bold text-cyan-900">{t('dashboard.tier_platinum_desc', { defaultValue: 'Từ 15.000 Điểm (2.0x)' })}</span>
               </div>
               <ProgressBar value={5} showValue={false} style={{ height: '8px' }} color="#06b6d4" />
             </div>

@@ -831,7 +831,7 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
         title={t('games.knife.title')}
         subtitle={
           highestStage > 1
-            ? `Kỷ lục: Màn ${highestStage} • ${t('games.knife.stage', { stage })}: ${currentTheme.badge}`
+            ? `${t('games.knife.record_stage', { highestStage, defaultValue: `Kỷ lục: Màn ${highestStage}` })} • ${t('games.knife.stage', { stage })}: ${currentTheme.badge}`
             : `${t('games.knife.stage', { stage })}: ${currentTheme.badge}`
         }
         onBack={onBack}

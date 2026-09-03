@@ -210,9 +210,13 @@ export const UserVoucherPage: React.FC<{
       setNotifyModal({
         isOpen: true,
         type: 'warning',
-        title: 'Chưa Đủ Điểm Đổi Voucher',
-        message: `Bạn cần tối thiểu ${item.pointsCost} điểm để đổi phiếu ưu đãi "${item.title}". Hãy tích thêm điểm qua các nhiệm vụ hoặc GameHub!`,
-        badge: 'CẦN THÊM ĐIỂM',
+        title: t('vouchers.insufficient_points_title', { defaultValue: 'Chưa Đủ Điểm Đổi Voucher' }),
+        message: t('vouchers.insufficient_points_msg', {
+          minPoints: item.pointsCost,
+          title: item.title,
+          defaultValue: `Bạn cần tối thiểu ${item.pointsCost} điểm để đổi phiếu ưu đãi "${item.title}". Hãy tích thêm điểm qua các nhiệm vụ hoặc GameHub!`,
+        }),
+        badge: t('vouchers.badge_need_points', { defaultValue: 'CẦN THÊM ĐIỂM' }),
       });
       return;
     }
@@ -229,10 +233,10 @@ export const UserVoucherPage: React.FC<{
       partnerName: item.partnerName,
       category: item.category,
       discountText: item.discountText,
-      minOrder: `Áp dụng cho đơn từ ${item.minBill} HTG`,
+      minOrder: t('vouchers.min_order_desc', { minBill: item.minBill, defaultValue: `Áp dụng cho đơn từ ${item.minBill} HTG` }),
       validUntil: '30/09/2026',
       status: 'AVAILABLE',
-      terms: 'Đổi từ điểm thưởng Loyalty.',
+      terms: t('vouchers.terms_redeemed_loyalty', { defaultValue: 'Đổi từ điểm thưởng Loyalty.' }),
     };
 
     setVouchers((prev) => [newVoucher, ...prev]);
@@ -245,9 +249,9 @@ export const UserVoucherPage: React.FC<{
       setNotifyModal({
         isOpen: true,
         type: 'warning',
-        title: 'Số Điểm Không Hợp Lệ',
-        message: 'Vui lòng nhập tối thiểu 100 điểm thưởng (bội số của 100) để thực hiện quy đổi tiền mặt vào ví.',
-        badge: 'LƯU Ý NHẬP LIỆU',
+        title: t('vouchers.invalid_points_title', { defaultValue: 'Số Điểm Không Hợp Lệ' }),
+        message: t('vouchers.invalid_points_msg', { defaultValue: 'Vui lòng nhập tối thiểu 100 điểm thưởng (bội số của 100) để thực hiện quy đổi tiền mặt vào ví.' }),
+        badge: t('vouchers.badge_input_notice', { defaultValue: 'LƯU Ý NHẬP LIỆU' }),
       });
       return;
     }
@@ -255,9 +259,13 @@ export const UserVoucherPage: React.FC<{
       setNotifyModal({
         isOpen: true,
         type: 'warning',
-        title: 'Số Dư Điểm Không Đủ',
-        message: `Số điểm muốn quy đổi (${pts} điểm) vượt quá số dư khả dụng hiện tại (${userPoints.toLocaleString()} điểm).`,
-        badge: 'SỐ DƯ KHÔNG ĐỦ',
+        title: t('vouchers.insufficient_balance_title', { defaultValue: 'Số Dư Điểm Không Đủ' }),
+        message: t('vouchers.insufficient_balance_msg', {
+          pts,
+          balance: userPoints.toLocaleString(),
+          defaultValue: `Số điểm muốn quy đổi (${pts} điểm) vượt quá số dư khả dụng hiện tại (${userPoints.toLocaleString()} điểm).`,
+        }),
+        badge: t('vouchers.badge_insufficient_balance', { defaultValue: 'SỐ DƯ KHÔNG ĐỦ' }),
       });
       return;
     }
@@ -512,11 +520,11 @@ export const UserVoucherPage: React.FC<{
           <div className="space-y-4 animate-fade-in">
             <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-2xl border border-amber-200 flex items-center justify-between text-xs">
               <div>
-                <span className="font-black text-amber-950 text-sm block">Kho Voucher Đối Tác Liên Minh</span>
-                <span className="text-amber-800/80 text-[11px]">Đổi điểm Loyalty lấy mã giảm giá Delimart, Natcom & Ringme</span>
+                <span className="font-black text-amber-950 text-sm block">{t('vouchers.partner_catalog_title', { defaultValue: 'Kho Voucher Đối Tác Liên Minh' })}</span>
+                <span className="text-amber-800/80 text-[11px]">{t('vouchers.partner_catalog_desc', { defaultValue: 'Đổi điểm Loyalty lấy mã giảm giá Delimart, Natcom & Ringme' })}</span>
               </div>
               <span className="bg-amber-500 text-slate-950 font-black px-2.5 py-1 rounded-xl text-xs font-mono shadow-xs">
-                {userPoints.toLocaleString()} đ
+                {userPoints.toLocaleString()} {t('common.points_short', { defaultValue: 'đ' })}
               </span>
             </div>
 
@@ -540,13 +548,13 @@ export const UserVoucherPage: React.FC<{
 
                       <h3 className="font-black text-sm text-slate-900">{catItem.title}</h3>
                       <p className="text-xs text-slate-500 mt-1">
-                        Áp dụng đơn từ {catItem.minBill} HTG • Hạn dùng {catItem.expiryDays} ngày
+                        {t('vouchers.min_bill_expiry', { minBill: catItem.minBill, expiryDays: catItem.expiryDays, defaultValue: `Áp dụng đơn từ ${catItem.minBill} HTG • Hạn dùng ${catItem.expiryDays} ngày` })}
                       </p>
                     </div>
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Điểm cần đổi</span>
+                        <span className="text-[10px] text-slate-400 block">{t('vouchers.points_to_redeem', { defaultValue: 'Điểm cần đổi' })}</span>
                         <span className="font-black text-amber-700 font-mono text-sm">
                           {t('vouchers.required_points', { points: catItem.pointsCost })}
                         </span>
@@ -591,14 +599,14 @@ export const UserVoucherPage: React.FC<{
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
               <span className="text-slate-600">{t('vouchers.available_points_label')}</span>
               <span className="font-mono font-black text-amber-700 text-sm">
-                {userPoints.toLocaleString()} Điểm
+                {userPoints.toLocaleString()} {t('common.points_unit', { defaultValue: 'Điểm' })}
               </span>
             </div>
 
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Số điểm muốn quy đổi:
+                  {t('vouchers.points_to_convert_label', { defaultValue: 'Số điểm muốn quy đổi:' })}
                 </label>
                 <div className="relative">
                   <input
@@ -612,7 +620,7 @@ export const UserVoucherPage: React.FC<{
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono font-black text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                    Điểm
+                    {t('common.points_unit', { defaultValue: 'Điểm' })}
                   </span>
                 </div>
               </div>
@@ -621,7 +629,7 @@ export const UserVoucherPage: React.FC<{
               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-emerald-950 font-bold block">{t('vouchers.received_amount_label')}</span>
-                  <span className="text-[10px] text-emerald-700/80">Tỷ lệ: 100 Điểm = 10 HTG</span>
+                  <span className="text-[10px] text-emerald-700/80">{t('vouchers.rate_exchange_desc', { defaultValue: 'Tỷ lệ: 100 Điểm = 10 HTG' })}</span>
                 </div>
                 <span className="font-mono font-black text-emerald-800 text-lg">
                   {Math.floor((parseInt(cashbackPointsInput, 10) || 0) / 10)} HTG

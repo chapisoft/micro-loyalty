@@ -13,7 +13,7 @@ type newProps = {
   onChange?: (date: AppDate) => void;
 };
 
-type AppCalendarProps = Omit<CalendarProps, 'onChange'> & AppLabelProps & newProps;
+type AppCalendarProps = Omit<CalendarProps<any, any>, 'onChange'> & AppLabelProps & newProps & { selectionMode?: 'single' | 'multiple' | 'range' };
 
 const AppCalendar: React.FC<AppCalendarProps> = ({
   inputId = '',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppConfirmDialog } from 'components';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -8,18 +9,20 @@ interface ConfirmDialogProps {
 }
 
 const CloseModalConfirm: React.FC<ConfirmDialogProps> = ({ visible, acceptAction, rejectAction }) => {
+  const { t } = useTranslation();
+
   return (
     <AppConfirmDialog
       {...{
-        message: `Các thay đổi vẫn chưa được lưu, bạn có chắc chắn muốn đóng?`,
-        header: 'Đóng màn hình?',
+        message: t('modal.unsaved_changes_confirmation'),
+        header: t('modal.close_screen'),
         icon: 'ti ti-info-circle',
-        acceptLabel: 'Đóng màn hình',
+        acceptLabel: t('modal.close_screen'),
         accept: () => {
           acceptAction();
         },
         acceptIcon: 'ti ti-check',
-        rejectLabel: 'Huỷ',
+        rejectLabel: t('modal.cancel'),
         reject: () => {
           rejectAction();
         },
@@ -32,3 +35,4 @@ const CloseModalConfirm: React.FC<ConfirmDialogProps> = ({ visible, acceptAction
 };
 
 export default CloseModalConfirm;
+

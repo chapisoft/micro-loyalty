@@ -22,10 +22,10 @@ export function SandboxHubPage() {
               <span className="text-xs text-500 font-medium">Smart OTP Platform • Sandbox Admin</span>
             </div>
             <h1 className="text-xl md:text-2xl font-bold text-900 m-0">
-              Quản Lý Hệ Thống Developer Sandbox
+              {t('sandbox.admin_title', { defaultValue: 'Quản Lý Hệ Thống Developer Sandbox' })}
             </h1>
             <p className="text-sm text-600 mt-1 mb-0 font-medium">
-              Quản lý tài khoản lập trình viên đối tác, phân quyền nhóm và cấu hình bài viết tài liệu tích hợp (giống hệ thống DIP)
+              {t('sandbox.admin_subtitle', { defaultValue: 'Quản lý tài khoản lập trình viên đối tác, phân quyền nhóm và cấu hình bài viết tài liệu tích hợp' })}
             </p>
           </div>
 
@@ -37,7 +37,7 @@ export function SandboxHubPage() {
               className="p-button p-component p-button-outlined p-button-sm p-button-warning flex align-items-center gap-2 text-decoration-none"
             >
               <i className="pi pi-external-link" />
-              <span className="font-semibold">Mở Cổng Sandbox Portal</span>
+              <span className="font-semibold">{t('sandbox.open_portal', { defaultValue: 'Mở Cổng Sandbox Portal' })}</span>
             </a>
           </div>
         </div>
@@ -47,21 +47,21 @@ export function SandboxHubPage() {
       <div className="surface-card p-2 md:p-3 shadow-1 border-round-xl border-1 surface-border">
         <TabView activeIndex={activeIndex} onTabChange={(e) => setActiveIndex(e.index)}>
           <TabPanel
-            header="Tài Khoản Đối Tác (Users)"
+            header={t('sandbox.tab_users', { defaultValue: 'Tài Khoản Đối Tác (Users)' })}
             leftIcon="pi pi-users mr-2"
           >
             <SandboxUsersPage />
           </TabPanel>
 
           <TabPanel
-            header="Nhóm & Phân Quyền (Groups)"
+            header={t('sandbox.tab_groups', { defaultValue: 'Nhóm & Phân Quyền (Groups)' })}
             leftIcon="pi pi-sitemap mr-2"
           >
             <SandboxGroupsPage />
           </TabPanel>
 
           <TabPanel
-            header="Menu & Bài Viết Tài Liệu (Menus & Content)"
+            header={t('sandbox.tab_menus', { defaultValue: 'Menu & Bài Viết Tài Liệu (Menus & Content)' })}
             leftIcon="pi pi-file-edit mr-2"
           >
             <SandboxMenusPage />

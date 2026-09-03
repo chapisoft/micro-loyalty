@@ -61,16 +61,16 @@ export function SandboxUsersPage() {
       await sandboxAdminService.approveUser(id);
       toast.current?.show({
         severity: 'success',
-        summary: 'Thành công',
-        detail: 'Đã duyệt tài khoản thành công',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: t('sandbox.approve_user_success', { defaultValue: 'Đã duyệt tài khoản thành công' }),
         life: 2500,
       });
       loadData();
     } catch (e) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Lỗi',
-        detail: 'Không thể duyệt tài khoản',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: t('sandbox.approve_user_failed', { defaultValue: 'Không thể duyệt tài khoản' }),
         life: 2500,
       });
     }
@@ -82,16 +82,16 @@ export function SandboxUsersPage() {
       await sandboxAdminService.toggleUserStatus(id, nextStatus);
       toast.current?.show({
         severity: 'info',
-        summary: 'Cập nhật',
-        detail: `Đã chuyển trạng thái tài khoản sang ${nextStatus}`,
+        summary: t('common.update', { defaultValue: 'Cập nhật' }),
+        detail: t('sandbox.status_changed_to', { status: nextStatus, defaultValue: `Đã chuyển trạng thái tài khoản sang ${nextStatus}` }),
         life: 2500,
       });
       loadData();
     } catch (e) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Lỗi',
-        detail: 'Không thể đổi trạng thái',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: t('sandbox.change_status_failed', { defaultValue: 'Không thể đổi trạng thái' }),
         life: 2500,
       });
     }
@@ -101,8 +101,8 @@ export function SandboxUsersPage() {
     if (!formData.username || !formData.fullName) {
       toast.current?.show({
         severity: 'warn',
-        summary: 'Thiếu thông tin',
-        detail: 'Vui lòng nhập tên đăng nhập và họ tên đối tác',
+        summary: t('common.warning', { defaultValue: 'Thiếu thông tin' }),
+        detail: t('sandbox.enter_username_fullname', { defaultValue: 'Vui lòng nhập tên đăng nhập và họ tên đối tác' }),
         life: 2500,
       });
       return;
@@ -112,8 +112,8 @@ export function SandboxUsersPage() {
       await sandboxAdminService.createUser(formData as SandboxUser);
       toast.current?.show({
         severity: 'success',
-        summary: 'Thành công',
-        detail: 'Đã tạo tài khoản Sandbox cho đối tác',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: t('sandbox.create_user_success', { defaultValue: 'Đã tạo tài khoản Sandbox cho đối tác' }),
         life: 2500,
       });
       setShowDialog(false);
@@ -121,8 +121,8 @@ export function SandboxUsersPage() {
     } catch (e) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Lỗi',
-        detail: 'Không thể tạo tài khoản',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: t('sandbox.create_user_failed', { defaultValue: 'Không thể tạo tài khoản' }),
         life: 2500,
       });
     }
@@ -142,21 +142,21 @@ export function SandboxUsersPage() {
       {/* Header */}
       <div className="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-900 m-0">Quản Lý Tài Khoản Sandbox (Developers)</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-900 m-0">{t('sandbox.users_title', { defaultValue: 'Quản Lý Tài Khoản Sandbox (Developers)' })}</h1>
           <p className="text-xs text-500 m-0 mt-1 font-medium">
-            Quản lý tài khoản lập trình viên và đối tác truy cập cổng Sandbox Portal Smart OTP
+            {t('sandbox.users_subtitle', { defaultValue: 'Quản lý tài khoản lập trình viên và đối tác truy cập cổng Sandbox Portal Smart OTP' })}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
-            label="Làm mới"
+            label={t('common.refresh', { defaultValue: 'Làm mới' })}
             icon="pi pi-refresh"
             outlined
             onClick={loadData}
             className="p-button-sm font-medium"
           />
           <Button
-            label="Thêm Tài Khoản"
+            label={t('sandbox.add_user_btn', { defaultValue: 'Thêm Tài Khoản' })}
             icon="pi pi-plus"
             onClick={() => {
               setFormData({
@@ -183,11 +183,11 @@ export function SandboxUsersPage() {
             <InputText
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm tài khoản, email..."
+              placeholder={t('sandbox.search_users_placeholder', { defaultValue: 'Tìm kiếm tài khoản, email...' })}
               className="w-full p-inputtext-sm"
             />
           </span>
-          <span className="text-xs text-500 font-medium">Tổng: {filteredUsers.length} tài khoản</span>
+          <span className="text-xs text-500 font-medium">{t('sandbox.total_users_count', { count: filteredUsers.length, defaultValue: `Tổng: ${filteredUsers.length} tài khoản` })}</span>
         </div>
 
         <DataTable
@@ -195,46 +195,46 @@ export function SandboxUsersPage() {
           loading={loading}
           paginator
           rows={10}
-          emptyMessage="Chưa có tài khoản Sandbox nào"
+          emptyMessage={t('sandbox.no_users', { defaultValue: 'Chưa có tài khoản Sandbox nào' })}
           className="p-datatable-sm"
         >
-          <Column field="username" header="Tên đăng nhập" body={(r: SandboxUser) => <span className="font-semibold text-900">{r.username}</span>} />
-          <Column field="fullName" header="Họ và tên / Đơn vị" />
+          <Column field="username" header={t('sandbox.username_col', { defaultValue: 'Tên đăng nhập' })} body={(r: SandboxUser) => <span className="font-semibold text-900">{r.username}</span>} />
+          <Column field="fullName" header={t('sandbox.fullname_col', { defaultValue: 'Họ và tên / Đơn vị' })} />
           <Column field="email" header="Email" body={(r: SandboxUser) => r.email || '-'} />
-          <Column field="phone" header="Số điện thoại" body={(r: SandboxUser) => r.phone || '-'} />
+          <Column field="phone" header={t('sandbox.phone_col', { defaultValue: 'Số điện thoại' })} body={(r: SandboxUser) => r.phone || '-'} />
           <Column
-            header="Nhóm quyền"
+            header={t('sandbox.roles_group_col', { defaultValue: 'Nhóm quyền' })}
             body={(r: SandboxUser) => (
               <div className="flex flex-wrap gap-1">
                 {r.groupNames && r.groupNames.length > 0 ? (
                   r.groupNames.map((g, idx) => <Tag key={idx} value={g} severity="info" className="text-xs" />)
                 ) : (
-                  <span className="text-xs text-400">Chưa gán</span>
+                  <span className="text-xs text-400">{t('sandbox.unassigned', { defaultValue: 'Chưa gán' })}</span>
                 )}
               </div>
             )}
           />
           <Column
             field="status"
-            header="Trạng thái"
+            header={t('common.status', { defaultValue: 'Trạng thái' })}
             body={(r: SandboxUser) => {
               const statusMap: Record<string, { label: string; severity: 'success' | 'warning' | 'danger' | 'info' }> = {
-                APPROVED: { label: 'Đã duyệt', severity: 'success' },
-                PENDING: { label: 'Chờ duyệt', severity: 'warning' },
-                LOCKED: { label: 'Đã khóa', severity: 'danger' },
-                REJECTED: { label: 'Từ chối', severity: 'danger' },
+                APPROVED: { label: t('sandbox.status_approved', { defaultValue: 'Đã duyệt' }), severity: 'success' },
+                PENDING: { label: t('sandbox.status_pending', { defaultValue: 'Chờ duyệt' }), severity: 'warning' },
+                LOCKED: { label: t('sandbox.status_locked', { defaultValue: 'Đã khóa' }), severity: 'danger' },
+                REJECTED: { label: t('sandbox.status_rejected', { defaultValue: 'Từ chối' }), severity: 'danger' },
               };
               const item = statusMap[r.status] || { label: r.status, severity: 'info' };
               return <Tag value={item.label} severity={item.severity} className="font-semibold text-xs" />;
             }}
           />
           <Column
-            header="Thao tác"
+            header={t('common.actions', { defaultValue: 'Thao tác' })}
             body={(r: SandboxUser) => (
               <div className="flex gap-2">
                 {r.status === SandboxUserStatus.PENDING && (
                   <Button
-                    label="Duyệt"
+                    label={t('sandbox.approve_btn', { defaultValue: 'Duyệt' })}
                     icon="pi pi-check"
                     severity="success"
                     size="small"
@@ -243,7 +243,7 @@ export function SandboxUsersPage() {
                   />
                 )}
                 <Button
-                  label={r.status === SandboxUserStatus.LOCKED ? 'Mở khóa' : 'Khóa'}
+                  label={r.status === SandboxUserStatus.LOCKED ? t('sandbox.unlock_btn', { defaultValue: 'Mở khóa' }) : t('sandbox.lock_btn', { defaultValue: 'Khóa' })}
                   icon={r.status === SandboxUserStatus.LOCKED ? 'pi pi-lock-open' : 'pi pi-lock'}
                   severity={r.status === SandboxUserStatus.LOCKED ? 'info' : 'danger'}
                   size="small"
@@ -258,15 +258,15 @@ export function SandboxUsersPage() {
 
       {/* Create Dialog */}
       <Dialog
-        header="Tạo Mới Tài Khoản Sandbox Cho Đối Tác"
+        header={t('sandbox.create_user_dialog_header', { defaultValue: 'Tạo Mới Tài Khoản Sandbox Cho Đối Tác' })}
         visible={showDialog}
         style={{ width: '480px' }}
         onHide={() => setShowDialog(false)}
         footer={
           <div className="flex justify-content-end gap-2">
-            <Button label="Hủy" severity="secondary" outlined onClick={() => setShowDialog(false)} />
+            <Button label={t('common.cancel', { defaultValue: 'Hủy' })} severity="secondary" outlined onClick={() => setShowDialog(false)} />
             <Button
-              label="Tạo Tài Khoản"
+              label={t('sandbox.create_user_submit', { defaultValue: 'Tạo Tài Khoản' })}
               icon="pi pi-check"
               onClick={handleSaveUser}
               style={{ background: '#FF6B00', borderColor: '#FF6B00', color: '#ffffff' }}
@@ -276,7 +276,7 @@ export function SandboxUsersPage() {
       >
         <div className="flex flex-column gap-3 mt-2">
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Tên đăng nhập (Username) *</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('sandbox.username_label', { defaultValue: 'Tên đăng nhập (Username) *' })}</label>
             <InputText
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -285,16 +285,16 @@ export function SandboxUsersPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Mật khẩu khởi tạo</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('sandbox.password_init_label', { defaultValue: 'Mật khẩu khởi tạo' })}</label>
             <InputText
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Mặc định: Dev@123456"
+              placeholder={t('sandbox.password_init_placeholder', { defaultValue: 'Mặc định: Dev@123456' })}
               className="w-full p-inputtext-sm"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Họ tên / Đơn vị đại diện *</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('sandbox.fullname_label', { defaultValue: 'Họ tên / Đơn vị đại diện *' })}</label>
             <InputText
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -312,7 +312,7 @@ export function SandboxUsersPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Số điện thoại</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('sandbox.phone_label', { defaultValue: 'Số điện thoại' })}</label>
             <InputText
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}

@@ -360,8 +360,8 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
     if (lang.startsWith('fr') && p.nameFr) return p.nameFr;
     if ((lang.startsWith('ht') || lang.startsWith('kr')) && p.nameHt) return p.nameHt;
     if (p.nameVi) return p.nameVi;
-    return p.prizeName || 'Quà Tặng';
-  }, [i18n.language]);
+    return p.prizeName || t('wheel.default_prize_name', { defaultValue: 'Quà Tặng' });
+  }, [i18n.language, t]);
 
   // Canvas 2D High-Resolution Wheel Rendering
   const drawWheel = useCallback((angle: number) => {
@@ -655,7 +655,7 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
       if (result) {
         targetSliceIndex = result.winningIndex ?? result.wonPrize?.sliceIndex ?? 0;
         const pId = result.prizeId ?? result.wonPrize?.prizeId ?? 1;
-        const pName = result.prizeName ?? result.wonPrize?.prizeName ?? 'Phần Thưởng May Mắn';
+        const pName = result.prizeName ?? result.wonPrize?.prizeName ?? t('wheel.default_lucky_prize', { defaultValue: 'Phần Thưởng May Mắn' });
         const pType = result.prizeType ?? result.wonPrize?.prizeType ?? 'POINTS';
         const pVal = Number(result.prizeValue ?? result.wonPrize?.prizeValue ?? 100);
 
@@ -774,7 +774,7 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
       const res = await LoyaltyJSBridge.requestPayment({
         amount: amountHtg,
         itemCode: `BUY_SPIN_${turnsCount}_TURNS`,
-        itemName: `Mua ${turnsCount} Lượt Quay May Mắn`,
+        itemName: t('wheel.buy_turns_item_name', { count: turnsCount, defaultValue: `Mua ${turnsCount} Lượt Quay May Mắn` }),
         transactionRef: 'SPIN_' + Date.now(),
       });
       if (res.success) {

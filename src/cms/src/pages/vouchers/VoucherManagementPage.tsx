@@ -190,12 +190,12 @@ export const VoucherManagementPage: React.FC = () => {
   // Xóa voucher
   const deleteItem = (item: VoucherItem) => {
     confirmDialog({
-      message: t('voucher.delete_confirm_msg', {
+      message: t('voucher.confirm_delete_msg', {
         code: item.voucherCode,
         title: item.title,
         defaultValue: `Bạn có chắc chắn muốn xóa voucher "${item.voucherCode}" (${item.title}) khỏi hệ thống?`,
       }),
-      header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Voucher' }),
+      header: t('common.confirm_delete', { defaultValue: 'Xác nhận xóa voucher' }),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
       acceptLabel: t('common.yes', { defaultValue: 'Xác nhận xóa' }),
@@ -207,7 +207,7 @@ export const VoucherManagementPage: React.FC = () => {
           toastRef.current?.show({
             severity: 'success',
             summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: t('voucher.delete_success', { defaultValue: `Đã xóa thành công voucher ${item.voucherCode}!` }),
+            detail: t('voucher.delete_success', { code: item.voucherCode, defaultValue: `Đã xóa thành công voucher ${item.voucherCode}!` }),
             life: 3000,
           });
           await fetchVouchers(selectedTenant);
@@ -216,7 +216,7 @@ export const VoucherManagementPage: React.FC = () => {
           toastRef.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: e?.message || 'Không thể xóa voucher, vui lòng thử lại sau!',
+            detail: e?.message || t('voucher.delete_failed', { defaultValue: 'Không thể xóa voucher, vui lòng thử lại sau!' }),
             life: 4000,
           });
         } finally {
@@ -251,7 +251,7 @@ export const VoucherManagementPage: React.FC = () => {
         toastRef.current?.show({
           severity: 'success',
           summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('voucher.update_success', { defaultValue: `Cập nhật thành công voucher ${formData.voucherCode || ''}!` }),
+          detail: t('voucher.update_success', { code: formData.voucherCode || '', defaultValue: `Cập nhật thành công voucher ${formData.voucherCode || ''}!` }),
           life: 3000,
         });
       } else {
@@ -270,7 +270,7 @@ export const VoucherManagementPage: React.FC = () => {
       toastRef.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || 'Không thể lưu voucher, vui lòng kiểm tra lại dữ liệu!',
+        detail: e?.message || t('voucher.save_failed', { defaultValue: 'Không thể lưu voucher, vui lòng kiểm tra lại dữ liệu!' }),
         life: 4000,
       });
     } finally {
@@ -291,8 +291,8 @@ export const VoucherManagementPage: React.FC = () => {
 
     if (isEdit) {
       confirmDialog({
-        message: `Bạn có chắc chắn muốn cập nhật thay đổi cho voucher ${formData.voucherCode || ''}?`,
-        header: t('common.confirm_update', { defaultValue: 'Xác nhận Cập nhật Voucher' }),
+        message: t('voucher.confirm_update_msg', { code: formData.voucherCode || '', defaultValue: `Bạn có chắc chắn muốn cập nhật thay đổi cho voucher ${formData.voucherCode || ''}?` }),
+        header: t('common.confirm_update', { defaultValue: 'Xác nhận cập nhật voucher' }),
         icon: 'pi pi-info-circle',
         acceptLabel: t('common.save', { defaultValue: 'Lưu thay đổi' }),
         rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
@@ -816,7 +816,7 @@ export const VoucherManagementPage: React.FC = () => {
           {/* Chọn đối tác mặc định cho file CSV nếu dòng không ghi mã */}
           <div className="field mb-3 surface-100 p-3 border-round">
             <label htmlFor="importPartner" className="font-bold text-sm text-900 block mb-1">
-              Đối Tác Mặc Định Cho File Này (Nếu dòng CSV để trống PARTNER_CODE):
+              {t('voucher.import_partner_label', { defaultValue: 'Đối Tác Mặc Định Cho File Này (Nếu dòng CSV để trống PARTNER_CODE):' })}
             </label>
             <Dropdown
               id="importPartner"
@@ -828,10 +828,10 @@ export const VoucherManagementPage: React.FC = () => {
             />
           </div>
 
-          <div className="mb-3 flex justify-content-between align-items-center surface-50 p-2 border-round">
-            <span className="text-xs text-600 font-semibold">Tệp mẫu chuẩn (.csv):</span>
+          <div className="mb-3 flex justify-content-between align-items-center surface-100 p-2 border-round">
+            <span className="text-xs text-600 font-semibold">{t('voucher.sample_csv_label', { defaultValue: 'Tệp mẫu chuẩn (.csv):' })}</span>
             <Button
-              label="Tải file mẫu CSV"
+              label={t('voucher.download_sample_csv', { defaultValue: 'Tải file mẫu CSV' })}
               icon="pi pi-download"
               size="small"
               outlined
@@ -854,7 +854,7 @@ export const VoucherManagementPage: React.FC = () => {
           {isSubmitting && (
             <div className="mt-3 text-center text-primary font-semibold">
               <i className="pi pi-spin pi-spinner mr-2" />
-              Đang xử lý nhập dữ liệu vào kho voucher...
+              {t('voucher.importing_csv_notice', { defaultValue: 'Đang xử lý nhập dữ liệu vào kho...' })}
             </div>
           )}
         </div>
