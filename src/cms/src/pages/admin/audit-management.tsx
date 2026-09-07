@@ -201,11 +201,27 @@ export default function AuditLogPage() {
   const operationBodyTemplate = (rowData: AuditLog) => {
     const op = String(rowData.operation || '').toUpperCase();
     let severity: 'success' | 'info' | 'warning' | 'danger' | 'secondary' = 'info';
-    if (op === 'INSERT') severity = 'success';
-    else if (op === 'UPDATE') severity = 'warning';
-    else if (op === 'DELETE') severity = 'danger';
-    else if (op === 'SETTLEMENT') severity = 'info';
-    return <Tag severity={severity} value={op} />;
+    let icon = 'pi pi-info-circle';
+    if (op === 'INSERT') {
+      severity = 'success';
+      icon = 'pi pi-plus';
+    } else if (op === 'UPDATE') {
+      severity = 'warning';
+      icon = 'pi pi-pencil';
+    } else if (op === 'DELETE') {
+      severity = 'danger';
+      icon = 'pi pi-trash';
+    } else if (op === 'SETTLEMENT') {
+      severity = 'info';
+      icon = 'pi pi-sync';
+    } else if (op === 'LOCK') {
+      severity = 'danger';
+      icon = 'pi pi-lock';
+    } else if (op === 'UNLOCK') {
+      severity = 'success';
+      icon = 'pi pi-unlock';
+    }
+    return <Tag severity={severity} value={op} icon={icon} className="text-xs px-2 py-1 font-semibold" />;
   };
 
   const tableBodyTemplate = (rowData: AuditLog) => {
@@ -331,85 +347,110 @@ export default function AuditLogPage() {
           </div>
         </div>
 
-        {/* Thanh Bộ Lọc Đa Tiêu Chí */}
-        <div className="flex flex-wrap gap-2 align-items-center mb-4">
-          <Dropdown
-            className="w-16rem"
-            placeholder={t('audit.table_name', { defaultValue: 'Chọn bảng dữ liệu' })}
-            value={query.tableName || ''}
-            options={[
-              { label: t('audit.all_tables', { defaultValue: 'Tất cả bảng nghiệp vụ' }), value: '' },
-              { label: 'Hạng Hội Viên (loyalty_tiers)', value: 'loyalty_tiers' },
-              { label: 'Chính Sách Tích/Tiêu (loyalty_acceptance_policies)', value: 'loyalty_acceptance_policies' },
-              { label: 'Cột Mốc Chiến Dịch (loyalty_campaign_milestones)', value: 'loyalty_campaign_milestones' },
-              { label: 'Kho Voucher (loyalty_vouchers)', value: 'loyalty_vouchers' },
-              { label: 'Cổng Game & Vòng Quay (loyalty_games)', value: 'loyalty_games' },
-              { label: 'Đối Tác Liên Minh (loyalty_partners)', value: 'loyalty_partners' },
-              { label: 'Bù Trừ Tài Chính (clearing_transactions)', value: 'clearing_transactions' },
-              { label: 'Thiết Bị Điểm Bán POS (partner_user_devices)', value: 'partner_user_devices' },
-              { label: 'Tham Số Hệ Thống (system_parameters)', value: 'system_parameters' },
-              { label: 'Người Dùng Quản Trị (admin_users)', value: 'admin_users' },
-            ]}
-            onChange={e => setQuery(q => ({ ...q, tableName: e.value }))}
-            showClear
-          />
+        {/* Thanh Bộ Lọc Đa Tiêu Chí Chuẩn Mực & Thẩm Mỹ */}
+        <div className="audit-filter-panel surface-50 border-round-xl p-3 mb-4 border-1 surface-border">
+          <div className="flex flex-wrap gap-3 align-items-center">
+            {/* 1. Chọn Bảng CSDL */}
+            <div className="w-16rem">
+              <Dropdown
+                className="w-full"
+                placeholder={t('audit.table_name', { defaultValue: 'Chọn bảng dữ liệu' })}
+                value={query.tableName || ''}
+                options={[
+                  { label: t('audit.all_tables', { defaultValue: 'Tất cả bảng nghiệp vụ' }), value: '' },
+                  { label: 'Hạng Hội Viên (loyalty_tiers)', value: 'loyalty_tiers' },
+                  { label: 'Chính Sách Tích/Tiêu (loyalty_acceptance_policies)', value: 'loyalty_acceptance_policies' },
+                  { label: 'Cột Mốc Chiến Dịch (loyalty_campaign_milestones)', value: 'loyalty_campaign_milestones' },
+                  { label: 'Kho Voucher (loyalty_vouchers)', value: 'loyalty_vouchers' },
+                  { label: 'Cổng Game & Vòng Quay (loyalty_games)', value: 'loyalty_games' },
+                  { label: 'Đối Tác Liên Minh (loyalty_partners)', value: 'loyalty_partners' },
+                  { label: 'Bù Trừ Tài Chính (clearing_transactions)', value: 'clearing_transactions' },
+                  { label: 'Thiết Bị Điểm Bán POS (partner_user_devices)', value: 'partner_user_devices' },
+                  { label: 'Tham Số Hệ Thống (system_parameters)', value: 'system_parameters' },
+                  { label: 'Người Dùng Quản Trị (admin_users)', value: 'admin_users' },
+                ]}
+                onChange={e => setQuery(q => ({ ...q, tableName: e.value }))}
+                showClear
+              />
+            </div>
 
-          <Dropdown
-            className="w-12rem"
-            placeholder={t('audit.operation', { defaultValue: 'Loại thao tác' })}
-            value={query.operation || ''}
-            options={[
-              { label: t('audit.all_operations', { defaultValue: 'Tất cả thao tác' }), value: '' },
-              { label: 'INSERT (Thêm mới)', value: 'INSERT' },
-              { label: 'UPDATE (Cập nhật)', value: 'UPDATE' },
-              { label: 'DELETE (Xóa bỏ)', value: 'DELETE' },
-              { label: 'SETTLEMENT (Quyết toán)', value: 'SETTLEMENT' },
-              { label: 'LOCK (Khóa bảo mật)', value: 'LOCK' },
-              { label: 'UNLOCK (Mở khóa)', value: 'UNLOCK' },
-            ]}
-            onChange={e => setQuery(q => ({ ...q, operation: e.value }))}
-            showClear
-          />
+            {/* 2. Chọn Loại Thao Tác */}
+            <div className="w-13rem">
+              <Dropdown
+                className="w-full"
+                placeholder={t('audit.operation', { defaultValue: 'Loại thao tác' })}
+                value={query.operation || ''}
+                options={[
+                  { label: t('audit.all_operations', { defaultValue: 'Tất cả thao tác' }), value: '' },
+                  { label: 'INSERT (Thêm mới)', value: 'INSERT' },
+                  { label: 'UPDATE (Cập nhật)', value: 'UPDATE' },
+                  { label: 'DELETE (Xóa bỏ)', value: 'DELETE' },
+                  { label: 'SETTLEMENT (Quyết toán)', value: 'SETTLEMENT' },
+                  { label: 'LOCK (Khóa bảo mật)', value: 'LOCK' },
+                  { label: 'UNLOCK (Mở khóa)', value: 'UNLOCK' },
+                ]}
+                onChange={e => setQuery(q => ({ ...q, operation: e.value }))}
+                showClear
+              />
+            </div>
 
-          <InputText
-            className="w-14rem"
-            placeholder={t('audit.username', { defaultValue: 'Tên người thực hiện' })}
-            value={query.username || ''}
-            onChange={e => setQuery(q => ({ ...q, username: e.target.value }))}
-          />
+            {/* 3. Người Thực Hiện với Icon */}
+            <div className="w-14rem">
+              <span className="p-input-icon-left w-full">
+                <i className="pi pi-user text-400" />
+                <InputText
+                  className="w-full"
+                  placeholder={t('audit.username', { defaultValue: 'Tên người thực hiện' })}
+                  value={query.username || ''}
+                  onChange={e => setQuery(q => ({ ...q, username: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleFilter();
+                  }}
+                />
+              </span>
+            </div>
 
-          <Calendar
-            value={fromDate}
-            onChange={e => setFromDate(e.value ?? null)}
-            placeholder={t('audit.from_date', { defaultValue: 'Từ ngày' })}
-            dateFormat="yy-mm-dd"
-            showIcon
-            className="w-11rem"
-          />
+            {/* 4. Khối Chọn Khoảng Thời Gian (Từ ngày -> Đến ngày) */}
+            <div className="audit-date-range-capsule">
+              <Calendar
+                value={fromDate}
+                onChange={e => setFromDate(e.value ?? null)}
+                placeholder={t('audit.from_date', { defaultValue: 'Từ ngày' })}
+                dateFormat="yy-mm-dd"
+                showIcon
+                className="w-8rem audit-calendar-input"
+              />
+              <i className="pi pi-arrow-right text-400 text-xs mx-1" />
+              <Calendar
+                value={toDate}
+                onChange={e => setToDate(e.value ?? null)}
+                placeholder={t('audit.to_date', { defaultValue: 'Đến ngày' })}
+                dateFormat="yy-mm-dd"
+                showIcon
+                className="w-8rem audit-calendar-input"
+              />
+            </div>
 
-          <Calendar
-            value={toDate}
-            onChange={e => setToDate(e.value ?? null)}
-            placeholder={t('audit.to_date', { defaultValue: 'Đến ngày' })}
-            dateFormat="yy-mm-dd"
-            showIcon
-            className="w-11rem"
-          />
-
-          <Button
-            label={t('audit.filter', { defaultValue: 'Tìm kiếm' })}
-            icon="pi pi-search"
-            size="small"
-            onClick={handleFilter}
-          />
-          <Button
-            label={t('audit.reset', { defaultValue: 'Đặt lại' })}
-            icon="pi pi-filter-slash"
-            severity="secondary"
-            outlined
-            size="small"
-            onClick={handleReset}
-          />
+            {/* 5. Nút Thao Tác (Tìm kiếm & Đặt lại) */}
+            <div className="flex align-items-center gap-2">
+              <Button
+                label={t('audit.filter', { defaultValue: 'Tìm kiếm' })}
+                icon="pi pi-search"
+                className="p-button-primary px-3"
+                size="small"
+                onClick={handleFilter}
+              />
+              <Button
+                label={t('audit.reset', { defaultValue: 'Đặt lại' })}
+                icon="pi pi-refresh"
+                severity="secondary"
+                outlined
+                size="small"
+                className="px-3"
+                onClick={handleReset}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Bảng Nhật Ký Kiểm Toán Chuẩn Mực */}

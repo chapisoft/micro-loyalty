@@ -1,84 +1,84 @@
 .audit-management-page {
-  padding: 20px;
+  .audit-filter-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s ease;
 
-  .page-header {
-    margin-bottom: 24px;
-    h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
+    &:hover {
+      border-color: #cbd5e1;
     }
   }
 
-  .toolbar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+  .audit-date-range-capsule {
+    display: inline-flex;
     align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 2px 8px;
+    height: 38px;
+    transition: all 0.15s ease;
 
-    .search-box {
-      flex: 1;
-      max-width: 300px;
-      .search-input {
-        width: 100%;
+    &:hover {
+      border-color: #94a3b8;
+    }
+
+    &:focus-within {
+      border-color: #ff6b00;
+      box-shadow: 0 0 0 1px #ff6b00;
+    }
+
+    .audit-calendar-input {
+      .p-inputtext {
+        border: none !important;
+        background: transparent !important;
+        padding: 0.35rem 0.4rem !important;
+        font-size: 0.88rem !important;
+        color: #1e293b !important;
+        box-shadow: none !important;
+        width: 100% !important;
+
+        &:focus {
+          box-shadow: none !important;
+        }
+      }
+
+      .p-datepicker-trigger.p-button,
+      button.p-datepicker-trigger {
+        background: transparent !important;
+        border: none !important;
+        color: #64748b !important;
+        width: 1.75rem !important;
+        min-width: 1.75rem !important;
+        height: auto !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+
+        .p-button-icon {
+          font-size: 0.88rem !important;
+          color: #64748b !important;
+        }
+
+        &:hover {
+          background: #fff7ed !important;
+          color: #ea580c !important;
+
+          .p-button-icon {
+            color: #ea580c !important;
+          }
+        }
       }
     }
-    .filter-input {
-      min-width: 120px;
-    }
   }
 
-  .data-table-wrapper {
-    border-radius: 4px;
+  .audit-diff-card {
+    border-radius: 10px;
     overflow: hidden;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    margin-bottom: 16px;
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      th, td {
-        padding: 8px;
-        border: 1px solid #eee;
-        text-align: left;
-      }
-      th {
-        background: #f9f9f9;
-        font-weight: 600;
-      }
-      tr:nth-child(even) {
-        background: #fafafa;
-      }
-    }
-    pre {
-      max-width: 200px;
-      white-space: pre-wrap;
-      background: #f4f4f4;
-      padding: 4px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-  }
+    transition: box-shadow 0.2s ease;
 
-  .pagination {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 16px;
-    button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      background: #3498db;
-      color: white;
-      font-weight: 500;
-      cursor: pointer;
-      &:disabled {
-        background: #eee;
-        color: #aaa;
-        cursor: not-allowed;
-      }
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
   }
 }

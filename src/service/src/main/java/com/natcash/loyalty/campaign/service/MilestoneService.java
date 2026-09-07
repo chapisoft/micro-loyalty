@@ -240,7 +240,7 @@ public class MilestoneService {
         if (request.getStartDate() != null) entity.setStartDate(request.getStartDate());
         if (request.getEndDate() != null) entity.setEndDate(request.getEndDate());
         if (request.getStatus() != null) entity.setStatus(request.getStatus());
-        entity.setUpdatedAt(Instant.now());
+        entity.setUpdatedAt(Instant.now());     
 
         return campaignRepository.save(entity);
     }
