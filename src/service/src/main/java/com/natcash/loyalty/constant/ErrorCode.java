@@ -25,6 +25,7 @@ public enum ErrorCode {
     GAME_OUT_OF_TURNS("13", "error.game_out_of_turns"),
     UNAUTHORIZED("14", "error.unauthorized"),
     NOT_FOUND("15", "error.not_found"),
+    VALIDATION_ERROR("16", "error.validation_error"),
     SYSTEM_ERROR("99", "error.system_error");
 
     @JsonValue

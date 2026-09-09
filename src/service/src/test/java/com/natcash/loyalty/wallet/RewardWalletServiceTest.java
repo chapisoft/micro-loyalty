@@ -7,10 +7,15 @@ import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.DiscountType;
 import com.natcash.loyalty.domain.enums.VoucherStatus;
+import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.lock.DistributedLockHelper;
 import com.natcash.loyalty.stream.LoyaltyStreamEvent;
 import com.natcash.loyalty.stream.LoyaltyStreamProducer;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateResponse;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyResponse;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletInquiryRequest;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletInquiryResponse;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRedeemRequest;
@@ -32,12 +37,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
-
-import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateRequest;
-import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateResponse;
-import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyRequest;
-import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyResponse;
-import com.natcash.loyalty.common.exception.LoyaltyException;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -263,7 +262,7 @@ class RewardWalletServiceTest {
     @Test
     @DisplayName("BE-13.4: Sinh mã Dynamic QR Token 60s cho Ví Phần Thưởng")
     void testGenerateQrToken() {
-        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        doReturn(rBucket).when(redissonClient).getBucket(anyString());
 
         QrTokenGenerateRequest request = QrTokenGenerateRequest.builder()
                 .externalUserId("USER_001")
@@ -281,7 +280,7 @@ class RewardWalletServiceTest {
     @Test
     @DisplayName("BE-13.5: Xác thực Dynamic QR Token 60s thành công")
     void testVerifyQrToken_Success() {
-        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        doReturn(rBucket).when(redissonClient).getBucket(anyString());
         when(rBucket.get()).thenReturn("USER_001");
 
         ProfileResponse profile = ProfileResponse.builder()
@@ -308,7 +307,7 @@ class RewardWalletServiceTest {
     @Test
     @DisplayName("BE-13.6: Xác thực Dynamic QR Token thất bại khi token hết hạn")
     void testVerifyQrToken_Expired() {
-        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        doReturn(rBucket).when(redissonClient).getBucket(anyString());
         when(rBucket.get()).thenReturn(null);
 
         QrTokenVerifyRequest request = QrTokenVerifyRequest.builder()
@@ -323,7 +322,7 @@ class RewardWalletServiceTest {
     @Test
     @DisplayName("BE-13.7: Khấu trừ Ví phần thưởng sử dụng Dynamic QR Token 60s (Single-use atomicity)")
     void testRewardWalletRedeem_WithQrToken() {
-        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        doReturn(rBucket).when(redissonClient).getBucket(anyString());
         when(rBucket.getAndDelete()).thenReturn("USER_001");
 
         when(clearingRepository.existsByTenantIdAndTransactionCode("TENANT_DELIMART", "POS_QR_TX_1"))

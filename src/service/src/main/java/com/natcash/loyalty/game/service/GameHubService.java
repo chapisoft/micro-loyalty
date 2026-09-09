@@ -1350,13 +1350,13 @@ public class GameHubService {
         Instant startYesterday = startToday.minus(1, ChronoUnit.DAYS);
 
         // 1. Số lượng game
-        List<GameHubEntity> allGames = gameHubRepository.findByTenantId(tenantId);
+        List<GameHubEntity> allGames = gameRepository.findByTenantId(tenantId);
         long totalGames = allGames.size();
         long activeGames = allGames.stream().filter(g -> g.getStatus() == GameStatus.ACTIVE).count();
 
         // 2. Lượt chơi hôm nay & hôm qua
-        long todaySpins = gamePlayHistoryRepository.countByTenantIdAndCreatedAtRange(tenantId, startToday, now);
-        long yesterdaySpins = gamePlayHistoryRepository.countByTenantIdAndCreatedAtRange(tenantId, startYesterday, startToday);
+        long todaySpins = historyRepository.countByTenantIdAndCreatedAtRange(tenantId, startToday, now);
+        long yesterdaySpins = historyRepository.countByTenantIdAndCreatedAtRange(tenantId, startYesterday, startToday);
 
         double spinGrowthPercent = 0.0;
         if (yesterdaySpins > 0) {
@@ -1366,12 +1366,12 @@ public class GameHubService {
         }
 
         // 3. Ngân sách & hạn mức
-        BigDecimal todaySpentAmount = gamePlayHistoryRepository.sumRewardValueByTenantIdAndCreatedAtRange(tenantId, startToday, now);
+        BigDecimal todaySpentAmount = historyRepository.sumRewardValueByTenantIdAndCreatedAtRange(tenantId, startToday, now);
         if (todaySpentAmount == null) {
             todaySpentAmount = BigDecimal.ZERO;
         }
 
-        BigDecimal dailyBudgetLimit = gameHubRepository.sumDailyBudgetLimitByTenantId(tenantId);
+        BigDecimal dailyBudgetLimit = gameRepository.sumDailyBudgetLimitByTenantId(tenantId);
         if (dailyBudgetLimit == null || dailyBudgetLimit.compareTo(BigDecimal.ZERO) == 0) {
             dailyBudgetLimit = new BigDecimal("50000.00");
         }
@@ -1382,7 +1382,7 @@ public class GameHubService {
         }
 
         // 4. Số người chơi duy nhất
-        long uniquePlayersToday = gamePlayHistoryRepository.countUniquePlayersByTenantIdAndCreatedAtRange(tenantId, startToday, now);
+        long uniquePlayersToday = historyRepository.countUniquePlayersByTenantIdAndCreatedAtRange(tenantId, startToday, now);
 
         return GameDashboardStatsResponse.builder()
                 .totalGames(totalGames)
