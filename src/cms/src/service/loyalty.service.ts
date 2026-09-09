@@ -14,6 +14,27 @@ export interface TierConfigModel {
   description: string;
 }
 
+export interface PartnerItemModel {
+  id: number;
+  partnerCode: string;
+  partnerName: string;
+  partnerType?: string;
+  status?: string;
+}
+
+export interface GameDashboardStats {
+  totalGames: number;
+  activeGames: number;
+  todaySpins: number;
+  yesterdaySpins: number;
+  spinGrowthPercent: number;
+  todaySpentAmount: number;
+  dailyBudgetLimit: number;
+  budgetUsagePercent: number;
+  uniquePlayersToday: number;
+  lockMechanism: string;
+}
+
 export interface PolicyRuleModel {
   id: number;
   code?: string;
@@ -56,13 +77,16 @@ export interface VoucherItemModel {
 
 export interface MilestoneItemModel {
   id?: number;
+  partnerId?: number | null;
+  partnerCode?: string;
+  partnerName?: string;
   campaignCode: string;
   campaignName: string;
   milestoneStep: number;
   targetMetric: string;
   targetValue: number;
   rewardPoints?: number;
-  rewardVoucherId?: number;
+  rewardVoucherId?: number | null;
   rewardGameTurns?: number;
   startDate?: string;
   endDate?: string;
@@ -376,6 +400,9 @@ export const LoyaltyService = {
         : [];
       return data.map((m: any) => ({
         id: m.id,
+        partnerId: m.partnerId ?? null,
+        partnerCode: m.partnerCode,
+        partnerName: m.partnerName,
         campaignCode: m.campaignCode,
         campaignName: m.campaignName,
         milestoneStep: m.milestoneStep || 1,
@@ -687,6 +714,29 @@ export const LoyaltyService = {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
+  },
+
+  async getGameDashboardStats(tenantId: string = 'TENANT_NATCASH'): Promise<GameDashboardStats> {
+    try {
+      const response: any = await apiClient.get('/gamehub/v1/admin/dashboard-stats', {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return response?.data || response;
+    } catch (e) {
+      console.error('[getGameDashboardStats] Error:', e);
+      return {
+        totalGames: 0,
+        activeGames: 0,
+        todaySpins: 0,
+        yesterdaySpins: 0,
+        spinGrowthPercent: 0,
+        todaySpentAmount: 0,
+        dailyBudgetLimit: 50000,
+        budgetUsagePercent: 0,
+        uniquePlayersToday: 0,
+        lockMechanism: 'Redisson RLock',
+      };
+    }
   },
 };
 

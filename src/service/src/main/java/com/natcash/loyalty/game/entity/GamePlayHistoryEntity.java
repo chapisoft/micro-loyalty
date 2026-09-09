@@ -1,5 +1,6 @@
 package com.natcash.loyalty.game.entity;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.PrizeType;
 
 import jakarta.persistence.Column;
@@ -72,9 +73,10 @@ public class GamePlayHistoryEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private String details;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "SUCCESS";
+    private CommonStatus status = CommonStatus.SUCCESS;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -97,7 +99,7 @@ public class GamePlayHistoryEntity {
             this.pointsAwarded = BigDecimal.ZERO;
         }
         if (this.status == null) {
-            this.status = "SUCCESS";
+            this.status = CommonStatus.SUCCESS;
         }
     }
 }

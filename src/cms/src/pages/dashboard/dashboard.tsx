@@ -194,7 +194,7 @@ export const Dashboard: React.FC = () => {
     try {
       const d = new Date(rowData.createdAt);
       if (isNaN(d.getTime())) return rowData.createdAt;
-      return d.toLocaleString('vi-VN');
+      return d.toLocaleString();
     } catch {
       return rowData.createdAt;
     }
@@ -262,7 +262,7 @@ export const Dashboard: React.FC = () => {
             <i className="pi pi-check-circle text-emerald-600 text-xs font-bold" />
             <span className="text-xs font-medium text-emerald-600">
               {t('dashboard.active_members_info', {
-                count: (stats.activeMembers || 0).toLocaleString(),
+                count: stats.activeMembers || 0,
                 defaultValue: `${(stats.activeMembers || 0).toLocaleString()} hội viên đang hoạt động`,
               })}
             </span>
@@ -394,7 +394,7 @@ export const Dashboard: React.FC = () => {
             <i className="pi pi-bolt text-purple-600 text-xs" />
             <span className="text-xs font-normal text-purple-700">
               {t('dashboard.total_txs_info', {
-                count: (stats.totalTransactions || 0).toLocaleString(),
+                count: stats.totalTransactions || 0,
                 defaultValue: `Tổng ${(stats.totalTransactions || 0).toLocaleString()} giao dịch điểm`,
               })}
             </span>

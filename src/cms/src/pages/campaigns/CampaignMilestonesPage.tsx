@@ -25,6 +25,9 @@ enum CampaignMetric {
 
 interface CampaignMilestoneItem {
   id: number;
+  partnerId?: number | null;
+  partnerCode?: string;
+  partnerName?: string;
   campaignCode: string;
   campaignName: string;
   milestoneStep: number;
@@ -63,9 +66,11 @@ export const CampaignMilestonesPage: React.FC = () => {
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
   const [campaigns, setCampaigns] = useState<CampaignMilestoneItem[]>([]);
+  const [partners, setPartners] = useState<any[]>([]);
   const [vouchers, setVouchers] = useState<VoucherItemModel[]>([]);
   const [selectedCampaigns, setSelectedCampaigns] = useState<CampaignMilestoneItem[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [selectedPartnerFilter, setSelectedPartnerFilter] = useState<string | number | null>('ALL');
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<CampaignMilestoneItem>>({});
   const [isNewCampaignMode, setIsNewCampaignMode] = useState(true);
@@ -83,6 +88,9 @@ export const CampaignMilestonesPage: React.FC = () => {
         setCampaigns(
           data.map((m: MilestoneItemModel) => ({
             id: m.id || 0,
+            partnerId: m.partnerId ?? null,
+            partnerCode: m.partnerCode,
+            partnerName: m.partnerName,
             campaignCode: m.campaignCode,
             campaignName: m.campaignName,
             milestoneStep: m.milestoneStep || 1,
@@ -107,7 +115,18 @@ export const CampaignMilestonesPage: React.FC = () => {
     }
   }, []);
 
-  // 2. Tải kho Voucher theo Liên minh để phục vụ chọn Voucher thưởng
+  // 2. Tải danh sách Đối tác theo Liên minh
+  const fetchPartners = useCallback(async (tenantId: string) => {
+    try {
+      const data = await LoyaltyService.getPartners(tenantId);
+      setPartners(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('[fetchPartners] Error:', e);
+      setPartners([]);
+    }
+  }, []);
+
+  // 3. Tải kho Voucher theo Liên minh để phục vụ chọn Voucher thưởng
   const fetchVouchers = useCallback(async (tenantId: string) => {
     try {
       const data = await LoyaltyService.getVouchers(tenantId);
@@ -120,8 +139,26 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   useEffect(() => {
     fetchMilestones(selectedTenant);
+    fetchPartners(selectedTenant);
     fetchVouchers(selectedTenant);
-  }, [selectedTenant, fetchMilestones, fetchVouchers]);
+  }, [selectedTenant, fetchMilestones, fetchPartners, fetchVouchers]);
+
+  const handleTenantChange = (newTenant: string) => {
+    setSelectedTenant(newTenant);
+    localStorage.setItem('selected_tenant_id', newTenant);
+    setSelectedPartnerFilter('ALL');
+  };
+
+  // Lọc danh sách chiến dịch theo đối tác được chọn
+  const filteredCampaigns = useMemo(() => {
+    if (selectedPartnerFilter === 'ALL') {
+      return campaigns;
+    }
+    if (selectedPartnerFilter === 'ALLIANCE') {
+      return campaigns.filter((c) => !c.partnerId);
+    }
+    return campaigns.filter((c) => c.partnerId === Number(selectedPartnerFilter));
+  }, [campaigns, selectedPartnerFilter]);
 
   // Danh sách các Chiến dịch Cha duy nhất đang có
   const existingCampaigns = useMemo(() => {
@@ -135,6 +172,29 @@ export const CampaignMilestonesPage: React.FC = () => {
       name: name,
     }));
   }, [campaigns]);
+
+  // Dropdown Đối tác trong Modal tạo/sửa
+  const partnerOptions = useMemo(() => {
+    return [
+      { label: t('milestone.all_alliance', { defaultValue: 'Toàn Liên Minh (Tất cả đối tác)' }), value: null },
+      ...partners.map((p) => ({
+        label: `[${p.partnerCode}] ${p.partnerName}`,
+        value: p.id,
+      })),
+    ];
+  }, [partners, t]);
+
+  // Dropdown Lọc Đối tác ở Thanh công cụ
+  const partnerFilterOptions = useMemo(() => {
+    return [
+      { label: t('milestone.all_partners_filter', { defaultValue: 'Tất cả Đối tác & Liên minh' }), value: 'ALL' },
+      { label: t('milestone.alliance_scope', { defaultValue: 'Toàn Liên Minh' }), value: 'ALLIANCE' },
+      ...partners.map((p) => ({
+        label: `${p.partnerName} (${p.partnerCode})`,
+        value: p.id,
+      })),
+    ];
+  }, [partners, t]);
 
   // Dropdown Voucher từ kho
   const voucherOptions = useMemo(() => {
@@ -153,6 +213,7 @@ export const CampaignMilestonesPage: React.FC = () => {
     const endSixMonths = formatLocalDate(new Date(Date.now() + 180 * 86400000));
 
     setFormData({
+      partnerId: null,
       campaignCode: 'CAMP_' + Math.floor(1000 + Math.random() * 9000),
       campaignName: '',
       milestoneStep: 1,
@@ -185,6 +246,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       ...prev,
       campaignCode: code,
       campaignName: matched ? matched.name : prev?.campaignName || '',
+      partnerId: firstCampaign?.partnerId ?? prev?.partnerId ?? null,
       milestoneStep: maxStep + 1,
       startDate: firstCampaign?.startDate || prev?.startDate,
       endDate: firstCampaign?.endDate || prev?.endDate,
@@ -195,6 +257,7 @@ export const CampaignMilestonesPage: React.FC = () => {
   const editItem = (item: CampaignMilestoneItem) => {
     setFormData({
       ...item,
+      partnerId: item.partnerId ?? null,
       rewardVoucherId: item.rewardVoucherId ?? null,
       startDate: item.startDate ? item.startDate.substring(0, 10) : '',
       endDate: item.endDate ? item.endDate.substring(0, 10) : '',
@@ -234,7 +297,7 @@ export const CampaignMilestonesPage: React.FC = () => {
           toast.current?.show({
             severity: 'error',
             summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: e?.message || 'Không thể xóa cột mốc, vui lòng thử lại sau!',
+            detail: e?.message || t('milestone.delete_failed', { defaultValue: 'Không thể xóa cột mốc, vui lòng thử lại sau!' }),
             life: 4000,
           });
         } finally {
@@ -249,13 +312,14 @@ export const CampaignMilestonesPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const payload: Partial<MilestoneItemModel> = {
+        partnerId: formData.partnerId ? Number(formData.partnerId) : null,
         campaignCode: (formData.campaignCode || '').trim().toUpperCase(),
         campaignName: (formData.campaignName || '').trim(),
         milestoneStep: formData.milestoneStep || 1,
         targetMetric: formData.targetMetric || CampaignMetric.BILL_AMOUNT,
         targetValue: formData.targetValue || 0,
         rewardPoints: formData.rewardPoints || 0,
-        rewardVoucherId: formData.rewardVoucherId ? Number(formData.rewardVoucherId) : undefined,
+        rewardVoucherId: formData.rewardVoucherId ? Number(formData.rewardVoucherId) : null,
         rewardGameTurns: formData.rewardGameTurns || 0,
         startDate: formData.startDate ? new Date(formData.startDate + 'T00:00:00').toISOString() : new Date().toISOString(),
         endDate: formData.endDate ? new Date(formData.endDate + 'T23:59:59').toISOString() : new Date(Date.now() + 180 * 86400000).toISOString(),
@@ -438,7 +502,7 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   // Header của DataTable
   const header = (
-    <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
+    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
       <div className="flex align-items-center gap-2">
         <Button
           type="button"
@@ -454,6 +518,7 @@ export const CampaignMilestonesPage: React.FC = () => {
           outlined
           onClick={() => {
             fetchMilestones(selectedTenant);
+            fetchPartners(selectedTenant);
             fetchVouchers(selectedTenant);
           }}
           loading={loading}
@@ -461,7 +526,17 @@ export const CampaignMilestonesPage: React.FC = () => {
         />
       </div>
 
-      <div className="flex align-items-center gap-2">
+      <div className="flex flex-wrap align-items-center gap-2">
+        <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
+
+        <Dropdown
+          value={selectedPartnerFilter}
+          options={partnerFilterOptions}
+          onChange={(e) => setSelectedPartnerFilter(e.value)}
+          placeholder={t('milestone.filter_partner', { defaultValue: 'Lọc theo Đối tác' })}
+          className="p-inputtext-sm w-15rem"
+        />
+
         <span className="p-input-icon-left">
           <i className="pi pi-search" />
           <InputText
@@ -469,7 +544,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder={t('common.search', { defaultValue: 'Tìm theo mã, tên chiến dịch...' })}
-            className="w-18rem"
+            className="w-16rem p-inputtext-sm"
           />
         </span>
       </div>
@@ -498,7 +573,7 @@ export const CampaignMilestonesPage: React.FC = () => {
 
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
-          value={campaigns}
+          value={filteredCampaigns}
           selection={selectedCampaigns}
           onSelectionChange={(e) => setSelectedCampaigns(e.value as CampaignMilestoneItem[])}
           dataKey="id"
@@ -508,7 +583,7 @@ export const CampaignMilestonesPage: React.FC = () => {
           rowsPerPageOptions={[5, 10, 25]}
           header={header}
           globalFilter={globalFilter}
-          globalFilterFields={['campaignCode', 'campaignName']}
+          globalFilterFields={['campaignCode', 'campaignName', 'partnerCode', 'partnerName']}
           responsiveLayout="scroll"
           emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chiến dịch cột mốc nào cho liên minh này' })}
         >
@@ -549,7 +624,32 @@ export const CampaignMilestonesPage: React.FC = () => {
               </div>
             )}
             sortable
-            style={{ minWidth: '14rem' }}
+            style={{ minWidth: '13rem' }}
+          />
+          <Column
+            header={<span title={t('milestone.applicable_partner_tooltip', { defaultValue: 'Đối tác áp dụng cột mốc chiến dịch (Chọn Toàn liên minh nếu áp dụng chung)' })}>{t('milestone.applicable_partner', { defaultValue: 'Đối Tác Áp Dụng' })}</span>}
+            body={(row: CampaignMilestoneItem) => {
+              if (!row.partnerId) {
+                return (
+                  <Tag
+                    severity="info"
+                    icon="pi pi-globe"
+                    value={t('milestone.alliance_scope', { defaultValue: 'Toàn Liên Minh' })}
+                  />
+                );
+              }
+              const partner = partners.find((p) => p.id === row.partnerId);
+              const name = row.partnerName || partner?.partnerName || row.partnerCode || `ID #${row.partnerId}`;
+              return (
+                <Tag
+                  severity="secondary"
+                  icon="pi pi-building"
+                  value={name}
+                />
+              );
+            }}
+            sortable
+            style={{ minWidth: '12rem' }}
           />
           <Column
             field="targetMetric"
@@ -581,7 +681,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       {/* Dialog Thêm / Sửa Cột mốc */}
       <Dialog
         visible={showDialog}
-        style={{ width: '600px' }}
+        style={{ width: '620px' }}
         header={isEdit ? t('milestone.edit_title', { defaultValue: 'Chỉnh Sửa Cột Mốc' }) : t('milestone.create_title', { defaultValue: 'Tạo Cột Mốc Mới' })}
         modal
         className="p-fluid"
@@ -645,6 +745,23 @@ export const CampaignMilestonesPage: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Lựa chọn Đối tác áp dụng */}
+        <div className="field mb-3">
+          <label htmlFor="partnerId" className="font-bold flex align-items-center gap-2">
+            <i className="pi pi-building text-primary" />
+            <span>{t('milestone.applicable_partner', { defaultValue: 'Đối Tác Áp Dụng' })}</span>
+          </label>
+          <Dropdown
+            id="partnerId"
+            value={formData.partnerId ?? null}
+            options={partnerOptions}
+            onChange={(e) => setFormData({ ...formData, partnerId: e.value })}
+            placeholder={t('milestone.applicable_partner_tooltip', { defaultValue: 'Chọn đối tác áp dụng...' })}
+            className="w-full"
+            appendTo="self"
+          />
+        </div>
 
         <div className="formgrid grid mb-3">
           <div className="field col-6">

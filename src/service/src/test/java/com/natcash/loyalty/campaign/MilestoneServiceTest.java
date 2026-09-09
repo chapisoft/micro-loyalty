@@ -51,6 +51,15 @@ class MilestoneServiceTest {
     @Mock
     private AccountService accountService;
 
+    @Mock
+    private com.natcash.loyalty.wallet.repository.LoyaltyVoucherRepository voucherRepository;
+
+    @Mock
+    private com.natcash.loyalty.wallet.repository.LoyaltyVoucherRedemptionRepository redemptionRepository;
+
+    @Mock
+    private com.natcash.loyalty.account.repository.LoyaltyPartnerRepository partnerRepository;
+
     @InjectMocks
     private MilestoneService milestoneService;
 
@@ -60,6 +69,7 @@ class MilestoneServiceTest {
         CampaignMilestoneEntity milestone = CampaignMilestoneEntity.builder()
                 .id(1L)
                 .tenantId("TENANT_DELIMART")
+                .partnerId(100L)
                 .campaignCode("GOLDEN_WEEK")
                 .campaignName("Tuần Lễ Vàng")
                 .milestoneStep(1)
@@ -83,9 +93,17 @@ class MilestoneServiceTest {
                 .status(MilestoneStatus.IN_PROGRESS)
                 .build();
 
+        com.natcash.loyalty.account.entity.LoyaltyPartnerEntity partner = com.natcash.loyalty.account.entity.LoyaltyPartnerEntity.builder()
+                .id(100L)
+                .partnerCode("DELI_SUPERMARKET")
+                .partnerName("DeliMart Supermarket")
+                .build();
+
         when(campaignRepository.findByTenantIdAndStatusAndStartDateBeforeAndEndDateAfterOrderByCampaignCodeAscMilestoneStepAsc(
                 eq("TENANT_DELIMART"), eq(CommonStatus.ACTIVE), any(), any()))
                 .thenReturn(List.of(milestone));
+
+        when(partnerRepository.findByTenantId("TENANT_DELIMART")).thenReturn(List.of(partner));
 
         when(userMilestoneRepository.findByTenantIdAndAccount_ExternalUserId("TENANT_DELIMART", "USER_01"))
                 .thenReturn(List.of(userMilestone));
@@ -96,6 +114,8 @@ class MilestoneServiceTest {
         assertEquals(1, response.getTotalActive());
         assertEquals(50.0, response.getMilestones().get(0).getProgressPercentage());
         assertEquals(MilestoneStatus.IN_PROGRESS, response.getMilestones().get(0).getStatus());
+        assertEquals(100L, response.getMilestones().get(0).getPartnerId());
+        assertEquals("DeliMart Supermarket", response.getMilestones().get(0).getPartnerName());
     }
 
     @Test
@@ -104,11 +124,14 @@ class MilestoneServiceTest {
         CampaignMilestoneEntity milestone = CampaignMilestoneEntity.builder()
                 .id(1L)
                 .tenantId("TENANT_DELIMART")
+                .partnerId(100L)
                 .campaignCode("GOLDEN_WEEK")
                 .campaignName("Tuần Lễ Vàng")
                 .milestoneStep(1)
                 .targetValue(new BigDecimal("1000.00"))
                 .rewardPoints(new BigDecimal("200.00"))
+                .rewardVoucherId(50L)
+                .rewardGameTurns(2)
                 .build();
 
         UserMilestoneEntity userMilestone = UserMilestoneEntity.builder()
@@ -125,11 +148,20 @@ class MilestoneServiceTest {
                 .currentPoints(new BigDecimal("300.00"))
                 .build();
 
+        com.natcash.loyalty.wallet.entity.LoyaltyVoucherEntity voucher = com.natcash.loyalty.wallet.entity.LoyaltyVoucherEntity.builder()
+                .id(50L)
+                .voucherCode("VOUCHER_50")
+                .title("Giảm 50K")
+                .discountValue(new BigDecimal("50.00"))
+                .status(com.natcash.loyalty.domain.enums.VoucherStatus.ACTIVE)
+                .build();
+
         when(campaignRepository.findById(1L)).thenReturn(Optional.of(milestone));
         when(userMilestoneRepository.findByTenantIdAndAccount_ExternalUserIdAndMilestone_Id("TENANT_DELIMART", "USER_01", 1L))
                 .thenReturn(Optional.of(userMilestone));
         when(accountService.getAccountForUpdate("TENANT_DELIMART", "USER_01"))
                 .thenReturn(account);
+        when(voucherRepository.findById(50L)).thenReturn(Optional.of(voucher));
 
         ClaimRewardRequest request = ClaimRewardRequest.builder()
                 .externalUserId("USER_01")
@@ -141,9 +173,13 @@ class MilestoneServiceTest {
         assertNotNull(response);
         assertEquals(new BigDecimal("200.00"), response.getRewardPoints());
         assertEquals(new BigDecimal("500.00"), response.getNewTotalPoints());
+        assertEquals(50L, response.getRewardVoucherId());
+        assertEquals(2, response.getRewardGameTurns());
         assertEquals(MilestoneStatus.CLAIMED, userMilestone.getStatus());
 
         verify(ledgerRepository, times(1)).save(any());
+        verify(redemptionRepository, times(1)).save(any());
+        verify(accountRepository, times(1)).save(account);
         verify(userMilestoneRepository, times(1)).save(userMilestone);
     }
 
@@ -172,5 +208,50 @@ class MilestoneServiceTest {
                 milestoneService.claimReward("TENANT_DELIMART", request));
 
         verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("BE-11.4: Tích lũy tiến độ cột mốc tự động theo giao dịch")
+    void testRecordProgressAccumulation() {
+        CampaignMilestoneEntity milestoneAlliance = CampaignMilestoneEntity.builder()
+                .id(1L)
+                .tenantId("TENANT_DELIMART")
+                .partnerId(null)
+                .campaignCode("SPEND_ALLIANCE")
+                .targetMetric(CampaignMetric.BILL_AMOUNT)
+                .targetValue(new BigDecimal("500.00"))
+                .build();
+
+        CampaignMilestoneEntity milestonePartner = CampaignMilestoneEntity.builder()
+                .id(2L)
+                .tenantId("TENANT_DELIMART")
+                .partnerId(10L)
+                .campaignCode("SPEND_DELI")
+                .targetMetric(CampaignMetric.BILL_AMOUNT)
+                .targetValue(new BigDecimal("200.00"))
+                .build();
+
+        LoyaltyAccountEntity account = LoyaltyAccountEntity.builder()
+                .id(100L)
+                .tenantId("TENANT_DELIMART")
+                .externalUserId("USER_01")
+                .build();
+
+        when(campaignRepository.findActiveMilestonesForTracking(
+                eq("TENANT_DELIMART"), eq(CommonStatus.ACTIVE), any(Instant.class), eq(CampaignMetric.BILL_AMOUNT), eq(10L)))
+                .thenReturn(List.of(milestoneAlliance, milestonePartner));
+
+        when(accountRepository.findByTenantIdAndExternalUserId("TENANT_DELIMART", "USER_01"))
+                .thenReturn(Optional.of(account));
+
+        when(userMilestoneRepository.findByTenantIdAndAccount_ExternalUserIdAndMilestone_Id("TENANT_DELIMART", "USER_01", 1L))
+                .thenReturn(Optional.empty());
+
+        when(userMilestoneRepository.findByTenantIdAndAccount_ExternalUserIdAndMilestone_Id("TENANT_DELIMART", "USER_01", 2L))
+                .thenReturn(Optional.empty());
+
+        milestoneService.recordProgress("TENANT_DELIMART", "USER_01", 10L, CampaignMetric.BILL_AMOUNT, new BigDecimal("250.00"));
+
+        verify(userMilestoneRepository, times(2)).save(any(UserMilestoneEntity.class));
     }
 }

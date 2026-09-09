@@ -90,13 +90,13 @@ export function Page(): React.JSX.Element {
         body={
           <Form form={form} onSubmit={handleSubmit(onSubmit)} className="w-full grid">
             <div className="col-12">
-              <FormField control={control} name="oldPassword" label={t('old_password')} required />
+              <FormField control={control as any} name="oldPassword" label={t('old_password')} required />
             </div>
             <div className="col-12">
-              <FormField control={control} name="newPassword" label={t('new_password')} required />
+              <FormField control={control as any} name="newPassword" label={t('new_password')} required />
             </div>
             <div className="col-12">
-              <FormField control={control} name="confirmPassword" label={t('confirm_password')} required />
+              <FormField control={control as any} name="confirmPassword" label={t('confirm_password')} required />
             </div>
           </Form>
         }

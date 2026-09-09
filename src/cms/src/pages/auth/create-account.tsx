@@ -134,22 +134,22 @@ export function Page(): React.JSX.Element {
         body={
           <Form form={form} onSubmit={handleSubmit(onSubmit)} className="grid mt-3">
             <div className="col-12 lg:col-6">
-              <FormField name="phoneNumber" control={control} label={t('login.phoneNumber')} required maxLength={11} />
+              <FormField name="phoneNumber" control={control as any} label={t('login.phoneNumber')} required maxLength={11} />
             </div>
             <div className="col-12 lg:col-6">
-              <FormField name="email" control={control} label={t('login.emailAddress')} required />
+              <FormField name="email" control={control as any} label={t('login.emailAddress')} required />
             </div>
             <div className="col-12 lg:col-6">
-              <FormField control={control} name="fullName" label={t('login.fullName')} required />
+              <FormField control={control as any} name="fullName" label={t('login.fullName')} required />
             </div>
             <div className="col-12 lg:col-6">
-              <FormField control={control} name="username" label={t('login.userName')} required />
+              <FormField control={control as any} name="username" label={t('login.userName')} required />
             </div>
             <div className="col-12 lg:col-6">
-              <FormField control={control} name="password" label={t('login.password')} required />
+              <FormField control={control as any} name="password" label={t('login.password')} required />
             </div>
             <div className="col-12 lg:col-6">
-              <FormField control={control} name="confirm_password" label={t('login.confirm_password')} required />
+              <FormField control={control as any} name="confirm_password" label={t('login.confirm_password')} required />
             </div>
             {/* <Show when={!isDetail}>
             <div className="col-12 mt-4 flex justify-content-center gap-4">

@@ -15,7 +15,7 @@ import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { AppBreadcrumb } from 'components';
 import { CommonStatus } from '@/models';
-import { LoyaltyService } from '@/service/loyalty.service';
+import { LoyaltyService, GameDashboardStats } from '@/service/loyalty.service';
 
 interface GameItem {
   id: number;
@@ -75,6 +75,18 @@ export const GameManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const [selectedTenant, setSelectedTenant] = useState('TENANT_NATCASH');
   const [games, setGames] = useState<GameItem[]>([]);
+  const [stats, setStats] = useState<GameDashboardStats>({
+    totalGames: 0,
+    activeGames: 0,
+    todaySpins: 0,
+    yesterdaySpins: 0,
+    spinGrowthPercent: 0,
+    todaySpentAmount: 0,
+    dailyBudgetLimit: 50000,
+    budgetUsagePercent: 0,
+    uniquePlayersToday: 0,
+    lockMechanism: 'Redisson RLock',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGames, setSelectedGames] = useState<GameItem[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -104,7 +116,19 @@ export const GameManagementPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useRef<Toast>(null);
 
-  // 1. Tải danh mục trò chơi từ Backend
+  // 1. Tải số liệu thống kê thời gian thực từ Backend
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await LoyaltyService.getGameDashboardStats(selectedTenant);
+      if (data) {
+        setStats(data);
+      }
+    } catch (e) {
+      console.error('[GameManagementPage] Load stats error:', e);
+    }
+  }, [selectedTenant]);
+
+  // 2. Tải danh mục trò chơi từ Backend
   const loadGames = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -123,7 +147,8 @@ export const GameManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadGames();
-  }, [loadGames]);
+    loadStats();
+  }, [loadGames, loadStats]);
 
   // 2. Tải danh sách ô giải thưởng của trò chơi
   const loadGamePrizes = async (gameCode: string) => {
@@ -396,7 +421,9 @@ export const GameManagementPage: React.FC = () => {
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.game_list', { defaultValue: 'Tổng Game Vận Hành' })}
                 </span>
-                <div className="text-900 font-black text-2xl tracking-tight">{games.length} Game</div>
+                <div className="text-900 font-black text-2xl tracking-tight">
+                  {stats.totalGames > 0 ? stats.totalGames : games.length} {t('common.games', { defaultValue: 'Game' })}
+                </div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -410,7 +437,7 @@ export const GameManagementPage: React.FC = () => {
               </div>
             </div>
             <span className="text-green-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-check text-xs font-bold" /> {t('game.ready_status', { defaultValue: '100% Sẵn sàng Webview & DB' })}
+              <i className="pi pi-check text-xs font-bold" /> {stats.activeGames > 0 ? stats.activeGames : games.filter(g => g.status === CommonStatus.ACTIVE).length} {t('game.active_count', { defaultValue: 'Đang hoạt động' })}
             </span>
           </div>
         </div>
@@ -422,7 +449,9 @@ export const GameManagementPage: React.FC = () => {
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.today_spins', { defaultValue: 'Tổng lượt chơi hôm nay' })}
                 </span>
-                <div className="text-900 font-black text-2xl font-mono tracking-tight text-orange-600">390 {t('common.spins', { defaultValue: 'Lượt' })}</div>
+                <div className="text-900 font-black text-2xl font-mono tracking-tight text-orange-600">
+                  {stats.todaySpins.toLocaleString()} {t('common.spins', { defaultValue: 'Lượt' })}
+                </div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -435,8 +464,9 @@ export const GameManagementPage: React.FC = () => {
                 <i className="pi pi-bolt text-white text-2xl font-bold" />
               </div>
             </div>
-            <span className="text-orange-600 font-bold text-xs flex align-items-center gap-1">
-              <i className="pi pi-arrow-up text-xs font-bold" /> {t('game.vs_yesterday', { defaultValue: '+18.4% so với hôm qua' })}
+            <span className={`font-bold text-xs flex align-items-center gap-1 ${stats.spinGrowthPercent >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+              <i className={`pi ${stats.spinGrowthPercent >= 0 ? 'pi-arrow-up' : 'pi-arrow-down'} text-xs font-bold`} />{' '}
+              {stats.spinGrowthPercent >= 0 ? `+${stats.spinGrowthPercent}%` : `${stats.spinGrowthPercent}%`} {t('game.vs_yesterday', { defaultValue: 'so với hôm qua' })}
             </span>
           </div>
         </div>
@@ -448,7 +478,9 @@ export const GameManagementPage: React.FC = () => {
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.today_cost', { defaultValue: 'Tổng ngân sách đã chi' })}
                 </span>
-                <div className="text-900 font-black text-2xl font-mono tracking-tight text-green-600">6,000 HTG</div>
+                <div className="text-900 font-black text-2xl font-mono tracking-tight text-green-600">
+                  {stats.todaySpentAmount.toLocaleString()} HTG
+                </div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -461,7 +493,13 @@ export const GameManagementPage: React.FC = () => {
                 <i className="pi pi-wallet text-white text-2xl font-bold" />
               </div>
             </div>
-            <span className="text-600 font-medium text-xs">{t('game.budget_limit_note', { defaultValue: 'Hạn mức: 50,000 HTG (12%)' })}</span>
+            <span className="text-600 font-medium text-xs">
+              {t('game.budget_limit_note', {
+                limit: stats.dailyBudgetLimit.toLocaleString(),
+                percent: stats.budgetUsagePercent,
+                defaultValue: `Hạn mức: ${stats.dailyBudgetLimit.toLocaleString()} HTG (${stats.budgetUsagePercent}%)`,
+              })}
+            </span>
           </div>
         </div>
 
@@ -470,7 +508,9 @@ export const GameManagementPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.lock_ledger_mechanism', { defaultValue: 'Cơ Chế Khóa & Sổ Cái' })}</span>
-                <div className="text-900 font-black text-2xl tracking-tight text-purple-600">Redisson RLock</div>
+                <div className="text-900 font-black text-2xl tracking-tight text-purple-600">
+                  {stats.lockMechanism || 'Redisson RLock'}
+                </div>
               </div>
               <div
                 className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
@@ -710,8 +750,18 @@ export const GameManagementPage: React.FC = () => {
         >
           <Column field="displayOrder" header={t('common.stt', { defaultValue: 'STT' })} style={{ width: '4rem', textAlign: 'center' }} />
           <Column
+            header={t('common.actions', { defaultValue: 'Thao Tác' })}
+            body={(row: GamePrizeItem) => (
+              <div className="flex gap-1 justify-content-center">
+                <Button icon="pi pi-pencil" rounded text severity="secondary" size="small" onClick={() => editPrize(row)} tooltip={t('common.edit', { defaultValue: 'Sửa' })} />
+                <Button icon="pi pi-trash" rounded text severity="danger" size="small" onClick={() => deletePrize(row)} tooltip={t('common.delete', { defaultValue: 'Xóa' })} />
+              </div>
+            )}
+            style={{ width: '6rem', textAlign: 'center' }}
+          />
+          <Column
             field="iconSymbol"
-            header="Icon"
+            header={t('game.prize_icon', { defaultValue: 'Biểu tượng' })}
             body={(row: GamePrizeItem) => <span className="text-xl">{row.iconSymbol || '🎁'}</span>}
             style={{ width: '4rem', textAlign: 'center' }}
           />
@@ -753,15 +803,6 @@ export const GameManagementPage: React.FC = () => {
             header={t('common.status', { defaultValue: 'Trạng Thái' })}
             body={(row: GamePrizeItem) => statusTemplate(row.status)}
             style={{ minWidth: '7rem' }}
-          />
-          <Column
-            body={(row: GamePrizeItem) => (
-              <div className="flex gap-1 justify-content-center">
-                <Button icon="pi pi-pencil" rounded text severity="secondary" size="small" onClick={() => editPrize(row)} />
-                <Button icon="pi pi-trash" rounded text severity="danger" size="small" onClick={() => deletePrize(row)} />
-              </div>
-            )}
-            style={{ width: '6rem', textAlign: 'center' }}
           />
         </DataTable>
       </Dialog>

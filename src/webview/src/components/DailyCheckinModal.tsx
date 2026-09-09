@@ -147,7 +147,7 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
                   </span>
                   <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-ping" />
                 </div>
-                <p className="text-[10px] text-amber-200 font-semibold">+200 Điểm & Voucher</p>
+                <p className="text-[10px] text-amber-200 font-semibold">{t('checkin.day_7_reward_desc', { defaultValue: '+200 Điểm & Voucher' })}</p>
               </div>
             </div>
             {streak >= 7 && checkedToday ? (

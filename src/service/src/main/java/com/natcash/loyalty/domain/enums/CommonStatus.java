@@ -12,7 +12,9 @@ public enum CommonStatus {
     ACTIVE("ACTIVE", "enum.common_status.active"),
     INACTIVE("INACTIVE", "enum.common_status.inactive"),
     LOCKED("LOCKED", "enum.common_status.locked"),
-    DELETED("DELETED", "enum.common_status.deleted");
+    DELETED("DELETED", "enum.common_status.deleted"),
+    SUCCESS("SUCCESS", "enum.common_status.success"),
+    FAILED("FAILED", "enum.common_status.failed");
 
     @JsonValue
     private final String code;

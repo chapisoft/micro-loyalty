@@ -179,12 +179,19 @@ export const SystemParameters: React.FC = () => {
           stripedRows
           responsiveLayout="scroll"
         >
+          <Column
+            header={t('common.stt', { defaultValue: 'STT' })}
+            body={(_: any, options: any) => (
+              <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+            )}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+          <Column body={actionBodyTemplate} exportable={false} header={t('common.actions', { defaultValue: 'Thao tác' })} style={{ width: '6rem', textAlign: 'center' }} />
           <Column field="paramKey" header={t('system_parameter.key', { defaultValue: 'Mã Tham số (Key)' })} sortable style={{ width: '18rem' }} />
           <Column field="paramValue" header={t('system_parameter.value', { defaultValue: 'Giá trị' })} sortable style={{ width: '12rem' }} />
           <Column field="description" header={t('system_parameter.description', { defaultValue: 'Mô tả ý nghĩa' })} sortable />
           <Column body={statusBodyTemplate} header={t('common.status', { defaultValue: 'Trạng thái' })} sortable style={{ width: '8rem' }} />
           <Column field="updatedAt" header={t('common.updated_at', { defaultValue: 'Cập nhật lần cuối' })} sortable />
-          <Column body={actionBodyTemplate} exportable={false} header={t('common.actions', { defaultValue: 'Thao tác' })} style={{ minWidth: '6rem' }} />
         </DataTable>
       </div>
 

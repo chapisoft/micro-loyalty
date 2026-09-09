@@ -1,5 +1,6 @@
 package com.natcash.loyalty.game.entity;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.PrizeType;
 
 import jakarta.persistence.Column;
@@ -105,9 +106,10 @@ public class GamePrizeEntity {
     @Builder.Default
     private Integer displayOrder = 0;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "ACTIVE";
+    private CommonStatus status = CommonStatus.ACTIVE;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

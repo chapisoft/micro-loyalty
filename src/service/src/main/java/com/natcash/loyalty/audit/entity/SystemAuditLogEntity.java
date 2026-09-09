@@ -1,7 +1,11 @@
 package com.natcash.loyalty.audit.entity;
 
+import com.natcash.loyalty.domain.enums.CommonStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,7 +50,7 @@ public class SystemAuditLogEntity {
     @Column(name = "actor_username", nullable = false, length = 100)
     private String actorUsername;
 
-    @Column(name = "actor_role", length = 100)
+    @Column(name = "actor_role", length = 50)
     private String actorRole;
 
     @Column(name = "client_ip", length = 100)
@@ -66,9 +70,10 @@ public class SystemAuditLogEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
-    private String status = "SUCCESS";
+    private CommonStatus status = CommonStatus.SUCCESS;
 
     @Column(name = "execution_time_ms")
     @Builder.Default
@@ -83,7 +88,7 @@ public class SystemAuditLogEntity {
             this.createdAt = Instant.now();
         }
         if (this.status == null) {
-            this.status = "SUCCESS";
+            this.status = CommonStatus.SUCCESS;
         }
     }
 }

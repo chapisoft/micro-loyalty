@@ -569,9 +569,21 @@ export default {
     "subtitle": "Điểm danh mỗi ngày để mở Rương Báu Hoàng Kim",
     "day_label": "Ngày {{day}}",
     "day_7_chest": "Ngày 7: Rương Vàng",
+    "day_7_reward_desc": "+200 Điểm & Voucher",
     "claimed_success": "Điểm danh thành công! Đã cộng điểm vào tài khoản.",
     "btn_checked": "ĐÃ ĐIỂM DANH HÔM NAY",
     "btn_claim": "NHẬN THƯỞNG ĐIỂM DANH"
+  },
+  "home": {
+    "points_expiration_warning": "{{count}} điểm sẽ hết hạn vào {{date}}",
+    "points_expiration_hint": "Đổi ngay phiếu quà tặng siêu thị hoặc gói data để không lãng phí điểm",
+    "redeem_now_btn": "Đổi quà →"
+  },
+  "tier": {
+    "your_tier_badge": "✓ Hạng của bạn",
+    "multiplier_label": "Tích điểm",
+    "daily_spins_label": "Quay miễn phí",
+    "eval_points_label": "Xét hạng"
   },
   "voucher": {
     "modal_instruction": "Đưa mã này cho thu ngân quét khi thanh toán",

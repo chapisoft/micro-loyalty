@@ -28,6 +28,8 @@ public final class CampaignMilestoneDto {
 
         @NotBlank(message = "Mã người dùng không được để trống")
         private String externalUserId;
+
+        private Long partnerId;
     }
 
     @Data
@@ -38,6 +40,9 @@ public final class CampaignMilestoneDto {
         private static final long serialVersionUID = 1L;
 
         private Long milestoneId;
+        private Long partnerId;
+        private String partnerCode;
+        private String partnerName;
         private String campaignCode;
         private String campaignName;
         private Integer milestoneStep;

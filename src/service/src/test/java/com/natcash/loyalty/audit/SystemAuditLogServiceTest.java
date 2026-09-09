@@ -5,6 +5,7 @@ import com.natcash.loyalty.audit.entity.SystemAuditLogEntity;
 import com.natcash.loyalty.audit.event.AuditLogEvent;
 import com.natcash.loyalty.audit.repository.SystemAuditLogRepository;
 import com.natcash.loyalty.audit.service.SystemAuditLogService;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -95,7 +96,7 @@ class SystemAuditLogServiceTest {
                 .beforeData("{\"budget\": 30000}")
                 .afterData("{\"budget\": 50000}")
                 .description("Tăng ngân sách ngày")
-                .status("SUCCESS")
+                .status(CommonStatus.SUCCESS)
                 .executionTimeMs(10L)
                 .createdAt(Instant.now())
                 .build();

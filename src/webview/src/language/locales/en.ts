@@ -569,9 +569,21 @@ export default {
     "subtitle": "Check in daily to unlock the Golden Treasure Chest",
     "day_label": "Day {{day}}",
     "day_7_chest": "Day 7: Golden Chest",
+    "day_7_reward_desc": "+200 Points & Voucher",
     "claimed_success": "Check-in successful! Points credited to your account.",
     "btn_checked": "CHECKED IN TODAY",
     "btn_claim": "CLAIM CHECK-IN REWARD"
+  },
+  "home": {
+    "points_expiration_warning": "{{count}} points will expire on {{date}}",
+    "points_expiration_hint": "Redeem supermarket gift vouchers or data packages now so points won't expire",
+    "redeem_now_btn": "Redeem now →"
+  },
+  "tier": {
+    "your_tier_badge": "✓ Your Current Tier",
+    "multiplier_label": "Point Earn Rate",
+    "daily_spins_label": "Free Daily Spins",
+    "eval_points_label": "Qualifying Points"
   },
   "voucher": {
     "modal_instruction": "Show this code to the cashier upon checkout",

@@ -60,10 +60,19 @@ class ConcurrentPointBurnTest {
     private ClearingTransactionRepository clearingRepository;
 
     @Mock
+    private com.natcash.loyalty.wallet.repository.LoyaltyAcceptancePolicyRepository policyRepository;
+
+    @Mock
+    private com.natcash.loyalty.account.repository.LoyaltyPartnerRepository partnerRepository;
+
+    @Mock
     private DistributedLockHelper lockHelper;
 
     @Mock
     private LoyaltyStreamProducer streamProducer;
+
+    @Mock
+    private com.natcash.loyalty.campaign.service.MilestoneService milestoneService;
 
     private RewardWalletService rewardWalletService;
 
@@ -78,8 +87,11 @@ class ConcurrentPointBurnTest {
                 ledgerRepository,
                 redemptionRepository,
                 clearingRepository,
+                policyRepository,
+                partnerRepository,
                 lockHelper,
-                streamProducer
+                streamProducer,
+                milestoneService
         );
 
         // Khởi tạo tài khoản mẫu có 500 điểm

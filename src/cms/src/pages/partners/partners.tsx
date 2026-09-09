@@ -826,25 +826,25 @@ export const Partners: React.FC = () => {
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">API Key (X-Api-Key Header)</label>
+              <label className="font-semibold text-xs text-500">{t('partner.api_key_header', { defaultValue: 'API Key (X-Api-Key Header)' })}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.apiKey || 'Chưa cấp'} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.apiKey || t('partner.not_issued', { defaultValue: 'Chưa cấp' })} readOnly className="p-inputtext-sm font-mono bg-50" />
                 <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.apiKey || '', 'API Key')} />
               </div>
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">Secret Key (Ký HMAC-SHA256)</label>
+              <label className="font-semibold text-xs text-500">{t('partner.secret_key_sign', { defaultValue: 'Secret Key (Ký HMAC-SHA256)' })}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.secretKey || 'Chưa cấp'} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.secretKey || t('partner.not_issued', { defaultValue: 'Chưa cấp' })} readOnly className="p-inputtext-sm font-mono bg-50" />
                 <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.secretKey || '', 'Secret Key')} />
               </div>
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">Webhook URL</label>
+              <label className="font-semibold text-xs text-500">{t('partner.webhook_url_label', { defaultValue: 'Webhook URL' })}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.webhookUrl || 'Chưa cấu hình'} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.webhookUrl || t('partner.not_configured', { defaultValue: 'Chưa cấu hình' })} readOnly className="p-inputtext-sm font-mono bg-50" />
                 {detailPartner.webhookUrl && (
                   <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.webhookUrl || '', 'Webhook URL')} />
                 )}
@@ -852,9 +852,9 @@ export const Partners: React.FC = () => {
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">Webhook Secret (X-Loyalty-Signature)</label>
+              <label className="font-semibold text-xs text-500">{t('partner.webhook_secret_label', { defaultValue: 'Webhook Secret (X-Loyalty-Signature)' })}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.webhookSecret || 'Chưa cấu hình'} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.webhookSecret || t('partner.not_configured', { defaultValue: 'Chưa cấu hình' })} readOnly className="p-inputtext-sm font-mono bg-50" />
                 {detailPartner.webhookSecret && (
                   <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.webhookSecret || '', 'Webhook Secret')} />
                 )}
@@ -862,12 +862,12 @@ export const Partners: React.FC = () => {
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">IP Whitelist</label>
+              <label className="font-semibold text-xs text-500">{t('partner.ip_whitelist_label', { defaultValue: 'IP Whitelist' })}</label>
               <InputText value={detailPartner.ipWhitelist || '0.0.0.0/0'} readOnly className="p-inputtext-sm font-mono bg-50" />
             </div>
 
             <div className="p-3 border-round surface-100 border-1 surface-border mt-2">
-              <div className="font-semibold text-xs text-700 mb-1">Mẫu HTTP Headers khi gọi API từ POS / Backend Đối tác:</div>
+              <div className="font-semibold text-xs text-700 mb-1">{t('partner.http_headers_sample', { defaultValue: 'Mẫu HTTP Headers khi gọi API từ POS / Backend Đối tác:' })}</div>
               <pre className="m-0 text-xs font-mono text-800 line-height-3 bg-white p-2 border-round">
 {`X-Tenant-Id: ${selectedTenant}
 X-Api-Key: ${detailPartner.apiKey || 'pk_live_...'}

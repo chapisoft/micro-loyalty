@@ -21,6 +21,10 @@ public final class RedisKeys {
     public static final String LOCK_VOUCHER_REDEEM_PREFIX = "lock:voucher:redeem:";
     public static final String GAME_DAILY_BUDGET_PREFIX = "budget:game:";
 
+    public static final String LOCK_BATCH_POINT_EXPIRATION = "lock:batch:point-expiration";
+    public static final String LOCK_BATCH_TIER_EVALUATION = "lock:batch:tier-evaluation";
+    public static final String LOCK_BATCH_CLEARING = "lock:batch:clearing-reconciliation";
+
     public static String getBurnLockKey(String tenantId, String userId) {
         return LOCK_BURN_POINT_PREFIX + tenantId + ":" + userId;
     }

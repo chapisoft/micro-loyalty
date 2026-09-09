@@ -5,6 +5,7 @@ import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.DiscountType;
 import com.natcash.loyalty.domain.enums.PointActionType;
@@ -171,7 +172,7 @@ public class VoucherService {
     @Transactional
     public UserVoucherResponse redeemVoucher(String tenantId, RedeemVoucherRequest request) {
         String lockKey = RedisKeys.getVoucherRedeemLockKey(tenantId, request.getExternalUserId());
-        return lockHelper.executeWithLock(lockKey, 3000, 5000, () -> {
+        return lockHelper.executeWithLock(lockKey, LoyaltyConstants.DEFAULT_LOCK_WAIT_TIME_MS, LoyaltyConstants.DEFAULT_SHORT_LOCK_LEASE_TIME_MS, () -> {
             LoyaltyAccountEntity account = accountRepository.findByTenantIdAndExternalUserId(tenantId, request.getExternalUserId())
                     .orElseThrow(() -> new LoyaltyException(ErrorCode.ACCOUNT_NOT_FOUND, "Không tìm thấy tài khoản"));
 

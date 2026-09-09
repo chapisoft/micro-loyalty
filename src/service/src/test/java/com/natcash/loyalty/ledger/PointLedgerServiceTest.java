@@ -54,6 +54,9 @@ class PointLedgerServiceTest {
     private AccountService accountService;
 
     @Mock
+    private com.natcash.loyalty.campaign.service.MilestoneService milestoneService;
+
+    @Mock
     private DistributedLockHelper lockHelper;
 
     @Mock
@@ -69,7 +72,8 @@ class PointLedgerServiceTest {
                 partnerRepository,
                 accountService,
                 lockHelper,
-                streamProducer
+                streamProducer,
+                milestoneService
         );
     }
 

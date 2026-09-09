@@ -30,8 +30,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
+
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateResponse;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyResponse;
+import com.natcash.loyalty.common.exception.LoyaltyException;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -60,10 +69,25 @@ class RewardWalletServiceTest {
     private ClearingTransactionRepository clearingRepository;
 
     @Mock
+    private com.natcash.loyalty.wallet.repository.LoyaltyAcceptancePolicyRepository policyRepository;
+
+    @Mock
+    private com.natcash.loyalty.account.repository.LoyaltyPartnerRepository partnerRepository;
+
+    @Mock
+    private com.natcash.loyalty.campaign.service.MilestoneService milestoneService;
+
+    @Mock
     private DistributedLockHelper lockHelper;
 
     @Mock
     private LoyaltyStreamProducer streamProducer;
+
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RBucket<String> rBucket;
 
     private RewardWalletService rewardWalletService;
 
@@ -75,8 +99,12 @@ class RewardWalletServiceTest {
                 ledgerRepository,
                 redemptionRepository,
                 clearingRepository,
+                policyRepository,
+                partnerRepository,
                 lockHelper,
-                streamProducer
+                streamProducer,
+                milestoneService,
+                redissonClient
         );
     }
 
@@ -230,5 +258,109 @@ class RewardWalletServiceTest {
         assertEquals(ClearingStatus.CANCELLED, clearing.getStatus());
 
         verify(ledgerRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("BE-13.4: Sinh mã Dynamic QR Token 60s cho Ví Phần Thưởng")
+    void testGenerateQrToken() {
+        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+
+        QrTokenGenerateRequest request = QrTokenGenerateRequest.builder()
+                .externalUserId("USER_001")
+                .build();
+
+        QrTokenGenerateResponse response = rewardWalletService.generateQrToken("TENANT_DELIMART", request);
+
+        assertNotNull(response);
+        assertNotNull(response.getQrToken());
+        assertEquals(60, response.getExpiresInSeconds());
+        assertNotNull(response.getExpiresAt());
+        verify(rBucket, times(1)).set(eq("USER_001"), any(Duration.class));
+    }
+
+    @Test
+    @DisplayName("BE-13.5: Xác thực Dynamic QR Token 60s thành công")
+    void testVerifyQrToken_Success() {
+        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        when(rBucket.get()).thenReturn("USER_001");
+
+        ProfileResponse profile = ProfileResponse.builder()
+                .accountId(1L)
+                .externalUserId("USER_001")
+                .currentPoints(new BigDecimal("1500.00"))
+                .build();
+        when(accountService.getOrCreateProfile(eq("TENANT_DELIMART"), any()))
+                .thenReturn(profile);
+
+        QrTokenVerifyRequest request = QrTokenVerifyRequest.builder()
+                .qrToken("QR_VALID_TOKEN_123")
+                .partnerId(2L)
+                .build();
+
+        QrTokenVerifyResponse response = rewardWalletService.verifyQrToken("TENANT_DELIMART", request);
+
+        assertNotNull(response);
+        assertTrue(response.isValid());
+        assertEquals("USER_001", response.getExternalUserId());
+        assertEquals(new BigDecimal("1500.00"), response.getCurrentPoints());
+    }
+
+    @Test
+    @DisplayName("BE-13.6: Xác thực Dynamic QR Token thất bại khi token hết hạn")
+    void testVerifyQrToken_Expired() {
+        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        when(rBucket.get()).thenReturn(null);
+
+        QrTokenVerifyRequest request = QrTokenVerifyRequest.builder()
+                .qrToken("QR_EXPIRED_TOKEN")
+                .build();
+
+        assertThrows(LoyaltyException.class, () ->
+                rewardWalletService.verifyQrToken("TENANT_DELIMART", request)
+        );
+    }
+
+    @Test
+    @DisplayName("BE-13.7: Khấu trừ Ví phần thưởng sử dụng Dynamic QR Token 60s (Single-use atomicity)")
+    void testRewardWalletRedeem_WithQrToken() {
+        when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+        when(rBucket.getAndDelete()).thenReturn("USER_001");
+
+        when(clearingRepository.existsByTenantIdAndTransactionCode("TENANT_DELIMART", "POS_QR_TX_1"))
+                .thenReturn(false);
+
+        when(lockHelper.executeWithLock(anyString(), anyLong(), anyLong(), any()))
+                .thenAnswer(invocation -> {
+                    Supplier<?> supplier = invocation.getArgument(3);
+                    return supplier.get();
+                });
+
+        LoyaltyAccountEntity account = LoyaltyAccountEntity.builder()
+                .id(1L)
+                .tenantId("TENANT_DELIMART")
+                .externalUserId("USER_001")
+                .currentPoints(new BigDecimal("500.00"))
+                .build();
+
+        when(accountService.getAccountForUpdate("TENANT_DELIMART", "USER_001"))
+                .thenReturn(account);
+
+        RewardWalletRedeemRequest request = RewardWalletRedeemRequest.builder()
+                .qrToken("QR_DYNAMIC_123")
+                .transactionCode("POS_QR_TX_1")
+                .totalBillAmount(new BigDecimal("500.00"))
+                .pointsToBurn(new BigDecimal("100.00"))
+                .redeemerPartnerId(2L)
+                .build();
+
+        RewardWalletRedeemResponse response = rewardWalletService.redeem("TENANT_DELIMART", request);
+
+        assertNotNull(response);
+        assertEquals("POS_QR_TX_1", response.getTransactionCode());
+        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(new BigDecimal("100.00"), response.getPointDiscountAmount());
+        assertEquals(new BigDecimal("400.00"), response.getRemainingPoints());
+
+        verify(rBucket, times(1)).getAndDelete();
     }
 }

@@ -443,5 +443,24 @@ public final class GameHubDto {
         private List<GamePrizeDto> prizes;
         private Map<String, Object> gameParams;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GameDashboardStatsResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private long totalGames;
+        private long activeGames;
+        private long todaySpins;
+        private long yesterdaySpins;
+        private double spinGrowthPercent;
+        private BigDecimal todaySpentAmount;
+        private BigDecimal dailyBudgetLimit;
+        private double budgetUsagePercent;
+        private long uniquePlayersToday;
+        private String lockMechanism;
+    }
 }
 

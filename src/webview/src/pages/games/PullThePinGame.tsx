@@ -434,7 +434,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
               className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-500 text-white font-black rounded-xl text-sm shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Chơi Lại Màn Này</span>
+              <span>{t('games.pin.retry_btn', { defaultValue: 'Chơi Lại Màn Này' })}</span>
             </button>
           </div>
         </div>

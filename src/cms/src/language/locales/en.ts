@@ -141,8 +141,12 @@ export default {
     "delete_confirm_msg": "Are you sure you want to delete step {{step}} of campaign \"{{name}}\"? This action cannot be undone.",
     "delete_failed": "Could not delete milestone, please try again later!",
     "save_failed": "Could not save campaign milestone, please try again later!",
-    "code_name_required": "Please enter Campaign Code and Campaign Name!",
-    "confirm_update_msg": "Are you sure you want to update step {{step}} of campaign {{name}}?",
+    "applicable_partner": "Applicable Partner",
+    "applicable_partner_tooltip": "Partner applicable for this milestone (Select Alliance-Wide for universal application)",
+    "all_alliance": "Alliance-Wide (All Partners)",
+    "filter_partner": "Filter by Partner",
+    "all_partners_filter": "All Partners",
+    "alliance_scope": "Alliance-Wide",
     "unit_times": "times",
     "step_label": "Step {{step}}"
   },
@@ -236,6 +240,7 @@ export default {
     "RINGME": "Ringme Digital Entertainment"
   },
   "game": {
+    "prize_icon": "Icon",
     "management_title": "Game Hub & Lucky Wheel Management",
     "game_list": "Game Catalog & Parameters",
     "wheel_config": "Lucky Wheel Prize & Probability Matrix",
@@ -307,8 +312,8 @@ export default {
     "cat_quiz": "Trivia Quiz (QUIZ)",
     "cat_casual": "Casual & Physics (CASUAL)",
     "ready_status": "100% Ready Webview & DB",
-    "vs_yesterday": "+18.4% vs yesterday",
-    "budget_limit_note": "Limit: 50,000 HTG (12%)",
+    "vs_yesterday": "vs yesterday",
+    "budget_limit_note": "Limit: {{limit}} HTG ({{percent}}%)",
     "lock_ledger_mechanism": "Lock & Ledger Engine",
     "integrity_status": "100% Financial Integrity",
     "management_description": "Manage dynamic prize matrices, winning odds, HTG turn pricing, and game parameters.",
@@ -602,7 +607,15 @@ export default {
     "save_failed": "Failed to save partner",
     "confirm_update_msg": "Are you sure you want to save changes for partner {{name}}?",
     "sample_delimart": "Delimart Supermarket",
-    "new_partner": "New Partner"
+    "new_partner": "New Partner",
+    "api_key_header": "API Key (X-Api-Key Header)",
+    "secret_key_sign": "Secret Key (HMAC-SHA256 Signing)",
+    "webhook_url_label": "Webhook URL",
+    "webhook_secret_label": "Webhook Secret (X-Loyalty-Signature)",
+    "ip_whitelist_label": "IP Whitelist",
+    "http_headers_sample": "HTTP Headers sample for POS / Partner backend API calls:",
+    "not_issued": "Not Issued",
+    "not_configured": "Not Configured"
   },
   "transaction": {
     "management_title": "Point Ledger & Loyalty Transaction Logs",
@@ -693,28 +706,6 @@ export default {
     "reject_reason_required": "Rejection reason is required",
     "confirm_approve": "Are you sure you want to approve this role?",
     "confirm_reject": "Are you sure you want to reject this role?"
-  },
-  "audit": {
-    "management": "System Audit Logs",
-    "table_name": "Select Table",
-    "operation": "Operation Type",
-    "username": "Username",
-    "from_date": "From Date",
-    "to_date": "To Date",
-    "filter": "Filter",
-    "missing_info": "Missing Information",
-    "select_date": "Please select a date range",
-    "invalid_range": "Invalid Date Range",
-    "from_before_to": "From Date must be before or equal to To Date",
-    "too_much": "Date range too large",
-    "max_31": "Maximum search range is 31 days",
-    "no_data": "No audit log records found",
-    "id": "ID",
-    "table": "Table Name",
-    "entity_id": "Entity ID",
-    "timestamp": "Timestamp",
-    "before": "Before Data",
-    "after": "After Data"
   },
   "profile": {
     "title": "User Profile",
@@ -1002,7 +993,14 @@ export default {
     "administrator": "Administrator",
     "system_admin": "System Administrator",
     "description": "Description",
-    "update": "Update"
+    "update": "Update",
+    "action": "Actions",
+    "loading": "Loading data...",
+    "no_order": "#",
+    "quick_select": "Quick Preset:",
+    "this_month": "This Month",
+    "last_month": "Last Month",
+    "last_7_days": "Last 7 Days"
   },
   "dashboard_title": "System Overview",
   "system_parameters": "System Parameters",
@@ -1085,6 +1083,7 @@ export default {
     "batch_confirm_desc": "All {{count}} events will be moved back to the Outbox queue for the background worker to re-deliver with HMAC-SHA256 signature."
   },
   "dead_letter": {
+    "tenant": "Tenant",
     "subtitle": "Monitor and re-trigger failed Webhook events after 5 exponential retries",
     "batch_retrigger": "Batch Re-trigger All",
     "view_payload": "View JSON Payload",
@@ -1094,31 +1093,6 @@ export default {
     "error_message": "Network Error Message",
     "failed_at": "Failed At",
     "payload_detail": "Payload Details for Event #{{id}}"
-  },
-  "common": {
-    "search": "Search",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "close": "Close",
-    "refresh": "Refresh",
-    "loading": "Loading data...",
-    "no_data": "No data available",
-    "action": "Actions",
-    "status": "Status",
-    "stt": "No.",
-    "no_order": "#",
-    "points": "Points",
-    "settled": "Settled",
-    "pending": "Pending",
-    "error": "Error",
-    "success": "Success",
-    "quick_select": "Quick Preset:",
-    "this_month": "This Month",
-    "last_month": "Last Month",
-    "last_7_days": "Last 7 Days"
   },
   "audit": {
     "management": "System Audit Logs",
@@ -1156,7 +1130,14 @@ export default {
     "max_31": "Maximum search date range is 31 days",
     "execution_time": "Execution Time",
     "status": "Status",
-    "user_agent": "Device / User Agent"
+    "user_agent": "Device / User Agent",
+    "op_all": "All Operations",
+    "op_insert": "INSERT (Create)",
+    "op_update": "UPDATE (Update)",
+    "op_delete": "DELETE (Delete)",
+    "op_settlement": "SETTLEMENT (Settlement)",
+    "op_lock": "LOCK (Security Lock)",
+    "op_unlock": "UNLOCK (Unlock)"
   }
 };
 
