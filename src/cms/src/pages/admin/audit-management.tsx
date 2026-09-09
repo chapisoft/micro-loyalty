@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Card } from 'primereact/card';
 import { useTranslation } from 'react-i18next';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
@@ -198,14 +199,38 @@ export default function AuditLogPage() {
     setShowDetailDialog(true);
   };
 
+  const idBodyTemplate = (rowData: AuditLog) => {
+    return (
+      <span className="inline-flex align-items-center font-mono font-medium text-xs text-700 bg-gray-100 border-1 border-gray-200 border-round px-2 py-1">
+        #{rowData.id}
+      </span>
+    );
+  };
+
   const operationBodyTemplate = (rowData: AuditLog) => {
     const op = String(rowData.operation || '').toUpperCase();
     let severity: 'success' | 'info' | 'warning' | 'danger' | 'secondary' = 'info';
-    if (op === 'INSERT') severity = 'success';
-    else if (op === 'UPDATE') severity = 'warning';
-    else if (op === 'DELETE') severity = 'danger';
-    else if (op === 'SETTLEMENT') severity = 'info';
-    return <Tag severity={severity} value={op} />;
+    let icon = 'pi pi-info-circle';
+    if (op === 'INSERT') {
+      severity = 'success';
+      icon = 'pi pi-plus';
+    } else if (op === 'UPDATE') {
+      severity = 'warning';
+      icon = 'pi pi-pencil';
+    } else if (op === 'DELETE') {
+      severity = 'danger';
+      icon = 'pi pi-trash';
+    } else if (op === 'SETTLEMENT') {
+      severity = 'info';
+      icon = 'pi pi-sync';
+    } else if (op === 'LOCK') {
+      severity = 'danger';
+      icon = 'pi pi-lock';
+    } else if (op === 'UNLOCK') {
+      severity = 'success';
+      icon = 'pi pi-unlock';
+    }
+    return <Tag severity={severity} value={op} icon={icon} className="text-xs px-2 py-1 font-semibold" />;
   };
 
   const tableBodyTemplate = (rowData: AuditLog) => {
@@ -261,7 +286,7 @@ export default function AuditLogPage() {
   };
 
   const renderJsonPretty = (jsonStr?: string) => {
-    if (!jsonStr) return <span className="text-400 italic font-mono">- Không có dữ liệu -</span>;
+    if (!jsonStr) return <span className="text-400 italic font-mono">- {t('no_data_available', { defaultValue: 'Không có dữ liệu' })} -</span>;
     try {
       const parsed = JSON.parse(jsonStr);
       return (
@@ -291,34 +316,28 @@ export default function AuditLogPage() {
     : logList.length;
 
   return (
-    <div className="audit-management-page">
-      <Toast ref={toast} position="top-center" />
-      <AppBreadcrumb
-        items={[
-          { label: t('nav.admin', { defaultValue: 'Quản trị hệ thống' }) },
-          { label: t('nav.audit_logs', { defaultValue: 'Nhật ký Hoạt động' }) },
-        ]}
-      />
-
-      <div className="card shadow-1 border-round surface-card p-4">
-        {/* Header Bar: Tiêu Đề + TenantSelector + Nút Xuất Excel + Nút Refresh */}
-        <div className="flex flex-wrap gap-3 align-items-center justify-content-between mb-4 pb-3 border-bottom-1 surface-border">
+    <div className="p-4 bg-gray-50 min-h-screen">
+      {/* 1. Header Toolbar */}
+      <Card className="mb-4 shadow-1 border-round-xl">
+        <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3">
           <div>
-            <h3 className="m-0 text-primary font-bold">{t('audit.management', { defaultValue: 'Nhật ký Hoạt động & Kiểm toán Hệ thống' })}</h3>
-            <span className="text-500 text-sm mt-1 block">
-              {t('audit.subtitle', { defaultValue: 'Truy vết 100% các thao tác thay đổi cấu hình, chính sách và giao dịch liên minh trên PostgreSQL 15+' })}
-            </span>
+            <h2 className="text-2xl font-bold text-800 m-0 flex align-items-center gap-2">
+              <i className="pi pi-history text-primary text-xl" />
+              {t('audit.management', { defaultValue: 'Nhật ký Hoạt động Hệ thống' })}
+            </h2>
+            <p className="text-500 text-sm m-0 mt-1">
+              {t('audit.subtitle', { defaultValue: 'Theo dõi và tra cứu 100% các thay đổi quản trị, chính sách và giao dịch nghiệp vụ trên toàn hệ thống' })}
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2 align-items-center">
+          <div className="flex align-items-center gap-2">
             <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
             <Button
-              label={t('audit.export_excel', { defaultValue: 'Xuất Excel Kiểm Toán' })}
               icon="pi pi-file-excel"
+              label={t('audit.export_excel', { defaultValue: 'Xuất Excel Nhật Ký' })}
               severity="success"
               outlined
-              size="small"
               onClick={handleExportExcel}
-              tooltip={t('audit.export_excel_tooltip', { defaultValue: 'Xuất toàn bộ dữ liệu nhật ký kiểm toán ra tệp Excel (.xlsx)' })}
+              tooltip={t('audit.export_excel_tooltip', { defaultValue: 'Xuất toàn bộ danh sách nhật ký hoạt động ra file Excel (.xlsx)' })}
             />
             <Button
               icon="pi pi-refresh"
@@ -330,89 +349,116 @@ export default function AuditLogPage() {
             />
           </div>
         </div>
+      </Card>
 
-        {/* Thanh Bộ Lọc Đa Tiêu Chí */}
-        <div className="flex flex-wrap gap-2 align-items-center mb-4">
-          <Dropdown
-            className="w-16rem"
-            placeholder={t('audit.table_name', { defaultValue: 'Chọn bảng dữ liệu' })}
-            value={query.tableName || ''}
-            options={[
-              { label: t('audit.all_tables', { defaultValue: 'Tất cả bảng nghiệp vụ' }), value: '' },
-              { label: 'Hạng Hội Viên (loyalty_tiers)', value: 'loyalty_tiers' },
-              { label: 'Chính Sách Tích/Tiêu (loyalty_acceptance_policies)', value: 'loyalty_acceptance_policies' },
-              { label: 'Cột Mốc Chiến Dịch (loyalty_campaign_milestones)', value: 'loyalty_campaign_milestones' },
-              { label: 'Kho Voucher (loyalty_vouchers)', value: 'loyalty_vouchers' },
-              { label: 'Cổng Game & Vòng Quay (loyalty_games)', value: 'loyalty_games' },
-              { label: 'Đối Tác Liên Minh (loyalty_partners)', value: 'loyalty_partners' },
-              { label: 'Bù Trừ Tài Chính (clearing_transactions)', value: 'clearing_transactions' },
-              { label: 'Thiết Bị Điểm Bán POS (partner_user_devices)', value: 'partner_user_devices' },
-              { label: 'Tham Số Hệ Thống (system_parameters)', value: 'system_parameters' },
-              { label: 'Người Dùng Quản Trị (admin_users)', value: 'admin_users' },
-            ]}
-            onChange={e => setQuery(q => ({ ...q, tableName: e.value }))}
-            showClear
-          />
+      {/* 2. Filter Bar */}
+      <Card className="mb-4 shadow-1 border-round-xl">
+        <div className="flex flex-wrap align-items-center gap-3">
+          {/* Nhóm Filter Điều Kiện */}
+          <div className="flex flex-wrap align-items-center gap-3 flex-1">
+            {/* 1. Chọn Bảng Dữ Liệu */}
+            <div className="w-16rem">
+              <Dropdown
+                className="w-full"
+                placeholder={t('audit.table_name', { defaultValue: 'Bảng dữ liệu' })}
+                value={query.tableName || ''}
+                options={[
+                  { label: t('audit.all_tables', { defaultValue: 'Tất cả bảng dữ liệu' }), value: '' },
+                  { label: 'Chính Sách Loyalty (loyalty_policies)', value: 'loyalty_policies' },
+                  { label: 'Hạng Hội Viên (loyalty_tiers)', value: 'loyalty_tiers' },
+                  { label: 'Kho Voucher (loyalty_vouchers)', value: 'loyalty_vouchers' },
+                  { label: 'Cấu Hình Game (loyalty_games)', value: 'loyalty_games' },
+                  { label: 'Giải Thưởng Game (loyalty_game_prizes)', value: 'loyalty_game_prizes' },
+                  { label: 'Đối Tác Liên Minh (loyalty_partners)', value: 'loyalty_partners' },
+                  { label: 'Người Dùng Quản Trị (admin_users)', value: 'admin_users' },
+                ]}
+                onChange={e => setQuery(q => ({ ...q, tableName: e.value }))}
+                showClear
+              />
+            </div>
 
-          <Dropdown
-            className="w-12rem"
-            placeholder={t('audit.operation', { defaultValue: 'Loại thao tác' })}
-            value={query.operation || ''}
-            options={[
-              { label: t('audit.all_operations', { defaultValue: 'Tất cả thao tác' }), value: '' },
-              { label: 'INSERT (Thêm mới)', value: 'INSERT' },
-              { label: 'UPDATE (Cập nhật)', value: 'UPDATE' },
-              { label: 'DELETE (Xóa bỏ)', value: 'DELETE' },
-              { label: 'SETTLEMENT (Quyết toán)', value: 'SETTLEMENT' },
-              { label: 'LOCK (Khóa bảo mật)', value: 'LOCK' },
-              { label: 'UNLOCK (Mở khóa)', value: 'UNLOCK' },
-            ]}
-            onChange={e => setQuery(q => ({ ...q, operation: e.value }))}
-            showClear
-          />
+            {/* 2. Chọn Loại Thao Tác */}
+            <div className="w-13rem">
+              <Dropdown
+                className="w-full"
+                placeholder={t('audit.operation', { defaultValue: 'Loại thao tác' })}
+                value={query.operation || ''}
+                options={[
+                  { label: t('audit.all_operations', { defaultValue: 'Tất cả thao tác' }), value: '' },
+                  { label: t('audit.op_insert', { defaultValue: 'INSERT (Thêm mới)' }), value: 'INSERT' },
+                  { label: t('audit.op_update', { defaultValue: 'UPDATE (Cập nhật)' }), value: 'UPDATE' },
+                  { label: t('audit.op_delete', { defaultValue: 'DELETE (Xóa bỏ)' }), value: 'DELETE' },
+                  { label: t('audit.op_settlement', { defaultValue: 'SETTLEMENT (Quyết toán)' }), value: 'SETTLEMENT' },
+                  { label: t('audit.op_lock', { defaultValue: 'LOCK (Khóa bảo mật)' }), value: 'LOCK' },
+                  { label: t('audit.op_unlock', { defaultValue: 'UNLOCK (Mở khóa)' }), value: 'UNLOCK' },
+                ]}
+                onChange={e => setQuery(q => ({ ...q, operation: e.value }))}
+                showClear
+              />
+            </div>
 
-          <InputText
-            className="w-14rem"
-            placeholder={t('audit.username', { defaultValue: 'Tên người thực hiện' })}
-            value={query.username || ''}
-            onChange={e => setQuery(q => ({ ...q, username: e.target.value }))}
-          />
+            {/* 3. Người Thực Hiện với Icon */}
+            <div className="w-14rem">
+              <span className="p-input-icon-left w-full">
+                <i className="pi pi-user text-400" />
+                <InputText
+                  className="w-full"
+                  placeholder={t('audit.username', { defaultValue: 'Tên người thực hiện' })}
+                  value={query.username || ''}
+                  onChange={e => setQuery(q => ({ ...q, username: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleFilter();
+                  }}
+                />
+              </span>
+            </div>
 
-          <Calendar
-            value={fromDate}
-            onChange={e => setFromDate(e.value ?? null)}
-            placeholder={t('audit.from_date', { defaultValue: 'Từ ngày' })}
-            dateFormat="yy-mm-dd"
-            showIcon
-            className="w-11rem"
-          />
+            {/* 4. Khối Chọn Khoảng Thời Gian (Từ ngày -> Đến ngày) */}
+            <div className="audit-date-range-capsule">
+              <Calendar
+                value={fromDate}
+                onChange={e => setFromDate(e.value ?? null)}
+                placeholder={t('audit.from_date', { defaultValue: 'Từ ngày' })}
+                dateFormat="yy-mm-dd"
+                showIcon
+                className="w-8rem audit-calendar-input"
+              />
+              <i className="pi pi-arrow-right text-400 text-xs mx-1" />
+              <Calendar
+                value={toDate}
+                onChange={e => setToDate(e.value ?? null)}
+                placeholder={t('audit.to_date', { defaultValue: 'Đến ngày' })}
+                dateFormat="yy-mm-dd"
+                showIcon
+                className="w-8rem audit-calendar-input"
+              />
+            </div>
 
-          <Calendar
-            value={toDate}
-            onChange={e => setToDate(e.value ?? null)}
-            placeholder={t('audit.to_date', { defaultValue: 'Đến ngày' })}
-            dateFormat="yy-mm-dd"
-            showIcon
-            className="w-11rem"
-          />
-
-          <Button
-            label={t('audit.filter', { defaultValue: 'Tìm kiếm' })}
-            icon="pi pi-search"
-            size="small"
-            onClick={handleFilter}
-          />
-          <Button
-            label={t('audit.reset', { defaultValue: 'Đặt lại' })}
-            icon="pi pi-filter-slash"
-            severity="secondary"
-            outlined
-            size="small"
-            onClick={handleReset}
-          />
+            {/* 5. Nút Thao Tác (Tìm kiếm & Đặt lại) */}
+            <div className="flex align-items-center gap-2">
+              <Button
+                label={t('audit.filter', { defaultValue: 'Tìm kiếm' })}
+                icon="pi pi-search"
+                className="p-button-primary px-3"
+                size="small"
+                onClick={handleFilter}
+              />
+              <Button
+                label={t('audit.reset', { defaultValue: 'Đặt lại' })}
+                icon="pi pi-refresh"
+                severity="secondary"
+                outlined
+                size="small"
+                className="px-3"
+                onClick={handleReset}
+              />
+            </div>
+          </div>
         </div>
+      </Card>
 
-        {/* Bảng Nhật Ký Kiểm Toán Chuẩn Mực */}
+      {/* Bảng Nhật Ký Kiểm Toán Chuẩn Mực */}
+      <div className="card shadow-1 border-round surface-card p-4">
         <DataTable
           value={logList}
           lazy
@@ -429,7 +475,9 @@ export default function AuditLogPage() {
           <Column
             field="id"
             header={t('audit.id', { defaultValue: 'ID' })}
-            style={{ minWidth: '70px', width: '5%' }}
+            body={idBodyTemplate}
+            style={{ minWidth: '75px', width: '6%', textAlign: 'center' }}
+            headerStyle={{ textAlign: 'center' }}
           />
           <Column
             field="timestamp"

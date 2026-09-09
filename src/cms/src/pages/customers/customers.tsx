@@ -37,9 +37,8 @@ export const Customers: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Gọi API lấy thông tin hội viên mẫu theo tenant
-      const userPhone = selectedTenant === 'TENANT_NATCASH' ? '50937123456' : '84977777777';
-      const response: any = await apiClient.get(`/loyalty/v1/profile?externalUserId=${userPhone}`, {
+      const userPhone = searchPhone.trim() || 'CUST_001';
+      const response: any = await apiClient.get(`/loyalty/v1/profile?externalUserId=${encodeURIComponent(userPhone)}`, {
         headers: { 'X-Tenant-Id': selectedTenant },
       });
       if (response && response.accountId) {
@@ -85,14 +84,14 @@ export const Customers: React.FC = () => {
   };
 
   const statusBodyTemplate = (rowData: LoyaltyMemberAccount) => {
-    if (rowData.status === CommonStatus.ACTIVE) {
+    if (rowData.status === CommonStatus.ACTIVE || rowData.status === 'ACTIVE') {
       return <Tag severity="success" value={t('customer.status_active', { defaultValue: 'Đang hoạt động' })} />;
     }
     return <Tag severity="secondary" value={t('customer.status_inactive', { defaultValue: 'Tạm khóa' })} />;
   };
 
   const dateTemplate = (rowData: LoyaltyMemberAccount) => {
-    return rowData.createdAt ? new Date(rowData.createdAt).toLocaleDateString('vi-VN') : '-';
+    return rowData.createdAt ? new Date(rowData.createdAt).toLocaleDateString() : '-';
   };
 
   const header = (

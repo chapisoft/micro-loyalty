@@ -1,5 +1,6 @@
 package com.natcash.loyalty.batch;
 
+import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.lock.DistributedLockHelper;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
@@ -18,7 +19,7 @@ import java.util.List;
 public class ClearingBatchJob {
 
     private static final Logger log = LoggerFactory.getLogger(ClearingBatchJob.class);
-    private static final String LOCK_KEY = "lock:batch:clearing-reconciliation";
+    private static final String LOCK_KEY = RedisKeys.LOCK_BATCH_CLEARING;
 
     private final ClearingTransactionRepository clearingRepository;
     private final DistributedLockHelper lockHelper;

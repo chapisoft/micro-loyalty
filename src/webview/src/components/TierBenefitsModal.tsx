@@ -115,22 +115,22 @@ export const TierBenefitsModal: React.FC<{ isOpen: boolean; onClose: () => void;
                   </div>
                   {isCurrent && (
                     <span className="text-[10px] bg-amber-500 text-slate-950 font-extrabold px-2 py-0.5 rounded-full">
-                      ✓ Hạng của bạn
+                      {t('tier.your_tier_badge', { defaultValue: '✓ Hạng của bạn' })}
                     </span>
                   )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 my-2 text-center text-[11px] bg-white/80 backdrop-blur-sm p-2 rounded-xl border border-white/60">
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Tích điểm</span>
+                    <span className="text-[10px] text-slate-500 block">{t('tier.multiplier_label', { defaultValue: 'Tích điểm' })}</span>
                     <span className="font-black text-xs text-amber-700">{tier.multiplier}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Quay miễn phí</span>
+                    <span className="text-[10px] text-slate-500 block">{t('tier.daily_spins_label', { defaultValue: 'Quay miễn phí' })}</span>
                     <span className="font-black text-xs text-indigo-700">{tier.dailySpins}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Xét hạng</span>
+                    <span className="text-[10px] text-slate-500 block">{t('tier.eval_points_label', { defaultValue: 'Xét hạng' })}</span>
                     <span className="font-bold text-[10px] text-slate-700">{tier.minPoints}</span>
                   </div>
                 </div>

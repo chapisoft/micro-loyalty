@@ -328,7 +328,6 @@ export const ClearingSettlementPage: React.FC = () => {
             <Button
               icon="pi pi-search"
               label={t('common.search', { defaultValue: 'Tra cứu' })}
-              severity="primary"
               onClick={fetchClearingData}
               loading={loading}
             />

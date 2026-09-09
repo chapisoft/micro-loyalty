@@ -195,7 +195,8 @@ const UserManagementPage: React.FC = () => {
         <DataTable
           value={(usersData?.users ?? (usersData?.data ? (Array.isArray(usersData.data) ? usersData.data : [usersData.data]) : (Array.isArray(usersData) ? (usersData as any) : []))) as IUser[]}
           selection={selectedUsers}
-          onSelectionChange={(e) => setSelectedUsers(e.value as IUser[])}
+          onSelectionChange={(e: any) => setSelectedUsers(e.value)}
+          selectionMode="checkbox"
           loading={isLoading}
           dataKey="userId"
           paginator

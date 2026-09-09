@@ -8,6 +8,7 @@ import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.TierLevel;
@@ -39,6 +40,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.natcash.loyalty.campaign.service.MilestoneService;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
+
 @Service
 public class PointLedgerService {
 
@@ -50,19 +54,22 @@ public class PointLedgerService {
     private final AccountService accountService;
     private final DistributedLockHelper lockHelper;
     private final LoyaltyStreamProducer streamProducer;
+    private final MilestoneService milestoneService;
 
     public PointLedgerService(LoyaltyPointLedgerRepository ledgerRepository,
                               LoyaltyAccountRepository accountRepository,
                               LoyaltyPartnerRepository partnerRepository,
                               AccountService accountService,
                               DistributedLockHelper lockHelper,
-                              LoyaltyStreamProducer streamProducer) {
+                              LoyaltyStreamProducer streamProducer,
+                              MilestoneService milestoneService) {
         this.ledgerRepository = ledgerRepository;
         this.accountRepository = accountRepository;
         this.partnerRepository = partnerRepository;
         this.accountService = accountService;
         this.lockHelper = lockHelper;
         this.streamProducer = streamProducer;
+        this.milestoneService = milestoneService;
     }
 
     @Transactional
@@ -78,7 +85,7 @@ public class PointLedgerService {
 
         // 2. Chiếm giữ khóa phân tán Redisson RLock
         String lockKey = RedisKeys.getBurnLockKey(tenantId, userId);
-        return lockHelper.executeWithLock(lockKey, 3000, 10000, () -> {
+        return lockHelper.executeWithLock(lockKey, LoyaltyConstants.DEFAULT_LOCK_WAIT_TIME_MS, LoyaltyConstants.DEFAULT_LOCK_LEASE_TIME_MS, () -> {
             // 3. Khóa bản ghi tài khoản (Pessimistic Write Lock)
             accountService.getOrCreateProfile(tenantId, ProfileRequest.builder().externalUserId(userId).build());
             LoyaltyAccountEntity account = accountService.getAccountForUpdate(tenantId, userId);
@@ -124,13 +131,20 @@ public class PointLedgerService {
             // 7. Bắn sự kiện lên Redis Streams
             LoyaltyStreamEvent streamEvent = LoyaltyStreamEvent.builder()
                     .tenantId(tenantId)
-                    .eventType("LOYALTY_EARN_EVENT")
+                    .eventType(LoyaltyConstants.STREAM_EVENT_LOYALTY_EARN)
                     .externalUserId(userId)
                     .amount(request.getBillAmount().longValue())
                     .transactionCode(txCode)
                     .timestamp(Instant.now())
                     .build();
             streamProducer.publishEvent(streamEvent);
+
+            // 8. Tích lũy dồn tiến độ cho các Chiến dịch Cột mốc (Milestone Tracking Engine)
+            if (milestoneService != null) {
+                milestoneService.recordProgress(tenantId, userId, resolvedPartnerId, CampaignMetric.EARN_POINTS, pointsEarned);
+                milestoneService.recordProgress(tenantId, userId, resolvedPartnerId, CampaignMetric.BILL_AMOUNT, request.getBillAmount());
+                milestoneService.recordProgress(tenantId, userId, resolvedPartnerId, CampaignMetric.TRANSACTION_COUNT, BigDecimal.ONE);
+            }
 
             log.info("[EARN-SUCCESS] tenantId={}, user={}, txCode={}, bill={}, earned={}, balance={}",
                     tenantId, userId, txCode, request.getBillAmount(), pointsEarned, currentPoints);
@@ -150,7 +164,7 @@ public class PointLedgerService {
 
     @Transactional(readOnly = true)
     public PointHistoryResponse getPointHistory(String tenantId, PointHistoryRequest request) {
-        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : "TENANT_NATCASH";
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : LoyaltyConstants.DEFAULT_TENANT_ID;
         int page = Math.max(request.getPage(), 0);
         int size = request.getSize() > 0 ? Math.min(request.getSize(), 100) : 15;
         Pageable pageable = PageRequest.of(page, size);

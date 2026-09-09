@@ -24,6 +24,12 @@ public final class LoyaltyConstants {
     public static final String STATUS_SUCCESS = "SUCCESS";
     public static final String STATUS_FAILED = "FAILED";
 
+    public static final long DEFAULT_LOCK_WAIT_TIME_MS = 3000L;
+    public static final long DEFAULT_LOCK_LEASE_TIME_MS = 10000L;
+    public static final long DEFAULT_SHORT_LOCK_LEASE_TIME_MS = 5000L;
+
+    public static final String STREAM_EVENT_LOYALTY_EARN = "LOYALTY_EARN_EVENT";
+
     public static final String HIBERNATE_TENANT_FILTER = "tenantFilter";
     public static final String HIBERNATE_TENANT_PARAM = "tenantId";
 }

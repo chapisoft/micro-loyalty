@@ -549,6 +549,19 @@ export const VoucherManagementPage: React.FC = () => {
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
           <Column
+            header={t('common.stt', { defaultValue: 'STT' })}
+            body={(_: any, options: any) => (
+              <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+            )}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+          <Column
+            header={t('common.actions', { defaultValue: 'Thao Tác' })}
+            body={actionTemplate}
+            exportable={false}
+            style={{ width: '7rem', textAlign: 'center' }}
+          />
+          <Column
             field="voucherCode"
             header={t('voucher.code', { defaultValue: 'Mã Voucher' })}
             body={(row: VoucherItem) => <span className="font-bold text-primary font-mono">{row.voucherCode}</span>}
@@ -623,7 +636,6 @@ export const VoucherManagementPage: React.FC = () => {
             style={{ minWidth: '10.5rem', textAlign: 'center' }}
           />
           <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-          <Column body={actionTemplate} exportable={false} style={{ width: '6rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 
@@ -793,7 +805,7 @@ export const VoucherManagementPage: React.FC = () => {
 
         <div className="flex justify-content-end gap-2 mt-4">
           <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
-          <Button label={t('common.save', { defaultValue: 'Lưu Voucher' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} severity="primary" />
+          <Button label={t('common.save', { defaultValue: 'Lưu Voucher' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} />
         </div>
       </Dialog>
 

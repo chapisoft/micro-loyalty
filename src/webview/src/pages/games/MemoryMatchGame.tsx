@@ -1161,7 +1161,7 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
               {/* Points Summary Box */}
               <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-2xl mt-3 space-y-1.5">
                 <div className="flex justify-between items-center text-xs text-slate-400">
-                  <span>Màn này:</span>
+                  <span>{t('games.memory.stage_score_label', { defaultValue: 'Màn này:' })}</span>
                   <span className="font-mono font-bold text-emerald-400">+{stageScoreWon} {t('nav.points_unit')}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-bold text-white border-t border-slate-800 pt-1">
@@ -1175,7 +1175,7 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
                 <div className="flex items-center gap-2 overflow-hidden">
                   <span className="text-base">{nextStagePreview.theme.icon}</span>
                   <div className="overflow-hidden">
-                    <span className="text-[9px] text-slate-400 block font-bold">Màn Tiếp Theo:</span>
+                    <span className="text-[9px] text-slate-400 block font-bold">{t('games.memory.next_stage_label', { defaultValue: 'Màn Tiếp Theo:' })}</span>
                     <span className="text-[11px] font-black text-amber-300 truncate block">
                       {t('games.memory.stage', { stage: currentStage + 1 })}: {nextStagePreview.theme.name}
                     </span>

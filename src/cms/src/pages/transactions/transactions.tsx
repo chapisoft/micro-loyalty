@@ -184,7 +184,7 @@ export const Transactions: React.FC = () => {
       case 'VOUCHER':
         return <Tag severity="info" value={t('action_type.voucher', { defaultValue: 'Đổi Voucher' })} icon="pi pi-ticket" />;
       case 'REFUND':
-        return <Tag severity="help" value={t('action_type.refund', { defaultValue: 'Hoàn Điểm' })} icon="pi pi-replay" />;
+        return <Tag severity="info" value={t('action_type.refund', { defaultValue: 'Hoàn Điểm' })} icon="pi pi-replay" />;
       case 'EXPIRE':
         return <Tag severity="secondary" value={t('action_type.expire', { defaultValue: 'Hết Hạn' })} icon="pi pi-clock" />;
       default:

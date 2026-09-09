@@ -191,7 +191,7 @@ const LoginOtpController: React.FC<LoginOtpControllerProps> = ({ visible, onHide
             <FormField
               name="otp"
               type={FieldType.NUMBER}
-              control={control}
+              control={control as any}
               label={t('login.otp')}
               required
               maxLength={6}

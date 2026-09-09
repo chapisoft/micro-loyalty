@@ -569,9 +569,21 @@ export default {
     "subtitle": "Tcheke chak jou pou louvri Kòf Trezò an Lò a",
     "day_label": "Jou {{day}}",
     "day_7_chest": "Jou 7: Kòf an Lò",
+    "day_7_reward_desc": "+200 Pwen & Bon Rabè",
     "claimed_success": "Prezans reyisi! Pwen ajoute nan kont ou.",
     "btn_checked": "OU TCHEKE POU JOU A DEJA",
     "btn_claim": "RESEVWA REKONPANS PREZANS"
+  },
+  "home": {
+    "points_expiration_warning": "{{count}} pwen ap ekspire nan dat {{date}}",
+    "points_expiration_hint": "Echanje pwen ou kounye a pou bon makèt oswa pake done anvan yo ekspire",
+    "redeem_now_btn": "Echanje kado →"
+  },
+  "tier": {
+    "your_tier_badge": "✓ Nivo pa w la",
+    "multiplier_label": "Pousantaj Pwen",
+    "daily_spins_label": "Tou Gratis Chak Jou",
+    "eval_points_label": "Pwen Kalifikasyon"
   },
   "voucher": {
     "modal_instruction": "Montre kòd sa a bay kesye a lè w ap peye",

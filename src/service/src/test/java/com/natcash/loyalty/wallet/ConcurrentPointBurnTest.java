@@ -2,7 +2,9 @@ package com.natcash.loyalty.wallet;
 
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
+import com.natcash.loyalty.campaign.service.MilestoneService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
@@ -11,6 +13,7 @@ import com.natcash.loyalty.stream.LoyaltyStreamProducer;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRedeemRequest;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRedeemResponse;
 import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
+import com.natcash.loyalty.wallet.repository.LoyaltyAcceptancePolicyRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyVoucherRedemptionRepository;
 import com.natcash.loyalty.wallet.service.RewardWalletService;
 
@@ -22,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.redisson.api.RedissonClient;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -60,10 +64,22 @@ class ConcurrentPointBurnTest {
     private ClearingTransactionRepository clearingRepository;
 
     @Mock
+    private LoyaltyAcceptancePolicyRepository policyRepository;
+
+    @Mock
+    private LoyaltyPartnerRepository partnerRepository;
+
+    @Mock
     private DistributedLockHelper lockHelper;
 
     @Mock
     private LoyaltyStreamProducer streamProducer;
+
+    @Mock
+    private MilestoneService milestoneService;
+
+    @Mock
+    private RedissonClient redissonClient;
 
     private RewardWalletService rewardWalletService;
 
@@ -78,8 +94,12 @@ class ConcurrentPointBurnTest {
                 ledgerRepository,
                 redemptionRepository,
                 clearingRepository,
+                policyRepository,
+                partnerRepository,
                 lockHelper,
-                streamProducer
+                streamProducer,
+                milestoneService,
+                redissonClient
         );
 
         // Khởi tạo tài khoản mẫu có 500 điểm

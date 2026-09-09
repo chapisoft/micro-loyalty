@@ -4,6 +4,7 @@ import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyTierRepository;
+import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.lock.DistributedLockHelper;
 import com.natcash.loyalty.outbox.service.OutboxService;
@@ -21,7 +22,7 @@ import java.util.List;
 public class TierEvaluationJob {
 
     private static final Logger log = LoggerFactory.getLogger(TierEvaluationJob.class);
-    private static final String LOCK_KEY = "lock:batch:tier-evaluation";
+    private static final String LOCK_KEY = RedisKeys.LOCK_BATCH_TIER_EVALUATION;
 
     private final LoyaltyAccountRepository accountRepository;
     private final LoyaltyTierRepository tierRepository;

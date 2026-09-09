@@ -105,8 +105,10 @@ export const DeadLetterPage: React.FC = () => {
           className="p-datatable-sm"
         >
           <Column
-            header="#"
-            body={(_data, options) => options.rowIndex + 1}
+            header={t('common.stt', { defaultValue: 'STT' })}
+            body={(_data, options) => (
+              <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+            )}
             style={{ width: '60px', textAlign: 'center' }}
           />
           <Column
@@ -138,7 +140,7 @@ export const DeadLetterPage: React.FC = () => {
             style={{ width: '120px' }}
           />
           <Column field="eventType" header={t('dead_letter.event_type', { defaultValue: 'Tên Sự Kiện' })} style={{ fontWeight: 600 }} />
-          <Column field="tenantId" header="Tenant" style={{ width: '150px' }} />
+          <Column field="tenantId" header={t('dead_letter.tenant', { defaultValue: 'Thuê bao' })} style={{ width: '150px' }} />
           <Column
             field="retryCount"
             header={t('dead_letter.retry_count', { defaultValue: 'Số lần thử' })}

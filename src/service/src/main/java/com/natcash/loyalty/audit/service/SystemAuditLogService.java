@@ -5,6 +5,7 @@ import com.natcash.loyalty.audit.controller.AuditLogController.AuditLogPageRespo
 import com.natcash.loyalty.audit.entity.SystemAuditLogEntity;
 import com.natcash.loyalty.audit.event.AuditLogEvent;
 import com.natcash.loyalty.audit.repository.SystemAuditLogRepository;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -112,7 +113,7 @@ public class SystemAuditLogService {
                     .beforeData(event.getBeforeData())
                     .afterData(event.getAfterData())
                     .description(event.getDescription())
-                    .status(event.getStatus() != null ? event.getStatus() : "SUCCESS")
+                    .status(parseCommonStatus(event.getStatus()))
                     .executionTimeMs(event.getExecutionTimeMs() != null ? event.getExecutionTimeMs() : 0L)
                     .createdAt(Instant.now())
                     .build();
@@ -155,9 +156,20 @@ public class SystemAuditLogService {
                 .beforeData(entity.getBeforeData())
                 .afterData(entity.getAfterData())
                 .description(entity.getDescription())
-                .status(entity.getStatus())
+                .status(entity.getStatus() != null ? entity.getStatus().name() : CommonStatus.SUCCESS.name())
                 .executionTimeMs(entity.getExecutionTimeMs())
                 .build();
+    }
+
+    private CommonStatus parseCommonStatus(String statusStr) {
+        if (statusStr == null || statusStr.isBlank()) {
+            return CommonStatus.SUCCESS;
+        }
+        try {
+            return CommonStatus.valueOf(statusStr.trim().toUpperCase());
+        } catch (Exception e) {
+            return CommonStatus.SUCCESS;
+        }
     }
 
     private Instant parseDateStartOfDay(String dateStr) {
