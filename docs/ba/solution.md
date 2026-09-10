@@ -106,66 +106,150 @@ flowchart LR
 
 ---
 
-## 4. MÔ HÌNH LIÊN THÔNG VÍ PHẦN THƯỞNG VÀ BÙ TRỪ TÀI CHÍNH LIÊN MINH
+## 4. MÔ HÌNH CHẤP NHẬN ĐIỂM ĐỐI TÁC, LIÊN THÔNG VÍ PHẦN THƯỞNG VÀ BÙ TRỪ TÀI CHÍNH LIÊN MINH
 
-Điểm đột phá của giải pháp là việc chuẩn hóa **Ví Phần Thưởng (Reward Wallet)**, cho phép mọi đối tác trong liên minh liên thông dữ liệu và thực hiện giao dịch khấu trừ đa phương tiện:
+Điểm đột phá của giải pháp là việc chuẩn hóa **Mô Hình Chấp Nhận Điểm Đối Tác (Partner Points Acceptance)** và **Ví Phần Thưởng Hợp Nhất (Reward Wallet)**, cho phép mọi đối tác trong liên minh liên thông dữ liệu, thực hiện giao dịch thanh toán trừ điểm đa phương thức, kiểm soát rủi ro tài chính và quyết toán bù trừ tự động:
 
 ```mermaid
 flowchart LR
-    subgraph COL_REWARD_WALLET ["CẤU THÀNH VÍ PHẦN THƯỞNG (REWARD WALLET)"]
+    subgraph S_PARTNER_ACCEPT ["PHÂN HỆ CHẤP NHẬN ĐIỂM & CHÍNH SÁCH ĐỐI TÁC"]
         direction TB
-        RW_TIER["1. Thông Tin Hạng & Đặc Quyền<br/>• Hạng Bạc, Vàng, Bạch Kim, Kim Cương<br/>• Tỷ lệ chiết khấu theo từng đối tác"]
-        RW_POINTS["2. Số Dư Điểm Thưởng Tích Lũy<br/>• Điểm khả dụng & Tỷ giá quy đổi tiền mặt<br/>• Số điểm sắp hết hạn trong kỳ"]
-        RW_VOUCHERS["3. Kho Phiếu Ưu Đãi / Mã Giảm Giá<br/>• Danh sách voucher khách hàng sở hữu<br/>• Điều kiện áp dụng theo đối tác & giỏ hàng"]
-        RW_GIFTS["4. Danh Mục Quà Tặng Đổi Tại Quầy<br/>• Hiện vật, voucher dịch vụ có thể đổi điểm"]
-        RW_TIER --> RW_POINTS
-        RW_POINTS --> RW_VOUCHERS
-        RW_VOUCHERS --> RW_GIFTS
+        PA_POLICY["1. Cấu Hình Chính Sách Riêng Biệt<br/>• Tỷ lệ phí sàn MDR (%) & Phí cố định/GD<br/>• Hạn mức tín dụng & Hạn mức tiêu điểm tối đa<br/>• Chu kỳ quyết toán: Ngày, Tuần, Tháng"]
+        PA_FLOW["2. Luồng Thanh Toán Đa Dạng<br/>• Thanh toán 2 pha (2-Step Hold / Capture)<br/>• Thanh toán trực tiếp 1 chạm (Direct QR)<br/>• Hoàn tiền giao dịch (Refund) & Đảo bút toán"]
+        PA_POLICY --> PA_FLOW
     end
 
-    subgraph COL_PARTNER_ACTION ["QUY TRÌNH LIÊN THÔNG TẠI ĐIỂM BÁN"]
+    subgraph S_CLEARING_RECON ["ĐỐI SOÁT, QUYẾT TOÁN BÙ TRỪ & WEBHOOK"]
         direction TB
-        PA_INQUIRY["1. Tra Cứu Ví Phần Thưởng<br/>• Quét mã QR của khách tại quầy thu ngân<br/>• Lấy toàn bộ Hạng, Điểm, Voucher, Quà"]
-        PA_SELECT["2. Lựa Chọn Hình Thức Khấu Trừ<br/>• Trừ điểm giảm tiền (Pay-with-Points)<br/>• Áp dụng voucher hoặc Đổi quà hiện vật"]
-        PA_REDEEM["3. Thực Thi Khấu Trừ & Bù TrỪ<br/>• Trừ điểm/Hủy voucher trong sổ cái Loyalty<br/>• Giảm trừ hóa đơn & Đối soát công nợ"]
-        PA_INQUIRY --> PA_SELECT
-        PA_SELECT --> PA_REDEEM
+        CR_ENGINE["3. Bù Trừ & Quyết Toán Đa Phương<br/>• Tính toán công nợ ròng (Net Settlement Payout)<br/>• Chốt sổ kỳ quyết toán bất biến (Settlement Batch)<br/>• Xử lý khiếu nại sai lệch đối soát (Dispute Mgmt)"]
+        CR_HOOK["4. Webhook 2 Chiều & Kiểm Toán<br/>• Inbound Webhook tiếp nhận callback đối tác<br/>• Outbound Transactional Outbox gửi thông báo<br/>• Ghi vết System Audit Log bất đồng bộ 100%"]
+        CR_ENGINE --> CR_HOOK
     end
 
-    RW_GIFTS -->|"Liên thông qua API"| PA_INQUIRY
+    PA_FLOW --> CR_ENGINE
 ```
 
-### 4.1. Khái Niệm Ví Phần Thưởng Hợp Nhất (Reward Wallet)
-Ví Phần Thưởng là tài sản số của khách hàng bao gồm 4 thành tố giá trị:
-1. **Thông tin Hạng hội viên:** Xác định cấp bậc và các đặc quyền giảm giá độc quyền tại từng đối tác.
-2. **Số dư Điểm thưởng tích lũy:** Quy đổi trực tiếp thành tiền mặt để trừ vào hóa đơn mua sắm (Ví dụ: 1 điểm = 1 HTG).
-3. **Kho Phiếu giảm giá điện tử:** Các voucher chiết khấu theo phần trăm hoặc theo số tiền cố định mà khách hàng đang nắm giữ.
-4. **Danh mục Quà tặng tại điểm bán:** Các phần quà hiện vật đối tác chấp nhận cho khách hàng dùng điểm tích lũy để đổi trực tiếp tại quầy.
+### 4.1. Cấu Hình Chính Sách Chấp Nhận Điểm Riêng Biệt Cho Từng Đối Tác (Policy Engine)
+Mỗi đối tác liên minh (Siêu thị Delimart, Cây xăng, Nhà thuốc, Chuỗi F&B, Cổng Game) khi tham gia mạng lưới đều được thiết lập một bộ quy tắc chính sách nghiệp vụ độc lập tại bảng `loyalty_acceptance_policies`:
+1. **Tỷ lệ phí chiết khấu sàn (MDR Fee Percent):** Tỷ lệ phần trăm phí sàn mà đối tác chấp nhận chia sẻ trên giá trị điểm thanh toán (Ví dụ: Siêu thị Delimart chịu phí MDR `1.5%`).
+2. **Phí xử lý cố định trên mỗi giao dịch (Fixed Fee Per Transaction):** Phí dịch vụ cố định thu trên mỗi lượt giao dịch (Ví dụ: `0.50 HTG/giao dịch`).
+3. **Hạn mức công nợ tín dụng đối tác (Credit Limit Amount):** Ngưỡng hạn mức công nợ tối đa cho phép đối tác thanh toán tiêu điểm (Ví dụ: `50.000 HTG`). Hệ thống tự động từ chối giao dịch nếu vượt hạn mức để bảo vệ thanh khoản và an toàn tài chính.
+4. **Hạn mức tiêu điểm tối đa trên từng giao dịch & theo ngày:** Giới hạn số điểm tối đa được phép trừ trong một đơn hàng (`max_burn_points_per_tx`) và trong một ngày (`daily_burn_limit`).
+5. **Chu kỳ quyết toán bù trừ (Settlement Cycle):** Cấu hình linh hoạt theo từng đối tác: Hàng ngày (`DAILY`), Hàng tuần (`WEEKLY`) hoặc Hàng tháng (`MONTHLY`).
+6. **Tỷ giá quy đổi điểm & Điều kiện hạng:** Quy định tỷ giá quy đổi (`redemption_rate`: 1 điểm = 1 HTG), danh mục nguồn điểm được phép tiêu (`allowed_point_types`) và hạng hội viên tối thiểu được áp dụng (`min_tier_level`).
 
-### 4.2. Quy Trình Liên Thông và Thực Thi Giao Dịch Tại Quầy Đối Tác
-1. **Bước 1: Tra cứu Ví Phần Thưởng tại quầy thu ngân:**  
-   Khách hàng xuất trình mã QR trên ứng dụng. Máy POS của đối tác (Siêu thị Delimart, Cây xăng Total) gọi API `POST /loyalty/v1/partners/reward-wallet/inquiry` truyền kèm mã khách hàng và tổng giá trị hóa đơn. Hệ thống Loyalty trả về toàn bộ: Hạng hội viên, số điểm tối đa được trừ, danh sách voucher hợp lệ cho hóa đơn này và danh mục quà có thể đổi.
-2. **Bước 2: Lựa chọn hình thức áp dụng:**  
-   Thu ngân và khách hàng thống nhất lựa chọn:
-   * *Phương án A:* Dùng điểm tích lũy để trừ tiền mặt trực tiếp (ví dụ: trừ 500 điểm để giảm 500 HTG).
-   * *Phương án B:* Sử dụng mã giảm giá có trong ví (ví dụ: áp voucher giảm 10%).
-   * *Phương án C:* Kết hợp cả áp voucher và trừ thêm điểm, hoặc dùng điểm đổi quà hiện vật mang về.
-3. **Bước 3: Khấu trừ và Ghi nhận bù trừ tài chính:**  
-   Máy POS gọi API `POST /loyalty/v1/partners/reward-wallet/redeem`. Hệ thống Loyalty đồng thời trừ điểm trong sổ cái, đánh dấu voucher đã sử dụng và ghi nhận giao dịch vào sổ cái bù trừ công nợ liên minh. Máy POS in hóa đơn giảm trừ tiền mặt cho khách hàng.
+---
 
-### 4.3. Bộ Máy Kiểm Soát Điều Kiện Sử Dụng
-Để đảm bảo quyền tự chủ của từng đối tác và an toàn tài chính cho liên minh, hệ thống cung cấp các bộ quy tắc điều kiện chấp nhận tiêu điểm chi tiết:
-1. **Tỷ lệ khấu trừ tối đa trên hóa đơn:** Đối tác siêu thị có thể quy định chỉ cho phép trừ tối đa 50% hoặc 100% giá trị hóa đơn bằng điểm.
-2. **Quy định tỷ giá quy đổi điểm:** Mỗi 1 điểm Loyalty tương đương với một giá trị tiền mặt quy ước (Ví dụ: 1 điểm = 1 HTG).
-3. **Phân loại nguồn điểm áp dụng:** Cho phép phân biệt điểm tích lũy tiêu chuẩn (được tiêu tự do toàn mạng lưới) và điểm khuyến mại nội bộ (chỉ được tiêu cho dịch vụ viễn thông).
-4. **Hạn mức giao dịch:** Thiết lập số điểm tối thiểu và tối đa được phép khấu trừ trong một lần thanh toán hoặc trong một ngày.
-5. **Điều kiện hạng hội viên:** Một số đối tác cao cấp có thể yêu cầu khách hàng đạt hạng Vàng hoặc Bạch Kim mới được áp dụng chương trình thanh toán bằng điểm.
+### 4.2. Các Phương Thức Thanh Toán Điểm Chuẩn Hóa
 
-### 4.4. Động Cơ Đối Soát và Thanh Toán Bù Trừ Tài Chính
-* **Ghi nhận nghĩa vụ tài chính:**
-  * Khi Đơn vị A (Viễn thông) phát hành điểm cho người dùng: Đơn vị A ghi nhận một khoản công nợ quỹ điểm.
-  * Khi người dùng mang số điểm đó sang Đơn vị B (Siêu thị) để mua hàng hoặc đổi quà: Đơn vị B phát sinh quyền thu tiền từ quỹ điểm.
-* **Thanh toán bù trừ tự động định kỳ:** Định kỳ hàng tuần hoặc hàng tháng, hệ thống tự động tổng hợp toàn bộ các giao dịch tích/tiêu điểm chéo, xuất báo cáo thanh toán bù trừ đa phương và tạo lệnh kết chuyển tiền mặt giữa tài khoản ngân hàng của các đơn vị đối tác liên quan.
+```mermaid
+flowchart LR
+    subgraph S_TWO_STEP ["PHƯƠNG ÁN 1: THANH TOÁN 2 PHA (2-STEP HOLD / CAPTURE)"]
+        direction TB
+        STEP_HOLD["1. Bước 1: Tạm Giữ Điểm (Hold)<br/>• POS gọi POST /payments/hold<br/>• Khóa điểm tạm giữ (TTL 15 phút)<br/>• Sinh mã hold_code xác thực"]
+        STEP_CONFIRM["2. Bước 2: Xác Nhận / Hủy (Capture/Cancel)<br/>• Thu ngân in bill -> POST /payments/confirm<br/>• Trừ điểm sổ cái & Ghi nhận bù trừ<br/>• Hoặc POST /payments/cancel để hoàn điểm"]
+        STEP_HOLD --> STEP_CONFIRM
+    end
+
+    subgraph S_DIRECT_REFUND ["PHƯƠNG ÁN 2: THANH TOÁN TRỰC TIẾP & HOÀN TIỀN"]
+        direction TB
+        STEP_DIRECT["3. Thanh Toán Trực Tiếp 1 Chạm (Direct QR)<br/>• POS quét mã QR ví của khách<br/>• Gọi POST /payments/direct xử lý nguyên tử<br/>• Khấu trừ điểm & In hóa đơn ngay lập tức"]
+        STEP_REFUND["4. Hoàn Tiền Giao Dịch (Refund)<br/>• Khách đổi trả hàng tại quầy<br/>• POS gọi POST /payments/refund<br/>• Hoàn điểm hội viên & Đảo bút toán bù trừ"]
+        STEP_DIRECT --> STEP_REFUND
+    end
+
+    STEP_CONFIRM --> STEP_DIRECT
+```
+
+#### 1. Thanh toán 2 pha (2-Step Hold / Capture Flow):
+Phù hợp cho các hệ thống bán lẻ POS lớn, đơn hàng giao hàng tận nơi hoặc dịch vụ cần thời gian chuẩn bị đơn:
+* **Bước 1 — Tạm giữ điểm (`POST /loyalty/v1/partners/payments/hold`):** Kiểm tra chính sách đối tác, kiểm tra số dư điểm và số dư tín dụng, khóa số điểm tương ứng vào trạng thái `HOLD` (bảng `loyalty_payment_holds`) với thời hạn 15 phút.
+* **Bước 2 — Xác nhận thanh toán (`POST /loyalty/v1/partners/payments/confirm`):** Khi quầy POS in hóa đơn thành công, gọi lệnh Capture để chuyển trạng thái sang `CONFIRMED`, khấu trừ điểm chính thức trên sổ cái `loyalty_point_ledger`, ghi nhận giao dịch bù trừ `clearing_transactions`, tính phí MDR và giá trị quyết toán ròng.
+* **Hủy tạm giữ (`POST /loyalty/v1/partners/payments/cancel`):** Nếu khách hàng hủy mua hoặc đơn hàng không thành công, giải phóng điểm bị tạm giữ về tài khoản khách hàng ngay lập tức.
+
+#### 2. Thanh toán trực tiếp 1 chạm (1-Touch Direct Payment Flow):
+Phù hợp cho quầy thanh toán nhanh tại siêu thị, cửa hàng tiện lợi và cây xăng:
+* POS quét mã QR động của khách hàng và gọi `POST /loyalty/v1/partners/payments/direct`. Hệ thống thực hiện tạm giữ và xác nhận thanh toán nguyên tử trong cùng một giao dịch, trừ điểm và trả về kết quả thành công trong dưới 100ms.
+
+#### 3. Hoàn tiền giao dịch (Refund Flow):
+* Khi phát sinh đổi trả hàng hoặc hủy hóa đơn, POS gọi `POST /loyalty/v1/partners/payments/refund`. Hệ thống hoàn trả điểm thưởng vào tài khoản khách hàng và ghi nhận một bản ghi bù trừ đảo (`REFUND`) trong sổ cái đối soát.
+
+---
+
+### 4.3. Động Cơ Đối Soát, Quyết Toán Bù Trừ Đa Phương & Xử Lý Khiếu Nại (Clearinghouse & Disputes)
+
+```mermaid
+flowchart LR
+    subgraph S_RECON_MATH ["TÍNH TOÁN CÔNG NỢ BÙ TRỪ RÒNG"]
+        direction TB
+        MATH_FORMULA["1. Công Thức Bù Trừ Ròng (Net Settlement)<br/>• Phải Thu (Fiat Receivables): Đối tác thu tiền mặt khi khách tiêu điểm<br/>• Phải Trả (Fiat Payables): Đối tác nợ quỹ khi phát hành điểm cho khách<br/>• Phí Dịch Vụ Sàn (MDR Fee): Khấu trừ theo tỷ lệ chính sách<br/>• Số Dư Quyết Toán Ròng = Phải Thu - Phải Trả - Phí Sàn MDR"]
+        MATH_REPORT["2. Báo Cáo Đối Soát Định Kỳ (Reconciliation Report)<br/>• Tổng hợp theo Tenant, Partner, Khoảng ngày<br/>• Drill-down chi tiết 100% giao dịch thành phần<br/>• Xác định trạng thái Khớp (MATCHED) / Sai lệch"]
+        MATH_FORMULA --> MATH_REPORT
+    end
+
+    subgraph S_SETTLE_DISPUTE ["CHỐT KỲ QUYẾT TOÁN & XỬ LÝ KHIẾU NẠI"]
+        direction TB
+        SETTLE_CLOSE["3. Chốt Kỳ Quyết Toán Bất Biến (Period Settle)<br/>• Chốt sổ cái kỳ hiện tại (bảng loyalty_clearinghouse_settlements)<br/>• Đánh dấu giao dịch ĐÃ QUYẾT TOÁN (SETTLED)<br/>• Tự động phát Outbound Webhook thông báo kết quả"]
+        DISPUTE_FLOW["4. Quản Lý Sai Lệch & Khiếu Nại (Dispute Mgmt)<br/>• Tiếp nhận khiếu nại sai lệch từ đối tác (DISPUTE_OPEN)<br/>• Quản trị viên điều tra & Phê duyệt giải quyết (RESOLVED)<br/>• Tự động tạo bút toán điều chỉnh số dư bù trừ"]
+        SETTLE_CLOSE --> DISPUTE_FLOW
+    end
+
+    MATH_REPORT --> SETTLE_CLOSE
+```
+
+1. **Công thức tính toán bù trừ tài chính chuẩn:**
+   * `Fiat Receivables (Khoản phải thu từ Quỹ Loyalty):` Tổng giá trị điểm mà đối tác đã chấp nhận cho khách hàng tiêu dùng để giảm trừ tiền mặt.
+   * `Fiat Payables (Khoản phải trả về Quỹ Loyalty):` Tổng giá trị điểm mà đối tác đã phát hành/tặng cho khách hàng từ các đơn hàng.
+   * `Total MDR Fee (Phí sàn dịch vụ):` Tổng phí chiết khấu sàn và phí cố định giữ lại cho đơn vị vận hành nền tảng.
+   * `Net Settlement Amount (Số tiền quyết toán ròng) = Fiat Receivables - Fiat Payables - Total MDR Fee`.
+     * Nếu `Net > 0`: Quỹ Loyalty chi trả (Payout) tiền mặt cho đối tác.
+     * Nếu `Net < 0`: Đối tác thanh toán nộp bổ sung tiền mặt vào Quỹ Loyalty.
+
+2. **Chốt kỳ quyết toán bất biến (Clearinghouse Period Settlement):**
+   * Quản trị viên kích hoạt hoặc Cronjob định kỳ chạy `POST /loyalty/v1/clearing/settle-period`. Hệ thống chốt số liệu công nợ, lưu vào bảng `loyalty_clearinghouse_settlements`, đánh dấu `clearing_status = SETTLED` và phát Webhook thông báo cho đối tác.
+
+3. **Quy trình xử lý khiếu nại sai lệch đối soát (Dispute Resolution Workflow):**
+   * Khi phát hiện sai lệch số liệu trong kỳ đối soát, đối tác gửi yêu cầu khiếu nại qua API `POST /loyalty/v1/partners/clearing/disputes`.
+   * Trạng thái khiếu nại chuyển từ `PENDING` → `UNDER_INVESTIGATION` → `RESOLVED` / `REJECTED`.
+   * Khi Quản trị viên duyệt giải quyết khiếu nại (`POST /loyalty/v1/clearing/disputes/{disputeCode}/resolve`), hệ thống tự động sinh bút toán bù trừ điều chỉnh (`DISPUTE_ADJUSTMENT`), cập nhật sổ cái và phát Webhook kết quả sang đối tác.
+
+---
+
+### 4.4. Cổng Webhook 2 Chiều & Nhật Ký Kiểm Toán Tự Động (System Audit Log)
+
+```mermaid
+flowchart LR
+    subgraph S_WEBHOOK_TWOWAY ["CỔNG WEBHOOK 2 CHIỀU (INBOUND & OUTBOUND)"]
+        direction TB
+        WH_IN["1. Inbound Webhook (Tiếp Nhận Từ Đối Tác)<br/>• Điểm cuối: POST /partners/webhooks/payment-callback<br/>• Xác thực chữ ký số HMAC-SHA256 & Timestamp<br/>• Xử lý Idempotency qua idempotency_key trong Redis"]
+        WH_OUT["2. Outbound Webhook (Mẫu Hộp Thư Đi Outbox)<br/>• Lưu sự kiện vào bảng webhook_outbox trong cùng Transaction<br/>• Quét gửi định kỳ với cơ chế Exponential Backoff (5 lần)<br/>• Thông báo chốt kỳ bù trừ & Kết quả xử lý khiếu nại"]
+        WH_IN --> WH_OUT
+    end
+
+    subgraph S_AUDIT_LOG ["NHẬT KÝ KIỂM TOÁN HỆ THỐNG (SYSTEM AUDIT LOG)"]
+        direction TB
+        AUDIT_CAPTURE["3. Ghi Vết Bất Biến 100% Thao Tác (Audit Event)<br/>• Bắt trọn vẹn dữ liệu trước (Before) & sau (After) dạng JSONB<br/>• Lưu vết Người thực hiện, Quyền hạn, IP, Module, Thời gian"]
+        AUDIT_ASYNC["4. Xử Lý Bất Đồng Bộ Hiệu Năng Cao (@Async)<br/>• Đẩy sự kiện qua Spring ApplicationEventPublisher<br/>• Worker lưu xuống bảng system_audit_logs không chặn luồng chính<br/>• Phân trang tra cứu, lọc đa chiều trên CMS Quản trị"]
+        AUDIT_CAPTURE --> AUDIT_ASYNC
+    end
+
+    WH_OUT --> AUDIT_CAPTURE
+```
+
+1. **Inbound Webhook (Tiếp nhận thông báo thanh toán/hạch toán từ đối tác):**
+   * Điểm cuối `POST /loyalty/v1/partners/webhooks/payment-callback`.
+   * Kiểm tra chữ ký số bảo mật `X-Loyalty-Signature` sử dụng mã bí mật `webhook_secret`.
+   * Kiểm soát tính lũy kế (Idempotency) qua khóa `idempotency_key` lưu trên Redis TTL 24 giờ để đảm bảo không bị xử lý trùng lặp khi đối tác bắn lại bản tin.
+   * Phản hồi `200 OK` tức thì và đẩy tiến trình hạch toán sang hàng đợi xử lý bất đồng bộ.
+
+2. **Outbound Webhook (Bắn thông báo sang hệ thống đối tác):**
+   * Sử dụng **Mẫu Hộp thư đi (Transactional Outbox Pattern)**: Ghi bản tin vào bảng `webhook_outbox` trong cùng Database Transaction với thay đổi nghiệp vụ để đảm bảo độ tin cậy tuyệt đối.
+   * Tiến trình nền quét và bắn Webhook với cơ chế thử lại giãn cách lũy tiến theo cấp số nhân (1m → 5m → 30m → 2h → 6h). Sau 5 lần thất bại, sự kiện được chuyển vào `webhook_dead_letter` để giám sát trên CMS.
+
+3. **Phân hệ Nhật Ký Kiểm Toán Tự Động (System Audit Log):**
+   * Tự động ghi vết bất biến mọi thay đổi trọng yếu: Cập nhật chính sách đối tác, thay đổi tỷ lệ MDR, điều chỉnh hạn mức tín dụng, thăng/hạ hạng hội viên, chốt quyết toán bù trừ và duyệt giải quyết khiếu nại.
+   * Lưu trữ trọn vẹn trạng thái trước (`before_data`) và sau (`after_data`) định dạng `JSONB` trong bảng `system_audit_logs` trên PostgreSQL 15+.
+   * Thực thi bất đồng bộ 100% qua cấu hình `@Async` Thread Pool riêng (`AuditAsyncConfig`), triệt tiêu hoàn toàn độ trễ và không ảnh hưởng đến luồng giao dịch nghiệp vụ.
 
 ---
 

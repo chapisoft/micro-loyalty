@@ -352,11 +352,15 @@ erDiagram
     TENANTS ||--o{ LOYALTY_CAMPAIGN_MILESTONES : "thiet_lap_cot_moc"
     TENANTS ||--o{ LOYALTY_ENGAGEMENT_TRIGGERS : "cau_hinh_goi_nhac"
     TENANTS ||--o{ WEBHOOK_OUTBOX : "quan_ly_hop_thu_di"
-    LOYALTY_PARTNERS ||--o{ LOYALTY_ACCEPTANCE_POLICIES : "thiet_lap_dieu_kien"
+    TENANTS ||--o{ SYSTEM_AUDIT_LOGS : "ghi_vet_kiem_toan"
+    LOYALTY_PARTNERS ||--o{ LOYALTY_ACCEPTANCE_POLICIES : "thiet_lap_chinh_sach"
+    LOYALTY_PARTNERS ||--o{ LOYALTY_PAYMENT_HOLDS : "tam_giu_thanh_toan"
     LOYALTY_PARTNERS ||--o{ LOYALTY_CROSS_PARTNER_TRANSACTIONS : "phat_sinh_giao_dich"
     LOYALTY_PARTNERS ||--o{ LOYALTY_CLEARINGHOUSE_SETTLEMENTS : "quyet_toan_bu_tru"
+    LOYALTY_PARTNERS ||--o{ LOYALTY_CLEARING_DISPUTES : "kieu_nai_sai_lech"
     LOYALTY_TIERS ||--o{ LOYALTY_ACCOUNTS : "phan_hang"
     LOYALTY_ACCOUNTS ||--o{ LOYALTY_POINT_LEDGER : "ghi_so_diem"
+    LOYALTY_ACCOUNTS ||--o{ LOYALTY_PAYMENT_HOLDS : "so_huu_khoan_giu"
     LOYALTY_ACCOUNTS ||--o{ LOYALTY_CROSS_PARTNER_TRANSACTIONS : "thuc_hien_tieu_diem"
     LOYALTY_ACCOUNTS ||--o{ LOYALTY_USER_MILESTONES : "theo_doi_tien_do"
     LOYALTY_CAMPAIGN_MILESTONES ||--o{ LOYALTY_USER_MILESTONES : "dinh_nghia"
@@ -377,25 +381,28 @@ erDiagram
 
 ### 7.2. Bảng Mô Tả Cấu Trúc Dữ Liệu Chi Tiết
 
-#### 1. Nhóm Bảng Cột Mốc Chiến Dịch, Gợi Nhắc & Hộp Thư Đi Webhook
-* **`LOYALTY_CAMPAIGN_MILESTONES`**: Quản lý các chặng cột mốc gắn với sự kiện/khuyến mại/game (`id`, `tenant_id`, `campaign_code`, `campaign_name`, `milestone_step`, `target_metric`, `target_value`, `reward_points`, `reward_voucher_id`, `reward_game_turns`, `start_date`, `end_date`, `status`).
+#### 1. Nhóm Bảng Cột Mốc Chiến Dịch, Gợi Nhắc & Hộp Thư Đi Webhook & Kiểm Toán
+* **`LOYALTY_CAMPAIGN_MILESTONES`**: Quản lý các chặng cột mốc gắn với sự kiện/khuyến mại/game (`id`, `tenant_id`, `partner_id`, `campaign_code`, `campaign_name`, `milestone_step`, `target_metric`, `target_value`, `reward_points`, `reward_voucher_id`, `reward_game_turns`, `start_date`, `end_date`, `status`).
 * **`LOYALTY_USER_MILESTONES`**: Lưu vết tiến độ hoàn thành cột mốc của từng người dùng (`id`, `user_account_id`, `milestone_id`, `current_progress`, `status`, `completed_at`).
 * **`LOYALTY_ENGAGEMENT_TRIGGERS`**: Cấu hình các kịch bản gợi nhắc thông minh theo ngữ cảnh (`id`, `tenant_id`, `trigger_type`, `threshold_percentage`, `days_in_advance`, `message_template`, `status`).
 * **`LOYALTY_COMMUNICATION_LOGS`**: Lưu vết thông điệp và kiểm soát hạn mức tần suất gửi tin chống làm phiền (`id`, `tenant_id`, `user_account_id`, `channel`, `sent_date`, `trigger_type`, `status`).
 * **`WEBHOOK_OUTBOX`**: Lưu trữ các sự kiện cần gửi sang Hệ thống ví lõi và Đối tác (`id`, `tenant_id`, `event_type`, `payload` định dạng JSONB, `target_url`, `retry_count`, `next_retry_at`, `status`, `created_at`).
 * **`WEBHOOK_DEAD_LETTER`**: Lưu trữ các sự kiện Webhook gửi thất bại sau 5 lần thử (`id`, `tenant_id`, `event_type`, `payload` định dạng JSONB, `error_message`, `failed_at`).
+* **`SYSTEM_AUDIT_LOGS`**: Nhật ký kiểm toán tự động ghi vết 100% thay đổi cấu hình, chính sách, thăng hạng, bù trừ và xử lý khiếu nại (`id`, `tenant_id`, `module`, `table_name`, `operation`, `entity_id`, `actor_username`, `actor_role`, `client_ip`, `before_data` JSONB, `after_data` JSONB, `description`, `status`, `execution_time_ms`, `created_at`).
 
-#### 2. Nhóm Bảng Quản Trị Thuê Bao, Đối Tác Liên Minh & Liên Thông Ví Phần Thưởng
+#### 2. Nhóm Bảng Quản Trị Thuê Bao, Đối Tác, Thanh Toán Điểm & Quyết Toán Bù Trừ
 * **`TENANTS`**: Quản trị thông tin các đơn vị thuê bao (`id`, `code`, `name`, `api_key`, `secret_key`, `status`).
 * **`LOYALTY_PARTNERS`**: Quản lý danh mục đối tác liên minh (`id`, `tenant_id`, `partner_code`, `partner_name`, `partner_type`, `api_key`, `secret_key`, `webhook_secret`, `ip_whitelist`, `status`).
-* **`LOYALTY_ACCEPTANCE_POLICIES`**: Thiết lập điều kiện chấp nhận tiêu điểm và voucher tại điểm bán (`id`, `partner_id`, `point_exchange_rate`, `max_burn_percentage`, `min_burn_points`, `max_burn_points_per_day`, `min_tier_id`, `allowed_point_types`, `status`).
-* **`LOYALTY_CROSS_PARTNER_TRANSACTIONS`**: Lưu vết các giao dịch tiêu điểm chéo, áp dụng voucher và đổi quà giữa Đơn vị phát hành và Đơn vị bán lẻ (`id`, `tenant_id`, `transaction_code`, `external_user_id`, `issuer_partner_id`, `redeemer_partner_id`, `points_burned`, `voucher_id_used`, `bill_discount_amount`, `gift_item_id`, `created_at`).
-* **`LOYALTY_CLEARINGHOUSE_SETTLEMENTS`**: Báo cáo quyết toán thanh toán bù trừ tài chính đa phương định kỳ (`id`, `tenant_id`, `partner_id`, `period`, `total_points_issued`, `total_points_redeemed`, `net_settlement_amount`, `status`).
+* **`LOYALTY_ACCEPTANCE_POLICIES`**: Thiết lập chính sách chấp nhận tiêu điểm và phí sàn của đối tác (`id`, `tenant_id`, `partner_id`, `point_exchange_rate`, `redemption_rate`, `max_burn_percentage`, `min_burn_points`, `max_burn_points_per_tx`, `daily_burn_limit`, `credit_limit_amount`, `mdr_fee_percent`, `fixed_fee_per_tx`, `settlement_cycle`, `min_tier_level`, `allowed_point_types`, `status`).
+* **`LOYALTY_PAYMENT_HOLDS`**: Quản lý các giao dịch tạm giữ điểm theo phương thức 2 pha (`id`, `tenant_id`, `partner_id`, `user_id`, `hold_code`, `bill_amount`, `points_to_burn`, `discount_amount`, `final_amount_to_pay`, `status` [HOLD, CONFIRMED, CANCELLED, EXPIRED], `expires_at`, `created_at`).
+* **`LOYALTY_CROSS_PARTNER_TRANSACTIONS` (hay `CLEARING_TRANSACTIONS`)**: Lưu vết các giao dịch tiêu điểm chéo, áp dụng voucher và đổi quà giữa Đơn vị phát hành và Đơn vị bán lẻ (`id`, `tenant_id`, `transaction_code`, `external_user_id`, `issuer_partner_id`, `redeemer_partner_id`, `points_burned`, `voucher_id_used`, `bill_discount_amount`, `gift_item_id`, `clearing_status` [PENDING, SETTLED], `batch_code`, `created_at`).
+* **`LOYALTY_CLEARINGHOUSE_SETTLEMENTS`**: Báo cáo quyết toán chốt kỳ bất biến (`id`, `tenant_id`, `partner_id`, `period_name`, `batch_code`, `total_points_issued`, `total_points_redeemed`, `total_fiat_receivables`, `total_fiat_payables`, `total_mdr_fee`, `net_settlement_amount`, `status` [PENDING, SETTLED, DISPUTED], `settled_at`, `created_at`).
+* **`LOYALTY_CLEARING_DISPUTES`**: Quản lý khiếu nại sai lệch số liệu đối soát (`id`, `tenant_id`, `partner_id`, `dispute_code`, `batch_code`, `disputed_amount`, `reason`, `status` [PENDING, UNDER_INVESTIGATION, RESOLVED, REJECTED], `resolution_notes`, `resolved_by`, `resolved_at`, `created_at`).
 
 #### 3. Nhóm Bảng Khách Hàng Thân Thiết, Sổ Cái Điểm & Kho Quà
 * **`LOYALTY_TIERS`**: Định nghĩa 4 hạng hội viên Bạc, Vàng, Bạch Kim, Kim Cương (`id`, `tenant_id`, `code`, `name`, `min_points`, `point_multiplier`, `free_daily_turns`).
 * **`LOYALTY_ACCOUNTS`**: Hồ sơ hội viên và số dư điểm hợp nhất (`id`, `tenant_id`, `external_user_id`, `tier_id`, `current_points`, `tier_points`, `tier_updated_at`).
-* **`LOYALTY_POINT_LEDGER`**: Sổ cái ghi nhận bất biến mọi giao dịch cộng/trừ điểm thưởng (`id`, `tenant_id`, `user_account_id`, `point_change`, `change_type`, `reference_code`, `expired_at`, `created_at`).
+* **`LOYALTY_POINT_LEDGER`**: Sổ cái ghi nhận bất biến mọi giao dịch cộng/trừ điểm thưởng (`id`, `tenant_id`, `user_account_id`, `partner_id`, `point_change`, `change_type`, `reference_code`, `expired_at`, `created_at`).
 * **`LOYALTY_VOUCHERS` & `LOYALTY_VOUCHER_REDEMPTIONS`**: Quản trị kho quà phiếu ưu đãi điện tử và lịch sử sở hữu/đổi phiếu của người dùng.
 
 #### 4. Nhóm Bảng Cổng Game, Trò Chơi & 7 Nhóm Cấu Hình CMS
@@ -413,41 +420,55 @@ erDiagram
 ## 8. ĐẶC TẢ GIAO DIỆN LẬP TRÌNH VÀ BÙ TRỪ TÀI CHÍNH LIÊN MINH
 
 Mọi yêu cầu gọi đến `loyalty-service` đều phải truyền kèm các tiêu đề chuẩn hóa:
-* `X-Tenant-Id`: Mã định danh thuê bao gọi đến (Ví dụ: `NATCASH`).
+* `X-Tenant-Id`: Mã định danh thuê bao gọi đến (Ví dụ: `TENANT_DELIMART`, `TENANT_NATCASH`).
+* `X-Partner-Code`: Mã đối tác tích hợp (Ví dụ: `DELIMART_RETAIL`, `NATCASH_WALLET`).
 * `X-Api-Key`: Khóa định danh bảo mật của thuê bao hoặc đối tác liên kết.
 * `X-Signature`: Chữ ký số HMAC-SHA256 để bảo vệ tính toàn vẹn.
 * `X-Timestamp`: Thời gian gửi Unix Timestamp (sai lệch tối đa ±300 giây).
 * `X-User-Id`: Mã định danh người dùng từ hệ thống gọi đến.
 
-### 8.1. Nhóm Giao Diện Liên Thông Ví Phần Thưởng Cho Đối Tác Bán Lẻ
-1. **`POST /loyalty/v1/partners/reward-wallet/inquiry`**: Máy POS quầy thu ngân của đối tác gọi để tra cứu toàn diện Ví Phần Thưởng của khách (Thông tin Hạng hội viên, Số dư điểm khả dụng, Tỷ lệ khấu trừ tối đa, Danh sách mã giảm giá hợp lệ cho hóa đơn hiện tại, Danh mục quà tặng đổi tại quầy).
-2. **`POST /loyalty/v1/partners/reward-wallet/redeem`**: Thực thi trừ điểm thưởng, áp dụng mã giảm giá voucher hoặc ghi nhận đổi quà tặng trong cùng một giao dịch tổng hợp, giảm trừ trực tiếp tiền mặt trên hóa đơn mua sắm.
-3. **`POST /loyalty/v1/partners/reward-wallet/refund`**: Hoàn lại điểm, mở khóa lại mã voucher hoặc hoàn quà cho khách hàng khi phát sinh trả hàng hoặc hủy hóa đơn tại quầy.
+### 8.1. Nhóm Giao Diện Thanh Toán Chấp Nhận Điểm Đối Tác (B2B Partner Payments)
+1. **`POST /loyalty/v1/partners/payments/hold`**: Tạm giữ số điểm của khách hàng, khóa điểm khả dụng trong 15 phút và sinh mã `hold_code`.
+2. **`POST /loyalty/v1/partners/payments/confirm`**: Xác nhận thanh toán chính thức (Capture), trừ điểm sổ cái vĩnh viễn, tính phí sàn MDR và ghi nhận giao dịch vào sổ cái bù trừ.
+3. **`POST /loyalty/v1/partners/payments/cancel`**: Hủy giao dịch tạm giữ, hoàn trả điểm bị khóa về tài khoản khách hàng ngay lập tức.
+4. **`POST /loyalty/v1/partners/payments/direct`**: Thanh toán trực tiếp 1 chạm qua mã QR động (Thực thi nguyên tử cả Tạm giữ và Xác nhận trong 1 bước duy nhất).
+5. **`POST /loyalty/v1/partners/payments/refund`**: Hoàn tiền/hoàn điểm giao dịch khi khách hàng đổi trả hàng tại quầy và ghi nhận bút toán đảo bù trừ.
 
-### 8.2. Nhóm Giao Diện Xác Thực Phiên Webview (SSO)
-1. **`POST /loyalty/v1/sso/generate-session-ticket`**: Máy chủ đối tác gọi để sinh mã vé phiên một lần (`session_ticket` TTL 60s) cho người dùng.
-2. **`POST /loyalty/v1/sso/exchange-token`**: Trang Webview nhúng tự động gọi để đổi vé lấy mã truy cập ngắn hạn (`Access Token JWT`).
+### 8.2. Nhóm Giao Diện Đối Soát, Quyết Toán Bù Trừ & Khiếu Nại (Partner Clearing & Disputes)
+1. **`GET /loyalty/v1/partners/clearing/reconciliation-report`**: Đối tác gọi để tra cứu báo cáo đối soát công nợ bù trừ tổng hợp trong khoảng thời gian chỉ định (`fiatPayables`, `fiatReceivables`, `totalMdrFee`, `netSettlementAmount`, `reconciliationStatus`).
+2. **`GET /loyalty/v1/partners/clearing/transactions`**: Drill-down danh sách chi tiết 100% các giao dịch thành phần phát sinh trong kỳ của đối tác.
+3. **`POST /loyalty/v1/partners/clearing/disputes`**: Đối tác gửi yêu cầu khiếu nại sai lệch số liệu đối soát kèm mã kỳ quyết toán và lý do.
+4. **`GET /loyalty/v1/clearing/batches`**: CMS Quản trị tra cứu danh sách các kỳ quyết toán bù trừ đa phương.
+5. **`GET /loyalty/v1/clearing/batches/{batchCode}/transactions`**: CMS Quản trị tra cứu toàn bộ giao dịch thành phần thuộc một kỳ quyết toán.
+6. **`POST /loyalty/v1/clearing/settle-period`**: Khởi tạo lệnh chốt kỳ quyết toán bù trừ bất biến, cập nhật trạng thái `SETTLED` và phát Webhook Outbox.
+7. **`GET /loyalty/v1/clearing/disputes`**: CMS Quản trị lấy danh sách khiếu nại sai lệch cần xử lý.
+8. **`POST /loyalty/v1/clearing/disputes/{disputeCode}/resolve`**: Phê duyệt hoặc từ chối giải quyết khiếu nại, tự động tạo bút toán điều chỉnh.
 
-### 8.3. Nhóm Giao Diện Đồng Bộ Hồ Sơ & Webhook
-1. **`POST /loyalty/v1/sync/user-profile`**: Hệ thống ví gọi để đồng bộ thông tin tài khoản người dùng, số điện thoại và ngày sinh nhật sang `loyalty-service`.
-2. **`POST /wallet/v1/webhooks/loyalty-tier-update`**: `loyalty-service` bắn Webhook sang hệ thống ví khi người dùng được nâng hạng hoặc hạ hạng hội viên.
+### 8.3. Nhóm Giao Diện Tiếp Nhận Webhook & Nhật Ký Kiểm Toán (Webhooks & Audit Logs)
+1. **`POST /loyalty/v1/partners/webhooks/payment-callback`**: Inbound Webhook tiếp nhận thông báo trạng thái thanh toán từ đối tác, xác thực chữ ký HMAC-SHA256 và xử lý Idempotency qua `idempotency_key`.
+2. **`GET /loyalty/v1/admin/audit-logs`**: Tra cứu phân trang, lọc đa chiều lịch sử kiểm toán hệ thống (`system_audit_logs`).
 
-### 8.4. Nhóm Giao Diện Cột Mốc Chiến Dịch & Gợi Nhắc Thông Minh
-1. **`POST /loyalty/v1/milestones/active-campaigns`**: Lấy danh sách các chiến dịch khuyến mại/sự kiện đang diễn ra kèm tiến độ vượt từng chặng cột mốc của người dùng.
+### 8.4. Nhóm Giao Diện Liên Thông Ví Phần Thưởng Cho Điểm Bán POS
+1. **`POST /loyalty/v1/partners/reward-wallet/inquiry`**: Máy POS tra cứu toàn diện Ví Phần Thưởng của khách hàng (Hạng, Điểm khả dụng, Hạn mức trừ tối đa, Danh sách voucher hợp lệ, Quà tặng đổi tại quầy).
+2. **`POST /loyalty/v1/partners/reward-wallet/redeem`**: Thực thi trừ điểm, áp dụng voucher hoặc đổi quà tại quầy.
+3. **`POST /loyalty/v1/partners/reward-wallet/refund`**: Hoàn trả điểm, mở khóa lại voucher khi hủy hóa đơn.
+
+### 8.5. Nhóm Giao Diện Xác Thực Phiên Webview (SSO) & Đồng Bộ
+1. **`POST /loyalty/v1/sso/generate-session-ticket`**: Sinh mã vé phiên một lần (`session_ticket` TTL 60s) cho người dùng.
+2. **`POST /loyalty/v1/sso/exchange-token`**: Trang Webview nhúng đổi vé lấy mã truy cập ngắn hạn (`Access Token JWT`).
+3. **`POST /loyalty/v1/sync/user-profile`**: Hệ thống ví đồng bộ thông tin tài khoản người dùng và ngày sinh nhật sang Loyalty.
+4. **`POST /wallet/v1/webhooks/loyalty-tier-update`**: `loyalty-service` bắn Webhook Outbox sang ví khi hội viên nâng hạng/hạ hạng.
+
+### 8.6. Nhóm Giao Diện Cột Mốc Chiến Dịch, Gợi Nhắc & Khách Hàng Thân Thiết
+1. **`POST /loyalty/v1/milestones/active-campaigns`**: Lấy danh sách chiến dịch khuyến mại/sự kiện kèm tiến độ vượt từng chặng cột mốc.
 2. **`POST /loyalty/v1/milestones/claim-reward`**: Nhận phần thưởng sau khi hoàn thành một chặng cột mốc.
-3. **`POST /loyalty/v1/engagement/in-app-nudges`**: Lấy danh sách các thẻ gợi nhắc ngữ cảnh hiển thị tinh tế trên giao diện ứng dụng.
-
-### 8.5. Nhóm Giao Diện Thanh Toán Bù Trừ Liên Minh
-1. **`POST /loyalty/v1/clearinghouse/reconciliation-report`**: Báo cáo tổng hợp số điểm phát hành và số điểm chấp nhận tiêu dùng giữa các bên liên minh.
-2. **`POST /loyalty/v1/clearinghouse/settle-period`**: Khởi tạo lệnh quyết toán bù trừ công nợ ròng giữa các tài khoản đối tác trong kỳ.
-
-### 8.6. Nhóm Giao Diện Khách Hàng Thân Thiết Chuẩn
-1. **`POST /loyalty/v1/profile`**: Lấy thông tin tài khoản hội viên, hạng hiện tại, điểm tích lũy khả dụng và điểm xét hạng năm.
-2. **`POST /loyalty/v1/earn`**: Hệ thống thanh toán/viễn thông gọi để tích lũy điểm tự động sau khi giao dịch thành công.
-3. **`POST /loyalty/v1/point-history`**: Tra cứu lịch sử cộng, trừ điểm thưởng theo sổ cái phân trang.
-4. **`POST /loyalty/v1/vouchers/catalog`**: Lấy danh sách phiếu giảm giá trong kho quà cho phép đổi điểm.
-5. **`POST /loyalty/v1/vouchers/redeem`**: Thực hiện đổi điểm thưởng lấy mã ưu đãi phiếu giảm giá.
-6. **`POST /loyalty/v1/cashback/redeem`**: Thực hiện đổi điểm thưởng lấy tiền mặt hoàn thẳng vào số dư ví Natcash.
+3. **`POST /loyalty/v1/engagement/in-app-nudges`**: Lấy danh sách các thẻ gợi nhắc ngữ cảnh hiển thị trên ứng dụng.
+4. **`POST /loyalty/v1/profile`**: Lấy thông tin tài khoản hội viên, hạng hiện tại, điểm khả dụng và điểm xét hạng.
+5. **`POST /loyalty/v1/earn`**: Tích lũy điểm tự động sau khi giao dịch ví/nạp cước thành công.
+6. **`POST /loyalty/v1/point-history`**: Tra cứu sổ cái lịch sử biến động điểm thưởng.
+7. **`POST /loyalty/v1/vouchers/catalog`**: Danh mục phiếu giảm giá trong kho quà.
+8. **`POST /loyalty/v1/vouchers/redeem`**: Đổi điểm thưởng lấy mã voucher ưu đãi.
+9. **`POST /loyalty/v1/cashback/redeem`**: Đổi điểm thưởng lấy tiền mặt hoàn thẳng vào số dư ví Natcash.
 
 ### 8.7. Nhóm Giao Diện Cổng Game, Cấu Hình CMS và Mua Lượt Chơi
 1. **`POST /gamehub/v1/games/list`**: Truy vấn danh sách game theo thể loại, từ khóa tìm kiếm và trạng thái nổi bật.
@@ -604,6 +625,78 @@ sequenceDiagram
     Svc-->>GW: Trả về mã ô trúng, số lượt còn lại và giá trị thưởng
     GW-->>App: Phản hồi kết quả
     App->>App: Dừng đĩa quay chính xác tại ô trúng thưởng và hiển thị kết quả
+```
+
+---
+
+### 9.6. Tiến Trình Thanh Toán 2 Pha (2-Step Hold / Capture) Điểm Thưởng Đối Tác
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Khách Hàng
+    participant POS as POS Siêu Thị (Delimart)
+    participant Loyalty as Dịch Vụ Loyalty (loyalty-service)
+    participant Redis as Redis Khóa Phân Tán
+    participant DB as PostgreSQL (loyalty_db)
+
+    User->>POS: Xuất trình mã QR thanh toán hóa đơn 600 HTG
+    POS->>Loyalty: POST /loyalty/v1/partners/payments/hold (User ID, Bill 600 HTG, Muốn trừ 200 điểm)
+    Loyalty->>Loyalty: Kiểm tra chính sách: MDR 1.5%, Hạn mức tín dụng, Max burn 500 điểm -> HỢP LỆ
+    Loyalty->>Redis: Chiếm khóa phân tán lock:burn:tenant:user_id (TTL 3s)
+    Loyalty->>DB: Trừ 200 điểm khả dụng -> Chuyển vào điểm tạm giữ
+    Loyalty->>DB: Tạo bản ghi LOYALTY_PAYMENT_HOLDS (hold_code, status=HOLD, TTL 15m)
+    Loyalty-->>POS: HTTP 200 OK (hold_code=HOLD_987654, discount=200 HTG, final_pay=400 HTG)
+    POS->>User: Thu tiền mặt / ví phần còn lại 400 HTG & In hóa đơn
+    alt Khách thanh toán thành công
+        POS->>Loyalty: POST /loyalty/v1/partners/payments/confirm (hold_code=HOLD_987654)
+        Loyalty->>DB: Cập nhật LOYALTY_PAYMENT_HOLDS sang CONFIRMED
+        Loyalty->>DB: Ghi sổ LOYALTY_POINT_LEDGER (BURN_PURCHASE 200 điểm)
+        Loyalty->>DB: Ghi nhận giao dịch bù trừ CLEARING_TRANSACTIONS (MDR Fee: 3.00 HTG, Net Payout: 197.00 HTG)
+        Loyalty->>DB: Ghi vết SYSTEM_AUDIT_LOGS bất đồng bộ
+        Loyalty-->>POS: HTTP 200 OK (Xác nhận Capture thành công)
+    else Khách hủy giao dịch / Lỗi đơn hàng
+        POS->>Loyalty: POST /loyalty/v1/partners/payments/cancel (hold_code=HOLD_987654)
+        Loyalty->>DB: Cập nhật status sang CANCELLED & Hoàn 200 điểm tạm giữ về điểm khả dụng
+        Loyalty-->>POS: HTTP 200 OK (Đã giải phóng điểm)
+    end
+```
+
+---
+
+### 9.7. Tiến Trình Quyết Toán Bù Trừ Đa Phương & Xử Lý Khiếu Nại Sai Lệch Đối Soát
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Quản Trị Viên / Cronjob
+    participant CMS as Cổng Quản Trị (loyalty-cms)
+    participant Loyalty as Dịch Vụ Loyalty (loyalty-service)
+    participant DB as PostgreSQL (loyalty_db)
+    participant Outbox as Hộp Thư Đi (WEBHOOK_OUTBOX)
+    participant Partner as Máy Chủ Đối Tác (B2B Partner)
+
+    Admin->>CMS: Chọn kỳ quyết toán 2026-09 & Bấm "Kết Chuyển Kỳ Quyết Toán"
+    CMS->>Loyalty: POST /loyalty/v1/clearing/settle-period (period_name=2026-09)
+    Loyalty->>DB: Khóa toàn bộ CLEARING_TRANSACTIONS trong kỳ (clearing_status=PENDING)
+    Loyalty->>Loyalty: Tính toán: Receivables 500 HTG, Payables 0 HTG, MDR Fee 7.50 HTG -> Net Payout = 492.50 HTG
+    Loyalty->>DB: Tạo bản ghi bất biến LOYALTY_CLEARINGHOUSE_SETTLEMENTS (batch_code, status=SETTLED)
+    Loyalty->>DB: Cập nhật giao dịch thành phần sang clearing_status=SETTLED
+    Loyalty->>Outbox: Lưu sự kiện SETTLEMENT_COMPLETED vào WEBHOOK_OUTBOX
+    Loyalty-->>CMS: Phản hồi kết chuyển kỳ thành công
+    Outbox->>Partner: Bắn Webhook thông báo kết quả quyết toán kỳ & mã batch
+    
+    opt Đối tác phát hiện sai lệch số liệu
+        Partner->>Loyalty: POST /loyalty/v1/partners/clearing/disputes (batch_code, disputed_amount, reason)
+        Loyalty->>DB: Tạo bản ghi LOYALTY_CLEARING_DISPUTES (status=PENDING)
+        Loyalty-->>Partner: HTTP 200 OK (Đã tiếp nhận khiếu nại)
+        Admin->>CMS: Xem danh sách khiếu nại -> Điều tra -> Bấm "Phê duyệt giải quyết"
+        CMS->>Loyalty: POST /loyalty/v1/clearing/disputes/{disputeCode}/resolve (status=RESOLVED)
+        Loyalty->>DB: Tạo bút toán bù trừ điều chỉnh DISPUTE_ADJUSTMENT trong CLEARING_TRANSACTIONS
+        Loyalty->>DB: Cập nhật trạng thái khiếu nại RESOLVED
+        Loyalty->>Outbox: Bắn Webhook DISPUTE_RESOLVED sang đối tác
+        Outbox->>Partner: Gửi kết quả giải quyết & bút toán điều chỉnh
+    end
 ```
 
 ---
