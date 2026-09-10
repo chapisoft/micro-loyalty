@@ -66,6 +66,12 @@ public final class PointLedgerDto {
         private static final long serialVersionUID = 1L;
 
         private String externalUserId;
+        private PointActionType actionType;
+        private String partnerCode;
+        private Long partnerId;
+        private String keyword;
+        private Instant fromDate;
+        private Instant toDate;
 
         @Builder.Default
         private int page = 0;
@@ -84,11 +90,16 @@ public final class PointLedgerDto {
         private Long id;
         private String externalUserId;
         private BigDecimal pointChange;
+        private BigDecimal balanceBefore;
         private BigDecimal balanceAfter;
         private PointActionType changeType;
         private String referenceCode;
+        private Long partnerId;
         private String partnerCode;
+        private String partnerName;
+        private String partnerType;
         private String description;
+        private String status;
         private Instant createdAt;
     }
 

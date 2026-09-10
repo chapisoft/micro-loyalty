@@ -29,6 +29,8 @@ public final class RewardWalletDto {
 
         @NotBlank(message = "Mã người dùng không được để trống")
         private String externalUserId;
+
+        private Long partnerId;
     }
 
     @Data
@@ -73,8 +75,9 @@ public final class RewardWalletDto {
     public static class RewardWalletRedeemRequest implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        @NotBlank(message = "Mã người dùng không được để trống")
         private String externalUserId;
+
+        private String qrToken;
 
         @NotBlank(message = "Mã giao dịch duy nhất không được để trống")
         private String transactionCode;
@@ -92,6 +95,59 @@ public final class RewardWalletDto {
         private Long redeemerPartnerId;
 
         private String description;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QrTokenGenerateRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotBlank(message = "Mã người dùng không được để trống")
+        private String externalUserId;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QrTokenGenerateResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String qrToken;
+        private int expiresInSeconds;
+        private Instant expiresAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QrTokenVerifyRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotBlank(message = "Mã QR không được để trống")
+        private String qrToken;
+
+        private Long partnerId;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QrTokenVerifyResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String externalUserId;
+        private TierLevel tier;
+        private String tierName;
+        private BigDecimal currentPoints;
+        private BigDecimal maxDeductiblePercentage;
+        private List<AvailableVoucherDto> availableVouchers;
+        private int totalVouchers;
+        private boolean valid;
     }
 
     @Data

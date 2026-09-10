@@ -1,5 +1,6 @@
 package com.natcash.loyalty.ledger.controller;
 
+import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.ledger.dto.PointLedgerDto.EarnPointRequest;
 import com.natcash.loyalty.ledger.dto.PointLedgerDto.EarnPointResponse;
 import com.natcash.loyalty.ledger.dto.PointLedgerDto.PointHistoryRequest;
@@ -41,12 +42,20 @@ public class PointLedgerController {
     public ResponseEntity<PointHistoryResponse> getLedgerGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestParam(value = "externalUserId", required = false) String externalUserId,
+            @RequestParam(value = "actionType", required = false) PointActionType actionType,
+            @RequestParam(value = "partnerCode", required = false) String partnerCode,
+            @RequestParam(value = "partnerId", required = false) Long partnerId,
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "50") int size) {
+            @RequestParam(value = "size", required = false, defaultValue = "15") int size) {
 
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         PointHistoryRequest request = PointHistoryRequest.builder()
                 .externalUserId(externalUserId)
+                .actionType(actionType)
+                .partnerCode(partnerCode)
+                .partnerId(partnerId)
+                .keyword(keyword)
                 .page(page)
                 .size(size)
                 .build();
@@ -58,12 +67,20 @@ public class PointLedgerController {
     public ResponseEntity<PointHistoryResponse> getPointHistoryGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestParam(value = "externalUserId", required = false) String externalUserId,
+            @RequestParam(value = "actionType", required = false) PointActionType actionType,
+            @RequestParam(value = "partnerCode", required = false) String partnerCode,
+            @RequestParam(value = "partnerId", required = false) Long partnerId,
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "50") int size) {
+            @RequestParam(value = "size", required = false, defaultValue = "15") int size) {
 
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         PointHistoryRequest request = PointHistoryRequest.builder()
                 .externalUserId(externalUserId)
+                .actionType(actionType)
+                .partnerCode(partnerCode)
+                .partnerId(partnerId)
+                .keyword(keyword)
                 .page(page)
                 .size(size)
                 .build();

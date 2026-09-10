@@ -23,6 +23,7 @@ public class VoucherDto {
         private String title;
         private String description;
         private Long partnerId;
+        private String partnerCode;
         private String partnerName;
         private DiscountType discountType;
         private BigDecimal discountValue;
@@ -62,12 +63,16 @@ public class VoucherDto {
         private String title;
         private String description;
         private Long partnerId;
+        private String partnerCode;
         private DiscountType discountType;
         private BigDecimal discountValue;
         private BigDecimal minBillAmount;
         private BigDecimal maxDiscountAmount;
         private Integer totalQuantity;
         private BigDecimal pointCost;
+        private Instant startDate;
+        private Instant endDate;
+        private VoucherStatus status;
     }
 
     @Data

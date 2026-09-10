@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.GameStatus;
 import com.natcash.loyalty.domain.enums.PaymentMethod;
 import com.natcash.loyalty.domain.enums.PointActionType;
@@ -16,6 +18,7 @@ import com.natcash.loyalty.domain.enums.SessionStatus;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.game.dto.GameHubDto.ActiveWheelThemeResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto;
+import com.natcash.loyalty.game.dto.GameHubDto.GameDashboardStatsResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameDetailResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListItemDto;
@@ -64,17 +67,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.natcash.loyalty.campaign.service.MilestoneService;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
 
 @Service
 public class GameHubService {
@@ -96,6 +104,8 @@ public class GameHubService {
     private final RedissonClient redissonClient;
     private final WheelThemeRepository wheelThemeRepository;
     private final GamePrizeRepository gamePrizeRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
+    private final MilestoneService milestoneService;
 
     public GameHubService(GameHubRepository gameRepository,
                           GameSessionRepository sessionRepository,
@@ -108,7 +118,9 @@ public class GameHubService {
                           DistributedLockHelper lockHelper,
                           RedissonClient redissonClient,
                           WheelThemeRepository wheelThemeRepository,
-                          GamePrizeRepository gamePrizeRepository) {
+                          GamePrizeRepository gamePrizeRepository,
+                          LoyaltyPartnerRepository partnerRepository,
+                          MilestoneService milestoneService) {
         this.gameRepository = gameRepository;
         this.sessionRepository = sessionRepository;
         this.historyRepository = historyRepository;
@@ -121,6 +133,8 @@ public class GameHubService {
         this.redissonClient = redissonClient;
         this.wheelThemeRepository = wheelThemeRepository;
         this.gamePrizeRepository = gamePrizeRepository;
+        this.partnerRepository = partnerRepository;
+        this.milestoneService = milestoneService;
     }
 
     @Transactional(readOnly = true)
@@ -174,10 +188,10 @@ public class GameHubService {
         }
 
         List<GamePrizeEntity> prizeEntities = gamePrizeRepository
-                .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc(tenantId, gameCode, "ACTIVE");
+                .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc(tenantId, gameCode, CommonStatus.ACTIVE);
         if (prizeEntities.isEmpty()) {
             prizeEntities = gamePrizeRepository
-                    .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc("TENANT_NATCASH", gameCode, "ACTIVE");
+                    .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc("TENANT_NATCASH", gameCode, CommonStatus.ACTIVE);
         }
 
         List<GamePrizeDto> prizeDtos = prizeEntities.stream().map(p -> GamePrizeDto.builder()
@@ -378,6 +392,7 @@ public class GameHubService {
                         .balanceAfter(currentPoints)
                         .changeType(PointActionType.EARN)
                         .referenceCode(txRef)
+                        .partnerId(getDefaultPartnerId(tenantId))
                         .description("Thưởng minigame: " + game.getGameName() + " (Điểm: " + score + ")")
                         .createdAt(Instant.now())
                         .build();
@@ -401,7 +416,7 @@ public class GameHubService {
                     .pointsAwarded(pointsToAward)
                     .voucherCode(null)
                     .details(request.getDetails())
-                    .status("SUCCESS")
+                    .status(CommonStatus.SUCCESS)
                     .createdAt(Instant.now())
                     .build();
             historyRepository.save(history);
@@ -412,6 +427,14 @@ public class GameHubService {
                 String webhookUrl = String.valueOf(gameParams.get("webhookUrl"));
                 String partnerCode = gameParams.containsKey("partnerCode") ? String.valueOf(gameParams.get("partnerCode")) : "GAME_STUDIO";
                 dispatchOutboundWebhook(tenantId, webhookUrl, partnerCode, finalTxRef, gameCode, userId, score, pointsToAward, rewardType.name());
+            }
+
+            // 7. Tích lũy dồn tiến độ cho các Chiến dịch Cột mốc (Milestone Tracking Engine)
+            if (milestoneService != null) {
+                milestoneService.recordProgress(tenantId, userId, null, CampaignMetric.GAME_SPINS, BigDecimal.ONE);
+                if (pointsToAward.compareTo(BigDecimal.ZERO) > 0) {
+                    milestoneService.recordProgress(tenantId, userId, null, CampaignMetric.EARN_POINTS, pointsToAward);
+                }
             }
 
             log.info("[GAME-RESULT-SUBMITTED] tenantId={}, user={}, game={}, score={}, pointsAwarded={}, newBalance={}, txRef={}",
@@ -472,6 +495,7 @@ public class GameHubService {
                     .balanceAfter(remainingBalance)
                     .changeType(PointActionType.BURN)
                     .referenceCode(txCode)
+                    .partnerId(getDefaultPartnerId(tenantId))
                     .description("Thanh toán mua " + turnsToBuy + " lượt chơi game: " + session.getGame().getGameName())
                     .createdAt(Instant.now())
                     .build();
@@ -687,7 +711,7 @@ public class GameHubService {
                 .rewardValue(h.getRewardValue())
                 .pointsAwarded(h.getPointsAwarded())
                 .voucherCode(h.getVoucherCode())
-                .status(h.getStatus())
+                .status(h.getStatus() != null ? h.getStatus().name() : CommonStatus.SUCCESS.name())
                 .createdAt(h.getCreatedAt())
                 .build()
         );
@@ -850,10 +874,10 @@ public class GameHubService {
 
             // 2. Tải ma trận giải thưởng động từ DB
             List<GamePrizeEntity> dbPrizes = gamePrizeRepository
-                    .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc(tenantId, gameCode, "ACTIVE");
+                    .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc(tenantId, gameCode, CommonStatus.ACTIVE);
             if (dbPrizes.isEmpty()) {
                 dbPrizes = gamePrizeRepository
-                        .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc("TENANT_NATCASH", gameCode, "ACTIVE");
+                        .findByTenantIdAndGameCodeAndStatusOrderByDisplayOrderAsc("TENANT_NATCASH", gameCode, CommonStatus.ACTIVE);
             }
 
             String outcome = "WIN";
@@ -1084,6 +1108,7 @@ public class GameHubService {
                         .balanceAfter(currentPoints)
                         .changeType(PointActionType.EARN)
                         .referenceCode(txRef)
+                        .partnerId(getDefaultPartnerId(tenantId))
                         .description("Thưởng trò chơi: " + game.getGameName() + " (" + outcome + ")")
                         .createdAt(Instant.now())
                         .build();
@@ -1102,7 +1127,7 @@ public class GameHubService {
                     .rewardType(rewardType)
                     .rewardValue(pointsToAward)
                     .pointsAwarded(pointsToAward)
-                    .status("SUCCESS")
+                    .status(CommonStatus.SUCCESS)
                     .createdAt(Instant.now())
                     .build();
             historyRepository.save(history);
@@ -1210,7 +1235,7 @@ public class GameHubService {
                         .iconSymbol(p.getIconSymbol())
                         .bgImageUrl(p.getBgImageUrl())
                         .displayOrder(p.getDisplayOrder())
-                        .status(p.getStatus())
+                        .status(p.getStatus() != null ? p.getStatus().name() : CommonStatus.ACTIVE.name())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -1254,7 +1279,7 @@ public class GameHubService {
         entity.setIconSymbol(dto.getIconSymbol() != null ? dto.getIconSymbol() : "🎁");
         entity.setBgImageUrl(dto.getBgImageUrl());
         entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0);
-        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
+        entity.setStatus(dto.getStatus() != null ? CommonStatus.fromCode(dto.getStatus()) : CommonStatus.ACTIVE);
         entity.setUpdatedAt(Instant.now());
 
         GamePrizeEntity saved = gamePrizeRepository.save(entity);
@@ -1280,7 +1305,7 @@ public class GameHubService {
                 .iconSymbol(saved.getIconSymbol())
                 .bgImageUrl(saved.getBgImageUrl())
                 .displayOrder(saved.getDisplayOrder())
-                .status(saved.getStatus())
+                .status(saved.getStatus() != null ? saved.getStatus().name() : CommonStatus.ACTIVE.name())
                 .build();
     }
 
@@ -1315,6 +1340,71 @@ public class GameHubService {
             }
         }
         return getGamePrizesAdmin(tenantId, gameCode);
+    }
+
+    @Transactional(readOnly = true)
+    public GameDashboardStatsResponse getGameDashboardStats(String tenantId) {
+        Instant now = Instant.now();
+        Instant startToday = now.truncatedTo(ChronoUnit.DAYS);
+        Instant startYesterday = startToday.minus(1, ChronoUnit.DAYS);
+
+        // 1. Số lượng game
+        List<GameHubEntity> allGames = gameRepository.findByTenantId(tenantId);
+        long totalGames = allGames.size();
+        long activeGames = allGames.stream().filter(g -> g.getStatus() == GameStatus.ACTIVE).count();
+
+        // 2. Lượt chơi hôm nay & hôm qua
+        long todaySpins = historyRepository.countByTenantIdAndCreatedAtRange(tenantId, startToday, now);
+        long yesterdaySpins = historyRepository.countByTenantIdAndCreatedAtRange(tenantId, startYesterday, startToday);
+
+        double spinGrowthPercent = 0.0;
+        if (yesterdaySpins > 0) {
+            spinGrowthPercent = ((double) (todaySpins - yesterdaySpins) / yesterdaySpins) * 100.0;
+        } else if (todaySpins > 0) {
+            spinGrowthPercent = 100.0;
+        }
+
+        // 3. Ngân sách & hạn mức
+        BigDecimal todaySpentAmount = historyRepository.sumRewardValueByTenantIdAndCreatedAtRange(tenantId, startToday, now);
+        if (todaySpentAmount == null) {
+            todaySpentAmount = BigDecimal.ZERO;
+        }
+
+        BigDecimal dailyBudgetLimit = gameRepository.sumDailyBudgetLimitByTenantId(tenantId);
+        if (dailyBudgetLimit == null || dailyBudgetLimit.compareTo(BigDecimal.ZERO) == 0) {
+            dailyBudgetLimit = new BigDecimal("50000.00");
+        }
+
+        double budgetUsagePercent = 0.0;
+        if (dailyBudgetLimit.compareTo(BigDecimal.ZERO) > 0) {
+            budgetUsagePercent = todaySpentAmount.divide(dailyBudgetLimit, 4, RoundingMode.HALF_UP).doubleValue() * 100.0;
+        }
+
+        // 4. Số người chơi duy nhất
+        long uniquePlayersToday = historyRepository.countUniquePlayersByTenantIdAndCreatedAtRange(tenantId, startToday, now);
+
+        return GameDashboardStatsResponse.builder()
+                .totalGames(totalGames)
+                .activeGames(activeGames)
+                .todaySpins(todaySpins)
+                .yesterdaySpins(yesterdaySpins)
+                .spinGrowthPercent(Math.round(spinGrowthPercent * 10.0) / 10.0)
+                .todaySpentAmount(todaySpentAmount)
+                .dailyBudgetLimit(dailyBudgetLimit)
+                .budgetUsagePercent(Math.round(budgetUsagePercent * 10.0) / 10.0)
+                .uniquePlayersToday(uniquePlayersToday)
+                .lockMechanism("Redisson RLock")
+                .build();
+    }
+
+    private Long getDefaultPartnerId(String tenantId) {
+        if (partnerRepository == null) {
+            return null;
+        }
+        String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+        return partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
+                .map(p -> p != null ? p.getId() : null)
+                .orElse(null);
     }
 }
 

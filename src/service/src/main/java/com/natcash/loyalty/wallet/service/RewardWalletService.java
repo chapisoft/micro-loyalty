@@ -3,9 +3,12 @@ package com.natcash.loyalty.wallet.service;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileRequest;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileResponse;
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
+import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.DiscountType;
@@ -19,6 +22,10 @@ import com.natcash.loyalty.lock.DistributedLockHelper;
 import com.natcash.loyalty.stream.LoyaltyStreamEvent;
 import com.natcash.loyalty.stream.LoyaltyStreamProducer;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.AvailableVoucherDto;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateResponse;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyResponse;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletInquiryRequest;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletInquiryResponse;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRedeemRequest;
@@ -26,11 +33,15 @@ import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRedeemResponse
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRefundRequest;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRefundResponse;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
+import com.natcash.loyalty.wallet.entity.LoyaltyAcceptancePolicyEntity;
 import com.natcash.loyalty.wallet.entity.LoyaltyVoucherEntity;
 import com.natcash.loyalty.wallet.entity.LoyaltyVoucherRedemptionEntity;
 import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
+import com.natcash.loyalty.wallet.repository.LoyaltyAcceptancePolicyRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyVoucherRedemptionRepository;
 
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,9 +49,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.natcash.loyalty.campaign.service.MilestoneService;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
 
 @Service
 public class RewardWalletService {
@@ -52,23 +69,86 @@ public class RewardWalletService {
     private final LoyaltyPointLedgerRepository ledgerRepository;
     private final LoyaltyVoucherRedemptionRepository redemptionRepository;
     private final ClearingTransactionRepository clearingRepository;
+    private final LoyaltyAcceptancePolicyRepository policyRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
     private final DistributedLockHelper lockHelper;
     private final LoyaltyStreamProducer streamProducer;
+    private final MilestoneService milestoneService;
+    private final RedissonClient redissonClient;
 
     public RewardWalletService(AccountService accountService,
                                LoyaltyAccountRepository accountRepository,
                                LoyaltyPointLedgerRepository ledgerRepository,
                                LoyaltyVoucherRedemptionRepository redemptionRepository,
                                ClearingTransactionRepository clearingRepository,
+                               LoyaltyAcceptancePolicyRepository policyRepository,
+                               LoyaltyPartnerRepository partnerRepository,
                                DistributedLockHelper lockHelper,
-                               LoyaltyStreamProducer streamProducer) {
+                               LoyaltyStreamProducer streamProducer,
+                               MilestoneService milestoneService,
+                               RedissonClient redissonClient) {
         this.accountService = accountService;
         this.accountRepository = accountRepository;
         this.ledgerRepository = ledgerRepository;
         this.redemptionRepository = redemptionRepository;
         this.clearingRepository = clearingRepository;
+        this.policyRepository = policyRepository;
+        this.partnerRepository = partnerRepository;
         this.lockHelper = lockHelper;
         this.streamProducer = streamProducer;
+        this.milestoneService = milestoneService;
+        this.redissonClient = redissonClient;
+    }
+
+    public QrTokenGenerateResponse generateQrToken(String tenantId, QrTokenGenerateRequest request) {
+        String userId = request.getExternalUserId();
+        String qrToken = "QR" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
+        int ttlSeconds = 60;
+        Instant expiresAt = Instant.now().plusSeconds(ttlSeconds);
+
+        if (redissonClient != null) {
+            String cacheKey = RedisKeys.QR_PAYMENT_TOKEN_PREFIX + tenantId + ":" + qrToken;
+            RBucket<String> bucket = redissonClient.getBucket(cacheKey);
+            bucket.set(userId, Duration.ofSeconds(ttlSeconds));
+        }
+
+        log.info("[QR-GENERATE] tenantId={}, user={}, token={}, expiresAt={}", tenantId, userId, qrToken, expiresAt);
+        return QrTokenGenerateResponse.builder()
+                .qrToken(qrToken)
+                .expiresInSeconds(ttlSeconds)
+                .expiresAt(expiresAt)
+                .build();
+    }
+
+    public QrTokenVerifyResponse verifyQrToken(String tenantId, QrTokenVerifyRequest request) {
+        String qrToken = request.getQrToken();
+        String userId = null;
+
+        if (redissonClient != null) {
+            String cacheKey = RedisKeys.QR_PAYMENT_TOKEN_PREFIX + tenantId + ":" + qrToken;
+            RBucket<String> bucket = redissonClient.getBucket(cacheKey);
+            userId = bucket.get();
+        }
+
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new LoyaltyException(ErrorCode.UNAUTHORIZED, "Mã QR thanh toán không hợp lệ hoặc đã hết hạn (60s)");
+        }
+
+        RewardWalletInquiryResponse inquiry = inquiry(tenantId, RewardWalletInquiryRequest.builder()
+                .externalUserId(userId)
+                .partnerId(request.getPartnerId())
+                .build());
+
+        return QrTokenVerifyResponse.builder()
+                .externalUserId(userId)
+                .tier(inquiry.getTier())
+                .tierName(inquiry.getTierName())
+                .currentPoints(inquiry.getCurrentPoints())
+                .maxDeductiblePercentage(inquiry.getMaxDeductiblePercentage())
+                .availableVouchers(inquiry.getAvailableVouchers())
+                .totalVouchers(inquiry.getTotalVouchers())
+                .valid(true)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -100,12 +180,26 @@ public class RewardWalletService {
                 })
                 .collect(Collectors.toList());
 
+        // Lấy chính sách khấu trừ tối đa theo đối tác nếu có
+        BigDecimal maxDeductiblePct = new BigDecimal("50.00");
+        if (request.getPartnerId() != null) {
+            Optional<LoyaltyAcceptancePolicyEntity> policyOpt = policyRepository
+                    .findByTenantIdAndPartnerId(tenantId, request.getPartnerId());
+            if (policyOpt.isPresent() && policyOpt.get().getMaxBurnPercentage() != null) {
+                maxDeductiblePct = policyOpt.get().getMaxBurnPercentage();
+            }
+        }
+
+        String resolvedTierName = profile.getTier() != null
+                ? (profile.getTier().getName() != null ? profile.getTier().getName() : profile.getTier().getCode().name())
+                : TierLevel.SILVER.name();
+
         return RewardWalletInquiryResponse.builder()
                 .externalUserId(userId)
                 .tier(profile.getTier() != null ? profile.getTier().getCode() : TierLevel.SILVER)
-                .tierName(profile.getTier() != null ? profile.getTier().getName() : "Hạng Bạc")
+                .tierName(resolvedTierName)
                 .currentPoints(profile.getCurrentPoints())
-                .maxDeductiblePercentage(new BigDecimal("50.00")) // Mặc định chấp nhận khấu trừ tối đa 50% hóa đơn
+                .maxDeductiblePercentage(maxDeductiblePct)
                 .availableVouchers(voucherDtos)
                 .totalVouchers(voucherDtos.size())
                 .build();
@@ -116,6 +210,30 @@ public class RewardWalletService {
         String txCode = request.getTransactionCode();
         String userId = request.getExternalUserId();
 
+        // 0. Xử lý Dynamic QR Token 60s (Single-use atomicity)
+        if (request.getQrToken() != null && !request.getQrToken().trim().isEmpty()) {
+            String qrToken = request.getQrToken().trim();
+            String tokenUserId = null;
+            if (redissonClient != null) {
+                String cacheKey = RedisKeys.QR_PAYMENT_TOKEN_PREFIX + tenantId + ":" + qrToken;
+                RBucket<String> bucket = redissonClient.getBucket(cacheKey);
+                tokenUserId = bucket.getAndDelete();
+            }
+            if (tokenUserId == null || tokenUserId.trim().isEmpty()) {
+                throw new LoyaltyException(ErrorCode.UNAUTHORIZED, "Mã QR thanh toán không hợp lệ, đã sử dụng hoặc hết hạn (60s)");
+            }
+            if (userId != null && !userId.trim().isEmpty() && !userId.equals(tokenUserId)) {
+                throw new LoyaltyException(ErrorCode.VALIDATION_ERROR, "Mã người dùng không khớp với mã QR thanh toán");
+            }
+            userId = tokenUserId;
+        }
+
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new LoyaltyException(ErrorCode.VALIDATION_ERROR, "Mã người dùng hoặc mã QR không được để trống");
+        }
+
+        final String finalUserId = userId;
+
         // 1. Kiểm tra tính lũy kế (Idempotency)
         if (clearingRepository.existsByTenantIdAndTransactionCode(tenantId, txCode)) {
             log.warn("[REDEEM-DUPLICATE] tenantId={}, txCode={} - Giao dịch đã tồn tại", tenantId, txCode);
@@ -123,10 +241,10 @@ public class RewardWalletService {
         }
 
         // 2. Chiếm giữ Khóa phân tán Redisson RLock
-        String lockKey = RedisKeys.getBurnLockKey(tenantId, userId);
-        return lockHelper.executeWithLock(lockKey, 3000, 10000, () -> {
+        String lockKey = RedisKeys.getBurnLockKey(tenantId, finalUserId);
+        return lockHelper.executeWithLock(lockKey, LoyaltyConstants.DEFAULT_LOCK_WAIT_TIME_MS, LoyaltyConstants.DEFAULT_LOCK_LEASE_TIME_MS, () -> {
             // 3. Khóa tài khoản với Pessimistic Write Lock
-            LoyaltyAccountEntity account = accountService.getAccountForUpdate(tenantId, userId);
+            LoyaltyAccountEntity account = accountService.getAccountForUpdate(tenantId, finalUserId);
 
             BigDecimal billAmount = request.getTotalBillAmount();
             BigDecimal pointsToBurn = request.getPointsToBurn() != null ? request.getPointsToBurn() : BigDecimal.ZERO;
@@ -172,10 +290,28 @@ public class RewardWalletService {
                 }
             }
 
-            // 5. Xử lý khấu trừ điểm (Tối đa 50% hóa đơn sau khi giảm voucher)
+            // 5. Tải chính sách đối tác để lấy tỷ lệ khấu trừ tối đa và tỷ giá quy đổi
+            BigDecimal maxBurnPercentage = new BigDecimal("50.00");
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if (request.getRedeemerPartnerId() != null) {
+                Optional<LoyaltyAcceptancePolicyEntity> policyOpt = policyRepository
+                        .findByTenantIdAndPartnerId(tenantId, request.getRedeemerPartnerId());
+                if (policyOpt.isPresent()) {
+                    LoyaltyAcceptancePolicyEntity policy = policyOpt.get();
+                    if (policy.getMaxBurnPercentage() != null) {
+                        maxBurnPercentage = policy.getMaxBurnPercentage();
+                    }
+                    if (policy.getPointExchangeRate() != null) {
+                        exchangeRate = policy.getPointExchangeRate();
+                    }
+                }
+            }
+
+            // Xử lý khấu trừ điểm (Theo tỷ lệ cấu hình của đối tác trên hóa đơn sau khi trừ voucher)
             BigDecimal remainingBillAfterVoucher = billAmount.subtract(voucherDiscount);
-            BigDecimal maxAllowedPointDeduction = remainingBillAfterVoucher.multiply(new BigDecimal("0.50"))
-                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal maxAllowedPointDeduction = remainingBillAfterVoucher
+                    .multiply(maxBurnPercentage)
+                    .divide(new BigDecimal("100.00"), 2, RoundingMode.HALF_UP);
 
             BigDecimal effectivePointsToBurn = pointsToBurn;
             if (effectivePointsToBurn.compareTo(maxAllowedPointDeduction) > 0) {
@@ -187,7 +323,8 @@ public class RewardWalletService {
                 throw new LoyaltyException(ErrorCode.INSUFFICIENT_POINTS, "Số dư điểm không đủ để thực hiện khấu trừ");
             }
 
-            BigDecimal pointDiscount = effectivePointsToBurn; // 1 Điểm = 1 HTG
+            // Quy đổi điểm ra tiền mặt theo tỷ giá chính sách (fiatDiscount = points * exchangeRate)
+            BigDecimal pointDiscount = effectivePointsToBurn.multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
             BigDecimal finalAmountToPay = remainingBillAfterVoucher.subtract(pointDiscount);
             if (finalAmountToPay.compareTo(BigDecimal.ZERO) < 0) {
                 finalAmountToPay = BigDecimal.ZERO;
@@ -214,15 +351,16 @@ public class RewardWalletService {
             }
 
             // 7. Ghi nhận giao dịch bù trừ liên minh (Clearing Transaction)
+            Long resolvedIssuerId = resolveIssuerPartnerId(tenantId);
             ClearingTransactionEntity clearing = ClearingTransactionEntity.builder()
                     .tenantId(tenantId)
                     .transactionCode(txCode)
-                    .issuerPartnerId(1L) // Mặc định Natcash phát hành
+                    .issuerPartnerId(resolvedIssuerId)
                     .redeemerPartnerId(request.getRedeemerPartnerId())
-                    .externalUserId(userId)
+                    .externalUserId(finalUserId)
                     .pointsRedeemed(effectivePointsToBurn)
                     .fiatAmount(pointDiscount)
-                    .exchangeRate(BigDecimal.ONE)
+                    .exchangeRate(exchangeRate)
                     .status(ClearingStatus.PENDING)
                     .createdAt(Instant.now())
                     .build();
@@ -232,15 +370,21 @@ public class RewardWalletService {
             LoyaltyStreamEvent streamEvent = LoyaltyStreamEvent.builder()
                     .tenantId(tenantId)
                     .eventType("POINTS_REDEEMED")
-                    .externalUserId(userId)
+                    .externalUserId(finalUserId)
                     .amount(pointDiscount.longValue())
                     .transactionCode(txCode)
                     .timestamp(Instant.now())
                     .build();
             streamProducer.publishEvent(streamEvent);
 
+            // 9. Tích lũy dồn tiến độ cho các Chiến dịch Cột mốc (Milestone Tracking Engine)
+            if (milestoneService != null) {
+                milestoneService.recordProgress(tenantId, finalUserId, request.getRedeemerPartnerId(), CampaignMetric.BILL_AMOUNT, billAmount);
+                milestoneService.recordProgress(tenantId, finalUserId, request.getRedeemerPartnerId(), CampaignMetric.TRANSACTION_COUNT, BigDecimal.ONE);
+            }
+
             log.info("[REDEEM-SUCCESS] tenantId={}, user={}, txCode={}, bill={}, pointDiscount={}, voucherDiscount={}, toPay={}",
-                    tenantId, userId, txCode, billAmount, pointDiscount, voucherDiscount, finalAmountToPay);
+                    tenantId, finalUserId, txCode, billAmount, pointDiscount, voucherDiscount, finalAmountToPay);
 
             return RewardWalletRedeemResponse.builder()
                     .transactionCode(txCode)
@@ -255,6 +399,19 @@ public class RewardWalletService {
                     .redeemedAt(Instant.now())
                     .build();
         });
+    }
+
+    private Long resolveIssuerPartnerId(String tenantId) {
+        List<LoyaltyPartnerEntity> partners = partnerRepository.findByTenantId(tenantId);
+        if (partners != null && !partners.isEmpty()) {
+            return partners.stream()
+                    .filter(p -> p != null && p.getPartnerCode() != null && p.getPartnerCode().toUpperCase().contains("WALLET"))
+                    .map(p -> p != null ? p.getId() : null)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(partners.get(0).getId());
+        }
+        return 1L;
     }
 
     @Transactional
@@ -286,6 +443,7 @@ public class RewardWalletService {
                 .balanceAfter(newBalance)
                 .changeType(PointActionType.REFUND)
                 .referenceCode(refundTx)
+                .partnerId(clearing.getRedeemerPartnerId())
                 .description("Hoàn điểm hủy hóa đơn giao dịch: " + originalTx)
                 .createdAt(Instant.now())
                 .build();

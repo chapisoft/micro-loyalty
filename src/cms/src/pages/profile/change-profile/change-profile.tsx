@@ -107,13 +107,13 @@ export function Page(): React.JSX.Element {
         body={
           <Form form={form} onSubmit={handleSubmit(onSubmit)} className="w-full grid">
             <div className="col-12">
-              <FormField control={control} name="fullName" label={t('login.fullName')} required />
+              <FormField control={control as any} name="fullName" label={t('login.fullName')} required />
             </div>
             <div className="col-12">
-              <FormField control={control} name="email" label={t('login.email')} required disabled/>
+              <FormField control={control as any} name="email" label={t('login.email')} required disabled/>
             </div>
             <div className="col-12">
-              <FormField control={control} name="phone" label={t('login.phoneNumber')} required disabled/>
+              <FormField control={control as any} name="phone" label={t('login.phoneNumber')} required disabled/>
             </div>
           </Form>
         }

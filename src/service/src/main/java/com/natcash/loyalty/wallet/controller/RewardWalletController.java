@@ -1,6 +1,10 @@
 package com.natcash.loyalty.wallet.controller;
 
 import com.natcash.loyalty.tenant.TenantContext;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenGenerateResponse;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyRequest;
+import com.natcash.loyalty.wallet.dto.RewardWalletDto.QrTokenVerifyResponse;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletInquiryRequest;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletInquiryResponse;
 import com.natcash.loyalty.wallet.dto.RewardWalletDto.RewardWalletRedeemRequest;
@@ -25,6 +29,26 @@ public class RewardWalletController {
 
     public RewardWalletController(RewardWalletService rewardWalletService) {
         this.rewardWalletService = rewardWalletService;
+    }
+
+    @PostMapping("/qr/generate")
+    public ResponseEntity<QrTokenGenerateResponse> generateQrToken(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @Valid @RequestBody QrTokenGenerateRequest request) {
+
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        QrTokenGenerateResponse response = rewardWalletService.generateQrToken(tenantId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/qr/verify")
+    public ResponseEntity<QrTokenVerifyResponse> verifyQrToken(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @Valid @RequestBody QrTokenVerifyRequest request) {
+
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        QrTokenVerifyResponse response = rewardWalletService.verifyQrToken(tenantId, request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/inquiry")

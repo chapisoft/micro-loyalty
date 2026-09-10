@@ -569,9 +569,21 @@ export default {
     "subtitle": "Enregistrez-vous quotidiennement pour débloquer le coffre doré",
     "day_label": "Jour {{day}}",
     "day_7_chest": "Jour 7 : Coffre d'or",
+    "day_7_reward_desc": "+200 Points & Bon d'achat",
     "claimed_success": "Présence validée ! Points crédités sur votre compte.",
     "btn_checked": "ENREGISTRÉ AUJOURD'HUI",
     "btn_claim": "RÉCLAMER LA RÉCOMPENSE"
+  },
+  "home": {
+    "points_expiration_warning": "{{count}} points expireront le {{date}}",
+    "points_expiration_hint": "Échangez vos points contre des bons d'achat ou des forfaits data dès maintenant",
+    "redeem_now_btn": "Échanger →"
+  },
+  "tier": {
+    "your_tier_badge": "✓ Votre niveau actuel",
+    "multiplier_label": "Taux de cumul",
+    "daily_spins_label": "Tours quotidiens gratuits",
+    "eval_points_label": "Points de qualification"
   },
   "voucher": {
     "modal_instruction": "Présentez ce code au caissier lors du paiement",

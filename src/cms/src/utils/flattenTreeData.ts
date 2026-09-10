@@ -7,17 +7,15 @@ export const flattenTreeData = (nodes: IAttribute[] | ICriteria[]): TreeNode[] =
 
   const rootNodes: (IAttribute | ICriteria)[] = [];
   nodes.forEach((node) => {
-    if (node.parentId === null) {
+    if (node.parentId === null || node.parentId === undefined) {
       rootNodes.push(node);
     } else {
-      //@ts-expect-error
       const parentNode = nodeMap.get(node.parentId);
       if (parentNode) {
         if (!parentNode.children) {
           parentNode.children = [];
         }
-        //@ts-expect-error
-        parentNode.children.push(node);
+        parentNode.children.push(node as any);
       }
     }
   });
@@ -26,14 +24,12 @@ export const flattenTreeData = (nodes: IAttribute[] | ICriteria[]): TreeNode[] =
   const sortByIsDefaultAndSortOrder = (a: IAttribute | ICriteria, b: IAttribute | ICriteria) => {
     if (a.isDefault === 1 && b.isDefault !== 1) return -1;
     if (a.isDefault !== 1 && b.isDefault === 1) return 1;
-    //@ts-expect-error
-    return a?.sortOrder - b?.sortOrder;
+    return (a.sortOrder || 0) - (b.sortOrder || 0);
   };
 
   rootNodes.sort(sortByIsDefaultAndSortOrder);
   rootNodes.forEach((node) => {
     if (node.children) {
-      //@ts-expect-error
       node.children.sort(sortByIsDefaultAndSortOrder);
     }
   });
@@ -41,12 +37,11 @@ export const flattenTreeData = (nodes: IAttribute[] | ICriteria[]): TreeNode[] =
   const flatten = (node: IAttribute | ICriteria, level: number = 0): TreeNode => {
     const hasChildren = node.children && node.children.length > 0;
     return {
-      key: node.id ? node.id.toString() : null,
+      key: node.id ? node.id.toString() : undefined,
       label: node.name,
       data: { ...node, level },
-      children: hasChildren
-        ? //@ts-expect-error
-          node.children.map((child) => flatten(child, level + 1))
+      children: hasChildren && node.children
+        ? node.children.map((child: any) => flatten(child, level + 1))
         : [],
     };
   };

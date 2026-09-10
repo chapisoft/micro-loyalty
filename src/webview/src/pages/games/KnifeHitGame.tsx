@@ -858,11 +858,11 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
 
             <div className="flex items-center gap-2 shrink-0">
               <div className="bg-slate-800/90 border border-slate-700/80 px-2 py-0.5 rounded-xl text-center flex items-center gap-1">
-                <span className="text-[10px] text-slate-400 font-bold">Dao:</span>
+                <span className="text-[10px] text-slate-400 font-bold">{t('games.knife.knives_label', { defaultValue: 'Dao:' })}</span>
                 <span className="font-mono font-black text-amber-400 text-xs">{knivesLeft}</span>
               </div>
               <div className="bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-xl text-center flex items-center gap-1">
-                <span className="text-[10px] text-amber-300 font-bold">Điểm:</span>
+                <span className="text-[10px] text-amber-300 font-bold">{t('games.knife.score_label', { defaultValue: 'Điểm:' })}</span>
                 <span className="font-mono font-black text-white text-xs">{score}</span>
               </div>
             </div>

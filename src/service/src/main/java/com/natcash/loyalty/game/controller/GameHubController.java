@@ -2,6 +2,7 @@ package com.natcash.loyalty.game.controller;
 
 import com.natcash.loyalty.game.dto.GameHubDto.ActiveWheelThemeResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto;
+import com.natcash.loyalty.game.dto.GameHubDto.GameDashboardStatsResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameHubGlobalConfigDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameDetailResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameListRequest;
@@ -48,6 +49,15 @@ public class GameHubController {
 
     public GameHubController(GameHubService gameHubService) {
         this.gameHubService = gameHubService;
+    }
+
+    @GetMapping("/admin/dashboard-stats")
+    @Operation(summary = "Lấy thống kê chỉ số tổng quan Cổng Game thời gian thực", description = "Trả về tổng lượt quay hôm nay, tăng trưởng so với hôm qua, ngân sách đã chi và hạn mức ngày")
+    public ResponseEntity<GameDashboardStatsResponse> getGameDashboardStats(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        GameDashboardStatsResponse response = gameHubService.getGameDashboardStats(tenantId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/games/detail")

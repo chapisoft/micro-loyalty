@@ -439,3 +439,23 @@ export enum ClearingStatus {
   CANCELLED = 'CANCELLED',
   REFUNDED = 'REFUNDED',
 }
+
+export interface IAttribute {
+  id: number;
+  name: string;
+  parentId?: number | null;
+  sortOrder?: number;
+  isDefault?: number | boolean;
+  children?: IAttribute[];
+  [key: string]: any;
+}
+
+export interface ICriteria {
+  id: number;
+  name: string;
+  parentId?: number | null;
+  sortOrder?: number;
+  isDefault?: number | boolean;
+  children?: ICriteria[];
+  [key: string]: any;
+}

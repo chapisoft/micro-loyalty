@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "node",
@@ -18,17 +22,39 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "components": ["./libraries/components/src"],
-      "components/*": ["./libraries/components/src/*"],
-      "micro-sdk": ["./libraries/micro-sdk"],
-      "micro-sdk/*": ["./libraries/micro-sdk/*"],
-      "types": ["./libraries/types"],
-      "types/*": ["./libraries/types/*"],
-      "utils": ["./libraries/micro-sdk/utils"],
-      "utils/*": ["./libraries/micro-sdk/utils/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "components": [
+        "./libraries/components/src"
+      ],
+      "components/*": [
+        "./libraries/components/src/*"
+      ],
+      "micro-sdk": [
+        "./libraries/micro-sdk"
+      ],
+      "micro-sdk/*": [
+        "./libraries/micro-sdk/*"
+      ],
+      "types": [
+        "./libraries/types"
+      ],
+      "types/*": [
+        "./libraries/types/*"
+      ],
+      "utils": [
+        "./libraries/micro-sdk/utils"
+      ],
+      "utils/*": [
+        "./libraries/micro-sdk/utils/*"
+      ]
     },
     "allowJs": true
   },
-  "include": ["src", "libraries"]
+  "include": [
+    "src",
+    "libraries",
+    "../../docs/AI_gen_docs/TenantSelector.tsx"
+  ]
 }

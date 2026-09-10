@@ -14,6 +14,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.natcash.loyalty.audit.event.AuditLogEvent;
+import com.natcash.loyalty.audit.service.SystemAuditLogService;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,9 +43,11 @@ import java.util.stream.Collectors;
 public class PartnerController {
 
     private final LoyaltyPartnerRepository partnerRepository;
+    private final SystemAuditLogService auditLogService;
 
-    public PartnerController(LoyaltyPartnerRepository partnerRepository) {
+    public PartnerController(LoyaltyPartnerRepository partnerRepository, SystemAuditLogService auditLogService) {
         this.partnerRepository = partnerRepository;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping
@@ -123,6 +130,22 @@ public class PartnerController {
                 .build();
 
         LoyaltyPartnerEntity saved = partnerRepository.save(entity);
+
+        // Tự động ghi vết kiểm toán hệ thống
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("PARTNER")
+                .tableName("loyalty_partners")
+                .operation("INSERT")
+                .entityId(saved.getPartnerCode())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(null)
+                .afterData(toPartnerJson(saved))
+                .description("Thêm mới đối tác liên minh: " + saved.getPartnerName() + " (" + saved.getPartnerCode() + ")")
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(mapToResponse(saved));
     }
 
@@ -136,6 +159,8 @@ public class PartnerController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         LoyaltyPartnerEntity entity = partnerRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, "Không tìm thấy đối tác #" + id));
+
+        String beforeJson = toPartnerJson(entity);
 
         if (request.getPartnerName() != null) entity.setPartnerName(request.getPartnerName());
         if (request.getPartnerCode() != null) entity.setPartnerCode(request.getPartnerCode().toUpperCase().trim());
@@ -162,6 +187,22 @@ public class PartnerController {
 
         entity.setUpdatedAt(Instant.now());
         LoyaltyPartnerEntity saved = partnerRepository.save(entity);
+
+        // Tự động ghi vết kiểm toán hệ thống
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("PARTNER")
+                .tableName("loyalty_partners")
+                .operation("UPDATE")
+                .entityId(saved.getPartnerCode())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(beforeJson)
+                .afterData(toPartnerJson(saved))
+                .description("Cập nhật thông tin đối tác liên minh: " + saved.getPartnerName() + " (" + saved.getPartnerCode() + ")")
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(mapToResponse(saved));
     }
 
@@ -172,9 +213,53 @@ public class PartnerController {
             @PathVariable("id") Long id,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        partnerRepository.findByIdAndTenantId(id, tenantId).ifPresent(partnerRepository::delete);
+        partnerRepository.findByIdAndTenantId(id, tenantId).ifPresent(p -> {
+            partnerRepository.delete(p);
+            auditLogService.recordActionAsync(AuditLogEvent.builder()
+                    .tenantId(tenantId)
+                    .module("PARTNER")
+                    .tableName("loyalty_partners")
+                    .operation("DELETE")
+                    .entityId(p.getPartnerCode())
+                    .actorUsername(getActorUsername())
+                    .actorRole("ADMIN")
+                    .beforeData(toPartnerJson(p))
+                    .afterData(null)
+                    .description("Xóa đối tác liên minh: " + p.getPartnerName() + " (" + p.getPartnerCode() + ")")
+                    .status("SUCCESS")
+                    .build());
+        });
         return ResponseEntity.noContent().build();
     }
+
+    private String getActorUsername() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+                return auth.getName();
+            }
+        } catch (Exception ignored) {}
+        return "admin";
+    }
+
+    private String toPartnerJson(LoyaltyPartnerEntity p) {
+        if (p == null) return null;
+        return String.format(
+                "{\"partnerCode\":\"%s\",\"partnerName\":\"%s\",\"partnerType\":\"%s\",\"apiKey\":\"%s\",\"status\":\"%s\",\"webhookUrl\":\"%s\"}",
+                escapeJson(p.getPartnerCode()),
+                escapeJson(p.getPartnerName()),
+                p.getPartnerType() != null ? p.getPartnerType().name() : "RETAIL",
+                escapeJson(p.getApiKey()),
+                p.getStatus() != null ? p.getStatus().name() : "ACTIVE",
+                escapeJson(p.getWebhookUrl())
+        );
+    }
+
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
 
     private PartnerResponse mapToResponse(LoyaltyPartnerEntity p) {
         return PartnerResponse.builder()

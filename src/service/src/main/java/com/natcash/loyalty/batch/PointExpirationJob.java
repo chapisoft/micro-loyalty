@@ -25,7 +25,7 @@ import java.util.UUID;
 public class PointExpirationJob {
 
     private static final Logger log = LoggerFactory.getLogger(PointExpirationJob.class);
-    private static final String LOCK_KEY = "lock:batch:point-expiration";
+    private static final String LOCK_KEY = RedisKeys.LOCK_BATCH_POINT_EXPIRATION;
     private static final int BATCH_CHUNK_SIZE = 500;
 
     private final LoyaltyAccountRepository accountRepository;

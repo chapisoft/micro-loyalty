@@ -24,15 +24,22 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.natcash.loyalty.audit.event.AuditLogEvent;
+import com.natcash.loyalty.audit.service.SystemAuditLogService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @RestController
 @RequestMapping("/loyalty/v1/tiers")
 @Tag(name = "Tier Management API", description = "Quản lý Cấu Hình Phân Hạng Hội Viên")
 public class TierController {
 
     private final LoyaltyTierRepository tierRepository;
+    private final SystemAuditLogService auditLogService;
 
-    public TierController(LoyaltyTierRepository tierRepository) {
+    public TierController(LoyaltyTierRepository tierRepository, SystemAuditLogService auditLogService) {
         this.tierRepository = tierRepository;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping
@@ -64,8 +71,14 @@ public class TierController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
 
         LoyaltyTierEntity entity;
+        String beforeJson = null;
+        String operation = "INSERT";
         if (request.getId() != null) {
             entity = tierRepository.findById(request.getId()).orElse(new LoyaltyTierEntity());
+            if (entity.getId() != null) {
+                beforeJson = toTierJson(entity);
+                operation = "UPDATE";
+            }
         } else {
             entity = new LoyaltyTierEntity();
         }
@@ -82,6 +95,20 @@ public class TierController {
 
         LoyaltyTierEntity saved = tierRepository.save(entity);
 
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("TIER")
+                .tableName("loyalty_tiers")
+                .operation(operation)
+                .entityId(saved.getCode() != null ? saved.getCode().name() : "TIER_" + saved.getId())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(beforeJson)
+                .afterData(toTierJson(saved))
+                .description("Cập nhật cấu hình hạng hội viên: " + saved.getName())
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(TierResponse.builder()
                 .id(saved.getId())
                 .code(saved.getCode())
@@ -94,6 +121,30 @@ public class TierController {
                 .status(saved.getStatus())
                 .build());
     }
+
+    private String getActorUsername() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+                return auth.getName();
+            }
+        } catch (Exception ignored) {}
+        return "admin";
+    }
+
+    private String toTierJson(LoyaltyTierEntity t) {
+        if (t == null) return null;
+        return String.format(
+                "{\"code\":\"%s\",\"name\":\"%s\",\"tierLevel\":\"%s\",\"minPoints\":%s,\"pointMultiplier\":%s,\"status\":\"%s\"}",
+                t.getCode() != null ? t.getCode().name() : "",
+                t.getName() != null ? t.getName() : "",
+                t.getTierLevel() != null ? String.valueOf(t.getTierLevel()) : "1",
+                t.getMinPoints() != null ? t.getMinPoints().toString() : "0",
+                t.getPointMultiplier() != null ? t.getPointMultiplier().toString() : "1.0",
+                t.getStatus() != null ? t.getStatus().name() : "ACTIVE"
+        );
+    }
+
 
     @Data
     @Builder

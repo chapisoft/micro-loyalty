@@ -739,10 +739,10 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
                   ? 'bg-red-600 border-red-400 text-white animate-pulse shadow-md shadow-red-500/30'
                   : 'bg-slate-800 border-slate-700 text-slate-200 hover:text-white active:scale-95'
               }`}
-              title="Búa Phá Ốc"
+              title={t('games.screw.hammer_tooltip', { defaultValue: 'Búa Phá Ốc' })}
             >
               <Hammer className="w-3.5 h-3.5" />
-              <span>Búa</span>
+              <span>{t('games.screw.hammer_btn', { defaultValue: 'Búa' })}</span>
             </button>
 
             {/* Add Extra Hole */}
@@ -757,7 +757,7 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
               title={t('games.screw.btn_add_hole')}
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>+1 Lỗ</span>
+              <span>{t('games.screw.add_hole_btn', { defaultValue: '+1 Lỗ' })}</span>
             </button>
           </div>
         </div>
@@ -769,7 +769,7 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
 
           {/* Top Free Holes Tray Header */}
           <div className="absolute top-2 inset-x-2 h-12 bg-slate-950/70 backdrop-blur-md rounded-2xl border border-slate-800/80 flex items-center px-2 z-10">
-            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider mr-2">Hộp Ốc:</span>
+            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider mr-2">{t('games.screw.screw_box_label', { defaultValue: 'Hộp Ốc:' })}</span>
           </div>
 
           {/* 1. RENDER ALL HOLES (Free Holes on top & Board Holes) */}

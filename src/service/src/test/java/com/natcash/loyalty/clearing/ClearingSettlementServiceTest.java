@@ -17,6 +17,7 @@ import com.natcash.loyalty.outbox.service.OutboxService;
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerDisputeRequest;
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerDisputeResponse;
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerReconciliationRequest;
+import com.natcash.loyalty.clearing.repository.LoyaltyClearinghouseSettlementRepository;
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerReconciliationResponse;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
 import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
@@ -51,6 +52,9 @@ class ClearingSettlementServiceTest {
     private LoyaltyClearingDisputeRepository disputeRepository;
 
     @Mock
+    private LoyaltyClearinghouseSettlementRepository settlementRepository;
+
+    @Mock
     private OutboxService outboxService;
 
     private ClearingSettlementService clearingService;
@@ -63,6 +67,7 @@ class ClearingSettlementServiceTest {
                 clearingRepository,
                 partnerRepository,
                 disputeRepository,
+                settlementRepository,
                 outboxService
         );
 

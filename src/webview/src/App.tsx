@@ -735,12 +735,12 @@ export const App: React.FC = () => {
                       ⏳
                     </div>
                     <div className="text-xs">
-                      <span className="font-extrabold text-amber-950 block">150 điểm sẽ hết hạn vào 31/08/2026</span>
-                      <p className="text-[11px] text-amber-800">Đổi ngay phiếu quà tặng siêu thị hoặc gói data để không lãng phí điểm</p>
+                      <span className="font-extrabold text-amber-950 block">{t('home.points_expiration_warning', { count: 150, date: '31/08/2026', defaultValue: '150 điểm sẽ hết hạn vào 31/08/2026' })}</span>
+                      <p className="text-[11px] text-amber-800">{t('home.points_expiration_hint', { defaultValue: 'Đổi ngay phiếu quà tặng siêu thị hoặc gói data để không lãng phí điểm' })}</p>
                     </div>
                   </div>
                   <span className="text-[11px] font-black text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition shrink-0">
-                    Đổi quà →
+                    {t('home.redeem_now_btn', { defaultValue: 'Đổi quà →' })}
                   </span>
                 </div>
               </div>

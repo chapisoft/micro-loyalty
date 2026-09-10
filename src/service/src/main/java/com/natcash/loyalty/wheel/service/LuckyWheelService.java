@@ -2,6 +2,7 @@ package com.natcash.loyalty.wheel.service;
 
 import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
+import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.RedisKeys;
@@ -52,6 +53,7 @@ public class LuckyWheelService {
     private final AccountService accountService;
     private final LoyaltyAccountRepository accountRepository;
     private final LoyaltyPointLedgerRepository ledgerRepository;
+    private final LoyaltyPartnerRepository partnerRepository;
     private final DistributedLockHelper lockHelper;
     private final RedissonClient redissonClient;
 
@@ -59,6 +61,7 @@ public class LuckyWheelService {
                              LuckyWheelPrizeRepository prizeRepository,
                              AccountService accountService,
                              LoyaltyAccountRepository accountRepository,
+                             LoyaltyPartnerRepository partnerRepository,
                              LoyaltyPointLedgerRepository ledgerRepository,
                              DistributedLockHelper lockHelper,
                              RedissonClient redissonClient) {
@@ -66,6 +69,7 @@ public class LuckyWheelService {
         this.prizeRepository = prizeRepository;
         this.accountService = accountService;
         this.accountRepository = accountRepository;
+        this.partnerRepository = partnerRepository;
         this.ledgerRepository = ledgerRepository;
         this.lockHelper = lockHelper;
         this.redissonClient = redissonClient;
@@ -142,6 +146,7 @@ public class LuckyWheelService {
                 account.setCurrentPoints(currentPoints);
                 accountRepository.save(account);
 
+                Long defaultPartnerId = getDefaultPartnerId(tenantId);
                 String feeTx = "SPIN_FEE_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
                 LoyaltyPointLedgerEntity feeLedger = LoyaltyPointLedgerEntity.builder()
                         .tenantId(tenantId)
@@ -150,6 +155,7 @@ public class LuckyWheelService {
                         .balanceAfter(currentPoints)
                         .changeType(PointActionType.BURN)
                         .referenceCode(feeTx)
+                        .partnerId(defaultPartnerId)
                         .description("Phí tham gia vòng quay: " + wheel.getWheelName())
                         .createdAt(Instant.now())
                         .build();
@@ -246,14 +252,16 @@ public class LuckyWheelService {
                 account.setCurrentPoints(currentPoints);
                 accountRepository.save(account);
 
+                Long defaultPartnerId = getDefaultPartnerId(tenantId);
                 String rewardTx = "SPIN_REWARD_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
                 LoyaltyPointLedgerEntity rewardLedger = LoyaltyPointLedgerEntity.builder()
                         .tenantId(tenantId)
                         .account(account)
                         .pointChange(winningPrize.getPrizeValue())
                         .balanceAfter(currentPoints)
-                        .changeType(PointActionType.EARN)
+                        .changeType(PointActionType.SPIN)
                         .referenceCode(rewardTx)
+                        .partnerId(defaultPartnerId)
                         .description("Trúng thưởng vòng quay: " + winningPrize.getPrizeName())
                         .createdAt(Instant.now())
                         .build();
@@ -431,5 +439,14 @@ public class LuckyWheelService {
                 .totalProbability(100)
                 .message("Đã cân bằng tự động tổng xác suất 100% thành công")
                 .build();
+    }
+    private Long getDefaultPartnerId(String tenantId) {
+        if (partnerRepository == null) {
+            return null;
+        }
+        String defaultCode = "TENANT_MICRO_CRM".equalsIgnoreCase(tenantId) ? "DELIMART_RETAIL" : "NATCASH_WALLET";
+        return partnerRepository.findByTenantIdAndPartnerCode(tenantId, defaultCode)
+                .map(p -> p != null ? p.getId() : null)
+                .orElse(null);
     }
 }

@@ -23,15 +23,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import com.natcash.loyalty.audit.event.AuditLogEvent;
+import com.natcash.loyalty.audit.service.SystemAuditLogService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @RestController
 @RequestMapping("/loyalty/v1/vouchers")
 @Tag(name = "Voucher Management API", description = "Quản lý Phiếu Ưu Đãi & Kho Voucher Hội Viên")
 public class VoucherController {
 
     private final VoucherService voucherService;
+    private final SystemAuditLogService auditLogService;
 
-    public VoucherController(VoucherService voucherService) {
+    public VoucherController(VoucherService voucherService, SystemAuditLogService auditLogService) {
         this.voucherService = voucherService;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping
@@ -61,6 +68,21 @@ public class VoucherController {
             @RequestBody CreateVoucherRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         VoucherResponse response = voucherService.createVoucher(tenantId, request);
+
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("VOUCHER")
+                .tableName("loyalty_vouchers")
+                .operation("INSERT")
+                .entityId(response.getVoucherCode() != null ? response.getVoucherCode() : "VCH_" + response.getId())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(null)
+                .afterData(toVoucherJson(response))
+                .description("Tạo voucher mới: " + response.getTitle())
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(response);
     }
 
@@ -72,6 +94,21 @@ public class VoucherController {
             @RequestBody CreateVoucherRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         VoucherResponse response = voucherService.updateVoucher(tenantId, id, request);
+
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("VOUCHER")
+                .tableName("loyalty_vouchers")
+                .operation("UPDATE")
+                .entityId(response.getVoucherCode() != null ? response.getVoucherCode() : "VCH_" + response.getId())
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(null)
+                .afterData(toVoucherJson(response))
+                .description("Cập nhật thông tin voucher: " + response.getTitle())
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok(response);
     }
 
@@ -82,6 +119,21 @@ public class VoucherController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         voucherService.deleteVoucher(tenantId, id);
+
+        auditLogService.recordActionAsync(AuditLogEvent.builder()
+                .tenantId(tenantId)
+                .module("VOUCHER")
+                .tableName("loyalty_vouchers")
+                .operation("DELETE")
+                .entityId("VCH_" + id)
+                .actorUsername(getActorUsername())
+                .actorRole("ADMIN")
+                .beforeData(null)
+                .afterData(null)
+                .description("Xóa voucher ID #" + id)
+                .status("SUCCESS")
+                .build());
+
         return ResponseEntity.ok().build();
     }
 
@@ -103,5 +155,31 @@ public class VoucherController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         List<VoucherResponse> response = voucherService.batchImportVouchers(tenantId, requests);
         return ResponseEntity.ok(response);
+    }
+
+    private String getActorUsername() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+                return auth.getName();
+            }
+        } catch (Exception ignored) {}
+        return "admin";
+    }
+
+    private String toVoucherJson(VoucherResponse v) {
+        if (v == null) return null;
+        return String.format(
+                "{\"id\":%d,\"voucherCode\":\"%s\",\"title\":\"%s\",\"status\":\"%s\"}",
+                v.getId(),
+                escapeJson(v.getVoucherCode()),
+                escapeJson(v.getTitle()),
+                v.getStatus() != null ? v.getStatus().name() : "ACTIVE"
+        );
+    }
+
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

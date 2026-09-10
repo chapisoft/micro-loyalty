@@ -36,6 +36,9 @@ public class CampaignMilestoneEntity {
     @Column(name = "tenant_id", nullable = false, length = 50)
     private String tenantId;
 
+    @Column(name = "partner_id")
+    private Long partnerId;
+
     @Column(name = "campaign_code", nullable = false, length = 100)
     private String campaignCode;
 
