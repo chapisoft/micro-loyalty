@@ -37,19 +37,28 @@ pipeline {
                 script {
                     env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD 2>/dev/null || echo "latest"', returnStdout: true).trim()
                     echo "Branch: ${env.BRANCH_NAME} | Commit: ${env.IMAGE_TAG}"
+                    if (env.BRANCH_NAME != 'main') {
+                        echo "⚠️ Nhánh hiện tại [${env.BRANCH_NAME}] không phải là nhánh 'main'. Pipeline được cấu hình CHỈ THỰC THI CI/CD trên nhánh 'main'. Toàn bộ các bước đóng gói và triển khai sẽ được bỏ qua an toàn."
+                    }
                 }
             }
         }
 
         stage('1. 🛡️ Quality Gate & Security Check') {
+            when {
+                branch 'main'
+            }
             steps {
-                echo "Kiểm tra chất lượng mã nguồn và tiêu chuẩn bảo mật Micro-Loyalty..."
+                echo "Kiểm tra chất lượng mã nguồn và tiêu chuẩn bảo mật Micro-Loyalty trên nhánh main..."
             }
         }
 
         stage('2. ☕ Build Backend Service') {
             when {
-                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-service' }
+                allOf {
+                    branch 'main'
+                    expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-service' }
+                }
             }
             steps {
                 script {
@@ -67,7 +76,10 @@ pipeline {
 
         stage('3. 🖥️ Build CMS & Webview Frontend') {
             when {
-                expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms' || params.TARGET_SERVICE == 'loyalty-webview' }
+                allOf {
+                    branch 'main'
+                    expression { params.TARGET_SERVICE == 'all' || params.TARGET_SERVICE == 'loyalty-cms' || params.TARGET_SERVICE == 'loyalty-webview' }
+                }
             }
             steps {
                 script {
@@ -93,10 +105,7 @@ pipeline {
 
         stage('4. 🐳 Deploy & Rolling Update') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                }
+                branch 'main'
             }
             steps {
                 script {
@@ -124,10 +133,7 @@ pipeline {
 
         stage('5. 🔍 Health Check Verification') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                }
+                branch 'main'
             }
             steps {
                 script {
@@ -189,24 +195,27 @@ pipeline {
 // Helper: Direct Telegram Notification (Độc lập 100%, không phụ thuộc file workspace)
 // ──────────────────────────────────────────────────────────────────
 def sendTelegramAlert(String status, String extraInfo = '') {
+    def branch = env.BRANCH_NAME ?: 'unknown'
+    if (branch != 'main') {
+        echo "Bỏ qua gửi thông báo Telegram cho nhánh không phải main: ${branch}"
+        return
+    }
     def botToken  = '8694821173:AAFJ3XlvDpYRywzEiB54RSNjAdS62XPKZXA'
     def chatId    = '-5397937309'
-    def branch    = env.BRANCH_NAME ?: 'unknown'
     def buildNum  = env.BUILD_NUMBER ?: '0'
     def targetEnv = 'SaaS Multi-tenant'
     def commitTag = env.IMAGE_TAG ?: 'latest'
     def buildUrl  = env.BUILD_URL ?: 'http://jenkins.dip.io.vn/jenkins/job/Micro-Loyalty/'
     def duration  = currentBuild.durationString ?: ''
     
-    def isMainBranch = (branch == 'main' || branch == 'master')
     def icon = 'ℹ️'
-    def header = isMainBranch ? 'THÔNG BÁO TRIỂN KHAI' : 'THÔNG BÁO KIỂM TRA CI'
+    def header = 'THÔNG BÁO TRIỂN KHAI'
     if (status == 'SUCCESS') {
-        icon = isMainBranch ? '🎉' : '✅'
-        header = isMainBranch ? 'TRIỂN KHAI THÀNH CÔNG (CD)' : 'KIỂM TRA MÃ NGUỒN THÀNH CÔNG (CI PASS)'
+        icon = '🎉'
+        header = 'TRIỂN KHAI THÀNH CÔNG (CD)'
     } else if (status == 'FAILED') {
         icon = '🚨'
-        header = isMainBranch ? 'TRIỂN KHAI THẤT BẠI (CD)' : 'KIỂM TRA MÃ NGUỒN THẤT BẠI (CI FAIL)'
+        header = 'TRIỂN KHAI THẤT BẠI (CD)'
     } else if (status == 'UNSTABLE') {
         icon = '⚠️'
         header = 'CẢNH BÁO HEALTH CHECK'
