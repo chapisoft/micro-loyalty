@@ -133,12 +133,23 @@ public class PolicyController {
                     .maxBurnPercentage(request.getMaxBurnPercentage() != null ? request.getMaxBurnPercentage() : new BigDecimal("50.00"))
                     .minBurnPoints(request.getMinBillAmount() != null ? request.getMinBillAmount() : BigDecimal.TEN)
                     .maxBurnPointsPerDay(new BigDecimal("10000.00"))
+                    .maxBurnPointsPerTx(request.getMaxBurnPointsPerTx() != null ? request.getMaxBurnPointsPerTx() : new BigDecimal("5000.00"))
+                    .commissionRatePercent(request.getCommissionRatePercent() != null ? request.getCommissionRatePercent() : BigDecimal.ZERO)
+                    .fixedFeePerTx(request.getFixedFeePerTx() != null ? request.getFixedFeePerTx() : BigDecimal.ZERO)
+                    .settlementCreditLimit(request.getSettlementCreditLimit() != null ? request.getSettlementCreditLimit() : new BigDecimal("500000.00"))
+                    .settlementCycle(request.getSettlementCycle() != null ? com.natcash.loyalty.domain.enums.SettlementCycle.fromCode(request.getSettlementCycle()) : com.natcash.loyalty.domain.enums.SettlementCycle.DAILY)
                     .allowedPointTypes("ALL")
                     .status(request.getStatus() != null ? request.getStatus() : CommonStatus.ACTIVE)
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
                     .build();
         }
+
+        if (request.getCommissionRatePercent() != null) entity.setCommissionRatePercent(request.getCommissionRatePercent());
+        if (request.getFixedFeePerTx() != null) entity.setFixedFeePerTx(request.getFixedFeePerTx());
+        if (request.getMaxBurnPointsPerTx() != null) entity.setMaxBurnPointsPerTx(request.getMaxBurnPointsPerTx());
+        if (request.getSettlementCreditLimit() != null) entity.setSettlementCreditLimit(request.getSettlementCreditLimit());
+        if (request.getSettlementCycle() != null) entity.setSettlementCycle(com.natcash.loyalty.domain.enums.SettlementCycle.fromCode(request.getSettlementCycle()));
 
         LoyaltyAcceptancePolicyEntity saved = policyRepository.save(entity);
         return ResponseEntity.ok(mapEntityToResponse(saved));
@@ -164,6 +175,21 @@ public class PolicyController {
         }
         if (request.getMinBillAmount() != null) {
             entity.setMinBurnPoints(request.getMinBillAmount());
+        }
+        if (request.getCommissionRatePercent() != null) {
+            entity.setCommissionRatePercent(request.getCommissionRatePercent());
+        }
+        if (request.getFixedFeePerTx() != null) {
+            entity.setFixedFeePerTx(request.getFixedFeePerTx());
+        }
+        if (request.getMaxBurnPointsPerTx() != null) {
+            entity.setMaxBurnPointsPerTx(request.getMaxBurnPointsPerTx());
+        }
+        if (request.getSettlementCreditLimit() != null) {
+            entity.setSettlementCreditLimit(request.getSettlementCreditLimit());
+        }
+        if (request.getSettlementCycle() != null) {
+            entity.setSettlementCycle(com.natcash.loyalty.domain.enums.SettlementCycle.fromCode(request.getSettlementCycle()));
         }
         if (request.getStatus() != null) {
             entity.setStatus(request.getStatus());
@@ -206,6 +232,11 @@ public class PolicyController {
                 .exchangeRate(entity.getPointExchangeRate() != null ? entity.getPointExchangeRate() : BigDecimal.ONE)
                 .minBillAmount(entity.getMinBurnPoints() != null ? entity.getMinBurnPoints() : BigDecimal.TEN)
                 .maxBurnPercentage(entity.getMaxBurnPercentage() != null ? entity.getMaxBurnPercentage() : new BigDecimal("50.00"))
+                .commissionRatePercent(entity.getCommissionRatePercent() != null ? entity.getCommissionRatePercent() : BigDecimal.ZERO)
+                .fixedFeePerTx(entity.getFixedFeePerTx() != null ? entity.getFixedFeePerTx() : BigDecimal.ZERO)
+                .maxBurnPointsPerTx(entity.getMaxBurnPointsPerTx() != null ? entity.getMaxBurnPointsPerTx() : new BigDecimal("5000.00"))
+                .settlementCreditLimit(entity.getSettlementCreditLimit() != null ? entity.getSettlementCreditLimit() : new BigDecimal("500000.00"))
+                .settlementCycle(entity.getSettlementCycle() != null ? entity.getSettlementCycle().getCode() : "DAILY")
                 .status(entity.getStatus() != null ? entity.getStatus() : CommonStatus.ACTIVE)
                 .description(entity.getMaxBurnPercentage() != null ? "Quy định khấu trừ tối đa " + entity.getMaxBurnPercentage() + "% hóa đơn" : "Chính sách điểm")
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : Instant.now().toString())
@@ -219,20 +250,11 @@ public class PolicyController {
             partners = new ArrayList<>();
             partners.add(partnerRepository.save(LoyaltyPartnerEntity.builder()
                     .tenantId(tenantId)
-                    .partnerCode("DELIMART_RETAIL")
-                    .partnerName("Hệ Thống Siêu Thị Delimart")
+                    .partnerCode("DELIMART")
+                    .partnerName("Siêu Thị Delimart")
                     .partnerType(PartnerType.RETAIL)
-                    .apiKey("pk_live_delimart_" + System.currentTimeMillis())
-                    .secretKey("sk_live_delimart_secret")
-                    .status(CommonStatus.ACTIVE)
-                    .build()));
-            partners.add(partnerRepository.save(LoyaltyPartnerEntity.builder()
-                    .tenantId(tenantId)
-                    .partnerCode("NATCOM_TELCO")
-                    .partnerName("Tổng Công Ty Viễn Thông Natcom")
-                    .partnerType(PartnerType.TELECOM)
-                    .apiKey("pk_live_natcom_" + System.currentTimeMillis())
-                    .secretKey("sk_live_natcom_secret")
+                    .apiKey("API_KEY_DELIMART_" + System.currentTimeMillis())
+                    .secretKey("SEC_KEY_DELIMART_" + System.currentTimeMillis())
                     .status(CommonStatus.ACTIVE)
                     .build()));
         }
@@ -241,14 +263,18 @@ public class PolicyController {
         for (LoyaltyPartnerEntity partner : partners) {
             Optional<LoyaltyAcceptancePolicyEntity> exist = policyRepository.findByTenantIdAndPartnerId(tenantId, partner.getId());
             if (exist.isEmpty()) {
-                BigDecimal maxBurn = "NATCOM_TELCO".equalsIgnoreCase(partner.getPartnerCode()) ? new BigDecimal("100.00") : new BigDecimal("50.00");
                 defaults.add(LoyaltyAcceptancePolicyEntity.builder()
                         .tenantId(tenantId)
                         .partner(partner)
                         .pointExchangeRate(BigDecimal.ONE)
-                        .maxBurnPercentage(maxBurn)
+                        .maxBurnPercentage(new BigDecimal("50.00"))
                         .minBurnPoints(new BigDecimal("10.00"))
                         .maxBurnPointsPerDay(new BigDecimal("10000.00"))
+                        .maxBurnPointsPerTx(new BigDecimal("5000.00"))
+                        .commissionRatePercent(new BigDecimal("1.50"))
+                        .fixedFeePerTx(BigDecimal.ZERO)
+                        .settlementCreditLimit(new BigDecimal("500000.00"))
+                        .settlementCycle(com.natcash.loyalty.domain.enums.SettlementCycle.DAILY)
                         .allowedPointTypes("ALL")
                         .status(CommonStatus.ACTIVE)
                         .createdAt(Instant.now())
@@ -274,6 +300,11 @@ public class PolicyController {
         private BigDecimal exchangeRate;
         private BigDecimal minBillAmount;
         private BigDecimal maxBurnPercentage;
+        private BigDecimal commissionRatePercent;
+        private BigDecimal fixedFeePerTx;
+        private BigDecimal maxBurnPointsPerTx;
+        private BigDecimal settlementCreditLimit;
+        private String settlementCycle;
         private CommonStatus status;
         private String description;
     }
@@ -294,6 +325,11 @@ public class PolicyController {
         private BigDecimal exchangeRate;
         private BigDecimal minBillAmount;
         private BigDecimal maxBurnPercentage;
+        private BigDecimal commissionRatePercent;
+        private BigDecimal fixedFeePerTx;
+        private BigDecimal maxBurnPointsPerTx;
+        private BigDecimal settlementCreditLimit;
+        private String settlementCycle;
         private CommonStatus status;
         private String description;
         private String createdAt;

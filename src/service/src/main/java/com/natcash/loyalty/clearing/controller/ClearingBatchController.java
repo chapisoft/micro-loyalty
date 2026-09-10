@@ -1,7 +1,9 @@
 package com.natcash.loyalty.clearing.controller;
 
+import com.natcash.loyalty.clearing.dto.ClearingDto.DisputeItemDto;
 import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportResponse;
+import com.natcash.loyalty.clearing.dto.ClearingDto.ResolveDisputeRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodResponse;
 import com.natcash.loyalty.clearing.service.ClearingSettlementService;
@@ -11,11 +13,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/loyalty/v1/clearinghouse")
@@ -46,5 +52,25 @@ public class ClearingBatchController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         SettlePeriodResponse response = clearingService.settlePeriod(tenantId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/disputes")
+    @Operation(summary = "Danh sách khiếu nại sai lệch đối soát", description = "Lấy toàn bộ các trường hợp lệch đối soát được đối tác gửi lên")
+    public ResponseEntity<List<DisputeItemDto>> getDisputes(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        List<DisputeItemDto> disputes = clearingService.getDisputes(tenantId);
+        return ResponseEntity.ok(disputes);
+    }
+
+    @PostMapping("/disputes/{disputeCode}/resolve")
+    @Operation(summary = "Xử lý kết luận khiếu nại sai lệch", description = "Cập nhật kết quả giải quyết khiếu nại đối soát")
+    public ResponseEntity<DisputeItemDto> resolveDispute(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("disputeCode") String disputeCode,
+            @Valid @RequestBody ResolveDisputeRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        DisputeItemDto result = clearingService.resolveDispute(tenantId, disputeCode, request);
+        return ResponseEntity.ok(result);
     }
 }

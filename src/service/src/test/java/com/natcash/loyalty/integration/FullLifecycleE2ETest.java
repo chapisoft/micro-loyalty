@@ -14,6 +14,7 @@ import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportResponse;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodResponse;
+import com.natcash.loyalty.clearing.repository.LoyaltyClearingDisputeRepository;
 import com.natcash.loyalty.clearing.service.ClearingSettlementService;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.CommonStatus;
@@ -22,6 +23,7 @@ import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.lock.DistributedLockHelper;
+import com.natcash.loyalty.outbox.service.OutboxService;
 import com.natcash.loyalty.stream.LoyaltyStreamProducer;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
 import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
@@ -64,6 +66,10 @@ class FullLifecycleE2ETest {
     @Mock
     private LoyaltyPartnerRepository partnerRepository;
     @Mock
+    private LoyaltyClearingDisputeRepository disputeRepository;
+    @Mock
+    private OutboxService outboxService;
+    @Mock
     private ClearingTransactionRepository clearingRepository;
     @Mock
     private LoyaltyStreamProducer streamProducer;
@@ -94,7 +100,7 @@ class FullLifecycleE2ETest {
         };
 
         accountService = new AccountService(accountRepository, tierRepository, streamProducer);
-        clearingService = new ClearingSettlementService(clearingRepository, partnerRepository);
+        clearingService = new ClearingSettlementService(clearingRepository, partnerRepository, disputeRepository, outboxService);
         pointExpirationJob = new PointExpirationJob(accountRepository, ledgerRepository, lockHelper);
     }
 

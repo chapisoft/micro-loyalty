@@ -68,6 +68,27 @@ public class LoyaltyAcceptancePolicyEntity {
     @Builder.Default
     private String allowedPointTypes = "ALL";
 
+    @Column(name = "commission_rate_percent", nullable = false, precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal commissionRatePercent = BigDecimal.ZERO;
+
+    @Column(name = "fixed_fee_per_tx", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal fixedFeePerTx = BigDecimal.ZERO;
+
+    @Column(name = "max_burn_points_per_tx", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal maxBurnPointsPerTx = new BigDecimal("5000.00");
+
+    @Column(name = "settlement_credit_limit", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal settlementCreditLimit = new BigDecimal("500000.00");
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "settlement_cycle", nullable = false, length = 20)
+    @Builder.Default
+    private com.natcash.loyalty.domain.enums.SettlementCycle settlementCycle = com.natcash.loyalty.domain.enums.SettlementCycle.DAILY;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default

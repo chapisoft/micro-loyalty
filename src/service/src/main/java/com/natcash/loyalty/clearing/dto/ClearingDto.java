@@ -41,12 +41,14 @@ public final class ClearingDto {
         private static final long serialVersionUID = 1L;
 
         private Long partnerId;
+        private String partnerCode;
         private String partnerName;
         private long totalTransactions;
         private BigDecimal totalPointsIssued;
         private BigDecimal totalPointsRedeemed;
         private BigDecimal totalFiatPayable;
         private BigDecimal totalFiatReceivable;
+        private BigDecimal totalCommissionFee;
         private BigDecimal netSettlementAmount; // Dư nợ ròng (+ phải thu, - phải trả)
         private ClearingStatus status;
     }
@@ -63,6 +65,8 @@ public final class ClearingDto {
         private long grandTotalTransactions;
         private BigDecimal grandTotalPointsRedeemed;
         private BigDecimal grandTotalFiatAmount;
+        private BigDecimal grandTotalCommissionFee;
+        private BigDecimal grandTotalNetSettlement;
         private List<PartnerClearingSummaryDto> partnerSummaries;
         private Instant generatedAt;
     }
@@ -80,6 +84,7 @@ public final class ClearingDto {
         @NotNull(message = "Thời gian kết thúc không được để trống")
         private Instant toDate;
 
+        private Long partnerId;
         private String remarks;
     }
 
@@ -93,8 +98,46 @@ public final class ClearingDto {
         private String settlementBatchCode;
         private int settledTransactionCount;
         private BigDecimal totalSettledAmount;
+        private BigDecimal totalCommissionFee;
+        private BigDecimal totalNetPayout;
         private ClearingStatus status;
         private String message;
         private Instant settledAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DisputeItemDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private Long id;
+        private String disputeCode;
+        private String batchCode;
+        private Long partnerId;
+        private String partnerName;
+        private String disputeType;
+        private BigDecimal partnerAmount;
+        private BigDecimal loyaltyAmount;
+        private BigDecimal resolvedAmount;
+        private String status;
+        private String resolutionNote;
+        private Instant createdAt;
+        private Instant resolvedAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ResolveDisputeRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @NotNull(message = "Trạng thái xử lý không được để trống")
+        private String status; // RESOLVED, REJECTED
+
+        private BigDecimal resolvedAmount;
+        private String note;
     }
 }

@@ -28,6 +28,11 @@ export interface PolicyRuleModel {
   exchangeRate?: number;
   maxBurnPercent?: number;
   maxBurnPercentage?: number;
+  commissionRatePercent?: number;
+  fixedFeePerTx?: number;
+  maxBurnPointsPerTx?: number;
+  settlementCreditLimit?: number;
+  settlementCycle?: string;
   minBillAmount: number;
   status: string;
   effectiveDate?: string;
@@ -95,12 +100,14 @@ export interface PointLedgerItem {
 
 export interface ClearingSummaryModel {
   partnerId: number;
+  partnerCode?: string;
   partnerName: string;
   totalTransactions: number;
   totalPointsIssued: number;
   totalPointsRedeemed: number;
   totalFiatPayable: number;
   totalFiatReceivable: number;
+  totalCommissionFee?: number;
   netSettlementAmount: number;
   status: string;
 }
@@ -111,8 +118,26 @@ export interface ClearingReportModel {
   grandTotalTransactions: number;
   grandTotalPointsRedeemed: number;
   grandTotalFiatAmount: number;
+  grandTotalCommissionFee?: number;
+  grandTotalNetSettlement?: number;
   partnerSummaries: ClearingSummaryModel[];
   generatedAt: string;
+}
+
+export interface DisputeItemModel {
+  id: number;
+  disputeCode: string;
+  batchCode: string;
+  partnerId: number;
+  partnerName: string;
+  disputeType: string;
+  partnerAmount: number;
+  loyaltyAmount: number;
+  resolvedAmount: number;
+  status: string;
+  resolutionNote?: string;
+  createdAt: string;
+  resolvedAt?: string;
 }
 
 export const LoyaltyService = {
@@ -389,6 +414,29 @@ export const LoyaltyService = {
     const response: any = await apiClient.post(
       '/loyalty/v1/clearinghouse/settle-period',
       { fromDate: from, toDate: to, remarks: remarks || 'Quyết toán bù trừ định kỳ' },
+      { headers: { 'X-Tenant-Id': tenantId } }
+    );
+    return response?.data || response;
+  },
+
+  async getDisputes(tenantId: string = 'TENANT_NATCASH'): Promise<DisputeItemModel[]> {
+    try {
+      const response: any = await apiClient.get('/loyalty/v1/clearinghouse/disputes', {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
+    } catch (e) {
+      console.error('[getDisputes] Error:', e);
+      return [];
+    }
+  },
+
+  async resolveDispute(disputeCode: string, status: string, resolvedAmount?: number, note?: string, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    const response: any = await apiClient.post(
+      `/loyalty/v1/clearinghouse/disputes/${disputeCode}/resolve`,
+      { status, resolvedAmount, note },
       { headers: { 'X-Tenant-Id': tenantId } }
     );
     return response?.data || response;

@@ -56,6 +56,31 @@ public class ClearingTransactionEntity {
     @Builder.Default
     private BigDecimal exchangeRate = BigDecimal.ONE;
 
+    @Column(name = "partner_order_id", length = 100)
+    private String partnerOrderId;
+
+    @Column(name = "hold_code", length = 100)
+    private String holdCode;
+
+    @Column(name = "commission_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal commissionAmount = BigDecimal.ZERO;
+
+    @Column(name = "net_payout_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal netPayoutAmount = BigDecimal.ZERO;
+
+    @Column(name = "reconciliation_batch_code", length = 100)
+    private String reconciliationBatchCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reconciliation_status", nullable = false, length = 30)
+    @Builder.Default
+    private com.natcash.loyalty.domain.enums.ReconciliationStatus reconciliationStatus = com.natcash.loyalty.domain.enums.ReconciliationStatus.UNMATCHED;
+
+    @Column(name = "dispute_reason", columnDefinition = "TEXT")
+    private String disputeReason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
@@ -77,6 +102,15 @@ public class ClearingTransactionEntity {
         }
         if (this.exchangeRate == null) {
             this.exchangeRate = BigDecimal.ONE;
+        }
+        if (this.commissionAmount == null) {
+            this.commissionAmount = BigDecimal.ZERO;
+        }
+        if (this.netPayoutAmount == null) {
+            this.netPayoutAmount = this.fiatAmount != null ? this.fiatAmount.subtract(this.commissionAmount) : BigDecimal.ZERO;
+        }
+        if (this.reconciliationStatus == null) {
+            this.reconciliationStatus = com.natcash.loyalty.domain.enums.ReconciliationStatus.UNMATCHED;
         }
     }
 }
