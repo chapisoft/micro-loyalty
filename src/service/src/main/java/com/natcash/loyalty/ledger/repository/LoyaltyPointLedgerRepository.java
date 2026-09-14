@@ -47,10 +47,10 @@ public interface LoyaltyPointLedgerRepository extends JpaRepository<LoyaltyPoint
 
     long countByTenantId(String tenantId);
 
-    @Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType IN (com.natcash.loyalty.domain.enums.PointActionType.EARN, com.natcash.loyalty.domain.enums.PointActionType.ADJUST, com.natcash.loyalty.domain.enums.PointActionType.CASHBACK, com.natcash.loyalty.domain.enums.PointActionType.SPIN, com.natcash.loyalty.domain.enums.PointActionType.REWARD)")
+    @Query("SELECT COALESCE(SUM(CASE WHEN l.pointChange > 0 THEN l.pointChange ELSE 0 END), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId")
     BigDecimal sumEarnedPoints(@Param("tenantId") String tenantId);
 
-    @Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType IN (com.natcash.loyalty.domain.enums.PointActionType.BURN, com.natcash.loyalty.domain.enums.PointActionType.EXPIRE, com.natcash.loyalty.domain.enums.PointActionType.REVERSAL)")
+    @Query("SELECT COALESCE(SUM(CASE WHEN l.pointChange < 0 THEN ABS(l.pointChange) ELSE 0 END), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId")
     BigDecimal sumBurnedPoints(@Param("tenantId") String tenantId);
 
     @Query(value = "SELECT TO_CHAR(l.created_at, 'YYYY-MM-DD') AS day, " +
