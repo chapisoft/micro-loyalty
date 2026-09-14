@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Copy, Check, QrCode, Barcode, MapPin, Calendar, AlertCircle } from 'lucide-react';
 import { generateBarcode128Svg } from '../utils/barcode128';
+import { generateQrCodeSvg } from '../utils/qrcode';
 import { soundHaptics } from '../utils/soundHaptics';
 
 interface VoucherBarcodeModalProps {
@@ -111,15 +112,12 @@ export const VoucherBarcodeModal: React.FC<VoucherBarcodeModalProps> = ({
               dangerouslySetInnerHTML={{ __html: barcodeSvg }}
             />
           ) : (
-            <div className="w-40 h-40 bg-white border border-slate-200 rounded-2xl p-2 flex items-center justify-center shadow-xs">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-                  voucher.voucherCode
-                )}`}
-                alt="Voucher QR Code"
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <div
+              className="w-44 h-44 bg-white border border-slate-200 rounded-2xl p-2 flex items-center justify-center shadow-xs"
+              dangerouslySetInnerHTML={{
+                __html: generateQrCodeSvg(voucher.voucherCode, 160),
+              }}
+            />
           )}
 
           {/* Raw Code string with Copy Button */}

@@ -47,11 +47,21 @@ public interface LoyaltyPointLedgerRepository extends JpaRepository<LoyaltyPoint
 
     long countByTenantId(String tenantId);
 
-    @Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType IN (com.natcash.loyalty.domain.enums.PointActionType.EARN, com.natcash.loyalty.domain.enums.PointActionType.ADJUST, com.natcash.loyalty.domain.enums.PointActionType.CASHBACK)")
+    @Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType IN (com.natcash.loyalty.domain.enums.PointActionType.EARN, com.natcash.loyalty.domain.enums.PointActionType.ADJUST, com.natcash.loyalty.domain.enums.PointActionType.CASHBACK, com.natcash.loyalty.domain.enums.PointActionType.SPIN, com.natcash.loyalty.domain.enums.PointActionType.REWARD)")
     BigDecimal sumEarnedPoints(@Param("tenantId") String tenantId);
 
-    @Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType = com.natcash.loyalty.domain.enums.PointActionType.BURN")
+    @Query("SELECT COALESCE(SUM(l.pointChange), 0) FROM LoyaltyPointLedgerEntity l WHERE l.tenantId = :tenantId AND l.changeType IN (com.natcash.loyalty.domain.enums.PointActionType.BURN, com.natcash.loyalty.domain.enums.PointActionType.EXPIRE, com.natcash.loyalty.domain.enums.PointActionType.REVERSAL)")
     BigDecimal sumBurnedPoints(@Param("tenantId") String tenantId);
+
+    @Query(value = "SELECT TO_CHAR(l.created_at, 'YYYY-MM-DD') AS day, " +
+                   "COALESCE(SUM(CASE WHEN l.point_change > 0 THEN l.point_change ELSE 0 END), 0) AS earned, " +
+                   "COALESCE(SUM(CASE WHEN l.point_change < 0 THEN ABS(l.point_change) ELSE 0 END), 0) AS burned, " +
+                   "COUNT(l.id) AS tx_count " +
+                   "FROM loyalty_point_ledger l " +
+                   "WHERE l.tenant_id = :tenantId AND l.created_at >= :since " +
+                   "GROUP BY TO_CHAR(l.created_at, 'YYYY-MM-DD') " +
+                   "ORDER BY day ASC", nativeQuery = true)
+    List<Object[]> getPointTrendsRaw(@Param("tenantId") String tenantId, @Param("since") Instant since);
 
     List<LoyaltyPointLedgerEntity> findTop500ByChangeTypeInAndExpiredAtBeforeAndExpiredAtIsNotNullOrderByIdAsc(
             Collection<PointActionType> changeTypes, Instant now);

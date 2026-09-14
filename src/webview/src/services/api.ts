@@ -4,18 +4,23 @@
  */
 
 const getApiBaseUrl = (): string => {
+  const runtimeApi = (window as any).__RUNTIME_CONFIG__?.API_URL || (window as any).__RUNTIME_CONFIG__?.API_BASE_URL;
+  if (runtimeApi) return runtimeApi;
+  const envApi = (import.meta as any).env?.VITE_API_URL;
+  if (envApi) return envApi;
+
   const hostname = window.location.hostname;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
   const origin = window.location.origin;
   const protocol = window.location.protocol;
 
   if (isLocal) {
-    return 'http://localhost:8088';
+    return 'http://localhost:8080/loyalty-service';
   }
   if (hostname.includes('portal.mid.io.vn') || hostname.includes('mid.io.vn')) {
     return `${protocol}//api.mid.io.vn`;
   }
-  return `${origin}/loyalty`;
+  return `${origin}/loyalty-service`;
 };
 
 export const getTenantId = (): string => {
@@ -258,52 +263,28 @@ export const LoyaltyApi = {
     const tenant = getTenantId();
     const effectiveWheelCode = wheelCode || (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
     const today = new Date().toISOString().slice(0, 10);
-    try {
-      const res = await fetch(`${API_BASE}/loyalty/v1/luckydraw/spin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-Id': tenant,
-        },
-        body: JSON.stringify({ externalUserId, usePoints, wheelCode: effectiveWheelCode }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.newPointBalance !== undefined) {
-          localStorage.setItem(`loyalty_points_${externalUserId}`, String(data.newPointBalance));
-        }
-        if (data.remainingSpinsToday !== undefined) {
-          localStorage.setItem(`loyalty_wheel_turns_${externalUserId}_${today}`, String(data.remainingSpinsToday));
-        }
-        return data;
-      }
-    } catch {
-      // Fallback
+    const res = await fetch(`${API_BASE}/loyalty/v1/luckydraw/spin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({ externalUserId, usePoints, wheelCode: effectiveWheelCode }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(errorData?.message || 'Lỗi hệ thống khi quay thưởng. Vui lòng thử lại!');
     }
 
-    // Client-side fallback with persistent balance and turns
-    const currentSaved = Number(localStorage.getItem(`loyalty_points_${externalUserId}`)) || 2480;
-    const savedTurns = localStorage.getItem(`loyalty_wheel_turns_${externalUserId}_${today}`);
-    const currentTurns = savedTurns !== null ? Number(savedTurns) : 2;
-    const remainingTurns = Math.max(0, currentTurns - 1);
-    localStorage.setItem(`loyalty_wheel_turns_${externalUserId}_${today}`, String(remainingTurns));
-
-    const wonPoints = 100;
-    const updatedBalance = currentSaved + wonPoints;
-    localStorage.setItem(`loyalty_points_${externalUserId}`, String(updatedBalance));
-
-    return {
-      prizeId: 1,
-      prizeName: '100 Điểm Thưởng',
-      prizeType: 'POINTS',
-      prizeValue: wonPoints,
-      winningIndex: 0,
-      winningAngle: 180,
-      newPointBalance: updatedBalance,
-      remainingSpinsToday: remainingTurns,
-      message: 'Chúc mừng bạn đã trúng 100 Điểm Thưởng!',
-      timestamp: new Date().toISOString(),
-    };
+    const data = await res.json();
+    if (data.newPointBalance !== undefined) {
+      localStorage.setItem(`loyalty_points_${externalUserId}`, String(data.newPointBalance));
+    }
+    if (data.remainingSpinsToday !== undefined) {
+      localStorage.setItem(`loyalty_wheel_turns_${externalUserId}_${today}`, String(data.remainingSpinsToday));
+    }
+    return data;
   },
 
   // 6. Lấy kho voucher của người dùng
@@ -312,6 +293,53 @@ export const LoyaltyApi = {
       headers: { 'X-Tenant-Id': getTenantId() },
     });
     if (!res.ok) throw new Error('Không thể tải kho voucher');
+    return res.json();
+  },
+
+  // 6.1. Lấy danh sách tất cả voucher khả dụng (Catalog) để đổi điểm
+  async getAllVouchersCatalog(): Promise<any[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers`, {
+      headers: { 'X-Tenant-Id': getTenantId() },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  // 6.2. Đổi điểm lấy voucher đối tác
+  async redeemVoucher(voucherCode: string, externalUserId: string = getDefaultUserId()): Promise<UserVoucherItem> {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/redeem`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({
+        externalUserId,
+        voucherCode,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.message || 'Không thể đổi phiếu ưu đãi. Vui lòng kiểm tra lại số dư điểm!');
+    }
+    return res.json();
+  },
+
+  // 6.3. Sinh mã Dynamic QR TOTP Ví Phần Thưởng 60s tại quầy POS
+  async generateDynamicQr(externalUserId: string = getDefaultUserId()): Promise<{ qrToken: string; expiresInSeconds: number }> {
+    const tenant = getTenantId();
+    const res = await fetch(`${API_BASE}/loyalty/v1/reward-wallet/qr/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Id': tenant,
+      },
+      body: JSON.stringify({ externalUserId }),
+    });
+    if (!res.ok) {
+      throw new Error('Không thể sinh mã QR động Ví phần thưởng');
+    }
     return res.json();
   },
 
@@ -336,7 +364,7 @@ export const LoyaltyApi = {
   // 9. Khởi tạo phiên chơi minigame
   async initGameSession(gameCode: string, externalUserId: string = getDefaultUserId()): Promise<GameSessionData> {
     const tenant = getTenantId();
-    const res = await fetch(`${API_BASE}/gamehub/v1/games/init-session`, {
+    const res = await fetch(`${API_BASE}/gamehub/v1/session/init`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -347,18 +375,44 @@ export const LoyaltyApi = {
         gameCode,
       }),
     });
-    if (!res.ok) throw new Error('Không thể khởi tạo phiên chơi');
+    if (!res.ok) {
+      // Trả về token fallback nếu chưa nạp được để không gián đoạn trải nghiệm người chơi
+      return {
+        sessionToken: `GS_${gameCode}_${Date.now()}`,
+        expiresAt: new Date(Date.now() + 1800000).toISOString(),
+      };
+    }
     return res.json();
   },
 
   // 10. Ghi nhận kết quả lượt chơi minigame (Tích điểm vào sổ cái DB)
   async submitGameResult(
-    gameCode: string,
-    score: number,
-    externalUserId: string = getDefaultUserId(),
-    sessionToken?: string,
-    details?: string
+    param1: string | { gameCode: string; score?: number; externalUserId?: string; sessionToken?: string; details?: string },
+    scoreParam?: number,
+    externalUserIdParam?: string,
+    sessionTokenParam?: string,
+    detailsParam?: string
   ) {
+    let gameCode: string;
+    let score: number = 0;
+    let externalUserId: string = getDefaultUserId();
+    let sessionToken: string | undefined;
+    let details: string | undefined;
+
+    if (typeof param1 === 'object') {
+      gameCode = param1.gameCode;
+      score = param1.score ?? 0;
+      externalUserId = param1.externalUserId || getDefaultUserId();
+      sessionToken = param1.sessionToken;
+      details = param1.details;
+    } else {
+      gameCode = param1;
+      score = scoreParam ?? 0;
+      externalUserId = externalUserIdParam || getDefaultUserId();
+      sessionToken = sessionTokenParam;
+      details = detailsParam;
+    }
+
     const tenant = getTenantId();
     try {
       const res = await fetch(`${API_BASE}/gamehub/v1/games/submit-result`, {
@@ -403,7 +457,33 @@ export const LoyaltyApi = {
   },
 
   // 11. Mua thêm lượt chơi trong game bằng Điểm
-  async inGameCheckout(gameCode: string, sessionToken: string, turnsToBuy: number = 1, paymentAmount: number = 10, externalUserId: string = getDefaultUserId()) {
+  async inGameCheckout(
+    param1: string | { gameCode: string; sessionToken?: string; itemType?: string; amount?: number; turnsToBuy?: number; paymentAmount?: number; externalUserId?: string },
+    sessionTokenParam?: string,
+    turnsToBuyParam: number = 1,
+    paymentAmountParam: number = 10,
+    externalUserIdParam: string = getDefaultUserId()
+  ) {
+    let gameCode: string;
+    let sessionToken: string = '';
+    let turnsToBuy: number = 1;
+    let paymentAmount: number = 10;
+    let externalUserId: string = getDefaultUserId();
+
+    if (typeof param1 === 'object') {
+      gameCode = param1.gameCode;
+      sessionToken = param1.sessionToken || '';
+      turnsToBuy = param1.turnsToBuy ?? (param1.itemType === 'TURN_TRIPLE' ? 3 : 1);
+      paymentAmount = param1.paymentAmount ?? param1.amount ?? 10;
+      externalUserId = param1.externalUserId || getDefaultUserId();
+    } else {
+      gameCode = param1;
+      sessionToken = sessionTokenParam || '';
+      turnsToBuy = turnsToBuyParam;
+      paymentAmount = paymentAmountParam;
+      externalUserId = externalUserIdParam;
+    }
+
     const tenant = getTenantId();
     const res = await fetch(`${API_BASE}/gamehub/v1/billing/in-game-checkout`, {
       method: 'POST',
@@ -638,6 +718,8 @@ export const LoyaltyApi = {
     };
   },
 };
+
+export const loyaltyApi = LoyaltyApi;
 
 export interface GamePrizeItem {
   id: number;

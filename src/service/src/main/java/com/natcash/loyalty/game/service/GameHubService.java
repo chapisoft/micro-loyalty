@@ -214,6 +214,13 @@ public class GameHubService {
                     .orElse(BigDecimal.ZERO);
         }
 
+        Instant startOfDay = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        long turnsPlayedToday = (userId != null && !userId.isBlank())
+                ? historyRepository.countPlayedToday(tenantId, userId, game.getGameCode(), startOfDay)
+                : 0L;
+        int dailyFree = game.getFreeTurnsDaily() != null ? game.getFreeTurnsDaily() : 1;
+        int remainingTurnsToday = Math.max(0, dailyFree - (int) turnsPlayedToday);
+
         Map<String, Object> params = parseGameParams(game.getGameParams());
 
         return GameDetailResponse.builder()
@@ -223,7 +230,7 @@ public class GameHubService {
                 .category(game.getCategory())
                 .pricePerTurn(game.getPricePerTurn())
                 .freeTurnsDaily(game.getFreeTurnsDaily())
-                .remainingTurnsToday(game.getFreeTurnsDaily())
+                .remainingTurnsToday(remainingTurnsToday)
                 .userPointBalance(userBalance)
                 .description(game.getDescription())
                 .rulesText(game.getRulesText())
@@ -251,6 +258,13 @@ public class GameHubService {
             throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Trò chơi đã tạm ngừng phát hành");
         }
 
+        Instant startOfDay = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        long turnsPlayedToday = (userId != null && !userId.isBlank())
+                ? historyRepository.countPlayedToday(tenantId, userId, gameCode, startOfDay)
+                : 0L;
+        int dailyFree = game.getFreeTurnsDaily() != null ? game.getFreeTurnsDaily() : 1;
+        int freeTurnsRemaining = Math.max(0, dailyFree - (int) turnsPlayedToday);
+
         String sessionToken = "GS_" + UUID.randomUUID().toString().replace("-", "");
         Instant expiresAt = Instant.now().plusSeconds(SESSION_TTL_SECONDS);
 
@@ -259,7 +273,7 @@ public class GameHubService {
                 .externalUserId(userId)
                 .game(game)
                 .sessionToken(sessionToken)
-                .turnsAllocated(game.getFreeTurnsDaily())
+                .turnsAllocated(freeTurnsRemaining)
                 .turnsUsed(0)
                 .status(SessionStatus.ACTIVE)
                 .expiresAt(expiresAt)
@@ -270,8 +284,8 @@ public class GameHubService {
         String launchUrl = (game.getGameUrl() != null ? game.getGameUrl() : "/games/" + game.getGameCode())
                 + "?sessionToken=" + sessionToken + "&tenantId=" + tenantId;
 
-        log.info("[GAME-SESSION-INIT] tenantId={}, user={}, game={}, token={}, turns={}",
-                tenantId, userId, gameCode, sessionToken, game.getFreeTurnsDaily());
+        log.info("[GAME-SESSION-INIT] tenantId={}, user={}, game={}, token={}, freeRemaining={}",
+                tenantId, userId, gameCode, sessionToken, freeTurnsRemaining);
 
         return InitSessionResponse.builder()
                 .sessionToken(sessionToken)
@@ -347,6 +361,24 @@ public class GameHubService {
                     int multiplier = Math.max(1, Math.min(score, 10));
                     pointsToAward = BigDecimal.valueOf(multiplier * 25L);
                     message = "Lắc xí ngầu may mắn nhân x" + multiplier + "! Bạn nhận " + pointsToAward + " Điểm!";
+                    break;
+
+                case "PUZZLE":
+                case "SCREW_PUZZLE":
+                    int stage1 = paramsMap.containsKey("stage1Reward") ? ((Number) paramsMap.get("stage1Reward")).intValue() : 20;
+                    int stage2 = paramsMap.containsKey("stage2Reward") ? ((Number) paramsMap.get("stage2Reward")).intValue() : 40;
+                    int stage3 = paramsMap.containsKey("stage3Reward") ? ((Number) paramsMap.get("stage3Reward")).intValue() : 60;
+                    int stage4 = paramsMap.containsKey("stage4Reward") ? ((Number) paramsMap.get("stage4Reward")).intValue() : 80;
+                    int stage5 = paramsMap.containsKey("stage5Reward") ? ((Number) paramsMap.get("stage5Reward")).intValue() : 100;
+                    int targetPts = 0;
+                    if (score >= 5) targetPts = stage5;
+                    else if (score == 4) targetPts = stage4;
+                    else if (score == 3) targetPts = stage3;
+                    else if (score == 2) targetPts = stage2;
+                    else if (score == 1) targetPts = stage1;
+                    else targetPts = Math.max(10, score * 10);
+                    pointsToAward = BigDecimal.valueOf(targetPts);
+                    message = "Chúc mừng! Bạn đã hoàn thành Màn " + score + " và nhận " + pointsToAward + " Điểm Thưởng!";
                     break;
 
                 default:
@@ -643,6 +675,17 @@ public class GameHubService {
         if (dto.getFarmSeasonDays() != null) params.put("farmSeasonDays", dto.getFarmSeasonDays());
         if (dto.getFarmVoucherLimit() != null) params.put("farmVoucherLimit", dto.getFarmVoucherLimit());
         if (dto.getDiceMultiplierMax() != null) params.put("diceMultiplierMax", dto.getDiceMultiplierMax());
+        if (dto.getTargetTimeSeconds() != null) params.put("targetTimeSeconds", dto.getTargetTimeSeconds());
+        if (dto.getTotalStagesPerSession() != null) params.put("totalStagesPerSession", dto.getTotalStagesPerSession());
+        if (dto.getStage1Reward() != null) params.put("stage1Reward", dto.getStage1Reward());
+        if (dto.getStage2Reward() != null) params.put("stage2Reward", dto.getStage2Reward());
+        if (dto.getStage3Reward() != null) params.put("stage3Reward", dto.getStage3Reward());
+        if (dto.getStage4Reward() != null) params.put("stage4Reward", dto.getStage4Reward());
+        if (dto.getStage5Reward() != null) params.put("stage5Reward", dto.getStage5Reward());
+        if (dto.getTurnSinglePoints() != null) params.put("turnSinglePoints", dto.getTurnSinglePoints());
+        if (dto.getTurnTriplePoints() != null) params.put("turnTriplePoints", dto.getTurnTriplePoints());
+        if (dto.getHintPoints() != null) params.put("hintPoints", dto.getHintPoints());
+        if (dto.getExtraHolePoints() != null) params.put("extraHolePoints", dto.getExtraHolePoints());
 
         try {
             entity.setGameParams(objectMapper.writeValueAsString(params));
@@ -746,6 +789,17 @@ public class GameHubService {
                 .farmSeasonDays(params.containsKey("farmSeasonDays") ? ((Number) params.get("farmSeasonDays")).intValue() : null)
                 .farmVoucherLimit(params.containsKey("farmVoucherLimit") ? ((Number) params.get("farmVoucherLimit")).intValue() : null)
                 .diceMultiplierMax(params.containsKey("diceMultiplierMax") ? ((Number) params.get("diceMultiplierMax")).intValue() : null)
+                .targetTimeSeconds(params.containsKey("targetTimeSeconds") ? ((Number) params.get("targetTimeSeconds")).intValue() : null)
+                .totalStagesPerSession(params.containsKey("totalStagesPerSession") ? ((Number) params.get("totalStagesPerSession")).intValue() : null)
+                .stage1Reward(params.containsKey("stage1Reward") ? ((Number) params.get("stage1Reward")).intValue() : null)
+                .stage2Reward(params.containsKey("stage2Reward") ? ((Number) params.get("stage2Reward")).intValue() : null)
+                .stage3Reward(params.containsKey("stage3Reward") ? ((Number) params.get("stage3Reward")).intValue() : null)
+                .stage4Reward(params.containsKey("stage4Reward") ? ((Number) params.get("stage4Reward")).intValue() : null)
+                .stage5Reward(params.containsKey("stage5Reward") ? ((Number) params.get("stage5Reward")).intValue() : null)
+                .turnSinglePoints(params.containsKey("turnSinglePoints") ? ((Number) params.get("turnSinglePoints")).intValue() : null)
+                .turnTriplePoints(params.containsKey("turnTriplePoints") ? ((Number) params.get("turnTriplePoints")).intValue() : null)
+                .hintPoints(params.containsKey("hintPoints") ? ((Number) params.get("hintPoints")).intValue() : null)
+                .extraHolePoints(params.containsKey("extraHolePoints") ? ((Number) params.get("extraHolePoints")).intValue() : null)
                 .build();
     }
 

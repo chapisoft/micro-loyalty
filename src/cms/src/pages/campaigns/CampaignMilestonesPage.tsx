@@ -390,12 +390,12 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   // Cột Thao tác
   const actionTemplate = (rowData: CampaignMilestoneItem) => (
-    <div className="flex gap-2 justify-content-center">
+    <div className="action-buttons">
       <Button
         icon="pi pi-pencil"
         rounded
         outlined
-        severity="warning"
+        severity="info"
         size="small"
         onClick={() => editItem(rowData)}
         tooltip={t('common.edit', { defaultValue: 'Sửa' })}
@@ -413,50 +413,108 @@ export const CampaignMilestonesPage: React.FC = () => {
   );
 
   // Cột Trạng thái
-  const statusTemplate = (rowData: CampaignMilestoneItem) => {
-    return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active', { defaultValue: 'Đang diễn ra' })} />
-    ) : (
-      <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Đã kết thúc' })} />
+  const statusTemplate = (rowData: CampaignMilestoneItem) => (
+    <div className="flex align-items-center justify-content-center">
+      {rowData.status === CommonStatus.ACTIVE ? (
+        <Tag severity="success" value={t('common.active', { defaultValue: 'Hoạt động' })} rounded />
+      ) : (
+        <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Đã kết thúc' })} rounded />
+      )}
+    </div>
+  );
+
+  // Cột Chặng
+  const stepTemplate = (row: CampaignMilestoneItem) => (
+    <div className="flex align-items-center justify-content-center">
+      <Tag
+        value={t('milestone.step_label', { step: row.milestoneStep, defaultValue: `Chặng ${row.milestoneStep}` })}
+        severity="warning"
+        rounded
+      />
+    </div>
+  );
+
+  // Cột Chiến dịch
+  const campaignTemplate = (row: CampaignMilestoneItem) => (
+    <div className="flex flex-column justify-content-center gap-1">
+      <span className="font-semibold text-primary font-mono text-sm">{row.campaignCode}</span>
+      <span className="text-700 text-xs line-height-2">{row.campaignName}</span>
+    </div>
+  );
+
+  // Cột Đối tác
+  const partnerTemplate = (row: CampaignMilestoneItem) => {
+    if (!row.partnerId) {
+      return (
+        <div className="flex align-items-center">
+          <Tag
+            severity="warning"
+            icon="pi pi-globe"
+            value={t('milestone.alliance_scope', { defaultValue: 'Toàn Liên Minh' })}
+            rounded
+          />
+        </div>
+      );
+    }
+    const partner = partners.find((p) => p.id === row.partnerId);
+    const name = row.partnerName || partner?.partnerName || row.partnerCode || `ID #${row.partnerId}`;
+    return (
+      <div className="flex align-items-center">
+        <Tag
+          severity="secondary"
+          icon="pi pi-building"
+          value={name}
+          rounded
+        />
+      </div>
     );
   };
 
+  // Cột Ngày
+  const dateTemplate = (row: CampaignMilestoneItem) => (
+    <div className="flex align-items-center justify-content-center">
+      <span className="text-sm text-700 font-mono white-space-nowrap">
+        {row.startDate} &rarr; {row.endDate}
+      </span>
+    </div>
+  );
+
   // Cột Chỉ tiêu đo lường
   const metricLabelTemplate = (row: CampaignMilestoneItem) => {
-    let icon = 'pi pi-dollar';
-    let label = t('milestone.metric_bill', { defaultValue: 'Chi tiêu tích lũy (HTG)' });
+    let icon = 'pi pi-dollar text-orange-500';
+    let label = t('milestone.metric_bill', { defaultValue: 'Chi tiêu' });
     let unit = 'HTG';
 
     switch (row.targetMetric) {
       case CampaignMetric.BILL_AMOUNT:
-        icon = 'pi pi-dollar';
-        label = t('milestone.metric_bill', { defaultValue: 'Chi tiêu tích lũy' });
+        icon = 'pi pi-dollar text-orange-500';
+        label = t('milestone.metric_bill', { defaultValue: 'Chi tiêu' });
         unit = 'HTG';
         break;
       case CampaignMetric.TRANSACTION_COUNT:
-        icon = 'pi pi-sync';
-        label = t('milestone.metric_tx_count', { defaultValue: 'Số giao dịch' });
+        icon = 'pi pi-sync text-orange-500';
+        label = t('milestone.metric_tx_count', { defaultValue: 'Giao dịch' });
         unit = t('milestone.unit_times', { defaultValue: 'lần' });
         break;
       case CampaignMetric.EARN_POINTS:
-        icon = 'pi pi-star';
-        label = t('milestone.metric_points', { defaultValue: 'Điểm tích lũy' });
+        icon = 'pi pi-star text-orange-500';
+        label = t('milestone.metric_points', { defaultValue: 'Tích điểm' });
         unit = t('common.points', { defaultValue: 'điểm' });
         break;
       case CampaignMetric.GAME_SPINS:
-        icon = 'pi pi-bolt';
-        label = t('milestone.metric_spins', { defaultValue: 'Lượt quay game' });
+        icon = 'pi pi-bolt text-orange-500';
+        label = t('milestone.metric_spins', { defaultValue: 'Lượt quay' });
         unit = t('common.spins', { defaultValue: 'lượt' });
         break;
     }
 
     return (
-      <div className="flex flex-column gap-1">
-        <div className="flex align-items-center gap-1 text-sm text-600">
-          <i className={`${icon} text-xs text-primary`} />
+      <div className="flex flex-column justify-content-center gap-1">
+        <div className="flex align-items-center gap-1 text-xs text-500">
+          <i className={icon} />
           <span>{label}</span>
         </div>
-        <span className="font-semibold text-900">
+        <span className="font-semibold text-900 text-sm">
           {Number(row.targetValue).toLocaleString()} {unit}
         </span>
       </div>
@@ -468,13 +526,14 @@ export const CampaignMilestonesPage: React.FC = () => {
     const voucher = vouchers.find((v) => v.id === row.rewardVoucherId);
 
     return (
-      <div className="flex flex-wrap gap-2 align-items-center">
+      <div className="flex flex-wrap gap-1 align-items-center justify-content-start w-full">
         {row.rewardPoints > 0 && (
           <Tag
             severity="warning"
             icon="pi pi-star-fill"
             value={`+${row.rewardPoints} ${t('common.points', { defaultValue: 'Điểm' })}`}
             title={t('milestone.reward_points_tooltip', { defaultValue: 'Điểm thưởng cộng ví' })}
+            rounded
           />
         )}
         {row.rewardGameTurns > 0 && (
@@ -483,6 +542,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             icon="pi pi-bolt"
             value={`+${row.rewardGameTurns} ${t('common.spins', { defaultValue: 'Lượt quay' })}`}
             title={t('milestone.reward_turns_tooltip', { defaultValue: 'Lượt chơi mini-game' })}
+            rounded
           />
         )}
         {voucher && (
@@ -491,6 +551,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             icon="pi pi-ticket"
             value={voucher.voucherCode}
             title={`${voucher.title} (${voucher.discountValue} ${voucher.discountType === 'PERCENTAGE' ? '%' : 'HTG'})`}
+            rounded
           />
         )}
         {row.rewardPoints === 0 && row.rewardGameTurns === 0 && !voucher && (
@@ -587,94 +648,93 @@ export const CampaignMilestonesPage: React.FC = () => {
           responsiveLayout="scroll"
           emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chiến dịch cột mốc nào cho liên minh này' })}
         >
-          <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
+          <Column selectionMode="multiple" exportable={false} alignHeader="center" align="center" headerStyle={{ whiteSpace: 'nowrap', width: '3rem' }} style={{ width: '3rem' }} />
           <Column
             header={t('common.no_order', { defaultValue: '#' })}
             body={(_row: CampaignMilestoneItem, { rowIndex }: { rowIndex: number }) => (
               <span className="text-600 font-medium">{rowIndex + 1}</span>
             )}
-            style={{ width: '3.5rem', textAlign: 'center' }}
+            alignHeader="center"
+            align="center"
+            headerStyle={{ whiteSpace: 'nowrap', width: '3.5rem' }}
+            style={{ width: '3.5rem' }}
           />
           <Column
             header={t('common.action', { defaultValue: 'Thao tác' })}
             body={actionTemplate}
             exportable={false}
-            style={{ width: '6.5rem', textAlign: 'center' }}
+            alignHeader="center"
+            align="center"
+            headerStyle={{ whiteSpace: 'nowrap', width: '6.5rem' }}
+            style={{ width: '6.5rem' }}
           />
           <Column
             field="milestoneStep"
-            header={<span title={t('milestone.step_tooltip', { defaultValue: 'Thứ tự chặng cột mốc liên tiếp trong chiến dịch' })}>{t('milestone.step', { defaultValue: 'Chặng #' })}</span>}
-            body={(row: CampaignMilestoneItem) => (
-              <Tag
-                value={t('milestone.step_label', { step: row.milestoneStep, defaultValue: `Chặng ${row.milestoneStep}` })}
-                severity={row.milestoneStep === 1 ? 'info' : row.milestoneStep === 2 ? 'warning' : 'danger'}
-                rounded
-              />
-            )}
+            header={<span title={t('milestone.step_tooltip', { defaultValue: 'Thứ tự chặng cột mốc liên tiếp trong chiến dịch' })}>{t('milestone.step', { defaultValue: 'Chặng' })}</span>}
+            body={stepTemplate}
             sortable
-            style={{ textAlign: 'center', width: '6.5rem' }}
+            alignHeader="center"
+            align="center"
+            headerStyle={{ whiteSpace: 'nowrap', width: '6.5rem' }}
+            style={{ width: '6.5rem' }}
           />
           <Column
             field="campaignCode"
-            header={t('milestone.code', { defaultValue: 'Mã Chiến Dịch' })}
-            body={(row: CampaignMilestoneItem) => (
-              <div>
-                <div className="font-semibold text-primary">{row.campaignCode}</div>
-                <div className="text-sm text-700">{row.campaignName}</div>
-              </div>
-            )}
+            header={<span title={t('milestone.code_tooltip', { defaultValue: 'Mã định danh và tên chiến dịch' })}>{t('milestone.code', { defaultValue: 'Chiến Dịch' })}</span>}
+            body={campaignTemplate}
             sortable
+            alignHeader="left"
+            align="left"
+            headerStyle={{ whiteSpace: 'nowrap', minWidth: '13rem' }}
             style={{ minWidth: '13rem' }}
           />
           <Column
             header={<span title={t('milestone.applicable_partner_tooltip', { defaultValue: 'Đối tác áp dụng cột mốc chiến dịch (Chọn Toàn liên minh nếu áp dụng chung)' })}>{t('milestone.applicable_partner', { defaultValue: 'Đối Tác Áp Dụng' })}</span>}
-            body={(row: CampaignMilestoneItem) => {
-              if (!row.partnerId) {
-                return (
-                  <Tag
-                    severity="info"
-                    icon="pi pi-globe"
-                    value={t('milestone.alliance_scope', { defaultValue: 'Toàn Liên Minh' })}
-                  />
-                );
-              }
-              const partner = partners.find((p) => p.id === row.partnerId);
-              const name = row.partnerName || partner?.partnerName || row.partnerCode || `ID #${row.partnerId}`;
-              return (
-                <Tag
-                  severity="secondary"
-                  icon="pi pi-building"
-                  value={name}
-                />
-              );
-            }}
+            body={partnerTemplate}
             sortable
-            style={{ minWidth: '12rem' }}
+            alignHeader="left"
+            align="left"
+            headerStyle={{ whiteSpace: 'nowrap', minWidth: '11rem' }}
+            style={{ minWidth: '11rem' }}
           />
           <Column
             field="targetMetric"
             header={<span title={t('milestone.metric_tooltip', { defaultValue: 'Chỉ tiêu điều kiện tích lũy để hoàn thành' })}>{t('milestone.metric', { defaultValue: 'Chỉ Tiêu & Mục Tiêu' })}</span>}
             body={metricLabelTemplate}
             sortable
-            style={{ minWidth: '12rem' }}
+            alignHeader="left"
+            align="left"
+            headerStyle={{ whiteSpace: 'nowrap', minWidth: '11.5rem' }}
+            style={{ minWidth: '11.5rem' }}
           />
           <Column
-            header={<span title={t('milestone.reward_points_tooltip', { defaultValue: 'Phần thưởng khi hoàn thành chặng' })}>{t('common.reward', { defaultValue: 'Phần Thưởng Chặng' })}</span>}
+            header={<span title={t('milestone.reward_points_tooltip', { defaultValue: 'Phần thưởng khi hoàn thành chặng' })}>{t('common.reward', { defaultValue: 'Phần Thưởng' })}</span>}
             body={rewardTemplate}
-            style={{ minWidth: '13rem' }}
+            alignHeader="left"
+            align="left"
+            headerStyle={{ whiteSpace: 'nowrap', minWidth: '15rem', textAlign: 'left' }}
+            style={{ minWidth: '15rem', textAlign: 'left' }}
           />
           <Column
             field="startDate"
-            header={<span title={t('milestone.date_range', { defaultValue: 'Thời gian diễn ra chiến dịch' })}>{t('milestone.date_range', { defaultValue: 'Thời Gian' })}</span>}
-            body={(row: CampaignMilestoneItem) => (
-              <span className="text-sm text-600">
-                {row.startDate} &rarr; {row.endDate}
-              </span>
-            )}
+            header={<span title={t('milestone.date_range_tooltip', { defaultValue: 'Thời gian diễn ra chiến dịch' })}>{t('milestone.date_range', { defaultValue: 'Thời Gian' })}</span>}
+            body={dateTemplate}
             sortable
-            style={{ minWidth: '11rem', textAlign: 'center' }}
+            alignHeader="center"
+            align="center"
+            headerStyle={{ whiteSpace: 'nowrap', minWidth: '14rem' }}
+            style={{ minWidth: '14rem' }}
           />
-          <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column
+            field="status"
+            header={t('common.status', { defaultValue: 'Trạng Thái' })}
+            body={statusTemplate}
+            sortable
+            alignHeader="center"
+            align="center"
+            headerStyle={{ whiteSpace: 'nowrap', width: '9rem', minWidth: '9rem' }}
+            style={{ width: '9rem', minWidth: '9rem' }}
+          />
         </DataTable>
       </div>
 

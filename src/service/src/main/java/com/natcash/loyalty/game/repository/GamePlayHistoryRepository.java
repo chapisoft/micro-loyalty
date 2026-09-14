@@ -41,4 +41,10 @@ public interface GamePlayHistoryRepository extends JpaRepository<GamePlayHistory
     long countUniquePlayersByTenantIdAndCreatedAtRange(@Param("tenantId") String tenantId,
                                                       @Param("start") Instant start,
                                                       @Param("end") Instant end);
+
+    @Query("SELECT COUNT(h) FROM GamePlayHistoryEntity h WHERE h.tenantId = :tenantId AND h.externalUserId = :userId AND h.gameCode = :gameCode AND h.createdAt >= :start")
+    long countPlayedToday(@Param("tenantId") String tenantId,
+                         @Param("userId") String userId,
+                         @Param("gameCode") String gameCode,
+                         @Param("start") Instant start);
 }

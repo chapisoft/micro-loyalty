@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
+import { Chart } from 'primereact/chart';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { paths } from '@/paths';
@@ -16,6 +17,7 @@ import {
   PointLedgerItem,
   MilestoneItemModel,
   SystemComponentHealthModel,
+  PointTrendItemModel,
 } from '@/service/loyalty.service';
 
 export const Dashboard: React.FC = () => {
@@ -28,6 +30,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [showSystemHealth, setShowSystemHealth] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
 
   const [stats, setStats] = useState<DashboardStatsModel>({
     totalMembers: 0,
@@ -44,6 +47,7 @@ export const Dashboard: React.FC = () => {
   const [recentTransactions, setRecentTransactions] = useState<PointLedgerItem[]>([]);
   const [campaigns, setCampaigns] = useState<MilestoneItemModel[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemComponentHealthModel[]>([]);
+  const [pointTrends, setPointTrends] = useState<PointTrendItemModel[]>([]);
 
   const handleTenantChange = (tenant: string) => {
     setSelectedTenant(tenant);
@@ -54,13 +58,14 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsData, ledgerData, milestonesData] = await Promise.all([
+      const [statsData, ledgerData, milestonesData, trendsData] = await Promise.all([
         LoyaltyService.getDashboardStats(selectedTenant),
         LoyaltyService.getPointLedger(selectedTenant),
         LoyaltyService.getMilestones(selectedTenant),
+        LoyaltyService.getPointTrends(selectedTenant, 7),
       ]);
 
       if (statsData) {
@@ -73,11 +78,15 @@ export const Dashboard: React.FC = () => {
       if (Array.isArray(milestonesData)) {
         setCampaigns(milestonesData.slice(0, 3));
       }
+
+      if (Array.isArray(trendsData)) {
+        setPointTrends(trendsData);
+      }
     } catch (e) {
       console.error('[Dashboard.fetchData] Error:', e);
     }
     setLoading(false);
-  };
+  }, [selectedTenant]);
 
   const fetchSystemHealth = async () => {
     setHealthLoading(true);
@@ -94,7 +103,85 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [selectedTenant]);
+  }, [fetchDashboardData]);
+
+  // Auto-refresh interval (30s)
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = setInterval(() => {
+      fetchDashboardData();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [autoRefresh, fetchDashboardData]);
+
+  const chartData = useMemo(() => {
+    const labels = pointTrends.map((t) => {
+      const parts = t.day.split('-');
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}` : t.day;
+    });
+    const earnedData = pointTrends.map((t) => t.earnedPoints);
+    const burnedData = pointTrends.map((t) => t.burnedPoints);
+
+    return {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: t('dashboard.points_issued', { defaultValue: 'Điểm Phát Hành (Earned)' }),
+          backgroundColor: '#10b981',
+          data: earnedData,
+          borderRadius: 6,
+        },
+        {
+          type: 'bar',
+          label: t('dashboard.points_redeemed', { defaultValue: 'Điểm Tiêu Dùng (Burned)' }),
+          backgroundColor: '#f59e0b',
+          data: burnedData,
+          borderRadius: 6,
+        },
+      ],
+    };
+  }, [pointTrends, t]);
+
+  const chartOptions = useMemo(
+    () => ({
+      maintainAspectRatio: false,
+      aspectRatio: 0.8,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#475569',
+            font: { weight: 600, size: 12 },
+          },
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#64748b',
+            font: { size: 11 },
+          },
+          grid: {
+            display: false,
+          },
+        },
+        y: {
+          ticks: {
+            color: '#64748b',
+            font: { size: 11 },
+          },
+          grid: {
+            color: '#f1f5f9',
+          },
+        },
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
     if (showSystemHealth && systemHealth.length === 0) {
@@ -204,9 +291,34 @@ export const Dashboard: React.FC = () => {
     <div className="grid">
       <div className="col-12 flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
         <AppBreadcrumb items={[{ label: t('dashboard.title', { defaultValue: 'Tổng quan Nền tảng Loyalty & GameHub' }) }]} />
-        <div className="flex align-items-center gap-3">
+        <div className="flex align-items-center gap-2">
           {/* Scalable Tenant / Partner Dropdown */}
           <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
+
+          {/* Manual Refresh Button */}
+          <Button
+            icon="pi pi-refresh"
+            rounded
+            text
+            size="small"
+            loading={loading}
+            onClick={() => fetchDashboardData()}
+            tooltip={t('dashboard.refresh_tooltip', { defaultValue: 'Làm mới số liệu thời gian thực' })}
+            className="p-button-sm text-slate-600 hover:text-primary"
+          />
+
+          {/* Auto Refresh Toggle */}
+          <Button
+            icon={autoRefresh ? 'pi pi-bolt' : 'pi pi-clock'}
+            label={autoRefresh ? 'Auto (30s)' : t('dashboard.auto_off', { defaultValue: 'Tự động' })}
+            rounded
+            outlined={!autoRefresh}
+            size="small"
+            severity={autoRefresh ? 'success' : 'secondary'}
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            tooltip={t('dashboard.auto_refresh_tooltip', { defaultValue: 'Tự động cập nhật số liệu mỗi 30 giây' })}
+            className="text-xs py-1 px-2"
+          />
 
           {/* Toggle Infrastructure Health Widget */}
           <Button
@@ -304,9 +416,9 @@ export const Dashboard: React.FC = () => {
           <div className="flex align-items-center gap-2 pt-2 border-top-1 surface-border">
             <i className="pi pi-check-circle text-emerald-600 text-xs" />
             <span className="text-xs font-normal text-600">
-              {t('dashboard.exchange_rate_info', {
-                amount: (stats.totalEarnedPoints || 0).toLocaleString(),
-                defaultValue: `Quy đổi 1:1 HTG (Tương đương ${(stats.totalEarnedPoints || 0).toLocaleString()} HTG)`,
+              {t('dashboard.exchange_rate_rebate', {
+                htgAmount: ((stats.totalEarnedPoints || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
+                defaultValue: `Tỷ lệ 100 Điểm = 1 HTG (~ ${((stats.totalEarnedPoints || 0) / 100).toLocaleString()} HTG)`,
               })}
             </span>
           </div>
@@ -402,28 +514,61 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Point Trends Chart (7 Days) */}
+      <div className="col-12 lg:col-8">
+        <Card
+          title={
+            <div className="flex align-items-center justify-content-between">
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-chart-bar text-primary text-xl" />
+                <span className="font-bold text-lg text-900">
+                  {t('dashboard.trend_chart_title', { defaultValue: 'Biến Động Điểm Thưởng 7 Ngày Gần Nhất' })}
+                </span>
+              </div>
+              <Tag
+                severity="success"
+                value={t('dashboard.realtime_db', { defaultValue: 'PostgreSQL 15+ Realtime' })}
+                className="text-xs font-normal"
+              />
+            </div>
+          }
+          className="h-full shadow-2 border-round-2xl"
+        >
+          <div style={{ minHeight: '280px', height: '300px' }}>
+            {pointTrends.length > 0 ? (
+              <Chart type="bar" data={chartData} options={chartOptions} style={{ height: '100%' }} />
+            ) : (
+              <div className="flex flex-column align-items-center justify-content-center h-full text-500 py-6">
+                <i className="pi pi-chart-line text-4xl mb-2 text-300" />
+                <span className="text-sm font-medium">{t('dashboard.no_trend_data', { defaultValue: 'Chưa có biến động điểm trong 7 ngày qua' })}</span>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
       {/* Dynamic Tier Distribution Card */}
-      <div className={showSystemHealth ? 'col-12 lg:col-4' : 'col-12 lg:col-6'}>
+      <div className="col-12 lg:col-4">
         <Card title={t('dashboard.tier_distribution', { defaultValue: 'Phân bố Hội viên theo Hạng thẻ' })} className="h-full shadow-2 border-round-2xl">
-          <div className="flex flex-column gap-4">
+          <div className="flex flex-column gap-3">
             {stats.tierDistributions && stats.tierDistributions.length > 0 ? (
               stats.tierDistributions.map((tier) => {
                 const colors = getTierColors(tier.tierLevel);
                 return (
                   <div key={tier.tierId || tier.tierCode}>
                     <div className="flex justify-content-between mb-1">
-                      <span className="font-semibold text-sm flex align-items-center gap-2" style={{ color: colors.textColor }}>
+                      <span className="font-semibold text-xs flex align-items-center gap-2" style={{ color: colors.textColor }}>
                         <i className="pi pi-circle-fill text-xs" style={{ color: colors.dotColor }} />
                         {tier.tierName || tier.tierCode} ({tier.pointMultiplier}x)
                       </span>
-                      <span className="text-sm font-medium text-slate-800">
+                      <span className="text-xs font-medium text-slate-800">
                         {tier.memberCount.toLocaleString()} {t('dashboard.member_count_unit', { defaultValue: 'hội viên' })} ({tier.percentage}%)
                       </span>
                     </div>
                     <ProgressBar
                       value={Number(tier.percentage) || 0}
                       showValue={false}
-                      style={{ height: '8px' }}
+                      style={{ height: '7px' }}
                       color={colors.barColor}
                     />
                   </div>
@@ -437,13 +582,14 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-top-1 surface-border flex justify-content-between align-items-center">
-            <span className="text-xs text-500">{t('dashboard.evaluation_cycle', { defaultValue: 'Chu kỳ tự động đánh giá: 12 tháng' })}</span>
+          <div className="mt-3 pt-2 border-top-1 surface-border flex justify-content-between align-items-center">
+            <span className="text-xs text-500">{t('dashboard.evaluation_cycle', { defaultValue: 'Chu kỳ: 12 tháng' })}</span>
             <Button
               label={t('dashboard.view_tier_config', { defaultValue: 'Xem cấu hình hạng' })}
               text
               size="small"
               onClick={() => navigate(paths.tierManagement)}
+              className="text-xs p-0"
             />
           </div>
         </Card>

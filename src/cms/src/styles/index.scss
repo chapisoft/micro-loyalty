@@ -750,16 +750,33 @@ header.sticky {
 }
 
 // Table Action Buttons Spacing Standard
-.p-datatable-tbody .p-button + .p-button,
-.action-buttons .p-button + .p-button,
-.p-datatable-tbody td .flex .p-button + .p-button {
-  margin-left: 0.5rem !important;
-}
-
-.action-buttons,
-.p-datatable-tbody td .flex {
+.action-buttons {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 0.5rem !important;
+
+  .p-button + .p-button {
+    margin-left: 0.5rem !important;
+  }
 }
+
+// Global DataTable Header & Typography Standard
+.p-datatable {
+  .p-datatable-thead > tr > th {
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+
+    .p-column-header-content {
+      display: inline-flex !important;
+      align-items: center !important;
+      white-space: nowrap !important;
+      gap: 0.35rem !important;
+    }
+  }
+
+  .p-datatable-tbody > tr > td {
+    vertical-align: middle !important;
+  }
+}
+

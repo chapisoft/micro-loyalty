@@ -500,6 +500,13 @@ export default {
   },
   "dashboard": {
     "title": "Loyalty & GameHub Platform Overview",
+    "refresh_tooltip": "Refresh realtime statistics",
+    "auto_off": "Auto",
+    "auto_refresh_tooltip": "Auto refresh data every 30 seconds",
+    "exchange_rate_rebate": "Rate: 100 Points = 1 HTG (~ {{htgAmount}} HTG)",
+    "trend_chart_title": "7-Day Point Activity Trends",
+    "realtime_db": "PostgreSQL 15+ Realtime",
+    "no_trend_data": "No point movements recorded in the last 7 days",
     "total_members": "Total Alliance Members",
     "active_members": "Active Members",
     "points_issued": "Total Points Issued",

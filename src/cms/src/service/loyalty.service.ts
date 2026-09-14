@@ -108,6 +108,13 @@ export interface TierDistributionModel {
   percentage: number;
 }
 
+export interface PointTrendItemModel {
+  day: string;
+  earnedPoints: number;
+  burnedPoints: number;
+  transactionCount: number;
+}
+
 export interface DashboardStatsModel {
   totalMembers: number;
   activeMembers: number;
@@ -554,6 +561,20 @@ export const LoyaltyService = {
         uptimePercent: 100.0,
         tierDistributions: [],
       };
+    }
+  },
+
+  // 6.1. Biểu đồ xu hướng biến động điểm 7 ngày
+  async getPointTrends(tenantId: string = 'TENANT_NATCASH', days: number = 7): Promise<PointTrendItemModel[]> {
+    try {
+      const response: any = await apiClient.get('/loyalty/v1/dashboard/point-trends', {
+        params: { days },
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
+    } catch (e) {
+      console.error('[getPointTrends] Error:', e);
+      return [];
     }
   },
 

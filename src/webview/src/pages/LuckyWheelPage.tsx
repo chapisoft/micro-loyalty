@@ -681,9 +681,11 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
           if (onUpdateTurns) onUpdateTurns(remTurns);
         }
       }
-    } catch {
-      targetSliceIndex = Math.floor(Math.random() * prizes.length);
-      serverPrize = prizes[targetSliceIndex];
+    } catch (err: any) {
+      console.error('Lỗi khi thực hiện quay thưởng:', err);
+      setIsSpinning(false);
+      alert(err?.message || t('wheel.spin_error', { defaultValue: 'Lỗi hệ thống khi quay thưởng. Vui lòng thử lại!' }));
+      return;
     }
 
     const selectedPrize = serverPrize || prizes[targetSliceIndex] || DEFAULT_PRIZES[0];

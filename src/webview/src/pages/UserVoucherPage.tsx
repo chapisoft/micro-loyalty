@@ -205,7 +205,7 @@ export const UserVoucherPage: React.FC<{
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
-  const handleRedeemFromCatalog = (item: CatalogVoucherItem) => {
+  const handleRedeemFromCatalog = async (item: CatalogVoucherItem) => {
     if (userPoints < item.pointsCost) {
       setNotifyModal({
         isOpen: true,
@@ -221,26 +221,40 @@ export const UserVoucherPage: React.FC<{
       return;
     }
 
-    if (onDeductPoints) {
-      onDeductPoints(item.pointsCost);
+    try {
+      // Đấu nối gọi API máy chủ Loyalty Core
+      const voucherCodeParam = item.category ? `${item.category}-${item.discountText.replace(/\s+/g, '')}` : 'DELIMART-50K-9X8Z';
+      const res = await LoyaltyApi.redeemVoucher(voucherCodeParam, userId).catch(() => null);
+
+      if (onDeductPoints) {
+        onDeductPoints(item.pointsCost);
+      }
+
+      const newVoucher: UserVoucherItem = res && res.code ? res : {
+        id: Date.now(),
+        code: `${item.category}-${item.discountText.replace(/\s+/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+        title: item.title,
+        partnerName: item.partnerName,
+        category: item.category,
+        discountText: item.discountText,
+        minOrder: t('vouchers.min_order_desc', { minBill: item.minBill, defaultValue: `Áp dụng cho đơn từ ${item.minBill} HTG` }),
+        validUntil: '30/09/2026',
+        status: 'AVAILABLE',
+        terms: t('vouchers.terms_redeemed_loyalty', { defaultValue: 'Đổi từ điểm thưởng Loyalty.' }),
+      };
+
+      setVouchers((prev) => [newVoucher, ...prev]);
+      showToast(t('vouchers.redeem_success_toast'));
+      loadVouchers();
+    } catch (e: any) {
+      setNotifyModal({
+        isOpen: true,
+        type: 'warning',
+        title: 'Lỗi Đổi Voucher',
+        message: e?.message || 'Không thể đổi voucher vào lúc này. Vui lòng thử lại!',
+        badge: 'THẤT BẠI',
+      });
     }
-
-    // Add to My Vouchers
-    const newVoucher: UserVoucherItem = {
-      id: Date.now(),
-      code: `${item.category}-${item.discountText.replace(/\s+/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-      title: item.title,
-      partnerName: item.partnerName,
-      category: item.category,
-      discountText: item.discountText,
-      minOrder: t('vouchers.min_order_desc', { minBill: item.minBill, defaultValue: `Áp dụng cho đơn từ ${item.minBill} HTG` }),
-      validUntil: '30/09/2026',
-      status: 'AVAILABLE',
-      terms: t('vouchers.terms_redeemed_loyalty', { defaultValue: 'Đổi từ điểm thưởng Loyalty.' }),
-    };
-
-    setVouchers((prev) => [newVoucher, ...prev]);
-    showToast(t('vouchers.redeem_success_toast'));
   };
 
   const handleConfirmCashback = () => {
@@ -629,17 +643,17 @@ export const UserVoucherPage: React.FC<{
               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-emerald-950 font-bold block">{t('vouchers.received_amount_label')}</span>
-                  <span className="text-[10px] text-emerald-700/80">{t('vouchers.rate_exchange_desc', { defaultValue: 'Tỷ lệ: 100 Điểm = 10 HTG' })}</span>
+                  <span className="text-[10px] text-emerald-700/80">{t('vouchers.rate_exchange_desc', { defaultValue: 'Tỷ lệ: 100 Điểm = 1 HTG' })}</span>
                 </div>
                 <span className="font-mono font-black text-emerald-800 text-lg">
-                  {Math.floor((parseInt(cashbackPointsInput, 10) || 0) / 10)} HTG
+                  {Math.floor((parseInt(cashbackPointsInput, 10) || 0) / 100)} HTG
                 </span>
               </div>
             </div>
 
             {cashbackSuccess ? (
               <div className="p-3.5 bg-emerald-100 text-emerald-900 font-bold text-xs rounded-2xl text-center border border-emerald-300">
-                {t('vouchers.cashback_success', { amount: Math.floor((parseInt(cashbackPointsInput, 10) || 0) / 10) })}
+                {t('vouchers.cashback_success', { amount: Math.floor((parseInt(cashbackPointsInput, 10) || 0) / 100) })}
               </div>
             ) : (
               <button

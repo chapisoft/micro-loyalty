@@ -45,6 +45,7 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { TierBenefitsModal } from './components/TierBenefitsModal';
 import { NotificationModal, NotificationType } from './components/NotificationModal';
 import { LoyaltyApi, MemberProfile, MilestoneItem, LedgerItem, PartnerItem, getDefaultUserId, getTenantId } from './services/api';
+import { generateQrCodeSvg } from './utils/qrcode';
 
 export type AppTabType =
   | 'HOME'
@@ -63,6 +64,21 @@ export type AppTabType =
   | 'UNTANGLE'
   | 'PULLPIN'
   | 'VOUCHERS';
+
+const TAB_TO_GAME_CODE: Partial<Record<AppTabType, string>> = {
+  FLAPPY: 'FLAPPY_NATCOM',
+  GAME2048: 'GAME_2048',
+  MEMORY: 'MEMORY_MATCH',
+  BUBBLE: 'BUBBLE_SHOOTER',
+  FRUIT: 'FRUIT_SLICE',
+  KNIFE: 'KNIFE_HIT',
+  BLOCK: 'BLOCK_PUZZLE',
+  RUNNER: 'ENDLESS_RUNNER',
+  WORDLE: 'WORDLE_GAME',
+  SCREW: 'SCREW_PUZZLE',
+  UNTANGLE: 'UNTANGLE_ROPE',
+  PULLPIN: 'PULL_PIN',
+};
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
@@ -108,6 +124,7 @@ export const App: React.FC = () => {
   const [checkinStreak, setCheckinStreak] = useState<number>(3);
   const [hasCheckedInToday, setHasCheckedInToday] = useState<boolean>(false);
   const [soundMuted, setSoundMuted] = useState<boolean>(soundHaptics.isMuted());
+  const [activeSessionToken, setActiveSessionToken] = useState<string | null>(null);
 
   // Smooth Scroll to Top Helper
   const scrollToTop = useCallback(() => {
@@ -183,6 +200,24 @@ export const App: React.FC = () => {
     };
   }, [scrollToTop]);
 
+  // Khởi tạo phiên chơi game bảo mật (SessionToken 30 phút) khi chuyển tab sang trò chơi
+  useEffect(() => {
+    const gameCode = TAB_TO_GAME_CODE[currentTab];
+    if (gameCode) {
+      LoyaltyApi.initGameSession(gameCode, userId)
+        .then((session) => {
+          if (session?.sessionToken) {
+            setActiveSessionToken(session.sessionToken);
+          }
+        })
+        .catch(() => {
+          setActiveSessionToken(`GS_${gameCode}_${Date.now()}`);
+        });
+    } else {
+      setActiveSessionToken(null);
+    }
+  }, [currentTab, userId]);
+
   const loadData = useCallback(async () => {
     try {
       const [profileData, milestoneData, ledgerData, partnerData] = await Promise.all([
@@ -208,19 +243,39 @@ export const App: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Auto refresh dynamic QR code every 60s
+  // Hàm sinh mã Dynamic QR TOTP bảo mật 60s từ Backend API
+  const refreshDynamicQr = useCallback(async () => {
+    try {
+      const res = await LoyaltyApi.generateDynamicQr(userId);
+      if (res?.qrToken) {
+        setQrToken(res.qrToken);
+        setQrCountdown(res.expiresInSeconds || 60);
+      }
+    } catch {
+      // Fallback TOTP nếu chưa kết nối được
+      setQrToken('NATCASH_PAY_' + Math.floor(100000 + Math.random() * 900000));
+      setQrCountdown(60);
+    }
+  }, [userId]);
+
+  // Khởi tạo Dynamic QR khi nạp trang
+  useEffect(() => {
+    refreshDynamicQr();
+  }, [refreshDynamicQr]);
+
+  // Tự động làm mới Dynamic QR mỗi 60s
   useEffect(() => {
     const timer = setInterval(() => {
       setQrCountdown((prev) => {
         if (prev <= 1) {
-          setQrToken('NATCASH_PAY_TOKEN_' + Math.floor(100000 + Math.random() * 900000));
+          refreshDynamicQr();
           return 60;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [refreshDynamicQr]);
 
   const handleCopyQrToken = () => {
     navigator.clipboard.writeText(qrToken);
@@ -234,8 +289,8 @@ export const App: React.FC = () => {
         gameCode,
         score > 0 ? score : earnedPoints,
         userId,
-        undefined,
-        JSON.stringify({ pointsAwarded: earnedPoints, gameCode })
+        activeSessionToken || undefined,
+        JSON.stringify({ pointsAwarded: earnedPoints, gameCode, sessionToken: activeSessionToken })
       );
       if (res?.newPointBalance !== undefined) {
         setUserPoints(res.newPointBalance);
@@ -556,6 +611,8 @@ export const App: React.FC = () => {
               navigateToTab('GAMEHUB');
             }}
             onClaimReward={(earnedPoints) => handleMinigameReward('SCREW_PUZZLE', earnedPoints)}
+            userPoints={userPoints}
+            onDeductPoints={(deducted) => setUserPoints((p) => Math.max(0, p - deducted))}
           />
         )}
 
@@ -763,9 +820,12 @@ export const App: React.FC = () => {
 
                   {/* QR Display */}
                   <div className="my-3 bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200/80 flex flex-col items-center justify-center text-center">
-                    <div className="bg-white p-2.5 rounded-2xl border-2 border-slate-900 shadow-md inline-block">
-                      <QrCode className="w-28 h-28 sm:w-36 sm:h-36 text-slate-950" />
-                    </div>
+                    <div
+                      className="w-32 h-32 sm:w-36 sm:h-36 bg-white p-2 rounded-2xl border-2 border-slate-900 shadow-md flex items-center justify-center"
+                      dangerouslySetInnerHTML={{
+                        __html: generateQrCodeSvg(qrToken, 130),
+                      }}
+                    />
                     <div className="mt-2.5 flex items-center space-x-1.5">
                       <span className="text-[11px] font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded border border-slate-300">
                         {qrToken}
@@ -1344,9 +1404,12 @@ export const App: React.FC = () => {
 
             {/* Dynamic QR Box */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block shadow-inner">
-              <div className="w-44 h-44 bg-white border-2 border-slate-900 rounded-2xl flex flex-col items-center justify-center p-2 relative shadow-md">
-                <QrCode className="w-40 h-40 text-slate-950" />
-              </div>
+              <div
+                className="w-44 h-44 bg-white border-2 border-slate-900 rounded-2xl flex items-center justify-center p-2 relative shadow-md"
+                dangerouslySetInnerHTML={{
+                  __html: generateQrCodeSvg(qrToken, 160),
+                }}
+              />
               <div className="mt-2.5 flex items-center justify-center space-x-1.5">
                 <span className="text-[11px] font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded border border-slate-300">
                   {qrToken}

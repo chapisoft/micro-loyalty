@@ -104,13 +104,20 @@ public class LuckyWheelService {
                 .build()
         ).collect(Collectors.toList());
 
+        LocalDate today = LocalDate.now();
+        String todayStr = today.format(DateTimeFormatter.BASIC_ISO_DATE);
+        int freeSpinsDaily = wheel.getFreeSpinsDaily() != null ? wheel.getFreeSpinsDaily() : 1;
+        String userDailySpinsKey = "spins:user:" + tenantId + ":" + wheel.getId() + ":" + (request != null && request.getExternalUserId() != null ? request.getExternalUserId() : "anon") + ":" + todayStr;
+        long spinsDoneToday = redissonClient.getAtomicLong(userDailySpinsKey).get();
+        int remainingSpinsToday = (int) Math.max(0, freeSpinsDaily - spinsDoneToday);
+
         return WheelConfigResponse.builder()
                 .wheelId(wheel.getId())
                 .wheelCode(wheel.getWheelCode())
                 .wheelName(wheel.getWheelName())
                 .pricePerSpin(wheel.getPricePerSpin())
-                .freeSpinsDaily(wheel.getFreeSpinsDaily())
-                .remainingSpinsToday(wheel.getFreeSpinsDaily())
+                .freeSpinsDaily(freeSpinsDaily)
+                .remainingSpinsToday(remainingSpinsToday)
                 .prizes(prizeDtos)
                 .build();
     }
@@ -134,32 +141,51 @@ public class LuckyWheelService {
             LoyaltyAccountEntity account = accountService.getAccountForUpdate(tenantId, userId);
             BigDecimal currentPoints = account.getCurrentPoints();
 
-            // 1. Trừ điểm nếu vòng quay có thu phí điểm
-            if (wheel.getPricePerSpin() != null && wheel.getPricePerSpin().compareTo(BigDecimal.ZERO) > 0) {
-                if (currentPoints.compareTo(wheel.getPricePerSpin()) < 0) {
-                    log.warn("[SPIN-INSUFFICIENT-POINTS] user={}, balance={}, price={}",
-                            userId, currentPoints, wheel.getPricePerSpin());
-                    throw new LoyaltyException(ErrorCode.INSUFFICIENT_POINTS, "Số dư điểm không đủ để tham gia vòng quay");
+            LocalDate now = LocalDate.now();
+            String todayIso = now.format(DateTimeFormatter.BASIC_ISO_DATE);
+            int freeSpinsDailyLimit = wheel.getFreeSpinsDaily() != null ? wheel.getFreeSpinsDaily() : 1;
+            String userSpinsKey = "spins:user:" + tenantId + ":" + wheel.getId() + ":" + userId + ":" + todayIso;
+            RAtomicLong userDailySpins = redissonClient.getAtomicLong(userSpinsKey);
+            long doneSpins = userDailySpins.get();
+
+            boolean isFreeSpin = doneSpins < freeSpinsDailyLimit;
+            int remainingSpins;
+
+            if (isFreeSpin) {
+                userDailySpins.incrementAndGet();
+                if (userDailySpins.remainTimeToLive() < 0) {
+                    userDailySpins.expire(Duration.ofHours(24));
                 }
+                remainingSpins = (int) Math.max(0, freeSpinsDailyLimit - (doneSpins + 1));
+            } else {
+                remainingSpins = 0;
+                // 1. Trừ điểm nếu vòng quay có thu phí điểm khi đã hết lượt miễn phí
+                if (wheel.getPricePerSpin() != null && wheel.getPricePerSpin().compareTo(BigDecimal.ZERO) > 0) {
+                    if (currentPoints.compareTo(wheel.getPricePerSpin()) < 0) {
+                        log.warn("[SPIN-INSUFFICIENT-POINTS] user={}, balance={}, price={}",
+                                userId, currentPoints, wheel.getPricePerSpin());
+                        throw new LoyaltyException(ErrorCode.INSUFFICIENT_POINTS, "Số dư điểm không đủ để tham gia vòng quay");
+                    }
 
-                currentPoints = currentPoints.subtract(wheel.getPricePerSpin());
-                account.setCurrentPoints(currentPoints);
-                accountRepository.save(account);
+                    currentPoints = currentPoints.subtract(wheel.getPricePerSpin());
+                    account.setCurrentPoints(currentPoints);
+                    accountRepository.save(account);
 
-                Long defaultPartnerId = getDefaultPartnerId(tenantId);
-                String feeTx = "SPIN_FEE_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
-                LoyaltyPointLedgerEntity feeLedger = LoyaltyPointLedgerEntity.builder()
-                        .tenantId(tenantId)
-                        .account(account)
-                        .pointChange(wheel.getPricePerSpin().negate())
-                        .balanceAfter(currentPoints)
-                        .changeType(PointActionType.BURN)
-                        .referenceCode(feeTx)
-                        .partnerId(defaultPartnerId)
-                        .description("Phí tham gia vòng quay: " + wheel.getWheelName())
-                        .createdAt(Instant.now())
-                        .build();
-                ledgerRepository.save(feeLedger);
+                    Long defaultPartnerId = getDefaultPartnerId(tenantId);
+                    String feeTx = "SPIN_FEE_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+                    LoyaltyPointLedgerEntity feeLedger = LoyaltyPointLedgerEntity.builder()
+                            .tenantId(tenantId)
+                            .account(account)
+                            .pointChange(wheel.getPricePerSpin().negate())
+                            .balanceAfter(currentPoints)
+                            .changeType(PointActionType.BURN)
+                            .referenceCode(feeTx)
+                            .partnerId(defaultPartnerId)
+                            .description("Phí tham gia vòng quay: " + wheel.getWheelName())
+                            .createdAt(Instant.now())
+                            .build();
+                    ledgerRepository.save(feeLedger);
+                }
             }
 
             // 2. Thuật toán phân bổ giải thưởng ngẫu nhiên theo ma trận trọng số xác suất
@@ -184,8 +210,7 @@ public class LuckyWheelService {
 
             // 3. Khống chế ngân sách trúng thưởng Ngày / Tuần / Tháng nguyên tử qua Redis Atomic
             boolean budgetExceeded = false;
-            LocalDate now = LocalDate.now();
-            String todayStr = now.format(DateTimeFormatter.BASIC_ISO_DATE);
+            String todayStr = todayIso;
             int weekOfYear = now.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
             int weekYear = now.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR);
             String weekStr = weekYear + "_W" + String.format("%02d", weekOfYear);
@@ -284,7 +309,7 @@ public class LuckyWheelService {
                     .winningIndex(winningIndex)
                     .winningAngle(winningAngle)
                     .newPointBalance(currentPoints)
-                    .remainingSpinsToday(0)
+                    .remainingSpinsToday(remainingSpins)
                     .message(winningPrize.getPrizeType() == PrizeType.NO_LUCK ? "Chúc bạn may mắn lần sau!" : "Chúc mừng bạn đã trúng " + winningPrize.getPrizeName())
                     .timestamp(Instant.now())
                     .build();

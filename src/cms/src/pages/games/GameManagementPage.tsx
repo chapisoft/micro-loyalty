@@ -44,6 +44,18 @@ interface GameItem {
   farmSeasonDays?: number;
   farmVoucherLimit?: number;
   diceMultiplierMax?: number;
+  // Puzzle Game Parameters
+  targetTimeSeconds?: number;
+  totalStagesPerSession?: number;
+  stage1Reward?: number;
+  stage2Reward?: number;
+  stage3Reward?: number;
+  stage4Reward?: number;
+  stage5Reward?: number;
+  turnSinglePoints?: number;
+  turnTriplePoints?: number;
+  hintPoints?: number;
+  extraHolePoints?: number;
 }
 
 interface GamePrizeItem {
@@ -384,6 +396,7 @@ export const GameManagementPage: React.FC = () => {
   const categoryOptions = useMemo(() => [
     { label: t('game.cat_lucky_draw', { defaultValue: 'Vòng Quay May Mắn (LUCKY_DRAW)' }), value: 'LUCKY_DRAW' },
     { label: t('game.cat_instant_win', { defaultValue: 'Vé Cào Trúng Liền (INSTANT_WIN)' }), value: 'INSTANT_WIN' },
+    { label: t('game.cat_puzzle', { defaultValue: 'Giải Đố & Tangram (PUZZLE)' }), value: 'PUZZLE' },
     { label: t('game.cat_action', { defaultValue: 'Thể Thao & Hành Động (ACTION)' }), value: 'ACTION' },
     { label: t('game.cat_adventure', { defaultValue: 'Phiêu Lưu Leo Tháp (ADVENTURE)' }), value: 'ADVENTURE' },
     { label: t('game.cat_board_3d', { defaultValue: 'Bàn Cờ 3D & Xúc Xắc (BOARD_3D)' }), value: 'BOARD_3D' },
@@ -1205,6 +1218,135 @@ export const GameManagementPage: React.FC = () => {
                 min={10}
                 onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizRewardPoints: e.value || 150 })}
               />
+            </div>
+          </div>
+        )}
+
+        {(paramsFormData.category === 'PUZZLE' || paramsFormData.gameCode === 'SCREW_PUZZLE') && (
+          <div className="surface-100 p-3 border-round-lg mb-3">
+            <div className="font-bold text-sm mb-3 text-primary">
+              <i className="pi pi-cog mr-2" />
+              {t('game.screw_puzzle_config_title', { defaultValue: 'Cấu hình Minigame Gỡ Ốc Vít & Xếp Hình Tangram' })}
+            </div>
+
+            <div className="grid">
+              <div className="col-12 md:col-6 field mb-3">
+                <label htmlFor="targetTimeSeconds" className="font-bold text-xs">
+                  {t('game.puzzle_target_time', { defaultValue: 'Thời gian đếm ngược (Giây/màn)' })}
+                </label>
+                <InputNumber
+                  id="targetTimeSeconds"
+                  value={paramsFormData.targetTimeSeconds || 60}
+                  min={10}
+                  max={300}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, targetTimeSeconds: e.value || 60 })}
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-3">
+                <label htmlFor="totalStagesPerSession" className="font-bold text-xs">
+                  {t('game.puzzle_total_stages', { defaultValue: 'Tổng số màn mỗi phiên chơi' })}
+                </label>
+                <InputNumber
+                  id="totalStagesPerSession"
+                  value={paramsFormData.totalStagesPerSession || 5}
+                  min={1}
+                  max={10}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, totalStagesPerSession: e.value || 5 })}
+                />
+              </div>
+            </div>
+
+            <div className="font-bold text-xs mb-2 text-700">
+              {t('game.puzzle_stage_rewards_title', { defaultValue: 'Bảng Điểm Thưởng Tăng Dần Theo Từng Màn (Stage Rewards)' })}
+            </div>
+            <div className="grid">
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="stage1Reward" className="text-xs font-semibold">{t('game.stage_1_reward', { defaultValue: 'Màn 1 (+Điểm)' })}</label>
+                <InputNumber
+                  id="stage1Reward"
+                  value={paramsFormData.stage1Reward ?? 20}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, stage1Reward: e.value ?? 20 })}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="stage2Reward" className="text-xs font-semibold">{t('game.stage_2_reward', { defaultValue: 'Màn 2 (+Điểm)' })}</label>
+                <InputNumber
+                  id="stage2Reward"
+                  value={paramsFormData.stage2Reward ?? 40}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, stage2Reward: e.value ?? 40 })}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="stage3Reward" className="text-xs font-semibold">{t('game.stage_3_reward', { defaultValue: 'Màn 3 (+Điểm)' })}</label>
+                <InputNumber
+                  id="stage3Reward"
+                  value={paramsFormData.stage3Reward ?? 60}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, stage3Reward: e.value ?? 60 })}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="stage4Reward" className="text-xs font-semibold">{t('game.stage_4_reward', { defaultValue: 'Màn 4 (+Điểm)' })}</label>
+                <InputNumber
+                  id="stage4Reward"
+                  value={paramsFormData.stage4Reward ?? 80}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, stage4Reward: e.value ?? 80 })}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="stage5Reward" className="text-xs font-semibold">{t('game.stage_5_reward', { defaultValue: 'Màn 5 - Phá đảo (+Điểm)' })}</label>
+                <InputNumber
+                  id="stage5Reward"
+                  value={paramsFormData.stage5Reward ?? 100}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, stage5Reward: e.value ?? 100 })}
+                />
+              </div>
+            </div>
+
+            <div className="font-bold text-xs mb-2 mt-3 text-700">
+              {t('game.puzzle_pricing_title', { defaultValue: 'Biểu Phí Đổi Lượt & Công Cụ Trợ Giúp (Bằng Điểm Loyalty)' })}
+            </div>
+            <div className="grid">
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="turnSinglePoints" className="text-xs font-semibold">{t('game.turn_single_points', { defaultValue: 'Mua 1 Lượt chơi (Điểm)' })}</label>
+                <InputNumber
+                  id="turnSinglePoints"
+                  value={paramsFormData.turnSinglePoints ?? 50}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, turnSinglePoints: e.value ?? 50 })}
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="turnTriplePoints" className="text-xs font-semibold">{t('game.turn_triple_points', { defaultValue: 'Gói Combo 3 Lượt (Điểm)' })}</label>
+                <InputNumber
+                  id="turnTriplePoints"
+                  value={paramsFormData.turnTriplePoints ?? 120}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, turnTriplePoints: e.value ?? 120 })}
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="hintPoints" className="text-xs font-semibold">{t('game.hint_points', { defaultValue: 'Mua 1 Gợi ý / Hint (Điểm)' })}</label>
+                <InputNumber
+                  id="hintPoints"
+                  value={paramsFormData.hintPoints ?? 20}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, hintPoints: e.value ?? 20 })}
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="extraHolePoints" className="text-xs font-semibold">{t('game.extra_hole_points', { defaultValue: 'Mở thêm 1 Lỗ chờ (Điểm)' })}</label>
+                <InputNumber
+                  id="extraHolePoints"
+                  value={paramsFormData.extraHolePoints ?? 30}
+                  min={0}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, extraHolePoints: e.value ?? 30 })}
+                />
+              </div>
             </div>
           </div>
         )}

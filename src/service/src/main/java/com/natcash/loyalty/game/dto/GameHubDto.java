@@ -256,13 +256,24 @@ public final class GameHubDto {
         private String partnerCode;
         private String webhookUrl;
         private Integer revenueSharePercent;
-        // Game parameters parsed
         private Integer quizQuestionCount;
         private Integer quizCountdownSec;
         private Integer quizRewardPoints;
         private Integer farmSeasonDays;
         private Integer farmVoucherLimit;
         private Integer diceMultiplierMax;
+        // Screw Puzzle parameters
+        private Integer targetTimeSeconds;
+        private Integer totalStagesPerSession;
+        private Integer stage1Reward;
+        private Integer stage2Reward;
+        private Integer stage3Reward;
+        private Integer stage4Reward;
+        private Integer stage5Reward;
+        private Integer turnSinglePoints;
+        private Integer turnTriplePoints;
+        private Integer hintPoints;
+        private Integer extraHolePoints;
     }
 
     @Data
