@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/loyalty/v1/integrations")
@@ -48,6 +49,14 @@ public class TenantIntegrationController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         IntegrationConfigDto saved = integrationService.saveIntegration(tenantId, request);
         return ResponseEntity.ok(saved);
+    }
+
+    @GetMapping("/overview")
+    @Operation(summary = "Tổng quan trạng thái 6 hệ thống tích hợp (QT-06)")
+    public ResponseEntity<List<Map<String, Object>>> getOverview(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        return ResponseEntity.ok(integrationService.getIntegrationsOverview(tenantId));
     }
 
     @PostMapping("/test")

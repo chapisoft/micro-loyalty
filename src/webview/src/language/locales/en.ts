@@ -29,7 +29,8 @@ export default {
     "progress_status": "Reached {{percent}}%",
     "points_balance": "Available Point Balance",
     "btn_wallet_code": "Spend Points QR",
-    "btn_view_perks": "View 4 Tier Perks"
+    "btn_view_perks": "View 4 Tier Perks",
+    "tier_points_unit": "Tier Pts"
   },
   "promo": {
     "featured_badge": "FEATURED EVENT",
@@ -100,7 +101,9 @@ export default {
     "game1_tag": "Lucky Draw",
     "energy_full": "FREE TURNS FULL",
     "next_turn_in": "Next turn in:",
-    "this_week": "This Week"
+    "this_week": "This Week",
+    "buy_turn_item_name": "Buy {{count}} GameHub Turns",
+    "filter_learning": "Learning"
   },
   "daily_missions": {
     "modal_title": "Daily Missions Station",
@@ -149,14 +152,25 @@ export default {
     "default2_sub": "Natcom Telecom • Reward +50 pts",
     "default3_title": "Invite 3 friends to join",
     "default3_sub": "Natcash Alliance • Reward +300 pts",
-    "daily_subtitle": "Missions automatically reset daily at 00:00."
+    "daily_subtitle": "Missions automatically reset daily at 00:00.",
+    "filter_all": "All campaigns",
+    "claim_btn": "Claim",
+    "claimed": "Claimed",
+    "empty_title": "No missions available",
+    "empty_desc": "New campaign missions will appear here soon.",
+    "claim_success_title": "Reward Claimed",
+    "claim_success_msg": "You successfully claimed {{points}} Natcash Coin.",
+    "claim_error_title": "Claim failed",
+    "claim_error_msg": "Please try again shortly."
   },
   "ledger": {
     "title": "Recent Point Activity",
     "subtitle": "Immutable Ledger",
     "ref_code": "Tx Ref: {{code}}",
     "default1_desc": "Earn points shopping at Delimart",
-    "default2_desc": "Lucky Wheel spin reward"
+    "default2_desc": "Lucky Wheel spin reward",
+    "empty_title": "No point activity yet",
+    "empty_desc": "Your earned and spent Natcash Coin entries will appear here."
   },
   "partners": {
     "title": "Partner Alliance Network",
@@ -165,7 +179,9 @@ export default {
     "delimart_name": "Delimart Supermarket",
     "delimart_desc": "Earn 1% • Redeem up to 50% bill",
     "natcom_name": "Natcom Telecom",
-    "natcom_desc": "Topup • Redeem 4G Data"
+    "natcom_desc": "Topup • Redeem 4G Data",
+    "empty_title": "No partners available",
+    "empty_desc": "Partner merchant locations will be listed here soon."
   },
   "wheel": {
     "title": "Appreciation Wheel",
@@ -254,7 +270,15 @@ export default {
     "min_bill_expiry": "Min order {{minBill}} HTG • Valid for {{expiryDays}} days",
     "points_to_redeem": "Points Required",
     "points_to_convert_label": "Points to convert:",
-    "rate_exchange_desc": "Rate: 100 Points = 10 HTG"
+    "rate_exchange_desc": "Rate: 100 Points = 10 HTG",
+    "status_awaiting_confirmation": "Awaiting confirmation",
+    "status_sold_out": "Sold out",
+    "redeeming": "Redeeming...",
+    "catalog_empty_title": "No rewards available",
+    "catalog_empty_desc": "The reward catalog is currently empty.",
+    "redeem_failed_title": "Redemption Failed",
+    "redeem_failed_msg": "Unable to complete voucher redemption.",
+    "badge_redeem_error": "Redeem Error"
   },
   "tiers": {
     "modal_title": "VIP 4-Tier Privileges & Benefits",
@@ -270,7 +294,15 @@ export default {
     "birthday_gift_label": "VIP Birthday Gift",
     "cycle_title": "12-Month Tier Maintenance Cycle",
     "cycle_desc": "Tier status is accumulated over a 12-month rolling period. Once qualified, your tier is upgraded instantly and preserved for 12 full months.",
-    "btn_got_it": "Got It"
+    "btn_got_it": "Got It",
+    "btn_program_terms": "Program Terms",
+    "keep_tier_label": "Keep tier",
+    "upgrade_threshold_label": "Upgrade threshold",
+    "natcash_coin_label": "Natcash Coin",
+    "natcash_coin_hint": "Spendable balance for vouchers and partner QR payments",
+    "qualifying_points_label": "Tier Qualifying Points",
+    "qualifying_points_hint": "Accumulated per cycle to upgrade and retain membership tier",
+    "spins_per_day": "{{count}} spins/day"
   },
   "games": {
     "common": {
@@ -388,7 +420,9 @@ export default {
         "tips": "Use \"X-Ray Peek\" to glimpse all cards for 1.5 seconds or click \"+10 Sec\" when running low on time."
       },
       "moves_unit": "moves",
-      "time_bonus_label": "time bonus"
+      "time_bonus_label": "time bonus",
+      "next_stage_label": "Next stage",
+      "stage_score_label": "Stage score"
     },
     "bubble": {
       "title": "Kanaval Bubble Shooter",
@@ -437,7 +471,9 @@ export default {
         "scoring": "Each knife stuck: +10 points. Hitting Red Envelopes or 4G Data packs awards +25 to +50 bonus points!",
         "tips": "The log randomly changes direction and speed. Wait for the widest open gap before throwing."
       },
-      "record_stage": "Record: Stage {{highestStage}}"
+      "record_stage": "Record: Stage {{highestStage}}",
+      "knives_label": "Knives",
+      "score_label": "Score"
     },
     "block": {
       "title": "Natcash Diamond Block Puzzle",
@@ -526,7 +562,11 @@ export default {
         "controls": "Tap a screw pin to lift it, then tap an empty hole to screw it in.",
         "scoring": "Each plate dropped: +50 points. Clear the full stage: +100 points + time bonus!",
         "tips": "Target plates on top layers first to unlock pins trapped underneath lower layers."
-      }
+      },
+      "add_hole_btn": "Add hole",
+      "hammer_btn": "Hammer",
+      "hammer_tooltip": "Smash a stuck pin",
+      "screw_box_label": "Screw box"
     },
     "untangle": {
       "title": "Tangle Master 3D",
@@ -558,6 +598,9 @@ export default {
         "scoring": "Defeat the thief: +50 points. Safe treasure retrieval: +100 points.",
         "tips": "Pour water onto fire/lava first to solidify it, then drop iron weights on the thief before releasing the treasure chest."
       }
+    },
+    "pin": {
+      "retry_btn": "Play again"
     }
   },
   "footer": {
@@ -577,7 +620,15 @@ export default {
   "home": {
     "points_expiration_warning": "{{count}} points will expire on {{date}}",
     "points_expiration_hint": "Redeem supermarket gift vouchers or data packages now so points won't expire",
-    "redeem_now_btn": "Redeem now →"
+    "redeem_now_btn": "Redeem now →",
+    "nc_entry_title": "Natcash Loyalty Hub",
+    "nc_entry_subtitle": "{{coins}} Natcash Coin · {{tierPts}} Tier Points",
+    "quick_qr_pay": "60s QR Pay",
+    "quick_where_to_use": "Where to Use",
+    "quick_invite": "Invite Friends",
+    "quick_learning": "Learn & Quiz",
+    "quick_ussd": "USSD *202#",
+    "quick_agent": "Agent Portal"
   },
   "tier": {
     "your_tier_badge": "✓ Your Current Tier",
@@ -590,7 +641,10 @@ export default {
     "view_barcode": "Barcode",
     "view_qr": "QR Code",
     "valid_until": "Valid until:",
-    "apply_at": "Applicable at:"
+    "apply_at": "Applicable at:",
+    "scan_at_counter": "Scan at the counter",
+    "redeem_ready_title": "Voucher Ready",
+    "redeem_ready_desc": "Present this QR code or barcode at the cashier to redeem."
   },
   "common": {
     "copied": "Copied",
@@ -598,6 +652,251 @@ export default {
     "reward_wallet": "Reward Wallet",
     "points_short": "pts",
     "bonus_points": "Bonus Points",
-    "points_unit": "Points"
+    "points_unit": "Points",
+    "change_language": "Change language",
+    "close": "Close",
+    "mute": "Mute sound",
+    "unmute": "Unmute sound",
+    "processing": "Processing...",
+    "retry": "Retry"
+  },
+  "terms": {
+    "open_btn": "Terms",
+    "title": "Membership Program Terms",
+    "subtitle": "Rules for earning, tiering, and spending Natcash Coin",
+    "sec1_title": "1. Natcash Coin vs. Tier Qualifying Points",
+    "sec1_desc": "Natcash Coin is your spendable reward balance. Tier Qualifying Points are tracked separately to determine your membership tier.",
+    "sec2_title": "2. Upgrade & Keep-Tier Thresholds",
+    "sec2_desc": "Four membership tiers are evaluated based on Qualifying Points earned within the active cycle.",
+    "sec3_title": "3. FIFO Expiry Deduction Rule",
+    "sec3_desc": "Coin batches expiring earliest are automatically deducted first on every redemption or QR payment.",
+    "sec4_title": "4. Dynamic QR Security & Marketing Opt-Out",
+    "sec4_desc": "Counter payment QR tokens expire in 60 seconds. You may opt out of marketing messages anytime.",
+    "table_title": "Official Tier Threshold Table",
+    "col_tier": "Tier",
+    "col_upgrade": "Upgrade",
+    "col_keep": "Keep tier",
+    "btn_agree": "Got it"
+  },
+  "fifo": {
+    "title": "Expiring Coin Batches (FIFO)",
+    "subtitle": "Automatic First-In, First-Out deduction order",
+    "view_batches_btn": "View FIFO batches",
+    "total_expiring_label": "Coins expiring soon",
+    "rule_explanation": "By FIFO rule, batches with the earliest expiration date are always used first when redeeming or paying.",
+    "earned_at": "Earned: {{date}}",
+    "expires_at": "Expires: {{date}}",
+    "expiring_soon_badge": "Expiring soon",
+    "default_source": "Reward batch",
+    "empty_title": "No expiring batches found",
+    "empty_desc": "You have no Natcash Coin batches expiring soon.",
+    "error_title": "Unable to load FIFO batches",
+    "load_error": "Failed to load expiring coin batches.",
+    "btn_refresh": "Refresh"
+  },
+  "referrals": {
+    "title": "Invite Friends & Earn",
+    "subtitle": "Share your invite link and earn Coins once friends complete eKYC",
+    "invite_btn": "Invite friends",
+    "your_code_label": "Your referral code",
+    "btn_share_now": "Share invite link",
+    "share_title": "Join Natcash Loyalty",
+    "share_content": "Use code {{code}} when joining Natcash to unlock rewards: {{link}}",
+    "stat_invited": "Invited",
+    "stat_ekyc": "eKYC Verified",
+    "stat_earned": "Coins Earned",
+    "friends_list_title": "Invited friends status",
+    "status_ekyc_verified": "eKYC Verified",
+    "status_pending_ekyc": "Pending eKYC",
+    "no_friends_title": "No referrals yet",
+    "no_friends_desc": "Share your QR code or invite link with friends to start earning.",
+    "empty_title": "No referral data",
+    "empty_desc": "Unable to retrieve your referral summary right now.",
+    "load_error": "Failed to load referral information."
+  },
+  "scratch": {
+    "title": "Lucky Scratch Card",
+    "subtitle": "Scratch the metallic foil for instant rewards",
+    "badge": "Instant Win",
+    "hero_title": "Every card reveals a real server prize",
+    "hero_desc": "Draw your official card and scratch to uncover matching symbols.",
+    "perk_badge": "Scratch",
+    "turns_remaining": "{{count}} turns available",
+    "ready_title": "Ready to play a scratch card",
+    "ready_desc": "Tap below to draw a server-verified scratch card.",
+    "draw_button": "Draw New Card",
+    "scratch_here": "SCRATCH HERE",
+    "scratched_pct": "Scratched {{pct}}%",
+    "drag_hint": "Swipe across the foil to reveal prizes",
+    "reveal_all": "Reveal All",
+    "win_subtitle": "Reward credited to your Natcash Coin balance",
+    "lose_subtitle": "Better luck on your next scratch card",
+    "play_again": "Play Another Card",
+    "load_error": "Unable to initialize scratch card."
+  },
+  "learning": {
+    "title": "Learning & Quiz",
+    "subtitle": "Complete micro-courses to earn Coins and climb the monthly leaderboard",
+    "perk_badge": "Quiz",
+    "tab_courses": "Courses",
+    "tab_leaderboard": "Leaderboard",
+    "tab_history": "Play History",
+    "course_tag": "Course",
+    "question_count": "{{count}} questions",
+    "start_quiz": "Start Quiz",
+    "review_quiz": "Retake Quiz",
+    "submit_quiz": "Submit ({{answered}}/{{total}})",
+    "quiz_completed": "Quiz Completed",
+    "score_summary": "You answered {{correct}} out of {{total}} correctly.",
+    "empty_courses": "No courses available",
+    "empty_courses_desc": "English Daily, Aprann Li, and Money Smart courses will appear here.",
+    "empty_questions": "No questions available",
+    "empty_questions_desc": "This course currently has no quiz questions.",
+    "empty_leaderboard": "No leaderboard entries yet",
+    "empty_leaderboard_desc": "Monthly rankings update after verified quiz & game sessions.",
+    "empty_history": "No play history yet",
+    "empty_history_desc": "Your completed games and quiz sessions will appear here.",
+    "session_default": "GameHub Session",
+    "recorded": "Recorded",
+    "load_error": "Unable to load learning content.",
+    "submit_error": "Unable to submit quiz answers."
+  },
+  "whereToUse": {
+    "title": "Where to Use Natcash Coin",
+    "subtitle": "Partner stores and services accepting Reward Wallet QR",
+    "see_all_btn": "See all locations",
+    "search_placeholder": "Search merchant, street, or city...",
+    "cat_all": "All",
+    "cat_retail": "Retail",
+    "cat_food": "Food & Drink",
+    "cat_telecom": "Telecom",
+    "cat_utility": "Utilities",
+    "nationwide": "Nationwide",
+    "cashback_rate": "{{pct}}% back",
+    "qr_accepted": "QR accepted",
+    "pay_with_qr": "Pay QR",
+    "empty_title": "No matching partner locations",
+    "empty_desc": "Try another category or clear your search filter.",
+    "load_error": "Unable to load partner locations."
+  },
+  "qrModal": {
+    "title": "Pay at the counter · QR 60 s",
+    "subtitle": "Show this rotating QR token at checkout to pay with Coins",
+    "available_coins": "Available Natcash Coin",
+    "qr_alt": "Reward Wallet payment QR code",
+    "auto_refresh_label": "Security refresh in",
+    "refresh_now": "Refresh QR now",
+    "tap_to_generate": "No active QR session yet",
+    "btn_where_to_use": "Where to use",
+    "btn_ussd": "USSD *202#",
+    "load_error": "Unable to generate payment QR token."
+  },
+  "ussd": {
+    "title": "Natcash USSD Simulator",
+    "redial": "Redial *202#",
+    "input_placeholder": "Enter option (e.g. 1, 2, 0)...",
+    "cancel": "Cancel",
+    "send": "Send",
+    "load_error": "USSD session interrupted."
+  },
+  "segments": {
+    "new_customer": {
+      "badge": "New Member",
+      "title": "Welcome to Natcash Loyalty",
+      "subtitle": "Complete your first mission to unlock starter Natcash Coin.",
+      "cta": "Get Started"
+    },
+    "low_activity": {
+      "badge": "Quick Boost",
+      "title": "Earn extra Coin in one tap today",
+      "subtitle": "Use your daily free turn or play Scratch Card for instant rewards.",
+      "cta": "Play Now"
+    },
+    "high_value": {
+      "badge": "VIP Privilege",
+      "title": "Exclusive tier multipliers & priority perks",
+      "subtitle": "Enjoy boosted Coin rewards and curated VIP vouchers.",
+      "cta": "View Perks"
+    },
+    "single_service": {
+      "badge": "Explore More",
+      "title": "Try partner QR payments for bonus Coin",
+      "subtitle": "Pay with Reward Wallet across participating alliance stores.",
+      "cta": "Find Stores"
+    },
+    "win_back": {
+      "badge": "Welcome Back",
+      "title": "Special welcome-back bonus awaits you",
+      "subtitle": "Claim free spins and check rewards waiting in your wallet.",
+      "cta": "Claim Bonus"
+    },
+    "partner_shopper": {
+      "badge": "Partner Shopper",
+      "title": "Spend Coin at partner counters nearby",
+      "subtitle": "Discover newly added stores accepting 60s Reward Wallet QR.",
+      "cta": "See Locations"
+    },
+    "general": {
+      "badge": "Featured Offer",
+      "title": "Earn Coin every day, redeem everywhere",
+      "subtitle": "Play GameHub and complete weekly missions to upgrade faster.",
+      "cta": "Open GameHub"
+    }
+  },
+  "inbox": {
+    "title": "Inbox Messages",
+    "subtitle": "Updates on rewards, tier status, and personalized offers",
+    "open_settings": "Notification preferences",
+    "cat_all": "All",
+    "cat_reward": "Rewards",
+    "cat_mission": "Missions",
+    "cat_tier": "Tiers",
+    "cat_promo": "Promos",
+    "empty_title": "Inbox is empty",
+    "empty_desc": "There are no messages in this category yet.",
+    "load_error": "Unable to load inbox messages."
+  },
+  "notifSettings": {
+    "title": "Notification & Language Settings",
+    "subtitle": "Manage communication channels and marketing opt-out",
+    "quick_language": "Quick display language",
+    "opt_out_label": "Opt out of marketing",
+    "opt_out_desc": "Stop promotional alerts while keeping security and transaction notices.",
+    "channel_push": "Push notifications",
+    "channel_push_desc": "Instant alerts for Coin earnings and bonus turns",
+    "channel_sms": "SMS alerts",
+    "channel_sms_desc": "Important loyalty account updates via SMS",
+    "channel_inapp": "In-app inbox",
+    "channel_inapp_desc": "Store reward updates and tier alerts in your inbox",
+    "save_button": "Save Preferences",
+    "saved_success": "Notification preferences saved.",
+    "load_error": "Unable to load notification preferences.",
+    "save_error": "Unable to save notification preferences."
+  },
+  "agent": {
+    "title": "Agent & Super Agent Portal",
+    "subtitle": "Monthly customer targets and subordinate network bonuses",
+    "tab_ag01": "AG-01 · Agent",
+    "tab_ag02": "AG-02 · Super Agent",
+    "current_month": "Current Month",
+    "status_qualified": "Qualified",
+    "status_in_progress": "In Progress",
+    "ag01_heading": "Monthly Active Customer Target",
+    "ag01_reward_desc": "Reach {{target}} customers this month to earn {{reward}} HTG / Coin.",
+    "customers_progress": "Monthly customer progress",
+    "reward_tier_label": "Milestone reward",
+    "ag02_heading": "Subordinate Agent Network Rate",
+    "ag02_reward_desc": "Reach at least {{pct}}% qualified sub-agents to unlock {{reward}} HTG.",
+    "qualified_agents": "Qualified",
+    "network_rate": "Network Rate",
+    "super_bonus": "Super Bonus",
+    "sub_agents_list": "Subordinate Agents",
+    "sub_qualified": "Qualified",
+    "sub_pending": "Pending",
+    "empty_title": "No agent profile found",
+    "empty_desc": "This account is not enrolled in the Agent Loyalty portal.",
+    "empty_sub_agents": "No subordinate agents",
+    "empty_sub_agents_desc": "Assigned sub-agents will appear here.",
+    "load_error": "Unable to load agent dashboard."
   }
 };

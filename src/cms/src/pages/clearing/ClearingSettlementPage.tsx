@@ -11,12 +11,14 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
+import { ProgressBar } from 'primereact/progressbar';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
-import { ClearingStatus } from '@/models';
+import { ClearingStatus, PaymentBatchStatus } from '@/models';
 import {
   LoyaltyService,
   ClearingSummaryModel,
+  ClearingBatchModel,
   DisputeItemModel,
   PartnerTransactionItemModel,
   PartnerTransactionsResponseModel,
@@ -92,15 +94,25 @@ export const ClearingSettlementPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState<PartnerTransactionsResponseModel | null>(null);
 
+  // LM-07 Payment Batches (PAY-...)
+  const [batches, setBatches] = useState<ClearingBatchModel[]>([]);
+  const [batchesLoading, setBatchesLoading] = useState(false);
+  const [showCreateBatchDialog, setShowCreateBatchDialog] = useState(false);
+  const [batchPartnerId, setBatchPartnerId] = useState<number | null>(null);
+  const [batchMdrRate, setBatchMdrRate] = useState<number>(1.5);
+  const [trackBatch, setTrackBatch] = useState<ClearingBatchModel | null>(null);
+
   const fetchClearingData = useCallback(async () => {
     setLoading(true);
+    setBatchesLoading(true);
     try {
       const fromIso = fromDate ? new Date(fromDate + 'T00:00:00').toISOString() : undefined;
       const toIso = toDate ? new Date(toDate + 'T23:59:59').toISOString() : undefined;
 
-      const [report, disputes] = await Promise.all([
+      const [report, disputes, batchRes] = await Promise.all([
         LoyaltyService.getClearingReport(selectedTenant, fromIso, toIso),
         LoyaltyService.getDisputes(selectedTenant),
+        LoyaltyService.getClearingBatches(selectedTenant),
       ]);
 
       if (report && Array.isArray(report.partnerSummaries)) {
@@ -114,14 +126,53 @@ export const ClearingSettlementPage: React.FC = () => {
       } else {
         setDisputeList([]);
       }
+
+      setBatches(Array.isArray(batchRes) ? batchRes : []);
     } catch (e) {
       console.error('[fetchClearingData] Error:', e);
       setClearingList([]);
       setDisputeList([]);
+      setBatches([]);
     } finally {
       setLoading(false);
+      setBatchesLoading(false);
     }
   }, [selectedTenant, fromDate, toDate]);
+
+  const handleCreateBatch = async () => {
+    if (!batchPartnerId) {
+      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('clearing.select_partner_batch', { defaultValue: 'Vui lòng chọn Đối tác để khởi tạo lô thanh toán PAY-...' }) });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.createClearingBatch(
+        { partnerId: batchPartnerId, periodFrom: fromDate, periodTo: toDate, mdrFeeRate: batchMdrRate },
+        selectedTenant
+      );
+      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('clearing.batch_created', { defaultValue: 'Đã khởi tạo lô thanh toán PAY-... thành công.' }) });
+      setShowCreateBatchDialog(false);
+      fetchClearingData();
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmBatch = async (batch: ClearingBatchModel) => {
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.confirmClearingBatch(batch.batchCode, selectedTenant);
+      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: `${batch.batchCode} ${t('clearing.batch_confirmed', { defaultValue: 'đã được xác nhận giải ngân.' })}` });
+      setTrackBatch(null);
+      fetchClearingData();
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     fetchClearingData();
@@ -528,7 +579,7 @@ export const ClearingSettlementPage: React.FC = () => {
               <Column field="totalPointsRedeemed" header={<span title={t('clearing.total_points_redeemed_tooltip', { defaultValue: 'Tổng số điểm đối tác chấp nhận trừ trên hóa đơn (Quyền thu tiền)' })}>{t('clearing.total_points_redeemed', { defaultValue: 'Điểm Thu Hồi' })}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsRedeemed || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
               <Column field="totalFiatPayable" header={<span title={t('clearing.payable_tooltip', { defaultValue: 'Số tiền mặt phải trả vào Quỹ liên minh (HTG)' })}>{t('clearing.total_fiat_payable', { defaultValue: 'Phải Trả' })}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatPayable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
               <Column field="totalFiatReceivable" header={<span title={t('clearing.receivable_tooltip', { defaultValue: 'Số tiền mặt được nhận hoàn từ Quỹ liên minh (HTG)' })}>{t('clearing.total_fiat_receivable', { defaultValue: 'Phải Thu' })}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatReceivable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalCommissionFee" header={<span title="Phí hoa hồng sàn Loyalty (MDR Fee)">Phí Sàn MDR</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalCommissionFee || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalCommissionFee" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(row: ClearingSummaryModel) => <span className="font-mono white-space-nowrap">{Number(row.totalCommissionFee || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
               <Column field="netSettlementAmount" body={netAmountTemplate} header={<span title={t('clearing.net_amount_tooltip', { defaultValue: 'Số tiền chênh lệch bù trừ ròng = Phải Thu - Phải Trả - Phí Sàn (HTG)' })}>{t('clearing.net_amount', { defaultValue: 'Dư Nợ Ròng' })}</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
               <Column field="status" body={(row: ClearingSummaryModel) => statusTemplate(row.status)} header={t('common.status', { defaultValue: 'Trạng Thái' })} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             </DataTable>
@@ -544,8 +595,8 @@ export const ClearingSettlementPage: React.FC = () => {
               responsiveLayout="scroll"
             >
               <Column header="#" body={(_, opt) => opt.rowIndex + 1} style={{ width: '3.5rem', textAlign: 'center' }} />
-              <Column field="disputeCode" header="Mã Khiếu Nại" sortable style={{ minWidth: '10rem', fontWeight: 600 }} />
-              <Column field="batchCode" header="Mã Lô Đối Soát" sortable style={{ minWidth: '10rem' }} />
+              <Column field="disputeCode" header="Mã Khiếu Nại" body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="batchCode" header="Mã Lô Đối Soát" body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
               <Column field="partnerName" header="Đối Tác" sortable style={{ minWidth: '12rem' }} />
               <Column field="disputeType" header="Loại Sai Lệch" sortable style={{ minWidth: '10rem' }} />
               <Column field="partnerAmount" header="Tiền Đối Tác" body={(r: DisputeItemModel) => `${Number(r.partnerAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
@@ -567,6 +618,30 @@ export const ClearingSettlementPage: React.FC = () => {
                 )}
                 style={{ width: '7rem', textAlign: 'center' }}
               />
+            </DataTable>
+          </TabPanel>
+
+          <TabPanel header={t('clearing.tab_batches', { defaultValue: `Quản lý Lô Thanh Toán (${batches.length})` })} leftIcon="pi pi-money-bill mr-2">
+            <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <span className="text-sm text-600">{t('clearing.batches_desc', { defaultValue: 'Tạo lô thanh toán bù trừ PAY-..., theo dõi trạng thái giải ngân và phí MDR.' })}</span>
+              <div className="flex gap-2">
+                <Button icon="pi pi-plus" label={t('clearing.create_batch', { defaultValue: 'Tạo Lô Thanh Toán' })} severity="success" size="small" onClick={() => setShowCreateBatchDialog(true)} />
+                <Button icon="pi pi-refresh" outlined size="small" onClick={fetchClearingData} loading={batchesLoading} />
+              </div>
+            </div>
+            <DataTable<ClearingBatchModel> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches', { defaultValue: 'Chưa có lô thanh toán PAY-... nào được tạo trong kỳ.' })}>
+              <Column field="batchCode" header={t('clearing.batch_code', { defaultValue: 'Mã Lô PAY' })} body={(b) => <span className="font-mono white-space-nowrap font-medium text-primary">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Đối Tác' })} body={(b) => `${b.partnerCode} - ${b.partnerName || ''}`} style={{ minWidth: '13rem' }} />
+              <Column header={t('clearing.period', { defaultValue: 'Kỳ Đối Soát' })} body={(b) => <span className="font-mono white-space-nowrap text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="grossAmount" header={t('clearing.gross_amount', { defaultValue: 'Tổng Giá Trị' })} body={(b) => <span className="font-mono">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(b) => <span className="font-mono text-orange-600">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="netPayableAmount" header={t('clearing.net_payable', { defaultValue: 'Thực Nhận Ròng' })} body={(b) => <span className="font-mono font-medium text-green-700">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(b) => <Tag value={b.status} severity={b.status === PaymentBatchStatus.SETTLED ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(b) => (
+                <div className="flex gap-1">
+                  <Button icon="pi pi-eye" label={t('clearing.track_batch', { defaultValue: 'Theo dõi' })} size="small" outlined onClick={() => setTrackBatch(b)} />
+                </div>
+              )} style={{ minWidth: '9rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -755,6 +830,67 @@ export const ClearingSettlementPage: React.FC = () => {
           <Button label="Hủy" icon="pi pi-times" outlined onClick={() => setShowResolveDialog(false)} disabled={isSubmitting} />
           <Button label="Lưu Kết Luận" icon="pi pi-check" severity="success" onClick={handleSaveResolve} loading={isSubmitting} />
         </div>
+      </Dialog>
+
+      {/* Dialog Create Batch PAY-... (LM-07) */}
+      <Dialog visible={showCreateBatchDialog} onHide={() => setShowCreateBatchDialog(false)} header={t('clearing.create_batch_title', { defaultValue: 'Khởi tạo Lô Thanh Toán Bù Trừ (PAY-...)' })} style={{ width: '34rem' }} modal className="p-fluid">
+        <div className="flex flex-column gap-3">
+          <div className="field m-0">
+            <label className="text-sm font-medium">{t('clearing.partner_name', { defaultValue: 'Đối Tác' })} *</label>
+            <Dropdown
+              value={batchPartnerId}
+              options={clearingList.map((c) => ({ label: `[${c.partnerCode}] ${c.partnerName}`, value: c.partnerId }))}
+              onChange={(e) => setBatchPartnerId(e.value)}
+              placeholder={t('clearing.select_partner_batch', { defaultValue: 'Chọn đối tác...' })}
+              appendTo="self"
+            />
+          </div>
+          <div className="grid">
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('clearing.from_date', { defaultValue: 'Từ ngày' })}</label>
+              <InputText value={fromDate} readOnly className="font-mono bg-50" />
+            </div>
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('clearing.to_date', { defaultValue: 'Đến ngày' })}</label>
+              <InputText value={toDate} readOnly className="font-mono bg-50" />
+            </div>
+          </div>
+          <div className="field m-0">
+            <label className="text-sm font-medium" title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng.' })}>
+              {t('clearing.mdr_rate', { defaultValue: 'Tỷ lệ Phí Sàn MDR (%)' })}
+            </label>
+            <InputNumber value={batchMdrRate} onValueChange={(e) => setBatchMdrRate(e.value || 0)} min={0} max={20} minFractionDigits={1} maxFractionDigits={2} suffix="%" />
+          </div>
+        </div>
+        <div className="flex justify-content-end gap-2 mt-4">
+          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowCreateBatchDialog(false)} />
+          <Button label={t('clearing.create_batch', { defaultValue: 'Khởi tạo Lô PAY' })} icon="pi pi-check" severity="success" onClick={handleCreateBatch} loading={isSubmitting} />
+        </div>
+      </Dialog>
+
+      {/* Dialog Track Batch (LM-07) */}
+      <Dialog visible={!!trackBatch} onHide={() => setTrackBatch(null)} header={trackBatch ? `${t('clearing.track_batch_title', { defaultValue: 'Tiến độ Lô Thanh Toán' })} · ${trackBatch.batchCode}` : ''} style={{ width: '40rem' }} modal>
+        {trackBatch && (
+          <div className="flex flex-column gap-3">
+            <div className="grid text-sm">
+              <div className="col-6"><span className="text-500 block text-xs">Đối tác</span><span className="font-medium">{trackBatch.partnerCode} - {trackBatch.partnerName}</span></div>
+              <div className="col-6"><span className="text-500 block text-xs">Trạng thái</span><Tag value={trackBatch.status} severity={trackBatch.status === PaymentBatchStatus.SETTLED ? 'success' : 'warning'} /></div>
+              <div className="col-4 mt-2"><span className="text-500 block text-xs">Tổng giá trị</span><span className="font-mono">{Number(trackBatch.grossAmount || 0).toLocaleString()} HTG</span></div>
+              <div className="col-4 mt-2"><span className="text-500 block text-xs" title="Merchant Discount Rate Fee">MDR Fee</span><span className="font-mono text-orange-600">{Number(trackBatch.mdrFeeAmount || 0).toLocaleString()} HTG</span></div>
+              <div className="col-4 mt-2"><span className="text-500 block text-xs">Thực nhận ròng</span><span className="font-mono font-medium text-green-700">{Number(trackBatch.netPayableAmount || 0).toLocaleString()} HTG</span></div>
+            </div>
+            <div>
+              <div className="text-xs text-500 mb-1">{t('clearing.settlement_progress', { defaultValue: 'Tiến trình đối soát & giải ngân' })}</div>
+              <ProgressBar value={trackBatch.status === PaymentBatchStatus.SETTLED ? 100 : trackBatch.status === PaymentBatchStatus.PARTNER_CONFIRMED ? 75 : trackBatch.status === PaymentBatchStatus.PENDING_PARTNER ? 40 : 20} />
+            </div>
+            <div className="flex justify-content-end gap-2 mt-2">
+              <Button label={t('common.close', { defaultValue: 'Đóng' })} outlined onClick={() => setTrackBatch(null)} />
+              {trackBatch.status !== PaymentBatchStatus.SETTLED && (
+                <Button label={t('clearing.confirm_settle_batch', { defaultValue: 'Xác nhận Hoàn tất Chi trả' })} icon="pi pi-check-circle" severity="success" onClick={() => handleConfirmBatch(trackBatch)} loading={isSubmitting} />
+              )}
+            </div>
+          </div>
+        )}
       </Dialog>
     </div>
   );

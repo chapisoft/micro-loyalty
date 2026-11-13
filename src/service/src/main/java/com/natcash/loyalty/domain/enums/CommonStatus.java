@@ -14,7 +14,9 @@ public enum CommonStatus {
     LOCKED("LOCKED", "enum.common_status.locked"),
     DELETED("DELETED", "enum.common_status.deleted"),
     SUCCESS("SUCCESS", "enum.common_status.success"),
-    FAILED("FAILED", "enum.common_status.failed");
+    FAILED("FAILED", "enum.common_status.failed"),
+    DRAFT("DRAFT", "enum.common_status.draft"),
+    PAUSED_BUDGET_EXCEEDED("PAUSED_BUDGET_EXCEEDED", "enum.common_status.paused_budget_exceeded");
 
     @JsonValue
     private final String code;

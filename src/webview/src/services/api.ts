@@ -1,6 +1,6 @@
 /**
  * Tầng giao tiếp mạng RESTful API cho Cổng Trải Nghiệm Khách Hàng Webview (portal.mid.io.vn)
- * Dữ liệu lấy trực tiếp 100% từ loyalty-service & PostgreSQL database, tuyệt đối không mock data!
+ * Dữ liệu lấy trực tiếp 100% từ loyalty-service & PostgreSQL database, tuyệt đối không fake default values.
  */
 
 const getApiBaseUrl = (): string => {
@@ -22,7 +22,7 @@ export const getTenantId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramTenant = urlParams.get('tenantId') || urlParams.get('tenant_id');
   if (paramTenant) return paramTenant;
-  const runtimeTenant = (window as any).__RUNTIME_CONFIG__?.TENANT_ID;
+  const runtimeTenant = (window as unknown as { __RUNTIME_CONFIG__?: { TENANT_ID?: string } }).__RUNTIME_CONFIG__?.TENANT_ID;
   if (runtimeTenant) return runtimeTenant;
   return 'TENANT_NATCASH';
 };
@@ -31,6 +31,8 @@ export const getDefaultUserId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramUser = urlParams.get('userId') || urlParams.get('user_id') || urlParams.get('phone');
   if (paramUser) return paramUser;
+  const storedUser = sessionStorage.getItem('loyalty_user');
+  if (storedUser) return storedUser;
   const tenant = getTenantId();
   if (tenant === 'TENANT_MICRO_CRM') return '84977777777';
   if (tenant === 'TENANT_DELIMART') return '84988888888';
@@ -38,6 +40,20 @@ export const getDefaultUserId = (): string => {
 };
 
 const API_BASE = getApiBaseUrl();
+
+const getAuthHeaders = (includeJsonContentType: boolean = false): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'X-Tenant-Id': getTenantId(),
+  };
+  const token = sessionStorage.getItem('loyalty_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (includeJsonContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+};
 
 export interface MemberProfile {
   accountId: number;
@@ -47,6 +63,11 @@ export interface MemberProfile {
   fullName: string;
   currentPoints: number;
   tierPoints: number;
+  freeDailyTurns?: number;
+  perpetualTurns?: number;
+  checkinStreakDays?: number;
+  hasCheckedInToday?: boolean;
+  cycleEndAt?: string;
   tier: {
     tierId: number;
     code: string;
@@ -54,6 +75,8 @@ export interface MemberProfile {
     tierLevel: number;
     pointMultiplier: number;
     freeDailyTurns: number;
+    keepTierPoints?: number;
+    upgradePoints?: number;
   };
   nextTierProgress: {
     nextTierCode: string;
@@ -69,12 +92,246 @@ export interface MilestoneItem {
   id: number;
   campaignCode: string;
   campaignName: string;
+  campaignCategory?: string;
+  partnerName?: string;
+  description?: string;
   milestoneStep: number;
   targetMetric: string;
   targetValue: number;
   rewardPoints: number;
   currentProgress: number;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'CLAIMED';
+  claimDeadline?: string;
+  expiresAt?: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'CLAIMED' | 'EXPIRED';
+}
+
+export interface MissionClaimResponse {
+  milestoneId: number;
+  pointsAwarded: number;
+  newPointBalance: number;
+  status: string;
+  claimedAt?: string;
+  message?: string;
+}
+
+export interface ExpiringBucketItem {
+  bucketId: number;
+  assetType: 'LOYALTY_COIN' | 'TIER_POINT' | string;
+  initialPoints: number;
+  remainingPoints: number;
+  earnedAt: string;
+  expiredAt: string;
+  daysRemaining?: number;
+  sourceRef?: string;
+  sourceDescription?: string;
+  status: string;
+}
+
+export interface ExpiringBucketsResponse {
+  totalExpiringPoints: number;
+  nearestExpiryDate?: string;
+  buckets: ExpiringBucketItem[];
+}
+
+export interface ReferralFriendItem {
+  id: number;
+  referredUserId?: string;
+  maskedPhone: string;
+  fullName?: string;
+  ekycStatus: 'VERIFIED_EKYC' | 'PENDING_EKYC' | 'REWARDED' | string;
+  firstTxCompleted?: boolean;
+  rewardPoints: number;
+  invitedAt: string;
+}
+
+export interface MyReferralsResponse {
+  referralCode: string;
+  referralLink: string;
+  totalInvited: number;
+  totalEkycVerified: number;
+  totalRewardPoints: number;
+  rewardPerReferral: number;
+  referrals: ReferralFriendItem[];
+}
+
+export interface RewardQrTokenResponse {
+  qrToken: string;
+  expiresInSeconds: number;
+  expiresAt: string;
+}
+
+export interface PartnerLocationItem {
+  id: number;
+  partnerId?: number;
+  partnerCode: string;
+  partnerName: string;
+  branchCode?: string;
+  branchName?: string;
+  paymentPointCode?: string;
+  category: string;
+  province?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  earnPolicyText?: string;
+  burnPolicyText?: string;
+  status: string;
+}
+
+export interface UssdMenuOption {
+  key: string;
+  label: string;
+}
+
+export interface UssdMenuResponse {
+  sessionId?: string;
+  menuLevel: number;
+  title: string;
+  screenText: string;
+  options: UssdMenuOption[];
+  isEndSession: boolean;
+}
+
+export type SegmentCode =
+  | 'NEW_CUSTOMER'
+  | 'LOW_ACTIVITY'
+  | 'HIGH_VALUE'
+  | 'SINGLE_SERVICE'
+  | 'WIN_BACK'
+  | 'PARTNER_SHOPPER'
+  | 'GENERAL';
+
+export interface SegmentProfileResponse {
+  externalUserId: string;
+  segmentCode: SegmentCode | string;
+  segmentName?: string;
+  headline?: string;
+  subheadline?: string;
+  ctaLabel?: string;
+  ctaTarget?: string;
+  badgeText?: string;
+  updatedAt?: string;
+}
+
+export interface InboxMessageItem {
+  id: number;
+  category: 'REWARD' | 'TIER' | 'PROMO' | 'SYSTEM' | string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  actionUrl?: string;
+  createdAt: string;
+}
+
+export interface InboxMessagesResponse {
+  unreadCount: number;
+  messages: InboxMessageItem[];
+}
+
+export interface NotificationPreferencesDto {
+  externalUserId?: string;
+  optOutMarketing: boolean;
+  pushEnabled: boolean;
+  smsEnabled: boolean;
+  inAppEnabled: boolean;
+  preferredLocale: string;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+}
+
+export interface LearningCourseItem {
+  id: number;
+  courseCode: string;
+  title: string;
+  description?: string;
+  category?: string;
+  difficulty?: string;
+  totalQuestions: number;
+  rewardPointsMax: number;
+  completedQuestions?: number;
+  bestScore?: number;
+  iconSymbol?: string;
+}
+
+export interface LearningQuestionItem {
+  id: number;
+  courseId: number;
+  questionText: string;
+  options: string[];
+  audioUrl?: string;
+  orderIndex: number;
+}
+
+export interface LearningQuizAnswer {
+  questionId: number;
+  selectedOptionIndex: number;
+}
+
+export interface LearningQuizSubmitResponse {
+  courseId: number;
+  correctCount: number;
+  totalQuestions: number;
+  pointsAwarded: number;
+  newPointBalance?: number;
+  milestoneBonusTier?: number;
+  results?: Array<{
+    questionId: number;
+    correct: boolean;
+    correctOptionIndex: number;
+  }>;
+}
+
+export interface LearningLeaderboardItem {
+  rank: number;
+  externalUserId: string;
+  maskedPhone?: string;
+  displayName: string;
+  totalPoints: number;
+  badge?: string;
+}
+
+export interface ScratchCardPlayResponse {
+  transactionRef: string;
+  outcome: 'WIN' | 'NO_LUCK' | string;
+  prizeName: string;
+  prizeType: 'POINTS' | 'VOUCHER' | 'NO_LUCK' | string;
+  pointsAwarded: number;
+  newPointBalance?: number;
+  turnsRemaining?: number;
+  scratchMatrix: string[];
+  winningSymbol?: string;
+  message?: string;
+  timestamp?: string;
+}
+
+export interface AgentSubordinateItem {
+  agentId: string;
+  agentName: string;
+  agentCode: string;
+  ekycCount: number;
+  targetCount: number;
+  qualified: boolean;
+  province?: string;
+  lastActiveAt?: string;
+}
+
+export interface AgentDashboardResponse {
+  agentRole: 'AGENT' | 'SUPER_AGENT' | string;
+  agentCode: string;
+  agentName: string;
+  monthLabel: string;
+  monthlyTargetCustomers: number;
+  currentCustomersCount: number;
+  pendingEkycCount?: number;
+  rewardAmount: number;
+  rewardCurrency: string;
+  rewardClaimed?: boolean;
+  superAgentNetworkRate?: number;
+  superAgentTargetRate?: number;
+  superAgentRewardAmount?: number;
+  subordinateTotal?: number;
+  subordinateQualifiedCount?: number;
+  subordinates?: AgentSubordinateItem[];
 }
 
 export interface WheelPrizeItem {
@@ -106,6 +363,7 @@ export interface WheelConfigData {
 export interface UserVoucherItem {
   id: number;
   code: string;
+  redemptionCode?: string;
   title: string;
   partnerName: string;
   category: string;
@@ -114,6 +372,26 @@ export interface UserVoucherItem {
   validUntil: string;
   status: string;
   terms: string;
+}
+
+export interface CatalogVoucherItem {
+  id: number;
+  voucherCode: string;
+  title: string;
+  description?: string;
+  partnerId?: number;
+  partnerCode?: string;
+  partnerName: string;
+  discountType: string;
+  discountValue: number;
+  minBillAmount?: number;
+  maxDiscountAmount?: number;
+  totalQuantity?: number;
+  availableQuantity?: number;
+  pointCost: number;
+  startDate?: string;
+  endDate?: string;
+  status: string;
 }
 
 export interface LedgerItem {
@@ -142,503 +420,6 @@ export interface GameSessionData {
   expiresAt: string;
 }
 
-export const LoyaltyApi = {
-  // 1. Lấy thông tin tài khoản hội viên
-  async getProfile(externalUserId: string = getDefaultUserId()): Promise<MemberProfile> {
-    const tenant = getTenantId();
-    const savedPoints = Number(localStorage.getItem(`loyalty_points_${externalUserId}`)) || 2480;
-    try {
-      const res = await fetch(`${API_BASE}/loyalty/v1/profile?externalUserId=${externalUserId}`, {
-        headers: { 'X-Tenant-Id': tenant },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.currentPoints !== undefined) {
-          localStorage.setItem(`loyalty_points_${externalUserId}`, String(data.currentPoints));
-        }
-        return data;
-      }
-    } catch {
-      // Fallback cục bộ
-    }
-
-    return {
-      accountId: 1,
-      tenantId: tenant,
-      externalUserId,
-      phoneNumber: externalUserId,
-      fullName: 'Khách Hàng Thân Thiết',
-      currentPoints: savedPoints,
-      tierPoints: savedPoints,
-      tier: {
-        tierId: 2,
-        code: 'GOLD',
-        name: 'Hạng Vàng',
-        tierLevel: 2,
-        pointMultiplier: 1.2,
-        freeDailyTurns: 3,
-      },
-      nextTierProgress: {
-        nextTierCode: 'DIAMOND',
-        nextTierName: 'Hạng Kim Cương',
-        requiredPoints: 5000,
-        currentTierPoints: savedPoints,
-        pointsNeeded: Math.max(0, 5000 - savedPoints),
-        progressPercentage: Math.min(100, Math.round((savedPoints / 5000) * 100)),
-      },
-    };
-  },
-
-  // 2. Lấy danh sách nhiệm vụ cột mốc
-  async getMilestones(externalUserId: string = getDefaultUserId()): Promise<{ campaigns: any[]; milestones: MilestoneItem[] }> {
-    const res = await fetch(`${API_BASE}/loyalty/v1/milestones/list?externalUserId=${externalUserId}`, {
-      headers: { 'X-Tenant-Id': getTenantId() },
-    });
-    if (!res.ok) throw new Error('Không thể tải danh sách nhiệm vụ');
-    return res.json();
-  },
-
-  // 3. Nhận thưởng nhiệm vụ cột mốc
-  async claimMilestone(externalUserId: string, campaignCode: string, milestoneStep: number) {
-    const res = await fetch(`${API_BASE}/loyalty/v1/milestones/claim-reward`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-Id': getTenantId(),
-      },
-      body: JSON.stringify({ externalUserId, campaignCode, milestoneStep }),
-    });
-    if (!res.ok) throw new Error('Không thể nhận thưởng cột mốc');
-    return res.json();
-  },
-
-  // 4. Lấy cấu hình và giải thưởng vòng quay may mắn
-  async getLuckyWheelConfig(externalUserId: string = getDefaultUserId(), wheelCode?: string): Promise<WheelConfigData> {
-    const tenant = getTenantId();
-    const effectiveWheelCode = wheelCode || (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
-    const today = new Date().toISOString().slice(0, 10);
-    const savedTurns = localStorage.getItem(`loyalty_wheel_turns_${externalUserId}_${today}`);
-    const localTurns = savedTurns !== null ? Number(savedTurns) : 2;
-
-    try {
-      const res = await fetch(`${API_BASE}/loyalty/v1/luckydraw/config?wheelCode=${effectiveWheelCode}&externalUserId=${externalUserId}`, {
-        headers: { 'X-Tenant-Id': tenant },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.remainingSpinsToday !== undefined) {
-          localStorage.setItem(`loyalty_wheel_turns_${externalUserId}_${today}`, String(data.remainingSpinsToday));
-        }
-        return data;
-      }
-    } catch {
-      // Fallback
-    }
-
-    return {
-      wheelId: 1,
-      wheelCode: effectiveWheelCode,
-      wheelName: 'Vòng Quay Tri Ân',
-      pricePerSpin: 20,
-      freeSpinsDaily: 2,
-      remainingSpinsToday: localTurns,
-      prizes: [
-        { prizeId: 1, prizeName: '100 Điểm Thưởng', prizeType: 'POINTS', prizeValue: 100, displayOrder: 0, colorCode: '#F59E0B' },
-        { prizeId: 2, prizeName: 'Voucher 50 HTG', prizeType: 'VOUCHER', prizeValue: 50, displayOrder: 1, colorCode: '#EF4444' },
-        { prizeId: 3, prizeName: '50 Điểm Thưởng', prizeType: 'POINTS', prizeValue: 50, displayOrder: 2, colorCode: '#06B6D4' },
-        { prizeId: 4, prizeName: '+1 Lượt Quay', prizeType: 'TURNS', prizeValue: 1, displayOrder: 3, colorCode: '#10B981' },
-        { prizeId: 5, prizeName: 'Chúc May Mắn', prizeType: 'NO_LUCK', prizeValue: 0, displayOrder: 4, colorCode: '#8B5CF6' },
-        { prizeId: 6, prizeName: '200 Điểm Thưởng', prizeType: 'POINTS', prizeValue: 200, displayOrder: 5, colorCode: '#EC4899' },
-      ],
-    };
-  },
-
-  // 5. Thực hiện quay thưởng may mắn nguyên tử
-  async spinLuckyWheel(externalUserId: string = getDefaultUserId(), usePoints: boolean = false, wheelCode?: string) {
-    const tenant = getTenantId();
-    const effectiveWheelCode = wheelCode || (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
-    const today = new Date().toISOString().slice(0, 10);
-    try {
-      const res = await fetch(`${API_BASE}/loyalty/v1/luckydraw/spin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-Id': tenant,
-        },
-        body: JSON.stringify({ externalUserId, usePoints, wheelCode: effectiveWheelCode }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.newPointBalance !== undefined) {
-          localStorage.setItem(`loyalty_points_${externalUserId}`, String(data.newPointBalance));
-        }
-        if (data.remainingSpinsToday !== undefined) {
-          localStorage.setItem(`loyalty_wheel_turns_${externalUserId}_${today}`, String(data.remainingSpinsToday));
-        }
-        return data;
-      }
-    } catch {
-      // Fallback
-    }
-
-    // Client-side fallback with persistent balance and turns
-    const currentSaved = Number(localStorage.getItem(`loyalty_points_${externalUserId}`)) || 2480;
-    const savedTurns = localStorage.getItem(`loyalty_wheel_turns_${externalUserId}_${today}`);
-    const currentTurns = savedTurns !== null ? Number(savedTurns) : 2;
-    const remainingTurns = Math.max(0, currentTurns - 1);
-    localStorage.setItem(`loyalty_wheel_turns_${externalUserId}_${today}`, String(remainingTurns));
-
-    const wonPoints = 100;
-    const updatedBalance = currentSaved + wonPoints;
-    localStorage.setItem(`loyalty_points_${externalUserId}`, String(updatedBalance));
-
-    return {
-      prizeId: 1,
-      prizeName: '100 Điểm Thưởng',
-      prizeType: 'POINTS',
-      prizeValue: wonPoints,
-      winningIndex: 0,
-      winningAngle: 180,
-      newPointBalance: updatedBalance,
-      remainingSpinsToday: remainingTurns,
-      message: 'Chúc mừng bạn đã trúng 100 Điểm Thưởng!',
-      timestamp: new Date().toISOString(),
-    };
-  },
-
-  // 6. Lấy kho voucher của người dùng
-  async getUserVouchers(externalUserId: string = getDefaultUserId(), status: string = 'ALL'): Promise<UserVoucherItem[]> {
-    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/my-vouchers?externalUserId=${externalUserId}&status=${status}`, {
-      headers: { 'X-Tenant-Id': getTenantId() },
-    });
-    if (!res.ok) throw new Error('Không thể tải kho voucher');
-    return res.json();
-  },
-
-  // 7. Lấy lịch sử biến động điểm (Sổ cái)
-  async getPointLedger(externalUserId: string = getDefaultUserId(), page: number = 0, size: number = 10): Promise<{ items: LedgerItem[]; totalElements: number }> {
-    const res = await fetch(`${API_BASE}/loyalty/v1/ledger?externalUserId=${externalUserId}&page=${page}&size=${size}`, {
-      headers: { 'X-Tenant-Id': getTenantId() },
-    });
-    if (!res.ok) throw new Error('Không thể tải lịch sử điểm');
-    return res.json();
-  },
-
-  // 8. Lấy danh sách đối tác liên minh
-  async getPartners(): Promise<PartnerItem[]> {
-    const res = await fetch(`${API_BASE}/loyalty/v1/partners`, {
-      headers: { 'X-Tenant-Id': getTenantId() },
-    });
-    if (!res.ok) throw new Error('Không thể tải danh sách đối tác');
-    return res.json();
-  },
-
-  // 9. Khởi tạo phiên chơi minigame
-  async initGameSession(gameCode: string, externalUserId: string = getDefaultUserId()): Promise<GameSessionData> {
-    const tenant = getTenantId();
-    const res = await fetch(`${API_BASE}/gamehub/v1/games/init-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-Id': tenant,
-      },
-      body: JSON.stringify({
-        externalUserId,
-        gameCode,
-      }),
-    });
-    if (!res.ok) throw new Error('Không thể khởi tạo phiên chơi');
-    return res.json();
-  },
-
-  // 10. Ghi nhận kết quả lượt chơi minigame (Tích điểm vào sổ cái DB)
-  async submitGameResult(
-    gameCode: string,
-    score: number,
-    externalUserId: string = getDefaultUserId(),
-    sessionToken?: string,
-    details?: string
-  ) {
-    const tenant = getTenantId();
-    try {
-      const res = await fetch(`${API_BASE}/gamehub/v1/games/submit-result`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-Id': tenant,
-        },
-        body: JSON.stringify({
-          externalUserId,
-          gameCode,
-          score,
-          sessionToken,
-          details,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.newPointBalance !== undefined) {
-          localStorage.setItem(`loyalty_points_${externalUserId}`, String(data.newPointBalance));
-        }
-        return data;
-      }
-    } catch {
-      // Fallback
-    }
-
-    const currentSaved = Number(localStorage.getItem(`loyalty_points_${externalUserId}`)) || 2480;
-    const pointsAwarded = Math.max(10, Math.min(200, score * 10));
-    const newBalance = currentSaved + pointsAwarded;
-    localStorage.setItem(`loyalty_points_${externalUserId}`, String(newBalance));
-
-    return {
-      success: true,
-      gameCode,
-      score,
-      pointsAwarded,
-      newPointBalance: newBalance,
-      transactionRef: 'GTX_' + Date.now(),
-      message: `Cộng ${pointsAwarded} điểm từ trò chơi ${gameCode}`,
-    };
-  },
-
-  // 11. Mua thêm lượt chơi trong game bằng Điểm
-  async inGameCheckout(gameCode: string, sessionToken: string, turnsToBuy: number = 1, paymentAmount: number = 10, externalUserId: string = getDefaultUserId()) {
-    const tenant = getTenantId();
-    const res = await fetch(`${API_BASE}/gamehub/v1/billing/in-game-checkout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-Id': tenant,
-      },
-      body: JSON.stringify({
-        externalUserId,
-        gameCode,
-        sessionToken,
-        turnsToBuy,
-        paymentAmount,
-        paymentMethod: 'POINTS',
-      }),
-    });
-    if (!res.ok) throw new Error('Không thể mua thêm lượt chơi');
-    return res.json();
-  },
-
-  // 12. Tra cứu lịch sử chơi game của người dùng
-  async getGamePlayHistory(externalUserId: string = getDefaultUserId(), page: number = 0, size: number = 20) {
-    const tenant = getTenantId();
-    const res = await fetch(`${API_BASE}/gamehub/v1/history/my-history?externalUserId=${externalUserId}&page=${page}&size=${size}`, {
-      headers: { 'X-Tenant-Id': tenant },
-    });
-    if (!res.ok) throw new Error('Không thể tải lịch sử chơi game');
-    return res.json();
-  },
-
-  // 13. Lấy danh sách Theme vòng quay và Theme đang kích hoạt
-  async getWheelThemes() {
-    const tenant = getTenantId();
-    const res = await fetch(`${API_BASE}/gamehub/v1/themes`, {
-      headers: { 'X-Tenant-Id': tenant },
-    });
-    if (!res.ok) throw new Error('Không thể tải danh sách giao diện chủ đề');
-    return res.json();
-  },
-
-  // 14. Chọn giao diện chủ đề vòng quay
-  async selectWheelTheme(themeCode: string) {
-    const tenant = getTenantId();
-    const res = await fetch(`${API_BASE}/gamehub/v1/themes/select`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-Id': tenant,
-      },
-      body: JSON.stringify({ themeCode }),
-    });
-    if (!res.ok) throw new Error('Không thể cập nhật chủ đề giao diện');
-    return res.json();
-  },
-
-  // 15. Thực hiện lượt chơi may rủi bảo mật phía Server
-  async playGame(
-    gameCode: string,
-    clientChoice?: number,
-    stepNumber?: number,
-    sessionToken?: string,
-    action: string = 'PLAY',
-    externalUserId: string = getDefaultUserId()
-  ) {
-    const tenant = getTenantId();
-    try {
-      const res = await fetch(`${API_BASE}/gamehub/v1/games/play`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-Id': tenant,
-        },
-        body: JSON.stringify({
-          externalUserId,
-          gameCode,
-          clientChoice,
-          stepNumber,
-          sessionToken,
-          action,
-        }),
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch {
-      // Client-side fallback below
-    }
-
-    // Client-side fallback simulation if backend is offline
-    const txRef = 'TX_OFFLINE_' + Date.now();
-    const symbols = ['GOLD_CHEST', 'SILVER_COIN', 'BRONZE_STAR', 'DIAMOND', 'CROWN', 'RUBY', 'TREASURE', 'COIN_BAG'];
-    const dice1 = Math.floor(Math.random() * 6) + 1;
-    const dice2 = Math.floor(Math.random() * 6) + 1;
-    const dice3 = Math.floor(Math.random() * 6) + 1;
-
-    let pointsAwarded = 50;
-    let message = 'Chúc mừng bạn đã trúng thưởng!';
-    let outcome = 'WIN';
-
-    if (gameCode === 'PENALTY_SHOOTOUT') {
-      const isGoal = Math.random() > 0.3;
-      outcome = isGoal ? 'GOAL' : 'SAVED';
-      pointsAwarded = isGoal ? 80 : 10;
-      message = isGoal ? 'VÀOOOO! Bàn thắng tuyệt phẩm!' : 'Thủ môn cản phá xuất sắc!';
-    } else if (gameCode === 'TOWER_CLIMB') {
-      const isCrash = Math.random() < 0.25;
-      outcome = isCrash ? 'CRASH' : (stepNumber && stepNumber >= 5 ? 'WIN' : 'STEP_OK');
-      pointsAwarded = isCrash ? 0 : (stepNumber || 1) * 30;
-      message = isCrash ? 'Bẫy sập! Bạn đã rơi khỏi tháp!' : `Thành công vượt qua tầng ${stepNumber || 1}!`;
-    } else if (gameCode === 'PLINKO_DROP') {
-      const landingIdx = Math.floor(Math.random() * 9);
-      pointsAwarded = [100, 50, 20, 10, 5, 10, 20, 50, 100][landingIdx] || 20;
-      message = `Bi rơi vào hộc nhân thưởng x${[10, 5, 2, 1, 0.5, 1, 2, 5, 10][landingIdx]}!`;
-      return {
-        transactionRef: txRef,
-        gameCode,
-        outcome: 'WIN',
-        plinkoLandingIndex: landingIdx,
-        plinkoBouncePath: [0, 1, 0, 1, 0, 1, 0, 1],
-        pointsAwarded,
-        newPointBalance: 2480 + pointsAwarded,
-        turnsRemaining: 1,
-        message,
-        timestamp: new Date().toISOString(),
-      };
-    } else if (gameCode === 'LUCKY_DICE') {
-      const total = dice1 + dice2 + dice3;
-      pointsAwarded = total * 5;
-      message = `Xúc xắc: ${dice1} - ${dice2} - ${dice3} (Tổng: ${total} điểm)!`;
-      return {
-        transactionRef: txRef,
-        gameCode,
-        outcome: 'WIN',
-        diceValues: [dice1, dice2, dice3],
-        pointsAwarded,
-        newPointBalance: 2480 + pointsAwarded,
-        turnsRemaining: 1,
-        message,
-        timestamp: new Date().toISOString(),
-      };
-    }
-
-    return {
-      transactionRef: txRef,
-      gameCode,
-      outcome,
-      scratchMatrix: Array(9).fill(symbols[Math.floor(Math.random() * symbols.length)]),
-      pointsAwarded,
-      newPointBalance: 2480 + pointsAwarded,
-      turnsRemaining: 1,
-      message,
-      timestamp: new Date().toISOString(),
-    };
-  },
-
-  // 16. Lấy chi tiết ma trận giải thưởng và cấu hình động của trò chơi từ DB
-  async getGameDetail(gameCode: string, externalUserId: string = getDefaultUserId()): Promise<GameDetailData> {
-    const tenant = getTenantId();
-    try {
-      const res = await fetch(`${API_BASE}/gamehub/v1/games/detail?gameCode=${gameCode}&userId=${externalUserId}`, {
-        headers: { 'X-Tenant-Id': tenant },
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch {
-      // Client-side fallback below
-    }
-
-    const fallbackPrizes: Record<string, GamePrizeItem[]> = {
-      SCRATCH_CARD: [
-        { id: 1, prizeCode: 'SCRATCH_GOLD', prizeName: '3 Hòm Vàng Đại Thắng', prizeType: 'POINTS', prizeValue: 100, probabilityWeight: 40, colorCode: '#F59E0B', iconSymbol: '👑', displayOrder: 1 },
-        { id: 2, prizeCode: 'SCRATCH_SILVER', prizeName: '3 Đồng Bạc Thịnh Vượng', prizeType: 'POINTS', prizeValue: 50, probabilityWeight: 30, colorCode: '#94A3B8', iconSymbol: '🪙', displayOrder: 2 },
-        { id: 3, prizeCode: 'SCRATCH_BRONZE', prizeName: '3 Ngôi Sao Đồng', prizeType: 'POINTS', prizeValue: 20, probabilityWeight: 20, colorCode: '#D97706', iconSymbol: '⭐', displayOrder: 3 },
-        { id: 4, prizeCode: 'SCRATCH_CONSOLATION', prizeName: 'Điểm May Mắn Khích Lệ', prizeType: 'POINTS', prizeValue: 5, probabilityWeight: 10, colorCode: '#64748B', iconSymbol: '✨', displayOrder: 4 },
-      ],
-      PENALTY_SHOOTOUT: [
-        { id: 1, prizeCode: 'PENALTY_GOAL', prizeName: 'Bàn Thắng Tuyệt Phẩm', prizeType: 'POINTS', prizeValue: 80, probabilityWeight: 70, colorCode: '#10B981', iconSymbol: '⚽', displayOrder: 1 },
-        { id: 2, prizeCode: 'PENALTY_POST', prizeName: 'Bóng Dội Xà Ngang', prizeType: 'POINTS', prizeValue: 20, probabilityWeight: 15, colorCode: '#F59E0B', iconSymbol: '⚡', displayOrder: 2 },
-        { id: 3, prizeCode: 'PENALTY_SAVED', prizeName: 'Thủ Môn Cản Phá An Ủi', prizeType: 'POINTS', prizeValue: 10, probabilityWeight: 15, colorCode: '#EF4444', iconSymbol: '🧤', displayOrder: 3 },
-      ],
-      TREASURE_CHEST: [
-        { id: 1, prizeCode: 'CHEST_JACKPOT', prizeName: 'Nổ Hũ Ngọc Bích', prizeType: 'POINTS', prizeValue: 200, probabilityWeight: 20, colorCode: '#06B6D4', iconSymbol: '💎', displayOrder: 1 },
-        { id: 2, prizeCode: 'CHEST_GOLD', prizeName: 'Rương Vàng Cổ Đại', prizeType: 'POINTS', prizeValue: 80, probabilityWeight: 40, colorCode: '#F59E0B', iconSymbol: '💰', displayOrder: 2 },
-        { id: 3, prizeCode: 'CHEST_SILVER', prizeName: 'Rương Bạc Bí Ẩn', prizeType: 'POINTS', prizeValue: 40, probabilityWeight: 30, colorCode: '#94A3B8', iconSymbol: '🏆', displayOrder: 3 },
-        { id: 4, prizeCode: 'CHEST_TRAP', prizeName: 'Rương Bẫy Thám Hiểm', prizeType: 'POINTS', prizeValue: 10, probabilityWeight: 10, colorCode: '#64748B', iconSymbol: '🗝️', displayOrder: 4 },
-      ],
-      TOWER_CLIMB: [
-        { id: 1, prizeCode: 'TOWER_F1', prizeName: 'Tầng 1 (x1.5)', prizeType: 'MULTIPLIER', prizeValue: 1.5, probabilityWeight: 20, colorCode: '#8B5CF6', iconSymbol: '🏰', displayOrder: 1 },
-        { id: 2, prizeCode: 'TOWER_F2', prizeName: 'Tầng 2 (x2.5)', prizeType: 'MULTIPLIER', prizeValue: 2.5, probabilityWeight: 20, colorCode: '#A855F7', iconSymbol: '🏰', displayOrder: 2 },
-        { id: 3, prizeCode: 'TOWER_F3', prizeName: 'Tầng 3 (x5.0)', prizeType: 'MULTIPLIER', prizeValue: 5.0, probabilityWeight: 20, colorCode: '#C084FC', iconSymbol: '🏰', displayOrder: 3 },
-        { id: 4, prizeCode: 'TOWER_F4', prizeName: 'Tầng 4 (x10.0)', prizeType: 'MULTIPLIER', prizeValue: 10.0, probabilityWeight: 20, colorCode: '#E879F9', iconSymbol: '🏰', displayOrder: 4 },
-        { id: 5, prizeCode: 'TOWER_F5', prizeName: 'Đỉnh Tháp Kim Cương (x50.0)', prizeType: 'MULTIPLIER', prizeValue: 50.0, probabilityWeight: 20, colorCode: '#F43F5E', iconSymbol: '👑', displayOrder: 5 },
-      ],
-      PLINKO_DROP: [
-        { id: 1, prizeCode: 'PLINKO_JACKPOT', prizeName: 'Hộc Kim Cương x10', prizeType: 'MULTIPLIER', prizeValue: 10.0, probabilityWeight: 10, colorCode: '#F59E0B', iconSymbol: '💎', displayOrder: 1 },
-        { id: 2, prizeCode: 'PLINKO_HIGH', prizeName: 'Hộc Vàng x5', prizeType: 'MULTIPLIER', prizeValue: 5.0, probabilityWeight: 20, colorCode: '#EC4899', iconSymbol: '🔥', displayOrder: 2 },
-        { id: 3, prizeCode: 'PLINKO_MID', prizeName: 'Hộc Bạc x2', prizeType: 'MULTIPLIER', prizeValue: 2.0, probabilityWeight: 30, colorCode: '#8B5CF6', iconSymbol: '✨', displayOrder: 3 },
-        { id: 4, prizeCode: 'PLINKO_BASE', prizeName: 'Hộc Cơ Bản x1', prizeType: 'MULTIPLIER', prizeValue: 1.0, probabilityWeight: 40, colorCode: '#64748B', iconSymbol: '⚪', displayOrder: 4 },
-      ],
-      GOLDEN_EGG: [
-        { id: 1, prizeCode: 'EGG_GOD', prizeName: 'Trứng Vàng Thần Tài', prizeType: 'POINTS', prizeValue: 150, probabilityWeight: 15, colorCode: '#F59E0B', iconSymbol: '👑', displayOrder: 1 },
-        { id: 2, prizeCode: 'EGG_BLOOM', prizeName: 'Trứng Vàng Nở Hoa', prizeType: 'POINTS', prizeValue: 75, probabilityWeight: 25, colorCode: '#EC4899', iconSymbol: '🌸', displayOrder: 2 },
-        { id: 3, prizeCode: 'EGG_RED', prizeName: 'Trứng Vàng Lì Xì', prizeType: 'POINTS', prizeValue: 35, probabilityWeight: 35, colorCode: '#EF4444', iconSymbol: '🧧', displayOrder: 3 },
-        { id: 4, prizeCode: 'EGG_CHICK', prizeName: 'Trứng Gà Con Khởi Đầu', prizeType: 'POINTS', prizeValue: 15, probabilityWeight: 25, colorCode: '#F97316', iconSymbol: '🐣', displayOrder: 4 },
-      ],
-      LUCKY_DICE: [
-        { id: 1, prizeCode: 'DICE_TRIPLE', prizeName: 'Siêu Bộ Ba', prizeType: 'POINTS', prizeValue: 300, probabilityWeight: 10, colorCode: '#F59E0B', iconSymbol: '🎲', displayOrder: 1 },
-        { id: 2, prizeCode: 'DICE_STRAIGHT', prizeName: 'Bộ Sảnh Tiến', prizeType: 'POINTS', prizeValue: 150, probabilityWeight: 20, colorCode: '#8B5CF6', iconSymbol: '🏆', displayOrder: 2 },
-        { id: 3, prizeCode: 'DICE_PAIR', prizeName: 'Cặp Đôi Song Hỷ', prizeType: 'POINTS', prizeValue: 60, probabilityWeight: 30, colorCode: '#06B6D4', iconSymbol: '⭐', displayOrder: 3 },
-        { id: 4, prizeCode: 'DICE_SUM', prizeName: 'Điểm Theo Tổng Nút', prizeType: 'POINTS', prizeValue: 20, probabilityWeight: 40, colorCode: '#64748B', iconSymbol: '✨', displayOrder: 4 },
-      ],
-      TRIVIA_QUIZ: [
-        { id: 1, prizeCode: 'QUIZ_PERFECT', prizeName: 'Quán Quân 5/5 Câu Đúng', prizeType: 'POINTS', prizeValue: 150, probabilityWeight: 25, colorCode: '#F59E0B', iconSymbol: '🏆', displayOrder: 1 },
-        { id: 2, prizeCode: 'QUIZ_GREAT', prizeName: 'Xuất Sắc 4/5 Câu Đúng', prizeType: 'POINTS', prizeValue: 100, probabilityWeight: 35, colorCode: '#8B5CF6', iconSymbol: '⭐', displayOrder: 2 },
-        { id: 3, prizeCode: 'QUIZ_PASS', prizeName: 'Đạt Chuẩn 3/5 Câu Đúng', prizeType: 'POINTS', prizeValue: 50, probabilityWeight: 25, colorCode: '#06B6D4', iconSymbol: '✨', displayOrder: 3 },
-        { id: 4, prizeCode: 'QUIZ_TRY', prizeName: 'Khích Lệ Tham Gia', prizeType: 'POINTS', prizeValue: 10, probabilityWeight: 15, colorCode: '#64748B', iconSymbol: '💡', displayOrder: 4 },
-      ],
-    };
-
-    return {
-      id: 1,
-      gameCode,
-      gameName: gameCode,
-      category: 'INSTANT_WIN',
-      pricePerTurn: 10,
-      freeTurnsDaily: 1,
-      remainingTurnsToday: 1,
-      userPointBalance: 2480,
-      allowPointsSpin: true,
-      prizes: fallbackPrizes[gameCode] || [],
-    };
-  },
-};
-
 export interface GamePrizeItem {
   id: number;
   prizeCode: string;
@@ -666,7 +447,428 @@ export interface GameDetailData {
   iconUrl?: string;
   allowPointsSpin: boolean;
   prizes: GamePrizeItem[];
-  gameParams?: Record<string, any>;
+  gameParams?: Record<string, unknown>;
 }
 
+export const LoyaltyApi = {
+  // 1. Lấy thông tin tài khoản hội viên
+  async getProfile(externalUserId: string = getDefaultUserId()): Promise<MemberProfile> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/profile?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) {
+      throw new Error(`HTTP_${res.status}`);
+    }
+    return res.json();
+  },
 
+  // 2. Lấy danh sách nhiệm vụ cột mốc
+  async getMilestones(externalUserId: string = getDefaultUserId()): Promise<{ campaigns: unknown[]; milestones: MilestoneItem[] }> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/milestones/list?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 3. Nhận thưởng nhiệm vụ cột mốc (legacy path)
+  async claimMilestone(externalUserId: string, campaignCode: string, milestoneStep: number) {
+    const res = await fetch(`${API_BASE}/loyalty/v1/milestones/claim-reward`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId, campaignCode, milestoneStep }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 3b. Nhận thưởng nhiệm vụ theo ID (v2.2 endpoint)
+  async claimMission(id: number | string, externalUserId: string = getDefaultUserId()): Promise<MissionClaimResponse> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/campaigns/milestones/${encodeURIComponent(String(id))}/claim`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 4. Lấy danh sách lô điểm sắp hết hạn theo FIFO (DT-01)
+  async getExpiringBuckets(externalUserId: string = getDefaultUserId()): Promise<ExpiringBucketsResponse> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/ledger/expiring-buckets?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 5. Lấy thông tin mời bạn bè & danh sách bạn bè đã eKYC (NV-06)
+  async getMyReferrals(externalUserId: string = getDefaultUserId()): Promise<MyReferralsResponse> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/referrals/me?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 6. Sinh mã QR Ví Phần Thưởng động 60s (LM-17)
+  async generateRewardQrToken(externalUserId: string = getDefaultUserId()): Promise<RewardQrTokenResponse> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/wallet/qr-token`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId }),
+    });
+    if (res.status === 404) {
+      const legacyRes = await fetch(`${API_BASE}/loyalty/v1/reward-wallet/qr/generate`, {
+        method: 'POST',
+        headers: getAuthHeaders(true),
+        body: JSON.stringify({ externalUserId }),
+      });
+      if (!legacyRes.ok) throw new Error(`HTTP_${legacyRes.status}`);
+      return legacyRes.json();
+    }
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 7. Lấy điểm chấp nhận tiêu điểm đối tác (LM-04)
+  async getWhereToUsePartners(category?: string): Promise<PartnerLocationItem[]> {
+    const query = category && category !== 'ALL' ? `?category=${encodeURIComponent(category)}` : '';
+    const res = await fetch(`${API_BASE}/loyalty/v1/partners/locations${query}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 8. Mô phỏng thực đơn USSD *202# (Section 5)
+  async getUssdMenu(input: string = '', externalUserId: string = getDefaultUserId()): Promise<UssdMenuResponse> {
+    const params = new URLSearchParams();
+    if (input) params.set('input', input);
+    params.set('externalUserId', externalUserId);
+    const res = await fetch(`${API_BASE}/loyalty/v1/ussd/menu?${params.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 9. Lấy phân khúc khách hàng hiện tại (CN-01)
+  async getSegmentProfile(externalUserId: string = getDefaultUserId()): Promise<SegmentProfileResponse> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/segments/me?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 10. Hộp thư thông báo (CN-02)
+  async getInboxMessages(externalUserId: string = getDefaultUserId(), category?: string): Promise<InboxMessagesResponse> {
+    const params = new URLSearchParams({ externalUserId });
+    if (category && category !== 'ALL') params.set('category', category);
+    const res = await fetch(`${API_BASE}/loyalty/v1/inbox?${params.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async markInboxRead(id: number | string, externalUserId: string = getDefaultUserId()): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/inbox`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ id, externalUserId, action: 'MARK_READ' }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 11. Cài đặt thông báo & Opt-out tiếp thị (CN-04)
+  async getNotificationPreferences(externalUserId: string = getDefaultUserId()): Promise<NotificationPreferencesDto> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/notification-preferences?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async updateNotificationPreferences(
+    dto: NotificationPreferencesDto,
+    externalUserId: string = getDefaultUserId()
+  ): Promise<NotificationPreferencesDto> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/notification-preferences`, {
+      method: 'PUT',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ ...dto, externalUserId }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 12. Learning & Quiz EdTech API (/gamehub/v1/learning/*)
+  async getLearningCourses(): Promise<LearningCourseItem[]> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/learning/courses`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async getLearningQuestions(courseId: number | string): Promise<LearningQuestionItem[]> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/learning/courses/${encodeURIComponent(String(courseId))}/questions`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async submitLearningQuiz(
+    courseId: number | string,
+    answers: LearningQuizAnswer[],
+    externalUserId: string = getDefaultUserId()
+  ): Promise<LearningQuizSubmitResponse> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/learning/courses/${encodeURIComponent(String(courseId))}/submit`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId, answers }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async getLearningLeaderboard(): Promise<LearningLeaderboardItem[]> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/leaderboard`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 13. Thẻ cào may mắn (Lucky Scratch Card - GM-02)
+  async playScratchCard(externalUserId: string = getDefaultUserId()): Promise<ScratchCardPlayResponse> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/scratch-card/play`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 14. Cổng Đại lý & Tổng đại lý (AG-01 & AG-02)
+  async getAgentDashboard(externalUserId: string = getDefaultUserId()): Promise<AgentDashboardResponse> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/agents/me?externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 15. Lấy cấu hình và giải thưởng vòng quay may mắn
+  async getLuckyWheelConfig(externalUserId: string = getDefaultUserId(), wheelCode?: string): Promise<WheelConfigData> {
+    const tenant = getTenantId();
+    const effectiveWheelCode =
+      wheelCode ||
+      (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/luckydraw/config?wheelCode=${encodeURIComponent(effectiveWheelCode)}&externalUserId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 16. Thực hiện quay thưởng may mắn nguyên tử
+  async spinLuckyWheel(externalUserId: string = getDefaultUserId(), usePoints: boolean = false, wheelCode?: string) {
+    const tenant = getTenantId();
+    const effectiveWheelCode =
+      wheelCode ||
+      (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
+    const res = await fetch(`${API_BASE}/loyalty/v1/luckydraw/spin`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId, usePoints, wheelCode: effectiveWheelCode }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 17. Lấy kho voucher của người dùng
+  async getUserVouchers(externalUserId: string = getDefaultUserId(), status: string = 'ALL'): Promise<UserVoucherItem[]> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/vouchers/my-vouchers?externalUserId=${encodeURIComponent(externalUserId)}&status=${encodeURIComponent(status)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 18. Lấy danh mục voucher đối tác khả dụng để đổi điểm
+  async getVoucherCatalog(): Promise<CatalogVoucherItem[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 19. Đổi điểm lấy voucher
+  async redeemVoucher(externalUserId: string, voucherCode: string): Promise<UserVoucherItem> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/redeem`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId, voucherCode }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 20. Lấy lịch sử biến động điểm (Sổ cái)
+  async getPointLedger(externalUserId: string = getDefaultUserId(), page: number = 0, size: number = 10): Promise<{ items: LedgerItem[]; totalElements: number }> {
+    const res = await fetch(
+      `${API_BASE}/loyalty/v1/ledger?externalUserId=${encodeURIComponent(externalUserId)}&page=${page}&size=${size}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 21. Lấy danh sách đối tác liên minh
+  async getPartners(): Promise<PartnerItem[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/partners`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 22. Khởi tạo phiên chơi minigame
+  async initGameSession(gameCode: string, externalUserId: string = getDefaultUserId()): Promise<GameSessionData> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/session/init`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId, gameCode }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 23. Ghi nhận kết quả lượt chơi minigame
+  async submitGameResult(
+    gameCode: string,
+    score: number,
+    externalUserId: string = getDefaultUserId(),
+    sessionToken?: string,
+    details?: string
+  ) {
+    const res = await fetch(`${API_BASE}/gamehub/v1/games/submit-result`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({
+        externalUserId,
+        gameCode,
+        score,
+        sessionToken,
+        details,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 24. Mua thêm lượt chơi trong game bằng Điểm
+  async inGameCheckout(
+    gameCode: string,
+    sessionToken: string,
+    turnsToBuy: number = 1,
+    paymentAmount: number = 10,
+    externalUserId: string = getDefaultUserId()
+  ) {
+    const res = await fetch(`${API_BASE}/gamehub/v1/billing/in-game-checkout`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({
+        externalUserId,
+        gameCode,
+        sessionToken,
+        turnsToBuy,
+        paymentAmount,
+        paymentMethod: 'POINTS',
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 25. Tra cứu lịch sử chơi game của người dùng
+  async getGamePlayHistory(externalUserId: string = getDefaultUserId(), page: number = 0, size: number = 20) {
+    const res = await fetch(
+      `${API_BASE}/gamehub/v1/history/my-history?externalUserId=${encodeURIComponent(externalUserId)}&page=${page}&size=${size}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 26. Lấy danh sách Theme vòng quay
+  async getWheelThemes() {
+    const res = await fetch(`${API_BASE}/gamehub/v1/themes`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 27. Chọn giao diện chủ đề vòng quay
+  async selectWheelTheme(themeCode: string) {
+    const res = await fetch(`${API_BASE}/gamehub/v1/themes/select`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ themeCode }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 28. Thực hiện lượt chơi may rủi bảo mật phía Server
+  async playGame(
+    gameCode: string,
+    clientChoice?: number,
+    stepNumber?: number,
+    sessionToken?: string,
+    action: string = 'PLAY',
+    externalUserId: string = getDefaultUserId()
+  ) {
+    const res = await fetch(`${API_BASE}/gamehub/v1/games/play`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({
+        externalUserId,
+        gameCode,
+        clientChoice,
+        stepNumber,
+        sessionToken,
+        action,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 29. Lấy chi tiết ma trận giải thưởng trò chơi
+  async getGameDetail(gameCode: string, externalUserId: string = getDefaultUserId()): Promise<GameDetailData> {
+    const res = await fetch(
+      `${API_BASE}/gamehub/v1/games/detail?gameCode=${encodeURIComponent(gameCode)}&userId=${encodeURIComponent(externalUserId)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+};

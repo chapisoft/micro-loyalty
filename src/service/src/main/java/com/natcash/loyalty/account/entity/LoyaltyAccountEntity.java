@@ -66,6 +66,15 @@ public class LoyaltyAccountEntity {
     @Column(name = "tier_updated_at")
     private Instant tierUpdatedAt;
 
+    @Column(name = "cycle_end_at")
+    private Instant cycleEndAt;
+
+    @Column(name = "tier_locked_until")
+    private Instant tierLockedUntil;
+
+    @Column(name = "lock_reason", columnDefinition = "text")
+    private String lockReason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default

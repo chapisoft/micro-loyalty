@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Gamepad2,
@@ -9,7 +9,8 @@ import {
   PlusCircle,
   Flame,
   Award,
-  Gift
+  Gift,
+  BookOpen,
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import { LiveWinnerTicker } from '../components/gamification/LiveWinnerTicker';
@@ -18,14 +19,34 @@ import { DailyMissionModal } from '../components/gamification/DailyMissionModal'
 import { ComboStreakBadge } from '../components/gamification/ComboStreakBadge';
 import { GameCoverArt } from '../components/game-assets/GameArtAssets';
 import { TurnRegenCountdown } from '../components/TurnRegenCountdown';
+import { SkeletonCard, EmptyState } from '../components/common/StateBlocks';
+import { LoyaltyApi, LearningLeaderboardItem } from '../services/api';
 import { soundHaptics } from '../utils/soundHaptics';
+
+export type GameHubGameId =
+  | 'WHEEL'
+  | 'SCRATCH'
+  | 'LEARNING'
+  | 'FLAPPY'
+  | 'GAME2048'
+  | 'MEMORY'
+  | 'BUBBLE'
+  | 'FRUIT'
+  | 'KNIFE'
+  | 'BLOCK'
+  | 'RUNNER'
+  | 'WORDLE'
+  | 'SCREW'
+  | 'UNTANGLE'
+  | 'PULLPIN';
 
 export interface GameHubPageProps {
   onBack?: () => void;
-  onSelectGame: (gameId: 'WHEEL' | 'FLAPPY' | 'GAME2048' | 'MEMORY' | 'BUBBLE' | 'FRUIT' | 'KNIFE' | 'BLOCK' | 'RUNNER' | 'WORDLE' | 'SCREW' | 'UNTANGLE' | 'PULLPIN') => void;
-  freeTurns?: number;
-  perpetualTurns?: number;
-  points?: number;
+  onSelectGame: (gameId: GameHubGameId) => void;
+  freeTurns?: number | null;
+  perpetualTurns?: number | null;
+  points?: number | null;
+  streakDays?: number;
   onUpdateTurns?: (newFree: number, newPerpetual: number) => void;
 }
 
@@ -43,52 +64,64 @@ interface GameHubItem {
   action: () => void;
 }
 
-const LEADERBOARD_USERS = [
-  { rank: 1, name: 'Nguyễn Văn A', phone: '0987***123', points: 15400, avatar: '👑', badge: 'Quán Quân' },
-  { rank: 2, name: 'Jean Baptiste', phone: '5093***456', points: 12850, avatar: '🥈', badge: 'Á Quân' },
-  { rank: 3, name: 'Trần Thị M', phone: '0912***789', points: 10200, avatar: '🥉', badge: 'Top 3' },
-  { rank: 4, name: 'Pierre Louis', phone: '5094***888', points: 8900, avatar: '⭐', badge: 'Top 10' },
-  { rank: 5, name: 'Lê Hoàng K', phone: '0977***999', points: 7650, avatar: '✨', badge: 'Top 10' },
-];
-
 export const GameHubPage: React.FC<GameHubPageProps> = ({
   onSelectGame,
-  freeTurns = 2,
-  perpetualTurns = 5,
-  points: _points = 2480,
+  freeTurns = 0,
+  perpetualTurns = 0,
+  points: _points,
+  streakDays = 0,
   onUpdateTurns,
 }) => {
   const { t } = useTranslation();
+  const safeFreeTurns = freeTurns ?? 0;
+  const safePerpetualTurns = perpetualTurns ?? 0;
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
   const [showMissionModal, setShowMissionModal] = useState<boolean>(false);
-  const [winStreak] = useState<number>(3);
+  const [leaderboard, setLeaderboard] = useState<LearningLeaderboardItem[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(true);
+  const winStreak = streakDays;
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadingLeaderboard(true);
+    LoyaltyApi.getLearningLeaderboard()
+      .then((rows) => {
+        if (mounted) setLeaderboard(rows);
+      })
+      .catch(() => {
+        if (mounted) setLeaderboard([]);
+      })
+      .finally(() => {
+        if (mounted) setLoadingLeaderboard(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleBuyTurn = async (turnsCount: number = 1, amountHtg: number = 20) => {
     try {
       const res = await LoyaltyJSBridge.requestPayment({
         amount: amountHtg,
         itemCode: `BUY_SPIN_${turnsCount}_TURNS`,
-        itemName: `Mua ${turnsCount} Lượt Chơi GameHub`,
+        itemName: t('gamehub.buy_turn_item_name', { count: turnsCount }),
         transactionRef: 'GAMEHUB_' + Date.now(),
       });
       if (res.success) {
         if (onUpdateTurns) {
-          onUpdateTurns(freeTurns, perpetualTurns + turnsCount);
+          onUpdateTurns(safeFreeTurns, safePerpetualTurns + turnsCount);
         }
         setShowBuyModal(false);
       }
     } catch {
-      if (onUpdateTurns) {
-        onUpdateTurns(freeTurns, perpetualTurns + turnsCount);
-      }
       setShowBuyModal(false);
     }
   };
 
   const handleClaimMissionTurns = (addedTurns: number, _addedPoints: number) => {
     if (onUpdateTurns) {
-      onUpdateTurns(freeTurns + addedTurns, perpetualTurns);
+      onUpdateTurns(safeFreeTurns + addedTurns, safePerpetualTurns);
     }
   };
 
@@ -103,7 +136,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       bgGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500',
       badge: 'HOT',
       badgeBg: 'bg-red-600',
-      perk: freeTurns > 0 ? `${freeTurns} Free` : '20 HTG',
+      perk: safeFreeTurns > 0 ? `${safeFreeTurns} Free` : '20 HTG',
       description: t('gamehub.game1_desc', { defaultValue: 'Vòng quay may mắn 100% trúng quà: Điểm Loyalty, tiền mặt và Voucher.' }),
       action: () => onSelectGame('WHEEL'),
     },
@@ -263,6 +296,32 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       description: t('games.pullpin.subtitle', { defaultValue: 'Rút chốt thông minh để dập tắt dung nham, hạ gục tên trộm và cứu kho báu!' }),
       action: () => onSelectGame('PULLPIN'),
     },
+    {
+      id: 'SCRATCH',
+      name: t('scratch.title'),
+      category: 'LUCKY',
+      categoryLabel: t('gamehub.filter_lucky'),
+      icon: '🎫',
+      bgGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600',
+      badge: 'NEW',
+      badgeBg: 'bg-amber-600',
+      perk: t('scratch.perk_badge'),
+      description: t('scratch.hero_desc'),
+      action: () => onSelectGame('SCRATCH'),
+    },
+    {
+      id: 'LEARNING',
+      name: t('learning.title'),
+      category: 'LEARNING',
+      categoryLabel: t('gamehub.filter_learning'),
+      icon: '🎓',
+      bgGradient: 'bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600',
+      badge: 'QUIZ',
+      badgeBg: 'bg-indigo-600',
+      perk: t('learning.perk_badge'),
+      description: t('learning.subtitle'),
+      action: () => onSelectGame('LEARNING'),
+    },
   ];
 
   const filteredGames = GAMES_LIST.filter(
@@ -306,7 +365,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 {t('gamehub.free_daily_turns')}
               </span>
               <div className="text-lg sm:text-2xl font-black text-yellow-200 font-mono leading-tight">
-                {freeTurns} <span className="text-xs text-white/80 font-normal">{t('gamehub.unit_turns', { defaultValue: 'lượt' })}</span>
+                {safeFreeTurns} <span className="text-xs text-white/80 font-normal">{t('gamehub.unit_turns', { defaultValue: 'lượt' })}</span>
               </div>
             </div>
 
@@ -317,15 +376,15 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 {t('gamehub.perpetual_turns')}
               </span>
               <div className="text-lg sm:text-2xl font-black text-white font-mono leading-tight">
-                {perpetualTurns} <span className="text-xs text-white/80 font-normal">{t('gamehub.unit_turns', { defaultValue: 'lượt' })}</span>
+                {safePerpetualTurns} <span className="text-xs text-white/80 font-normal">{t('gamehub.unit_turns', { defaultValue: 'lượt' })}</span>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-1.5">
               <TurnRegenCountdown
-                freeTurns={freeTurns}
+                freeTurns={safeFreeTurns}
                 onTurnRegenerated={() => {
-                  if (onUpdateTurns) onUpdateTurns(freeTurns + 1, perpetualTurns);
+                  if (onUpdateTurns) onUpdateTurns(safeFreeTurns + 1, safePerpetualTurns);
                 }}
               />
 
@@ -368,6 +427,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
           { key: 'SKILL', label: t('gamehub.filter_skill', { defaultValue: 'Phản Xạ' }), icon: Flame, count: GAMES_LIST.filter((g) => g.category === 'SKILL').length },
           { key: 'PUZZLE', label: t('gamehub.filter_quiz', { defaultValue: 'Trí Tuệ' }), icon: HelpCircle, count: GAMES_LIST.filter((g) => g.category === 'PUZZLE').length },
           { key: 'CASUAL', label: t('gamehub.filter_casual', { defaultValue: 'Giải Trí' }), icon: Zap, count: GAMES_LIST.filter((g) => g.category === 'CASUAL').length },
+          { key: 'LEARNING', label: t('gamehub.filter_learning'), icon: BookOpen, count: GAMES_LIST.filter((g) => g.category === 'LEARNING').length },
         ].map((cat) => {
           const Icon = cat.icon;
           const isSelected = selectedCategory === cat.key;
@@ -512,32 +572,52 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
           </div>
 
           <div className="space-y-1.5 sm:space-y-2">
-            {LEADERBOARD_USERS.map((user) => (
-              <div
-                key={user.rank}
-                className="p-2 sm:p-2.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-6 h-6 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-xs text-slate-800 shrink-0">
-                    {user.avatar}
-                  </span>
-                  <div>
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5 text-[11px] sm:text-xs">
-                      <span>{user.name}</span>
-                      <span className="text-[9px] sm:text-[10px] font-normal text-slate-400 font-mono">({user.phone})</span>
+            {loadingLeaderboard ? (
+              <SkeletonCard rows={3} />
+            ) : leaderboard.length === 0 ? (
+              <EmptyState
+                icon={<Trophy className="w-5 h-5 text-amber-500" />}
+                title={t('learning.empty_leaderboard')}
+                description={t('learning.empty_leaderboard_desc')}
+              />
+            ) : (
+              leaderboard.map((user) => (
+                <div
+                  key={`${user.rank}-${user.displayName}`}
+                  className="p-2 sm:p-2.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                >
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    <span className="w-6 h-6 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-mono font-semibold text-xs text-slate-800 shrink-0">
+                      #{user.rank}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-900 flex items-center gap-1.5 text-[11px] sm:text-xs truncate">
+                        <span className="truncate">{user.displayName}</span>
+                        {user.maskedPhone && (
+                          <span className="text-[9px] sm:text-[10px] font-normal text-slate-400 font-mono">
+                            ({user.maskedPhone})
+                          </span>
+                        )}
+                      </div>
+                      {user.badge && (
+                        <span className="text-[9px] sm:text-[10px] text-amber-600 font-medium">
+                          {user.badge}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[9px] sm:text-[10px] text-amber-600 font-semibold">{user.badge}</span>
                   </div>
-                </div>
 
-                <div className="text-right">
-                  <div className="font-black text-amber-600 font-mono text-[11px] sm:text-xs">
-                    +{user.points.toLocaleString()}{t('common.points_short', { defaultValue: 'đ' })}
+                  <div className="text-right shrink-0">
+                    <div className="font-semibold text-amber-600 font-mono text-[11px] sm:text-xs">
+                      +{user.totalPoints.toLocaleString()}{t('common.points_short', { defaultValue: 'đ' })}
+                    </div>
+                    <span className="text-[8px] sm:text-[9px] text-slate-400">
+                      {t('common.bonus_points', { defaultValue: 'Điểm Thưởng' })}
+                    </span>
                   </div>
-                  <span className="text-[8px] sm:text-[9px] text-slate-400">{t('common.bonus_points', { defaultValue: 'Điểm Thưởng' })}</span>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -29,7 +29,8 @@ export default {
     "progress_status": "Rive {{percent}}%",
     "points_balance": "Balans Pwen Disponib",
     "btn_wallet_code": "Kòd Depanse Pwen",
-    "btn_view_perks": "Wè 4 Nivo VIP Yo"
+    "btn_view_perks": "Wè 4 Nivo VIP Yo",
+    "tier_points_unit": "Pwen Nivo"
   },
   "promo": {
     "featured_badge": "EVÈNMAN ESPESYAL",
@@ -100,7 +101,9 @@ export default {
     "game1_tag": "Chans",
     "energy_full": "PLEN TOU GRATIS",
     "next_turn_in": "Pwochen tou nan:",
-    "this_week": "Semèn Sa a"
+    "this_week": "Semèn Sa a",
+    "buy_turn_item_name": "Achte {{count}} tou GameHub",
+    "filter_learning": "Aprantisaj"
   },
   "daily_missions": {
     "modal_title": "Estasyon Misyon Chak Jou",
@@ -149,14 +152,25 @@ export default {
     "default2_sub": "Telekòm Natcom • Rekonpans +50 pwen",
     "default3_title": "Envite 3 zanmi vin jwenn nou",
     "default3_sub": "Alyans Natcash • Rekonpans +300 pwen",
-    "daily_subtitle": "Misyon yo renouvle otomatikman a 00:00 chak jou."
+    "daily_subtitle": "Misyon yo renouvle otomatikman a 00:00 chak jou.",
+    "filter_all": "Tout kanpay",
+    "claim_btn": "Reklame",
+    "claimed": "Reklame deja",
+    "empty_title": "Pa gen misyon disponib",
+    "empty_desc": "Nouvo misyon kanpay ap parèt isit la byento.",
+    "claim_success_title": "Rekonpans Reklame",
+    "claim_success_msg": "Ou fèk resevwa {{points}} Natcash Coin.",
+    "claim_error_title": "Pa ka reklame",
+    "claim_error_msg": "Tanpri eseye ankò nan yon ti moman."
   },
   "ledger": {
     "title": "Aktivite Pwen Resan",
     "subtitle": "Gran Liv Enchanjab",
     "ref_code": "Kòd GD: {{code}}",
     "default1_desc": "Pwen ou fè lè w te achte nan Delimart",
-    "default2_desc": "Pwen ou genyen nan Wou Chans"
+    "default2_desc": "Pwen ou genyen nan Wou Chans",
+    "empty_title": "Poko gen mouvman pwen",
+    "empty_desc": "Istorik Natcash Coin ou ap parèt isit la."
   },
   "partners": {
     "title": "Rezo Patnè Alyans",
@@ -165,7 +179,9 @@ export default {
     "delimart_name": "Makèt Delimart",
     "delimart_desc": "Fè 1% pwen • Peye jiska 50% bòdwo",
     "natcom_name": "Telekòm Natcom",
-    "natcom_desc": "Rechaje • Chanje plan 4G"
+    "natcom_desc": "Rechaje • Chanje plan 4G",
+    "empty_title": "Pa gen patnè disponib",
+    "empty_desc": "Lis boutik patnè yo ap parèt byento."
   },
   "wheel": {
     "title": "Wou Chans Rekonpans",
@@ -254,7 +270,15 @@ export default {
     "min_bill_expiry": "Minimòm kòmand {{minBill}} HTG • Valab pandan {{expiryDays}} jou",
     "points_to_redeem": "Pwen Ki Nesesè",
     "points_to_convert_label": "Pwen pou konvèti:",
-    "rate_exchange_desc": "To: 100 Pwen = 10 HTG"
+    "rate_exchange_desc": "To: 100 Pwen = 10 HTG",
+    "status_awaiting_confirmation": "Ap tann konfimasyon",
+    "status_sold_out": "Fini",
+    "redeeming": "Ap echanje...",
+    "catalog_empty_title": "Pa gen kado disponib",
+    "catalog_empty_desc": "Katalòg kado a vid pou kounye a.",
+    "redeem_failed_title": "Echanj pa reyisi",
+    "redeem_failed_msg": "Pa ka fini tranzaksyon echanj koupon an.",
+    "badge_redeem_error": "Erè Echanj"
   },
   "tiers": {
     "modal_title": "Avantaj 4 Nivo Manm VIP Yo",
@@ -270,7 +294,15 @@ export default {
     "birthday_gift_label": "Kado anivèsè VIP",
     "cycle_title": "Sik Evalyasyon Manm 12 Mwa",
     "cycle_desc": "Nivo manm nan kalkile sou 12 mwa. Lè w rive nan pwen yo, ou monte nivo touswit pou 12 mwa.",
-    "btn_got_it": "Mwen Konprann"
+    "btn_got_it": "Mwen Konprann",
+    "btn_program_terms": "Kondisyon Pwogram nan",
+    "keep_tier_label": "Kenbe nivo",
+    "upgrade_threshold_label": "Papòt monte nivo",
+    "natcash_coin_label": "Natcash Coin",
+    "natcash_coin_hint": "Balans ou ka depanse pou koupon ak peman QR patnè",
+    "qualifying_points_label": "Pwen Kalifikasyon",
+    "qualifying_points_hint": "Ranmase nan sik la pou monte oswa kenbe nivo ou",
+    "spins_per_day": "{{count}} tou/jou"
   },
   "games": {
     "common": {
@@ -388,7 +420,9 @@ export default {
         "tips": "Sèvi ak \"Kout Je\" pou wè tout kat pandan 1.5s oswa klike \"+10 Seg\" lè tan prèt pou fini."
       },
       "moves_unit": "mouvman",
-      "time_bonus_label": "bonis tan"
+      "time_bonus_label": "bonis tan",
+      "next_stage_label": "Pwochen nivo",
+      "stage_score_label": "Nòt nivo"
     },
     "bubble": {
       "title": "Tire Boul Kanaval",
@@ -437,7 +471,9 @@ export default {
         "scoring": "Chak kouto ki plante: +10 pwen. Frape Anvlòp oswa pakè Data 4G bay +25 a +50 pwen kado!",
         "tips": "Bwa a chanje vitès ak direksyon san prevni. Tann pi gwo espas vid la anvan w voye kouto a."
       },
-      "record_stage": "Rekò: Etap {{highestStage}}"
+      "record_stage": "Rekò: Etap {{highestStage}}",
+      "knives_label": "Kouto",
+      "score_label": "Nòt"
     },
     "block": {
       "title": "Blòk Diaman Natcash",
@@ -526,7 +562,11 @@ export default {
         "controls": "Touche yon vis pou leve l, apre sa touche yon twou vid pou vise l ladan l.",
         "scoring": "Chak plak ki tonbe: +50 pwen. Fini nivo a: +100 pwen + bonis tan!",
         "tips": "Gade plak ki sou kouch siperyè yo anvan pou devise yo an premye."
-      }
+      },
+      "add_hole_btn": "Ajoute twou",
+      "hammer_btn": "Mato",
+      "hammer_tooltip": "Kase yon pikèt ki bloke",
+      "screw_box_label": "Bwat vis"
     },
     "untangle": {
       "title": "Mèt Demele Kòd 3D",
@@ -558,6 +598,9 @@ export default {
         "scoring": "Bat vòlè a: +50 pwen. Rekipere trezò an sekirite: +100 pwen.",
         "tips": "Mete dlo sou lav/dife an premye pou fè l vin wòch, apre sa lage pwa lou sou vòlè a."
       }
+    },
+    "pin": {
+      "retry_btn": "Jwe ankò"
     }
   },
   "footer": {
@@ -577,7 +620,15 @@ export default {
   "home": {
     "points_expiration_warning": "{{count}} pwen ap ekspire nan dat {{date}}",
     "points_expiration_hint": "Echanje pwen ou kounye a pou bon makèt oswa pake done anvan yo ekspire",
-    "redeem_now_btn": "Echanje kado →"
+    "redeem_now_btn": "Echanje kado →",
+    "nc_entry_title": "Espas Natcash Loyalty",
+    "nc_entry_subtitle": "{{coins}} Natcash Coin · {{tierPts}} Pwen Nivo",
+    "quick_qr_pay": "QR 60s",
+    "quick_where_to_use": "Kote pou depanse",
+    "quick_invite": "Envite zanmi",
+    "quick_learning": "Aprann & Kwiz",
+    "quick_ussd": "USSD *202#",
+    "quick_agent": "Ajan"
   },
   "tier": {
     "your_tier_badge": "✓ Nivo pa w la",
@@ -590,7 +641,10 @@ export default {
     "view_barcode": "Kòd-baryè",
     "view_qr": "Kòd QR",
     "valid_until": "Valab jiska:",
-    "apply_at": "Aplikab nan:"
+    "apply_at": "Aplikab nan:",
+    "scan_at_counter": "Eskane nan kesye a",
+    "redeem_ready_title": "Koupon Prè",
+    "redeem_ready_desc": "Montre kòd QR oswa kòd ba sa a bay kesye a."
   },
   "common": {
     "copied": "Kopye",
@@ -598,6 +652,251 @@ export default {
     "reward_wallet": "Bous Rekonpans",
     "points_short": "pwen",
     "bonus_points": "Pwen Kado",
-    "points_unit": "Pwen"
+    "points_unit": "Pwen",
+    "change_language": "Chanje lang",
+    "close": "Fèmen",
+    "mute": "Koupe son",
+    "unmute": "Limen son",
+    "processing": "Ap trete...",
+    "retry": "Eseye ankò"
+  },
+  "terms": {
+    "open_btn": "Kondisyon",
+    "title": "Kondisyon Pwogram Manm",
+    "subtitle": "Règ pou ranmase, nivo manm, ak depanse Natcash Coin",
+    "sec1_title": "1. Natcash Coin vs Pwen Kalifikasyon",
+    "sec1_desc": "Natcash Coin se balans rekonpans ou ka depanse. Pwen Kalifikasyon konte separe pou nivo manm ou.",
+    "sec2_title": "2. Papòt pou monte ak kenbe nivo",
+    "sec2_desc": "Kat nivo manm kalkile sou Pwen Kalifikasyon ou ranmase nan sik aktif la.",
+    "sec3_title": "3. Règ dediksyon FIFO",
+    "sec3_desc": "Pakèt Coin k ap ekspire pi bonè toujou retire an premye lè w ap achte oswa chanje koupon.",
+    "sec4_title": "4. Sekirite QR ak refi maketing",
+    "sec4_desc": "Kòd QR kesye a ekspire nan 60 segonn. Ou ka dezaktive mesaj pwomosyon nenpòt lè.",
+    "table_title": "Tablo Ofisyèl Papòt Nivo",
+    "col_tier": "Nivo",
+    "col_upgrade": "Monte nivo",
+    "col_keep": "Kenbe nivo",
+    "btn_agree": "Konprann"
+  },
+  "fifo": {
+    "title": "Pakèt Coin k ap ekspire (FIFO)",
+    "subtitle": "Lòd otomatik Premye Antre, Premye Soti",
+    "view_batches_btn": "Wè detay FIFO",
+    "total_expiring_label": "Total Coin k ap ekspire",
+    "rule_explanation": "Dapre règ FIFO, pakèt ki gen dat ekspirasyon pi pre ap depanse an premye.",
+    "earned_at": "Resevwa: {{date}}",
+    "expires_at": "Ekspire: {{date}}",
+    "expiring_soon_badge": "Ap ekspire byento",
+    "default_source": "Pakèt pwen",
+    "empty_title": "Pa gen pakèt k ap ekspire",
+    "empty_desc": "Ou pa gen okenn Natcash Coin k ap ekspire talè.",
+    "error_title": "Pa ka chaje pakèt yo",
+    "load_error": "Erè pandan chajman pakèt FIFO yo.",
+    "btn_refresh": "Rafrechi"
+  },
+  "referrals": {
+    "title": "Envite zanmi pou genyen Coin",
+    "subtitle": "Pataje lyen ou, resevwa Coin lè zanmi ou fini eKYC",
+    "invite_btn": "Envite zanmi",
+    "your_code_label": "Kòd envitasyon ou",
+    "btn_share_now": "Pataje lyen envitasyon",
+    "share_title": "Antre nan Natcash Loyalty",
+    "share_content": "Sèvi ak kòd {{code}} lè w ap enskri sou Natcash: {{link}}",
+    "stat_invited": "Envite",
+    "stat_ekyc": "eKYC Fini",
+    "stat_earned": "Coin Resevwa",
+    "friends_list_title": "Lis zanmi ou envite yo",
+    "status_ekyc_verified": "eKYC Verifye",
+    "status_pending_ekyc": "Ap tann eKYC",
+    "no_friends_title": "Poko gen envitasyon",
+    "no_friends_desc": "Pataje kòd QR oswa lyen ou ak zanmi pou kòmanse.",
+    "empty_title": "Pa gen done envitasyon",
+    "empty_desc": "Pa ka jwenn enfòmasyon envitasyon kounye a.",
+    "load_error": "Pa ka chaje done envitasyon yo."
+  },
+  "scratch": {
+    "title": "Kat Grate Chans",
+    "subtitle": "Grate kouch ajan an pou wè rekonpans lan touswit",
+    "badge": "Genyen touswit",
+    "hero_title": "Chak kat gen yon rezilta ofisyèl sou sèvè",
+    "hero_desc": "Pran yon kat epi grate l ak dwèt ou pou dekouvri senbòl yo.",
+    "perk_badge": "Kat grate",
+    "turns_remaining": "{{count}} tou disponib",
+    "ready_title": "Prè pou grate yon kat",
+    "ready_desc": "Peze bouton anba a pou tire yon kat ofisyèl.",
+    "draw_button": "Pran Nouvo Kat",
+    "scratch_here": "GRATE ISIT LA",
+    "scratched_pct": "Grate {{pct}}%",
+    "drag_hint": "Pase dwèt ou sou kat la pou grate l",
+    "reveal_all": "Louvri tout",
+    "win_subtitle": "Rekonpans lan ajoute nan balans Natcash Coin ou",
+    "lose_subtitle": "Plis chans sou pwochen kat la",
+    "play_again": "Jwe yon lòt kat",
+    "load_error": "Pa ka kreye kat grate a."
+  },
+  "learning": {
+    "title": "Aprann & Kwiz",
+    "subtitle": "Fini kou yo pou genyen Coin epi monte nan klasman mwa a",
+    "perk_badge": "Kwiz",
+    "tab_courses": "Kou yo",
+    "tab_leaderboard": "Klasman",
+    "tab_history": "Istorik",
+    "course_tag": "Kou",
+    "question_count": "{{count}} kesyon",
+    "start_quiz": "Kòmanse Kwiz",
+    "review_quiz": "Refè Kwiz la",
+    "submit_quiz": "Voye ({{answered}}/{{total}})",
+    "quiz_completed": "Kwiz la fini",
+    "score_summary": "Ou reponn {{correct}} sou {{total}} kesyon kòrèkteman.",
+    "empty_courses": "Pa gen kou disponib",
+    "empty_courses_desc": "Kou English Daily, Aprann Li ak Money Smart ap parèt isit la.",
+    "empty_questions": "Pa gen kesyon disponib",
+    "empty_questions_desc": "Kou sa a poko gen kesyon.",
+    "empty_leaderboard": "Poko gen klasman",
+    "empty_leaderboard_desc": "Klasman mwa a ap mete ajou aprè premye jwèt yo.",
+    "empty_history": "Poko gen istorik jwèt",
+    "empty_history_desc": "Sesyon GameHub ak kwiz ou yo ap sove isit la.",
+    "session_default": "Sesyon GameHub",
+    "recorded": "Anrejistre",
+    "load_error": "Pa ka chaje done aprantisaj yo.",
+    "submit_error": "Pa ka voye repons kwiz yo."
+  },
+  "whereToUse": {
+    "title": "Kote pou depanse Natcash Coin",
+    "subtitle": "Boutik ak sèvis ki aksepte QR Bòs Rekonpans lan",
+    "see_all_btn": "Wè tout",
+    "search_placeholder": "Chèche non boutik, ri oswa vil...",
+    "cat_all": "Tout",
+    "cat_retail": "Komès",
+    "cat_food": "Manje ak Bwason",
+    "cat_telecom": "Telekòm",
+    "cat_utility": "Sèvis",
+    "nationwide": "Tout peyi a",
+    "cashback_rate": "{{pct}}% retou",
+    "qr_accepted": "Aksepte QR",
+    "pay_with_qr": "Peye ak QR",
+    "empty_title": "Pa jwenn okenn patnè",
+    "empty_desc": "Eseye yon lòt kategori oswa efase rechèch la.",
+    "load_error": "Pa ka chaje lis patnè yo."
+  },
+  "qrModal": {
+    "title": "Peye nan kesye · QR 60s",
+    "subtitle": "Montre QR dinamik sa a bay kesye a pou peye ak Coin",
+    "available_coins": "Natcash Coin disponib",
+    "qr_alt": "Kòd QR peman Bòs Rekonpans",
+    "auto_refresh_label": "Sekirite ap rafrechi nan",
+    "refresh_now": "Rafrechi QR kounye a",
+    "tap_to_generate": "Pa gen sesyon QR aktif",
+    "btn_where_to_use": "Kote pou depanse",
+    "btn_ussd": "USSD *202#",
+    "load_error": "Pa ka jenere kòd QR peman."
+  },
+  "ussd": {
+    "title": "Similatè USSD Natcash",
+    "redial": "Rele *202# ankò",
+    "input_placeholder": "Antre chwa ou (egz: 1, 2, 0)...",
+    "cancel": "Anile",
+    "send": "Voye",
+    "load_error": "Sesyon USSD la koupe."
+  },
+  "segments": {
+    "new_customer": {
+      "badge": "Nouvo Manm",
+      "title": "Byenvini nan Natcash Loyalty",
+      "subtitle": "Fini premye misyon ou pou resevwa kado demaraj ou.",
+      "cta": "Dekouvri"
+    },
+    "low_activity": {
+      "badge": "Koup de men",
+      "title": "Ranmase plis Coin nan yon sèl klik jodi a",
+      "subtitle": "Sèvi ak tou gratis ou oswa jwe Kat Grate.",
+      "cta": "Jwe kounye a"
+    },
+    "high_value": {
+      "badge": "Privilèj VIP",
+      "title": "Miltiplikatè nivo ak avantaj espesyal",
+      "subtitle": "Pwofite bonis Coin ak koupon VIP pou manm fidèl.",
+      "cta": "Wè avantaj"
+    },
+    "single_service": {
+      "badge": "Eksplore plis",
+      "title": "Eseye peman QR patnè pou double rekonpans",
+      "subtitle": "Peye ak Bòs Rekonpans lan nan boutik alyans yo.",
+      "cta": "Jwenn boutik"
+    },
+    "win_back": {
+      "badge": "Bon retou",
+      "title": "Bonis espesyal ap tann ou tounen",
+      "subtitle": "Reklame tou gratis ak kado ki nan bòs ou a.",
+      "cta": "Reklame"
+    },
+    "partner_shopper": {
+      "badge": "Kliyan Patnè",
+      "title": "Depanse Coin ou nan kesye patnè yo",
+      "subtitle": "Dekouvri nouvo boutik ki aksepte QR 60 segonn.",
+      "cta": "Wè kote yo"
+    },
+    "general": {
+      "badge": "Òf Jodi a",
+      "title": "Ranmase Coin chak jou, chanje tout kote",
+      "subtitle": "Jwe sou GameHub epi fini misyon semèn nan pi vit.",
+      "cta": "Louvri GameHub"
+    }
+  },
+  "inbox": {
+    "title": "Bwat Mesaj",
+    "subtitle": "Nouvèl sou rekonpans, nivo manm, ak òf pèsonèl",
+    "open_settings": "Paramèt notifikasyon",
+    "cat_all": "Tout",
+    "cat_reward": "Rekonpans",
+    "cat_mission": "Misyon",
+    "cat_tier": "Nivo manm",
+    "cat_promo": "Pwomosyon",
+    "empty_title": "Bwat mesaj la vid",
+    "empty_desc": "Pa gen okenn mesaj nan kategori sa a.",
+    "load_error": "Pa ka chaje mesaj yo."
+  },
+  "notifSettings": {
+    "title": "Paramèt Notifikasyon & Lang",
+    "subtitle": "Jere chanèl kominikasyon ak opsyon refi maketing",
+    "quick_language": "Chwazi lang rapid",
+    "opt_out_label": "Refize mesaj maketing (Opt-out)",
+    "opt_out_desc": "Kanpe mesaj pwomosyon pandan w ap kenbe alèt sekirite ak tranzaksyon.",
+    "channel_push": "Notifikasyon sou aplikasyon",
+    "channel_push_desc": "Alèt rapid pou nouvo Coin ak tou gratis",
+    "channel_sms": "Mesaj SMS",
+    "channel_sms_desc": "Resevwa enfòmasyon enpòtan pa SMS",
+    "channel_inapp": "Bwat mesaj nan app la",
+    "channel_inapp_desc": "Kenbe mesaj kado ak nivo manm nan bwat ou",
+    "save_button": "Anrejistre Chwa",
+    "saved_success": "Paramèt notifikasyon yo anrejistre.",
+    "load_error": "Pa ka chaje paramèt yo.",
+    "save_error": "Pa ka sove paramèt yo."
+  },
+  "agent": {
+    "title": "Pòtay Ajan & Sipè Ajan",
+    "subtitle": "Swiv objektif kliyan ak bonis rezo chak mwa",
+    "tab_ag01": "AG-01 · Ajan",
+    "tab_ag02": "AG-02 · Sipè Ajan",
+    "current_month": "Mwa aktyèl la",
+    "status_qualified": "Kalifye",
+    "status_in_progress": "Ap pwogrese",
+    "ag01_heading": "Objektif Kliyan Aktif nan Mwa a",
+    "ag01_reward_desc": "Rive nan {{target}} kliyan mwa sa a pou genyen {{reward}} HTG / Coin.",
+    "customers_progress": "Pwogrè kliyan mwa sa a",
+    "reward_tier_label": "Bonis objektif",
+    "ag02_heading": "Pousantaj Kalifikasyon Rezo Ajan",
+    "ag02_reward_desc": "Rive omwen {{pct}}% ajan anba w kalifye pou debloke {{reward}} HTG.",
+    "qualified_agents": "Ajan Kalifye",
+    "network_rate": "To Rezo",
+    "super_bonus": "Bonis Sipè Ajan",
+    "sub_agents_list": "Lis Ajan Anba Ou",
+    "sub_qualified": "Kalifye",
+    "sub_pending": "Poko rive",
+    "empty_title": "Pa jwenn pwofil ajan",
+    "empty_desc": "Kont sa a pa anrejistre kòm Ajan.",
+    "empty_sub_agents": "Pa gen ajan anba ou",
+    "empty_sub_agents_desc": "Ajan ki nan rezo w la ap parèt isit la.",
+    "load_error": "Pa ka chaje tablo ajan an."
   }
 };

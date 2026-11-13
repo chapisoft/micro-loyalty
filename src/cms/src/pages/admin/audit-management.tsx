@@ -11,6 +11,7 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Dialog } from 'primereact/dialog';
 import { Divider } from 'primereact/divider';
+import { TabView, TabPanel } from 'primereact/tabview';
 import * as XLSX from 'xlsx';
 
 import { useAuditLogs } from '@/service/admin/audit-hooks';
@@ -201,7 +202,7 @@ export default function AuditLogPage() {
 
   const idBodyTemplate = (rowData: AuditLog) => {
     return (
-      <span className="inline-flex align-items-center font-mono font-medium text-xs text-700 bg-gray-100 border-1 border-gray-200 border-round px-2 py-1">
+      <span className="inline-flex align-items-center font-mono text-xs text-700 bg-gray-100 border-1 border-gray-200 border-round px-2 py-1 white-space-nowrap">
         #{rowData.id}
       </span>
     );
@@ -230,12 +231,12 @@ export default function AuditLogPage() {
       severity = 'success';
       icon = 'pi pi-unlock';
     }
-    return <Tag severity={severity} value={op} icon={icon} className="text-xs px-2 py-1 font-semibold" />;
+    return <Tag severity={severity} value={op} icon={icon} className="text-xs px-2 py-1 white-space-nowrap" />;
   };
 
   const tableBodyTemplate = (rowData: AuditLog) => {
     return (
-      <span className="text-700 text-sm font-mono">{rowData.tableName}</span>
+      <span className="text-700 text-sm font-mono white-space-nowrap">{rowData.tableName}</span>
     );
   };
 
@@ -243,21 +244,21 @@ export default function AuditLogPage() {
     if (!rowData.timestamp) return '-';
     try {
       return (
-        <span className="text-sm text-700 font-mono">
+        <span className="text-sm text-700 font-mono white-space-nowrap">
           {new Date(rowData.timestamp).toLocaleString()}
         </span>
       );
     } catch {
-      return <span className="text-sm font-mono">{rowData.timestamp}</span>;
+      return <span className="text-sm font-mono white-space-nowrap">{rowData.timestamp}</span>;
     }
   };
 
   const actorBodyTemplate = (rowData: AuditLog) => {
     return (
       <div className="flex flex-column gap-1">
-        <span className="font-semibold text-sm text-900">{rowData.username}</span>
+        <span className="font-medium text-sm text-900 white-space-nowrap">{rowData.username}</span>
         {rowData.clientIp && (
-          <span className="text-xs text-500 font-mono">IP: {rowData.clientIp}</span>
+          <span className="text-xs text-500 font-mono white-space-nowrap">IP: {rowData.clientIp}</span>
         )}
       </div>
     );
@@ -283,6 +284,37 @@ export default function AuditLogPage() {
         tooltip={t('audit.view_diff', { defaultValue: 'Xem chi tiết thay đổi' })}
       />
     );
+  };
+
+  const computeJsonDiff = (beforeStr?: string, afterStr?: string) => {
+    const parseSafe = (raw?: string): Record<string, any> => {
+      if (!raw) return {};
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : { value: parsed };
+      } catch {
+        return { raw };
+      }
+    };
+    const beforeObj = parseSafe(beforeStr);
+    const afterObj = parseSafe(afterStr);
+    const keys = Array.from(new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]));
+    return keys.map((key) => {
+      const hasBefore = Object.prototype.hasOwnProperty.call(beforeObj, key);
+      const hasAfter = Object.prototype.hasOwnProperty.call(afterObj, key);
+      const bVal = hasBefore ? JSON.stringify(beforeObj[key]) : undefined;
+      const aVal = hasAfter ? JSON.stringify(afterObj[key]) : undefined;
+      let changeType: 'ADDED' | 'REMOVED' | 'MODIFIED' | 'UNCHANGED' = 'UNCHANGED';
+      if (!hasBefore && hasAfter) changeType = 'ADDED';
+      else if (hasBefore && !hasAfter) changeType = 'REMOVED';
+      else if (bVal !== aVal) changeType = 'MODIFIED';
+      return {
+        field: key,
+        beforeValue: bVal ?? '—',
+        afterValue: aVal ?? '—',
+        changeType,
+      };
+    });
   };
 
   const renderJsonPretty = (jsonStr?: string) => {
@@ -474,61 +506,61 @@ export default function AuditLogPage() {
         >
           <Column
             field="id"
-            header={t('audit.id', { defaultValue: 'ID' })}
+            header={<span title={t('audit.id_tooltip', { defaultValue: 'Mã bản ghi kiểm toán' })}>{t('audit.id', { defaultValue: 'ID' })}</span>}
             body={idBodyTemplate}
-            style={{ minWidth: '75px', width: '6%', textAlign: 'center' }}
+            style={{ minWidth: '85px', textAlign: 'center' }}
             headerStyle={{ textAlign: 'center' }}
           />
           <Column
             field="timestamp"
-            header={t('audit.timestamp', { defaultValue: 'Thời gian' })}
+            header={<span title={t('audit.timestamp_tooltip', { defaultValue: 'Thời điểm ghi nhận thay đổi' })}>{t('audit.timestamp', { defaultValue: 'Thời gian' })}</span>}
             body={timestampBodyTemplate}
-            style={{ minWidth: '150px', width: '13%' }}
+            style={{ minWidth: '175px' }}
           />
           <Column
             field="tenantId"
             header={t('audit.tenant', { defaultValue: 'Thuê bao' })}
             body={(rowData: AuditLog) => (
-              <span className="font-medium text-primary text-xs">{rowData.tenantId || selectedTenant}</span>
+              <span className="text-primary text-xs font-mono white-space-nowrap">{rowData.tenantId || selectedTenant}</span>
             )}
-            style={{ minWidth: '130px', width: '10%' }}
+            style={{ minWidth: '145px' }}
           />
           <Column
             field="tableName"
             header={t('audit.table', { defaultValue: 'Bảng dữ liệu' })}
             body={tableBodyTemplate}
-            style={{ minWidth: '180px', width: '15%' }}
+            style={{ minWidth: '190px' }}
           />
           <Column
             field="operation"
             header={t('audit.operation', { defaultValue: 'Thao tác' })}
             body={operationBodyTemplate}
-            style={{ minWidth: '100px', width: '8%' }}
+            style={{ minWidth: '115px' }}
           />
           <Column
             field="entityId"
-            header={t('audit.entity_id', { defaultValue: 'Mã đối tượng' })}
+            header={<span title={t('audit.entity_id_tooltip', { defaultValue: 'Mã định danh đối tượng bị thay đổi' })}>{t('audit.entity_id', { defaultValue: 'Mã đối tượng' })}</span>}
             body={(rowData: AuditLog) => (
-              <span className="font-mono text-xs text-800">{rowData.entityId}</span>
+              <span className="font-mono text-xs text-800 white-space-nowrap">{rowData.entityId}</span>
             )}
-            style={{ minWidth: '140px', width: '11%' }}
+            style={{ minWidth: '170px' }}
           />
           <Column
             field="username"
             header={t('audit.actor', { defaultValue: 'Người thực hiện' })}
             body={actorBodyTemplate}
-            style={{ minWidth: '140px', width: '12%' }}
+            style={{ minWidth: '150px' }}
           />
           <Column
             field="description"
             header={t('audit.description', { defaultValue: 'Diễn giải nghiệp vụ' })}
             body={descriptionBodyTemplate}
-            style={{ minWidth: '200px', width: '18%' }}
+            style={{ minWidth: '220px' }}
           />
           <Column
-            header={t('audit.actions', { defaultValue: 'Thao tác' })}
+            header={t('audit.actions', { defaultValue: 'Chi tiết' })}
             body={actionBodyTemplate}
-            style={{ minWidth: '80px', width: '8%', textAlign: 'center' }}
+            style={{ minWidth: '80px', textAlign: 'center' }}
           />
         </DataTable>
       </div>
@@ -597,32 +629,100 @@ export default function AuditLogPage() {
 
             <Divider />
 
-            {/* So Sánh Diff Before / After Dữ Liệu */}
-            <div className="grid">
-              <div className="col-12 md:col-6">
-                <div className="border-1 border-orange-200 border-round p-3 surface-card">
-                  <div className="flex align-items-center justify-content-between mb-2 pb-2 border-bottom-1 border-orange-100">
-                    <span className="font-bold text-orange-700 text-sm">
-                      <i className="pi pi-history mr-2" />
-                      {t('audit.before', { defaultValue: 'Dữ liệu trước (Before Snapshot)' })}
-                    </span>
+            {/* So Sánh Diff Before / After Dữ Liệu (QT-04) */}
+            <TabView>
+              <TabPanel header={t('audit.diff_table_tab', { defaultValue: 'Bảng đối chiếu thay đổi (JSONB Diff)' })} leftIcon="pi pi-arrows-h mr-2">
+                <DataTable
+                  value={computeJsonDiff(selectedLog.beforeData, selectedLog.afterData)}
+                  size="small"
+                  stripedRows
+                  emptyMessage={t('no_data_available', { defaultValue: 'Không có thay đổi trường dữ liệu' })}
+                  responsiveLayout="scroll"
+                >
+                  <Column
+                    field="field"
+                    header={t('audit.diff_field', { defaultValue: 'Trường dữ liệu' })}
+                    body={(row: any) => <span className="font-mono text-xs text-900 white-space-nowrap">{row.field}</span>}
+                    style={{ minWidth: '160px' }}
+                  />
+                  <Column
+                    field="changeType"
+                    header={t('audit.diff_type', { defaultValue: 'Biến động' })}
+                    body={(row: any) => {
+                      const sev =
+                        row.changeType === 'ADDED'
+                          ? 'success'
+                          : row.changeType === 'REMOVED'
+                          ? 'danger'
+                          : row.changeType === 'MODIFIED'
+                          ? 'warning'
+                          : 'secondary';
+                      return <Tag value={row.changeType} severity={sev} className="text-xs" />;
+                    }}
+                    style={{ minWidth: '110px', textAlign: 'center' }}
+                  />
+                  <Column
+                    field="beforeValue"
+                    header={t('audit.before', { defaultValue: 'Giá trị trước' })}
+                    body={(row: any) => (
+                      <span
+                        className={`font-mono text-xs block p-1 border-round ${
+                          row.changeType === 'MODIFIED' || row.changeType === 'REMOVED'
+                            ? 'bg-red-50 text-red-700'
+                            : 'text-600'
+                        }`}
+                      >
+                        {row.beforeValue}
+                      </span>
+                    )}
+                    style={{ minWidth: '200px' }}
+                  />
+                  <Column
+                    field="afterValue"
+                    header={t('audit.after', { defaultValue: 'Giá trị sau' })}
+                    body={(row: any) => (
+                      <span
+                        className={`font-mono text-xs block p-1 border-round ${
+                          row.changeType === 'MODIFIED' || row.changeType === 'ADDED'
+                            ? 'bg-green-50 text-green-700'
+                            : 'text-600'
+                        }`}
+                      >
+                        {row.afterValue}
+                      </span>
+                    )}
+                    style={{ minWidth: '200px' }}
+                  />
+                </DataTable>
+              </TabPanel>
+              <TabPanel header={t('audit.raw_json_tab', { defaultValue: 'Dữ liệu JSON gốc' })} leftIcon="pi pi-code mr-2">
+                <div className="grid">
+                  <div className="col-12 md:col-6">
+                    <div className="border-1 border-orange-200 border-round p-3 surface-card">
+                      <div className="flex align-items-center justify-content-between mb-2 pb-2 border-bottom-1 border-orange-100">
+                        <span className="font-medium text-orange-700 text-sm">
+                          <i className="pi pi-history mr-2" />
+                          {t('audit.before', { defaultValue: 'Dữ liệu trước (Before Snapshot)' })}
+                        </span>
+                      </div>
+                      {renderJsonPretty(selectedLog.beforeData)}
+                    </div>
                   </div>
-                  {renderJsonPretty(selectedLog.beforeData)}
-                </div>
-              </div>
 
-              <div className="col-12 md:col-6">
-                <div className="border-1 border-green-200 border-round p-3 surface-card">
-                  <div className="flex align-items-center justify-content-between mb-2 pb-2 border-bottom-1 border-green-100">
-                    <span className="font-bold text-green-700 text-sm">
-                      <i className="pi pi-check mr-2" />
-                      {t('audit.after', { defaultValue: 'Dữ liệu sau (After Snapshot)' })}
-                    </span>
+                  <div className="col-12 md:col-6">
+                    <div className="border-1 border-green-200 border-round p-3 surface-card">
+                      <div className="flex align-items-center justify-content-between mb-2 pb-2 border-bottom-1 border-green-100">
+                        <span className="font-medium text-green-700 text-sm">
+                          <i className="pi pi-check mr-2" />
+                          {t('audit.after', { defaultValue: 'Dữ liệu sau (After Snapshot)' })}
+                        </span>
+                      </div>
+                      {renderJsonPretty(selectedLog.afterData)}
+                    </div>
                   </div>
-                  {renderJsonPretty(selectedLog.afterData)}
                 </div>
-              </div>
-            </div>
+              </TabPanel>
+            </TabView>
           </div>
         )}
       </Dialog>

@@ -414,10 +414,118 @@ export enum CommonStatus {
 }
 
 export enum TierLevel {
+  BRONZE = 'BRONZE',
   SILVER = 'SILVER',
   GOLD = 'GOLD',
   PLATINUM = 'PLATINUM',
   DIAMOND = 'DIAMOND',
+}
+
+export enum CurrencyAssetType {
+  TIER_POINT = 'TIER_POINT',
+  LOYALTY_COIN = 'LOYALTY_COIN',
+}
+
+export enum ApprovalTargetType {
+  POLICY = 'POLICY',
+  PROGRAM = 'PROGRAM',
+  POINT_ADJUSTMENT = 'POINT_ADJUSTMENT',
+  PAYMENT_BATCH = 'PAYMENT_BATCH',
+  SYSTEM_PARAM = 'SYSTEM_PARAM',
+  MEMBER_LOCK = 'MEMBER_LOCK',
+  PARTNER_PROPOSAL = 'PARTNER_PROPOSAL',
+}
+
+export enum ApprovalStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum PartnerHierarchyLevel {
+  PARTNER = 'PARTNER',
+  BRANCH = 'BRANCH',
+  PRODUCT_GROUP = 'PRODUCT_GROUP',
+  PRODUCT = 'PRODUCT',
+}
+
+export enum CampaignMissionCategory {
+  FIRST_TX = 'FIRST_TX',
+  SPEND_TIERED = 'SPEND_TIERED',
+  TX_COUNT = 'TX_COUNT',
+  STREAK = 'STREAK',
+  CHECKIN_7D = 'CHECKIN_7D',
+  WIN_BACK = 'WIN_BACK',
+  PARTNER_PURCHASE = 'PARTNER_PURCHASE',
+  CROSS_SELL = 'CROSS_SELL',
+  REFERRAL = 'REFERRAL',
+}
+
+export enum CustomerSegmentCode {
+  NEW_CUSTOMER = 'NEW_CUSTOMER',
+  LOW_ACTIVITY = 'LOW_ACTIVITY',
+  HIGH_VALUE = 'HIGH_VALUE',
+  SINGLE_SERVICE = 'SINGLE_SERVICE',
+  WIN_BACK = 'WIN_BACK',
+  PARTNER_SHOPPER = 'PARTNER_SHOPPER',
+  GENERAL = 'GENERAL',
+}
+
+export enum GameCategory {
+  ENTERTAINMENT = 'ENTERTAINMENT',
+  PUZZLE_BRAIN = 'PUZZLE_BRAIN',
+  LEARNING_EDTECH = 'LEARNING_EDTECH',
+}
+
+export enum AgentRoleType {
+  AGENT = 'AGENT',
+  SUPER_AGENT = 'SUPER_AGENT',
+}
+
+export enum PaymentBatchStatus {
+  DRAFT = 'DRAFT',
+  PENDING_CONFIRM = 'PENDING_CONFIRM',
+  PARTNER_CONFIRMED = 'PARTNER_CONFIRMED',
+  DISPUTED = 'DISPUTED',
+  PROCESSING = 'PROCESSING',
+  PAID = 'PAID',
+}
+
+export enum AlertSeverity {
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  CRITICAL = 'CRITICAL',
+}
+
+export enum AlertStatus {
+  OPEN = 'OPEN',
+  ACKNOWLEDGED = 'ACKNOWLEDGED',
+  RESOLVED = 'RESOLVED',
+}
+
+export enum AdjustmentDirection {
+  CREDIT = 'CREDIT',
+  DEBIT = 'DEBIT',
+}
+
+export enum ApiKeyStatus {
+  ACTIVE = 'ACTIVE',
+  GRACE_PERIOD = 'GRACE_PERIOD',
+  REVOKED = 'REVOKED',
+  EXPIRED = 'EXPIRED',
+}
+
+export enum ProposalStatus {
+  DRAFT = 'DRAFT',
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum MemberAccountStatus {
+  ACTIVE = 'ACTIVE',
+  LOCKED = 'LOCKED',
+  INACTIVE = 'INACTIVE',
 }
 
 export enum CampaignMetric {

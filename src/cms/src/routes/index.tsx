@@ -163,6 +163,155 @@ const mainAppRoutes: RouteObject = {
         return { Component: DeadLetterPage };
       }),
     },
+    // CMS v2.1 New Admin & Engagement & Reports Routes
+    {
+      path: paths.approvalQueue,
+      lazy: safeLazy(async () => {
+        const { ApprovalQueuePage } = await import('@/pages/admin/ApprovalQueuePage');
+        return { Component: ApprovalQueuePage };
+      }),
+    },
+    {
+      path: paths.natcashPaymentPoints,
+      lazy: safeLazy(async () => {
+        const { NatcashBranchesPaymentPointsPage } = await import('@/pages/partners/NatcashBranchesPaymentPointsPage');
+        return { Component: NatcashBranchesPaymentPointsPage };
+      }),
+    },
+    {
+      path: paths.customerSegments,
+      lazy: safeLazy(async () => {
+        const { CustomerSegmentsPage } = await import('@/pages/engagement/CustomerSegmentsPage');
+        return { Component: CustomerSegmentsPage };
+      }),
+    },
+    {
+      path: paths.reminderScenarios,
+      lazy: safeLazy(async () => {
+        const { ReminderScenariosPage } = await import('@/pages/engagement/ReminderScenariosPage');
+        return { Component: ReminderScenariosPage };
+      }),
+    },
+    {
+      path: paths.budgetManagement,
+      lazy: safeLazy(async () => {
+        const { BudgetManagementPage } = await import('@/pages/reports/BudgetManagementPage');
+        return { Component: BudgetManagementPage };
+      }),
+    },
+    {
+      path: paths.programEffectiveness,
+      lazy: safeLazy(async () => {
+        const { ProgramEffectivenessPage } = await import('@/pages/reports/ProgramEffectivenessPage');
+        return { Component: ProgramEffectivenessPage };
+      }),
+    },
+    {
+      path: paths.alertCenter,
+      lazy: safeLazy(async () => {
+        const { AlertCenterPage } = await import('@/pages/reports/AlertCenterPage');
+        return { Component: AlertCenterPage };
+      }),
+    },
+    {
+      path: paths.advancedReports,
+      lazy: safeLazy(async () => {
+        const { AdvancedReportsPage } = await import('@/pages/reports/AdvancedReportsPage');
+        return { Component: AdvancedReportsPage };
+      }),
+    },
+    {
+      path: paths.learningQuizBank,
+      lazy: safeLazy(async () => {
+        const { LearningQuizBankPage } = await import('@/pages/games/LearningQuizBankPage');
+        return { Component: LearningQuizBankPage };
+      }),
+    },
+    {
+      path: paths.gameStatistics,
+      lazy: safeLazy(async () => {
+        const { GameStatisticsPage } = await import('@/pages/games/GameStatisticsPage');
+        return { Component: GameStatisticsPage };
+      }),
+    },
+    {
+      path: paths.agentLoyaltyManagement,
+      lazy: safeLazy(async () => {
+        const { AgentLoyaltyManagementPage } = await import('@/pages/agents/AgentLoyaltyManagementPage');
+        return { Component: AgentLoyaltyManagementPage };
+      }),
+    },
+    // Merchant Partner Portal v2.1 Routes
+    {
+      path: paths.partnerPortalDashboard,
+      lazy: safeLazy(async () => {
+        const { PartnerDashboardPage } = await import('@/pages/partner-portal/PartnerDashboardPage');
+        return { Component: PartnerDashboardPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalBranches,
+      lazy: safeLazy(async () => {
+        const { PartnerBranchesProductsPage } = await import('@/pages/partner-portal/PartnerBranchesProductsPage');
+        return { Component: PartnerBranchesProductsPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalPolicy,
+      lazy: safeLazy(async () => {
+        const { PartnerPointsPolicyPage } = await import('@/pages/partner-portal/PartnerPointsPolicyPage');
+        return { Component: PartnerPointsPolicyPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalStaff,
+      lazy: safeLazy(async () => {
+        const { PartnerStaffAccountsPage } = await import('@/pages/partner-portal/PartnerStaffAccountsPage');
+        return { Component: PartnerStaffAccountsPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalProposals,
+      lazy: safeLazy(async () => {
+        const { PartnerProgramProposalPage } = await import('@/pages/partner-portal/PartnerProgramProposalPage');
+        return { Component: PartnerProgramProposalPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalVouchers,
+      lazy: safeLazy(async () => {
+        const { PartnerVouchersPage } = await import('@/pages/partner-portal/PartnerVouchersPage');
+        return { Component: PartnerVouchersPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalTransactions,
+      lazy: safeLazy(async () => {
+        const { PartnerTransactionsPage } = await import('@/pages/partner-portal/PartnerTransactionsPage');
+        return { Component: PartnerTransactionsPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalSettlement,
+      lazy: safeLazy(async () => {
+        const { PartnerSettlementPage } = await import('@/pages/partner-portal/PartnerSettlementPage');
+        return { Component: PartnerSettlementPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalNotifications,
+      lazy: safeLazy(async () => {
+        const { PartnerNotificationsPage } = await import('@/pages/partner-portal/PartnerNotificationsPage');
+        return { Component: PartnerNotificationsPage };
+      }),
+    },
+    {
+      path: paths.partnerPortalApiKeys,
+      lazy: safeLazy(async () => {
+        const { PartnerWebhookApiKeyPage } = await import('@/pages/partner-portal/PartnerWebhookApiKeyPage');
+        return { Component: PartnerWebhookApiKeyPage };
+      }),
+    },
     // Profile routes
     {
       path: paths.changeProfile,

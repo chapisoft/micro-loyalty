@@ -67,25 +67,42 @@ const Header: React.FC = () => {
     paths.tierManagement,
     paths.policyConfig,
     paths.campaignMilestones,
+    paths.customers,
+    paths.customerSegments,
+    paths.reminderScenarios,
   ].some((p) => location.pathname.startsWith(p));
 
   const isRewardsGroupActive = [
     paths.voucherManagement,
     paths.gameManagement,
     paths.gameHubConfig,
+    paths.learningQuizBank,
+    paths.gameStatistics,
   ].some((p) => location.pathname.startsWith(p));
 
   const isPartnerGroupActive = [
     paths.partners,
+    paths.natcashPaymentPoints,
     paths.transactions,
     paths.clearingSettlement,
+    paths.agentLoyaltyManagement,
   ].some((p) => location.pathname.startsWith(p));
+
+  const isReportsGroupActive = [
+    paths.budgetManagement,
+    paths.programEffectiveness,
+    paths.alertCenter,
+    paths.advancedReports,
+  ].some((p) => location.pathname.startsWith(p));
+
+  const isPartnerPortalActive = location.pathname.startsWith('/partner-portal');
 
   const isAdminActive = [
     paths.userManagement,
     paths.roleManagement,
     paths.auditManagement,
     paths.deadLetterManagement,
+    paths.approvalQueue,
     paths.systemParameters,
   ].some((p) => location.pathname.startsWith(p));
 
@@ -117,6 +134,22 @@ const Header: React.FC = () => {
             icon: 'pi pi-flag',
             command: () => handleNavigate(paths.campaignMilestones),
           },
+          { separator: true },
+          {
+            label: t('nav.customers', { defaultValue: 'Hội viên & Member 360' }),
+            icon: 'pi pi-users',
+            command: () => handleNavigate(paths.customers),
+          },
+          {
+            label: t('nav.segments', { defaultValue: 'Phân khúc Khách hàng (CN-03)' }),
+            icon: 'pi pi-filter',
+            command: () => handleNavigate(paths.customerSegments),
+          },
+          {
+            label: t('nav.scenarios', { defaultValue: 'Kịch bản Gợi nhắc (CN-04)' }),
+            icon: 'pi pi-bell',
+            command: () => handleNavigate(paths.reminderScenarios),
+          },
         ],
       },
       {
@@ -139,6 +172,16 @@ const Header: React.FC = () => {
             icon: 'pi pi-cog',
             command: () => handleNavigate(paths.gameHubConfig),
           },
+          {
+            label: t('nav.learning_quiz', { defaultValue: 'Ngân hàng Câu hỏi Ngoại ngữ' }),
+            icon: 'pi pi-book',
+            command: () => handleNavigate(paths.learningQuizBank),
+          },
+          {
+            label: t('nav.game_stats', { defaultValue: 'Thống kê & Phiên chơi Game' }),
+            icon: 'pi pi-chart-line',
+            command: () => handleNavigate(paths.gameStatistics),
+          },
         ],
       },
       {
@@ -152,6 +195,11 @@ const Header: React.FC = () => {
             command: () => handleNavigate(paths.partners),
           },
           {
+            label: t('nav.payment_points', { defaultValue: 'Chi nhánh & Điểm Thanh toán' }),
+            icon: 'pi pi-map-marker',
+            command: () => handleNavigate(paths.natcashPaymentPoints),
+          },
+          {
             label: t('nav.transactions', { defaultValue: 'Sổ Cái & Giao Dịch' }),
             icon: 'pi pi-history',
             command: () => handleNavigate(paths.transactions),
@@ -161,6 +209,95 @@ const Header: React.FC = () => {
             icon: 'pi pi-chart-pie',
             command: () => handleNavigate(paths.clearingSettlement),
           },
+          {
+            label: t('nav.agent_loyalty', { defaultValue: 'Loyalty Đại lý (AG-03)' }),
+            icon: 'pi pi-briefcase',
+            command: () => handleNavigate(paths.agentLoyaltyManagement),
+          },
+        ],
+      },
+      {
+        label: t('nav.reports_budget', { defaultValue: 'Báo cáo & Ngân sách' }),
+        icon: 'pi pi-chart-line',
+        className: isReportsGroupActive ? 'menu-pill-active' : 'menu-pill-item',
+        items: [
+          {
+            label: t('nav.budgets', { defaultValue: 'Ngân sách Tháng (NS-01)' }),
+            icon: 'pi pi-wallet',
+            command: () => handleNavigate(paths.budgetManagement),
+          },
+          {
+            label: t('nav.effectiveness', { defaultValue: 'Hiệu quả & Lift (NS-03)' }),
+            icon: 'pi pi-percentage',
+            command: () => handleNavigate(paths.programEffectiveness),
+          },
+          {
+            label: t('nav.alerts', { defaultValue: 'Trung tâm Cảnh báo (CN-05)' }),
+            icon: 'pi pi-exclamation-triangle',
+            command: () => handleNavigate(paths.alertCenter),
+          },
+          {
+            label: t('nav.advanced_reports', { defaultValue: 'Báo cáo Chuyên sâu (NS-05..07)' }),
+            icon: 'pi pi-file-excel',
+            command: () => handleNavigate(paths.advancedReports),
+          },
+        ],
+      },
+      {
+        label: t('nav.partner_portal', { defaultValue: 'Partner Portal (Đối tác)' }),
+        icon: 'pi pi-id-card',
+        className: isPartnerPortalActive ? 'menu-pill-active' : 'menu-pill-item',
+        items: [
+          {
+            label: t('partner_portal.nav_dashboard', { defaultValue: 'Tổng quan Đối tác (NS-04)' }),
+            icon: 'pi pi-home',
+            command: () => handleNavigate(paths.partnerPortalDashboard),
+          },
+          {
+            label: t('partner_portal.nav_branches', { defaultValue: 'Chi nhánh & Sản phẩm (LM-08)' }),
+            icon: 'pi pi-sitemap',
+            command: () => handleNavigate(paths.partnerPortalBranches),
+          },
+          {
+            label: t('partner_portal.nav_policy', { defaultValue: 'Chính sách Điểm (LM-09)' }),
+            icon: 'pi pi-sliders-h',
+            command: () => handleNavigate(paths.partnerPortalPolicy),
+          },
+          {
+            label: t('partner_portal.nav_staff', { defaultValue: 'Nhân viên & Phân quyền (QT-03)' }),
+            icon: 'pi pi-users',
+            command: () => handleNavigate(paths.partnerPortalStaff),
+          },
+          {
+            label: t('partner_portal.nav_proposals', { defaultValue: 'Đề xuất Chương trình (NV-07)' }),
+            icon: 'pi pi-send',
+            command: () => handleNavigate(paths.partnerPortalProposals),
+          },
+          {
+            label: t('partner_portal.nav_vouchers', { defaultValue: 'Voucher & Gạch nợ Quầy (VQ-05)' }),
+            icon: 'pi pi-qrcode',
+            command: () => handleNavigate(paths.partnerPortalVouchers),
+          },
+          {
+            label: t('partner_portal.nav_transactions', { defaultValue: 'Giao dịch Đối tác (LM-11)' }),
+            icon: 'pi pi-list',
+            command: () => handleNavigate(paths.partnerPortalTransactions),
+          },
+          {
+            label: t('partner_portal.nav_settlement', { defaultValue: 'Đối soát & Thanh toán (LM-10)' }),
+            icon: 'pi pi-money-bill',
+            command: () => handleNavigate(paths.partnerPortalSettlement),
+          },
+          {
+            label: t('partner_portal.nav_notifications', { defaultValue: 'Thông báo (CN-08)' }),
+            icon: 'pi pi-bell',
+            command: () => handleNavigate(paths.partnerPortalNotifications),
+          },
+          {
+            label: t('partner_portal.nav_api_keys', { defaultValue: 'Webhook & API Keys (QT-06)' }),
+            icon: 'pi pi-key',
+            command: () => handleNavigate(paths.partnerPortalApiKeys),
+          },
         ],
       },
       {
@@ -168,6 +305,14 @@ const Header: React.FC = () => {
         icon: 'pi pi-shield',
         className: isAdminActive ? 'menu-pill-active' : 'menu-pill-item',
         items: [
+          {
+            label: t('nav.approvals', { defaultValue: 'Hàng đợi Phê duyệt 2 lớp (QT-04)' }),
+            icon: 'pi pi-check-square',
+            command: () => handleNavigate(paths.approvalQueue),
+          },
+          {
+            separator: true,
+          },
           {
             label: t('user.management', { defaultValue: 'Quản lý Tài khoản' }),
             icon: 'pi pi-user-edit',
@@ -206,6 +351,8 @@ const Header: React.FC = () => {
       isPolicyGroupActive,
       isRewardsGroupActive,
       isPartnerGroupActive,
+      isReportsGroupActive,
+      isPartnerPortalActive,
       isAdminActive,
     ]
   );

@@ -21,7 +21,20 @@ export default {
     "roles": "Wòl & Pèmisyon",
     "audit_logs": "Jounal Odit",
     "dead_letter": "Webhooks Rejte (Dead-Letter)",
-    "milestones": "Etap Kanpay"
+    "milestones": "Etap Kanpay",
+    "segments": "Segman Kliyan (CN-03)",
+    "scenarios": "Senaryo Rapèl (CN-04)",
+    "learning_quiz": "Bank Kesyon Lang",
+    "game_stats": "Estatistik & Istorik Jwèt",
+    "payment_points": "Siksasal & Pwen Peman",
+    "agent_loyalty": "Loyalty Ajan (AG-03)",
+    "reports_budget": "Rapò & Bidjè",
+    "budgets": "Bidjè Mansyèl (NS-01)",
+    "effectiveness": "Efikasite & Lift (NS-03)",
+    "alerts": "Sant Alèt (CN-05)",
+    "advanced_reports": "Rapò Avanse (NS-05..07)",
+    "partner_portal": "Pòtay Patnè",
+    "approvals": "Apwobasyon 2 Nivo (QT-04)"
   },
   "policy": {
     "management_title": "Konfigirasyon Règ Akimilasyon ak Itilizasyon Pwen",
@@ -1178,6 +1191,62 @@ export default {
     "error_message": "Mesaj Erè Rezo",
     "failed_at": "Echwe Nan",
     "payload_detail": "Detay Payload pou Evènman #{{id}}"
+  },
+  "approval": {
+    "title": "Apwobasyon Maker-Checker (QT-04)",
+    "approved": "Apwouve",
+    "rejected": "Rejte",
+    "approve_btn": "Apwouve",
+    "reject_btn": "Rejte",
+    "review_btn": "Revize"
+  },
+  "payment_point": {
+    "title": "Rezo Siksasal & Pwen Peman QR (LM-02)",
+    "add_new": "Ajoute Pwen"
+  },
+  "segment": {
+    "title": "7 Segman Dinamik (CN-03)",
+    "view_members": "Manm",
+    "recalculate": "Rekalkile"
+  },
+  "scenario": {
+    "title": "Senaryo Rapèl Multikanal (CN-04)",
+    "add_new": "Nouvo Senaryo"
+  },
+  "budget": {
+    "title": "Kontwòl Bidjè Mansyèl (NS-01)",
+    "add_new": "Konfigire Bidjè"
+  },
+  "report": {
+    "effectiveness_title": "Efikasite & Lift vs Gwoup Kontwòl (NS-03)",
+    "advanced_title": "Rapò Alyans Avanse (NS-05 · NS-06 · NS-07)"
+  },
+  "alert": {
+    "title": "Sant Alèt Operasyonèl (CN-05)",
+    "ack_btn": "Aksepte",
+    "resolve_btn": "Fèmen"
+  },
+  "learning": {
+    "title": "Bank Kesyon Aprann Lang & Odyo (GM-09)",
+    "add_new": "Ajoute Kesyon",
+    "import_csv": "Enpòte CSV"
+  },
+  "agent": {
+    "title": "Jesyon Loyalty Ajan (AG-03)",
+    "set_target": "Fikse KPI"
+  },
+  "partner_portal": {
+    "nav_dashboard": "Tablo Bò Patnè (NS-04)",
+    "nav_branches": "Siksasal & Pwodwi (LM-08)",
+    "nav_policy": "Règ Pwen (LM-09)",
+    "nav_staff": "Kont Anplwaye (QT-03)",
+    "nav_proposals": "Pwopozisyon Pwogram (NV-07)",
+    "nav_vouchers": "Vouchè Kontwa (VQ-05)",
+    "nav_transactions": "Transaksyon Patnè (LM-11)",
+    "nav_settlement": "Règleman & Reklamasyon (LM-10)",
+    "nav_notifications": "Notifikasyon (CN-08)",
+    "nav_api_keys": "Webhook & Kle API (QT-06)",
+    "raise_claim": "Fè yon reklamasyon"
   }
 };
 

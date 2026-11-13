@@ -10,11 +10,24 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
+import { TabView, TabPanel } from 'primereact/tabview';
+import { Sidebar } from 'primereact/sidebar';
+import { InputTextarea } from 'primereact/inputtextarea';
+import { InputSwitch } from 'primereact/inputswitch';
+import { Skeleton } from 'primereact/skeleton';
+import { ProgressBar } from 'primereact/progressbar';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
-import { CommonStatus } from '@/models';
-import { LoyaltyService, MilestoneItemModel, VoucherItemModel } from '@/service/loyalty.service';
+import { CommonStatus, CampaignMissionCategory } from '@/models';
+import {
+  LoyaltyService,
+  MilestoneItemModel,
+  VoucherItemModel,
+  CampaignRuleModel,
+  CampaignTrackingModel,
+  CampaignCopilotResponseModel,
+} from '@/service/loyalty.service';
 
 enum CampaignMetric {
   BILL_AMOUNT = 'BILL_AMOUNT',
@@ -78,6 +91,116 @@ export const CampaignMilestonesPage: React.FC = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // v2.1 Rule Builder (NV-05), Tracking (NV-06) & AI Copilot (AI-01)
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [rules, setRules] = useState<CampaignRuleModel[]>([]);
+  const [rulesLoading, setRulesLoading] = useState(false);
+  const [showRuleDialog, setShowRuleDialog] = useState(false);
+  const [ruleForm, setRuleForm] = useState<Partial<CampaignRuleModel>>({
+    missionCategory: CampaignMissionCategory.TOPUP,
+    whenEvent: 'TOPUP_SUCCESS',
+    ifConditionExpr: 'amount >= 100',
+    thenRewardType: 'POINTS',
+    thenRewardValue: 50,
+    dailyCap: 1,
+    monthlyCap: 10,
+    totalBudgetCap: 100000,
+    priority: 1,
+    status: CommonStatus.ACTIVE,
+  });
+  const [trackingRows, setTrackingRows] = useState<CampaignTrackingModel[]>([]);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [copilotVisible, setCopilotVisible] = useState(false);
+  const [copilotPrompt, setCopilotPrompt] = useState('');
+  const [copilotLoading, setCopilotLoading] = useState(false);
+  const [copilotResult, setCopilotResult] = useState<CampaignCopilotResponseModel | null>(null);
+
+  const missionCategoryOptions = useMemo(() => [
+    { label: t('campaign.cat_topup', { defaultValue: 'Nạp tiền điện thoại (TOPUP)' }), value: CampaignMissionCategory.TOPUP },
+    { label: t('campaign.cat_p2p', { defaultValue: 'Chuyển tiền P2P (P2P_TRANSFER)' }), value: CampaignMissionCategory.P2P_TRANSFER },
+    { label: t('campaign.cat_bill', { defaultValue: 'Thanh toán hóa đơn (BILL_PAYMENT)' }), value: CampaignMissionCategory.BILL_PAYMENT },
+    { label: t('campaign.cat_qr', { defaultValue: 'Thanh toán QR tại quầy (QR_MERCHANT)' }), value: CampaignMissionCategory.QR_MERCHANT },
+    { label: t('campaign.cat_referral', { defaultValue: 'Giới thiệu bạn bè (REFERRAL)' }), value: CampaignMissionCategory.REFERRAL },
+    { label: t('campaign.cat_streak', { defaultValue: 'Điểm danh chuỗi ngày (DAILY_STREAK)' }), value: CampaignMissionCategory.DAILY_STREAK },
+    { label: t('campaign.cat_ekyc', { defaultValue: 'Định danh eKYC / Liên kết ngân hàng' }), value: CampaignMissionCategory.EKYC_ONBOARDING },
+    { label: t('campaign.cat_game', { defaultValue: 'Hoàn thành Mini-game / Quiz' }), value: CampaignMissionCategory.GAME_CHALLENGE },
+    { label: t('campaign.cat_cross_sell', { defaultValue: 'Bán chéo dịch vụ đối tác (CROSS_SELL)' }), value: CampaignMissionCategory.PARTNER_CROSS_SELL },
+  ], [t]);
+
+  const fetchRulesAndTracking = useCallback(async (tenantId: string) => {
+    setRulesLoading(true);
+    setTrackingLoading(true);
+    try {
+      const [rulesRes, trackingRes] = await Promise.all([
+        LoyaltyService.getCampaignRules(tenantId),
+        LoyaltyService.getCampaignTracking(tenantId),
+      ]);
+      setRules(Array.isArray(rulesRes) ? rulesRes : []);
+      setTrackingRows(Array.isArray(trackingRes) ? trackingRes : []);
+    } finally {
+      setRulesLoading(false);
+      setTrackingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRulesAndTracking(selectedTenant);
+  }, [selectedTenant, fetchRulesAndTracking]);
+
+  const handleSaveRule = async () => {
+    if (!ruleForm.ruleCode || !ruleForm.ruleName) {
+      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('campaign.rule_required', { defaultValue: 'Vui lòng nhập Mã luật và Tên luật.' }) });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.saveCampaignRule(ruleForm as CampaignRuleModel, selectedTenant);
+      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('campaign.rule_saved', { defaultValue: 'Đã lưu luật chiến dịch WHEN-IF-THEN-LIMITS.' }) });
+      setShowRuleDialog(false);
+      fetchRulesAndTracking(selectedTenant);
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteRule = async (rule: CampaignRuleModel) => {
+    if (!rule.id) return;
+    try {
+      await LoyaltyService.deleteCampaignRule(rule.id, selectedTenant);
+      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('campaign.rule_deleted', { defaultValue: 'Đã xóa luật chiến dịch.' }) });
+      fetchRulesAndTracking(selectedTenant);
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    }
+  };
+
+  const handleRunCopilot = async () => {
+    if (!copilotPrompt.trim()) return;
+    setCopilotLoading(true);
+    try {
+      const res = await LoyaltyService.suggestCampaignCopilot({ prompt: copilotPrompt.trim() }, selectedTenant);
+      setCopilotResult(res);
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setCopilotLoading(false);
+    }
+  };
+
+  const handleApplyCopilotDraft = () => {
+    if (!copilotResult?.suggestedRule) return;
+    setRuleForm({
+      ...ruleForm,
+      ...copilotResult.suggestedRule,
+      status: CommonStatus.ACTIVE,
+    });
+    setCopilotVisible(false);
+    setActiveTab(1);
+    setShowRuleDialog(true);
+  };
 
   // 1. Tải danh sách Cột mốc theo Liên minh
   const fetchMilestones = useCallback(async (tenantId: string) => {
@@ -571,7 +694,23 @@ export const CampaignMilestonesPage: React.FC = () => {
       <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('nav.milestones', { defaultValue: 'Cột mốc Chiến dịch' }) }]} />
 
+      <div className="flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+        <div className="flex align-items-center gap-2">
+          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
+        </div>
+        <Button
+          type="button"
+          icon="pi pi-sparkles"
+          label={t('campaign.open_copilot', { defaultValue: 'AI Campaign Copilot' })}
+          severity="help"
+          outlined
+          onClick={() => setCopilotVisible(true)}
+        />
+      </div>
+
       <div className="card shadow-1 border-round surface-card p-4">
+        <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
+          <TabPanel header={t('campaign.tab_milestones', { defaultValue: 'Cột mốc Chiến dịch (NV-04)' })} leftIcon="pi pi-flag mr-2">
         <DataTable<any>
           value={filteredCampaigns}
           selection={selectedCampaigns}
@@ -676,6 +815,74 @@ export const CampaignMilestonesPage: React.FC = () => {
           />
           <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
         </DataTable>
+          </TabPanel>
+
+          <TabPanel header={t('campaign.tab_rule_builder', { defaultValue: 'Bộ dựng luật WHEN-IF-THEN-LIMITS (NV-05)' })} leftIcon="pi pi-sliders-h mr-2">
+            <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <span className="text-sm text-600">{t('campaign.rule_builder_desc', { defaultValue: 'Thiết lập luật nhiệm vụ đa kênh 9 loại sự kiện kèm giới hạn ngày/tháng và kiểm tra xung đột.' })}</span>
+              <div className="flex gap-2">
+                <Button icon="pi pi-plus" label={t('campaign.add_rule', { defaultValue: 'Tạo luật nhiệm vụ' })} severity="success" size="small" onClick={() => {
+                  setRuleForm({
+                    ruleCode: '',
+                    ruleName: '',
+                    missionCategory: CampaignMissionCategory.TOPUP,
+                    whenEvent: 'TOPUP_SUCCESS',
+                    ifConditionExpr: 'amount >= 100',
+                    thenRewardType: 'POINTS',
+                    thenRewardValue: 50,
+                    dailyCap: 1,
+                    monthlyCap: 10,
+                    totalBudgetCap: 100000,
+                    priority: 1,
+                    status: CommonStatus.ACTIVE,
+                  });
+                  setShowRuleDialog(true);
+                }} />
+                <Button icon="pi pi-refresh" outlined size="small" onClick={() => fetchRulesAndTracking(selectedTenant)} loading={rulesLoading} />
+              </div>
+            </div>
+
+            {rulesLoading ? (
+              <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
+            ) : (
+              <DataTable<CampaignRuleModel> value={rules} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('campaign.no_rules', { defaultValue: 'Chưa có luật chiến dịch nào được cấu hình.' })}>
+                <Column field="ruleCode" header={t('campaign.rule_code', { defaultValue: 'Mã Luật' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.ruleCode}</span>} style={{ minWidth: '10rem' }} />
+                <Column field="ruleName" header={t('campaign.rule_name', { defaultValue: 'Tên Luật' })} style={{ minWidth: '14rem' }} />
+                <Column field="missionCategory" header={t('campaign.mission_category', { defaultValue: 'Loại Nhiệm Vụ' })} body={(r) => <Tag value={r.missionCategory} severity="info" />} style={{ minWidth: '11rem' }} />
+                <Column header="WHEN / IF" body={(r) => <div className="text-xs font-mono"><div>WHEN: {r.whenEvent}</div><div className="text-500">IF: {r.ifConditionExpr}</div></div>} style={{ minWidth: '13rem' }} />
+                <Column header="THEN / LIMITS" body={(r) => <div className="text-xs"><div>+{r.thenRewardValue} {r.thenRewardType}</div><div className="text-500">Cap: {r.dailyCap ?? '∞'}/ngày · {r.monthlyCap ?? '∞'}/tháng</div></div>} style={{ minWidth: '12rem' }} />
+                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+                <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(r) => (
+                  <div className="flex gap-1">
+                    <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setRuleForm(r); setShowRuleDialog(true); }} />
+                    <Button icon="pi pi-trash" text rounded severity="danger" size="small" onClick={() => handleDeleteRule(r)} />
+                  </div>
+                )} style={{ minWidth: '7rem' }} />
+              </DataTable>
+            )}
+          </TabPanel>
+
+          <TabPanel header={t('campaign.tab_tracking', { defaultValue: 'Theo dõi Tiến độ (NV-06)' })} leftIcon="pi pi-chart-bar mr-2">
+            {trackingLoading ? (
+              <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
+            ) : (
+              <DataTable<CampaignTrackingModel> value={trackingRows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu theo dõi tiến độ chiến dịch.' })}>
+                <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến Dịch' })} body={(r) => <span className="font-mono white-space-nowrap font-medium">{r.campaignCode}</span>} style={{ minWidth: '10rem' }} />
+                <Column field="campaignName" header={t('campaign.name', { defaultValue: 'Tên Chiến Dịch' })} style={{ minWidth: '14rem' }} />
+                <Column field="enrolledUsers" header={t('campaign.enrolled', { defaultValue: 'Tham Gia' })} body={(r) => Number(r.enrolledUsers || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+                <Column field="completedUsers" header={t('campaign.completed', { defaultValue: 'Hoàn Thành' })} body={(r) => Number(r.completedUsers || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+                <Column field="completionRate" header={t('campaign.completion_rate', { defaultValue: 'Tỷ Lệ' })} body={(r) => (
+                  <div className="flex align-items-center gap-2">
+                    <ProgressBar value={Number(r.completionRate || 0)} showValue={false} style={{ height: '6px', width: '5rem' }} />
+                    <span className="text-xs font-mono">{Number(r.completionRate || 0).toFixed(1)}%</span>
+                  </div>
+                )} style={{ minWidth: '10rem' }} />
+                <Column field="totalPointsIssued" header={t('campaign.points_issued', { defaultValue: 'Điểm Đã Cấp' })} body={(r) => Number(r.totalPointsIssued || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
+                <Column field="budgetSpent" header={t('campaign.budget_spent', { defaultValue: 'Ngân Sách Đã Dùng' })} body={(r) => `${Number(r.budgetSpent || 0).toLocaleString()} / ${Number(r.budgetCap || 0).toLocaleString()} HTG`} style={{ minWidth: '12rem', textAlign: 'right' }} />
+              </DataTable>
+            )}
+          </TabPanel>
+        </TabView>
       </div>
 
       {/* Dialog Thêm / Sửa Cột mốc */}
@@ -910,6 +1117,102 @@ export const CampaignMilestonesPage: React.FC = () => {
           <Button label={t('common.save', { defaultValue: 'Lưu Cột Mốc' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} />
         </div>
       </Dialog>
+
+      {/* Dialog Bộ dựng luật WHEN-IF-THEN-LIMITS (NV-05) */}
+      <Dialog
+        visible={showRuleDialog}
+        style={{ width: '48rem' }}
+        breakpoints={{ '960px': '85vw', '641px': '95vw' }}
+        header={t('campaign.rule_dialog_title', { defaultValue: 'Cấu hình Luật Nhiệm vụ WHEN – IF – THEN – LIMITS' })}
+        modal
+        className="p-fluid"
+        onHide={() => setShowRuleDialog(false)}
+      >
+        <div className="grid">
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">{t('campaign.rule_code', { defaultValue: 'Mã Luật' })} *</label>
+            <InputText value={ruleForm.ruleCode || ''} onChange={(e) => setRuleForm({ ...ruleForm, ruleCode: e.target.value.toUpperCase() })} className="font-mono" placeholder="RULE_TOPUP_WEEKEND" />
+          </div>
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">{t('campaign.rule_name', { defaultValue: 'Tên Luật' })} *</label>
+            <InputText value={ruleForm.ruleName || ''} onChange={(e) => setRuleForm({ ...ruleForm, ruleName: e.target.value })} />
+          </div>
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">{t('campaign.mission_category', { defaultValue: 'Loại Nhiệm Vụ (9 nhóm)' })}</label>
+            <Dropdown value={ruleForm.missionCategory} options={missionCategoryOptions} onChange={(e) => setRuleForm({ ...ruleForm, missionCategory: e.value })} appendTo="self" />
+          </div>
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">WHEN (Sự kiện kích hoạt)</label>
+            <InputText value={ruleForm.whenEvent || ''} onChange={(e) => setRuleForm({ ...ruleForm, whenEvent: e.target.value })} className="font-mono" />
+          </div>
+          <div className="col-12 field">
+            <label className="text-sm font-medium">IF (Biểu thức điều kiện)</label>
+            <InputText value={ruleForm.ifConditionExpr || ''} onChange={(e) => setRuleForm({ ...ruleForm, ifConditionExpr: e.target.value })} className="font-mono" placeholder="amount >= 100 && tier in ['GOLD','PLATINUM']" />
+          </div>
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">THEN (Loại phần thưởng)</label>
+            <Dropdown value={ruleForm.thenRewardType || 'POINTS'} options={[{ label: 'Điểm Loyalty (POINTS)', value: 'POINTS' }, { label: 'Lượt quay Game (SPINS)', value: 'SPINS' }, { label: 'Voucher Quà tặng (VOUCHER)', value: 'VOUCHER' }]} onChange={(e) => setRuleForm({ ...ruleForm, thenRewardType: e.value })} appendTo="self" />
+          </div>
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">THEN (Giá trị thưởng)</label>
+            <InputNumber value={ruleForm.thenRewardValue ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, thenRewardValue: e.value || 0 })} min={0} />
+          </div>
+          <div className="col-12 md:col-4 field">
+            <label className="text-sm font-medium">LIMITS: Trần / ngày</label>
+            <InputNumber value={ruleForm.dailyCap ?? 1} onValueChange={(e) => setRuleForm({ ...ruleForm, dailyCap: e.value || 0 })} min={0} />
+          </div>
+          <div className="col-12 md:col-4 field">
+            <label className="text-sm font-medium">LIMITS: Trần / tháng</label>
+            <InputNumber value={ruleForm.monthlyCap ?? 10} onValueChange={(e) => setRuleForm({ ...ruleForm, monthlyCap: e.value || 0 })} min={0} />
+          </div>
+          <div className="col-12 md:col-4 field">
+            <label className="text-sm font-medium">LIMITS: Ngân sách tối đa</label>
+            <InputNumber value={ruleForm.totalBudgetCap ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, totalBudgetCap: e.value || 0 })} min={0} />
+          </div>
+          <div className="col-12 flex align-items-center gap-3">
+            <InputSwitch checked={ruleForm.status === CommonStatus.ACTIVE} onChange={(e) => setRuleForm({ ...ruleForm, status: e.value ? CommonStatus.ACTIVE : CommonStatus.INACTIVE })} />
+            <span className="text-sm">{ruleForm.status === CommonStatus.ACTIVE ? t('common.active', { defaultValue: 'Đang kích hoạt' }) : t('common.inactive', { defaultValue: 'Tạm dừng' })}</span>
+          </div>
+        </div>
+        <div className="flex justify-content-end gap-2 mt-4">
+          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowRuleDialog(false)} />
+          <Button label={t('common.save', { defaultValue: 'Lưu Luật' })} icon="pi pi-check" onClick={handleSaveRule} loading={isSubmitting} />
+        </div>
+      </Dialog>
+
+      {/* Sidebar AI-01 Campaign Copilot */}
+      <Sidebar visible={copilotVisible} position="right" onHide={() => setCopilotVisible(false)} style={{ width: '36rem', maxWidth: '95vw' }} header={<span className="font-medium text-lg"><i className="pi pi-sparkles text-purple-600 mr-2" />AI-01 Campaign Copilot</span>}>
+        <div className="flex flex-column gap-3">
+          <p className="text-sm text-600 m-0">{t('campaign.copilot_desc', { defaultValue: 'Nhập mục tiêu chiến dịch để AI đề xuất bộ luật WHEN-IF-THEN-LIMITS và kiểm tra xung đột với các chiến dịch đang chạy.' })}</p>
+          <InputTextarea rows={4} value={copilotPrompt} onChange={(e) => setCopilotPrompt(e.target.value)} placeholder={t('campaign.copilot_placeholder', { defaultValue: 'Ví dụ: Thưởng x2 điểm cho khách hàng nạp thẻ từ 200 HTG cuối tuần, giới hạn 2 lần/ngày...' })} className="w-full" />
+          <Button label={t('campaign.copilot_generate', { defaultValue: 'Phân tích & Đề xuất Luật' })} icon="pi pi-bolt" onClick={handleRunCopilot} loading={copilotLoading} />
+
+          {copilotResult && (
+            <div className="flex flex-column gap-3 mt-2">
+              {copilotResult.conflicts && copilotResult.conflicts.length > 0 && (
+                <div className="p-3 border-round bg-orange-50 border-1 border-orange-200">
+                  <div className="font-medium text-orange-800 mb-2"><i className="pi pi-exclamation-triangle mr-2" />{t('campaign.conflicts_detected', { defaultValue: 'Phát hiện Xung đột Chiến dịch' })}</div>
+                  {copilotResult.conflicts.map((c, idx) => (
+                    <div key={idx} className="text-xs text-orange-900 mb-1">
+                      <Tag value={c.severity} severity={c.severity === 'HIGH' ? 'danger' : 'warning'} className="mr-2" />
+                      <span className="font-mono mr-1">{c.conflictingRuleCode}</span>: {c.message}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="p-3 border-round surface-50 border-1 surface-border">
+                <div className="text-xs text-500 uppercase mb-1">{t('campaign.suggested_rule', { defaultValue: 'Bản nháp Luật đề xuất' })}</div>
+                <div className="text-sm mb-2">{copilotResult.explanation}</div>
+                <pre className="m-0 text-xs font-mono surface-card p-2 border-round overflow-auto">{JSON.stringify(copilotResult.suggestedRule, null, 2)}</pre>
+                <div className="flex justify-content-end mt-3">
+                  <Button label={t('campaign.apply_draft', { defaultValue: 'Áp dụng vào Bộ dựng luật' })} icon="pi pi-check" size="small" severity="success" onClick={handleApplyCopilotDraft} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Sidebar>
     </div>
   );
 };

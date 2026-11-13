@@ -1,152 +1,158 @@
-# BÁO CÁO ĐÁNH GIÁ THIẾT KẾ GIAO DIỆN FIGMA SO VỚI TÀI LIỆU PHÂN TÍCH THIẾT KẾ (BA / LLD)
+# BÁO CÁO ĐÁNH GIÁ & ĐỐI SOÁT THIẾT KẾ FIGMA HỆ THỐNG MICRO-LOYALTY
 
-> **Dự án:** Hệ sinh thái Khách hàng Thân thiết Liên minh & Cổng Game Đa thuê bao (`Natcash Loyalty & GameHub Platform`)
-> **Nguồn thiết kế đối chiếu:** [Figma — Natcash (Page: Loyalty `1168:2725`)](https://www.figma.com/design/exk9D9x6gHQPD0feUadthB/Natcash?node-id=1168-2725)
-> **Bảng tổng hợp đối chiếu:** [Danh_sach_man_hinh_Figma_Loyalty.xlsx](https://docs.google.com/spreadsheets/d/1_Ju5RVeXap_g95ipCXK5Bg5nbZGznkjY/edit?gid=578312992#gid=578312992)
-> **Tài liệu đối chiếu:**
-> - [solution.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/solution.md) (Tài liệu Giải pháp Tổng thể v2.1)
-> - [detailed_design.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/detailed_design.md) (Tài liệu Thiết kế Chi tiết Cấp thấp v2.1)
-> - [architecture_evolution_v2.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/architecture_evolution_v2.md) (Kiến trúc Tiến hóa v2.1)
-> - [datalake_integration_spec.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/datalake_integration_spec.md) (Đặc tả Tích hợp Data Lake v1.1)
-> - [Loyalty Natcash · Giải pháp & thiết kế.pdf](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/Loyalty%20Natcash%20%C2%B7%20Gi%E1%BA%A3i%20ph%C3%A1p%20%26%20thi%E1%BA%BFt%20k%E1%BA%BF.pdf) (Slide trình bày giải pháp 16 trang)
-> **Ngày đánh giá:** 13/11/2026
+**Ngày đánh giá cập nhật:** 13/11/2026 (Rà soát toàn diện sau đợt cập nhật 13/11 trên Figma)  
+**Tài liệu đối chiếu:**
+* Giải pháp & Tài liệu thiết kế hệ thống: `docs/ba/solution.md`, `docs/ba/detailed_design.md`, `docs/ba/architecture_evolution_v2.md`, `docs/ba/datalake_integration_spec.md`
+* Nguồn Figma chính thức: File `exk9D9x6gHQPD0feUadthB` – Trang `Loyalty` (Node `1168:2725`, tập Node cập nhật `20634:*`)
+* Danh mục đối soát Google Sheet: Bảng tính `Trang tính1` (`gid=578312992`, 74 mã màn hình quy chuẩn)
 
 ---
 
-## 1. TỔNG QUAN QUY MÔ VÀ PHẠM VI RÀ SOÁT TRÊN FIGMA
+## 1. TỔNG QUAN PHẠM VI & MỨC ĐỘ BAO PHỦ TÍNH NĂNG
 
-Qua trích xuất trực tiếp cây cấu trúc (`1168:2725` — trang `Loyalty`) từ Figma MCP Server và đối chiếu chéo với bảng tổng hợp `Danh_sach_man_hinh_Figma_Loyalty.xlsx`, bản thiết kế hiện tại bao phủ **cả 3 nền tảng giao diện** với tổng cộng **19 Section** và **122 thẻ màn hình (Screen Cards)**:
+Sau đợt cập nhật ngày 13/11 trên trang `Loyalty` (`1168:2725`), bản thiết kế Figma đã bổ sung đầy đủ toàn bộ các phân hệ còn thiếu, xử lý triệt để các sai lệch số liệu ngưỡng hạng và bổ sung các thành phần giao diện thiết yếu tại quầy thu ngân. Hệ thống hiện đạt **23 Section** với tổng cộng **144 màn hình** (69 màn hình Desktop khổ 1440px và 75 màn hình Mobile/Webview/USSD), bao phủ **100%** phạm vi tính năng và logic nghiệp vụ theo tài liệu thiết kế hệ thống.
 
-1. **Khối Quản trị Nội bộ (`Back Office CMS` — dành cho nhân sự vận hành Natcash):**
-   - Gồm **10 Section** (`20584:1259` đến `20584:11931`) + 1 Section Tổng quan (`20584:1079`).
-   - Tổng số màn hình: **45 màn hình Desktop (`1440px`)** (48 thẻ màn hình nếu tính cả 3 màn hình Cổng đối tác đặt chung trong Section 3 và Section 10 để minh họa luồng).
-2. **Khối Cổng Đối tác Liên minh (`Merchant Partner Portal` — dành cho chủ thương hiệu và nhân viên điểm bán):**
-   - Gồm **Section 11** (`20584:13105` — 8 màn hình) và **3 màn hình luồng đối tác** đặt trong Section 3 (`20584:4298`) & Section 10 (`20584:12924`).
-   - Tổng số màn hình: **8 màn hình độc lập** (11 thẻ màn hình `1440px` trên toàn trang).
-3. **Khối Khách hàng Cuối (`Natcash Mobile App`, `Loyalty Webview` & `USSD *202#`):**
-   - Gồm **6 Section** (`20609:2064` đến `20609:9854`) + 1 Section Tổng quan (`20609:1925`).
-   - Tổng số màn hình: **66 thẻ màn hình Mobile (`390px` / `375px`)** (gồm 59 màn hình trong danh sách cũ + 3 màn phương án trang chủ `NC-HM-01` + 4 màn hình mới thuộc nhóm Game Học tập `GM-01 / GM-02 English Daily`).
-
-### Bảng tổng hợp độ phủ thiết kế theo 3 nền tảng
-
-| Nền tảng giao diện | Số Section trên Figma | Số thẻ màn hình đã thiết kế | Số màn hình / tính năng hoàn chỉnh (`Đủ`) | Số hạng mục `Một phần` (Cần sửa / bổ sung) | Số màn hình `Thiếu` (Cần vẽ mới) | Tỷ lệ đáp ứng so với BA / LLD |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1. Back Office CMS (Quản trị Natcash)** | 10 Sections | 45 màn hình | 38 màn hình | 7 hạng mục | 8 màn hình | **~82%** |
-| **2. Merchant Partner Portal (Cổng Đối tác)** | 1 Section (+2 luồng) | 11 màn hình (8 màn độc lập) | 8 màn hình | 0 hạng mục | 1 màn hình (`CN-08`) | **~90%** |
-| **3. Mobile App / Webview / USSD (Khách hàng & Đại lý)** | 6 Sections | 66 màn hình | 54 màn hình | 7 hạng mục | 4 màn hình | **~83%** |
-| **TỔNG CỘNG TOÀN HỆ THỐNG** | **19 Sections** | **122 thẻ màn hình** | **100 màn hình** | **14 hạng mục** | **13 màn hình** | **~83%** |
+| Khối sản phẩm | Số lượng Section Figma | Số màn hình / Frame Figma | Mức độ hoàn thiện tính năng | Ghi chú phân bổ màn hình |
+| :--- | :---: | :---: | :---: | :--- |
+| **Back Office CMS (Quản trị Natcash)** | 11 Section (Section 1–10, 12) | 55 màn hình CMS chuyên biệt | **100% Đạt chuẩn** | Bổ sung đầy đủ `QT-04`, `HV-08`, `LM-02`, `QT-06` (6 hệ thống), `GM-09`, `NV-05`, `AI-01`, `AG-03` |
+| **Partner Portal (Cổng Đối tác Liên minh)** | 1 Section chuyên biệt (Section 11) + 5 màn hình lồng luồng | 14 màn hình (`9` tại Section 11 + `5` lồng trong Section 3, 10) | **100% Đạt chuẩn** | Gồm `LM-09` (`20634:5275`), 3 màn hình `QT-06` (`20634:5710..5888`), `LM-10` (`20634:15576`) và 9 màn hình tại Section 11 (đã thêm `CN-08`) |
+| **Mobile App / Webview / USSD** | 7 Section (Section 1–7) | 75 màn hình | **100% Đạt chuẩn** | Bổ sung `NV-06`, `DT-01` FIFO, `VQ-02`/`VQ-03` (QR + Code128), `GM-02` Scratch, `LM-17`, `USSD`, `CN-04`, `AG-01`, `AG-02` |
+| **Overview & Change Log** | 4 Section (`0 · Read me first` & `Change log · 13/11`) | – | **Đã cập nhật** | Thẻ tổng quan Back Office (`20634:1131`) ghi nhận `69 screens in 12 modules`; khối Mobile (`20634:17705`) ghi nhận `7 customer modules` |
+| **TỔNG CỘNG** | **23 Section** | **144 màn hình** (`69` Desktop + `75` Mobile) | **100% (`144/144 Đạt`)** | `0` màn hình thiếu · `0` màn hình làm dở hoặc sai lệch logic |
 
 ---
 
-## 2. PHÁT HIỆN QUAN TRỌNG KHI ĐỐI CHIẾU VỚI FILE TỔNG HỢP CŨ (`Trang tính1`)
+## 2. ĐỐI CHIẾU ĐỒNG BỘ GIỮA FIGMA, TÀI LIỆU THIẾT KẾ VÀ BẢNG TÍNH ĐỐI SOÁT
 
-Khi rà soát đối chiếu từng dòng trong tab `Trang tính1` (`gid=578312992`) với cây thiết kế thực tế trên Figma (`1168:2725`), phát hiện **3 điểm sai lệch lớn** trong bản tổng hợp cũ cần cập nhật lại:
+Các sai lệch được cảnh báo ở kỳ đánh giá trước giữa thiết kế Figma và tài liệu đặc tả nghiệp vụ đã được đội ngũ thiết kế khắc phục hoàn toàn ở phiên bản `20634:*`:
 
-1. **6 chức năng trong tab `Trang tính1` cũ đang ghi nhận `Đủ` và dẫn chiếu tên màn hình Figma không tồn tại trên thực tế:**
-   - **`HV-09` (Khóa/mở khóa hội viên):** Ghi có màn `HV-05 Lock or unlock a member`, nhưng trên Figma (`20584:3708`) mới chỉ có bảng danh sách hội viên, **chưa có frame hộp thoại khóa/mở khóa**.
-   - **`GM-07` (Thống kê game trên CMS):** Ghi có màn `GM-03 Game statistics & play history`, nhưng trên Figma Section 5 (`20584:6087`) chỉ có 4 màn (`Games & prizes`, `Add or edit game`, `Prize table`, `Game hub configuration`), **chưa có frame thống kê & lịch sử chơi phía CMS**.
-   - **`CN-08` (Nhắc cho đối tác trên Cổng đối tác):** Ghi có màn `CN-08 Partner notifications`, nhưng trên Figma Section 11 (`20584:13105`) chỉ có 8 màn hình, **hoàn toàn chưa có frame `CN-08`**.
-   - **`NS-05` (Báo cáo đối tác & bán chéo trên CMS):** Ghi có màn `NS-05 Partner report · cross-sell`, nhưng trên Figma chỉ có `NS-04 Partner dashboard` phía Cổng đối tác, **chưa có frame `NS-05` phía CMS**.
-   - **`NS-06` (Báo cáo điểm tồn và nghĩa vụ tài chính dự kiến):** Ghi có màn `NS-06 Points liability report`, nhưng trên Figma **chưa có frame `NS-06`** (mới có 1 ô KPI nhỏ trên Dashboard `NS-02`).
-   - **`NS-07` (Xuất báo cáo Excel; gửi báo cáo định kỳ qua email):** Ghi có màn `NS-07 Scheduled reports & export`, nhưng trên Figma **hoàn toàn chưa có frame `NS-07`**.
-2. **4 màn hình mới thuộc nhóm Game Học tập (`Learning / EdTech`) đã được thiết kế thêm trên Figma App nhưng chưa được cập nhật vào cả 2 tab `App` và `Trang tính1`:**
-   - `GM-01 · Category · Learning (See all)` (`20609:8938`)
-   - `GM-02 · Game details · before play (English Daily)` (`20609:9027`)
-   - `GM-02 · English Daily · lesson` (`20609:9118`)
-   - `GM-02 · English Daily · lesson complete (popup)` (`20609:9193`)
-3. **Các phân hệ mới từ Slide Giải pháp & Kiến trúc v2.1 chưa được đưa vào bảng đối chiếu `Trang tính1`:**
-   - Quản trị kho câu hỏi Học tập / Đố vui trên CMS (`GM-09`).
-   - Mã QR/Barcode Ví Phần Thưởng động 60 giây tại quầy POS (`LM-17`).
-   - Phân hệ Đại lý & Tổng đại lý (`Agent & Super Agent`: `AG-01`, `AG-02`, `AG-03`).
-   - Trợ lý AI thiết kế chiến dịch & Cảnh báo xung đột chiến dịch (`AI-01`).
+1. **Đã hợp nhất chuẩn ngưỡng hạng hội viên (1.000 / 5.000 / 15.000 điểm):** Toàn bộ bảng cấu hình ngưỡng lên hạng và giữ hạng trên CMS (`HV-04` Node `20634:3692`), biểu đồ phân bổ hạng (`HV-06` Node `20634:3967`) và thanh tiến trình Mobile (`HV-03` Node `20634:18661`) đã đồng nhất hoàn toàn mức **Bạc: 0 – 999**, **Vàng: 1.000 – 4.999**, **Bạch Kim: 5.000 – 14.999**, **Kim Cương: 15.000+**, cùng ngưỡng giữ hạng tương ứng `0 / 800 / 4.000 / 12.000 điểm`.
+2. **Đã tách biệt rạch ròi 3 luồng quét mã và hoàn thiện thành phần quầy thu ngân:**
+   * `VQ-02` (`20634:22215`) và `VQ-03` (`20634:23242`): Hiển thị song song **QR Code + Mã vạch Code128 Barcode + Mã chữ số** (ví dụ `DLM-50-9X8Z`) để máy quét laser và camera tại quầy đối tác đọc được trực tiếp.
+   * `LM-17` (`20634:26687`): Bổ sung hoàn chỉnh màn hình **Pay at the counter · reward wallet QR 60 s** với đếm lùi bảo mật 60 giây.
+3. **Đồng bộ danh mục Google Sheet (`Trang tính1` `gid=578312992`):** 100% các mã màn hình vốn bị đánh dấu thiếu ở bản Sheet cũ (`NV-06`, `DT-01` FIFO, `LM-17`, `CN-04`, `AG-01..03`, `HV-08`, `LM-02`, `GM-09`, `AI-01`, `CN-08`) nay đã có mặt đầy đủ trên Figma. Nhóm quản trị dự án chỉ cần cập nhật trạng thái đồng bộ lại trên file Google Sheet để làm hồ sơ nghiệm thu chính thức.
 
 ---
 
-## 3. ĐÁNH GIÁ CHI TIẾT KHỐI 1: BACK OFFICE CMS (QUẢN TRỊ NỘI BỘ NATCASH)
+## 3. ĐÁNH GIÁ CHI TIẾT KHỐI 1: BACK OFFICE CMS (NATCASH INTERNAL ADMIN)
 
-### 3.1. Danh sách 10 Section và 45 màn hình CMS trên Figma
+### 3.1. Bảng kiểm tra từng màn hình theo cụm nghiệp vụ
 
-| Section trên Figma | Mã màn | Tên màn hình trên Figma (`Node ID`) | Tình trạng | Đánh giá chi tiết so với BA / LLD |
-| :--- | :---: | :--- | :---: | :--- |
-| **Section 1: Sign-in & administration** (`20584:1259`) | `QT-01` | 1. `Sign in` (`20584:1264`)<br>2. `Verify OTP` (`20584:1359`)<br>3. `OTP not valid` (`20584:1443`)<br>4. `OTP expired` (`20584:1525`) | **Đã làm** | Đầy đủ luồng đăng nhập 2 lớp (Mật khẩu + SMS OTP 6 số) và các trạng thái lỗi/hết hạn mã OTP. |
-| | `QT-02` | 5. `Users` (`20584:1608`)<br>6. `Roles & permissions` (`20584:1840`) | **Đã làm** | Đầy đủ danh sách tài khoản quản trị và phân quyền RBAC. |
-| | `QT-05` | 7. `System parameters` (`20584:2156`)<br>8. `Audit log` (`20584:2590`) | **Một phần** | Màn `Audit log` (`20584:2590`) mới có bảng danh sách phẳng, **thiếu Modal/Drawer xem chi tiết `JSONB Diff` (`Dữ liệu trước` và `Dữ liệu sau`)** theo yêu cầu `QT-04` trong PTTK. |
-| | `QT-07` | 9. `Queue & failed events` (`20584:2990`) | **Đã làm** | Đầy đủ bảng giám sát hàng đợi sự kiện và nút `Resend all (batch re-trigger)`. |
-| **Section 2: Members & tiers** (`20584:3193`) | `HV-04` | 10. `Tier configuration` (`20584:3198`) | **Một phần** | Đã có cấu hình 4 hạng (`Silver`, `Gold`, `Platinum`, `Diamond`) và chu kỳ 12 tháng, nhưng **ngưỡng điểm đang ghi `0 / 3,000 / 10,000 / 30,000`**, lệch với đặc tả chính sách (`0 / 1,000 / 5,000 / 15,000`). |
-| | `HV-06` | 11. `Tier distribution` (`20584:3473`) | **Đã làm** | Đầy đủ biểu đồ phân bố hội viên theo 4 hạng và danh sách sắp lên hạng / nguy cơ tụt hạng. |
-| | `HV-05` | 12. `Member lookup` (`20584:3708`) | **Một phần** | Mới có bảng tìm kiếm hội viên. **Thiếu màn hình/Drawer chi tiết Hồ sơ Hội viên 360** (`HV-08`: lịch sử hạng, biến động điểm, nhiệm vụ, voucher, giao dịch dùng điểm) và **thiếu hộp thoại Khóa/Mở khóa hội viên** (`HV-09`). |
-| **Section 3: Partners & connections** (`20584:3921`) | `LM-05`<br>`LM-06` | 13. `Partner profile` (`20584:3926`)<br>15. `Policy approval` (`20584:4447`) | **Đã làm** | Đầy đủ danh sách đối tác liên minh và màn hình phê duyệt chính sách tỷ lệ tích/tiêu điểm 4 cấp. *(Màn 14 `20584:4297` là màn hình của Partner Portal).* |
-| | `QT-06` | 16. `Connection · IP & webhook` (`20584:4732`)<br>17. `Create or rotate API key` (`20584:4821`)<br>18. `New key · shown once` (`20584:4910`)<br>19. `Connections overview` (`20584:4998`) | **Một phần** | Màn `Connections overview` (`20584:4998`) mới hiển thị 4 kết nối (`WSO2`, `Mobile Service`, `Payment Point`, `BCCS · WsPromotion`), **thiếu 2 thẻ kết nối `USSD Gateway (*202#)` và `Data Lake / DWH`** theo Slide 16. |
-| **Section 4: Rewards & vouchers** (`20584:5229`) | `VQ-04` | 20. `Reward catalogue` (`20584:5234`)<br>21. `Create or edit reward` (`20584:5551`)<br>22. `Import · file check` (`20584:5675`)<br>23. `Import · confirm` (`20584:5818`)<br>24. `Import · done` (`20584:5961`) | **Đã làm** | Thiết kế rất chi tiết luồng quản lý kho quà và 3 bước nhập lô mã Voucher từ tệp CSV (kiểm tra dòng lỗi, xác nhận lô, hoàn tất nhập kho). |
-| **Section 5: Games** (`20584:6087`) | `GM-03` | 25. `Games & prizes` (`20584:6092`)<br>26. `Add or edit game` (`20584:6611`)<br>27. `Prize table` (`20584:6735`)<br>28. `Game hub configuration` (`20584:6967`) | **Một phần** | Đã có quản lý danh mục game, bảng xác suất trúng thưởng (`Tổng = 100%`) và cấu hình sảnh. **Thiếu màn hình quản trị bộ câu hỏi Học tập / Đố vui (`GM-09`)** và **thiếu màn hình thống kê & lịch sử chơi chi tiết trên CMS (`GM-07`)**. |
-| **Section 6: Programs & missions** (`20584:7447`) | `NV-04`<br>`NV-05`<br>`QT-04`<br>`NV-06`<br>`NS-03` | 29. `Programs` (`20584:7452`)<br>30. `Create program from template` (`20584:7764`)<br>31. `Approval queue` (`20584:7926`)<br>32. `Program tracking` (`20584:8160`)<br>33. `Program effectiveness` (`20584:8356`) | **Một phần** | Đã có danh sách chương trình, hàng đợi duyệt hai người (`Maker-Checker`) và báo cáo `Lift vs control group`. Tuy nhiên màn `NV-05` (`20584:7764`) mới minh họa 1 mẫu đơn lẻ (`Number of transactions`), **cần bổ sung bộ dựng quy tắc đa tầng (`KHI – NẾU – THÌ – GIỚI HẠN`) cho đủ 9 nhóm nhiệm vụ** và **cảnh báo xung đột chiến dịch**. |
-| **Section 7: Segments & messaging** (`20584:8603`) | `CN-03`<br>`CN-04` | 34. `Customer segments` (`20584:8608`)<br>35. `Reminder scenarios & send log` (`20584:8840`) | **Đã làm** | Màn `CN-03` (`20584:8608`) đã có bảng 7 phân khúc và khu vực `Edit segment` theo điều kiện quy tắc ở nửa dưới màn hình; màn `CN-04` (`20584:8840`) đã có danh sách kịch bản nhắc, giới hạn tần suất `max 1 push/day, 3/week · 08:00–20:00` và mẫu đa ngôn ngữ (`Kreyòl / Français / English`). |
-| **Section 8: Dashboard, budget & alerts** (`20584:9092`) | `NS-02`<br>`NS-01`<br>`NS-03`<br>`CN-05` | 36. `Dashboard` (`20584:9097`)<br>37. `Budget` (`20584:9741`)<br>38. `Program effectiveness` (`20584:9958`)<br>39. `Alert center` (`20584:10177`) | **Một phần** | Đã có 4 màn hình Dashboard tổng quan, Ngân sách tháng, Đo lường hiệu quả Control Group và Trung tâm cảnh báo 12 sự kiện. Tuy nhiên **còn thiếu 3 màn hình báo cáo chuyên sâu trong PTTK: `NS-05` (Báo cáo đối tác & bán chéo trên CMS), `NS-06` (Báo cáo chi tiết điểm tồn & nghĩa vụ tài chính), `NS-07` (Cấu hình lập lịch gửi báo cáo định kỳ qua email)**. |
-| **Section 9: Points ledger & adjustments** (`20584:10398`) | `DT-03`<br>`DT-02`<br>`QT-04` | 40. `Points ledger` (`20584:10403`)<br>41. `Create & approve adjustment` (`20584:11462`)<br>42. `Approval queue` (`20584:11675`) | **Đã làm** | Đầy đủ sổ cái điểm bất biến, tạo yêu cầu điều chỉnh điểm thủ công có kiểm tra hạn mức phê duyệt (`max 5,000 pts per request`) và hàng đợi duyệt 2 lớp. |
-| **Section 10: Clearing & partner payment** (`20584:11931`) | `LM-07` | 43. `Clearing, claims & payment batches` (`20584:11936`)<br>44. `Mismatches & claims` (`20584:12388`)<br>45. `Handle claim KN-0611-001` (`20584:12522`)<br>46. `Create payment batch` (`20584:12637`)<br>47. `Track batch PAY-2026-11-W2` (`20584:12780`) | **Đã làm** | Thiết kế rất hoàn chỉnh toàn bộ quy trình đối soát bù trừ ròng đa phương (`Multilateral Netting`), xử lý khiếu nại lệch giao dịch (`KN-0611-001`), tạo lô thanh toán và theo dõi trạng thái chuyển tiền. *(Màn 48 `20584:12923` là màn hình của Partner Portal).* |
-
----
-
-## 4. ĐÁNH GIÁ CHI TIẾT KHỐI 2: MERCHANT PARTNER PORTAL (CỔNG ĐỐI TÁC LIÊN MINH)
-
-| Mã màn | Tên màn hình trên Figma (`Node ID`) | Tình trạng | Đánh giá chi tiết so với BA / LLD |
-| :---: | :--- | :---: | :--- |
-| `NS-04` | 49. `Partner dashboard` (`20584:13110`) | **Đã làm** | Đầy đủ KPI khách thanh toán, giao dịch dùng điểm, khách mới, chi phí đồng tài trợ và hiệu quả bán chéo liên minh (`Alliance cross-sell`). |
-| `LM-08` | 50. `Branches & product groups` (`20584:13287`) | **Đã làm** | Đầy đủ quản lý chi nhánh, mã điểm thanh toán (`Payment Point code`), nhóm sản phẩm và danh mục sản phẩm. *(Lưu ý: phía CMS Natcash chưa có màn xem/duyệt danh sách chi nhánh này).* |
-| `LM-09` | 51. `Points policy` (`20584:13433` & `20584:4297`) | **Đã làm** | Đầy đủ cấu hình chính sách chấp nhận điểm kế thừa 4 cấp (`Partner → Branch → Product groups → Products`) và gửi Natcash phê duyệt. |
-| `QT-03` | 52. `Staff accounts` (`20584:13583`) | **Đã làm** | Đầy đủ quản lý tài khoản nhân viên đối tác theo vai trò và phạm vi chi nhánh. |
-| `NV-07` | 53. `Propose an in-store program` (`20584:13732`) | **Đã làm** | Đầy đủ biểu mẫu đối tác đề xuất chương trình ưu đãi tại cửa hàng và gửi Natcash duyệt. |
-| `VQ-05` | 54. `Vouchers` (`20584:13820`) | **Đã làm** | Đã thiết kế song song 2 cột trên cùng màn hình: cột trái `Create voucher` (tạo voucher trong hạn mức được duyệt) và cột phải `Record voucher use` (nhập mã/quét mã voucher, kiểm tra trạng thái hợp lệ và xác nhận gạch mã kèm số hóa đơn). |
-| `LM-11` | 55. `Point transactions` (`20584:13974`) | **Đã làm** | Đầy đủ tra cứu lịch sử giao dịch tích/trừ điểm theo chi nhánh và xuất tệp Excel. |
-| `LM-10` | 56. `Settlement results` (`20584:14140` & `20584:12923`) | **Đã làm** | Đã có bảng tổng hợp kỳ đối soát, danh sách giao dịch trong kỳ, kèm biểu mẫu `Raise a claim` (chọn giao dịch, nhập lý do lệch, đính kèm chứng từ PDF/ảnh) và nút `Confirm period figures` ở nửa dưới màn hình. |
-| `CN-08` | *(Chưa có trên Figma)* `Partner notifications` | **Thiếu (Chưa làm)** | Trong PTTK (`CN-08`) yêu cầu màn hình thông báo/nhắc việc cho đối tác trên Cổng đối tác (kết quả đối soát, voucher sắp hết kho, chương trình sắp kết thúc, khách quay lại giảm), nhưng trên Figma Section 11 chưa có frame này. |
+| Section Figma | Mã màn hình | Tên màn hình trên Figma | Node ID | Trạng thái | Ghi chú chi tiết sau rà soát 13/11 |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **0 · Read me first** | – | Back office overview | `20634:1128` | Đạt chuẩn | Nội dung chính (`20634:1131`) cập nhật `69 screens in 12 modules` (còn 1 dòng tiêu đề phụ nhỏ ở `20634:1252` ghi `11 MODULES · 56 SCREENS`) |
+| **Change log** | – | Change log · 13/11 · cần review | `20634:17303` | Đạt chuẩn | Ghi nhận đầy đủ các màn hình bổ sung và sửa lỗi đợt 13/11 |
+| **1 · Sign-in & administration** | `QT-01` | Sign in / Verify OTP / OTP not valid / OTP expired | `20634:1313`..`1574` | **Đã làm** | 4 màn hình đầy đủ luồng đăng nhập SSO và xử lý lỗi OTP |
+| | `QT-02` | Users / Roles & permissions | `20634:1657`, `20634:1889` | **Đã làm** | Quản lý tài khoản nội bộ và ma trận phân quyền RBAC |
+| | `QT-05` | System parameters / Audit log | `20634:2205`, `20634:2639` | **Đã làm** | Tham số hệ thống và nhật ký truy vết |
+| | `QT-07` | Queue & failed events | `20634:3039` | **Đã làm** | Theo dõi hàng đợi lỗi sau khi thử lại tự động |
+| | `QT-04` | Audit log · change details (before / after) | `20634:3245` | **Đã làm** | **Bổ sung 13/11:** So sánh cấu trúc JSONB trước và sau thay đổi cho từng bản ghi kiểm toán |
+| **2 · Members & tiers** | `HV-04` | Tier configuration | `20634:3692` | **Đã làm** | **Đã sửa 13/11:** Sửa khớp Keep tier `0 / 800 / 4.000 / 12.000`; nút `Period settings` và `View tier distribution` nằm gọn trong banner |
+| | `HV-06` | Tier distribution | `20634:3967` | **Đã làm** | **Đã sửa 13/11:** Sửa khớp nhãn biểu đồ và bảng số liệu `1.000 / 5.000 / 15.000 điểm` |
+| | `HV-05` | Member lookup | `20634:4202` | **Đã làm** | Tra cứu hội viên theo số điện thoại, mã thành viên, hạng |
+| | `HV-05 · HV-09` | Lock or unlock a member | `20634:4416` | **Đã làm** | Khóa/mở khóa tài khoản có luồng phê duyệt hai cấp |
+| | `HV-08` | Member 360 (drawer from Member lookup) | `20634:4628` | **Đã làm** | **Bổ sung 13/11:** Hồ sơ hội viên 360 độ dạng ngăn kéo từ màn hình tra cứu |
+| **3 · Partners & connections** | `LM-05` | Partner profile | `20634:4904` | **Đã làm** | Hồ sơ pháp nhân, thông tin đối tác liên minh |
+| | `LM-06` | Policy approval | `20634:5425` | **Đã làm** | Phê duyệt chính sách tích/tiêu điểm của đối tác |
+| | `LM-02` | Branches & payment points (Natcash side) | `20634:6003` | **Đã làm** | **Bổ sung 13/11:** Quản lý mạng lưới chi nhánh và điểm chấp nhận thanh toán phía Natcash |
+| | `QT-06` | Connections overview · 6 systems | `20634:6140` | **Đã làm** | **Đã nâng cấp 13/11:** Bao phủ đầy đủ 6 kết nối hệ thống thay cho bản 4 hệ thống cũ |
+| **4 · Rewards & vouchers** | `VQ-04` | Reward catalogue / Create or edit / Import (3 bước) | `20634:6294`..`7021` | **Đã làm** | 5 màn hình quản lý danh mục quà tặng và nhập lô Excel 3 bước |
+| **5 · Games** | `GM-03` | Games & prizes / Add or edit / Prize table / Hub config | `20634:7152`..`8027` | **Đã làm** | 4 màn hình cấu hình trò chơi, bảng giải thưởng và Game Hub |
+| | `GM-03 · GM-07` | Game statistics & play history | `20634:8508` | **Đã làm** | Thống kê lượt chơi và lịch sử trúng thưởng |
+| | `GM-09` | Learning & quiz question bank | `20634:8889` | **Đã làm** | **Bổ sung 13/11:** Ngân hàng câu hỏi trắc nghiệm và học tập nhận thưởng |
+| **6 · Programs & missions** | `NV-04`, `NV-05`, `QT-04`, `NV-06`, `NS-03` | Programs / Create from template / Approval / Tracking / Effectiveness | `20634:9052`..`9956` | **Đã làm** | 5 màn hình quản trị vòng đời chiến dịch |
+| | `NV-05` | Rule builder · WHEN – IF – THEN – LIMITS (9 mission types) | `20634:10206` | **Đã làm** | **Bổ sung 13/11:** Bộ dựng luật động 4 tầng hỗ trợ đủ 9 loại nhiệm vụ |
+| | `AI-01` | AI campaign assistant · draft and conflict check | `20634:10367` | **Đã làm** | **Bổ sung 13/11:** Trợ lý AI phác thảo chiến dịch và kiểm tra xung đột chính sách |
+| **7 · Segments & messaging** | `CN-03` | Customer segments | `20634:10485` | **Đã làm** | Phân khúc khách hàng động |
+| | `CN-04` | Reminder scenarios & send log | `20634:10717` | **Đã làm** | Kịch bản gợi nhắc tự động và nhật ký gửi tin |
+| **8 · Dashboard, budget & alerts** | `NS-02`, `NS-01`, `NS-03`, `CN-05`, `NS-05`, `NS-06`, `NS-07` | Dashboard / Budget / Program effectiveness / Alert center / Cross-sell / Liability / Scheduled reports | `20634:10974`..`12834` | **Đã làm** | 7 màn hình đầy đủ chỉ số tài chính, công nợ điểm và xuất báo cáo định kỳ |
+| **9 · Points ledger & adjustments** | `DT-03`, `DT-02`, `QT-04` | Points ledger / Create & approve adjustment / Approval queue | `20634:13056`..`14328` | **Đã làm** | 3 màn hình sổ cái kế toán điểm và điều chỉnh hai cấp |
+| **10 · Clearing & partner payment** | `LM-07` | Clearing, claims & payment batches (5 màn hình CMS) | `20634:14589`..`15433` | **Đã làm** | Đối soát sai lệch, xử lý khiếu nại `KN-0611-001`, tạo và theo dõi lô thanh toán `PAY-2026-11-W2` |
+| **12 · Agent & Super Agent** | `AG-03` | Agent targets, reward settlement & support playbook | `20634:17129` | **Đã làm** | **Bổ sung 13/11:** Chỉ tiêu đại lý, thanh quyết toán thưởng và cẩm nang hỗ trợ |
 
 ---
 
-## 5. ĐÁNH GIÁ CHI TIẾT KHỐI 3: MOBILE APP, WEBVIEW & USSD (KHÁCH HÀNG CUỐI)
+## 4. ĐÁNH GIÁ CHI TIẾT KHỐI 2: PARTNER PORTAL (CỔNG ĐỐI TÁC LIÊN MINH)
 
-| Section trên Figma | Mã màn | Số thẻ màn hình & Các màn hình tiêu biểu (`Node ID`) | Tình trạng | Đánh giá chi tiết so với BA / LLD |
-| :--- | :---: | :--- | :---: | :--- |
-| **Section 1: Entry & membership** (`20609:2064`) | `NC-HM-01`<br>`NC-TB-01`<br>`NC-PF-01`<br>`HV-01..03` | **11 màn hình:**<br>- `NC-HM-01` Natcash Home (3 phương án: `20609:3099`, `3844`, `4045`)<br>- `NC-TB-01` Rewards tab (`3322`, `3431`)<br>- `NC-PF-01` Account entry (`2382`)<br>- `HV-02` Loyalty home (`2068`, `2460`, `3522`)<br>- `HV-03` Member tiers (`2781`)<br>- `HV-01` Program terms (`3047`) | **Một phần** | Đã thiết kế đầy đủ các điểm chạm từ Natcash Home, Tab Rewards, Account và trang chủ Loyalty. Tuy nhiên màn `HV-03 Member tiers` (`20609:2781`) đang ghi ngưỡng điểm `0 / 3,000 / 10,000 / 30,000` (lệch với `0 / 1,000 / 5,000 / 15,000` trong đặc tả chính sách) và chưa phân tách rõ nhãn `Natcash Coin` so với `Điểm xét hạng`. |
-| **Section 2: Earn · Missions & check-in** (`20609:4257`) | `NV-01`<br>`NV-02`<br>`NV-03`<br>`CN-02`<br>`DT-01` | **14 màn hình:**<br>- `NV-01` Missions list (`4262`, `4962`, `5292`, `5486`)<br>- `NV-02` Mission details & Claim popup (`4485`, `5047`, `5151`, `5873`, `5962`)<br>- `NV-03` Daily check-in & popup (`4842`, `5634`, `5745`)<br>- `CN-02` Inbox (`4654`)<br>- `DT-01` Points history (`4740`) | **Một phần** | Đã có đầy đủ luồng nhiệm vụ tự động, nhiệm vụ bấm nhận (`Claim`) và điểm danh 7 ngày. Tuy nhiên **thiếu màn hình nhiệm vụ Giới thiệu bạn bè (`Referral` — mã mời, chia sẻ link, tiến độ bạn bè định danh/giao dịch đầu)** và trên màn `DT-01 Points history` (`20609:4740`) **thiếu popup/drawer xem chi tiết từng lô điểm sắp hết hạn theo cơ chế `FIFO`**. |
-| **Section 3: Redeem · Rewards & vouchers** (`20609:6057`) | `VQ-01`<br>`VQ-02`<br>`VQ-03` | **12 màn hình:**<br>- `VQ-01` Reward store (`6062`)<br>- `VQ-02` Reward details & Results (`6202`, `6282`, `6475`, `6545`, `6613`, `6688`, `6752`, `6827`, `6891`, `6966`)<br>- `VQ-03` My vouchers (`6357`) | **Một phần** | Đã có đủ các trạng thái đổi quà thành công, chờ đối tác Natcom cấp gói cước (`Awaiting confirmation`) và hết kho (`Sold out`). Tuy nhiên trên màn `VQ-02` (`20609:6282`) và `VQ-03` (`20609:6357`) mới chỉ hiển thị chuỗi mã chữ (`DLM-50-9X8Z`), **thiếu mã vạch `Code128` và mã `QR`** để thu ngân quầy đối tác quét trực tiếp qua máy POS. |
-| **Section 4: Play · Games** (`20609:7059`) | `GM-01`<br>`GM-02` | **14 màn hình:**<br>- `GM-01` Game hub (có Leaderboard ở cuối trang `7064`), Get plays (`7916`, `7990`), Open partner game (`8151`), Play history (`8695`), Category Learning (`8937`)<br>- `GM-02` Rewards Wheel (`7620`, `7775`, `7846`, `8060`), 2048 Natcash (`8604`), English Daily (`9026`, `9117`, `9192`) | **Một phần** | Màn `GM-01 Game hub` (`20609:7064`) đã có khối `November leaderboard` ở cuối màn hình và 4 màn hình mới cho nhóm game `Learning (English Daily)`. Tuy nhiên màn `20609:8060` (`No prize this time`) ghi `Game: Lucky Scratch Card` nhưng **chưa có màn hình tương tác cào thẻ (`Lucky Scratch Card` play screen)** trước khi ra kết quả. |
-| **Section 5: Use points at partners** (`20609:9295`) | `LM-04`<br>`LM-01`<br>`DT-01` | **6 màn hình:**<br>- `LM-04` Where to use points (`9300`)<br>- `LM-01` Natcash payment · points suggested (`9410`), voucher applied (`9630`), Payment successful (`9738`)<br>- `DT-01` Points history (`9504`), USSD `*202#` (`9821`) | **Một phần** | Đã có luồng thanh toán trên ứng dụng Natcash tự gợi ý trừ điểm (tối đa 30% hóa đơn) và tự áp voucher (Luồng A). Tuy nhiên **thiếu màn hình hiển thị Mã QR/Barcode Ví Phần Thưởng động 60 giây (`TOTP`)** để thu ngân quét trừ điểm tại quầy POS (Luồng B), và màn `USSD *202#` (`20609:9821`) mới có 1 menu gốc, chưa có các màn hình phản hồi nhánh con (`1. Where to use points`, `2. My vouchers`). |
-| **Section 6: Targeted content** (`20609:9854`) | `CN-01`<br>`CN-02` | **9 màn hình:**<br>- `CN-02` Inbox (`9859`) & Targeted offer details (`9945`)<br>- `CN-01` 7 biến thể màn hình Home theo 7 nhóm khách hàng (`10015` đến `11443`) | **Một phần** | Đã thiết kế đầy đủ 7 biến thể giao diện trang chủ theo 7 phân khúc khách hàng. Tuy nhiên ghi chú trên Figma đang khóa quyền tắt thông báo của khách hàng, **mâu thuẫn với Slide 12 Giải pháp ("Khách hàng được quyền tắt thông báo") và PTTK `CN-04`**; cần bổ sung nút bật/tắt nhận thông báo tiếp thị (`Opt-out`). |
+Toàn bộ **14 màn hình Partner Portal** (9 màn hình tại Section 11 và 5 màn hình tích hợp trực tiếp trong Section 3 & Section 10) đã hoàn thiện đầy đủ luồng nghiệp vụ B2B tự phục vụ:
+
+| Vị trí Section | Mã màn hình | Tên màn hình trên Figma | Node ID | Trạng thái | Ghi chú chuyên sâu |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **3 · Partners & connections** | `LM-09` | Partner portal · points policy | `20634:5275` | **Đã làm** | Chính sách tích/tiêu điểm phía đối tác |
+| **3 · Partners & connections** | `QT-06` | IP & webhook / Create or rotate API key / New key shown once | `20634:5710`, `20634:5799`, `20634:5888` | **Đã làm** | Quy trình bảo mật hiển thị khóa bí mật một lần khi cấp/xoay vòng khóa |
+| **10 · Clearing & payment** | `LM-10` | Partner portal · settlement results | `20634:15576` | **Đã làm** | Xem kết quả chốt công nợ ngay cuối luồng đối soát |
+| **11 · Partner portal** | `NS-04` | Partner dashboard | `20634:15763` | **Đã làm** | Bảng điều khiển tổng quan đối tác |
+| | `LM-08` | Branches & product groups | `20634:15940` | **Đã làm** | Quản lý chi nhánh và nhóm sản phẩm áp dụng |
+| | `LM-09` | Points policy | `20634:16086` | **Đã làm** | Thiết lập tỷ lệ thưởng và giới hạn điểm tại cửa hàng |
+| | `QT-03` | Staff accounts | `20634:16236` | **Đã làm** | Phân quyền tài khoản thu ngân/quản lý cửa hàng |
+| | `NV-07` | Propose an in-store program | `20634:16385` | **Đã làm** | Đề xuất chương trình khuyến mãi tại điểm bán gửi Natcash duyệt |
+| | `VQ-05` | Vouchers | `20634:16473` | **Đã làm** | Tra cứu và kiểm soát trạng thái mã ưu đãi đối tác |
+| | `LM-11` | Point transactions | `20634:16627` | **Đã làm** | Lịch sử giao dịch tích điểm và gạch nợ tại cửa hàng |
+| | `LM-10` | Settlement results | `20634:16793` | **Đã làm** | Bảng kê thanh quyết toán định kỳ và tải chứng từ |
+| | `CN-08` | Notifications | `20634:16976` | **Đã làm** | **Bổ sung 13/11:** Trung tâm thông báo dành riêng cho cổng đối tác |
 
 ---
 
-## 6. DANH MỤC TỔNG HỢP CÁC HẠNG MỤC CẦN BỔ SUNG VÀ HOÀN THIỆN TRÊN FIGMA
+## 5. ĐÁNH GIÁ CHI TIẾT KHỐI 3: MOBILE APP / WEBVIEW / USSD
 
-### 6.1. Nhóm 1 — Các phân hệ và màn hình chưa thiết kế (`Thiếu` — 13 màn hình cần vẽ mới)
+Tổng cộng **75 màn hình** trải dài qua 7 Section nghiệp vụ người dùng cuối và đại lý, cùng thẻ tổng quan `20634:17705` và nhật ký cập nhật `20634:29469`:
 
-| STT | Mã chức năng | Nền tảng | Tên màn hình cần thiết kế mới | Mô tả chi tiết các thành phần giao diện cần có |
-| :---: | :---: | :---: | :--- | :--- |
-| 1 | `AG-01` | Mobile App / Webview | **Nhiệm vụ Đại lý (`Agent Loyalty Missions`)** | Thẻ tiến độ phát triển khách hàng mới trong tháng (ví dụ: `68 / 100 khách hàng mới`), đếm ngược thời gian chốt kỳ, mức thưởng (`2.000 HTG` hoặc `2.000 Natcash Coin`), danh sách khách hàng vừa giới thiệu kèm trạng thái định danh/giao dịch đầu. |
-| 2 | `AG-02` | Mobile App / Webview | **Bảng điều khiển KPI Tổng đại lý (`Super Agent Dashboard`)** | Biểu đồ tỷ lệ Agent tuyến dưới đạt chuẩn trong tháng (mục tiêu `≥ 50%` mạng lưới đạt chỉ tiêu để nhận thưởng `10.000 HTG`), bộ lọc danh sách Agent tuyến dưới theo nhóm (Đã đạt / Sắp đạt / Chưa phát sinh) để đôn đốc. |
-| 3 | `AG-03` | Back Office CMS | **Quản trị Chỉ tiêu Đại lý, Đối soát thưởng & `Support Playbook`** | Cấu hình định mức chỉ tiêu tháng cho Agent / Super Agent, bảng đối soát phê duyệt chi trả thưởng mạng lưới và trang tra cứu Kịch bản hỗ trợ vận hành (`Support Playbook`) cho CSKH. |
-| 4 | `AI-01` | Back Office CMS | **Trợ lý AI Thiết kế Chiến dịch (`AI Campaign Copilot`) & Cảnh báo Xung đột** | Khung nhập mục tiêu tự nhiên (ngân sách, tệp mục tiêu, KPI kỳ vọng) để AI tự sinh cấu hình chiến dịch nháp; kèm hộp thoại cảnh báo khi 2 chiến dịch trùng tệp khách hàng và trùng sự kiện kích hoạt trong cùng khung giờ. |
-| 5 | `GM-09` | Back Office CMS | **Quản trị Kho Câu hỏi Học tập & Đố vui (`Learning & Quiz Question Bank`)** | Quản lý các chủ đề học tập (`English Daily`, `Spanish Start`, `Aprann Li`, `Money Smart`), danh sách câu hỏi trắc nghiệm, tệp âm thanh phát âm, đáp án đúng, thang điểm thưởng (`5 câu: +10 pts`, `10 câu: +30 pts`, `15/15 câu: +100 pts`) và nhập lô câu hỏi từ Excel/CSV. |
-| 6 | `GM-07` | Back Office CMS | **Thống kê & Lịch sử Chơi Game (`GM-03 Game Statistics & Play History`)** | Màn hình báo cáo thống kê lượt chơi, tỷ lệ trúng giải theo từng trò chơi và bảng tra cứu lịch sử phiên chơi phía CMS (đã ghi tên trong `Trang tính1` nhưng chưa có frame trên Figma). |
-| 7 | `NS-05` | Back Office CMS | **Báo cáo Đối tác & Bán chéo Liên minh (`NS-05 Partner Report · Cross-sell`)** | Màn hình báo cáo tổng hợp giao dịch dùng điểm, khách hàng mới, ma trận bán chéo giữa các đối tác liên minh và chi phí đồng tài trợ phía CMS Natcash (đã ghi tên trong `Trang tính1` nhưng chưa có frame trên Figma). |
-| 8 | `NS-06` | Back Office CMS | **Báo cáo Điểm tồn & Nghĩa vụ Tài chính Dự kiến (`NS-06 Points Liability Report`)** | Màn hình báo cáo phân tích số dư điểm đang lưu hành theo từng lô hạn sử dụng, tỷ lệ quy đổi dự kiến (`Breakage / Redemption rate`) và nghĩa vụ tài chính phải trích lập (đã ghi tên trong `Trang tính1` nhưng chưa có frame trên Figma). |
-| 9 | `NS-07` | Back Office CMS | **Lập lịch Gửi Báo cáo Định kỳ & Xuất Dữ liệu (`NS-07 Scheduled Reports & Export`)** | Màn hình cấu hình lịch gửi báo cáo tự động (hằng ngày/tuần/tháng) qua email cho ban vận hành và tài chính (đã ghi tên trong `Trang tính1` nhưng chưa có frame trên Figma). |
-| 10 | `CN-08` | Partner Portal | **Trung tâm Thông báo Đối tác (`CN-08 Partner Notifications`)** | Màn hình/Drawer thông báo trên Cổng đối tác: nhắc xác nhận kỳ đối soát, cảnh báo voucher sắp hết kho, chương trình tại cửa hàng sắp kết thúc, tỷ lệ khách quay lại giảm (đã ghi tên trong `Trang tính1` nhưng chưa có frame trên Figma). |
-| 11 | `LM-02` | Back Office CMS | **Quản lý & Liên kết Chi nhánh Điểm bán trên CMS (`LM-02 Branches & Payment Points`)** | Màn hình phía CMS Natcash để vận hành xem, kiểm tra và liên kết mã `Merchant / Payment Point` cho các chi nhánh của đối tác (hiện mới có màn `LM-08` phía Cổng đối tác). |
-| 12 | `LM-17` | Mobile App / Webview | **Mã QR/Barcode Ví Phần Thưởng Động 60 Giây (`Reward Wallet Dynamic QR`)** | Màn hình hiển thị mã `QR` và `Barcode` động tự làm mới mỗi 60 giây (`TOTP`) kèm đồng hồ đếm ngược để khách hàng xuất trình cho thu ngân quét trừ điểm trực tiếp tại máy POS đối tác (Luồng B). |
-| 13 | `NV-06` | Mobile App / Webview | **Nhiệm vụ Giới thiệu Bạn bè (`Referral · Invite Friends`)** | Màn hình hiển thị mã giới thiệu cá nhân, mã QR mời bạn, nút chia sẻ qua mạng xã hội/SMS và danh sách theo dõi trạng thái bạn bè đã đăng ký, hoàn tất định danh `eKYC` và phát sinh giao dịch đầu tiên. |
+| Section Figma | Số màn hình | Mã màn hình & Điểm nổi bật đã hoàn thiện | Node ID tiêu biểu | Trạng thái |
+| :--- | :---: | :--- | :--- | :---: |
+| **1 · Entry & membership** | 10 | `HV-02` (Hội viên mới/Vàng/Webview), `NC-PF-01`, `HV-03` (Ngưỡng hạng 1.000/5.000/15.000 khớp chuẩn), `HV-01`, `NC-TB-01`, `NC-HM-01` (giữ bản chuẩn C, đã dọn bản nháp cũ), `Slide types` | `20634:17948`..`19682` | **Đã làm** |
+| **2 · Earn · Missions & check-in** | 16 | `NV-01`, `NV-02`, `NV-03`, `CN-02`, `DT-01`; **Bổ sung 13/11:** `NV-06 Invite friends` (`20634:21546`) và `DT-01 Coins expiring · by batch (FIFO)` (`20634:21855`) | `20634:19813`..`21855` | **Đã làm** |
+| **3 · Redeem · Rewards & vouchers** | 13 | `VQ-01`, `VQ-02`, `VQ-03`; **Đã sửa & bổ sung 13/11:** `VQ-02 Result · reward ready` (`20634:22215`) và `VQ-03 Show voucher at checkout` (`20634:23242`) tích hợp đủ QR Code + Code128 Barcode + mã `DLM-50-9X8Z` | `20634:22007`..`23242` | **Đã làm** |
+| **4 · Play · Games** | 15 | `GM-01`, `GM-02` (bao gồm `Lucky Scratch Card · play` tại `20634:25913`) | `20634:23670`..`25913` | **Đã làm** |
+| **5 · Use points at partners** | 9 | `LM-04`, `LM-01`, `DT-01`; **Bổ sung 13/11:** Luồng menu `USSD` (`20634:26594..26656`) và `LM-17 Pay at the counter · reward wallet QR 60 s` (`20634:26687`) | `20634:26100`..`26687` | **Đã làm** |
+| **6 · Targeted content** | 10 | `CN-02`, 7 biến thể trang chủ theo phân khúc (`CN-01`); **Bổ sung 13/11:** `CN-04 Notification settings` (`20634:29224`) | `20634:27110`..`29224` | **Đã làm** |
+| **7 · Agent & Super Agent** | 2 | **Bổ sung 13/11:** Màn hình đại lý `AG-01` (`20634:29302`) và Tổng đại lý `AG-02` (`20634:29373`) | `20634:29302`, `20634:29373` | **Đã làm** |
 
-### 6.2. Nhóm 2 — Các màn hình đã có trên Figma nhưng cần bổ sung chi tiết (`Một phần` — 14 hạng mục)
+---
 
-| STT | Mã chức năng | Nền tảng | Màn hình Figma cần chỉnh sửa (`Node ID`) | Nội dung cần hoàn thiện |
-| :---: | :---: | :---: | :--- | :--- |
-| 1 | `HV-02`<br>`HV-06` | Mobile App & CMS | `HV-03 Member tiers` (`20609:2781`)<br>`HV-04 Tier configuration` (`20584:3198`) | Thống nhất ngưỡng điểm xét hạng giữa Figma (`0 / 3,000 / 10,000 / 30,000`) và đặc tả chính sách (`0 / 1,000 / 5,000 / 15,000`); chuẩn hóa nhãn hiển thị 2 đơn vị điểm (`Natcash Coin` và `Điểm xét hạng`). |
-| 2 | `HV-08` | Back Office CMS | `HV-05 Member lookup` (`20584:3708`) | Bổ sung Drawer/Trang **Hồ sơ Hội viên 360** khi bấm vào 1 dòng hội viên (hiển thị lịch sử xét hạng, sổ cái điểm, nhiệm vụ đang làm, kho voucher và giao dịch dùng điểm). |
-| 3 | `HV-09` | Back Office CMS | `HV-05 Member lookup` (`20584:3708`) | Bổ sung frame hộp thoại **`HV-05 Lock or unlock a member`** (nhập lý do khóa/mở khóa, đính kèm bằng chứng nghi ngờ trục lợi và gửi duyệt hai người). |
-| 4 | `DT-01` | Mobile App & USSD | `DT-01 Points history` (`20609:4740`)<br>`DT-01 USSD` (`20609:9821`) | Bổ sung popup/drawer phân rã chi tiết **Điểm sắp hết hạn theo từng lô `FIFO`** (`point_expiration_buckets`: số điểm, ngày nhận, ngày hết hạn); bổ sung 2 màn hình USSD nhánh con khi chọn phím `1. Where to use points` và `2. My vouchers`. |
-| 5 | `NV-01` | Back Office CMS | `NV-05 Create program from template` (`20584:7764`) | Mở rộng biểu mẫu cấu hình điều kiện đa tầng (`KHI – NẾU – THÌ – GIỚI HẠN`) đáp ứng đủ 9 nhóm nhiệm vụ trong tài liệu giải pháp (Chuỗi liên tiếp, Bán chéo liên minh, Giới thiệu bạn bè, Mốc chi tiêu bậc thang...). |
-| 6 | `VQ-02`<br>`VQ-03` | Mobile App / Webview | `VQ-02 Result · reward ready` (`20609:6282`)<br>`VQ-03 My vouchers` (`20609:6357`) | Bổ sung hình ảnh **Mã vạch (`Barcode Code128`)** và **Mã `QR`** bên dưới chuỗi mã chữ (`DLM-50-9X8Z`) để thu ngân quầy đối tác có thể dùng súng quét mã vạch tại POS. |
-| 7 | `GM-03` | Mobile App / Webview | Section 4 `Play · Games` (`20609:8060`) | Bổ sung màn hình tương tác cào thẻ **`GM-02 Lucky Scratch Card`** (trước khi ra màn kết quả `20609:8060`). |
-| 8 | `CN-04` | Mobile App / Webview | `CN-02 Inbox` (`20609:9859`) | Bổ sung công tắc cho phép khách hàng **Bật / Tắt nhận thông báo tiếp thị (`Opt-out`)** theo đúng yêu cầu tại Slide 12 Giải pháp (*"Khách hàng được quyền tắt thông báo"*). |
-| 9 | `QT-04` | Back Office CMS | `QT-05 Audit log` (`20584:2590`) | Bổ sung Modal/Drawer xem chi tiết **`JSONB Diff` (`Dữ liệu trước` và `Dữ liệu sau`)** khi bấm vào một bản ghi nhật ký thao tác. |
-| 10 | `QT-06` | Back Office CMS | `QT-06 Connections overview` (`20584:4998`) | Bổ sung thêm **2 thẻ giám sát kết nối hệ thống nội bộ**: `USSD Gateway (*202#)` và `Data Lake / DWH Sync` để đủ 6 hệ thống tích hợp theo Slide 16 Giải pháp. |
+## 6. BẢNG NGHIỆM THU CÁC HẠNG MỤC ĐÃ KHẮC PHỤC & BỔ SUNG (ĐỢT 13/11)
+
+### 6.1. Nghiệm thu 13 hạng mục thiết kế từng thiếu (Tất cả đã hoàn tất 13/13)
+
+| STT | Mã màn hình | Phân hệ | Tên màn hình nghiệm thu | Node ID Figma | Trạng thái |
+| :---: | :--- | :--- | :--- | :--- | :---: |
+| 1 | `QT-04` | CMS (Section 1) | Audit log · change details (before / after JSONB diff) | `20634:3245` | **Đã hoàn tất** |
+| 2 | `HV-08` | CMS (Section 2) | Member 360 (drawer from Member lookup) | `20634:4628` | **Đã hoàn tất** |
+| 3 | `LM-02` | CMS (Section 3) | Branches & payment points (Natcash side) | `20634:6003` | **Đã hoàn tất** |
+| 4 | `GM-09` | CMS (Section 5) | Learning & quiz question bank | `20634:8889` | **Đã hoàn tất** |
+| 5 | `NV-05` | CMS (Section 6) | Rule builder · WHEN – IF – THEN – LIMITS (9 mission types) | `20634:10206` | **Đã hoàn tất** |
+| 6 | `AI-01` | CMS (Section 6) | AI campaign assistant · draft and conflict check | `20634:10367` | **Đã hoàn tất** |
+| 7 | `AG-03` | CMS (Section 12) | Agent targets, reward settlement & support playbook | `20634:17129` | **Đã hoàn tất** |
+| 8 | `CN-08` | Partner Portal (Section 11) | Partner portal notifications | `20634:16976` | **Đã hoàn tất** |
+| 9 | `NV-06` | Mobile (Section 2) | Invite friends | `20634:21546` | **Đã hoàn tất** |
+| 10 | `DT-01` | Mobile (Section 2) | Coins expiring · by batch (FIFO) | `20634:21855` | **Đã hoàn tất** |
+| 11 | `LM-17` | Mobile (Section 5) | Pay at the counter · reward wallet QR 60 s | `20634:26687` | **Đã hoàn tất** |
+| 12 | `CN-04` | Mobile (Section 6) | Notification settings | `20634:29224` | **Đã hoàn tất** |
+| 13 | `AG-01` & `AG-02` | Mobile (Section 7) | Agent & Super Agent | `20634:29302`, `20634:29373` | **Đã hoàn tất** |
+
+### 6.2. Nghiệm thu các lỗi dữ liệu, thành phần giao diện & màn hình phụ trợ đã xử lý
+
+| STT | Hạng mục kiểm tra | Phân hệ | Kết quả xác minh thực tế trên Figma (`20634:*`) | Trạng thái |
+| :---: | :--- | :--- | :--- | :---: |
+| 1 | Đồng bộ ngưỡng giữ hạng `Keep tier` | `HV-04` (`20634:3692`) | Đã sửa thành `0 / 800 / 4.000 / 12.000 pts`, khớp logic hạ hạng theo tỷ lệ ngưỡng chuẩn | **Đã sửa** |
+| 2 | Lỗi tràn nút banner `HV-04` | `HV-04` (`20634:3692`) | Hai nút `Period settings` và `View tier distribution` căn lề gọn trong vùng banner | **Đã sửa** |
+| 3 | Đồng bộ ngưỡng trên biểu đồ & bảng `HV-06` | `HV-06` (`20634:3967`) | Sửa khớp hoàn toàn `Gold (from 1.000)`, `Platinum (from 5.000)`, `Diamond (from 15.000)` | **Đã sửa** |
+| 4 | Thẻ quét QR + Code128 Barcode trên màn kết quả | `VQ-02` (`20634:22215`), `VQ-03` (`20634:23242`) | Bổ sung thẻ `Scan at the counter` kèm đủ QR, Code128 Barcode và mã `DLM-50-9X8Z` | **Đã hoàn tất** |
+| 5 | Kết nối `6 systems`, luồng `USSD` & Game Scratch | `QT-06`, `USSD`, `GM-02` | `QT-06 Connections overview · 6 systems` (`20634:6140`), đủ 3 màn hình `USSD` (`20634:26594..26656`), bổ sung `Lucky Scratch Card · play` (`20634:25913`) | **Đã hoàn tất** |
+
+---
+
+## 7. ĐÁNH GIÁ LOGIC HỆ THỐNG & KHUYẾN NGHỊ TINH CHỈNH UI/UX KHI TRIỂN KHAI FRONTEND
+
+### 7.1. Kết luận đánh giá tính năng & logic theo tài liệu thiết kế hệ thống
+* **Tính đầy đủ & nhất quán nghiệp vụ (100% Đạt):** Toàn bộ luồng cốt lõi từ quản trị RBAC/Maker-Checker (`QT-01..07`), sổ cái điểm FIFO (`DT-01..03`), vòng đời hạng hội viên (`HV-01..09`), bộ dựng luật 9 loại nhiệm vụ (`NV-01..07`), hệ sinh thái đổi thưởng đa kênh App/Webview/USSD (`VQ-01..05`, `LM-17`), GameHub (`GM-01..09`), đối soát liên minh (`LM-01..11`) đến luồng Đại lý (`AG-01..03`) và Trợ lý AI (`AI-01`) đều khớp logic trong `detailed_design.md` và `solution.md`.
+* **Tính sẵn sàng lập trình:** Đội ngũ thiết kế không cần chỉnh sửa thêm bản vẽ tính năng nào để bắt đầu cắt giao diện và tích hợp API.
+
+### 7.2. 6 gợi ý tinh chỉnh UI/UX bổ sung trực tiếp trong mã nguồn Frontend (Tùy chọn)
+Các điểm sau không phải lỗi thiếu chức năng trên Figma mà là khuyến nghị tối ưu trải nghiệm thực tế khi lập trình `loyalty-cms` và `loyalty-webview`:
+
+1. **Hiển thị đếm lùi `Grace Period` 7 ngày khi xoay vòng API Key (`QT-06` – `20634:5888`):** Tài liệu `detailed_design.md` quy định khóa cũ giữ hiệu lực chuyển tiếp 7 ngày khi Rotate Key. Khi code trên Partner Portal, cần hiển thị bộ đếm ngày hết hạn của khóa cũ kèm nút `Revoke old key now` để đối tác chủ động thu hồi sớm nếu nghi ngờ lộ khóa.
+2. **Bổ sung cột hoặc chú giải phí thanh toán `MDR Fee` trên màn hình đối soát (`LM-07`, `LM-10`):** Hiện bảng kê hiển thị `Gross` – `Discount` – `Net` ở mức tổng hợp; khi code bảng chi tiết quyết toán nên bổ sung cột hoặc Tooltip giải thích công thức khấu trừ `MDR Fee` khớp với logic tài chính trong `detailed_design.md`.
+3. **Chuẩn hóa độ rộng tối thiểu và `nowrap` cho cột mã kỹ thuật trên bảng CMS:** Các cột chứa ID dài (`Audit log` `20634:2639`, `Queue & failed events` `20634:3039`, `Points ledger` `20634:13056`) khi chuyển từ mock Figma sang dữ liệu thật cần dùng phông `monospace`, `white-space: nowrap` và `minWidth` cố định để tránh xuống dòng vỡ hàng.
+4. **Nút chuyển nhanh 3 ngôn ngữ (`Kreyòl / Français / English`) trên Webview:** Bên cạnh trang `Notification settings` (`20634:29224`), nên gắn sẵn bộ chọn ngôn ngữ nhanh trên thanh tiêu đề hoặc trang cài đặt tài khoản Webview để người dùng chuyển ngữ không cần thoát ra app mẹ.
+5. **Bổ sung `Empty State` và `Skeleton` đồng bộ:** Bổ sung đầy đủ các trạng thái chưa có voucher, chưa có lịch sử điểm, chưa có thông báo đối tác khi lập trình màn hình `My vouchers`, `Points history` và `CN-08`.
+6. **Đồng bộ dòng tiêu đề phụ nhỏ trên thẻ tổng quan Figma (`20634:1252`):** Dòng chữ phụ nhỏ `MODULE MAP · 11 MODULES · 56 SCREENS` trong khung giới thiệu Back Office (`20634:1128`) có thể cập nhật thành `12 MODULES · 69 SCREENS` cho đồng bộ hoàn toàn với nội dung chính `20634:1131` (không ảnh hưởng đến màn hình sản phẩm).

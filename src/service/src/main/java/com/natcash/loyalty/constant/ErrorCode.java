@@ -28,6 +28,13 @@ public enum ErrorCode {
     VALIDATION_ERROR("16", "error.validation_error"),
     HOLD_NOT_FOUND("17", "error.hold_not_found"),
     HOLD_EXPIRED("18", "error.hold_expired"),
+    MAKER_CHECKER_VIOLATION("19", "error.maker_checker_violation"),
+    APPROVAL_ALREADY_PROCESSED("20", "error.approval_already_processed"),
+    BUDGET_EXCEEDED("21", "error.budget_exceeded"),
+    SPAM_LIMIT_EXCEEDED("22", "error.spam_limit_exceeded"),
+    IDOR_FORBIDDEN("23", "error.idor_forbidden"),
+    QUIZ_ALREADY_COMPLETED("24", "error.quiz_already_completed"),
+    API_KEY_REVOKED("25", "error.api_key_revoked"),
     SYSTEM_ERROR("99", "error.system_error");
 
     @JsonValue

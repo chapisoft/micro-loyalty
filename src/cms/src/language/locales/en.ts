@@ -21,7 +21,20 @@ export default {
     "roles": "Roles & Permissions",
     "audit_logs": "Audit Logs",
     "dead_letter": "Dead-Letter Webhooks",
-    "milestones": "Campaign Milestones"
+    "milestones": "Campaign Milestones",
+    "segments": "Customer Segments (CN-03)",
+    "scenarios": "Reminder Scenarios (CN-04)",
+    "learning_quiz": "Learning Quiz Bank",
+    "game_stats": "Game Stats & History",
+    "payment_points": "Branches & Payment Points",
+    "agent_loyalty": "Agent Loyalty (AG-03)",
+    "reports_budget": "Reports & Budgets",
+    "budgets": "Monthly Budgets (NS-01)",
+    "effectiveness": "Program Effectiveness (NS-03)",
+    "alerts": "Alert Center (CN-05)",
+    "advanced_reports": "Advanced Reports (NS-05..07)",
+    "partner_portal": "Partner Portal",
+    "approvals": "2-Layer Approvals (QT-04)"
   },
   "policy": {
     "management_title": "Point Earning & Burning Policy Configuration",
@@ -1138,6 +1151,66 @@ export default {
     "op_settlement": "SETTLEMENT (Settlement)",
     "op_lock": "LOCK (Security Lock)",
     "op_unlock": "UNLOCK (Unlock)"
+  },
+  "approval": {
+    "title": "Maker-Checker Approval Queue (QT-04)",
+    "subtitle": "2-layer control for point adjustments, member lock/unlock, policy updates and partner proposals.",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "approve_btn": "Approve",
+    "reject_btn": "Reject",
+    "review_btn": "Review",
+    "checker_note": "Checker Note (required on Reject)"
+  },
+  "payment_point": {
+    "title": "Natcash Branches & QR Payment Points (LM-02)",
+    "add_new": "Add Payment Point",
+    "code": "Point Code",
+    "name": "Branch / Point Name"
+  },
+  "segment": {
+    "title": "7 Dynamic Member Segments (CN-03)",
+    "view_members": "Members",
+    "recalculate": "Recalculate"
+  },
+  "scenario": {
+    "title": "Omnichannel Reminder Scenarios & Anti-Spam (CN-04)",
+    "add_new": "New Scenario"
+  },
+  "budget": {
+    "title": "Monthly Budget Cap & Auto-Pause Control (NS-01)",
+    "add_new": "Configure Budget"
+  },
+  "report": {
+    "effectiveness_title": "Program Effectiveness & Lift vs Control Group (NS-03)",
+    "advanced_title": "Advanced Alliance Reports (NS-05 · NS-06 · NS-07)"
+  },
+  "alert": {
+    "title": "Operational Alert Center (CN-05)",
+    "ack_btn": "Acknowledge",
+    "resolve_btn": "Resolve"
+  },
+  "learning": {
+    "title": "Language Learning Quiz Bank & Audio (GM-09)",
+    "add_new": "Add Question",
+    "import_csv": "Import CSV"
+  },
+  "agent": {
+    "title": "Agent & Super Agent Loyalty Management (AG-03)",
+    "set_target": "Set KPI Target"
+  },
+  "partner_portal": {
+    "nav_dashboard": "Partner Overview (NS-04)",
+    "nav_branches": "Branches & Products (LM-08)",
+    "nav_policy": "Points Policy (LM-09)",
+    "nav_staff": "Staff Accounts (QT-03)",
+    "nav_proposals": "Program Proposals (NV-07)",
+    "nav_vouchers": "Counter Vouchers (VQ-05)",
+    "nav_transactions": "Partner Transactions (LM-11)",
+    "nav_settlement": "Settlement & Claims (LM-10)",
+    "nav_notifications": "Notifications (CN-08)",
+    "nav_api_keys": "Webhook & API Keys (QT-06)",
+    "raise_claim": "Raise a claim"
   }
 };
 

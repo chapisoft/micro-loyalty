@@ -8,8 +8,11 @@ import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { TabView, TabPanel } from 'primereact/tabview';
+import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { Partner, partnerService } from '@/service/partner.service';
+import { LoyaltyService, SystemIntegrationItemModel, PartnerApiKeyModel } from '@/service/loyalty.service';
 import { TenantSelector } from '@/components/TenantSelector';
 import { AppBreadcrumb } from 'components';
 
@@ -43,6 +46,17 @@ export const Partners: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const toast = useRef<Toast>(null);
 
+  // QT-06 Connections overview · 6 systems & API Key Rotate / IP-Webhook Dialog
+  const [integrations, setIntegrations] = useState<SystemIntegrationItemModel[]>([]);
+  const [integrationsLoading, setIntegrationsLoading] = useState<boolean>(false);
+  const [showKeyWebhookDialog, setShowKeyWebhookDialog] = useState<boolean>(false);
+  const [keyTargetPartner, setKeyTargetPartner] = useState<Partner | null>(null);
+  const [editWebhookUrl, setEditWebhookUrl] = useState<string>('');
+  const [editIpWhitelist, setEditIpWhitelist] = useState<string>('');
+  const [rotatedKeyOnce, setRotatedKeyOnce] = useState<string | null>(null);
+  const [partnerKeys, setPartnerKeys] = useState<PartnerApiKeyModel[]>([]);
+  const [keyLoading, setKeyLoading] = useState<boolean>(false);
+
   // Sinh khóa B2B ngẫu nhiên
   const generateRandomApiKey = () => {
     const randomHex = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
@@ -72,9 +86,81 @@ export const Partners: React.FC = () => {
     }
   };
 
+  const fetchIntegrations = async (tenantId: string = selectedTenant) => {
+    setIntegrationsLoading(true);
+    try {
+      const list = await LoyaltyService.getIntegrationsOverview(tenantId);
+      setIntegrations(Array.isArray(list) ? list : []);
+    } finally {
+      setIntegrationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchData(selectedTenant);
+    fetchIntegrations(selectedTenant);
   }, [selectedTenant]);
+
+  const openKeyWebhookDialog = async (p: Partner) => {
+    setKeyTargetPartner(p);
+    setEditWebhookUrl(p.webhookUrl || '');
+    setEditIpWhitelist(p.ipWhitelist || '0.0.0.0/0');
+    setRotatedKeyOnce(null);
+    setShowKeyWebhookDialog(true);
+    setKeyLoading(true);
+    try {
+      const keys = await LoyaltyService.getPartnerApiKeys(selectedTenant);
+      setPartnerKeys(Array.isArray(keys) ? keys : []);
+    } finally {
+      setKeyLoading(false);
+    }
+  };
+
+  const handleSaveWebhookAndIp = async () => {
+    if (!keyTargetPartner) return;
+    setKeyLoading(true);
+    try {
+      await LoyaltyService.updatePartnerWebhookConfig(
+        { webhookUrl: editWebhookUrl.trim(), ipWhitelist: editIpWhitelist.split(',').map((s) => s.trim()).filter(Boolean) },
+        selectedTenant
+      );
+      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('partner.webhook_updated', { defaultValue: 'Đã cập nhật cấu hình Webhook & IP Whitelist.' }) });
+      fetchData(selectedTenant);
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setKeyLoading(false);
+    }
+  };
+
+  const handleRotateApiKey = async () => {
+    setKeyLoading(true);
+    try {
+      const res = await LoyaltyService.rotatePartnerApiKey({ graceDays: 7 }, selectedTenant);
+      setRotatedKeyOnce(res?.newKey || null);
+      const keys = await LoyaltyService.getPartnerApiKeys(selectedTenant);
+      setPartnerKeys(Array.isArray(keys) ? keys : []);
+      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Xoay vòng API Key' }), detail: t('partner.rotate_success', { defaultValue: 'Khóa mới chỉ hiển thị 1 lần. Khóa cũ còn hiệu lực 7 ngày (Grace Period).' }) });
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setKeyLoading(false);
+    }
+  };
+
+  const handleRevokeOldKey = async (keyId: number) => {
+    setKeyLoading(true);
+    try {
+      await LoyaltyService.revokePartnerApiKey(keyId, selectedTenant);
+      const keys = await LoyaltyService.getPartnerApiKeys(selectedTenant);
+      setPartnerKeys(Array.isArray(keys) ? keys : []);
+      toast.current?.show({ severity: 'info', summary: t('common.success', { defaultValue: 'Đã thu hồi' }), detail: t('partner.key_revoked', { defaultValue: 'Đã thu hồi khóa API cũ ngay lập tức.' }) });
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setKeyLoading(false);
+    }
+  };
 
   const handleTenantChange = (tenantId: string) => {
     setSelectedTenant(tenantId);
@@ -342,6 +428,15 @@ export const Partners: React.FC = () => {
           tooltip={t('partner.detail_title', { defaultValue: 'Xem thông tin tích hợp' })}
         />
         <Button
+          icon="pi pi-key"
+          rounded
+          outlined
+          severity="help"
+          size="small"
+          onClick={() => openKeyWebhookDialog(rowData)}
+          tooltip={t('partner.manage_key_webhook', { defaultValue: 'Xoay vòng API Key & IP/Webhook' })}
+        />
+        <Button
           icon="pi pi-pencil"
           rounded
           outlined
@@ -466,6 +561,8 @@ export const Partners: React.FC = () => {
       <AppBreadcrumb items={[{ label: t('nav.partners', { defaultValue: 'Đối tác' }) }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
+        <TabView>
+          <TabPanel header={t('partner.tab_directory', { defaultValue: 'Danh mục Đối tác Liên minh' })} leftIcon="pi pi-building mr-2">
         <DataTable<any>
           value={filteredItems}
           selection={selectedItems}
@@ -568,6 +665,52 @@ export const Partners: React.FC = () => {
             style={{ minWidth: '11rem' }}
           />
         </DataTable>
+          </TabPanel>
+
+          <TabPanel header={t('partner.tab_connections_overview', { defaultValue: 'QT-06 · Tổng quan kết nối (6 hệ thống)' })} leftIcon="pi pi-sitemap mr-2">
+            <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <div>
+                <h5 className="m-0 font-medium text-900">{t('partner.qt06_title', { defaultValue: 'Giám sát Tích hợp Hệ thống Lõi (WSO2, Mobile Service, Payment Point, BCCS, USSD *202#, Data Lake)' })}</h5>
+                <span className="text-xs text-500">{t('partner.qt06_desc', { defaultValue: 'Trạng thái kết nối thời gian thực, độ trễ và tỷ lệ thành công 24h.' })}</span>
+              </div>
+              <Button icon="pi pi-refresh" label={t('common.refresh', { defaultValue: 'Kiểm tra lại' })} outlined size="small" onClick={() => fetchIntegrations(selectedTenant)} loading={integrationsLoading} />
+            </div>
+
+            {integrationsLoading ? (
+              <div className="grid">
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <div key={n} className="col-12 md:col-4"><Skeleton height="8rem" /></div>
+                ))}
+              </div>
+            ) : integrations.length === 0 ? (
+              <div className="text-center p-5 border-1 surface-border border-round surface-50 text-500">
+                <i className="pi pi-sitemap text-3xl mb-2 block text-400" />
+                {t('partner.no_integrations', { defaultValue: 'Chưa nhận được dữ liệu trạng thái từ 6 hệ thống lõi.' })}
+              </div>
+            ) : (
+              <div className="grid">
+                {integrations.map((sys) => (
+                  <div key={sys.systemCode} className="col-12 md:col-6 lg:col-4">
+                    <div className="p-3 border-round surface-card border-1 surface-border h-full flex flex-column justify-content-between gap-2">
+                      <div className="flex justify-content-between align-items-start gap-2">
+                        <div>
+                          <div className="font-medium text-900">{sys.systemName}</div>
+                          <div className="text-xs font-mono text-500">{sys.systemCode} · {sys.protocol || 'REST/HTTPS'}</div>
+                        </div>
+                        <Tag value={sys.status} severity={sys.status === 'HEALTHY' ? 'success' : sys.status === 'DEGRADED' ? 'warning' : 'danger'} />
+                      </div>
+                      <div className="text-xs text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap" title={sys.endpointUrl}>{sys.endpointUrl || '--'}</div>
+                      <div className="flex justify-content-between text-xs pt-2 border-top-1 surface-border">
+                        <span>Latency: <span className="font-mono">{sys.latencyMs ?? 0} ms</span></span>
+                        <span>24h Rate: <span className="font-mono">{Number(sys.successRate24h ?? 0).toFixed(2)}%</span></span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabPanel>
+        </TabView>
       </div>
 
       {/* Dialog Tạo mới / Chỉnh sửa Đối tác */}
@@ -880,6 +1023,58 @@ Content-Type: application/json`}
         )}
         <div className="flex justify-content-end mt-3">
           <Button label={t('common.close', { defaultValue: 'Đóng' })} icon="pi pi-times" onClick={() => setShowDetailDialog(false)} />
+        </div>
+      </Dialog>
+
+      {/* Dialog Xoay vòng API Key (hiển thị 1 lần) & Cấu hình IP/Webhook */}
+      <Dialog
+        visible={showKeyWebhookDialog}
+        onHide={() => setShowKeyWebhookDialog(false)}
+        header={keyTargetPartner ? `${t('partner.key_webhook_title', { defaultValue: 'Cấu hình IP/Webhook & API Key' })} · ${keyTargetPartner.partnerCode}` : ''}
+        style={{ width: '44rem' }}
+        breakpoints={{ '641px': '95vw' }}
+        modal
+      >
+        <div className="flex flex-column gap-3">
+          <div className="p-3 border-round surface-50 border-1 surface-border">
+            <div className="font-medium text-sm mb-2">{t('partner.webhook_ip_section', { defaultValue: '1. Cấu hình Webhook & IP Whitelist' })}</div>
+            <div className="flex flex-column gap-2">
+              <label className="text-xs text-600">Webhook Callback URL</label>
+              <InputText value={editWebhookUrl} onChange={(e) => setEditWebhookUrl(e.target.value)} className="font-mono p-inputtext-sm" placeholder="https://partner.example.com/loyalty/webhook" />
+              <label className="text-xs text-600 mt-1">IP Whitelist (phân cách bằng dấu phẩy)</label>
+              <InputText value={editIpWhitelist} onChange={(e) => setEditIpWhitelist(e.target.value)} className="font-mono p-inputtext-sm" placeholder="103.1.2.3/32, 103.1.2.4/32" />
+              <div className="flex justify-content-end mt-2">
+                <Button label={t('common.save', { defaultValue: 'Lưu cấu hình' })} icon="pi pi-save" size="small" onClick={handleSaveWebhookAndIp} loading={keyLoading} />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 border-round surface-50 border-1 surface-border">
+            <div className="flex justify-content-between align-items-center mb-2">
+              <span className="font-medium text-sm">{t('partner.rotate_section', { defaultValue: '2. Xoay vòng API Key (Grace Period 7 ngày)' })}</span>
+              <Button label={t('partner.rotate_btn', { defaultValue: 'Xoay vòng API Key' })} icon="pi pi-sync" severity="warning" size="small" onClick={handleRotateApiKey} loading={keyLoading} />
+            </div>
+
+            {rotatedKeyOnce && (
+              <div className="p-3 border-round bg-green-50 border-1 border-green-300 mb-3">
+                <div className="text-xs font-medium text-green-800 mb-1">
+                  <i className="pi pi-exclamation-circle mr-1" />
+                  {t('partner.show_once_warning', { defaultValue: 'Khóa mới chỉ hiển thị DUY NHẤT 1 LẦN. Vui lòng sao chép và lưu trữ an toàn ngay:' })}
+                </div>
+                <div className="flex align-items-center gap-2">
+                  <code className="flex-1 p-2 border-round bg-white font-mono text-sm text-green-900">{rotatedKeyOnce}</code>
+                  <Button icon="pi pi-copy" size="small" onClick={() => copyToClipboard(rotatedKeyOnce, 'New API Key')} />
+                </div>
+              </div>
+            )}
+
+            <DataTable<PartnerApiKeyModel> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys', { defaultValue: 'Chưa có danh sách khóa từ hệ thống.' })}>
+              <Column field="keyPrefix" header="Prefix" body={(k) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={(k) => <Tag value={k.status} severity={k.status === 'ACTIVE' ? 'success' : k.status === 'GRACE_PERIOD' ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
+              <Column field="graceUntil" header="Grace Period" body={(k) => <span className="font-mono text-xs white-space-nowrap">{k.graceUntil ? new Date(k.graceUntil).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
+              <Column header={t('common.action', { defaultValue: 'Thu hồi' })} body={(k) => k.id && k.status === 'GRACE_PERIOD' ? <Button label={t('partner.revoke_now', { defaultValue: 'Revoke old key now' })} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
+            </DataTable>
+          </div>
         </div>
       </Dialog>
     </div>

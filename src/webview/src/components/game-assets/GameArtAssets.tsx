@@ -701,6 +701,52 @@ export const GameCoverArt: React.FC<GameCoverProps> = ({ gameId, className = 'w-
         </svg>
       );
 
+    case 'SCRATCH':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgScratch" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F59E0B" />
+              <stop offset="50%" stopColor="#EA580C" />
+              <stop offset="100%" stopColor="#BE123C" />
+            </linearGradient>
+            <linearGradient id="foilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F8FAFC" />
+              <stop offset="50%" stopColor="#CBD5E1" />
+              <stop offset="100%" stopColor="#94A3B8" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgScratch)" />
+          <rect x="28" y="42" width="144" height="116" rx="18" fill="#FFFBEB" stroke="#FDE047" strokeWidth="4" />
+          <rect x="40" y="56" width="120" height="88" rx="12" fill="url(#foilGrad)" />
+          <path d="M55 128 C72 95, 95 112, 118 76 C128 62, 140 86, 148 70" stroke="#F59E0B" strokeWidth="14" strokeLinecap="round" fill="none" />
+          <circle cx="72" cy="86" r="10" fill="#FDE047" />
+          <circle cx="132" cy="116" r="12" fill="#F59E0B" />
+          <text x="100" y="108" textAnchor="middle" fontSize="28" fontWeight="bold" fill="#7C2D12">🎁</text>
+        </svg>
+      );
+
+    case 'LEARNING':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgLearning" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#312E81" />
+              <stop offset="60%" stopColor="#4F46E5" />
+              <stop offset="100%" stopColor="#0EA5E9" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgLearning)" />
+          <rect x="38" y="48" width="124" height="104" rx="16" fill="#EEF2FF" stroke="#A5B4FC" strokeWidth="3" />
+          <line x1="100" y1="54" x2="100" y2="146" stroke="#818CF8" strokeWidth="3" />
+          <rect x="52" y="68" width="36" height="8" rx="4" fill="#4F46E5" />
+          <rect x="52" y="86" width="32" height="6" rx="3" fill="#818CF8" />
+          <rect x="52" y="100" width="38" height="6" rx="3" fill="#818CF8" />
+          <circle cx="130" cy="96" r="20" fill="#F59E0B" stroke="#FEF08A" strokeWidth="3" />
+          <text x="130" y="103" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#FFFFFF">?</text>
+        </svg>
+      );
+
     default:
       return null;
   }

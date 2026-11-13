@@ -6,10 +6,12 @@ import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
+import com.natcash.loyalty.ledger.service.PointBucketFifoService;
 import com.natcash.loyalty.lock.DistributedLockHelper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +33,9 @@ public class PointExpirationJob {
     private final LoyaltyAccountRepository accountRepository;
     private final LoyaltyPointLedgerRepository ledgerRepository;
     private final DistributedLockHelper lockHelper;
+
+    @Autowired(required = false)
+    private PointBucketFifoService pointBucketFifoService;
 
     public PointExpirationJob(LoyaltyAccountRepository accountRepository,
                               LoyaltyPointLedgerRepository ledgerRepository,
@@ -60,7 +65,9 @@ public class PointExpirationJob {
                 pageNumber++;
             } while (page.hasNext());
 
-            log.info("[BATCH-POINT-EXPIRATION-COMPLETED] Hoàn thành quét điểm hết hạn cho {} tài khoản hội viên", totalProcessedAccounts);
+            int expiredBuckets = pointBucketFifoService != null ? pointBucketFifoService.expireDueBuckets() : 0;
+            log.info("[BATCH-POINT-EXPIRATION-COMPLETED] Hoàn thành quét điểm hết hạn cho {} tài khoản hội viên, {} lô FIFO hết hạn",
+                    totalProcessedAccounts, expiredBuckets);
             return totalProcessedAccounts;
         });
     }

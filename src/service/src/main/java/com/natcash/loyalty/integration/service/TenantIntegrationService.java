@@ -22,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -232,6 +235,45 @@ public class TenantIntegrationService {
                     .latencyMs(System.currentTimeMillis() - start)
                     .build();
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getIntegrationsOverview(String tenantId) {
+        List<TenantIntegrationEntity> configured = repository.findByTenantId(tenantId);
+        Map<String, TenantIntegrationEntity> byProvider = new LinkedHashMap<>();
+        if (configured != null) {
+            for (TenantIntegrationEntity entity : configured) {
+                if (entity.getProviderCode() != null) {
+                    byProvider.put(entity.getProviderCode().toUpperCase(), entity);
+                }
+            }
+        }
+
+        List<String[]> systems = List.of(
+                new String[]{"WSO2", "WSO2 API Gateway & SSO", "API_GATEWAY"},
+                new String[]{"MOBILE_SERVICE", "Natcash Mobile Service", "MOBILE_CHANNEL"},
+                new String[]{"PAYMENT_POINT", "Natcash Payment Point POS", "POS_TERMINAL"},
+                new String[]{"BCCS", "Natcom BCCS Core Telecom", "CORE_TELECOM"},
+                new String[]{"USSD_202", "USSD *202# Gateway", "USSD"},
+                new String[]{"DATA_LAKE", "Enterprise Data Lake CDC", "ANALYTICS_ETL"}
+        );
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String[] sys : systems) {
+            String code = sys[0];
+            TenantIntegrationEntity match = byProvider.get(code);
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("systemCode", code);
+            item.put("systemName", sys[1]);
+            item.put("category", sys[2]);
+            item.put("configured", match != null);
+            item.put("active", match != null && Boolean.TRUE.equals(match.getIsActive()));
+            item.put("endpointUrl", match != null ? match.getEndpointUrl() : null);
+            item.put("status", (match != null && Boolean.TRUE.equals(match.getIsActive())) ? "CONNECTED" : "STANDBY");
+            item.put("lastCheckedAt", Instant.now());
+            result.add(item);
+        }
+        return result;
     }
 
     private IntegrationConfigDto mapToDto(TenantIntegrationEntity entity) {

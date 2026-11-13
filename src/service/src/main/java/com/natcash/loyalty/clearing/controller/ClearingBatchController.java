@@ -7,12 +7,18 @@ import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportResponse
 import com.natcash.loyalty.clearing.dto.ClearingDto.ResolveDisputeRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodResponse;
+import com.natcash.loyalty.clearing.entity.ClearingPaymentBatchEntity;
 import com.natcash.loyalty.clearing.service.ClearingSettlementService;
 import com.natcash.loyalty.tenant.TenantContext;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -88,5 +95,45 @@ public class ClearingBatchController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         DisputeItemDto result = clearingService.resolveDispute(tenantId, disputeCode, request);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/batches")
+    @Operation(summary = "Danh sách lô thanh toán đối soát đối tác (LM-07)")
+    public ResponseEntity<List<ClearingPaymentBatchEntity>> getPaymentBatches(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestParam(value = "partnerId", required = false) Long partnerId) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        return ResponseEntity.ok(clearingService.listPaymentBatches(tenantId, partnerId));
+    }
+
+    @PostMapping("/batches")
+    @Operation(summary = "Khởi tạo lô thanh toán đối soát kèm phí MDR và tách khiếu nại KN-...")
+    public ResponseEntity<ClearingPaymentBatchEntity> createPaymentBatch(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @Valid @RequestBody CreatePaymentBatchRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        ClearingPaymentBatchEntity created = clearingService.createPaymentBatch(
+                tenantId,
+                request.getPartnerId(),
+                request.getPeriod(),
+                request.getGrossAmount(),
+                request.getDiscountAmount(),
+                request.getMdrFeePercent(),
+                request.getTxCount());
+        return ResponseEntity.ok(created);
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreatePaymentBatchRequest {
+        @NotNull
+        private Long partnerId;
+        private String period;
+        private BigDecimal grossAmount;
+        private BigDecimal discountAmount;
+        private BigDecimal mdrFeePercent;
+        private Integer txCount;
     }
 }

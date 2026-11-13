@@ -7,10 +7,13 @@ import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
+import com.natcash.loyalty.campaign.service.MilestoneService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
+import com.natcash.loyalty.domain.enums.CurrencyAssetType;
 import com.natcash.loyalty.domain.enums.DiscountType;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.TierLevel;
@@ -18,6 +21,7 @@ import com.natcash.loyalty.domain.enums.VoucherStatus;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
+import com.natcash.loyalty.ledger.service.PointBucketFifoService;
 import com.natcash.loyalty.lock.DistributedLockHelper;
 import com.natcash.loyalty.stream.LoyaltyStreamEvent;
 import com.natcash.loyalty.stream.LoyaltyStreamProducer;
@@ -44,6 +48,7 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,9 +60,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import com.natcash.loyalty.campaign.service.MilestoneService;
-import com.natcash.loyalty.domain.enums.CampaignMetric;
 
 @Service
 public class RewardWalletService {
@@ -75,6 +77,9 @@ public class RewardWalletService {
     private final LoyaltyStreamProducer streamProducer;
     private final MilestoneService milestoneService;
     private final RedissonClient redissonClient;
+
+    @Autowired(required = false)
+    private PointBucketFifoService pointBucketFifoService;
 
     public RewardWalletService(AccountService accountService,
                                LoyaltyAccountRepository accountRepository,
@@ -336,6 +341,10 @@ public class RewardWalletService {
             accountRepository.save(account);
 
             if (effectivePointsToBurn.compareTo(BigDecimal.ZERO) > 0) {
+                if (pointBucketFifoService != null && account.getId() != null) {
+                    pointBucketFifoService.consumeFifo(
+                            tenantId, account.getId(), effectivePointsToBurn, CurrencyAssetType.LOYALTY_COIN);
+                }
                 LoyaltyPointLedgerEntity ledger = LoyaltyPointLedgerEntity.builder()
                         .tenantId(tenantId)
                         .account(account)

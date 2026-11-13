@@ -7,9 +7,12 @@ import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
+import com.natcash.loyalty.campaign.service.MilestoneService;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
+import com.natcash.loyalty.domain.enums.CampaignMetric;
+import com.natcash.loyalty.domain.enums.CurrencyAssetType;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.exception.LoyaltyException;
@@ -26,6 +29,7 @@ import com.natcash.loyalty.stream.LoyaltyStreamProducer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,13 +39,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.natcash.loyalty.campaign.service.MilestoneService;
-import com.natcash.loyalty.domain.enums.CampaignMetric;
 
 @Service
 public class PointLedgerService {
@@ -55,6 +57,9 @@ public class PointLedgerService {
     private final DistributedLockHelper lockHelper;
     private final LoyaltyStreamProducer streamProducer;
     private final MilestoneService milestoneService;
+
+    @Autowired(required = false)
+    private PointBucketFifoService pointBucketFifoService;
 
     public PointLedgerService(LoyaltyPointLedgerRepository ledgerRepository,
                               LoyaltyAccountRepository accountRepository,
@@ -124,6 +129,12 @@ public class PointLedgerService {
                     .createdAt(Instant.now())
                     .build();
             ledgerRepository.save(ledger);
+
+            if (pointBucketFifoService != null && account.getId() != null) {
+                Instant expiredAt = Instant.now().plus(LoyaltyConstants.DEFAULT_POINT_EXPIRATION_MONTHS * 30L, ChronoUnit.DAYS);
+                pointBucketFifoService.createEarnBucket(
+                        tenantId, account.getId(), pointsEarned, expiredAt, txCode, CurrencyAssetType.LOYALTY_COIN);
+            }
 
             // 6. Kiểm tra tự động thăng hạng
             boolean tierUpgraded = accountService.checkAndUpgradeTier(account);

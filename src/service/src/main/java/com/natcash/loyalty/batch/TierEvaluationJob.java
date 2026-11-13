@@ -4,6 +4,7 @@ import com.natcash.loyalty.account.entity.LoyaltyAccountEntity;
 import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyTierRepository;
+import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.lock.DistributedLockHelper;
@@ -15,8 +16,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class TierEvaluationJob {
@@ -51,36 +56,91 @@ public class TierEvaluationJob {
             List<LoyaltyAccountEntity> accounts = accountRepository.findAll();
             int evaluatedCount = 0;
 
+            Instant now = Instant.now();
+            Instant warningCutoff = now.plus(LoyaltyConstants.TIER_EXPIRY_WARNING_DAYS, ChronoUnit.DAYS);
+
             for (LoyaltyAccountEntity account : accounts) {
-                // Lọc hạng phù hợp nhất theo ngưỡng điểm xét hạng tierPoints
-                LoyaltyTierEntity appropriateTier = allTiers.stream()
+                List<LoyaltyTierEntity> tenantTiers = allTiers.stream()
                         .filter(t -> t.getTenantId().equals(account.getTenantId()))
-                        .filter(t -> account.getTierPoints().compareTo(t.getMinPoints()) >= 0)
-                        .max((t1, t2) -> t1.getMinPoints().compareTo(t2.getMinPoints()))
+                        .sorted(Comparator.comparing(LoyaltyTierEntity::getTierLevel))
+                        .toList();
+                if (tenantTiers.isEmpty()) {
+                    continue;
+                }
+
+                LoyaltyTierEntity currentTier = account.getTier();
+                BigDecimal tierPoints = account.getTierPoints() != null ? account.getTierPoints() : BigDecimal.ZERO;
+
+                LoyaltyTierEntity upgradeTier = tenantTiers.stream()
+                        .filter(t -> tierPoints.compareTo(t.getMinPoints()) >= 0)
+                        .max(Comparator.comparing(LoyaltyTierEntity::getMinPoints))
                         .orElse(null);
 
-                if (appropriateTier != null && (account.getTier() == null || !appropriateTier.getId().equals(account.getTier().getId()))) {
-                    TierLevel oldTier = account.getTier() != null ? account.getTier().getCode() : null;
-                    account.setTier(appropriateTier);
-                    account.setTierUpdatedAt(Instant.now());
+                if (upgradeTier != null && (currentTier == null
+                        || upgradeTier.getTierLevel() > currentTier.getTierLevel())) {
+                    TierLevel oldTier = currentTier != null ? currentTier.getCode() : null;
+                    account.setTier(upgradeTier);
+                    account.setTierUpdatedAt(now);
+                    account.setCycleEndAt(now.plus(365, ChronoUnit.DAYS));
                     accountRepository.save(account);
-
-                    // Bắn sự kiện thay đổi hạng vào Transactional Outbox
-                    outboxService.recordEvent(
-                            account.getTenantId(),
-                            "LOYALTY_TIER_UPDATED",
-                            "{\"userId\":\"" + account.getExternalUserId() + "\",\"oldTier\":\"" + oldTier + "\",\"newTier\":\"" + appropriateTier.getCode() + "\"}",
-                            "https://partner.webhook.internal/tier-updated"
-                    );
-
-                    log.info("[TIER-EVALUATION-CHANGED] user={}, from={}, to={}",
-                            account.getExternalUserId(), oldTier, appropriateTier.getCode());
+                    emitTierChangeEvent(account, oldTier, upgradeTier.getCode());
                     evaluatedCount++;
+                    continue;
+                }
+
+                if (currentTier != null && account.getCycleEndAt() != null) {
+                    if (account.getCycleEndAt().isAfter(now) && !account.getCycleEndAt().isAfter(warningCutoff)) {
+                        BigDecimal keepThreshold = currentTier.getKeepTierPoints() != null
+                                ? currentTier.getKeepTierPoints()
+                                : currentTier.getMinPoints();
+                        if (tierPoints.compareTo(keepThreshold) < 0) {
+                            outboxService.recordEvent(
+                                    account.getTenantId(),
+                                    "LOYALTY_TIER_EXPIRY_WARNING",
+                                    "{\"userId\":\"" + account.getExternalUserId() + "\",\"tier\":\"" + currentTier.getCode() + "\",\"needed\":" + keepThreshold.subtract(tierPoints) + "}",
+                                    "https://partner.webhook.internal/tier-warning"
+                            );
+                        }
+                    } else if (!account.getCycleEndAt().isAfter(now)) {
+                        boolean locked = account.getTierLockedUntil() != null && account.getTierLockedUntil().isAfter(now);
+                        BigDecimal keepThreshold = currentTier.getKeepTierPoints() != null
+                                ? currentTier.getKeepTierPoints()
+                                : currentTier.getMinPoints();
+                        if (!locked && tierPoints.compareTo(keepThreshold) < 0 && currentTier.getTierLevel() > 1) {
+                            Optional<LoyaltyTierEntity> oneStepLower = tenantTiers.stream()
+                                    .filter(t -> t.getTierLevel() < currentTier.getTierLevel())
+                                    .max(Comparator.comparing(LoyaltyTierEntity::getTierLevel));
+                            if (oneStepLower.isPresent()) {
+                                TierLevel oldTier = currentTier.getCode();
+                                LoyaltyTierEntity nextTier = oneStepLower.get();
+                                account.setTier(nextTier);
+                                account.setTierUpdatedAt(now);
+                                account.setCycleEndAt(now.plus(365, ChronoUnit.DAYS));
+                                accountRepository.save(account);
+                                emitTierChangeEvent(account, oldTier, nextTier.getCode());
+                                evaluatedCount++;
+                            }
+                        } else {
+                            account.setCycleEndAt(now.plus(365, ChronoUnit.DAYS));
+                            accountRepository.save(account);
+                        }
+                    }
                 }
             }
 
             log.info("[BATCH-TIER-EVALUATION-COMPLETED] Đã hoàn tất đánh giá và cập nhật hạng cho {} hội viên", evaluatedCount);
             return evaluatedCount;
         });
+    }
+
+    private void emitTierChangeEvent(LoyaltyAccountEntity account, TierLevel oldTier, TierLevel newTier) {
+        outboxService.recordEvent(
+                account.getTenantId(),
+                "LOYALTY_TIER_UPDATED",
+                "{\"userId\":\"" + account.getExternalUserId() + "\",\"oldTier\":\"" + oldTier + "\",\"newTier\":\"" + newTier + "\"}",
+                "https://partner.webhook.internal/tier-updated"
+        );
+        log.info("[TIER-EVALUATION-CHANGED] user={}, from={}, to={}",
+                account.getExternalUserId(), oldTier, newTier);
     }
 }

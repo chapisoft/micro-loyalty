@@ -7,10 +7,13 @@ import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
+import { InputNumber } from 'primereact/inputnumber';
+import { InputTextarea } from 'primereact/inputtextarea';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
-import { loyaltyService, PointLedgerItem } from '@/service/loyalty.service';
+import { AdjustmentDirection, CurrencyAssetType } from '@/models';
+import { loyaltyService, LoyaltyService, PointLedgerItem } from '@/service/loyalty.service';
 import { partnerService, Partner } from '@/service/partner.service';
 
 export const Transactions: React.FC = () => {
@@ -36,6 +39,51 @@ export const Transactions: React.FC = () => {
   // Selected item for audit detail modal
   const [detailItem, setDetailItem] = useState<PointLedgerItem | null>(null);
   const [detailDialogVisible, setDetailDialogVisible] = useState<boolean>(false);
+
+  // DT-02 Manual Point Adjustment (2-layer approval)
+  const [adjustVisible, setAdjustVisible] = useState<boolean>(false);
+  const [adjustSubmitting, setAdjustSubmitting] = useState<boolean>(false);
+  const [adjustUserId, setAdjustUserId] = useState<string>('');
+  const [adjustDirection, setAdjustDirection] = useState<AdjustmentDirection>(AdjustmentDirection.CREDIT);
+  const [adjustAssetType, setAdjustAssetType] = useState<CurrencyAssetType>(CurrencyAssetType.POINTS);
+  const [adjustAmount, setAdjustAmount] = useState<number>(0);
+  const [adjustReason, setAdjustReason] = useState<string>('');
+  const [adjustTicketRef, setAdjustTicketRef] = useState<string>('');
+
+  const handleSubmitAdjustment = async () => {
+    if (!adjustUserId.trim() || adjustAmount <= 0 || !adjustReason.trim()) {
+      toastRef.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('transaction.adjust_required', { defaultValue: 'Vui lòng nhập Hội viên, Số điểm > 0 và Lý do điều chỉnh.' }) });
+      return;
+    }
+    setAdjustSubmitting(true);
+    try {
+      await LoyaltyService.createPointAdjustment(
+        {
+          externalUserId: adjustUserId.trim(),
+          direction: adjustDirection,
+          assetType: adjustAssetType,
+          amount: adjustAmount,
+          reason: adjustReason.trim(),
+          ticketRef: adjustTicketRef.trim() || undefined,
+        },
+        selectedTenant
+      );
+      toastRef.current?.show({
+        severity: 'success',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: t('transaction.adjust_submitted', { defaultValue: 'Đã gửi yêu cầu điều chỉnh điểm sang hàng đợi phê duyệt 2 lớp.' }),
+      });
+      setAdjustVisible(false);
+      setAdjustUserId('');
+      setAdjustAmount(0);
+      setAdjustReason('');
+      setAdjustTicketRef('');
+    } catch (err: any) {
+      toastRef.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setAdjustSubmitting(false);
+    }
+  };
 
   // Load partners of selected tenant for filter dropdown
   useEffect(() => {
@@ -283,6 +331,14 @@ export const Transactions: React.FC = () => {
           />
         </span>
         <Button
+          label={t('transaction.manual_adjust_btn', { defaultValue: 'Điều chỉnh điểm' })}
+          icon="pi pi-sliders-h"
+          severity="warning"
+          outlined
+          size="small"
+          onClick={() => setAdjustVisible(true)}
+        />
+        <Button
           icon="pi pi-refresh"
           rounded
           outlined
@@ -335,7 +391,7 @@ export const Transactions: React.FC = () => {
             header={<span title={t('transaction.id_tooltip', { defaultValue: 'Mã định danh giao dịch sổ cái duy nhất' })}>{t('transaction.id', { defaultValue: 'Mã GD' })}</span>}
             body={(row: PointLedgerItem) => (
               <div className="flex align-items-center gap-1">
-                <span className="font-mono font-bold text-primary text-sm">{row.transactionId}</span>
+                <span className="font-mono white-space-nowrap font-medium text-primary text-sm">{row.transactionId}</span>
                 <Button
                   icon="pi pi-copy"
                   text
@@ -348,15 +404,15 @@ export const Transactions: React.FC = () => {
                 />
               </div>
             )}
-            style={{ minWidth: '12rem' }}
+            style={{ minWidth: '15rem' }}
           />
 
           {/* Cột 4: Số Điện Thoại / User ID */}
           <Column
             field="externalUserId"
             header={<span title={t('transaction.phone_tooltip', { defaultValue: 'Số điện thoại hoặc mã định danh hội viên' })}>{t('transaction.phone', { defaultValue: 'Số Điện Thoại' })}</span>}
-            body={(row: PointLedgerItem) => <span className="font-mono text-800">{row.externalUserId}</span>}
-            style={{ minWidth: '10rem' }}
+            body={(row: PointLedgerItem) => <span className="font-mono white-space-nowrap text-800">{row.externalUserId}</span>}
+            style={{ minWidth: '12rem' }}
           />
 
           {/* Cột 5: Loại GD */}
@@ -396,7 +452,8 @@ export const Transactions: React.FC = () => {
             field="createdAt"
             body={dateTemplate}
             header={t('common.created_at', { defaultValue: 'Thời Gian' })}
-            style={{ minWidth: '10.5rem' }}
+            className="font-mono white-space-nowrap"
+            style={{ minWidth: '12rem' }}
           />
 
           {/* Cột 10: Trạng Thái */}
@@ -546,6 +603,56 @@ export const Transactions: React.FC = () => {
             </div>
           </div>
         )}
+      </Dialog>
+
+      {/* Dialog DT-02: Điều chỉnh điểm thủ công (Gửi duyệt 2 lớp) */}
+      <Dialog
+        visible={adjustVisible}
+        onHide={() => setAdjustVisible(false)}
+        header={t('transaction.dt02_title', { defaultValue: 'Tạo Điều chỉnh Điểm thủ công (DT-02)' })}
+        style={{ width: '36rem' }}
+        breakpoints={{ '641px': '95vw' }}
+        modal
+        className="p-fluid"
+      >
+        <div className="flex flex-column gap-3">
+          <div className="p-3 border-round bg-blue-50 border-1 border-blue-200 text-xs text-blue-900">
+            <i className="pi pi-shield mr-2" />
+            {t('transaction.dt02_approval_hint', { defaultValue: 'Mọi lệnh cộng/trừ điểm thủ công đều đi qua quy trình phê duyệt 2 lớp (Maker-Checker) và kiểm soát hạn mức ngày/tháng.' })}
+          </div>
+          <div className="field m-0">
+            <label className="text-sm font-medium">{t('transaction.phone', { defaultValue: 'SĐT / Mã hội viên' })} *</label>
+            <InputText value={adjustUserId} onChange={(e) => setAdjustUserId(e.target.value)} className="font-mono" placeholder="+509..." />
+          </div>
+          <div className="grid">
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('transaction.adjust_direction', { defaultValue: 'Chiều điều chỉnh' })}</label>
+              <Dropdown value={adjustDirection} options={[{ label: 'Cộng điểm (CREDIT)', value: AdjustmentDirection.CREDIT }, { label: 'Trừ điểm (DEBIT)', value: AdjustmentDirection.DEBIT }]} onChange={(e) => setAdjustDirection(e.value)} appendTo="self" />
+            </div>
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('transaction.adjust_asset', { defaultValue: 'Loại tài sản' })}</label>
+              <Dropdown value={adjustAssetType} options={[{ label: 'Điểm Loyalty', value: CurrencyAssetType.POINTS }, { label: 'Lượt quay Game', value: CurrencyAssetType.GAME_SPINS }]} onChange={(e) => setAdjustAssetType(e.value)} appendTo="self" />
+            </div>
+          </div>
+          <div className="grid">
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('transaction.adjust_amount', { defaultValue: 'Số lượng' })} *</label>
+              <InputNumber value={adjustAmount} onValueChange={(e) => setAdjustAmount(e.value || 0)} min={1} />
+            </div>
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('transaction.ticket_ref', { defaultValue: 'Mã Ticket đối soát' })}</label>
+              <InputText value={adjustTicketRef} onChange={(e) => setAdjustTicketRef(e.target.value)} className="font-mono" placeholder="INC-2026-001" />
+            </div>
+          </div>
+          <div className="field m-0">
+            <label className="text-sm font-medium">{t('common.reason', { defaultValue: 'Lý do điều chỉnh' })} *</label>
+            <InputTextarea rows={3} value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex justify-content-end gap-2 mt-4">
+          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setAdjustVisible(false)} />
+          <Button label={t('transaction.submit_adjust', { defaultValue: 'Gửi duyệt 2 lớp' })} icon="pi pi-send" severity="warning" onClick={handleSubmitAdjustment} loading={adjustSubmitting} />
+        </div>
       </Dialog>
     </div>
   );

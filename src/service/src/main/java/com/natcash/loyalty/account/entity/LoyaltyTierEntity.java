@@ -50,6 +50,10 @@ public class LoyaltyTierEntity {
     @Builder.Default
     private BigDecimal minPoints = BigDecimal.ZERO;
 
+    @Column(name = "keep_tier_points", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal keepTierPoints = BigDecimal.ZERO;
+
     @Column(name = "point_multiplier", nullable = false, precision = 5, scale = 2)
     @Builder.Default
     private BigDecimal pointMultiplier = BigDecimal.ONE;

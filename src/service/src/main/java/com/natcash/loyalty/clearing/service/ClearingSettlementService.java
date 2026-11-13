@@ -11,11 +11,15 @@ import com.natcash.loyalty.clearing.dto.ClearingDto.ReconciliationReportResponse
 import com.natcash.loyalty.clearing.dto.ClearingDto.ResolveDisputeRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodRequest;
 import com.natcash.loyalty.clearing.dto.ClearingDto.SettlePeriodResponse;
+import com.natcash.loyalty.clearing.entity.ClearingPaymentBatchEntity;
 import com.natcash.loyalty.clearing.entity.LoyaltyClearingDisputeEntity;
 import com.natcash.loyalty.clearing.entity.LoyaltyClearinghouseSettlementEntity;
+import com.natcash.loyalty.clearing.repository.ClearingPaymentBatchRepository;
 import com.natcash.loyalty.clearing.repository.LoyaltyClearingDisputeRepository;
 import com.natcash.loyalty.clearing.repository.LoyaltyClearinghouseSettlementRepository;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.constant.LoyaltyConstants;
+import com.natcash.loyalty.domain.enums.BatchSettlementStatus;
 import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.DisputeStatus;
 import com.natcash.loyalty.domain.enums.ReconciliationStatus;
@@ -31,15 +35,18 @@ import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,6 +67,9 @@ public class ClearingSettlementService {
     private final LoyaltyClearingDisputeRepository disputeRepository;
     private final LoyaltyClearinghouseSettlementRepository settlementRepository;
     private final OutboxService outboxService;
+
+    @Autowired(required = false)
+    private ClearingPaymentBatchRepository paymentBatchRepository;
 
     // =========================================================================
     // 1. TỔNG HỢP BÁO CÁO ĐỐI SOÁT BÙ TRỪ KỲ (CMS)
@@ -564,6 +574,77 @@ public class ClearingSettlementService {
                 .createdAt(dispute.getCreatedAt())
                 .resolvedAt(dispute.getResolvedAt())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClearingPaymentBatchEntity> listPaymentBatches(String tenantId, Long partnerId) {
+        if (paymentBatchRepository == null) {
+            return Collections.emptyList();
+        }
+        return partnerId != null
+                ? paymentBatchRepository.findByTenantIdAndPartnerIdOrderByCreatedAtDesc(tenantId, partnerId)
+                : paymentBatchRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
+    }
+
+    @Transactional
+    public ClearingPaymentBatchEntity createPaymentBatch(
+            String tenantId,
+            Long partnerId,
+            String period,
+            BigDecimal grossAmount,
+            BigDecimal discountAmount,
+            BigDecimal mdrFeePercent,
+            Integer txCount) {
+        if (paymentBatchRepository == null) {
+            throw new LoyaltyException(ErrorCode.SYSTEM_ERROR);
+        }
+        LoyaltyPartnerEntity partner = partnerRepository.findByIdAndTenantId(partnerId, tenantId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+
+        BigDecimal gross = grossAmount != null ? grossAmount : BigDecimal.ZERO;
+        BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
+        BigDecimal feePct = mdrFeePercent != null
+                ? mdrFeePercent
+                : new BigDecimal(LoyaltyConstants.DEFAULT_MDR_FEE_PERCENT);
+
+        BigDecimal mdrFee = gross.multiply(feePct)
+                .divide(new BigDecimal("100.00"), 2, RoundingMode.HALF_UP);
+        BigDecimal netPayable = gross.subtract(discount).subtract(mdrFee).max(BigDecimal.ZERO);
+
+        List<LoyaltyClearingDisputeEntity> openDisputes = disputeRepository
+                .findByTenantIdAndPartner_Id(tenantId, partnerId)
+                .stream()
+                .filter(d -> d.getStatus() == DisputeStatus.OPEN || d.getStatus() == DisputeStatus.IN_REVIEW)
+                .toList();
+        List<String> knCodes = openDisputes.stream()
+                .map(LoyaltyClearingDisputeEntity::getDisputeCode)
+                .filter(code -> code != null && code.startsWith("KN-"))
+                .toList();
+        String excludedJson = knCodes.isEmpty()
+                ? "[]"
+                : "[" + knCodes.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(",")) + "]";
+
+        String effectivePeriod = period != null && !period.isBlank()
+                ? period.trim()
+                : PERIOD_FORMATTER.format(Instant.now());
+        String batchCode = "BATCH-" + effectivePeriod.replace("-", "") + "-"
+                + UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+
+        ClearingPaymentBatchEntity batch = ClearingPaymentBatchEntity.builder()
+                .tenantId(tenantId)
+                .batchCode(batchCode)
+                .partnerId(partnerId)
+                .period(effectivePeriod)
+                .grossAmount(gross)
+                .discountAmount(discount)
+                .mdrFeeAmount(mdrFee)
+                .netPayableAmount(netPayable)
+                .excludedDisputeCodes(excludedJson)
+                .txCount(txCount != null ? txCount : 0)
+                .confirmDeadlineAt(Instant.now().plus(LoyaltyConstants.SETTLEMENT_CONFIRM_DEADLINE_DAYS, ChronoUnit.DAYS))
+                .status(BatchSettlementStatus.PENDING_CONFIRM)
+                .build();
+        return paymentBatchRepository.save(batch);
     }
 
     private static class PartnerAccumulator {

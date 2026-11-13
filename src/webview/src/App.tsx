@@ -18,15 +18,24 @@ import {
   History,
   Gift,
   ChevronRight,
-  Smartphone,
   Store,
   Copy,
   Check,
-  Crown
+  Crown,
+  Bell,
+  MapPin,
+  Hash,
+  UserPlus,
+  FileText,
+  Briefcase,
+  Settings,
+  GraduationCap,
 } from 'lucide-react';
 import { LoyaltyJSBridge } from './bridge/LoyaltyJSBridge';
 const GameHubPage = lazy(() => import('./pages/GameHubPage').then((m) => ({ default: m.GameHubPage })));
 const LuckyWheelPage = lazy(() => import('./pages/LuckyWheelPage').then((m) => ({ default: m.LuckyWheelPage })));
+const LuckyScratchCardGame = lazy(() => import('./pages/games/LuckyScratchCardGame').then((m) => ({ default: m.LuckyScratchCardGame })));
+const LearningQuizPage = lazy(() => import('./pages/LearningQuizPage').then((m) => ({ default: m.LearningQuizPage })));
 const FlappyNatcomGame = lazy(() => import('./pages/games/FlappyNatcomGame').then((m) => ({ default: m.FlappyNatcomGame })));
 const Game2048Page = lazy(() => import('./pages/games/Game2048Page').then((m) => ({ default: m.Game2048Page })));
 const MemoryMatchGame = lazy(() => import('./pages/games/MemoryMatchGame').then((m) => ({ default: m.MemoryMatchGame })));
@@ -43,13 +52,37 @@ const UserVoucherPage = lazy(() => import('./pages/UserVoucherPage').then((m) =>
 import { GameCoverArt } from './components/game-assets/GameArtAssets';
 import { LanguageSelector } from './components/LanguageSelector';
 import { TierBenefitsModal } from './components/TierBenefitsModal';
+import { ProgramTermsModal } from './components/ProgramTermsModal';
+import { FifoExpiringBucketsModal } from './components/FifoExpiringBucketsModal';
+import { InviteFriendsModal } from './components/InviteFriendsModal';
+import { WhereToUseModal } from './components/WhereToUseModal';
+import { RewardWalletQrModal } from './components/RewardWalletQrModal';
+import { UssdSimulatorModal } from './components/UssdSimulatorModal';
+import { SegmentBannerRenderer } from './components/SegmentBannerRenderer';
+import { InboxModal } from './components/InboxModal';
+import { NotificationSettingsModal } from './components/NotificationSettingsModal';
+import { AgentPortalModal } from './components/AgentPortalModal';
 import { NotificationModal, NotificationType } from './components/NotificationModal';
-import { LoyaltyApi, MemberProfile, MilestoneItem, LedgerItem, PartnerItem, getDefaultUserId, getTenantId } from './services/api';
+import { SkeletonCard, SkeletonLine, EmptyState } from './components/common/StateBlocks';
+import { generateQrCodeSvgDataUri } from './utils/qrCodeSvg';
+import {
+  LoyaltyApi,
+  MemberProfile,
+  MilestoneItem,
+  LedgerItem,
+  PartnerItem,
+  ExpiringBucketsResponse,
+  SegmentProfileResponse,
+  getDefaultUserId,
+  getTenantId,
+} from './services/api';
 
 export type AppTabType =
   | 'HOME'
   | 'GAMEHUB'
   | 'WHEEL'
+  | 'SCRATCH'
+  | 'LEARNING'
   | 'FLAPPY'
   | 'GAME2048'
   | 'MEMORY'
@@ -67,29 +100,36 @@ export type AppTabType =
 export const App: React.FC = () => {
   const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<AppTabType>('HOME');
+  const [loadingHome, setLoadingHome] = useState<boolean>(true);
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
+  const [selectedCampaignFilter, setSelectedCampaignFilter] = useState<string>('ALL');
+  const [claimingMilestoneId, setClaimingMilestoneId] = useState<number | null>(null);
   const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
   const [partners, setPartners] = useState<PartnerItem[]>([]);
+  const [expiringBuckets, setExpiringBuckets] = useState<ExpiringBucketsResponse | null>(null);
+  const [segmentProfile, setSegmentProfile] = useState<SegmentProfileResponse | null>(null);
+  const [inboxUnreadCount, setInboxUnreadCount] = useState<number>(0);
 
   const userId = getDefaultUserId();
   const tenantId = getTenantId();
-  const today = new Date().toISOString().slice(0, 10);
 
-  // User state
-  const [userPoints, setUserPoints] = useState<number>(() => {
-    const saved = localStorage.getItem(`loyalty_points_${userId}`);
-    return saved !== null ? Number(saved) : 2480;
-  });
-  const [freeTurns, setFreeTurns] = useState<number>(() => {
-    const saved = localStorage.getItem(`loyalty_wheel_turns_${userId}_${today}`);
-    return saved !== null ? Number(saved) : 2;
-  });
-  const [perpetualTurns, setPerpetualTurns] = useState<number>(5);
+  // User balances hydrated exclusively from backend API (no fake defaults)
+  const [userPoints, setUserPoints] = useState<number | null>(null);
+  const [freeTurns, setFreeTurns] = useState<number | null>(null);
+  const [perpetualTurns, setPerpetualTurns] = useState<number | null>(null);
 
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [showTierModal, setShowTierModal] = useState<boolean>(false);
+  const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
+  const [showFifoModal, setShowFifoModal] = useState<boolean>(false);
+  const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
+  const [showWhereToUseModal, setShowWhereToUseModal] = useState<boolean>(false);
+  const [showUssdModal, setShowUssdModal] = useState<boolean>(false);
+  const [showInboxModal, setShowInboxModal] = useState<boolean>(false);
+  const [showNotifSettingsModal, setShowNotifSettingsModal] = useState<boolean>(false);
+  const [showAgentPortalModal, setShowAgentPortalModal] = useState<boolean>(false);
   const [notifyModal, setNotifyModal] = useState<{
     isOpen: boolean;
     type: NotificationType;
@@ -102,10 +142,10 @@ export const App: React.FC = () => {
     message: '',
   });
   const [qrCountdown, setQrCountdown] = useState<number>(60);
-  const [qrToken, setQrToken] = useState<string>('NATCASH_PAY_TOKEN_' + Math.floor(100000 + Math.random() * 900000));
+  const [qrToken, setQrToken] = useState<string>('');
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
   const [showCheckinModal, setShowCheckinModal] = useState<boolean>(false);
-  const [checkinStreak, setCheckinStreak] = useState<number>(3);
+  const [checkinStreak, setCheckinStreak] = useState<number>(0);
   const [hasCheckedInToday, setHasCheckedInToday] = useState<boolean>(false);
   const [soundMuted, setSoundMuted] = useState<boolean>(soundHaptics.isMuted());
 
@@ -141,6 +181,10 @@ export const App: React.FC = () => {
         setCurrentTab('GAMEHUB');
       } else if (rawHash === 'WHEEL' || rawHash === 'GAMEHUB/WHEEL') {
         setCurrentTab('WHEEL');
+      } else if (rawHash === 'SCRATCH' || rawHash === 'GAMEHUB/SCRATCH') {
+        setCurrentTab('SCRATCH');
+      } else if (rawHash === 'LEARNING' || rawHash === 'GAMEHUB/LEARNING') {
+        setCurrentTab('LEARNING');
       } else if (rawHash === 'FLAPPY' || rawHash === 'GAMEHUB/FLAPPY') {
         setCurrentTab('FLAPPY');
       } else if (rawHash === 'GAME2048' || rawHash === '2048' || rawHash === 'GAMEHUB/2048') {
@@ -183,49 +227,89 @@ export const App: React.FC = () => {
     };
   }, [scrollToTop]);
 
-  const loadData = useCallback(async () => {
+  const refreshEmbeddedQrToken = useCallback(async () => {
     try {
-      const [profileData, milestoneData, ledgerData, partnerData] = await Promise.all([
+      const res = await LoyaltyApi.generateRewardQrToken(userId);
+      setQrToken(res.qrToken);
+      setQrCountdown(res.expiresInSeconds && res.expiresInSeconds > 0 ? res.expiresInSeconds : 60);
+    } catch {
+      setQrToken('');
+    }
+  }, [userId]);
+
+  const loadData = useCallback(async () => {
+    setLoadingHome(true);
+    try {
+      const [
+        profileData,
+        milestoneData,
+        ledgerData,
+        partnerData,
+        bucketsData,
+        segmentData,
+        inboxData,
+      ] = await Promise.all([
         LoyaltyApi.getProfile(userId).catch(() => null),
         LoyaltyApi.getMilestones(userId).catch(() => ({ campaigns: [], milestones: [] })),
         LoyaltyApi.getPointLedger(userId, 0, 5).catch(() => ({ items: [], totalElements: 0 })),
         LoyaltyApi.getPartners().catch(() => []),
+        LoyaltyApi.getExpiringBuckets(userId).catch(() => null),
+        LoyaltyApi.getSegmentProfile(userId).catch(() => null),
+        LoyaltyApi.getInboxMessages(userId).catch(() => null),
       ]);
 
       if (profileData) {
         setProfile(profileData);
-        if (profileData.currentPoints) setUserPoints(profileData.currentPoints);
+        setUserPoints(profileData.currentPoints ?? 0);
+        setFreeTurns(profileData.freeDailyTurns ?? profileData.tier?.freeDailyTurns ?? 0);
+        setPerpetualTurns(profileData.perpetualTurns ?? 0);
+        setCheckinStreak(profileData.checkinStreakDays ?? 0);
+        setHasCheckedInToday(Boolean(profileData.hasCheckedInToday));
+      } else {
+        setUserPoints(0);
+        setFreeTurns(0);
+        setPerpetualTurns(0);
       }
-      if (milestoneData?.milestones) setMilestones(milestoneData.milestones);
-      if (ledgerData?.items) setLedgerItems(ledgerData.items);
-      if (partnerData) setPartners(partnerData);
+      setMilestones(milestoneData?.milestones || []);
+      setLedgerItems(ledgerData?.items || []);
+      setPartners(partnerData || []);
+      setExpiringBuckets(bucketsData);
+      setSegmentProfile(segmentData);
+      if (inboxData) {
+        setInboxUnreadCount(inboxData.unreadCount);
+      }
     } catch (e) {
       console.error('Lỗi nạp dữ liệu API:', e);
+    } finally {
+      setLoadingHome(false);
     }
   }, [userId]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    void loadData();
+    void refreshEmbeddedQrToken();
+  }, [loadData, refreshEmbeddedQrToken]);
 
-  // Auto refresh dynamic QR code every 60s
+  // Auto refresh dynamic QR code every 60s from backend
   useEffect(() => {
-    const timer = setInterval(() => {
+    if (!qrToken) return;
+    const timer = window.setInterval(() => {
       setQrCountdown((prev) => {
         if (prev <= 1) {
-          setQrToken('NATCASH_PAY_TOKEN_' + Math.floor(100000 + Math.random() * 900000));
+          void refreshEmbeddedQrToken();
           return 60;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    return () => window.clearInterval(timer);
+  }, [qrToken, refreshEmbeddedQrToken]);
 
   const handleCopyQrToken = () => {
+    if (!qrToken) return;
     navigator.clipboard.writeText(qrToken);
     setCopiedToken(true);
-    setTimeout(() => setCopiedToken(false), 2000);
+    window.setTimeout(() => setCopiedToken(false), 2000);
   };
 
   const handleMinigameReward = async (gameCode: string, earnedPoints: number, score: number = 0) => {
@@ -239,44 +323,69 @@ export const App: React.FC = () => {
       );
       if (res?.newPointBalance !== undefined) {
         setUserPoints(res.newPointBalance);
-        localStorage.setItem(`loyalty_points_${userId}`, String(res.newPointBalance));
       } else if (res?.pointsAwarded !== undefined) {
-        setUserPoints((p) => {
-          const updated = p + res.pointsAwarded;
-          localStorage.setItem(`loyalty_points_${userId}`, String(updated));
-          return updated;
-        });
+        setUserPoints((p) => (p ?? 0) + res.pointsAwarded);
       } else {
-        setUserPoints((p) => {
-          const updated = p + earnedPoints;
-          localStorage.setItem(`loyalty_points_${userId}`, String(updated));
-          return updated;
-        });
+        setUserPoints((p) => (p ?? 0) + earnedPoints);
       }
-      // Nạp lại thông tin sổ cái và hồ sơ nền
-      LoyaltyApi.getProfile(userId).then((p) => {
+      void LoyaltyApi.getProfile(userId).then((p) => {
         if (p) setProfile(p);
       });
-      LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
+      void LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
         if (l?.items) setLedgerItems(l.items);
       });
     } catch (e) {
-      console.warn('[handleMinigameReward] Fallback local state:', e);
-      setUserPoints((p) => {
-        const updated = p + earnedPoints;
-        localStorage.setItem(`loyalty_points_${userId}`, String(updated));
-        return updated;
-      });
+      console.warn('[handleMinigameReward] Failed to record reward:', e);
     }
   };
 
-  const points = userPoints;
-  const tierName = profile?.tier?.name || t('hero.current_tier');
-  const tierMultiplier = profile?.tier?.pointMultiplier ? `×${profile.tier.pointMultiplier}` : '×1.2';
-  const currentTierPoints = profile?.nextTierProgress?.currentTierPoints ?? profile?.tierPoints ?? 2480;
-  const nextTierPoints = profile?.nextTierProgress?.requiredPoints ?? 5000;
-  const progressPercent = profile?.nextTierProgress?.progressPercentage ?? Math.min(100, Math.round((currentTierPoints / nextTierPoints) * 100));
-  const pointsNeeded = profile?.nextTierProgress?.pointsNeeded ?? Math.max(0, nextTierPoints - currentTierPoints);
+  const handleClaimMission = async (milestone: MilestoneItem) => {
+    if (claimingMilestoneId !== null) return;
+    setClaimingMilestoneId(milestone.id);
+    soundHaptics.playClick();
+    try {
+      const res = await LoyaltyApi.claimMission(milestone.id, userId);
+      setUserPoints(res.newPointBalance);
+      setMilestones((prev) =>
+        prev.map((m) =>
+          m.id === milestone.id
+            ? { ...m, status: (res.status as MilestoneItem['status']) || 'CLAIMED' }
+            : m
+        )
+      );
+      soundHaptics.playVictoryFanfare();
+      setNotifyModal({
+        isOpen: true,
+        type: 'success',
+        title: t('missions.claim_success_title'),
+        message: t('missions.claim_success_msg', { points: res.pointsAwarded.toLocaleString() }),
+        badge: `+${res.pointsAwarded.toLocaleString()} ${t('common.points_unit')}`,
+      });
+      void LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
+        if (l?.items) setLedgerItems(l.items);
+      });
+    } catch (err) {
+      setNotifyModal({
+        isOpen: true,
+        type: 'error',
+        title: t('missions.claim_error_title'),
+        message: err instanceof Error ? err.message : t('missions.claim_error_msg'),
+      });
+    } finally {
+      setClaimingMilestoneId(null);
+    }
+  };
+
+  const points = userPoints ?? 0;
+  const tierName = profile?.tier?.name || (loadingHome ? '...' : t('hero.current_tier'));
+  const tierMultiplier = profile?.tier?.pointMultiplier ? `×${profile.tier.pointMultiplier}` : '—';
+  const currentTierPoints = profile?.nextTierProgress?.currentTierPoints ?? profile?.tierPoints ?? 0;
+  const nextTierPoints = profile?.nextTierProgress?.requiredPoints ?? 0;
+  const progressPercent =
+    profile?.nextTierProgress?.progressPercentage ??
+    (nextTierPoints > 0 ? Math.min(100, Math.round((currentTierPoints / nextTierPoints) * 100)) : 0);
+  const pointsNeeded =
+    profile?.nextTierProgress?.pointsNeeded ?? Math.max(0, nextTierPoints - currentTierPoints);
 
   const isPlayingGame = currentTab !== 'HOME' && currentTab !== 'GAMEHUB' && currentTab !== 'VOUCHERS';
 
@@ -350,8 +459,8 @@ export const App: React.FC = () => {
             </button>
           </nav>
 
-          {/* Right Action: Points Badge, Language Dropdown & Close */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Right Action: Points Badge, Inbox, Settings, Language Dropdown & Close */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5">
             {/* Live Point Balance Chip */}
             <div
               onClick={() => setShowTierModal(true)}
@@ -362,12 +471,37 @@ export const App: React.FC = () => {
                 ★
               </div>
               <div className="flex flex-col text-right leading-none">
-                <span className="font-mono font-black text-amber-900 text-xs">
-                  {points.toLocaleString()}
+                <span className="font-mono font-bold text-amber-900 text-xs">
+                  {userPoints === null ? '—' : userPoints.toLocaleString()}
                 </span>
                 <span className="text-[9px] text-amber-700 font-semibold">{tierName}</span>
               </div>
             </div>
+
+            {/* Inbox Button (CN-02) */}
+            <button
+              type="button"
+              onClick={() => setShowInboxModal(true)}
+              className="relative p-2 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-600 hover:text-slate-900 border border-slate-200"
+              title={t('inbox.title')}
+            >
+              <Bell className="w-4 h-4" />
+              {inboxUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-mono font-bold flex items-center justify-center">
+                  {inboxUnreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification & Language Settings Button (CN-04) */}
+            <button
+              type="button"
+              onClick={() => setShowNotifSettingsModal(true)}
+              className="hidden sm:flex p-2 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-600 hover:text-slate-900 border border-slate-200"
+              title={t('notifSettings.title')}
+            >
+              <Settings className="w-4 h-4" />
+            </button>
 
             {/* Sound Mute Toggle */}
             <button
@@ -376,7 +510,7 @@ export const App: React.FC = () => {
                 setSoundMuted(next);
               }}
               className="p-2 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-600 hover:text-slate-900 border border-slate-200"
-              title={soundMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+              title={soundMuted ? t('common.unmute') : t('common.mute')}
             >
               {soundMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
             </button>
@@ -405,13 +539,13 @@ export const App: React.FC = () => {
           <GameHubPage
             onBack={() => navigateToTab('HOME')}
             onSelectGame={(gameId) => navigateToTab(gameId)}
-            freeTurns={freeTurns}
-            perpetualTurns={perpetualTurns}
+            freeTurns={freeTurns ?? 0}
+            perpetualTurns={perpetualTurns ?? 0}
             points={points}
+            streakDays={checkinStreak}
             onUpdateTurns={(free, perp) => {
               setFreeTurns(free);
               setPerpetualTurns(perp);
-              localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(free));
             }}
           />
         )}
@@ -420,32 +554,66 @@ export const App: React.FC = () => {
         {currentTab === 'WHEEL' && (
           <LuckyWheelPage
             onBack={() => {
-              loadData();
+              void loadData();
               navigateToTab('GAMEHUB');
             }}
             userPoints={points}
-            freeTurns={freeTurns}
+            freeTurns={freeTurns ?? 0}
             onClaimReward={(earnedPoints, newBalance) => {
               if (newBalance !== undefined) {
                 setUserPoints(newBalance);
-                localStorage.setItem(`loyalty_points_${userId}`, String(newBalance));
               } else {
-                setUserPoints((p) => {
-                  const updated = p + earnedPoints;
-                  localStorage.setItem(`loyalty_points_${userId}`, String(updated));
-                  return updated;
-                });
+                setUserPoints((p) => (p ?? 0) + earnedPoints);
               }
-              LoyaltyApi.getProfile(userId).then((p) => {
+              void LoyaltyApi.getProfile(userId).then((p) => {
                 if (p) setProfile(p);
               });
-              LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
+              void LoyaltyApi.getPointLedger(userId, 0, 5).then((l) => {
                 if (l?.items) setLedgerItems(l.items);
               });
             }}
             onUpdateTurns={(remainingTurns) => {
               setFreeTurns(remainingTurns);
-              localStorage.setItem(`loyalty_wheel_turns_${userId}_${today}`, String(remainingTurns));
+            }}
+          />
+        )}
+
+        {/* SUBGAME: THẺ CÀO MAY MẮN (GM-02) */}
+        {currentTab === 'SCRATCH' && (
+          <LuckyScratchCardGame
+            onBack={() => {
+              void loadData();
+              navigateToTab('GAMEHUB');
+            }}
+            externalUserId={userId}
+            availableTurns={(freeTurns ?? 0) + (perpetualTurns ?? 0)}
+            onClaimReward={(earnedPoints, newBalance) => {
+              if (newBalance !== undefined) {
+                setUserPoints(newBalance);
+              } else {
+                setUserPoints((p) => (p ?? 0) + earnedPoints);
+              }
+              void LoyaltyApi.getProfile(userId).then((p) => {
+                if (p) setProfile(p);
+              });
+            }}
+          />
+        )}
+
+        {/* SUBGAME: HỌC TẬP & TRẮC NGHIỆM (LEARNING & QUIZ) */}
+        {currentTab === 'LEARNING' && (
+          <LearningQuizPage
+            onBack={() => {
+              void loadData();
+              navigateToTab('GAMEHUB');
+            }}
+            externalUserId={userId}
+            onPointsUpdated={(earnedPoints, newBalance) => {
+              if (newBalance !== undefined) {
+                setUserPoints(newBalance);
+              } else {
+                setUserPoints((p) => (p ?? 0) + earnedPoints);
+              }
             }}
           />
         )}
@@ -586,16 +754,12 @@ export const App: React.FC = () => {
         {currentTab === 'VOUCHERS' && (
           <UserVoucherPage
             onBack={() => {
-              loadData();
+              void loadData();
               navigateToTab('HOME');
             }}
-            userPoints={points}
+            userPoints={userPoints}
             onDeductPoints={(pts) => {
-              setUserPoints((p) => {
-                const updated = Math.max(0, p - pts);
-                localStorage.setItem(`loyalty_points_${userId}`, String(updated));
-                return updated;
-              });
+              setUserPoints((p) => Math.max(0, (p ?? 0) - pts));
             }}
           />
         )}
@@ -615,6 +779,114 @@ export const App: React.FC = () => {
                 </button>
               </div>
             )}
+
+            {/* ── NC-HM-01: NATCASH ENTRY TOUCHPOINT & QUICK ECOSYSTEM BAR ── */}
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-3.5 sm:p-4 shadow-xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    NC
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">{t('home.nc_entry_title')}</p>
+                    <p className="text-[11px] text-slate-500">
+                      {t('home.nc_entry_subtitle', {
+                        coins: userPoints === null ? '—' : userPoints.toLocaleString(),
+                        tierPts: currentTierPoints.toLocaleString(),
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
+                >
+                  <FileText className="w-3 h-3" />
+                  <span>{t('terms.open_btn')}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {[
+                  {
+                    key: 'QR_PAY',
+                    label: t('home.quick_qr_pay'),
+                    icon: QrCode,
+                    color: 'text-amber-600 bg-amber-50 border-amber-200',
+                    onClick: () => setShowQrModal(true),
+                  },
+                  {
+                    key: 'WHERE',
+                    label: t('home.quick_where_to_use'),
+                    icon: MapPin,
+                    color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+                    onClick: () => setShowWhereToUseModal(true),
+                  },
+                  {
+                    key: 'INVITE',
+                    label: t('home.quick_invite'),
+                    icon: UserPlus,
+                    color: 'text-sky-600 bg-sky-50 border-sky-200',
+                    onClick: () => setShowInviteModal(true),
+                  },
+                  {
+                    key: 'LEARNING',
+                    label: t('home.quick_learning'),
+                    icon: GraduationCap,
+                    color: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+                    onClick: () => navigateToTab('LEARNING'),
+                  },
+                  {
+                    key: 'USSD',
+                    label: t('home.quick_ussd'),
+                    icon: Hash,
+                    color: 'text-violet-600 bg-violet-50 border-violet-200',
+                    onClick: () => setShowUssdModal(true),
+                  },
+                  {
+                    key: 'AGENT',
+                    label: t('home.quick_agent'),
+                    icon: Briefcase,
+                    color: 'text-slate-700 bg-slate-100 border-slate-200',
+                    onClick: () => setShowAgentPortalModal(true),
+                  },
+                ].map((act) => {
+                  const Icon = act.icon;
+                  return (
+                    <button
+                      key={act.key}
+                      type="button"
+                      onClick={() => {
+                        soundHaptics.playClick();
+                        act.onClick();
+                      }}
+                      className="flex flex-col items-center justify-center gap-1 p-2 rounded-2xl border border-slate-100 hover:border-slate-300 bg-slate-50/70 hover:bg-white transition active:scale-95"
+                    >
+                      <span className={`w-8 h-8 rounded-xl border flex items-center justify-center ${act.color}`}>
+                        <Icon className="w-4 h-4" />
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-700 text-center leading-tight line-clamp-1">
+                        {act.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── CN-01: PERSONALIZED SEGMENT BANNER ── */}
+            <SegmentBannerRenderer
+              segment={segmentProfile}
+              loading={loadingHome && !segmentProfile}
+              onAction={(actionKey) => {
+                if (actionKey === 'VOUCHERS') navigateToTab('VOUCHERS');
+                else if (actionKey === 'WHERE_TO_USE') setShowWhereToUseModal(true);
+                else if (actionKey === 'GAMEHUB') navigateToTab('GAMEHUB');
+                else if (actionKey === 'INVITE') setShowInviteModal(true);
+                else navigateToTab('GAMEHUB');
+              }}
+            />
 
             {/* ── SECTION 1: HERO VIP CARD & DYNAMIC QR HUB ── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
@@ -646,7 +918,6 @@ export const App: React.FC = () => {
 
                 {/* 3D VIP Card */}
                 <div className="relative rounded-3xl p-4 sm:p-7 text-white shadow-xl shadow-amber-500/15 overflow-hidden bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-600 border border-amber-400/40 no-scrollbar select-none isolate">
-                  {/* Decorative Ambient Inset Glows (Safe from WebKit blur clipping bugs) */}
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/25 via-transparent to-white/20 pointer-events-none" />
                   <div className="absolute top-0 right-0 w-48 h-48 bg-radial from-white/25 via-transparent to-transparent pointer-events-none" />
 
@@ -673,12 +944,14 @@ export const App: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Middle: Progress Bar */}
+                  {/* Middle: Progress Bar (Tier Qualifying Points vs Upgrade Threshold) */}
                   <div className="space-y-1.5 my-3 sm:my-5 relative z-10 bg-black/15 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/15">
                     <div className="flex justify-between text-[11px] sm:text-xs text-amber-100 font-medium">
                       <span>{t('hero.next_tier_progress')}</span>
                       <span className="font-bold text-white font-mono">
-                        {currentTierPoints.toLocaleString()} / {nextTierPoints.toLocaleString()} {t('nav.points_unit')}
+                        {nextTierPoints > 0
+                          ? `${currentTierPoints.toLocaleString()} / ${nextTierPoints.toLocaleString()} ${t('hero.tier_points_unit')}`
+                          : `${currentTierPoints.toLocaleString()} ${t('hero.tier_points_unit')}`}
                       </span>
                     </div>
                     <div className="w-full h-2.5 bg-black/30 rounded-full overflow-hidden p-0.5">
@@ -693,14 +966,18 @@ export const App: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Bottom: Points Available & Fast Actions */}
+                  {/* Bottom: Natcash Coin Balance & Fast Actions */}
                   <div className="pt-3 border-t border-white/20 flex flex-col sm:flex-row sm:items-end justify-between gap-3 relative z-10">
                     <div>
                       <div className="text-[10px] sm:text-xs text-amber-100 font-medium">{t('hero.points_balance')}</div>
-                      <div className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-baseline gap-1 font-mono">
-                        {points.toLocaleString()}
-                        <span className="text-xs sm:text-sm font-normal opacity-90 font-sans">{t('nav.points_unit')}</span>
-                      </div>
+                      {loadingHome && userPoints === null ? (
+                        <SkeletonLine className="w-28 h-7" />
+                      ) : (
+                        <div className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-baseline gap-1 font-mono">
+                          {points.toLocaleString()}
+                          <span className="text-xs sm:text-sm font-normal opacity-90 font-sans">{t('nav.points_unit')}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
@@ -723,27 +1000,36 @@ export const App: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Smart Point Expiration Warning Chip */}
-                <div
-                  onClick={() => {
-                    soundHaptics.playClick();
-                    navigateToTab('VOUCHERS');
-                  }}
-                  className="bg-gradient-to-r from-amber-50 to-orange-50/80 hover:from-amber-100 hover:to-orange-100 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between cursor-pointer transition active:scale-98 shadow-xs"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-900 flex items-center justify-center font-bold text-sm shrink-0">
-                      ⏳
+                {/* DT-01: Smart Point Expiration Warning Chip (Real FIFO Buckets) */}
+                {expiringBuckets && expiringBuckets.totalExpiringPoints > 0 && (
+                  <div
+                    onClick={() => {
+                      soundHaptics.playClick();
+                      setShowFifoModal(true);
+                    }}
+                    className="bg-gradient-to-r from-amber-50 to-orange-50/80 hover:from-amber-100 hover:to-orange-100 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between cursor-pointer transition active:scale-98 shadow-xs"
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-900 flex items-center justify-center font-bold text-sm shrink-0">
+                        ⏳
+                      </div>
+                      <div className="text-xs min-w-0">
+                        <span className="font-bold text-amber-950 block truncate">
+                          {t('home.points_expiration_warning', {
+                            count: expiringBuckets.totalExpiringPoints,
+                            date: expiringBuckets.nearestExpiryDate
+                              ? new Date(expiringBuckets.nearestExpiryDate).toLocaleDateString()
+                              : '—',
+                          })}
+                        </span>
+                        <p className="text-[11px] text-amber-800 truncate">{t('home.points_expiration_hint')}</p>
+                      </div>
                     </div>
-                    <div className="text-xs">
-                      <span className="font-extrabold text-amber-950 block">{t('home.points_expiration_warning', { count: 150, date: '31/08/2026', defaultValue: '150 điểm sẽ hết hạn vào 31/08/2026' })}</span>
-                      <p className="text-[11px] text-amber-800">{t('home.points_expiration_hint', { defaultValue: 'Đổi ngay phiếu quà tặng siêu thị hoặc gói data để không lãng phí điểm' })}</p>
-                    </div>
+                    <span className="text-[11px] font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition shrink-0">
+                      {t('fifo.view_batches_btn')}
+                    </span>
                   </div>
-                  <span className="text-[11px] font-black text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition shrink-0">
-                    {t('home.redeem_now_btn', { defaultValue: 'Đổi quà →' })}
-                  </span>
-                </div>
+                )}
               </div>
 
               {/* Right Column: Embedded Dynamic QR Payment Card */}
@@ -764,21 +1050,41 @@ export const App: React.FC = () => {
 
                   {/* QR Display */}
                   <div className="my-3 bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200/80 flex flex-col items-center justify-center text-center">
-                    <div className="bg-white p-2.5 rounded-2xl border-2 border-slate-900 shadow-md inline-block">
-                      <QrCode className="w-28 h-28 sm:w-36 sm:h-36 text-slate-950" />
-                    </div>
-                    <div className="mt-2.5 flex items-center space-x-1.5">
-                      <span className="text-[11px] font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded border border-slate-300">
-                        {qrToken}
-                      </span>
-                      <button
-                        onClick={handleCopyQrToken}
-                        className="p-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 transition"
-                        title={t('wallet.copy_hint')}
-                      >
-                        {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
+                    {qrToken ? (
+                      <>
+                        <div className="bg-white p-2 rounded-2xl border-2 border-slate-900 shadow-md inline-block">
+                          <img
+                            src={generateQrCodeSvgDataUri(qrToken, 136)}
+                            alt={t('qrModal.qr_alt')}
+                            className="w-28 h-28 sm:w-36 sm:h-36 block"
+                          />
+                        </div>
+                        <div className="mt-2.5 flex items-center space-x-1.5 max-w-full">
+                          <span className="text-[11px] font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded border border-slate-300 truncate max-w-[180px]">
+                            {qrToken}
+                          </span>
+                          <button
+                            onClick={handleCopyQrToken}
+                            className="p-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 transition shrink-0"
+                            title={t('wallet.copy_hint')}
+                          >
+                            {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="py-6 space-y-2">
+                        <QrCode className="w-10 h-10 text-slate-300 mx-auto" />
+                        <p className="text-[11px] text-slate-500">{t('qrModal.tap_to_generate')}</p>
+                        <button
+                          type="button"
+                          onClick={() => void refreshEmbeddedQrToken()}
+                          className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-semibold"
+                        >
+                          {t('qrModal.refresh_now')}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Fast Action Buttons Grid */}
@@ -791,7 +1097,7 @@ export const App: React.FC = () => {
                       className="py-2.5 px-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-amber-500/20 active:scale-95 transition"
                     >
                       <Gift className="w-4 h-4" />
-                      <span>{t('wallet.btn_checkin', { defaultValue: 'Chuỗi Điểm Danh' })}</span>
+                      <span>{t('wallet.btn_checkin')}</span>
                     </button>
 
                     <button
@@ -841,14 +1147,14 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* ── SECTION 3: TOÀN BỘ 13 TRÒ CHƠI GAMEHUB (RESPONSIVE GRID & FULL CATALOG) ── */}
+            {/* ── SECTION 3: TOÀN BỘ 15 TRÒ CHƠI & HỌC TẬP GAMEHUB ── */}
             <div className="space-y-3 sm:space-y-3.5">
               <div className="flex justify-between items-end">
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                     <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" /> {t('gamehub.title')}
                     <span className="text-[10px] font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                      13 Trò Chơi
+                      {t('gamehub.games_count', { count: 15 })}
                     </span>
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-500">{t('gamehub.subtitle')}</p>
@@ -873,7 +1179,7 @@ export const App: React.FC = () => {
                     bgGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500',
                     badge: 'HOT',
                     badgeBg: 'bg-red-600',
-                    perk: freeTurns > 0 ? `${freeTurns} Free` : '20 HTG',
+                    perk: (freeTurns ?? 0) > 0 ? `${freeTurns} Free` : '20 HTG',
                     action: () => navigateToTab('WHEEL'),
                   },
                   {
@@ -1008,6 +1314,28 @@ export const App: React.FC = () => {
                     perk: 'Kho Vàng',
                     action: () => navigateToTab('PULLPIN'),
                   },
+                  {
+                    id: 'SCRATCH',
+                    name: t('scratch.title'),
+                    categoryLabel: t('gamehub.filter_lucky'),
+                    icon: '🎫',
+                    bgGradient: 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600',
+                    badge: 'NEW',
+                    badgeBg: 'bg-amber-600',
+                    perk: t('scratch.perk_badge'),
+                    action: () => navigateToTab('SCRATCH'),
+                  },
+                  {
+                    id: 'LEARNING',
+                    name: t('learning.title'),
+                    categoryLabel: t('gamehub.filter_learning'),
+                    icon: '🎓',
+                    bgGradient: 'bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600',
+                    badge: 'QUIZ',
+                    badgeBg: 'bg-indigo-600',
+                    perk: t('learning.perk_badge'),
+                    action: () => navigateToTab('LEARNING'),
+                  },
                 ].map((game) => (
                   <div
                     key={game.id}
@@ -1054,99 +1382,143 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* ── SECTION 4: MILESTONE MISSIONS ── */}
+            {/* ── SECTION 4: MILESTONE MISSIONS (CAMPAIGN FILTER + CLAIM) ── */}
             <div className="space-y-3 sm:space-y-4">
-              <div className="flex justify-between items-end">
+              <div className="flex flex-wrap justify-between items-end gap-2">
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" /> {t('missions.title')}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-500">{t('missions.subtitle')}</p>
                 </div>
-                <button
-                  onClick={() => navigateToTab('VOUCHERS')}
-                  className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-0.5"
-                >
-                  <span>{t('missions.view_rewards')}</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteModal(true)}
+                    className="px-2.5 py-1 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-[11px] font-semibold inline-flex items-center gap-1"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>{t('referrals.invite_btn')}</span>
+                  </button>
+                  <button
+                    onClick={() => navigateToTab('VOUCHERS')}
+                    className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-0.5"
+                  >
+                    <span>{t('missions.view_rewards')}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                {milestones.length > 0 ? (
-                  milestones.map((m) => (
-                    <div key={m.id} className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-                          <Store className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">{m.campaignName}</h4>
-                          <p className="text-[11px] text-slate-500">{t('missions.target', { target: m.targetValue, points: m.rewardPoints })}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          m.status === 'COMPLETED' ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50'
-                        }`}>
-                          {m.status === 'COMPLETED' ? t('missions.completed') : t('missions.in_progress')}
-                        </span>
-                        <span className="text-xs font-black text-amber-600">{t('missions.plus_points', { points: m.rewardPoints })}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-                          <Store className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">{t('missions.default1_title')}</h4>
-                          <p className="text-[11px] text-slate-500">{t('missions.default1_sub')}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center">
-                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{t('missions.completed')} (1/1)</span>
-                        <span className="text-xs font-black text-amber-600">{t('missions.plus_points', { points: 100 })}</span>
-                      </div>
-                    </div>
+              {/* Campaign Filter Pills */}
+              {milestones.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                  {['ALL', ...Array.from(new Set(milestones.map((m) => m.campaignName).filter(Boolean)))].map(
+                    (camp) => {
+                      const active = selectedCampaignFilter === camp;
+                      return (
+                        <button
+                          key={camp}
+                          type="button"
+                          onClick={() => setSelectedCampaignFilter(camp)}
+                          className={`px-3 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap border transition ${
+                            active
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {camp === 'ALL' ? t('missions.filter_all') : camp}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+              )}
 
-                    <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                          <Smartphone className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">{t('missions.default2_title')}</h4>
-                          <p className="text-[11px] text-slate-500">{t('missions.default2_sub')}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center">
-                        <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-md">{t('missions.in_progress')} (0/1)</span>
-                        <span className="text-xs font-black text-amber-600">{t('missions.plus_points', { points: 50 })}</span>
-                      </div>
-                    </div>
+              {loadingHome && milestones.length === 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                  <SkeletonCard rows={3} />
+                  <SkeletonCard rows={3} />
+                  <SkeletonCard rows={3} />
+                </div>
+              ) : milestones.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-slate-200/80 p-4">
+                  <EmptyState
+                    icon={<CheckCircle2 className="w-6 h-6 text-slate-400" />}
+                    title={t('missions.empty_title')}
+                    description={t('missions.empty_desc')}
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                  {milestones
+                    .filter(
+                      (m) => selectedCampaignFilter === 'ALL' || m.campaignName === selectedCampaignFilter
+                    )
+                    .map((m) => {
+                      const normalizedStatus = (m.status || '').toUpperCase();
+                      const isClaimed = normalizedStatus === 'CLAIMED';
+                      const isClaimable =
+                        !isClaimed &&
+                        (normalizedStatus === 'CLAIMABLE' || normalizedStatus === 'COMPLETED');
+                      return (
+                        <div
+                          key={m.id}
+                          className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
+                              <Store className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-xs sm:text-sm text-slate-900 truncate">
+                                {m.campaignName}
+                              </h4>
+                              <p className="text-[11px] text-slate-500">
+                                {t('missions.target', { target: m.targetValue, points: m.rewardPoints })}
+                              </p>
+                            </div>
+                          </div>
 
-                    <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-slate-300 transition">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold shrink-0">
-                          <Gift className="w-4 h-4" />
+                          <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center gap-2">
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                                isClaimed
+                                  ? 'text-slate-600 bg-slate-100'
+                                  : isClaimable
+                                  ? 'text-emerald-700 bg-emerald-50'
+                                  : 'text-amber-800 bg-amber-50'
+                              }`}
+                            >
+                              {isClaimed
+                                ? t('missions.claimed')
+                                : isClaimable
+                                ? t('missions.completed')
+                                : t('missions.in_progress')}
+                            </span>
+
+                            {isClaimable ? (
+                              <button
+                                type="button"
+                                disabled={claimingMilestoneId === m.id}
+                                onClick={() => void handleClaimMission(m)}
+                                className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white text-[11px] font-bold active:scale-95 transition"
+                              >
+                                {claimingMilestoneId === m.id
+                                  ? t('common.processing')
+                                  : t('missions.claim_btn')}
+                              </button>
+                            ) : (
+                              <span className="text-xs font-mono font-bold text-amber-600">
+                                {t('missions.plus_points', { points: m.rewardPoints })}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">{t('missions.default3_title')}</h4>
-                          <p className="text-[11px] text-slate-500">{t('missions.default3_sub')}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center">
-                        <span className="text-[10px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md">{t('missions.in_progress')} (2/3)</span>
-                        <span className="text-xs font-black text-amber-600">{t('missions.plus_points', { points: 300 })}</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
 
             {/* ── SECTION 5: POINT ACTIVITY & PARTNERS ── */}
@@ -1157,54 +1529,58 @@ export const App: React.FC = () => {
                   <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center gap-1.5">
                     <History className="w-4 h-4 text-amber-600" /> {t('ledger.title')}
                   </h3>
-                  <span className="text-[11px] font-bold text-amber-600">{t('ledger.subtitle')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowFifoModal(true)}
+                    className="text-[11px] font-semibold text-amber-700 hover:text-amber-800 underline"
+                  >
+                    {t('fifo.view_batches_btn')}
+                  </button>
                 </div>
 
                 <div className="divide-y divide-slate-100">
-                  {ledgerItems.length > 0 ? (
+                  {loadingHome && ledgerItems.length === 0 ? (
+                    <div className="py-2">
+                      <SkeletonCard rows={3} />
+                    </div>
+                  ) : ledgerItems.length === 0 ? (
+                    <EmptyState
+                      icon={<History className="w-5 h-5 text-slate-400" />}
+                      title={t('ledger.empty_title')}
+                      description={t('ledger.empty_desc')}
+                    />
+                  ) : (
                     ledgerItems.map((item) => (
-                      <div key={item.id} className="py-2.5 flex items-center justify-between">
-                        <div className="flex items-center space-x-2.5">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
-                            item.pointChange >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                          }`}>
+                      <div key={item.id} className="py-2.5 flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2.5 min-w-0">
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                              item.pointChange >= 0
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-rose-50 text-rose-600'
+                            }`}
+                          >
                             {item.pointChange >= 0 ? '+' : '-'}
                           </div>
-                          <div>
-                            <p className="font-bold text-xs text-slate-800">{item.description}</p>
-                            <p className="text-[10px] text-slate-400">{t('ledger.ref_code', { code: item.referenceCode })}</p>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-xs text-slate-800 truncate">
+                              {item.description}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-mono truncate">
+                              {t('ledger.ref_code', { code: item.referenceCode })}
+                            </p>
                           </div>
                         </div>
-                        <span className={`font-mono font-black text-xs ${
-                          item.pointChange >= 0 ? 'text-emerald-600' : 'text-rose-600'
-                        }`}>
-                          {item.pointChange >= 0 ? `+${item.pointChange}` : `${item.pointChange}`} {t('nav.points_unit')}
+                        <span
+                          className={`font-mono font-bold text-xs shrink-0 ${
+                            item.pointChange >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                          }`}
+                        >
+                          {item.pointChange >= 0 ? `+${item.pointChange}` : `${item.pointChange}`}{' '}
+                          {t('nav.points_unit')}
                         </span>
                       </div>
                     ))
-                  ) : (
-                    <>
-                      <div className="py-2.5 flex items-center justify-between">
-                        <div className="flex items-center space-x-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">+</div>
-                          <div>
-                            <p className="font-bold text-xs text-slate-800">{t('ledger.default1_desc')}</p>
-                            <p className="text-[10px] text-slate-400">{t('ledger.ref_code', { code: 'POS_TX_123' })}</p>
-                          </div>
-                        </div>
-                        <span className="font-mono font-black text-emerald-600 text-xs">+150 {t('nav.points_unit')}</span>
-                      </div>
-                      <div className="py-2.5 flex items-center justify-between">
-                        <div className="flex items-center space-x-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">★</div>
-                          <div>
-                            <p className="font-bold text-xs text-slate-800">{t('ledger.default2_desc')}</p>
-                            <p className="text-[10px] text-slate-400">{t('ledger.ref_code', { code: 'SPIN_TX_456' })}</p>
-                          </div>
-                        </div>
-                        <span className="font-mono font-black text-amber-600 text-xs">+100 {t('nav.points_unit')}</span>
-                      </div>
-                    </>
                   )}
                 </div>
               </div>
@@ -1215,31 +1591,48 @@ export const App: React.FC = () => {
                   <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center gap-1.5">
                     <Store className="w-4 h-4 text-amber-600" /> {t('partners.title')}
                   </h3>
-                  <span className="text-[11px] text-slate-400">{t('partners.brands_count', { count: partners.length || 2 })}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowWhereToUseModal(true)}
+                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+                  >
+                    <span>{t('whereToUse.see_all_btn')}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
-                    <div className="flex items-center space-x-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-xs">DLM</div>
-                      <div>
-                        <p className="font-bold text-xs text-slate-800">{t('partners.delimart_name')}</p>
-                        <p className="text-[10px] text-slate-400">{t('partners.delimart_desc')}</p>
+                  {loadingHome && partners.length === 0 ? (
+                    <SkeletonCard rows={3} />
+                  ) : partners.length === 0 ? (
+                    <EmptyState
+                      icon={<Store className="w-5 h-5 text-slate-400" />}
+                      title={t('partners.empty_title')}
+                      description={t('partners.empty_desc')}
+                    />
+                  ) : (
+                    partners.map((partner) => (
+                      <div
+                        key={partner.id}
+                        className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center space-x-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                            {(partner.partnerCode || partner.partnerName || 'PT').slice(0, 3).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-xs text-slate-800 truncate">
+                              {partner.partnerName}
+                            </p>
+                            <p className="text-[10px] text-slate-500 truncate">{partner.partnerCode}</p>
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                          {partner.status || t('partners.connected')}
+                        </span>
                       </div>
-                    </div>
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{t('partners.connected')}</span>
-                  </div>
-
-                  <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
-                    <div className="flex items-center space-x-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs">NTC</div>
-                      <div>
-                        <p className="font-bold text-xs text-slate-800">{t('partners.natcom_name')}</p>
-                        <p className="text-[10px] text-slate-400">{t('partners.natcom_desc')}</p>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{t('partners.connected')}</span>
-                  </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -1324,60 +1717,15 @@ export const App: React.FC = () => {
         </>
       )}
 
-      {/* ── DYNAMIC QR MODAL ── */}
-      {showQrModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-sm w-full border border-slate-200 shadow-2xl relative space-y-4 text-center">
-            <button
-              onClick={() => setShowQrModal(false)}
-              className="absolute right-3.5 top-3.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition"
-              aria-label={t('nav.close')}
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div>
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-1.5 font-black">
-                <QrCode className="w-5 h-5" />
-              </div>
-              <h3 className="font-black text-lg text-slate-900">{t('wallet.modal_title')}</h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">{t('wallet.modal_desc')}</p>
-            </div>
-
-            {/* Dynamic QR Box */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block shadow-inner">
-              <div className="w-44 h-44 bg-white border-2 border-slate-900 rounded-2xl flex flex-col items-center justify-center p-2 relative shadow-md">
-                <QrCode className="w-40 h-40 text-slate-950" />
-              </div>
-              <div className="mt-2.5 flex items-center justify-center space-x-1.5">
-                <span className="text-[11px] font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded border border-slate-300">
-                  {qrToken}
-                </span>
-                <button
-                  onClick={handleCopyQrToken}
-                  className="p-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 transition"
-                  title={t('wallet.copy_hint')}
-                >
-                  {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* 60s Countdown */}
-            <div className="flex items-center justify-center space-x-2 text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 py-2 px-3 rounded-xl">
-              <Clock className="w-3.5 h-3.5 animate-spin text-amber-600" />
-              <span>
-                {t('wallet.refresh_in')}{' '}
-                <span className="font-mono text-sm font-black">{qrCountdown}{t('wallet.seconds')}</span>
-              </span>
-            </div>
-
-            <p className="text-[10px] text-slate-400 leading-tight">
-              {t('wallet.modal_security_note')}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* ── LM-17: REWARD WALLET 60S QR MODAL ── */}
+      <RewardWalletQrModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        externalUserId={userId}
+        availableCoins={userPoints}
+        onOpenWhereToUse={() => setShowWhereToUseModal(true)}
+        onOpenUssd={() => setShowUssdModal(true)}
+      />
 
       {/* ── DAILY CHECKIN 7-DAY STREAK MODAL ── */}
       <DailyCheckinModal
@@ -1386,17 +1734,80 @@ export const App: React.FC = () => {
         currentStreakDays={checkinStreak}
         hasCheckedInToday={hasCheckedInToday}
         onClaimReward={(pts, dayNum) => {
-          handleMinigameReward('DAILY_CHECKIN', pts, dayNum);
+          void handleMinigameReward('DAILY_CHECKIN', pts, dayNum);
           setHasCheckedInToday(true);
           setCheckinStreak((prev) => (prev >= 7 ? 1 : prev + 1));
         }}
       />
 
-      {/* ── TIER PRIVILEGES MODAL ── */}
+      {/* ── HV-03: TIER PRIVILEGES MODAL ── */}
       <TierBenefitsModal
         isOpen={showTierModal}
         onClose={() => setShowTierModal(false)}
-        currentTierCode={profile?.tier?.code || 'GOLD'}
+        currentTierCode={profile?.tier?.code || 'BRONZE'}
+        natcashCoins={userPoints ?? 0}
+        tierPoints={currentTierPoints}
+        onOpenTerms={() => {
+          setShowTierModal(false);
+          setShowTermsModal(true);
+        }}
+      />
+
+      {/* ── HV-01: PROGRAM TERMS MODAL ── */}
+      <ProgramTermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+
+      {/* ── DT-01: FIFO EXPIRING BUCKETS MODAL ── */}
+      <FifoExpiringBucketsModal
+        isOpen={showFifoModal}
+        onClose={() => setShowFifoModal(false)}
+        externalUserId={userId}
+      />
+
+      {/* ── NV-06: INVITE FRIENDS & REFERRAL MODAL ── */}
+      <InviteFriendsModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        externalUserId={userId}
+      />
+
+      {/* ── LM-04: WHERE TO USE PARTNERS MODAL ── */}
+      <WhereToUseModal
+        isOpen={showWhereToUseModal}
+        onClose={() => setShowWhereToUseModal(false)}
+        onOpenQrPay={() => setShowQrModal(true)}
+      />
+
+      {/* ── USSD *202# SIMULATOR MODAL ── */}
+      <UssdSimulatorModal
+        isOpen={showUssdModal}
+        onClose={() => setShowUssdModal(false)}
+        externalUserId={userId}
+      />
+
+      {/* ── CN-02: INBOX MODAL ── */}
+      <InboxModal
+        isOpen={showInboxModal}
+        onClose={() => setShowInboxModal(false)}
+        externalUserId={userId}
+        onOpenSettings={() => setShowNotifSettingsModal(true)}
+        onUnreadChange={(count) => setInboxUnreadCount(count)}
+      />
+
+      {/* ── CN-04: NOTIFICATION & LANGUAGE PREFERENCES MODAL ── */}
+      <NotificationSettingsModal
+        isOpen={showNotifSettingsModal}
+        onClose={() => setShowNotifSettingsModal(false)}
+        externalUserId={userId}
+      />
+
+      {/* ── AG-01 / AG-02: AGENT & SUPER AGENT PORTAL MODAL ── */}
+      <AgentPortalModal
+        isOpen={showAgentPortalModal}
+        onClose={() => setShowAgentPortalModal(false)}
+        externalUserId={userId}
       />
 
       {/* ── HIGH-END NOTIFICATION MODAL ── */}

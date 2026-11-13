@@ -10,138 +10,40 @@ import {
   Coins,
   ArrowRight,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Clock,
+  Ban,
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
-import { LoyaltyApi, UserVoucherItem } from '../services/api';
+import { LoyaltyApi, UserVoucherItem, CatalogVoucherItem, getDefaultUserId } from '../services/api';
 import { NotificationModal, NotificationType } from '../components/NotificationModal';
 import { VoucherBarcodeModal } from '../components/VoucherBarcodeModal';
+import { SkeletonCard, EmptyState } from '../components/common/StateBlocks';
 import { soundHaptics } from '../utils/soundHaptics';
-
-const DEFAULT_MY_VOUCHERS: UserVoucherItem[] = [
-  {
-    id: 1,
-    code: 'DELIMART-50K-9X8Z',
-    title: 'Phiếu Giảm 50 HTG Tại Siêu Thị Delimart',
-    partnerName: 'Delimart Supermarket',
-    category: 'DELIMART',
-    discountText: '50 HTG',
-    minOrder: 'Áp dụng cho hóa đơn từ 200 HTG',
-    validUntil: '31/08/2026',
-    status: 'AVAILABLE',
-    terms: 'Áp dụng tại tất cả các điểm bán của Delimart trên toàn quốc.',
-  },
-  {
-    id: 2,
-    code: 'NATCOM-10PCT-7B2C',
-    title: 'Chiết Khấu 10% Khi Nạp Tiền Natcom',
-    partnerName: 'Natcom Telecom',
-    category: 'NATCOM',
-    discountText: '10%',
-    minOrder: 'Hóa đơn nạp từ 100 HTG',
-    validUntil: '15/09/2026',
-    status: 'AVAILABLE',
-    terms: 'Áp dụng khi nạp thẻ điện thoại hoặc đăng ký gói cước 4G Natcom.',
-  },
-  {
-    id: 3,
-    code: 'DELIMART-20K-1A4F',
-    title: 'Phiếu Giảm 20 HTG Mua Sắm Bánh Kẹo',
-    partnerName: 'Delimart Supermarket',
-    category: 'DELIMART',
-    discountText: '20 HTG',
-    minOrder: 'Áp dụng cho hóa đơn từ 100 HTG',
-    validUntil: '30/09/2026',
-    status: 'AVAILABLE',
-    terms: 'Áp dụng trực tiếp khi thanh toán bằng mã ví phần thưởng.',
-  },
-  {
-    id: 4,
-    code: 'RINGME-VIP-88H2',
-    title: 'Gói Hội Viên Ringme Premium 1 Tháng',
-    partnerName: 'Ringme Entertainment',
-    category: 'ENTERTAINMENT',
-    discountText: '1 Tháng',
-    minOrder: 'Tài khoản Ringme đã xác thực',
-    validUntil: '20/08/2026',
-    status: 'EXPIRED',
-    terms: 'Đổi tại mục phần thưởng trên ứng dụng Ringme OTT.',
-  },
-];
-
-interface CatalogVoucherItem {
-  id: number;
-  partnerName: string;
-  category: string;
-  title: string;
-  discountText: string;
-  pointsCost: number;
-  minBill: number;
-  expiryDays: number;
-  badge: string;
-}
-
-const REDEEM_CATALOG: CatalogVoucherItem[] = [
-  {
-    id: 101,
-    partnerName: 'Delimart Supermarket',
-    category: 'DELIMART',
-    title: 'Phiếu Giảm 50 HTG Hóa Đơn Siêu Thị',
-    discountText: '50 HTG',
-    pointsCost: 200,
-    minBill: 200,
-    expiryDays: 30,
-    badge: 'PHỔ BIẾN',
-  },
-  {
-    id: 102,
-    partnerName: 'Delimart Supermarket',
-    category: 'DELIMART',
-    title: 'Phiếu Giảm 100 HTG Hóa Đơn Lớn',
-    discountText: '100 HTG',
-    pointsCost: 400,
-    minBill: 400,
-    expiryDays: 45,
-    badge: 'TIẾT KIỆM',
-  },
-  {
-    id: 103,
-    partnerName: 'Natcom Telecom',
-    category: 'NATCOM',
-    title: 'Gói Cước Data 4G Tốc Độ Cao 5GB',
-    discountText: '5GB 4G',
-    pointsCost: 150,
-    minBill: 0,
-    expiryDays: 15,
-    badge: 'HOT',
-  },
-  {
-    id: 104,
-    partnerName: 'Ringme OTT',
-    category: 'ENTERTAINMENT',
-    title: 'Tài Khoản VIP Xem Phim Không Quảng Cáo',
-    discountText: '1 Tháng VIP',
-    pointsCost: 300,
-    minBill: 0,
-    expiryDays: 30,
-    badge: 'GIẢI TRÍ',
-  },
-];
 
 export const UserVoucherPage: React.FC<{
   onBack?: () => void;
-  userPoints?: number;
+  userPoints?: number | null;
   onDeductPoints?: (pts: number) => void;
-}> = ({ onBack, userPoints = 2480, onDeductPoints }) => {
+}> = ({ onBack, userPoints = null, onDeductPoints }) => {
   const { t } = useTranslation();
+  const userId = getDefaultUserId();
   const [activeMainTab, setActiveMainTab] = useState<'MY_VOUCHERS' | 'REDEEM_CATALOG' | 'CASHBACK'>('MY_VOUCHERS');
 
-  // My Vouchers states
-  const [vouchers, setVouchers] = useState<UserVoucherItem[]>(DEFAULT_MY_VOUCHERS);
+  // My Vouchers states (zero fake defaults)
+  const [vouchers, setVouchers] = useState<UserVoucherItem[]>([]);
+  const [loadingVouchers, setLoadingVouchers] = useState<boolean>(true);
+  const [catalog, setCatalog] = useState<CatalogVoucherItem[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState<boolean>(true);
+  const [redeemingCode, setRedeemingCode] = useState<string | null>(null);
+
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
-  const [filterStatus, setFilterStatus] = useState<'ALL' | 'AVAILABLE' | 'USED' | 'EXPIRED'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'AVAILABLE' | 'AWAITING_CONFIRMATION' | 'USED' | 'EXPIRED'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedVoucher, setSelectedVoucher] = useState<UserVoucherItem | null>(null);
+  const [selectedVoucher, setSelectedVoucher] = useState<{
+    item: UserVoucherItem;
+    mode: 'REDEEM_RESULT' | 'CHECKOUT';
+  } | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [notifyModal, setNotifyModal] = useState<{
@@ -156,8 +58,8 @@ export const UserVoucherPage: React.FC<{
     message: '',
   });
 
-  // Cashback states
-  const [cashbackPointsInput, setCashbackPointsInput] = useState<string>('500');
+  // Cashback states (no hardcoded default value)
+  const [cashbackPointsInput, setCashbackPointsInput] = useState<string>('');
   const [cashbackSuccess, setCashbackSuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -165,8 +67,6 @@ export const UserVoucherPage: React.FC<{
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, [activeMainTab]);
-
-  const userId = '84988888888';
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -184,63 +84,87 @@ export const UserVoucherPage: React.FC<{
   };
 
   const loadVouchers = useCallback(async () => {
+    setLoadingVouchers(true);
     try {
       const data = await LoyaltyApi.getUserVouchers(userId, filterStatus);
-      if (data && data.length > 0) {
-        setVouchers(data);
-      }
+      setVouchers(Array.isArray(data) ? data : []);
     } catch {
-      // fallback to mock
+      setVouchers([]);
+    } finally {
+      setLoadingVouchers(false);
     }
-  }, [filterStatus]);
+  }, [userId, filterStatus]);
+
+  const loadCatalog = useCallback(async () => {
+    setLoadingCatalog(true);
+    try {
+      const data = await LoyaltyApi.getVoucherCatalog();
+      setCatalog(Array.isArray(data) ? data : []);
+    } catch {
+      setCatalog([]);
+    } finally {
+      setLoadingCatalog(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadVouchers();
   }, [loadVouchers]);
 
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
   const handleCopyCode = (code: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    soundHaptics.playClick();
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
-  const handleRedeemFromCatalog = (item: CatalogVoucherItem) => {
-    if (userPoints < item.pointsCost) {
+  const availablePoints = userPoints ?? 0;
+
+  const handleRedeemFromCatalog = async (item: CatalogVoucherItem) => {
+    const isSoldOut = item.status === 'SOLD_OUT' || (typeof item.availableQuantity === 'number' && item.availableQuantity <= 0);
+    if (isSoldOut) return;
+
+    if (availablePoints < item.pointCost) {
       setNotifyModal({
         isOpen: true,
         type: 'warning',
-        title: t('vouchers.insufficient_points_title', { defaultValue: 'Chưa Đủ Điểm Đổi Voucher' }),
+        title: t('vouchers.insufficient_points_title'),
         message: t('vouchers.insufficient_points_msg', {
-          minPoints: item.pointsCost,
+          minPoints: item.pointCost,
           title: item.title,
-          defaultValue: `Bạn cần tối thiểu ${item.pointsCost} điểm để đổi phiếu ưu đãi "${item.title}". Hãy tích thêm điểm qua các nhiệm vụ hoặc GameHub!`,
         }),
-        badge: t('vouchers.badge_need_points', { defaultValue: 'CẦN THÊM ĐIỂM' }),
+        badge: t('vouchers.badge_need_points'),
       });
       return;
     }
 
-    if (onDeductPoints) {
-      onDeductPoints(item.pointsCost);
+    setRedeemingCode(item.voucherCode);
+    try {
+      const redeemed = await LoyaltyApi.redeemVoucher(userId, item.voucherCode);
+      soundHaptics.playVictoryFanfare();
+      if (onDeductPoints) {
+        onDeductPoints(item.pointCost);
+      }
+      await Promise.all([loadVouchers(), loadCatalog()]);
+      showToast(t('vouchers.redeem_success_toast'));
+      // VQ-02 Result · reward ready with Scan at the counter card
+      setSelectedVoucher({ item: redeemed, mode: 'REDEEM_RESULT' });
+    } catch {
+      setNotifyModal({
+        isOpen: true,
+        type: 'error',
+        title: t('vouchers.redeem_failed_title'),
+        message: t('vouchers.redeem_failed_msg'),
+        badge: t('vouchers.badge_redeem_error'),
+      });
+    } finally {
+      setRedeemingCode(null);
     }
-
-    // Add to My Vouchers
-    const newVoucher: UserVoucherItem = {
-      id: Date.now(),
-      code: `${item.category}-${item.discountText.replace(/\s+/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-      title: item.title,
-      partnerName: item.partnerName,
-      category: item.category,
-      discountText: item.discountText,
-      minOrder: t('vouchers.min_order_desc', { minBill: item.minBill, defaultValue: `Áp dụng cho đơn từ ${item.minBill} HTG` }),
-      validUntil: '30/09/2026',
-      status: 'AVAILABLE',
-      terms: t('vouchers.terms_redeemed_loyalty', { defaultValue: 'Đổi từ điểm thưởng Loyalty.' }),
-    };
-
-    setVouchers((prev) => [newVoucher, ...prev]);
-    showToast(t('vouchers.redeem_success_toast'));
   };
 
   const handleConfirmCashback = () => {
@@ -249,23 +173,22 @@ export const UserVoucherPage: React.FC<{
       setNotifyModal({
         isOpen: true,
         type: 'warning',
-        title: t('vouchers.invalid_points_title', { defaultValue: 'Số Điểm Không Hợp Lệ' }),
-        message: t('vouchers.invalid_points_msg', { defaultValue: 'Vui lòng nhập tối thiểu 100 điểm thưởng (bội số của 100) để thực hiện quy đổi tiền mặt vào ví.' }),
-        badge: t('vouchers.badge_input_notice', { defaultValue: 'LƯU Ý NHẬP LIỆU' }),
+        title: t('vouchers.invalid_points_title'),
+        message: t('vouchers.invalid_points_msg'),
+        badge: t('vouchers.badge_input_notice'),
       });
       return;
     }
-    if (pts > userPoints) {
+    if (pts > availablePoints) {
       setNotifyModal({
         isOpen: true,
         type: 'warning',
-        title: t('vouchers.insufficient_balance_title', { defaultValue: 'Số Dư Điểm Không Đủ' }),
+        title: t('vouchers.insufficient_balance_title'),
         message: t('vouchers.insufficient_balance_msg', {
           pts,
-          balance: userPoints.toLocaleString(),
-          defaultValue: `Số điểm muốn quy đổi (${pts} điểm) vượt quá số dư khả dụng hiện tại (${userPoints.toLocaleString()} điểm).`,
+          balance: availablePoints.toLocaleString(),
         }),
-        badge: t('vouchers.badge_insufficient_balance', { defaultValue: 'SỐ DƯ KHÔNG ĐỦ' }),
+        badge: t('vouchers.badge_insufficient_balance'),
       });
       return;
     }
@@ -280,16 +203,36 @@ export const UserVoucherPage: React.FC<{
     }, 4000);
   };
 
+  const categories = ['ALL', ...Array.from(new Set(vouchers.map((v) => v.category).filter(Boolean)))];
+
   const filteredVouchers = vouchers.filter((v) => {
     const matchCat = filterCategory === 'ALL' || v.category === filterCategory;
     const matchStat = filterStatus === 'ALL' || v.status === filterStatus;
+    const q = searchQuery.toLowerCase();
     const matchQuery =
-      searchQuery === '' ||
-      v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.partnerName.toLowerCase().includes(searchQuery.toLowerCase());
+      q === '' ||
+      v.title.toLowerCase().includes(q) ||
+      v.code.toLowerCase().includes(q) ||
+      v.partnerName.toLowerCase().includes(q);
     return matchCat && matchStat && matchQuery;
   });
+
+  const getStatusMeta = (status: string) => {
+    switch (status) {
+      case 'AVAILABLE':
+        return { label: t('vouchers.status_active'), cls: 'bg-emerald-100 text-emerald-800', icon: null };
+      case 'AWAITING_CONFIRMATION':
+        return {
+          label: t('vouchers.status_awaiting_confirmation'),
+          cls: 'bg-amber-100 text-amber-800',
+          icon: <Clock className="w-3 h-3" />,
+        };
+      case 'USED':
+        return { label: t('vouchers.status_used'), cls: 'bg-slate-200 text-slate-700', icon: null };
+      default:
+        return { label: t('vouchers.status_expired'), cls: 'bg-rose-100 text-rose-800', icon: null };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
@@ -323,12 +266,14 @@ export const UserVoucherPage: React.FC<{
 
           <div className="flex items-center space-x-1 text-xs font-mono font-bold bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl text-amber-900">
             <Coins className="w-3.5 h-3.5 text-amber-600" />
-            <span>{userPoints.toLocaleString()} đ</span>
+            <span>
+              {userPoints !== null ? `${userPoints.toLocaleString()} ${t('common.points_short')}` : '—'}
+            </span>
           </div>
         </div>
 
-        {/* ── 3-SUBTABS SWITCHER ── */}
-        <div className="max-w-4xl mx-auto px-4 flex items-center border-t border-slate-100 text-xs font-bold overflow-x-auto scrollbar-none">
+        {/* 3-SUBTABS SWITCHER */}
+        <div className="max-w-4xl mx-auto px-4 flex items-center border-t border-slate-100 text-xs font-bold overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveMainTab('MY_VOUCHERS')}
             className={`py-3 px-3.5 sm:px-5 border-b-2 transition whitespace-nowrap flex items-center gap-1.5 ${
@@ -370,11 +315,9 @@ export const UserVoucherPage: React.FC<{
         </div>
       </header>
 
-      {/* ── MAIN CONTENT ACCORDING TO ACTIVE SUBTAB ── */}
+      {/* MAIN CONTENT */}
       <main className="max-w-4xl mx-auto px-4 py-5 flex-1 w-full space-y-4">
-        {/* ======================================================== */}
-        {/* SUBTAB 1: VOUCHER CỦA TÔI                               */}
-        {/* ======================================================== */}
+        {/* SUBTAB 1: MY VOUCHERS */}
         {activeMainTab === 'MY_VOUCHERS' && (
           <div className="space-y-4 animate-fade-in">
             {/* Search & Filter Bar */}
@@ -391,9 +334,8 @@ export const UserVoucherPage: React.FC<{
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
-                {/* Category Pills */}
-                <div className="flex items-center space-x-1 overflow-x-auto scrollbar-none py-0.5">
-                  {['ALL', 'DELIMART', 'NATCOM', 'ENTERTAINMENT'].map((cat) => (
+                <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+                  {categories.map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setFilterCategory(cat)}
@@ -408,13 +350,12 @@ export const UserVoucherPage: React.FC<{
                   ))}
                 </div>
 
-                {/* Status Pills */}
-                <div className="flex items-center space-x-1 text-[11px]">
-                  {(['ALL', 'AVAILABLE', 'USED', 'EXPIRED'] as const).map((st) => (
+                <div className="flex items-center space-x-1 text-[11px] overflow-x-auto no-scrollbar">
+                  {(['ALL', 'AVAILABLE', 'AWAITING_CONFIRMATION', 'USED', 'EXPIRED'] as const).map((st) => (
                     <button
                       key={st}
                       onClick={() => setFilterStatus(st)}
-                      className={`px-2 py-0.5 rounded-lg font-bold transition ${
+                      className={`px-2 py-0.5 rounded-lg font-bold whitespace-nowrap transition ${
                         filterStatus === st
                           ? 'bg-slate-900 text-white'
                           : 'text-slate-500 hover:text-slate-900'
@@ -424,6 +365,8 @@ export const UserVoucherPage: React.FC<{
                         ? t('vouchers.all_status')
                         : st === 'AVAILABLE'
                         ? t('vouchers.status_active')
+                        : st === 'AWAITING_CONFIRMATION'
+                        ? t('vouchers.status_awaiting_confirmation')
                         : st === 'USED'
                         ? t('vouchers.status_used')
                         : t('vouchers.status_expired')}
@@ -433,30 +376,37 @@ export const UserVoucherPage: React.FC<{
               </div>
             </div>
 
-            {/* Vouchers List */}
-            {filteredVouchers.length === 0 ? (
-              <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center space-y-3 shadow-xs">
-                <Ticket className="w-12 h-12 text-slate-300 mx-auto" />
-                <h3 className="text-sm font-bold text-slate-700">{t('vouchers.empty_title')}</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">{t('vouchers.empty_desc')}</p>
+            {loadingVouchers ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <SkeletonCard rows={3} />
+                <SkeletonCard rows={3} />
               </div>
+            ) : filteredVouchers.length === 0 ? (
+              <EmptyState
+                icon={<Ticket className="w-6 h-6" />}
+                title={t('vouchers.empty_title')}
+                description={t('vouchers.empty_desc')}
+                actionLabel={t('vouchers.refresh')}
+                onAction={loadVouchers}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {filteredVouchers.map((v) => {
                   const isAvailable = v.status === 'AVAILABLE';
+                  const meta = getStatusMeta(v.status);
                   return (
                     <div
                       key={v.id}
                       onClick={() => {
                         if (isAvailable) {
                           soundHaptics.playClick();
-                          setSelectedVoucher(v);
+                          setSelectedVoucher({ item: v, mode: 'CHECKOUT' });
                         }
                       }}
                       className={`bg-white rounded-2xl border p-4 shadow-xs transition flex flex-col justify-between relative overflow-hidden ${
                         isAvailable
                           ? 'border-slate-200/90 hover:border-amber-400 hover:shadow-md cursor-pointer'
-                          : 'border-slate-200/60 opacity-60 bg-slate-50/70'
+                          : 'border-slate-200/60 opacity-75 bg-slate-50/70'
                       }`}
                     >
                       <div>
@@ -464,20 +414,9 @@ export const UserVoucherPage: React.FC<{
                           <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md">
                             {v.partnerName}
                           </span>
-                          <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                              isAvailable
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : v.status === 'USED'
-                                ? 'bg-slate-200 text-slate-700'
-                                : 'bg-rose-100 text-rose-800'
-                            }`}
-                          >
-                            {isAvailable
-                              ? t('vouchers.status_active')
-                              : v.status === 'USED'
-                              ? t('vouchers.status_used')
-                              : t('vouchers.status_expired')}
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${meta.cls}`}>
+                            {meta.icon}
+                            <span>{meta.label}</span>
                           </span>
                         </div>
 
@@ -485,7 +424,7 @@ export const UserVoucherPage: React.FC<{
                         <p className="text-xs text-slate-500 mt-1 line-clamp-1">{v.minOrder}</p>
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
                         <div className="font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5">
                           <span>{v.code}</span>
                           <button
@@ -513,75 +452,107 @@ export const UserVoucherPage: React.FC<{
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SUBTAB 2: ĐỔI ĐIỂM LẤY VOUCHER ĐỐI TÁC                  */}
-        {/* ======================================================== */}
+        {/* SUBTAB 2: REDEEM CATALOG */}
         {activeMainTab === 'REDEEM_CATALOG' && (
           <div className="space-y-4 animate-fade-in">
             <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-2xl border border-amber-200 flex items-center justify-between text-xs">
               <div>
-                <span className="font-black text-amber-950 text-sm block">{t('vouchers.partner_catalog_title', { defaultValue: 'Kho Voucher Đối Tác Liên Minh' })}</span>
-                <span className="text-amber-800/80 text-[11px]">{t('vouchers.partner_catalog_desc', { defaultValue: 'Đổi điểm Loyalty lấy mã giảm giá Delimart, Natcom & Ringme' })}</span>
+                <span className="font-black text-amber-950 text-sm block">{t('vouchers.partner_catalog_title')}</span>
+                <span className="text-amber-800/80 text-[11px]">{t('vouchers.partner_catalog_desc')}</span>
               </div>
               <span className="bg-amber-500 text-slate-950 font-black px-2.5 py-1 rounded-xl text-xs font-mono shadow-xs">
-                {userPoints.toLocaleString()} {t('common.points_short', { defaultValue: 'đ' })}
+                {userPoints !== null ? `${userPoints.toLocaleString()} ${t('common.points_short')}` : '—'}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {REDEEM_CATALOG.map((catItem) => {
-                const canAfford = userPoints >= catItem.pointsCost;
-                return (
-                  <div
-                    key={catItem.id}
-                    className="bg-white rounded-3xl border border-slate-200/90 p-4 shadow-xs hover:border-amber-400 hover:shadow-md transition flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
-                          {catItem.partnerName}
-                        </span>
-                        <span className="text-[9px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full uppercase">
-                          {catItem.badge}
-                        </span>
-                      </div>
+            {loadingCatalog ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SkeletonCard rows={3} />
+                <SkeletonCard rows={3} />
+              </div>
+            ) : catalog.length === 0 ? (
+              <EmptyState
+                icon={<Gift className="w-6 h-6" />}
+                title={t('vouchers.catalog_empty_title')}
+                description={t('vouchers.catalog_empty_desc')}
+                actionLabel={t('vouchers.refresh')}
+                onAction={loadCatalog}
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {catalog.map((catItem) => {
+                  const isSoldOut =
+                    catItem.status === 'SOLD_OUT' ||
+                    (typeof catItem.availableQuantity === 'number' && catItem.availableQuantity <= 0);
+                  const canAfford = !isSoldOut && availablePoints >= catItem.pointCost;
+                  const isRedeeming = redeemingCode === catItem.voucherCode;
 
-                      <h3 className="font-black text-sm text-slate-900">{catItem.title}</h3>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {t('vouchers.min_bill_expiry', { minBill: catItem.minBill, expiryDays: catItem.expiryDays, defaultValue: `Áp dụng đơn từ ${catItem.minBill} HTG • Hạn dùng ${catItem.expiryDays} ngày` })}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  return (
+                    <div
+                      key={catItem.id}
+                      className={`bg-white rounded-3xl border p-4 shadow-xs transition flex flex-col justify-between space-y-3 ${
+                        isSoldOut ? 'border-slate-200 opacity-75' : 'border-slate-200/90 hover:border-amber-400 hover:shadow-md'
+                      }`}
+                    >
                       <div>
-                        <span className="text-[10px] text-slate-400 block">{t('vouchers.points_to_redeem', { defaultValue: 'Điểm cần đổi' })}</span>
-                        <span className="font-black text-amber-700 font-mono text-sm">
-                          {t('vouchers.required_points', { points: catItem.pointsCost })}
-                        </span>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                            {catItem.partnerName || catItem.partnerCode}
+                          </span>
+                          {isSoldOut ? (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full uppercase">
+                              <Ban className="w-3 h-3" />
+                              {t('vouchers.status_sold_out')}
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full uppercase font-mono">
+                              {catItem.voucherCode}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-black text-sm text-slate-900">{catItem.title}</h3>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {catItem.description ||
+                            t('vouchers.min_bill', { amount: (catItem.minBillAmount ?? 0).toLocaleString() })}
+                        </p>
                       </div>
 
-                      <button
-                        onClick={() => handleRedeemFromCatalog(catItem)}
-                        disabled={!canAfford}
-                        className={`px-4 py-2 rounded-xl text-xs font-black transition active:scale-95 ${
-                          canAfford
-                            ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {t('vouchers.btn_redeem_now')}
-                      </button>
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">{t('vouchers.points_to_redeem')}</span>
+                          <span className="font-black text-amber-700 font-mono text-sm">
+                            {t('vouchers.required_points', { points: catItem.pointCost })}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => handleRedeemFromCatalog(catItem)}
+                          disabled={!canAfford || isRedeeming || isSoldOut}
+                          className={`px-4 py-2 rounded-xl text-xs font-black transition active:scale-95 ${
+                            isSoldOut
+                              ? 'bg-rose-50 text-rose-400 border border-rose-200 cursor-not-allowed'
+                              : canAfford
+                              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md'
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {isSoldOut
+                            ? t('vouchers.status_sold_out')
+                            : isRedeeming
+                            ? t('vouchers.redeeming')
+                            : t('vouchers.btn_redeem_now')}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SUBTAB 3: ĐỔI ĐIỂM HOÀN TIỀN VÍ (CASHBACK)               */}
-        {/* ======================================================== */}
+        {/* SUBTAB 3: CASHBACK */}
         {activeMainTab === 'CASHBACK' && (
           <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5 animate-fade-in max-w-xl mx-auto">
             <div className="text-center space-y-1">
@@ -599,37 +570,36 @@ export const UserVoucherPage: React.FC<{
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
               <span className="text-slate-600">{t('vouchers.available_points_label')}</span>
               <span className="font-mono font-black text-amber-700 text-sm">
-                {userPoints.toLocaleString()} {t('common.points_unit', { defaultValue: 'Điểm' })}
+                {userPoints !== null ? `${userPoints.toLocaleString()} ${t('common.points_unit')}` : '—'}
               </span>
             </div>
 
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t('vouchers.points_to_convert_label', { defaultValue: 'Số điểm muốn quy đổi:' })}
+                  {t('vouchers.points_to_convert_label')}
                 </label>
                 <div className="relative">
                   <input
                     type="number"
                     step="100"
                     min="100"
-                    max={userPoints}
+                    max={availablePoints}
                     value={cashbackPointsInput}
                     onChange={(e) => setCashbackPointsInput(e.target.value)}
                     placeholder={t('vouchers.input_points_placeholder')}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono font-black text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                    {t('common.points_unit', { defaultValue: 'Điểm' })}
+                    {t('common.points_unit')}
                   </span>
                 </div>
               </div>
 
-              {/* Converted Cash Calculation */}
               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-emerald-950 font-bold block">{t('vouchers.received_amount_label')}</span>
-                  <span className="text-[10px] text-emerald-700/80">{t('vouchers.rate_exchange_desc', { defaultValue: 'Tỷ lệ: 100 Điểm = 10 HTG' })}</span>
+                  <span className="text-[10px] text-emerald-700/80">{t('vouchers.rate_exchange_desc')}</span>
                 </div>
                 <span className="font-mono font-black text-emerald-800 text-lg">
                   {Math.floor((parseInt(cashbackPointsInput, 10) || 0) / 10)} HTG
@@ -654,27 +624,28 @@ export const UserVoucherPage: React.FC<{
         )}
       </main>
 
-      {/* ── MODAL: HIGH-CONTRAST BARCODE & QR CODE DIALOG ── */}
+      {/* MODAL: VQ-02 & VQ-03 SCAN AT THE COUNTER (QR + CODE128 + ALPHANUMERIC CODE) */}
       <VoucherBarcodeModal
         isOpen={Boolean(selectedVoucher)}
         onClose={() => setSelectedVoucher(null)}
+        mode={selectedVoucher?.mode || 'CHECKOUT'}
         voucher={
           selectedVoucher
             ? {
-                id: selectedVoucher.id,
-                voucherCode: selectedVoucher.code,
-                voucherTitle: selectedVoucher.title,
-                partnerName: selectedVoucher.partnerName,
-                discountValue: 50,
-                discountType: 'FIXED_AMOUNT',
-                expiredAt: selectedVoucher.validUntil,
-                terms: selectedVoucher.terms,
+                id: selectedVoucher.item.id,
+                voucherCode: selectedVoucher.item.code,
+                voucherTitle: selectedVoucher.item.title,
+                partnerName: selectedVoucher.item.partnerName,
+                discountText: selectedVoucher.item.discountText,
+                expiredAt: selectedVoucher.item.validUntil,
+                minOrder: selectedVoucher.item.minOrder,
+                terms: selectedVoucher.item.terms,
+                status: selectedVoucher.item.status,
               }
             : null
         }
       />
 
-      {/* ── HIGH-END NOTIFICATION MODAL ── */}
       <NotificationModal
         isOpen={notifyModal.isOpen}
         type={notifyModal.type}

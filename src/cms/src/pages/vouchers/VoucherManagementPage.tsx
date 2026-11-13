@@ -11,6 +11,7 @@ import { Calendar } from 'primereact/calendar';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { FileUpload } from 'primereact/fileupload';
+import { Steps } from 'primereact/steps';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
@@ -51,6 +52,28 @@ export const VoucherManagementPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importDefaultPartnerId, setImportDefaultPartnerId] = useState<number | null>(null);
+  const [importStep, setImportStep] = useState<number>(0);
+  const [importFileName, setImportFileName] = useState<string>('');
+  const [importPreviewRows, setImportPreviewRows] = useState<
+    Array<{
+      rowNumber: number;
+      voucherCode: string;
+      title: string;
+      discountValue: number;
+      discountType: string;
+      pointCost: number;
+      totalQuantity: number;
+      minBillAmount: number;
+      partnerCode?: string;
+      partnerId?: number;
+      isValid: boolean;
+      errorMessage?: string;
+    }>
+  >([]);
+  const [importSummary, setImportSummary] = useState<{
+    importedCount: number;
+    skippedCount: number;
+  } | null>(null);
   const [formData, setFormData] = useState<Partial<VoucherItem>>({});
   const [isEdit, setIsEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -324,14 +347,20 @@ export const VoucherManagementPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Xử lý nhập file CSV (Đọc UTF-8 chuẩn xác)
-  const handleImportCsv = async (event: any) => {
+  const openImportWizard = () => {
+    setImportStep(0);
+    setImportFileName('');
+    setImportPreviewRows([]);
+    setImportSummary(null);
+    setShowImportDialog(true);
+  };
+
+  // Bước 1: Đọc & kiểm tra từng dòng tệp CSV (File Check)
+  const handleCsvFileCheck = async (event: any) => {
     const file = event.files?.[0];
     if (!file) return;
 
-    setIsSubmitting(true);
     try {
-      // Sử dụng FileReader với mã hóa UTF-8 rõ ràng
       const text = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve((e.target?.result as string) || '');
@@ -339,7 +368,6 @@ export const VoucherManagementPage: React.FC = () => {
         reader.readAsText(file, 'UTF-8');
       });
 
-      // Loại bỏ BOM nếu tệp upload đã có BOM
       const cleanText = text.replace(/^\uFEFF/, '');
       const lines = cleanText.split(/\r?\n/).filter((l: string) => l.trim().length > 0);
 
@@ -349,60 +377,120 @@ export const VoucherManagementPage: React.FC = () => {
           summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
           detail: t('voucher.csv_empty', { defaultValue: 'Tệp CSV không có dữ liệu' }),
         });
-        setIsSubmitting(false);
         return;
       }
 
       const startIndex = lines[0].toUpperCase().includes('CODE') ? 1 : 0;
-      const voucherList: any[] = [];
+      const existingCodes = new Set(vouchers.map((v) => v.voucherCode.toUpperCase()));
+      const seenCodesInFile = new Set<string>();
+      const parsedRows: typeof importPreviewRows = [];
 
       for (let i = startIndex; i < lines.length; i++) {
         const parts = lines[i].split(',').map((p: string) => p.trim().replace(/^["']|["']$/g, ''));
-        if (parts.length >= 2 && parts[0]) {
-          const code = parts[0];
-          const title = parts[1] || `Voucher ${code}`;
-          const discountVal = parseFloat(parts[2]) || 50;
-          const pointsCost = parseFloat(parts[3]) || 50;
-          const totalQty = parseInt(parts[4]) || 1000;
-          const discountType = parts[5]?.toUpperCase() === 'PERCENTAGE' ? 'PERCENTAGE' : 'FIXED_AMOUNT';
-          const partnerCode = parts[6] ? parts[6].trim().toUpperCase() : undefined;
-          const minOrder = parseFloat(parts[7]) || 0;
+        const code = (parts[0] || '').toUpperCase();
+        const title = parts[1] || '';
+        const discountVal = Number(parts[2]);
+        const pointsCost = Number(parts[3]);
+        const totalQty = Number(parts[4]);
+        const rawType = (parts[5] || 'FIXED_AMOUNT').toUpperCase();
+        const discountType = rawType === DiscountType.PERCENTAGE ? DiscountType.PERCENTAGE : DiscountType.FIXED_AMOUNT;
+        const partnerCode = parts[6] ? parts[6].trim().toUpperCase() : undefined;
+        const minOrder = Number(parts[7] || 0);
 
-          voucherList.push({
-            voucherCode: code,
-            title: title,
-            description: `Voucher ưu đãi ${title}`,
-            partnerCode: partnerCode,
-            partnerId: !partnerCode && importDefaultPartnerId != null ? importDefaultPartnerId : undefined,
-            discountValue: discountVal,
-            discountType: discountType,
-            pointCost: pointsCost,
-            totalQuantity: totalQty,
-            minBillAmount: minOrder,
-            status: 'ACTIVE',
-          });
+        const errors: string[] = [];
+        if (!code) errors.push(t('voucher.csv_err_code', { defaultValue: 'Thiếu mã CODE' }));
+        if (code && seenCodesInFile.has(code)) {
+          errors.push(t('voucher.csv_err_dup_file', { defaultValue: 'Trùng mã trong file CSV' }));
         }
+        if (code && existingCodes.has(code)) {
+          errors.push(t('voucher.csv_err_dup_db', { defaultValue: 'Mã đã tồn tại trong kho' }));
+        }
+        if (!title) errors.push(t('voucher.csv_err_title', { defaultValue: 'Thiếu tiêu đề' }));
+        if (isNaN(discountVal) || discountVal <= 0) {
+          errors.push(t('voucher.csv_err_discount', { defaultValue: 'Mức giảm không hợp lệ' }));
+        }
+        if (isNaN(pointsCost) || pointsCost < 0) {
+          errors.push(t('voucher.csv_err_points', { defaultValue: 'Điểm đổi phải >= 0' }));
+        }
+        if (isNaN(totalQty) || totalQty <= 0) {
+          errors.push(t('voucher.csv_err_qty', { defaultValue: 'Số lượng phải > 0' }));
+        }
+        if (discountType === DiscountType.PERCENTAGE && discountVal > 100) {
+          errors.push(t('voucher.csv_err_pct', { defaultValue: 'Phần trăm giảm tối đa 100%' }));
+        }
+
+        if (code) seenCodesInFile.add(code);
+
+        parsedRows.push({
+          rowNumber: i + 1,
+          voucherCode: code || `ROW_${i + 1}`,
+          title: title || '—',
+          discountValue: isNaN(discountVal) ? 0 : discountVal,
+          discountType,
+          pointCost: isNaN(pointsCost) ? 0 : pointsCost,
+          totalQuantity: isNaN(totalQty) ? 0 : totalQty,
+          minBillAmount: isNaN(minOrder) ? 0 : minOrder,
+          partnerCode,
+          partnerId: !partnerCode && importDefaultPartnerId != null ? importDefaultPartnerId : undefined,
+          isValid: errors.length === 0,
+          errorMessage: errors.join('; '),
+        });
       }
 
-      if (voucherList.length > 0) {
-        await LoyaltyService.batchImportVouchers(voucherList, selectedTenant);
-        toastRef.current?.show({
-          severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('voucher.import_success', {
-            defaultValue: `Đã nhập thành công ${voucherList.length} mã voucher từ CSV`,
-            count: voucherList.length,
-          }),
-        });
-        setShowImportDialog(false);
-        await fetchVouchers(selectedTenant);
+      setImportFileName(file.name);
+      setImportPreviewRows(parsedRows);
+      if (event.options?.clear) {
+        event.options.clear();
       }
     } catch (e: any) {
-      console.error('[handleImportCsv] Error:', e);
+      console.error('[handleCsvFileCheck] Error:', e);
       toastRef.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể đọc hoặc xử lý tệp CSV' }),
+        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể đọc tệp CSV' }),
+      });
+    }
+  };
+
+  // Bước 2 -> 3: Xác nhận lưu các dòng hợp lệ lên máy chủ
+  const handleConfirmImportCsv = async () => {
+    const validRows = importPreviewRows.filter((r) => r.isValid);
+    if (validRows.length === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const payload = validRows.map((r) => ({
+        voucherCode: r.voucherCode,
+        title: r.title,
+        description: r.title,
+        partnerCode: r.partnerCode,
+        partnerId: !r.partnerCode && importDefaultPartnerId != null ? importDefaultPartnerId : undefined,
+        discountValue: r.discountValue,
+        discountType: r.discountType,
+        pointCost: r.pointCost,
+        totalQuantity: r.totalQuantity,
+        minBillAmount: r.minBillAmount,
+        status: CommonStatus.ACTIVE,
+      }));
+      await LoyaltyService.batchImportVouchers(payload, selectedTenant);
+      const skipped = importPreviewRows.length - validRows.length;
+      setImportSummary({ importedCount: validRows.length, skippedCount: skipped });
+      setImportStep(2);
+      await fetchVouchers(selectedTenant);
+      toastRef.current?.show({
+        severity: 'success',
+        summary: t('common.success', { defaultValue: 'Thành công' }),
+        detail: t('voucher.import_success', {
+          defaultValue: `Đã nhập thành công ${validRows.length} mã voucher từ CSV`,
+          count: validRows.length,
+        }),
+      });
+    } catch (e: any) {
+      console.error('[handleConfirmImportCsv] Error:', e);
+      toastRef.current?.show({
+        severity: 'error',
+        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể lưu lô voucher từ CSV' }),
       });
     } finally {
       setIsSubmitting(false);
@@ -505,7 +593,7 @@ export const VoucherManagementPage: React.FC = () => {
           icon="pi pi-upload"
           severity="help"
           size="small"
-          onClick={() => setShowImportDialog(true)}
+          onClick={openImportWizard}
         />
         <Button
           label={t('voucher.add_new', { defaultValue: 'Tạo Voucher' })}
@@ -809,64 +897,249 @@ export const VoucherManagementPage: React.FC = () => {
         </div>
       </Dialog>
 
-      {/* MODAL DIALOG: IMPORT CSV */}
+      {/* MODAL WIZARD 3 BƯỚC: IMPORT CSV (VQ-04: file check -> confirm -> done) */}
       <Dialog
         visible={showImportDialog}
-        style={{ width: '520px' }}
-        header={t('voucher.import_csv_title', { defaultValue: 'Nhập lô Voucher từ tệp CSV' })}
+        style={{ width: '56rem' }}
+        breakpoints={{ '960px': '85vw', '641px': '95vw' }}
+        header={t('voucher.import_csv_title', { defaultValue: 'Nhập lô Voucher từ tệp CSV (3 bước)' })}
         modal
         className="border-round-xl"
         onHide={() => setShowImportDialog(false)}
       >
-        <div className="p-fluid">
-          <p className="text-secondary mb-3 text-sm">
-            {t('voucher.import_instruction', {
-              defaultValue: 'Tải lên tệp CSV chứa danh sách mã voucher (Cột: CODE, TITLE, DISCOUNT_VAL, POINTS_COST, TOTAL_QTY, DISCOUNT_TYPE, PARTNER_CODE, MIN_ORDER)',
-            })}
-          </p>
-
-          {/* Chọn đối tác mặc định cho file CSV nếu dòng không ghi mã */}
-          <div className="field mb-3 surface-100 p-3 border-round">
-            <label htmlFor="importPartner" className="font-bold text-sm text-900 block mb-1">
-              {t('voucher.import_partner_label', { defaultValue: 'Đối Tác Mặc Định Cho File Này (Nếu dòng CSV để trống PARTNER_CODE):' })}
-            </label>
-            <Dropdown
-              id="importPartner"
-              value={importDefaultPartnerId}
-              options={partnerDropdownOptions}
-              onChange={(e) => setImportDefaultPartnerId(e.value)}
-              className="w-full"
-              appendTo="self"
-            />
-          </div>
-
-          <div className="mb-3 flex justify-content-between align-items-center surface-100 p-2 border-round">
-            <span className="text-xs text-600 font-semibold">{t('voucher.sample_csv_label', { defaultValue: 'Tệp mẫu chuẩn (.csv):' })}</span>
-            <Button
-              label={t('voucher.download_sample_csv', { defaultValue: 'Tải file mẫu CSV' })}
-              icon="pi pi-download"
-              size="small"
-              outlined
-              severity="help"
-              onClick={downloadSampleCsv}
-              type="button"
-            />
-          </div>
-
-          <FileUpload
-            mode="basic"
-            name="file"
-            accept=".csv, text/csv, application/vnd.ms-excel, text/plain, application/csv, text/x-csv, text/comma-separated-values, *"
-            maxFileSize={10000000}
-            customUpload
-            uploadHandler={handleImportCsv}
-            auto
-            chooseLabel={t('common.choose_file', { defaultValue: 'Chọn tệp CSV từ máy tính' })}
+        <div className="flex flex-column gap-4">
+          <Steps
+            model={[
+              { label: t('voucher.wizard_step_check', { defaultValue: '1. Kiểm tra tệp' }) },
+              { label: t('voucher.wizard_step_confirm', { defaultValue: '2. Xác nhận nhập' }) },
+              { label: t('voucher.wizard_step_done', { defaultValue: '3. Hoàn tất' }) },
+            ]}
+            activeIndex={importStep}
           />
-          {isSubmitting && (
-            <div className="mt-3 text-center text-primary font-semibold">
-              <i className="pi pi-spin pi-spinner mr-2" />
-              {t('voucher.importing_csv_notice', { defaultValue: 'Đang xử lý nhập dữ liệu vào kho...' })}
+
+          {importStep === 0 && (
+            <div className="p-fluid flex flex-column gap-3">
+              <p className="text-secondary m-0 text-sm">
+                {t('voucher.import_instruction', {
+                  defaultValue:
+                    'Tải lên tệp CSV chứa danh sách mã voucher (Cột: CODE, TITLE, DISCOUNT_VAL, POINTS_COST, TOTAL_QTY, DISCOUNT_TYPE, PARTNER_CODE, MIN_ORDER)',
+                })}
+              </p>
+
+              <div className="grid">
+                <div className="col-12 md:col-7">
+                  <div className="surface-100 p-3 border-round h-full">
+                    <label htmlFor="importPartner" className="font-medium text-sm text-900 block mb-2">
+                      {t('voucher.import_partner_label', {
+                        defaultValue: 'Đối Tác Mặc Định (nếu cột PARTNER_CODE trống):',
+                      })}
+                    </label>
+                    <Dropdown
+                      id="importPartner"
+                      value={importDefaultPartnerId}
+                      options={partnerDropdownOptions}
+                      onChange={(e) => setImportDefaultPartnerId(e.value)}
+                      className="w-full"
+                      appendTo="self"
+                    />
+                  </div>
+                </div>
+                <div className="col-12 md:col-5">
+                  <div className="surface-100 p-3 border-round h-full flex flex-column justify-content-between gap-2">
+                    <span className="text-xs text-600 font-medium">
+                      {t('voucher.sample_csv_label', { defaultValue: 'Tệp mẫu chuẩn (.csv):' })}
+                    </span>
+                    <Button
+                      label={t('voucher.download_sample_csv', { defaultValue: 'Tải file mẫu CSV' })}
+                      icon="pi pi-download"
+                      size="small"
+                      outlined
+                      severity="help"
+                      onClick={downloadSampleCsv}
+                      type="button"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <FileUpload
+                mode="basic"
+                name="file"
+                accept=".csv, text/csv, application/vnd.ms-excel, text/plain"
+                maxFileSize={10000000}
+                customUpload
+                uploadHandler={handleCsvFileCheck}
+                auto
+                chooseLabel={
+                  importFileName
+                    ? `${t('voucher.reselect_file', { defaultValue: 'Chọn lại' })}: ${importFileName}`
+                    : t('common.choose_file', { defaultValue: 'Chọn tệp CSV để kiểm tra' })
+                }
+              />
+
+              {importPreviewRows.length > 0 && (
+                <div>
+                  <div className="flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+                    <div className="flex gap-2">
+                      <Tag
+                        severity="info"
+                        value={`${t('voucher.csv_total_rows', { defaultValue: 'Tổng dòng' })}: ${importPreviewRows.length}`}
+                      />
+                      <Tag
+                        severity="success"
+                        value={`${t('voucher.csv_valid_rows', { defaultValue: 'Hợp lệ' })}: ${
+                          importPreviewRows.filter((r) => r.isValid).length
+                        }`}
+                      />
+                      <Tag
+                        severity="danger"
+                        value={`${t('voucher.csv_error_rows', { defaultValue: 'Lỗi' })}: ${
+                          importPreviewRows.filter((r) => !r.isValid).length
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <DataTable
+                    value={importPreviewRows}
+                    size="small"
+                    scrollable
+                    scrollHeight="220px"
+                    stripedRows
+                  >
+                    <Column field="rowNumber" header="#" style={{ width: '3rem' }} />
+                    <Column
+                      field="voucherCode"
+                      header={t('voucher.code', { defaultValue: 'Mã Voucher' })}
+                      body={(r: any) => <span className="font-mono text-xs">{r.voucherCode}</span>}
+                      style={{ minWidth: '8.5rem' }}
+                    />
+                    <Column
+                      field="title"
+                      header={t('voucher.title_label', { defaultValue: 'Tiêu Đề' })}
+                      style={{ minWidth: '12rem' }}
+                    />
+                    <Column
+                      field="discountValue"
+                      header={t('voucher.discount_value', { defaultValue: 'Mức Giảm' })}
+                      body={(r: any) => (
+                        <span className="font-mono text-xs">
+                          {r.discountValue} {r.discountType === DiscountType.PERCENTAGE ? '%' : 'HTG'}
+                        </span>
+                      )}
+                      style={{ minWidth: '6.5rem' }}
+                    />
+                    <Column
+                      field="totalQuantity"
+                      header={t('voucher.total_quantity', { defaultValue: 'SL' })}
+                      style={{ minWidth: '4.5rem' }}
+                    />
+                    <Column
+                      header={t('common.status', { defaultValue: 'Kiểm tra' })}
+                      body={(r: any) =>
+                        r.isValid ? (
+                          <Tag severity="success" value={t('common.valid', { defaultValue: 'Hợp lệ' })} />
+                        ) : (
+                          <Tag severity="danger" value={r.errorMessage} />
+                        )
+                      }
+                      style={{ minWidth: '12rem' }}
+                    />
+                  </DataTable>
+                </div>
+              )}
+
+              <div className="flex justify-content-end gap-2 mt-2">
+                <Button
+                  label={t('common.cancel', { defaultValue: 'Hủy' })}
+                  icon="pi pi-times"
+                  outlined
+                  onClick={() => setShowImportDialog(false)}
+                />
+                <Button
+                  label={t('common.next', { defaultValue: 'Tiếp tục xác nhận' })}
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  disabled={importPreviewRows.filter((r) => r.isValid).length === 0}
+                  onClick={() => setImportStep(1)}
+                />
+              </div>
+            </div>
+          )}
+
+          {importStep === 1 && (
+            <div className="flex flex-column gap-3">
+              <div className="surface-50 p-4 border-round border-1 surface-border">
+                <h5 className="m-0 mb-2 text-900 font-bold">
+                  {t('voucher.wizard_confirm_heading', {
+                    defaultValue: 'Xác nhận nhập lô Voucher vào kho',
+                  })}
+                </h5>
+                <div className="text-sm text-700 mb-3">
+                  {t('voucher.wizard_confirm_desc', {
+                    valid: importPreviewRows.filter((r) => r.isValid).length,
+                    skipped: importPreviewRows.filter((r) => !r.isValid).length,
+                    defaultValue: `Hệ thống sẽ nhập ${importPreviewRows.filter((r) => r.isValid).length} voucher hợp lệ và bỏ qua ${importPreviewRows.filter((r) => !r.isValid).length} dòng lỗi.`,
+                  })}
+                </div>
+                <div className="flex gap-3">
+                  <Tag
+                    severity="info"
+                    value={`${t('voucher.file_label', { defaultValue: 'Tệp' })}: ${importFileName}`}
+                  />
+                  <Tag
+                    severity="success"
+                    value={`${t('voucher.csv_valid_rows', { defaultValue: 'Sẽ nhập' })}: ${
+                      importPreviewRows.filter((r) => r.isValid).length
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-content-between gap-2 mt-2">
+                <Button
+                  label={t('common.back', { defaultValue: 'Quay lại kiểm tra' })}
+                  icon="pi pi-arrow-left"
+                  outlined
+                  onClick={() => setImportStep(0)}
+                  disabled={isSubmitting}
+                />
+                <Button
+                  label={t('voucher.wizard_commit_btn', { defaultValue: 'Xác nhận Nhập Kho' })}
+                  icon="pi pi-check"
+                  severity="success"
+                  loading={isSubmitting}
+                  onClick={handleConfirmImportCsv}
+                />
+              </div>
+            </div>
+          )}
+
+          {importStep === 2 && (
+            <div className="flex flex-column align-items-center text-center gap-3 py-4">
+              <i className="pi pi-check-circle text-6xl text-green-500" />
+              <h4 className="m-0 text-900 font-bold">
+                {t('voucher.wizard_done_title', { defaultValue: 'Nhập lô Voucher hoàn tất!' })}
+              </h4>
+              <p className="m-0 text-sm text-600">
+                {t('voucher.wizard_done_desc', {
+                  imported: importSummary?.importedCount ?? 0,
+                  skipped: importSummary?.skippedCount ?? 0,
+                  defaultValue: `Đã lưu thành công ${importSummary?.importedCount ?? 0} mã voucher vào kho (Bỏ qua ${importSummary?.skippedCount ?? 0} dòng lỗi).`,
+                })}
+              </p>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  label={t('voucher.import_another', { defaultValue: 'Nhập tệp khác' })}
+                  icon="pi pi-upload"
+                  outlined
+                  onClick={openImportWizard}
+                />
+                <Button
+                  label={t('common.close', { defaultValue: 'Đóng' })}
+                  icon="pi pi-check"
+                  onClick={() => setShowImportDialog(false)}
+                />
+              </div>
             </div>
           )}
         </div>

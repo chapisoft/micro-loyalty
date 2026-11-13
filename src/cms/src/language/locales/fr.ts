@@ -21,7 +21,20 @@ export default {
     "roles": "Rôles & Permissions",
     "audit_logs": "Journaux d'Audit",
     "dead_letter": "Webhooks Rejetés (Dead-Letter)",
-    "milestones": "Jalons de campagne"
+    "milestones": "Jalons de campagne",
+    "segments": "Segments Clients (CN-03)",
+    "scenarios": "Scénarios de Rappel (CN-04)",
+    "learning_quiz": "Banque de Quiz Langues",
+    "game_stats": "Statistiques & Historique Jeux",
+    "payment_points": "Agences & Points de Paiement",
+    "agent_loyalty": "Fidélité Agents (AG-03)",
+    "reports_budget": "Rapports & Budgets",
+    "budgets": "Budgets Mensuels (NS-01)",
+    "effectiveness": "Efficacité & Lift (NS-03)",
+    "alerts": "Centre d'Alertes (CN-05)",
+    "advanced_reports": "Rapports Avancés (NS-05..07)",
+    "partner_portal": "Portail Partenaire",
+    "approvals": "File d'Approbation 2 Niveaux (QT-04)"
   },
   "policy": {
     "management_title": "Configuration des Politiques de Cumul et d'Utilisation des Points",
@@ -1177,6 +1190,62 @@ export default {
     "error_message": "Message d'erreur réseau",
     "failed_at": "Échoué à",
     "payload_detail": "Détails du payload pour l'événement #{{id}}"
+  },
+  "approval": {
+    "title": "File d'Approbation Maker-Checker (QT-04)",
+    "approved": "Approuvé",
+    "rejected": "Rejeté",
+    "approve_btn": "Approuver",
+    "reject_btn": "Rejeter",
+    "review_btn": "Examiner"
+  },
+  "payment_point": {
+    "title": "Réseau d'Agences & Points de Paiement QR (LM-02)",
+    "add_new": "Ajouter un Point"
+  },
+  "segment": {
+    "title": "7 Segments Dynamiques (CN-03)",
+    "view_members": "Membres",
+    "recalculate": "Recalculer"
+  },
+  "scenario": {
+    "title": "Scénarios de Rappel Omnicanal (CN-04)",
+    "add_new": "Nouveau Scénario"
+  },
+  "budget": {
+    "title": "Plafonds Budgétaires Mensuels (NS-01)",
+    "add_new": "Configurer Budget"
+  },
+  "report": {
+    "effectiveness_title": "Efficacité vs Groupe Témoin (NS-03)",
+    "advanced_title": "Rapports Avancés (NS-05 · NS-06 · NS-07)"
+  },
+  "alert": {
+    "title": "Centre d'Alertes Opérationnelles (CN-05)",
+    "ack_btn": "Prendre en charge",
+    "resolve_btn": "Résoudre"
+  },
+  "learning": {
+    "title": "Banque de Questions Langues & Audio (GM-09)",
+    "add_new": "Ajouter Question",
+    "import_csv": "Importer CSV"
+  },
+  "agent": {
+    "title": "Gestion Fidélité Agents (AG-03)",
+    "set_target": "Définir KPI"
+  },
+  "partner_portal": {
+    "nav_dashboard": "Aperçu Partenaire (NS-04)",
+    "nav_branches": "Agences & Produits (LM-08)",
+    "nav_policy": "Politique de Points (LM-09)",
+    "nav_staff": "Comptes Personnel (QT-03)",
+    "nav_proposals": "Propositions Programme (NV-07)",
+    "nav_vouchers": "Bons Comptoir (VQ-05)",
+    "nav_transactions": "Transactions Partenaire (LM-11)",
+    "nav_settlement": "Règlements & Litiges (LM-10)",
+    "nav_notifications": "Notifications (CN-08)",
+    "nav_api_keys": "Webhook & Clés API (QT-06)",
+    "raise_claim": "Déposer une réclamation"
   }
 };
 

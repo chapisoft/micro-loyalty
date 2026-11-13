@@ -1,5 +1,6 @@
 package com.natcash.loyalty.game.controller;
 
+import com.natcash.loyalty.domain.enums.GameCode;
 import com.natcash.loyalty.game.dto.GameHubDto.ActiveWheelThemeResponse;
 import com.natcash.loyalty.game.dto.GameHubDto.GameAdminDto;
 import com.natcash.loyalty.game.dto.GameHubDto.GameDashboardStatsResponse;
@@ -228,5 +229,17 @@ public class GameHubController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         List<GamePrizeDto> list = gameHubService.autoBalanceGamePrizes(tenantId, gameCode);
         return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/scratch-card/play")
+    @Operation(summary = "Chơi thẻ cào may mắn (GM-09)")
+    public ResponseEntity<PlayGameResponse> playScratchCard(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody PlayGameRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        if (request.getGameCode() == null || request.getGameCode().isBlank()) {
+            request.setGameCode(GameCode.SCRATCH_CARD.getCode());
+        }
+        return ResponseEntity.ok(gameHubService.playGame(tenantId, request));
     }
 }

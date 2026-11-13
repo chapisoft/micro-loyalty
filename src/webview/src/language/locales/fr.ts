@@ -29,7 +29,8 @@ export default {
     "progress_status": "Atteint {{percent}}%",
     "points_balance": "Solde de Points Disponibles",
     "btn_wallet_code": "QR Dépense de Points",
-    "btn_view_perks": "Voir les 4 Niveaux VIP"
+    "btn_view_perks": "Voir les 4 Niveaux VIP",
+    "tier_points_unit": "Pts palier"
   },
   "promo": {
     "featured_badge": "ÉVÉNEMENT EN VEDETTE",
@@ -100,7 +101,9 @@ export default {
     "game1_tag": "Chance",
     "energy_full": "TOURS GRATUITS PLEINS",
     "next_turn_in": "Prochain tour dans :",
-    "this_week": "Cette semaine"
+    "this_week": "Cette semaine",
+    "buy_turn_item_name": "Acheter {{count}} tours GameHub",
+    "filter_learning": "Apprentissage"
   },
   "daily_missions": {
     "modal_title": "Station des Missions Quotidiennes",
@@ -149,14 +152,25 @@ export default {
     "default2_sub": "Télécom Natcom • +50 pts",
     "default3_title": "Inviter 3 amis à rejoindre",
     "default3_sub": "Alliance Natcash • +300 pts",
-    "daily_subtitle": "Les missions se réinitialisent automatiquement à 00h00 chaque jour."
+    "daily_subtitle": "Les missions se réinitialisent automatiquement à 00h00 chaque jour.",
+    "filter_all": "Toutes campagnes",
+    "claim_btn": "Réclamer",
+    "claimed": "Réclamé",
+    "empty_title": "Aucune mission active",
+    "empty_desc": "Les nouvelles missions de campagne apparaîtront ici.",
+    "claim_success_title": "Récompense réclamée",
+    "claim_success_msg": "Vous avez reçu {{points}} Natcash Coin.",
+    "claim_error_title": "Échec de réclamation",
+    "claim_error_msg": "Veuillez réessayer plus tard."
   },
   "ledger": {
     "title": "Activité Récente des Points",
     "subtitle": "Grand Livre Immuable",
     "ref_code": "Réf : {{code}}",
     "default1_desc": "Points gagnés chez Delimart",
-    "default2_desc": "Gain Roue de la Fortune"
+    "default2_desc": "Gain Roue de la Fortune",
+    "empty_title": "Aucune opération enregistrée",
+    "empty_desc": "Vos gains et dépenses Natcash Coin apparaîtront ici."
   },
   "partners": {
     "title": "Réseau de Partenaires",
@@ -165,7 +179,9 @@ export default {
     "delimart_name": "Supermarché Delimart",
     "delimart_desc": "Gagnez 1% • Payez jusqu'à 50% du total",
     "natcom_name": "Télécom Natcom",
-    "natcom_desc": "Recharge • Échange forfaits 4G"
+    "natcom_desc": "Recharge • Échange forfaits 4G",
+    "empty_title": "Aucun partenaire disponible",
+    "empty_desc": "La liste des marchands partenaires sera mise à jour."
   },
   "wheel": {
     "title": "Roue de la Fortune",
@@ -254,7 +270,15 @@ export default {
     "min_bill_expiry": "Commande min. {{minBill}} HTG • Valable {{expiryDays}} jours",
     "points_to_redeem": "Points requis",
     "points_to_convert_label": "Points à convertir :",
-    "rate_exchange_desc": "Taux : 100 Points = 10 HTG"
+    "rate_exchange_desc": "Taux : 100 Points = 10 HTG",
+    "status_awaiting_confirmation": "En attente de confirmation",
+    "status_sold_out": "Épuisé",
+    "redeeming": "Échange...",
+    "catalog_empty_title": "Aucune offre disponible",
+    "catalog_empty_desc": "Le catalogue de récompenses est vide actuellement.",
+    "redeem_failed_title": "Échec de l’échange",
+    "redeem_failed_msg": "Impossible de finaliser l’échange du bon.",
+    "badge_redeem_error": "Erreur échange"
   },
   "tiers": {
     "modal_title": "Avantages des 4 Niveaux VIP",
@@ -270,7 +294,15 @@ export default {
     "birthday_gift_label": "Cadeau d'anniversaire VIP",
     "cycle_title": "Cycle de Maintien du Statut sur 12 Mois",
     "cycle_desc": "Le niveau est évalué sur une période glissante de 12 mois. Dès que le seuil est atteint, vous montez de niveau immédiatement pour 12 mois.",
-    "btn_got_it": "Compris"
+    "btn_got_it": "Compris",
+    "btn_program_terms": "Conditions du programme",
+    "keep_tier_label": "Maintien",
+    "upgrade_threshold_label": "Seuil palier",
+    "natcash_coin_label": "Natcash Coin",
+    "natcash_coin_hint": "Solde utilisable pour bons et paiements QR partenaires",
+    "qualifying_points_label": "Points de qualification",
+    "qualifying_points_hint": "Cumulés sur le cycle pour évoluer ou maintenir votre niveau",
+    "spins_per_day": "{{count}} tours/jour"
   },
   "games": {
     "common": {
@@ -388,7 +420,9 @@ export default {
         "tips": "Utilisez \"Coup d'œil\" pour voir toutes les cartes pendant 1.5s ou ajoutez \"+10 Sec\" en cas d'urgence."
       },
       "moves_unit": "coups",
-      "time_bonus_label": "bonus de temps"
+      "time_bonus_label": "bonus de temps",
+      "next_stage_label": "Niveau suiv.",
+      "stage_score_label": "Score niveau"
     },
     "bubble": {
       "title": "Tir aux Bulles Kanaval",
@@ -437,7 +471,9 @@ export default {
         "scoring": "Chaque couteau planté : +10 points. Toucher les Enveloppes ou packs Data 4G offre +25 à +50 bonus !",
         "tips": "La bûche change de vitesse et de direction aléatoirement. Attendez le plus grand espace libre."
       },
-      "record_stage": "Record : Niveau {{highestStage}}"
+      "record_stage": "Record : Niveau {{highestStage}}",
+      "knives_label": "Couteaux",
+      "score_label": "Score"
     },
     "block": {
       "title": "Puzzle de Blocs Diamants Natcash",
@@ -526,7 +562,11 @@ export default {
         "controls": "Touchez une vis pour la soulever, puis touchez un trou libre pour la visser.",
         "scoring": "Chaque plaque tombée : +50 points. Finir le niveau : +100 points + bonus de temps !",
         "tips": "Ciblez en priorité les plaques des couches supérieures pour débloquer les vis des couches inférieures."
-      }
+      },
+      "add_hole_btn": "Ajouter trou",
+      "hammer_btn": "Marteau",
+      "hammer_tooltip": "Retirer une goupille bloquée",
+      "screw_box_label": "Boîte à vis"
     },
     "untangle": {
       "title": "Maître Démêlage 3D",
@@ -558,6 +598,9 @@ export default {
         "scoring": "Vaincre le voleur : +50 points. Récupération sûre du trésor : +100 points.",
         "tips": "Versez de l’eau sur la lave/le feu d’abord, puis laissez tomber les poids sur le voleur avant de libérer le trésor."
       }
+    },
+    "pin": {
+      "retry_btn": "Rejouer"
     }
   },
   "footer": {
@@ -577,7 +620,15 @@ export default {
   "home": {
     "points_expiration_warning": "{{count}} points expireront le {{date}}",
     "points_expiration_hint": "Échangez vos points contre des bons d'achat ou des forfaits data dès maintenant",
-    "redeem_now_btn": "Échanger →"
+    "redeem_now_btn": "Échanger →",
+    "nc_entry_title": "Espace Natcash Loyalty",
+    "nc_entry_subtitle": "{{coins}} Natcash Coin · {{tierPts}} Points de palier",
+    "quick_qr_pay": "QR 60 s",
+    "quick_where_to_use": "Où utiliser",
+    "quick_invite": "Parrainer",
+    "quick_learning": "Cours & Quiz",
+    "quick_ussd": "USSD *202#",
+    "quick_agent": "Agent"
   },
   "tier": {
     "your_tier_badge": "✓ Votre niveau actuel",
@@ -590,7 +641,10 @@ export default {
     "view_barcode": "Code-barres",
     "view_qr": "Code QR",
     "valid_until": "Valable jusqu'au :",
-    "apply_at": "Valable chez :"
+    "apply_at": "Valable chez :",
+    "scan_at_counter": "Scanner en caisse",
+    "redeem_ready_title": "Bon prêt à l’emploi",
+    "redeem_ready_desc": "Présentez ce QR code ou code-barres au caissier."
   },
   "common": {
     "copied": "Copié",
@@ -598,6 +652,251 @@ export default {
     "reward_wallet": "Portefeuille de récompenses",
     "points_short": "pts",
     "bonus_points": "Points bonus",
-    "points_unit": "Points"
+    "points_unit": "Points",
+    "change_language": "Changer de langue",
+    "close": "Fermer",
+    "mute": "Couper le son",
+    "unmute": "Activer le son",
+    "processing": "Traitement...",
+    "retry": "Réessayer"
+  },
+  "terms": {
+    "open_btn": "Conditions",
+    "title": "Conditions du programme de fidélité",
+    "subtitle": "Règles de cumul, de palier et d’utilisation des Natcash Coin",
+    "sec1_title": "1. Natcash Coin et Points de qualification",
+    "sec1_desc": "Les Natcash Coin servent aux paiements et récompenses. Les Points de qualification déterminent votre statut.",
+    "sec2_title": "2. Seuils de montée et de maintien",
+    "sec2_desc": "Quatre paliers sont calculés selon les Points de qualification cumulés sur le cycle actif.",
+    "sec3_title": "3. Déduction FIFO",
+    "sec3_desc": "Les lots de Coin expirant le plus tôt sont toujours consommés en priorité.",
+    "sec4_title": "4. Sécurité QR et désabonnement marketing",
+    "sec4_desc": "Le QR de paiement expire après 60 secondes. Vous pouvez refuser les offres marketing à tout moment.",
+    "table_title": "Barème officiel des paliers",
+    "col_tier": "Palier",
+    "col_upgrade": "Montée",
+    "col_keep": "Maintien",
+    "btn_agree": "Compris"
+  },
+  "fifo": {
+    "title": "Lots expirant bientôt (FIFO)",
+    "subtitle": "Ordre automatique Premier Entré, Premier Sorti",
+    "view_batches_btn": "Voir lots FIFO",
+    "total_expiring_label": "Coins expirant bientôt",
+    "rule_explanation": "Selon la règle FIFO, les lots à date limite la plus proche sont utilisés en premier.",
+    "earned_at": "Reçu le : {{date}}",
+    "expires_at": "Expire le : {{date}}",
+    "expiring_soon_badge": "Expire bientôt",
+    "default_source": "Lot de points",
+    "empty_title": "Aucun lot proche de l’expiration",
+    "empty_desc": "Aucun de vos lots Natcash Coin n’expire prochainement.",
+    "error_title": "Chargement impossible",
+    "load_error": "Impossible de charger les lots FIFO.",
+    "btn_refresh": "Actualiser"
+  },
+  "referrals": {
+    "title": "Inviter des amis",
+    "subtitle": "Partagez votre lien et recevez des Coin après validation eKYC",
+    "invite_btn": "Parrainer",
+    "your_code_label": "Votre code de parrainage",
+    "btn_share_now": "Partager le lien",
+    "share_title": "Rejoindre Natcash Loyalty",
+    "share_content": "Utilisez le code {{code}} sur Natcash pour gagner des bonus : {{link}}",
+    "stat_invited": "Invités",
+    "stat_ekyc": "eKYC validés",
+    "stat_earned": "Coin gagnés",
+    "friends_list_title": "Suivi de vos filleuls",
+    "status_ekyc_verified": "eKYC validé",
+    "status_pending_ekyc": "eKYC en attente",
+    "no_friends_title": "Aucun filleul pour le moment",
+    "no_friends_desc": "Partagez votre code QR ou lien avec vos proches.",
+    "empty_title": "Aucune donnée de parrainage",
+    "empty_desc": "Impossible de récupérer vos parrainages actuellement.",
+    "load_error": "Erreur de chargement du parrainage."
+  },
+  "scratch": {
+    "title": "Carte à Gratter Chance",
+    "subtitle": "Grattez le film argenté pour gagner instantanément",
+    "badge": "Gain immédiat",
+    "hero_title": "Chaque carte révèle un gain officiel",
+    "hero_desc": "Tirez une carte sécurisée et grattez pour découvrir vos symboles.",
+    "perk_badge": "Grattage",
+    "turns_remaining": "{{count}} tours disponibles",
+    "ready_title": "Prêt pour une carte à gratter",
+    "ready_desc": "Appuyez ci-dessous pour générer une carte officielle.",
+    "draw_button": "Tirer une carte",
+    "scratch_here": "GRATTEZ ICI",
+    "scratched_pct": "Gratté {{pct}}%",
+    "drag_hint": "Faites glisser le doigt sur la carte",
+    "reveal_all": "Tout révéler",
+    "win_subtitle": "Récompense créditée sur votre solde Natcash Coin",
+    "lose_subtitle": "Plus de chance sur la prochaine carte",
+    "play_again": "Rejouer",
+    "load_error": "Impossible de charger la carte à gratter."
+  },
+  "learning": {
+    "title": "Apprentissage & Quiz",
+    "subtitle": "Complétez les modules pour gagner des Coin et grimper au classement",
+    "perk_badge": "Quiz",
+    "tab_courses": "Cours",
+    "tab_leaderboard": "Classement",
+    "tab_history": "Historique",
+    "course_tag": "Module",
+    "question_count": "{{count}} questions",
+    "start_quiz": "Commencer",
+    "review_quiz": "Refaire le quiz",
+    "submit_quiz": "Valider ({{answered}}/{{total}})",
+    "quiz_completed": "Quiz terminé",
+    "score_summary": "Vous avez {{correct}} bonne(s) réponse(s) sur {{total}}.",
+    "empty_courses": "Aucun cours disponible",
+    "empty_courses_desc": "English Daily, Aprann Li et Money Smart apparaîtront ici.",
+    "empty_questions": "Aucune question disponible",
+    "empty_questions_desc": "Ce module ne contient pas encore de questions.",
+    "empty_leaderboard": "Classement vide",
+    "empty_leaderboard_desc": "Le classement mensuel s’actualisera après les premières parties.",
+    "empty_history": "Aucun historique de jeu",
+    "empty_history_desc": "Vos sessions GameHub et quiz apparaîtront ici.",
+    "session_default": "Session GameHub",
+    "recorded": "Enregistré",
+    "load_error": "Erreur de chargement du module.",
+    "submit_error": "Erreur lors de la soumission du quiz."
+  },
+  "whereToUse": {
+    "title": "Où utiliser Natcash Coin",
+    "subtitle": "Points de vente acceptant le QR Portefeuille Récompenses",
+    "see_all_btn": "Voir tout",
+    "search_placeholder": "Rechercher magasin, rue ou ville...",
+    "cat_all": "Tous",
+    "cat_retail": "Commerce",
+    "cat_food": "Restauration",
+    "cat_telecom": "Télécom",
+    "cat_utility": "Services",
+    "nationwide": "National",
+    "cashback_rate": "{{pct}}% retour",
+    "qr_accepted": "QR accepté",
+    "pay_with_qr": "Payer QR",
+    "empty_title": "Aucun point de vente trouvé",
+    "empty_desc": "Essayez une autre catégorie ou effacez la recherche.",
+    "load_error": "Impossible de charger les partenaires."
+  },
+  "qrModal": {
+    "title": "Payer en caisse · QR 60 s",
+    "subtitle": "Présentez ce QR dynamique au caissier pour payer en Coin",
+    "available_coins": "Solde Natcash Coin disponible",
+    "qr_alt": "QR code de paiement Portefeuille Récompenses",
+    "auto_refresh_label": "Actualisation sécurité dans",
+    "refresh_now": "Actualiser le QR",
+    "tap_to_generate": "Aucune session QR active",
+    "btn_where_to_use": "Où utiliser",
+    "btn_ussd": "USSD *202#",
+    "load_error": "Impossible de générer le jeton QR."
+  },
+  "ussd": {
+    "title": "Simulateur USSD Natcash",
+    "redial": "Rappeler *202#",
+    "input_placeholder": "Entrez un choix (ex : 1, 2, 0)...",
+    "cancel": "Annuler",
+    "send": "Envoyer",
+    "load_error": "Session USSD interrompue."
+  },
+  "segments": {
+    "new_customer": {
+      "badge": "Nouveau membre",
+      "title": "Bienvenue dans Natcash Loyalty",
+      "subtitle": "Terminez votre première mission pour obtenir votre bonus de départ.",
+      "cta": "Découvrir"
+    },
+    "low_activity": {
+      "badge": "Coup de boost",
+      "title": "Gagnez des Coin en un geste aujourd’hui",
+      "subtitle": "Utilisez votre tour gratuit ou grattez une carte chance.",
+      "cta": "Jouer"
+    },
+    "high_value": {
+      "badge": "Privilège VIP",
+      "title": "Multiplicateurs de palier et offres exclusives",
+      "subtitle": "Profitez d’avantages réservés aux membres à forte activité.",
+      "cta": "Voir avantages"
+    },
+    "single_service": {
+      "badge": "Explorer plus",
+      "title": "Essayez le paiement QR partenaire pour doubler vos gains",
+      "subtitle": "Utilisez votre Portefeuille Récompenses dans les enseignes alliées.",
+      "cta": "Trouver un magasin"
+    },
+    "win_back": {
+      "badge": "Bon retour",
+      "title": "Un bonus de retour vous attend",
+      "subtitle": "Récupérez vos tours gratuits et récompenses disponibles.",
+      "cta": "Récupérer"
+    },
+    "partner_shopper": {
+      "badge": "Client partenaire",
+      "title": "Dépensez vos Coin chez nos commerçants",
+      "subtitle": "Découvrez les nouveaux points acceptant le QR 60 s.",
+      "cta": "Voir la carte"
+    },
+    "general": {
+      "badge": "Offre du jour",
+      "title": "Cumulez chaque jour, échangez partout",
+      "subtitle": "Jouez sur GameHub et relevez les défis hebdomadaires.",
+      "cta": "Ouvrir GameHub"
+    }
+  },
+  "inbox": {
+    "title": "Boîte de réception",
+    "subtitle": "Suivi des récompenses, paliers et offres ciblées",
+    "open_settings": "Préférences de notification",
+    "cat_all": "Tous",
+    "cat_reward": "Récompenses",
+    "cat_mission": "Missions",
+    "cat_tier": "Paliers",
+    "cat_promo": "Promos",
+    "empty_title": "Boîte vide",
+    "empty_desc": "Aucun message dans cette catégorie.",
+    "load_error": "Impossible de charger les messages."
+  },
+  "notifSettings": {
+    "title": "Notifications & Langue",
+    "subtitle": "Gérez vos canaux et votre préférence marketing",
+    "quick_language": "Langue d’affichage rapide",
+    "opt_out_label": "Refuser les messages marketing (Opt-out)",
+    "opt_out_desc": "Désactive les promotions tout en conservant les alertes de sécurité.",
+    "channel_push": "Notifications push",
+    "channel_push_desc": "Alertes en temps réel pour vos Coin et tours gratuits",
+    "channel_sms": "Alertes SMS",
+    "channel_sms_desc": "Notifications importantes par SMS",
+    "channel_inapp": "Messagerie intégrée",
+    "channel_inapp_desc": "Conserver l’historique des offres dans la boîte",
+    "save_button": "Enregistrer",
+    "saved_success": "Préférences enregistrées.",
+    "load_error": "Chargement des préférences impossible.",
+    "save_error": "Enregistrement impossible."
+  },
+  "agent": {
+    "title": "Portail Agent & Super Agent",
+    "subtitle": "Objectifs mensuels et primes réseau",
+    "tab_ag01": "AG-01 · Agent",
+    "tab_ag02": "AG-02 · Super Agent",
+    "current_month": "Mois en cours",
+    "status_qualified": "Qualifié",
+    "status_in_progress": "En cours",
+    "ag01_heading": "Objectif mensuel de clients actifs",
+    "ag01_reward_desc": "Atteignez {{target}} clients ce mois-ci pour recevoir {{reward}} HTG / Coin.",
+    "customers_progress": "Progression mensuelle",
+    "reward_tier_label": "Prime du palier",
+    "ag02_heading": "Taux de qualification du réseau",
+    "ag02_reward_desc": "Atteignez au moins {{pct}}% d’agents qualifiés pour débloquer {{reward}} HTG.",
+    "qualified_agents": "Qualifiés",
+    "network_rate": "Taux réseau",
+    "super_bonus": "Prime Super Agent",
+    "sub_agents_list": "Agents rattachés",
+    "sub_qualified": "Qualifié",
+    "sub_pending": "En attente",
+    "empty_title": "Profil agent introuvable",
+    "empty_desc": "Ce compte n’est pas inscrit au programme Agent.",
+    "empty_sub_agents": "Aucun agent rattaché",
+    "empty_sub_agents_desc": "Vos sous-agents apparaîtront ici.",
+    "load_error": "Impossible de charger le tableau agent."
   }
 };

@@ -29,7 +29,8 @@ export default {
     "progress_status": "Đạt {{percent}}%",
     "points_balance": "Số Dư Điểm Thưởng",
     "btn_wallet_code": "Mã Ví Tiêu Điểm",
-    "btn_view_perks": "Xem Đặc Quyền 4 Hạng"
+    "btn_view_perks": "Xem Đặc Quyền 4 Hạng",
+    "tier_points_unit": "Điểm xét hạng"
   },
   "promo": {
     "featured_badge": "SỰ KIỆN NỔI BẬT",
@@ -100,7 +101,9 @@ export default {
     "game1_tag": "May Mắn",
     "energy_full": "ĐẦY LƯỢT MIỄN PHÍ",
     "next_turn_in": "Hồi 1 lượt sau:",
-    "this_week": "Tuần Này"
+    "this_week": "Tuần Này",
+    "buy_turn_item_name": "Mua {{count}} lượt chơi GameHub",
+    "filter_learning": "Học tập"
   },
   "daily_missions": {
     "modal_title": "Trạm Nhiệm Vụ Hàng Ngày",
@@ -149,14 +152,25 @@ export default {
     "default2_sub": "Viễn thông Natcom • Thưởng +50 điểm",
     "default3_title": "Mời 3 bạn bè tham gia",
     "default3_sub": "Liên minh Natcash • Thưởng +300 điểm",
-    "daily_subtitle": "Nhiệm vụ tự động làm mới vào lúc 00:00 hàng ngày."
+    "daily_subtitle": "Nhiệm vụ tự động làm mới vào lúc 00:00 hàng ngày.",
+    "filter_all": "Tất cả chiến dịch",
+    "claim_btn": "Nhận thưởng",
+    "claimed": "Đã nhận",
+    "empty_title": "Chưa có nhiệm vụ khả dụng",
+    "empty_desc": "Các nhiệm vụ mới theo chiến dịch sẽ sớm xuất hiện tại đây.",
+    "claim_success_title": "Nhận thưởng thành công",
+    "claim_success_msg": "Bạn vừa nhận thành công {{points}} Natcash Coin từ nhiệm vụ.",
+    "claim_error_title": "Không thể nhận thưởng",
+    "claim_error_msg": "Vui lòng thử lại sau ít phút."
   },
   "ledger": {
     "title": "Biến Động Điểm Gần Đây",
     "subtitle": "Sổ Cái Bất Biến",
     "ref_code": "Mã GD: {{code}}",
     "default1_desc": "Tích điểm mua sắm tại Delimart",
-    "default2_desc": "Trúng thưởng Vòng Quay May Mắn"
+    "default2_desc": "Trúng thưởng Vòng Quay May Mắn",
+    "empty_title": "Chưa có biến động điểm",
+    "empty_desc": "Lịch sử cộng và trừ Natcash Coin của bạn sẽ hiển thị tại đây."
   },
   "partners": {
     "title": "Mạng Lưới Đối Tác Chấp Nhận Tiêu Điểm",
@@ -165,7 +179,9 @@ export default {
     "delimart_name": "Siêu Thị Delimart",
     "delimart_desc": "Tích 1% • Tiêu tối đa 50% bill",
     "natcom_name": "Viễn Thông Natcom",
-    "natcom_desc": "Nạp thẻ • Đổi cước 4G"
+    "natcom_desc": "Nạp thẻ • Đổi cước 4G",
+    "empty_title": "Chưa có đối tác khả dụng",
+    "empty_desc": "Danh sách điểm chấp nhận thanh toán sẽ sớm được cập nhật."
   },
   "wheel": {
     "title": "Vòng Quay Tri Ân",
@@ -254,7 +270,15 @@ export default {
     "min_bill_expiry": "Áp dụng đơn từ {{minBill}} HTG • Hạn dùng {{expiryDays}} ngày",
     "points_to_redeem": "Điểm cần đổi",
     "points_to_convert_label": "Số điểm muốn quy đổi:",
-    "rate_exchange_desc": "Tỷ lệ: 100 Điểm = 10 HTG"
+    "rate_exchange_desc": "Tỷ lệ: 100 Điểm = 10 HTG",
+    "status_awaiting_confirmation": "Chờ xác nhận",
+    "status_sold_out": "Hết suất",
+    "redeeming": "Đang đổi...",
+    "catalog_empty_title": "Chưa có ưu đãi để đổi",
+    "catalog_empty_desc": "Danh mục quà tặng hiện trống hoặc đang cập nhật.",
+    "redeem_failed_title": "Đổi ưu đãi không thành công",
+    "redeem_failed_msg": "Không thể hoàn tất giao dịch đổi ưu đãi.",
+    "badge_redeem_error": "Lỗi đổi quà"
   },
   "tiers": {
     "modal_title": "Đặc Quyền 4 Hạng Hội Viên VIP",
@@ -270,7 +294,15 @@ export default {
     "birthday_gift_label": "Quà sinh nhật VIP",
     "cycle_title": "Chu Kỳ Đánh Giá Duy Trì Hạng 12 Tháng",
     "cycle_desc": "Hạng hội viên được tính lũy kế trong chu kỳ 12 tháng. Khi đạt đủ điểm xét hạng, bạn được nâng hạng ngay lập tức và duy trì trong suốt 12 tháng tiếp theo.",
-    "btn_got_it": "Đã Hiểu"
+    "btn_got_it": "Đã Hiểu",
+    "btn_program_terms": "Điều khoản chương trình",
+    "keep_tier_label": "Giữ hạng",
+    "upgrade_threshold_label": "Ngưỡng lên hạng",
+    "natcash_coin_label": "Natcash Coin",
+    "natcash_coin_hint": "Dùng để đổi quà, thẻ cào và thanh toán tại quầy đối tác",
+    "qualifying_points_label": "Điểm xét hạng",
+    "qualifying_points_hint": "Tích lũy trong chu kỳ để xét thăng hạng và giữ hạng",
+    "spins_per_day": "{{count}} lượt/ngày"
   },
   "games": {
     "common": {
@@ -388,7 +420,9 @@ export default {
         "tips": "Sử dụng trợ năng \"Mắt Thần\" để mở nhanh toàn bộ bài trong 1.5 giây hoặc bấm \"+10 Giây\" khi sắp hết thời gian."
       },
       "moves_unit": "lượt",
-      "time_bonus_label": "thời gian dư"
+      "time_bonus_label": "thời gian dư",
+      "next_stage_label": "Màn tiếp",
+      "stage_score_label": "Điểm màn"
     },
     "bubble": {
       "title": "Bắn Bóng Màu Kanaval",
@@ -437,7 +471,9 @@ export default {
         "scoring": "Mỗi dao cắm trúng bia: +10 điểm. Cắm trúng Bao Lì Xì hoặc Gói Data 4G gắn trên thớt: nhận thêm +25 đến +50 điểm thưởng!",
         "tips": "Bia gỗ xoay đổi chiều và thay đổi tốc độ bất ngờ. Hãy căn khoảng trống rộng nhất trên bia trước khi bấm phóng."
       },
-      "record_stage": "Kỷ lục: Màn {{highestStage}}"
+      "record_stage": "Kỷ lục: Màn {{highestStage}}",
+      "knives_label": "Dao",
+      "score_label": "Điểm"
     },
     "block": {
       "title": "Xếp Gạch Kim Cương Natcash",
@@ -526,7 +562,11 @@ export default {
         "controls": "Chạm vào 1 con ốc vít để nhấc lên, sau đó chạm vào 1 lỗ ren trống để vặn ốc vào đó.",
         "scoring": "Mỗi tấm kim loại rơi xuống: +50 điểm. Hoàn thành màn chơi: nhận 100 điểm + thưởng thời gian!",
         "tips": "Quan sát các tấm kim loại nằm ở lớp trên cùng (layer cao hơn) để tháo ốc giải phóng chúng trước."
-      }
+      },
+      "add_hole_btn": "Thêm lỗ",
+      "hammer_btn": "Búa phá",
+      "hammer_tooltip": "Phá một chốt bị kẹt",
+      "screw_box_label": "Hộp ốc vít"
     },
     "untangle": {
       "title": "Gỡ Rối Dây Thừng",
@@ -558,6 +598,9 @@ export default {
         "scoring": "Tiêu diệt tên trộm: +50 điểm. Thu gom rương vàng Natcash an toàn: nhận +100 điểm.",
         "tips": "Dùng nước dập lửa/nham thạch trước, sau đó thả tạ sắt đè tên trộm trước khi mở chốt cho kho báu rơi xuống."
       }
+    },
+    "pin": {
+      "retry_btn": "Chơi lại"
     }
   },
   "footer": {
@@ -577,7 +620,15 @@ export default {
   "home": {
     "points_expiration_warning": "{{count}} điểm sẽ hết hạn vào {{date}}",
     "points_expiration_hint": "Đổi ngay phiếu quà tặng siêu thị hoặc gói data để không lãng phí điểm",
-    "redeem_now_btn": "Đổi quà →"
+    "redeem_now_btn": "Đổi quà →",
+    "nc_entry_title": "Điểm chạm Natcash Loyalty",
+    "nc_entry_subtitle": "{{coins}} Natcash Coin · {{tierPts}} Điểm xét hạng",
+    "quick_qr_pay": "QR Ví 60s",
+    "quick_where_to_use": "Điểm tiêu Coin",
+    "quick_invite": "Mời bạn bè",
+    "quick_learning": "Học & Đố vui",
+    "quick_ussd": "USSD *202#",
+    "quick_agent": "Đại lý"
   },
   "tier": {
     "your_tier_badge": "✓ Hạng của bạn",
@@ -590,7 +641,10 @@ export default {
     "view_barcode": "Mã Vạch",
     "view_qr": "Mã QR",
     "valid_until": "Hạn sử dụng:",
-    "apply_at": "Áp dụng tại:"
+    "apply_at": "Áp dụng tại:",
+    "scan_at_counter": "Quét tại quầy",
+    "redeem_ready_title": "Đổi quà thành công",
+    "redeem_ready_desc": "Đưa mã QR hoặc mã vạch này cho thu ngân để áp dụng ưu đãi."
   },
   "common": {
     "copied": "Đã sao chép",
@@ -598,6 +652,251 @@ export default {
     "reward_wallet": "Ví Phần Thưởng",
     "points_short": "đ",
     "bonus_points": "Điểm Thưởng",
-    "points_unit": "Điểm"
+    "points_unit": "Điểm",
+    "change_language": "Đổi ngôn ngữ",
+    "close": "Đóng",
+    "mute": "Tắt âm thanh",
+    "unmute": "Bật âm thanh",
+    "processing": "Đang xử lý...",
+    "retry": "Thử lại"
+  },
+  "terms": {
+    "open_btn": "Điều khoản",
+    "title": "Điều khoản chương trình hội viên",
+    "subtitle": "Quy định tích lũy, phân hạng và sử dụng Natcash Coin",
+    "sec1_title": "1. Phân biệt Natcash Coin và Điểm xét hạng",
+    "sec1_desc": "Natcash Coin là số dư thưởng dùng để đổi ưu đãi hoặc thanh toán QR tại quầy. Điểm xét hạng được ghi nhận riêng để tính bậc hội viên.",
+    "sec2_title": "2. Ngưỡng lên hạng và giữ hạng",
+    "sec2_desc": "Hệ thống áp dụng 4 bậc hội viên theo Điểm xét hạng tích lũy trong chu kỳ hiện tại.",
+    "sec3_title": "3. Nguyên tắc khấu trừ FIFO",
+    "sec3_desc": "Các lô Natcash Coin có ngày hết hạn sớm nhất sẽ được ưu tiên trừ trước khi đổi quà hoặc thanh toán.",
+    "sec4_title": "4. Bảo mật phiên QR và quyền hủy tiếp thị",
+    "sec4_desc": "Mã QR thanh toán tại quầy có hiệu lực 60 giây. Hội viên có thể tắt thông báo tiếp thị bất kỳ lúc nào.",
+    "table_title": "Bảng ngưỡng Điểm xét hạng chính thức",
+    "col_tier": "Hạng hội viên",
+    "col_upgrade": "Lên hạng",
+    "col_keep": "Giữ hạng",
+    "btn_agree": "Đã hiểu"
+  },
+  "fifo": {
+    "title": "Lô điểm sắp hết hạn (FIFO)",
+    "subtitle": "Thứ tự ưu tiên khấu trừ theo hạn sử dụng",
+    "view_batches_btn": "Xem chi tiết lô FIFO",
+    "total_expiring_label": "Tổng Coin sắp hết hạn",
+    "rule_explanation": "Theo quy tắc FIFO, lô Coin có hạn sử dụng gần nhất sẽ tự động được tiêu trước khi bạn đổi ưu đãi hoặc quét QR.",
+    "earned_at": "Ngày nhận: {{date}}",
+    "expires_at": "Hết hạn: {{date}}",
+    "expiring_soon_badge": "Sắp hết hạn",
+    "default_source": "Lô tích lũy",
+    "empty_title": "Chưa có lô điểm sắp hết hạn",
+    "empty_desc": "Số dư Natcash Coin của bạn hiện chưa có lô nào sắp đến hạn.",
+    "error_title": "Không thể tải danh sách lô điểm",
+    "load_error": "Lỗi tải thông tin lô điểm FIFO.",
+    "btn_refresh": "Làm mới"
+  },
+  "referrals": {
+    "title": "Mời bạn bè nhận thưởng",
+    "subtitle": "Chia sẻ mã giới thiệu, nhận Coin ngay khi bạn hoàn tất eKYC",
+    "invite_btn": "Mời bạn bè",
+    "your_code_label": "Mã giới thiệu của bạn",
+    "btn_share_now": "Chia sẻ liên kết mời",
+    "share_title": "Tham gia Natcash Loyalty",
+    "share_content": "Nhập mã {{code}} khi đăng ký Natcash để nhận quà chào mừng: {{link}}",
+    "stat_invited": "Đã mời",
+    "stat_ekyc": "Đã eKYC",
+    "stat_earned": "Coin đã nhận",
+    "friends_list_title": "Danh sách bạn bè đã mời",
+    "status_ekyc_verified": "Đã eKYC",
+    "status_pending_ekyc": "Chờ eKYC",
+    "no_friends_title": "Chưa có lượt giới thiệu nào",
+    "no_friends_desc": "Hãy chia sẻ mã QR hoặc liên kết cho bạn bè để cùng nhận thưởng.",
+    "empty_title": "Chưa có dữ liệu giới thiệu",
+    "empty_desc": "Không tìm thấy thông tin mã giới thiệu lúc này.",
+    "load_error": "Không thể tải dữ liệu giới thiệu."
+  },
+  "scratch": {
+    "title": "Thẻ Cào May Mắn",
+    "subtitle": "Cào lớp phủ bạc để mở thưởng tức thì",
+    "badge": "Thẻ cào trực tuyến",
+    "hero_title": "Mỗi thẻ là một cơ hội trúng Coin",
+    "hero_desc": "Nhận kết quả bảo mật từ máy chủ và tự tay cào mở ô may mắn.",
+    "perk_badge": "Thẻ cào",
+    "turns_remaining": "Còn {{count}} lượt khả dụng",
+    "ready_title": "Sẵn sàng mở thẻ cào mới",
+    "ready_desc": "Nhấn nút bên dưới để lấy thẻ cào từ hệ thống.",
+    "draw_button": "Lấy thẻ cào mới",
+    "scratch_here": "CÀO TẠI ĐÂY",
+    "scratched_pct": "Đã cào {{pct}}%",
+    "drag_hint": "Dùng ngón tay hoặc chuột cào phủ trên thẻ",
+    "reveal_all": "Mở nhanh tất cả",
+    "win_subtitle": "Phần thưởng đã được cộng vào ví của bạn",
+    "lose_subtitle": "Chúc bạn may mắn ở thẻ cào tiếp theo",
+    "play_again": "Chơi thẻ tiếp theo",
+    "load_error": "Không thể khởi tạo thẻ cào."
+  },
+  "learning": {
+    "title": "Học tập & Trắc nghiệm",
+    "subtitle": "Hoàn thành bài học để nhận Natcash Coin và leo bảng xếp hạng",
+    "perk_badge": "Trắc nghiệm",
+    "tab_courses": "Khóa học",
+    "tab_leaderboard": "Xếp hạng",
+    "tab_history": "Lịch sử chơi",
+    "course_tag": "Kiến thức",
+    "question_count": "{{count}} câu hỏi",
+    "start_quiz": "Làm bài ngay",
+    "review_quiz": "Làm lại bài",
+    "submit_quiz": "Nộp bài ({{answered}}/{{total}})",
+    "quiz_completed": "Hoàn thành bài trắc nghiệm",
+    "score_summary": "Bạn trả lời đúng {{correct}}/{{total}} câu hỏi.",
+    "empty_courses": "Chưa có khóa học nào",
+    "empty_courses_desc": "Các khóa học English Daily, Aprann Li và Money Smart sẽ hiển thị tại đây.",
+    "empty_questions": "Chưa có câu hỏi",
+    "empty_questions_desc": "Khóa học này hiện chưa có bộ câu hỏi.",
+    "empty_leaderboard": "Chưa có dữ liệu xếp hạng",
+    "empty_leaderboard_desc": "Bảng xếp hạng tháng sẽ cập nhật khi có phiên chơi hợp lệ.",
+    "empty_history": "Chưa có lịch sử phiên chơi",
+    "empty_history_desc": "Các lượt chơi GameHub và trắc nghiệm của bạn sẽ lưu tại đây.",
+    "session_default": "Phiên chơi GameHub",
+    "recorded": "Đã ghi nhận",
+    "load_error": "Không thể tải dữ liệu học tập.",
+    "submit_error": "Không thể nộp bài trắc nghiệm."
+  },
+  "whereToUse": {
+    "title": "Điểm tiêu Natcash Coin",
+    "subtitle": "Danh sách cửa hàng và dịch vụ chấp nhận QR Ví Phần Thưởng",
+    "see_all_btn": "Xem tất cả điểm tiêu",
+    "search_placeholder": "Tìm theo tên cửa hàng, đường, thành phố...",
+    "cat_all": "Tất cả",
+    "cat_retail": "Siêu thị & Bán lẻ",
+    "cat_food": "Ẩm thực",
+    "cat_telecom": "Viễn thông",
+    "cat_utility": "Tiện ích",
+    "nationwide": "Toàn quốc",
+    "cashback_rate": "Hoàn {{pct}}%",
+    "qr_accepted": "Nhận QR tại quầy",
+    "pay_with_qr": "Quét QR trả",
+    "empty_title": "Không tìm thấy điểm tiêu phù hợp",
+    "empty_desc": "Thử chọn danh mục khác hoặc xóa từ khóa tìm kiếm.",
+    "load_error": "Không thể tải danh sách điểm chấp nhận."
+  },
+  "qrModal": {
+    "title": "Thanh toán tại quầy · QR 60s",
+    "subtitle": "Đưa mã QR động cho thu ngân để dùng Natcash Coin",
+    "available_coins": "Số dư Natcash Coin khả dụng",
+    "qr_alt": "Mã QR thanh toán Ví Phần Thưởng",
+    "auto_refresh_label": "Tự làm mới bảo mật sau",
+    "refresh_now": "Làm mới mã QR ngay",
+    "tap_to_generate": "Chưa có phiên QR đang hoạt động",
+    "btn_where_to_use": "Điểm tiêu Coin",
+    "btn_ussd": "Mở USSD *202#",
+    "load_error": "Không thể cấp mã QR thanh toán."
+  },
+  "ussd": {
+    "title": "Mô phỏng USSD Natcash",
+    "redial": "Gọi lại *202#",
+    "input_placeholder": "Nhập số lựa chọn (VD: 1, 2, 0)...",
+    "cancel": "Hủy",
+    "send": "Gửi",
+    "load_error": "Phiên USSD bị gián đoạn."
+  },
+  "segments": {
+    "new_customer": {
+      "badge": "Thành viên mới",
+      "title": "Chào mừng đến với Natcash Loyalty",
+      "subtitle": "Hoàn thành nhiệm vụ đầu tiên để nhận gói quà khởi đầu.",
+      "cta": "Khám phá ngay"
+    },
+    "low_activity": {
+      "badge": "Gợi ý kích hoạt",
+      "title": "Nhận thêm Coin mỗi ngày chỉ với 1 chạm",
+      "subtitle": "Quay vòng quay miễn phí hoặc chơi thẻ cào để tăng số dư nhanh chóng.",
+      "cta": "Chơi ngay"
+    },
+    "high_value": {
+      "badge": "Hội viên ưu tiên",
+      "title": "Đặc quyền hoàn điểm và ưu đãi hạng cao",
+      "subtitle": "Tận hưởng tỷ lệ nhân điểm và kho voucher độc quyền dành riêng cho bạn.",
+      "cta": "Xem ưu đãi"
+    },
+    "single_service": {
+      "badge": "Mở rộng trải nghiệm",
+      "title": "Thử thêm thanh toán đối tác để nhân đôi thưởng",
+      "subtitle": "Quét QR Ví Phần Thưởng tại hệ thống cửa hàng liên minh.",
+      "cta": "Tìm điểm tiêu"
+    },
+    "win_back": {
+      "badge": "Chào mừng trở lại",
+      "title": "Ưu đãi dành riêng chào đón bạn quay lại",
+      "subtitle": "Nhận ngay lượt chơi miễn phí và mở khóa quà tặng trong ví.",
+      "cta": "Nhận quà ngay"
+    },
+    "partner_shopper": {
+      "badge": "Tín đồ mua sắm",
+      "title": "Tiêu Coin thông minh tại quầy đối tác",
+      "subtitle": "Khám phá thêm điểm chấp nhận thanh toán mới quanh bạn.",
+      "cta": "Xem điểm bán"
+    },
+    "general": {
+      "badge": "Ưu đãi hôm nay",
+      "title": "Tích Coin mỗi giao dịch, đổi quà mọi lúc",
+      "subtitle": "Tham gia GameHub và hoàn thành nhiệm vụ tuần để thăng hạng nhanh hơn.",
+      "cta": "Mở GameHub"
+    }
+  },
+  "inbox": {
+    "title": "Hộp thư thông báo",
+    "subtitle": "Cập nhật biến động điểm, hạng và ưu đãi cá nhân",
+    "open_settings": "Cài đặt thông báo",
+    "cat_all": "Tất cả",
+    "cat_reward": "Phần thưởng",
+    "cat_mission": "Nhiệm vụ",
+    "cat_tier": "Hạng hội viên",
+    "cat_promo": "Khuyến mãi",
+    "empty_title": "Hộp thư trống",
+    "empty_desc": "Bạn chưa có thông báo nào trong mục này.",
+    "load_error": "Không thể tải hộp thư thông báo."
+  },
+  "notifSettings": {
+    "title": "Cài đặt thông báo & Ngôn ngữ",
+    "subtitle": "Kiểm soát kênh liên lạc và tùy chọn từ chối tiếp thị",
+    "quick_language": "Chọn nhanh ngôn ngữ hiển thị",
+    "opt_out_label": "Từ chối tin tiếp thị (Opt-out)",
+    "opt_out_desc": "Không nhận thông điệp quảng cáo, vẫn giữ thông báo giao dịch và bảo mật.",
+    "channel_push": "Thông báo đẩy trên ứng dụng",
+    "channel_push_desc": "Nhận tin tức thời về giao dịch Coin và lượt chơi mới",
+    "channel_sms": "Tin nhắn SMS",
+    "channel_sms_desc": "Nhận cảnh báo quan trọng qua tin nhắn điện thoại",
+    "channel_inapp": "Hộp thư trong ứng dụng",
+    "channel_inapp_desc": "Lưu trữ thông báo ưu đãi và biến động hạng tại hộp thư",
+    "save_button": "Lưu tùy chọn",
+    "saved_success": "Đã lưu tùy chọn thông báo thành công.",
+    "load_error": "Không thể tải cấu hình thông báo.",
+    "save_error": "Không thể cập nhật cấu hình thông báo."
+  },
+  "agent": {
+    "title": "Cổng Đại lý & Tổng Đại lý",
+    "subtitle": "Theo dõi chỉ tiêu khách hàng và thưởng mạng lưới theo tháng",
+    "tab_ag01": "AG-01 · Đại lý",
+    "tab_ag02": "AG-02 · Tổng Đại lý",
+    "current_month": "Tháng hiện tại",
+    "status_qualified": "Đạt chỉ tiêu",
+    "status_in_progress": "Đang tích lũy",
+    "ag01_heading": "Chỉ tiêu khách hàng hoạt động tháng",
+    "ag01_reward_desc": "Đạt {{target}} khách hàng trong tháng để nhận thưởng {{reward}} HTG / Coin.",
+    "customers_progress": "Tiến độ khách hàng tháng này",
+    "reward_tier_label": "Mức thưởng đạt mốc",
+    "ag02_heading": "Hiệu suất mạng lưới Đại lý trực thuộc",
+    "ag02_reward_desc": "Tỷ lệ đại lý tuyến dưới đạt chuẩn từ {{pct}}% trở lên nhận thưởng {{reward}} HTG.",
+    "qualified_agents": "Đại lý đạt",
+    "network_rate": "Tỷ lệ mạng lưới",
+    "super_bonus": "Thưởng Tổng ĐL",
+    "sub_agents_list": "Danh sách đại lý trực thuộc",
+    "sub_qualified": "Đạt chuẩn",
+    "sub_pending": "Chưa đạt",
+    "empty_title": "Chưa có dữ liệu đại lý",
+    "empty_desc": "Tài khoản này chưa được ghi nhận hồ sơ đại lý.",
+    "empty_sub_agents": "Chưa có đại lý tuyến dưới",
+    "empty_sub_agents_desc": "Danh sách đại lý trực thuộc sẽ hiển thị tại đây.",
+    "load_error": "Không thể tải bảng điều khiển đại lý."
   }
 };

@@ -21,7 +21,20 @@ export default {
     "roles": "Quản lý Vai trò",
     "audit_logs": "Nhật ký Hoạt động",
     "dead_letter": "Lỗi Webhook (Dead-Letter)",
-    "milestones": "Cột mốc Chiến dịch"
+    "milestones": "Cột mốc Chiến dịch",
+    "segments": "Phân khúc Khách hàng (CN-03)",
+    "scenarios": "Kịch bản Gợi nhắc (CN-04)",
+    "learning_quiz": "Ngân hàng Câu hỏi Ngoại ngữ",
+    "game_stats": "Thống kê & Phiên chơi Game",
+    "payment_points": "Chi nhánh & Điểm Thanh toán",
+    "agent_loyalty": "Loyalty Đại lý (AG-03)",
+    "reports_budget": "Báo cáo & Ngân sách",
+    "budgets": "Ngân sách Tháng (NS-01)",
+    "effectiveness": "Hiệu quả & Lift (NS-03)",
+    "alerts": "Trung tâm Cảnh báo (CN-05)",
+    "advanced_reports": "Báo cáo Chuyên sâu (NS-05..07)",
+    "partner_portal": "Partner Portal (Đối tác)",
+    "approvals": "Hàng đợi Phê duyệt 2 lớp (QT-04)"
   },
   "policy": {
     "management_title": "Cấu hình Chính sách Tích & Tiêu Điểm",
@@ -1203,6 +1216,66 @@ export default {
     "error_message": "Lý do lỗi mạng",
     "failed_at": "Thời điểm thất bại",
     "payload_detail": "Chi tiết Payload sự kiện #{{id}}"
+  },
+  "approval": {
+    "title": "Hàng đợi Phê duyệt Maker-Checker (QT-04)",
+    "subtitle": "Kiểm soát 2 lớp đối với điều chỉnh điểm, khóa/mở khóa hội viên, thay đổi chính sách và đề xuất đối tác.",
+    "approved": "Đã phê duyệt",
+    "rejected": "Đã từ chối",
+    "approve_btn": "Phê duyệt",
+    "reject_btn": "Từ chối",
+    "review_btn": "Xem & Duyệt",
+    "checker_note": "Ghi chú của Checker (bắt buộc nếu Từ chối)"
+  },
+  "payment_point": {
+    "title": "Mạng lưới Chi nhánh Natcash & Điểm Thanh toán QR (LM-02)",
+    "add_new": "Thêm điểm thu",
+    "code": "Mã Điểm Thu",
+    "name": "Tên Chi nhánh / Quầy"
+  },
+  "segment": {
+    "title": "7 Phân khúc Hội viên Động (CN-03)",
+    "view_members": "Hội viên",
+    "recalculate": "Tính lại"
+  },
+  "scenario": {
+    "title": "Kịch bản Gợi nhắc Đa kênh & Chống Làm phiền (CN-04)",
+    "add_new": "Tạo kịch bản"
+  },
+  "budget": {
+    "title": "Kiểm soát Trần Ngân sách Tháng & Tự động Tạm dừng (NS-01)",
+    "add_new": "Thiết lập ngân sách"
+  },
+  "report": {
+    "effectiveness_title": "Đo lường Hiệu quả & Tăng trưởng Lift so với Nhóm Đối chứng (NS-03)",
+    "advanced_title": "Báo cáo Liên minh Nâng cao (NS-05 · NS-06 · NS-07)"
+  },
+  "alert": {
+    "title": "Trung tâm Cảnh báo & Ngưỡng Vận hành (CN-05)",
+    "ack_btn": "Tiếp nhận",
+    "resolve_btn": "Đóng"
+  },
+  "learning": {
+    "title": "Ngân hàng Câu hỏi Game Học Ngoại ngữ & Audio (GM-09)",
+    "add_new": "Thêm câu hỏi",
+    "import_csv": "Nhập CSV"
+  },
+  "agent": {
+    "title": "Quản trị Chỉ tiêu & Thưởng Loyalty Đại lý / Tổng đại lý (AG-03)",
+    "set_target": "Thiết lập KPI"
+  },
+  "partner_portal": {
+    "nav_dashboard": "Tổng quan Đối tác (NS-04)",
+    "nav_branches": "Chi nhánh & Sản phẩm (LM-08)",
+    "nav_policy": "Chính sách Điểm (LM-09)",
+    "nav_staff": "Nhân viên & Phân quyền (QT-03)",
+    "nav_proposals": "Đề xuất Chương trình (NV-07)",
+    "nav_vouchers": "Voucher & Gạch nợ Quầy (VQ-05)",
+    "nav_transactions": "Giao dịch Đối tác (LM-11)",
+    "nav_settlement": "Đối soát & Thanh toán (LM-10)",
+    "nav_notifications": "Thông báo (CN-08)",
+    "nav_api_keys": "Webhook & API Keys (QT-06)",
+    "raise_claim": "Raise a claim"
   }
 };
 

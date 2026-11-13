@@ -3,6 +3,8 @@ package com.natcash.loyalty.wallet.entity;
 import com.natcash.loyalty.account.entity.LoyaltyPartnerEntity;
 import com.natcash.loyalty.account.entity.LoyaltyTierEntity;
 import com.natcash.loyalty.domain.enums.CommonStatus;
+import com.natcash.loyalty.domain.enums.PartnerHierarchyLevel;
+import com.natcash.loyalty.domain.enums.SettlementCycle;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -87,7 +89,29 @@ public class LoyaltyAcceptancePolicyEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "settlement_cycle", nullable = false, length = 20)
     @Builder.Default
-    private com.natcash.loyalty.domain.enums.SettlementCycle settlementCycle = com.natcash.loyalty.domain.enums.SettlementCycle.DAILY;
+    private SettlementCycle settlementCycle = SettlementCycle.DAILY;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "hierarchy_level", nullable = false, length = 30)
+    @Builder.Default
+    private PartnerHierarchyLevel hierarchyLevel = PartnerHierarchyLevel.PARTNER;
+
+    @Column(name = "branch_id")
+    private Long branchId;
+
+    @Column(name = "product_group_id")
+    private Long productGroupId;
+
+    @Column(name = "product_id")
+    private Long productId;
+
+    @Column(name = "version_no", nullable = false)
+    @Builder.Default
+    private Integer versionNo = 1;
+
+    @Column(name = "is_active_version", nullable = false)
+    @Builder.Default
+    private Boolean isActiveVersion = Boolean.TRUE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
