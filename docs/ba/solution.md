@@ -277,59 +277,74 @@ flowchart LR
 ```
 
 ### 5.1. Mô Hình Phân Tầng Hội Viên và Vòng Đời Khách Hàng
-* **Cơ chế xét hạng:** Điểm xét hạng được tích lũy tự động từ các giao dịch thanh toán trên ví và nạp cước viễn thông trong chu kỳ 12 tháng liên tục.
-* **Ma trận phân cấp đặc quyền:**
+* **Tự động là hội viên:** Mọi khách hàng có Ví Natcash tự động là hội viên hạng `Silver` ngay từ đầu, không cần đăng ký riêng.
+* **Cơ chế xét hạng 12 tháng nhân văn:**
+  1. **Chu kỳ xét hạng:** 12 tháng theo năm dương lịch (`01/01` đến `31/12`), dựa trên **Điểm hạng (`TIER_POINT`)** tích lũy trong kỳ.
+  2. **Đủ điểm là lên hạng ngay:** Khi đạt mốc điểm của hạng cao hơn, khách hàng được nâng hạng tức thì và giữ hạng mới hết kỳ kế tiếp.
+  3. **Không hạ hạng giữa kỳ:** Tuyệt đối không hạ hạng hội viên khi đang trong năm xét hạng.
+  4. **Báo trước 30 ngày & Hạ tối đa 1 hạng:** Gửi thông báo nhắc khách hàng trước 30 ngày khi sắp hết kỳ; cuối kỳ nếu không đủ điểm duy trì thì chỉ hạ tối đa **1 bậc hạng**.
+* **Ma trận phân cấp 4 hạng & Hệ số nhân `Natcash Coin`:**
 
-| Hạng hội viên | Điểm xét hạng tối thiểu | Hệ số nhân điểm | Đặc quyền nổi bật |
-| :--- | :--- | :--- | :--- |
-| **Bạc** | 0 điểm | × 1.0 | Tặng 1 lượt quay miễn phí/ngày khi điểm danh; đổi điểm lấy phiếu giảm giá tiêu chuẩn; thanh toán điểm tại siêu thị tối đa 30% hóa đơn. |
-| **Vàng** | 1.000 điểm | × 1.2 | Miễn phí chuyển tiền ví 5 giao dịch/tháng; mở quyền quay Vòng quay Vàng; tặng quà sinh nhật; thanh toán điểm tại siêu thị tối đa 50% hóa đơn. |
-| **Bạch Kim** | 5.000 điểm | × 1.5 | Hoàn tiền 1% khi thanh toán hóa đơn; mở quyền quay Vòng quay VIP; ưu tiên xử lý khiếu nại; thanh toán điểm tại siêu thị tối đa 100% hóa đơn. |
-| **Kim Cương** | 15.000 điểm | × 2.0 | Hoàn tiền 2% mọi giao dịch; quản lý tài khoản riêng; quyền tham gia toàn bộ giải đấu game độc quyền; không giới hạn hạn mức tiêu điểm đối tác. |
-
----
-
-### 5.2. Động Cơ Tích Điểm và Sổ Cái Điểm Thưởng Kép
-* **Quy tắc tích điểm đa kênh:**
-  1. *Thanh toán hóa đơn và mua sắm ví:* Tích lũy điểm dựa trên tỷ lệ cấu hình theo giá trị giao dịch ví.
-  2. *Nạp cước viễn thông và dịch vụ số:* Tích điểm theo giá trị nạp tiền điện thoại và gói data.
-  3. *Tương tác trò chơi:* Thắng các trò chơi trên Cổng Game để nhận điểm thưởng trực tiếp.
-* **Quản trị vòng đời của điểm:** Điểm thưởng có hiệu lực 12 tháng kể từ ngày phát sinh. Hệ thống tự động phân tách điểm khả dụng, điểm tạm giữ khi giao dịch đang xử lý và tự động xử lý điểm hết hạn định kỳ.
+| Hạng hội viên | Điểm hạng tối thiểu / năm | Hệ số nhân `Natcash Coin` | Đặc quyền nổi bật |
+| :--- | :--- | :---: | :--- |
+| **Silver (Bạc)** | `0` điểm | `× 1.0` | Tích điểm cơ bản mọi giao dịch; tham gia nhiệm vụ hàng ngày; đổi Voucher và gói Data tiêu chuẩn. |
+| **Gold (Vàng)** | `1.000` điểm | `× 1.1` (`+10%`) | Cộng thêm 10% `Natcash Coin` mọi giao dịch; mở kho quà hạng Gold; quà tặng mừng sinh nhật. |
+| **Platinum (Bạch Kim)** | `5.000` điểm | `× 1.25` (`+25%`) | Cộng thêm 25% `Natcash Coin`; mở kho quà độc quyền Platinum; ưu tiên tổng đài hỗ trợ. |
+| **Diamond (Kim Cương)** | `15.000` điểm | `× 1.5` (`+50%`) | Cộng thêm 50% `Natcash Coin`; kho quà VIP giới hạn; chăm sóc ưu tiên đặc biệt toàn liên minh. |
 
 ---
 
-### 5.3. Động Cơ Nhiệm Vụ và Thử Thách Trò Chơi Hóa
-* **Chuỗi điểm danh 7 ngày:** Khuyến khích mở ứng dụng hàng ngày; thưởng tăng dần qua từng ngày (Ngày 1: 10 điểm → Ngày 7: 100 điểm + 1 lượt quay miễn phí).
-* **Nhiệm vụ thanh toán định kỳ:** Khuyến khích người dùng thực hiện đủ số lượng giao dịch thanh toán trong tuần để mở rương kho báu chứa điểm thưởng lớn.
+### 5.2. Tách Bạch Hai Đơn Vị Thưởng: Điểm Hạng & Natcash Coin
+* **Tách rõ 2 đơn vị tránh nhầm lẫn:**
+  1. **Điểm hạng (`TIER_POINT`):** Dùng để xác định hạng hội viên (`Silver → Gold → Platinum → Diamond`), **không bị trừ khi khách hàng đổi quà** và được đặt lại theo chu kỳ xét hạng 12 tháng.
+  2. **`Natcash Coin` (`LOYALTY_COIN`):** Đơn vị thưởng dùng để tiêu và đổi quà với tỷ giá neo cố định **`1 Coin = 1 HTG`**. Dùng để đổi Voucher, đổi gói Data/Phút gọi viễn thông hoặc trừ trực tiếp vào hóa đơn tại Merchant liên minh. Có hạn dùng theo lô (`FIFO`) và nhắc trước khi hết hạn.
+* **Quy tắc tích lũy đa kênh:**
+  1. *Thanh toán hóa đơn, nạp tiền, chuyển tiền và mua sắm ví:* Tích lũy đồng thời Điểm hạng và `Natcash Coin` (nhân hệ số hạng `×1.0` đến `×1.5`).
+  2. *Nạp cước viễn thông và mua gói Data:* Tích lũy theo giá trị giao dịch viễn thông.
+  3. *Hoàn thành nhiệm vụ, cột mốc, trò chơi và bài học ngắn:* Nhận `Natcash Coin`, Voucher, gói Data hoặc lượt chơi.
+
+---
+
+### 5.3. Động Cơ Nhiệm Vụ Động 9 Nhóm (`KHI – NẾU – THÌ – GIỚI HẠN`)
+Hệ thống cung cấp bộ khung cấu hình nhiệm vụ động không cần sửa mã nguồn (`KHI sự kiện xảy ra` → `NẾU thỏa điều kiện` → `THÌ trao thưởng` → `GIỚI HẠN ngân sách & tần suất`), bao phủ 9 nhóm nhiệm vụ:
+1. **Chào mừng (`Onboarding`):** Mở ví, định danh `eKYC`, giao dịch đầu tiên.
+2. **Hằng ngày (`Daily`):** Điểm danh mở ứng dụng, thanh toán QR, nạp tiền điện thoại.
+3. **Chuỗi ngày (`Streak`):** Duy trì hành động 3 ngày, 7 ngày, 14 ngày, 30 ngày liên tiếp.
+4. **Theo tuần / tháng:** Hoàn thành các mốc tích lũy giao dịch trong tuần hoặc tháng.
+5. **Theo dịch vụ:** Thanh toán hóa đơn Điện/Nước, nạp Data 4G, chuyển tiền ví.
+6. **Tại Merchant liên minh:** Mua sắm tại siêu thị `Delimart`, nhà hàng, hiệu thuốc liên minh.
+7. **Giới thiệu bạn bè (`Referral`):** Mời bạn mới mở ví và phát sinh giao dịch thực.
+8. **Kích hoạt lại (`Re-activation`):** Nhiệm vụ kéo khách hàng lâu ngày chưa giao dịch quay lại.
+9. **Nhiệm vụ cho `Agent` & `Super Agent`:** Chăm sóc đủ 100 khách hàng/tháng đối với `Agent` và đạt từ 50% chỉ tiêu mạng lưới đối với `Super Agent`.
 
 ---
 
 ### 5.4. Kho Quà Tặng và Động Cơ Đổi Thưởng Đa Năng
-Hệ thống cung cấp 4 hình thức đổi thưởng linh hoạt:
-1. **Thanh toán trực tiếp tại siêu thị/điểm bán:** Quét mã trừ điểm tại quầy thanh toán của đối tác.
-2. **Phiếu giảm giá điện tử:** Đổi điểm lấy mã ưu đãi mua sắm, ẩm thực, giải trí từ mạng lưới đối tác liên kết.
-3. **Hoàn tiền số dư ví:** Chuyển đổi trực tiếp điểm thưởng thành tiền mặt cộng vào số dư ví Natcash.
-4. **Lượt chơi trò chơi:** Dùng điểm thưởng để mua thêm lượt quay may mắn hoặc lượt tham gia các trò chơi thu phí trên GameHub.
+Hệ thống cung cấp 4 hình thức đổi thưởng linh hoạt bằng `Natcash Coin` (`1 Coin = 1 HTG`):
+1. **Trừ trực tiếp vào hóa đơn tại Merchant liên minh:** Quét mã QR giảm tiền trực tiếp tại quầy thu ngân siêu thị, cửa hàng đối tác.
+2. **Đổi gói Data (GB) & Phút gọi viễn thông:** Cấp phát tức thời qua kết nối trực tiếp với hệ thống `Natcom BCCS`.
+3. **Phiếu giảm giá điện tử (`Voucher`):** Đổi mã ưu đãi mua sắm, ẩm thực, dịch vụ từ mạng lưới đối tác liên minh.
+4. **Học tập & Giải trí trên GameHub:** Nhận lượt tham gia các trò chơi giải trí, trí tuệ và các khóa học ngắn đổi thưởng.
 
 ---
 
-## 6. ĐỘNG CƠ CỘT MỐC CHIẾN DỊCH VÀ HỆ THỐNG GỢI NHẮC THÔNG MINH
+## 6. ĐỘNG CƠ CỘT MỐC, NHẮC NHỞ 3 BÊN VÀ CHỐNG LÀM PHIỀN 4 LỚP
 
-Để duy trì sự hiện diện liên tục trong tâm trí khách hàng mà không gây cảm giác bị làm phiền, hệ thống thiết lập bộ máy quản lý cột mốc chiến dịch và động cơ gợi nhắc theo ngữ cảnh:
+Để duy trì sự hiện diện liên tục trong tâm trí khách hàng và hỗ trợ vận hành chủ động mà không gây phiền hà, hệ thống thiết lập cơ chế nhắc nhở 3 bên kết hợp bộ lọc chống làm phiền 4 lớp:
 
 ```mermaid
 flowchart LR
     subgraph COL_MILESTONE ["CỘT MỐC CHIẾN DỊCH & SỰ KIỆN"]
         direction TB
-        M_Campaign["1. Cột Mốc Gắn Với Khuyến Mại & Game<br/>• Chuỗi cột mốc tích lũy giao dịch trong tuần lễ vàng<br/>• Cột mốc hoàn thành chuỗi ván game sự kiện<br/>• Mở rương phần thưởng đặc biệt khi đạt mốc"]
-        M_Leaderboard["2. Bảng Xếp Hạng Sự Kiện Thời Gian Thực<br/>• Đua top nạp cước và chi tiêu theo chiến dịch<br/>• Đua top điểm số game mùa giải<br/>• Trao giải thưởng lớn cho nhóm dẫn đầu"]
+        M_Campaign["1. Cột Mốc Gắn Với Khuyến Mại & Game<br/>• Chuỗi cột mốc tích lũy giao dịch trong tuần lễ vàng<br/>• Cột mốc hoàn thành chuỗi ván game & bài học<br/>• Mở rương phần thưởng đặc biệt khi đạt mốc"]
+        M_Leaderboard["2. Bảng Xếp Hạng Sự Kiện Thời Gian Thực<br/>• Đua top nạp cước và chi tiêu theo chiến dịch<br/>• Đua top điểm số game & chuỗi ngày học tập<br/>• Trao giải thưởng lớn cho nhóm dẫn đầu"]
         M_Campaign --> M_Leaderboard
     end
 
-    subgraph COL_NUDGE ["ĐỘNG CƠ GỢI NHẮC & CHĂM SÓC KHÁCH HÀNG"]
+    subgraph COL_NUDGE ["NHẮC NHỞ 3 BÊN & CHỐNG LÀM PHIỀN 4 LỚP"]
         direction TB
-        N_Trigger["3. Tính Toán Gợi Nhắc Tự Động<br/>• Gợi nhắc khoảng cách điểm còn thiếu để lên hạng<br/>• Cảnh báo điểm và phiếu ưu đãi sắp hết hạn<br/>• Chúc mừng sinh nhật & quà tặng lễ hội"]
-        N_AntiSpam["4. Kiểm Soát Tần Suất Chống Làm Phiền<br/>• Giới hạn tối đa 1 thông báo đẩy mỗi ngày<br/>• Ưu tiên hiển thị thông điệp âm thầm trong ứng dụng<br/>• Khung giờ gửi thân thiện từ 8h00 đến 20h00"]
+        N_Trigger["3. Hệ Thống Nhắc Nhở & Cảnh Báo 3 Bên<br/>• Khách hàng: Sắp lên hạng, sắp hết hạn Coin/Voucher, nhiệm vụ dở dang<br/>• Đội vận hành: Ngân sách chạm 80%, kém nhóm đối chứng, nghi gian lận, lệch đối soát<br/>• Merchant: Kết quả đối soát kỳ, sắp hết mã Voucher, khách quay lại giảm"]
+        N_AntiSpam["4. Kiểm Soát Chống Làm Phiền 4 Lớp<br/>• Tối đa 1 thông báo/ngày & tối đa 3 thông báo/tuần<br/>• Chỉ gửi trong khung giờ từ 08h00 đến 20h00<br/>• Khách hàng có quyền chủ động tắt thông báo khuyến mại"]
         N_Trigger --> N_AntiSpam
     end
 
@@ -337,22 +352,28 @@ flowchart LR
 ```
 
 ### 6.1. Chuỗi Cột Mốc và Nhiệm Vụ Động Theo Sự Kiện
-* **Cột mốc theo chiến dịch khuyến mại:** Người dùng tham gia các chiến dịch tuần lễ vàng (ví dụ: Nạp cước viễn thông ngày vàng, Ngày hội mua sắm không tiền mặt). Khi đạt từng mốc giao dịch (Mốc 1: 3 giao dịch → Mốc 2: 5 giao dịch → Mốc 3: 10 giao dịch), hệ thống tự động mở khóa các phần quà tăng dần (Cộng thêm điểm thưởng, tặng mã giảm giá mua hàng siêu thị, tặng lượt quay Vàng).
-* **Cột mốc gắn với Cổng Game:** Tổ chức các giải đấu mùa vụ trên GameHub. Khách hàng vượt qua các màn chơi hoặc đạt chuỗi trận thắng sẽ nhận huy hiệu vinh danh và điểm thưởng thăng hạng nhanh chóng.
+* **Cột mốc theo chiến dịch khuyến mại:** Người dùng tham gia các chiến dịch tuần lễ vàng (Nạp cước viễn thông ngày vàng, Ngày hội mua sắm không tiền mặt). Khi đạt từng mốc giao dịch (Mốc 1: 3 giao dịch → Mốc 2: 5 giao dịch → Mốc 3: 10 giao dịch), hệ thống tự động mở khóa các phần quà tăng dần.
+* **Cột mốc gắn với Cổng Game & Học tập:** Tổ chức các giải đấu mùa vụ và thử thách học tập hàng ngày trên GameHub. Khách hàng vượt qua các màn chơi hoặc hoàn thành chuỗi bài học ngắn sẽ nhận huy hiệu vinh danh và thưởng `Natcash Coin`.
 
-### 6.2. Các Kịch Bản Gợi Nhắc Ngữ Cảnh Tự Động
-Hệ thống tự động tính toán dữ liệu hành vi của từng khách hàng để kích hoạt các thông điệp chăm sóc cá nhân hóa:
-1. **Gợi nhắc nâng hạng hội viên:** Khi người dùng đạt từ 80% đến 95% điểm xét hạng của cấp tiếp theo, hệ thống tự động tính toán khoảng cách còn thiếu và gợi ý hành động cụ thể.
-2. **Cảnh báo điểm thưởng và quà sắp hết hạn:** Tự động rà soát sổ cái điểm và kho phiếu ưu đãi, gửi cảnh báo trước 15 ngày và trước 3 ngày.
-3. **Chăm sóc sinh nhật và ngày lễ hội:**
-   * *Ngày sinh nhật:* Tự động gửi lời chúc mừng cá nhân hóa kèm gói quà tặng đặc quyền (Nhân đôi điểm thưởng mọi giao dịch trong tuần sinh nhật + tặng 3 lượt quay may mắn VIP).
-   * *Dịp lễ quốc gia:* Gửi thông điệp chúc mừng kèm bộ nhiệm vụ lễ hội với hệ số điểm thưởng nhân dịp lễ.
+### 6.2. Hệ Thống Nhắc Nhở & Cảnh Báo Tự Động Cho 3 Bên
+1. **Nhắc nhở cho Khách hàng:**
+   * Sắp đủ điểm lên hạng hoặc cần tích thêm trước kỳ xét hạng cuối năm (báo trước 30 ngày).
+   * `Natcash Coin` hoặc `Voucher` sắp hết hạn sử dụng.
+   * Nhiệm vụ đang làm dở và ưu đãi phù hợp theo hành vi thực tế.
+2. **Cảnh báo cho Đội vận hành Natcash:**
+   * Chiến dịch chạm ngưỡng **80% ngân sách**.
+   * Chiến dịch có hiệu quả **kém hơn nhóm đối chứng (`Control Group`)**.
+   * Phát hiện dấu hiệu **nghi gian lận (`Fraud Anomaly`)** hoặc **lệch số liệu đối soát**.
+3. **Thông báo cho Đối tác (`Merchant`):**
+   * Thông báo kết quả đối soát và quyết toán cuối kỳ.
+   * Cảnh báo kho `Voucher` của đối tác sắp hết số lượng.
+   * Cảnh báo lượng khách hàng quay lại chi nhánh sụt giảm bất thường.
 
-### 6.3. Cơ Chế Kiểm Soát Tần Suất Chống Làm Phiền
-* **Hạn mức tần suất nhận tin:** Mỗi khách hàng nhận tối đa **1 thông báo đẩy** từ hệ thống Loyalty trong vòng 24 giờ.
-* **Thứ tự ưu tiên thông điệp:** Thông báo biến động giao dịch tài chính (Ưu tiên 1) > Cảnh báo điểm/quà sắp hết hạn (Ưu tiên 2) > Gợi nhắc thăng hạng (Ưu tiên 3) > Thông tin sự kiện và khuyến mại chung (Ưu tiên 4).
-* **Ưu tiên hiển thị thông điệp âm thầm trong ứng dụng:** Các thông điệp gợi nhắc nâng hạng hoặc tiến độ cột mốc được hiển thị tinh tế dưới dạng thẻ thông tin nhỏ trên trang chủ Trung tâm Loyalty, không phát sinh âm thanh hoặc rung làm phiền khi người dùng chưa mở ứng dụng.
-* **Khung giờ gửi thân thiện:** Tuyệt đối không gửi thông báo đẩy ngoài khung giờ từ 8h00 sáng đến 20h00 tối.
+### 6.3. Cơ Chế Kiểm Soát Chống Làm Phiền 4 Lớp
+1. **Giới hạn theo ngày:** Tối đa **1 thông báo đẩy / ngày** cho mỗi khách hàng.
+2. **Giới hạn theo tuần:** Tối đa **3 thông báo đẩy / tuần** cho mỗi khách hàng.
+3. **Giới hạn khung giờ:** Chỉ gửi thông báo từ **08h00 sáng đến 20h00 tối** (tuyệt đối không gửi ban đêm).
+4. **Quyền chủ động của khách hàng (`Opt-out`):** Khách hàng có nút bật/tắt nhận thông báo nhắc nhở khuyến mại ngay trên ứng dụng; các gợi nhắc thông thường được ưu tiên hiển thị nhẹ nhàng dưới dạng thẻ thông tin trên màn hình Loyalty.
 
 ## 7. MÔ HÌNH NGHIỆP VỤ CỔNG GAME VÀ KINH TẾ TRÒ CHƠI
 
@@ -377,10 +398,20 @@ flowchart LR
     G_Publish --> G_Billing
 ```
 
-### 7.1. Vai Trò Của GameHub Trong Hệ Sinh Thái Loyalty
-* **Tiêu thụ điểm thưởng:** Cung cấp nơi cho người dùng sử dụng điểm tích lũy đổi lấy niềm vui và cơ hội trúng giải thưởng lớn.
-* **Tạo động lực kiếm điểm:** Tạo môi trường cạnh tranh bảng xếp hạng, chuỗi thắng để nhận điểm thưởng thăng hạng hội viên.
-* **Kênh giải phóng kho quà:** Phân phối các gói phiếu giảm giá, tiền hoàn ví từ kho quà đến tay người chơi một cách tự nhiên và hào hứng.
+### 7.1. Phân Loại 2 Chiều Cổng GameHub & Học Tập Đổi Thưởng (`EdTech / Micro-Learning`)
+* **Phân loại 2 chiều trên một cổng dùng chung:**
+  1. **Theo nội dung (3 nhóm):**
+     * **Giải trí (`ENTERTAINMENT`):** Vòng quay may mắn, Đập lu vàng, Cào thẻ, Hứng xu.
+     * **Trí tuệ (`PUZZLE_BRAIN`):** Đố vui kiến thức, Ghép hình, Giải ô chữ, Thử thách trí nhớ.
+     * **Giáo dục & Học tập (`EDUCATION_LEARNING`):** Các khóa học ngắn 3–5 phút mỗi ngày giúp người dùng học ngoại ngữ và kỹ năng tài chính để nhận thưởng:
+       * `English Daily`: Học tiếng Anh giao tiếp hàng ngày.
+       * `Spanish Start`: Học tiếng Tây Ban Nha cơ bản.
+       * `Aprann Li`: Chương trình xóa mù chữ / đọc viết tiếng Creole bản địa.
+       * `Money Smart`: Kiến thức quản lý tài chính cá nhân và an toàn ví điện tử.
+  2. **Theo mô hình kinh tế (2 nhóm):**
+     * **Miễn phí (`FREE_TO_PLAY`):** Người dùng nhận lượt chơi từ điểm danh, hoàn thành nhiệm vụ ví hoặc hoàn thành bài học hàng ngày.
+     * **Thu phí đối tác (`PARTNER_MONETIZED`):** Dịch vụ trò chơi/học tập nâng cao của nhà phát triển đối tác tích hợp qua SDK/API và chia sẻ doanh thu; **hệ thống Loyalty cốt lõi của Natcash tuyệt đối không bán lượt chơi bằng tiền mặt và không trả thưởng bằng tiền mặt** để loại bỏ hoàn toàn rủi ro pháp lý về trò chơi có thưởng ăn tiền.
+* **6 lớp kỹ thuật dùng chung của GameHub:** Toàn bộ game nội bộ và game đối tác dùng chung 6 lớp: `Danh mục game`, `Cấp lượt chơi`, ` Bảng xếp hạng`, `Trao thưởng`, `Chống gian lận` và `Báo cáo hiệu quả`.
 
 ### 7.2. Kiến Trúc Tách Rời Webview Độc Lập & Game H5 Decoupled
 * **Không làm trực tiếp vào mã nguồn ứng dụng ví Natcash:** Toàn bộ giao diện Frontend của Trung tâm Loyalty, Cổng GameHub và các trò chơi H5 được đặt trọn vẹn trong module độc lập `loyalty-webview` và các gói tĩnh H5 riêng biệt.
@@ -389,46 +420,76 @@ flowchart LR
 
 ### 7.3. Các Phương Thức Tích Hợp Linh Hoạt Đa Kênh
 Hệ thống hỗ trợ 4 phương thức tích hợp tối ưu theo từng nhu cầu trải nghiệm:
-1. **Phương thức 1: Mở qua Cổng GameHub Tập Trung (GameHub Portal):** Người dùng truy cập Cổng GameHub để xem toàn bộ danh mục game theo thể loại (Vòng quay, Trí tuệ, Tương tác nhanh), kho lượt chơi cá nhân và bảng xếp hạng sự kiện.
-2. **Phương thức 2: Mở Trực Tiếp Cổng GameHub Độc Lập (Không qua Loyalty):** GameHub hoạt động như một dịch vụ giải trí độc lập ngay trên màn hình trang chủ App. Người dùng không cần phải vào Trung tâm Loyalty mới thấy GameHub.
-3. **Phương thức 3: Chơi Ngay Qua Phím Tắt Động / Liên Kết Sâu (Direct Game Shortcut):** Người dùng chạm vào các icon/banner/widget game động trên trang chủ ví Natcash (ví dụ liên kết sâu `natcash://game/lucky-wheel`), hệ thống mở ngay trình chơi game H5 trong tích tắc, bỏ qua mọi bước điều hướng trung gian.
-4. **Phương thức 4: Nhúng Webview Cho Mọi Đối Tác B2B:** Đối tác bên thứ ba tích hợp Webview qua API cấp vé phiên và cầu nối `LoyaltyJSBridge` để cung cấp game cho khách hàng của riêng họ.
+1. **Phương thức 1: Mở qua Cổng GameHub Tập Trung (GameHub Portal):** Người dùng truy cập Cổng GameHub để xem toàn bộ danh mục game theo thể loại (Giải trí, Trí tuệ, Giáo dục), kho lượt chơi cá nhân và bảng xếp hạng sự kiện.
+2. **Phương thức 2: Mở Trực Tiếp Cổng GameHub Độc Lập (Không qua Loyalty):** GameHub hoạt động như một dịch vụ giải trí và học tập độc lập ngay trên màn hình trang chủ App.
+3. **Phương thức 3: Chơi Ngay Qua Phím Tắt Động / Liên Kết Sâu (Direct Game Shortcut):** Người dùng chạm vào các icon/banner/widget game động trên trang chủ ví Natcash (ví dụ liên kết sâu `natcash://game/lucky-wheel`), hệ thống mở ngay trình chơi game H5 trong tích tắc.
+4. **Phương thức 4: Nhúng Webview & Tích Hợp 1 Lần Qua SDK/API Cho Đối Tác:** Nhà phát triển game/ứng dụng học tập bên thứ ba tích hợp 1 lần qua bộ SDK/API chuẩn để phát hành trên GameHub.
 
 ### 7.4. Tiêu Chuẩn 7 Nhóm Cấu Hình Game Chuẩn Công Nghiệp Phát Hành Trên CMS
-Toàn bộ trò chơi phát hành trên hệ thống bắt buộc phải được cấu hình đầy đủ trên `loyalty-cms` theo 7 nhóm thông số chuẩn:
-1. **Nhóm 1: Thuộc tính & Siêu dữ liệu cơ bản:** Mã game, tên game đa ngôn ngữ, thể loại, ảnh icon 1:1, ảnh banner 16:9, URL gói H5 bundle, định hướng màn hình (dọc/ngang), trạng thái phát hành (Nháp / Đang chạy / Tạm dừng / Bảo trì) và thời gian hiệu lực sự kiện.
-2. **Nhóm 2: Cấu hình thành phần giao diện & âm thanh:** Bộ skin/theme theo mùa (Tết, Giáng sinh), số ô đĩa quay (8 ô, 12 ô), hình ảnh từng ô giải thưởng, nhạc nền BGM, âm thanh quay đĩa, âm thanh trúng giải đặc biệt, âm thanh trượt giải và hiệu ứng pháo hoa chúc mừng.
-3. **Nhóm 3: Chính sách tặng lượt chơi miễn phí:** Tặng khi mở tài khoản/đăng ký mới, tặng khi điểm danh hàng ngày theo khung giờ, tặng định kỳ theo cấp bậc hội viên (Bạc, Vàng, Bạch Kim, Kim Cương), tặng khi hoàn thành nhiệm vụ cột mốc chiến dịch.
-4. **Nhóm 4: Chính sách đổi điểm lấy lượt chơi:** Bật/tắt tính năng đổi điểm, tỷ lệ quy đổi (ví dụ: 10 điểm Loyalty = 1 lượt chơi), giới hạn số lượt đổi tối đa mỗi ngày / mỗi tuần trên từng tài khoản và hạn mức quỹ đổi toàn hệ thống.
-5. **Nhóm 5: Chính sách mua thêm lượt chơi lẻ & Gói Combo:** Bảng giá mua lượt lẻ (ví dụ: 5 HTG / 1 lượt), danh mục gói bán combo (Gói 5 lượt, Gói 10 lượt, Gói VIP 50 lượt tặng kèm 10 lượt khuyến mại), cấu hình nhãn nổi bật ("Bán chạy nhất", "Tiết kiệm 20%").
-6. **Nhóm 6: Chính sách vòng đời & hết hạn lượt chơi:** Cơ chế xử lý khi hết ngày: **Cộng dồn (Roll-over)** cho lượt mua bằng tiền/đổi điểm và **Làm mới về 0 (Daily Reset)** vào 23:59:59 cho lượt tặng miễn phí trong ngày; thứ tự ưu tiên trừ lượt (trừ lượt miễn phí trong ngày trước, trừ lượt mua/đổi điểm sau).
-7. **Nhóm 7: Chính sách trả thưởng & Ma trận xác suất:** Danh mục giải thưởng (Tiền hoàn ví, Điểm loyalty, Voucher, Hiện vật, Tặng thêm lượt, Chúc may mắn), ma trận xác suất trúng thưởng (%) tổng 100%, hạn mức ngân sách tiền mặt tối đa trong ngày, hạn mức số lượng giải lớn trong ngày, lệnh nguyên tử trừ ngân sách Redis `DECRBY` và luật tự động lái xác suất khi hết hạn ngạch.
+Toàn bộ trò chơi và khóa học phát hành trên hệ thống được cấu hình tập trung trên `loyalty-cms` theo 7 nhóm thông số chuẩn:
+1. **Nhóm 1: Thuộc tính & Siêu dữ liệu cơ bản:** Mã game, tên đa ngôn ngữ, phân loại 2 chiều (`Giải trí / Trí tuệ / Giáo dục` × `Miễn phí / Thu phí đối tác`), ảnh icon 1:1, ảnh banner 16:9, URL gói H5 bundle, trạng thái phát hành và thời gian hiệu lực.
+2. **Nhóm 2: Cấu hình thành phần giao diện & âm thanh:** Bộ skin/theme theo mùa, số ô đĩa quay, hình ảnh giải thưởng, nhạc nền BGM, âm thanh hiệu ứng.
+3. **Nhóm 3: Chính sách tặng lượt chơi miễn phí:** Tặng khi mở tài khoản/đăng ký mới, tặng khi điểm danh hàng ngày, tặng theo hạng hội viên (`Silver → Diamond`), tặng khi hoàn thành nhiệm vụ ví hoặc bài học.
+4. **Nhóm 4: Chính sách quy đổi lượt chơi:** Bật/tắt quy đổi lượt, giới hạn số lượt tối đa mỗi ngày / mỗi tuần trên từng tài khoản và hạn mức toàn hệ thống.
+5. **Nhóm 5: Chính sách gói dịch vụ đối tác (`Partner Monetized`):** Cấu hình gói học tập/trò chơi của đối tác nội dung và tỷ lệ đối soát chia sẻ doanh thu (tuân thủ nguyên tắc Loyalty không trực tiếp bán lượt chơi lấy tiền mặt).
+6. **Nhóm 6: Chính sách vòng đời & hết hạn lượt chơi:** Cơ chế **Cộng dồn (`Roll-over`)** và **Làm mới về 0 (`Daily Reset`)** vào `23:59:59` cho lượt tặng miễn phí trong ngày.
+7. **Nhóm 7: Chính sách trả thưởng & Ma trận xác suất:** Danh mục giải thưởng (`Natcash Coin`, Điểm hạng, `Voucher`, Gói Data/Phút gọi, Lượt chơi thêm), ma trận xác suất trúng thưởng (%) tổng 100%, hạn mức ngân sách trong ngày, lệnh nguyên tử trừ ngân sách Redis `DECRBY` và luật tự động lái xác suất khi hết hạn ngạch.
 
 ---
 
-## 8. CHIẾN LƯỢC TÍCH HỢP VÀ LỘ TRÌNH TRIỂN KHAI
+## 8. PHÂN HỆ ĐẠI LÝ (`AGENT & SUPER AGENT`), CỔNG MERCHANT ĐA CHI NHÁNH VÀ TRỢ LÝ AI
 
-### 8.1. Phương Án Tích Hợp Hệ Thống
-* **Ứng dụng di động (`natcash-eu-app`):** Nhúng Mobile SDK để hiển thị Trung tâm Khách hàng thân thiết, Cổng Game, Phím tắt Động trên trang chủ và Mã QR tiêu điểm động 60s tại quầy thu ngân.
-* **Cổng Webview nhúng & Game H5 Decoupled (`loyalty-webview`):** Cung cấp giao diện trọn gói cho đối tác liên minh nhúng trực tiếp vào ứng dụng di động của họ qua vé phiên một lần (SSO) và cầu nối `LoyaltyJSBridge`.
-* **Cổng Quản trị Trung tâm (`loyalty-cms`):** Cung cấp cổng điều hành cho phép quản trị viên cấu hình 7 nhóm thông số Game chuẩn phát hành, chính sách tích/tiêu điểm, tỷ giá, quản lý kho voucher và duyệt quyết toán bù trừ tài chính.
-* **Hệ sinh thái Công cụ & Trình Giả lập (`loyalty-sandbox` & Simulators - Sprint 9):** Bộ công cụ Web POS Live Simulator, App Đối tác Giả lập nhúng Webview, Smartphone Live Simulator và Cổng Sandbox Portal tra cứu API / soi mã HMAC.
-* **Hệ thống POS / Máy tính tiền đối tác:** Tích hợp với Cổng API Loyalty để tra cứu toàn diện Ví Phần Thưởng và thực hiện giao dịch trừ điểm/đổi quà theo thời gian thực.
-* **Cổng API Gateway hiện có (`natcash-eu-api`):** Đóng vai trò là Reverse Proxy xác thực người dùng và chuyển tiếp yêu cầu sang Dịch vụ độc lập `loyalty-service` kèm định danh thuê bao `X-Tenant-Id`.
-* **Dịch vụ độc lập `loyalty-service`:** Chịu trách nhiệm toàn bộ logic phân hạng, tích điểm, liên thông Ví Phần Thưởng, quản lý Cổng Game, động cơ cột mốc và đối soát bù trừ tài chính trên cơ sở dữ liệu **PostgreSQL 15+**.
+Để hoàn thiện trọn vẹn 11 phân hệ trên một nền tảng theo thiết kế tổng thể (chi tiết kỹ thuật xem tại [architecture_evolution_v2.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/architecture_evolution_v2.md)), hệ thống bổ sung 3 năng lực chiến lược:
 
-### 8.2. Lộ Trình Triển Khai 5 Giai Đoạn (9 Sprints)
+### 8.1. Phân Hệ Đại Lý & Tổng Đại Lý (`Agent & Super Agent Loyalty`)
+* **Nhiệm vụ và thưởng cho `Agent`:** Khuyến khích `Agent` mở mới khách hàng, hướng dẫn `eKYC` và hỗ trợ nạp/rút/thanh toán. Khi đạt mốc **Chăm sóc thành công 100 khách/tháng**, hệ thống tự động thưởng `Voucher`, gói `Data (GB)` qua `Natcom BCCS` hoặc thưởng hoa hồng tiền mặt vào ví đại lý đối với các nhiệm vụ phát triển mạng lưới đặc thù.
+* **Đánh giá chỉ tiêu mạng lưới & Kịch bản hỗ trợ cho `Super Agent`:** Theo dõi tỷ lệ hoàn thành chỉ tiêu tổng hợp của toàn bộ các `Agent` cấp dưới trực thuộc:
+  * **Đạt từ `50%` chỉ tiêu mạng lưới trở lên:** `Super Agent` đủ điều kiện nhận thưởng doanh số mạng lưới cuối kỳ.
+  * **Dưới ngưỡng `50%` chỉ tiêu mạng lưới:** Hệ thống tự động kích hoạt **Kịch bản hỗ trợ (`Support Playbook`)**, cảnh báo cho Quản lý khu vực để hỗ trợ điểm bán kịp thời.
 
-1. **Giai đoạn 1: Hạ Tầng Kế Thừa, Cơ Sở Dữ Liệu PostgreSQL 15+ & Bảo Mật B2B (Sprint 1 & 2):**
+### 8.2. Cổng Đối Tác Thương Mại Tự Phục Vụ Đa Chi Nhánh (`Merchant Partner Portal`)
+Cung cấp cổng làm việc riêng cho các chuỗi đối tác lớn (như siêu thị `Delimart`) với 6 chức năng tự phục vụ:
+1. **Tổng quan hiệu quả (`Overview`):** Theo dõi khách hàng quay lại, doanh thu từ hội viên và số `Natcash Coin` đã tích/tiêu.
+2. **Báo cáo chi tiết theo từng chi nhánh (`Branches`):** Xem số liệu tách biệt cho từng cửa hàng (ví dụ: `Pétion-Ville`, `Delmas 33`, `Cap-Haïtien`).
+3. **Báo cáo theo nhóm ngành hàng (`Product Groups`):** Phân tích hiệu quả theo từng danh mục sản phẩm.
+4. **Đề xuất chương trình tại điểm bán (`Propose an in-store program`):** Đối tác chủ động gửi đề xuất ưu đãi tại quầy kèm mức đồng tài trợ và trần ngân sách tháng để Đội vận hành Natcash phê duyệt.
+5. **Quản lý ngân sách thưởng tháng & Bán chéo liên minh (`Monthly reward budget` & `Alliance cross-sell`).**
+6. **Quản lý tài khoản nhân viên (`Staff accounts`):** Phân quyền cho Quản lý chi nhánh và Thu ngân quầy POS.
+
+### 8.3. Đo Lường Bằng Nhóm Đối Chứng (`Control Group`) & Trợ Lý AI (`AI Campaign Copilot`)
+* **Đo lường hiệu quả thực bằng Nhóm đối chứng (`Control Group`):** Mỗi chiến dịch tự động tách một tỷ lệ khách hàng tương đồng (mặc định `5% – 10%`) vào nhóm đối chứng không nhận ưu đãi để tính chính xác **Doanh thu tăng thêm thực chất (`True Net Uplift GMV`)**.
+* **Trợ lý AI hỗ trợ Đội vận hành (`AI Campaign Copilot`):**
+  1. **Gợi ý chương trình từ mục tiêu & ngân sách:** Nhập mục tiêu ngôn ngữ tự nhiên (ví dụ: *"Giữ chân khách nạp tiền tháng này, ngân sách 5.000 USD"*), AI tự động gợi ý nhóm khách hàng mục tiêu, cấu hình nhiệm vụ và mức thưởng.
+  2. **Dự báo chi phí & tỷ lệ tham gia** trước khi bấm chạy.
+  3. **Cảnh báo trùng lặp nhiệm vụ (`Conflict Detection`):** Tự động rà soát và cảnh báo nếu nhiệm vụ dự kiến bị trùng tập khách hàng và hành vi với một nhiệm vụ khác đang chạy.
+  4. **Đánh dấu giao dịch nghi gian lận** để kiểm tra trước khi chi thưởng.
+  5. **Nguyên tắc kiểm soát:** *AI chỉ gợi ý; con người duyệt và chịu trách nhiệm cuối cùng.*
+
+---
+
+## 9. CHIẾN LƯỢC KẾT NỐI 6 HỆ THỐNG NATCASH VÀ LỘ TRÌNH TRIỂN KHAI
+
+### 9.1. Kiến Trúc Kết Nối 6 Hệ Thống Hiện Hữu Của Natcash
+Nền tảng `loyalty-service` kết nối đồng bộ và bất đồng bộ với đầy đủ 6 hệ thống trong hạ tầng Natcash / Natcom:
+1. **Core Ví (`Natcash Core Wallet`):** Đẩy sự kiện giao dịch bất đồng bộ sang Loyalty. **Quá trình tích điểm nằm hoàn toàn ngoài luồng giao dịch chính**, đảm bảo nếu Loyalty bảo trì thì giao dịch Ví vẫn thông suốt 100%.
+2. **Mobile Service (`natcash-eu-app` & `natcash-eu-api`):** Hiển thị Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60 giây, Cổng GameHub và Phím tắt Động.
+3. **Cổng tích hợp `WSO2 API Manager`:** Định tuyến, kiểm soát lưu lượng và bảo mật tập trung cho các luồng gọi API nội bộ và đối tác.
+4. **Hệ thống viễn thông `Natcom BCCS`:** Gạch nối trực tiếp để cộng gói `Data (GB)`, phút gọi hoặc cước viễn thông tức thời ngay khi khách hàng hoặc `Agent` đổi thưởng.
+5. **Cổng `USSD *202#`:** Phục vụ khách hàng dùng điện thoại phổ thông (`Feature Phone`) hoặc không có kết nối Internet tra cứu số dư `Natcash Coin`, kiểm tra hạng và đổi gói Data/Voucher qua menu `*202#`.
+6. **Cổng `API Đối tác` & Máy POS:** Kết nối hệ thống thu ngân siêu thị và `Merchant Partner Portal` bằng xác thực Khóa kép (`X-Api-Key` + chữ ký `HMAC-SHA256`).
+
+### 9.2. Lộ Trình Triển Khai 5 Giai Đoạn Cốt Lõi & Mở Rộng V2.0
+1. **Giai đoạn 1: Hạ Tầng Kế Thừa, Cơ Sở Dữ Liệu PostgreSQL 15+ & Bảo Mật B2B:**
    - Tích hợp 11 module thư viện lõi `ims-libraries`, PostgreSQL 15+ độc lập `loyalty_db`, bộ lọc đa thuê bao `TenantContextFilter`, bảo mật Khóa kép HMAC-SHA256, khóa phân tán Redisson RLock, Redis Streams và Transactional Outbox Engine.
-2. **Giai đoạn 2: Phát Triển 7 Phân Hệ Nghiệp Vụ, CMS & Webview Độc Lập (Sprint 3 & 4):**
-   - Hoàn thiện Sổ cái điểm thưởng kép, phân hạng 4 cấp, liên thông Ví Phần Thưởng, động cơ cột mốc chiến dịch và động cơ bù trừ tài chính liên minh.
-   - Xây dựng 7 nhóm cấu hình Game trên CMS (`loyalty-cms`), Trình mở Game H5 độc lập và đĩa quay Canvas 60 FPS (`loyalty-webview`).
-3. **Giai đoạn 3: Tích Hợp API Gateway, Ứng Dụng Di Động, Webview & Phím Tắt Động (Sprint 5 & 6):**
-   - Nâng cấp Reverse Proxy Gateway `natcash-eu-api`, đồng bộ hồ sơ hai chiều và Webhook thăng hạng.
-   - Nâng cấp `natcash-eu-app`: Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60s, Cổng GameHub độc lập, Phím tắt Động chơi game tức thì 1 chạm và kiểm thử E2E tích hợp.
-4. **Giai đoạn 4: Kiểm Thử Tải Lớn, An Ninh & Triển Khai Production (Sprint 7 & 8):**
-   - Kiểm thử tải 1.000 RPS API điểm bán POS, kiểm thử tải đồng thời Vòng quay may mắn & ngân sách Redis `DECRBY`, Pentest bảo mật, đóng gói CI/CD Docker Kubernetes và chạy thử nghiệm Pilot tại Siêu thị Delimart.
-5. **Giai đoạn 5: Hệ Sinh Thái Giả Lập, Thử Nghiệm Sandbox & Chuyển Giao Đối Tác (Sprint 9):**
+2. **Giai đoạn 2: Phát Triển 11 Phân Hệ Nghiệp Vụ, CMS, Partner Portal & Webview Độc Lập:**
+   - Hoàn thiện mô hình 2 đơn vị (`Điểm hạng` & `Natcash Coin` `1 Coin = 1 HTG`), phân hạng 4 cấp (`Silver → Diamond`), động cơ nhiệm vụ động 9 nhóm, liên thông Ví Phần Thưởng và đối soát bù trừ liên minh.
+   - Xây dựng Cổng GameHub 3 nhóm (*Giải trí, Trí tuệ, Giáo dục*), phân hệ `Agent & Super Agent`, `Merchant Partner Portal` đa chi nhánh và `AI Campaign Copilot`.
+3. **Giai đoạn 3: Tích Hợp 6 Hệ Thống (`Core Ví`, `Mobile`, `WSO2`, `Natcom BCCS`, `USSD *202#`, `API Đối tác`):**
+   - Nâng cấp Reverse Proxy Gateway `natcash-eu-api`, tích hợp `WSO2`, `Natcom BCCS` (trả thưởng Data/Phút gọi) và cổng `USSD *202#`.
+   - Nâng cấp `natcash-eu-app`: Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60s, Cổng GameHub độc lập và Phím tắt Động.
+4. **Giai đoạn 4: Kiểm Thử Tải Lớn, An Ninh & Triển Khai Production:**
+   - Kiểm thử tải 1.000 RPS API điểm bán POS, kiểm thử tải đồng thời Vòng quay may mắn & ngân sách Redis `DECRBY`, Pentest bảo mật, đóng gói CI/CD và chạy thử nghiệm Pilot tại Siêu thị Delimart.
+5. **Giai đoạn 5: Hệ Sinh Thái Giả Lập, Thử Nghiệm Sandbox & Chuyển Giao Đối Tác:**
    - Xây dựng Web POS Live Simulator cho quầy thu ngân siêu thị, App Đối tác Giả lập nhúng Webview qua SSO Ticket & JSBridge, Trình Giả lập Smartphone Live trên Webview và Cổng Developer Sandbox Portal soi chữ ký HMAC-SHA256.
+
 

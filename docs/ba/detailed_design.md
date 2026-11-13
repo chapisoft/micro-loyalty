@@ -309,33 +309,34 @@ flowchart LR
 
 ---
 
-## 6. PHÂN RÃ CÁC PHÂN HỆ VÀ TÍNH NĂNG TRONG DỊCH VỤ
+## 6. PHÂN RÃ 11 PHÂN HỆ VÀ TÍNH NĂNG TRONG DỊCH VỤ
 
-Dịch vụ độc lập `loyalty-service` được cấu thành từ 7 phân hệ chức năng chuyên biệt:
+Dịch vụ độc lập `loyalty-service` được cấu thành từ **11 phân hệ chức năng chuyên biệt** (tổ chức thành 4 cụm kiến trúc):
 
 ```mermaid
 flowchart LR
-    subgraph COL_LOYALTY ["PHÂN HỆ KHÁCH HÀNG THÂN THIẾT & GỢI NHẮC"]
+    subgraph COL_LOYALTY ["I. CỤM KHÁCH HÀNG & TƯƠNG TÁC"]
         direction TB
-        MOD_TIER["Phân Hệ 1: Quản Trị Hạng Hội Viên<br/>• Quản lý 4 hạng: Bạc, Vàng, Bạch Kim, Kim Cương<br/>• Tự động nâng hạng và xét duy trì hạng hàng năm<br/>• Quản lý ma trận đặc quyền và hệ số nhân điểm"]
-        MOD_POINT["Phân Hệ 2: Sổ Cái Điểm Hợp Nhất & Bù Trừ<br/>• Tích điểm từ viễn thông, ví điện tử và game<br/>• Sổ cái ghi nhận tích, tiêu, hoàn, hết hạn điểm<br/>• Động cơ thanh toán bù trừ tài chính liên minh"]
-        MOD_MILESTONE["Phân Hệ 3: Cột Mốc Chiến Dịch & Gợi Nhắc<br/>• Chuỗi cột mốc gắn với khuyến mại và game<br/>• Tính toán gợi nhắc khoảng cách thăng hạng<br/>• Cảnh báo hết hạn điểm/quà & Chúc mừng sinh nhật"]
-        MOD_TIER --> MOD_POINT
-        MOD_POINT --> MOD_MILESTONE
+        MOD_TIER["Phân Hệ 1: Hội Viên & 4 Hạng<br/>• Tự động là hội viên hạng Silver khi có ví<br/>• 4 hạng: Silver (×1.0), Gold (×1.1), Platinum (×1.25), Diamond (×1.5)<br/>• Xét hạng 12 tháng, báo trước 30 ngày, hạ tối đa 1 hạng"]
+        MOD_POINT["Phân Hệ 2: Điểm Hạng & Natcash Coin<br/>• Điểm hạng để xét cấp bậc (không bị trừ khi đổi quà)<br/>• Natcash Coin (1 Coin = 1 HTG) để tiêu & đổi quà<br/>• Quản lý lô hạn dùng FIFO & nhắc trước hết hạn"]
+        MOD_VOUCHER["Phân Hệ 3: Voucher & Kho Quà<br/>• Đổi Voucher đối tác, gói Data (GB)/Phút gọi qua Natcom BCCS<br/>• Liên thông Ví Phần Thưởng trừ tiền trực tiếp tại POS"]
+        MOD_MISSION["Phân Hệ 4: Nhiệm Vụ & Cột Mốc Động<br/>• Khung luật KHI – NẾU – THÌ – GIỚI HẠN không cần sửa code<br/>• Bao phủ 9 nhóm nhiệm vụ từ Chào mừng đến Chuỗi ngày"]
+        MOD_GAME["Phân Hệ 5: Cổng GameHub (Giải Trí – Trí Tuệ – Giáo Dục)<br/>• 6 lớp dùng chung, tích hợp 1 lần qua SDK/API<br/>• Học tập 3-5 phút (English Daily, Spanish Start, Aprann Li, Money Smart)<br/>• Không bán lượt chơi & không trả thưởng tiền mặt"]
+        MOD_NUDGE["Phân Hệ 6: Cá Nhân Hóa & Nhắc Nhở 3 Bên<br/>• Nhắc nhở Khách hàng, Đội vận hành & Merchant<br/>• Chống làm phiền 4 lớp: 1 tin/ngày, 3 tin/tuần, 8h-20h, Opt-out"]
+        MOD_TIER --> MOD_POINT --> MOD_VOUCHER --> MOD_MISSION --> MOD_GAME --> MOD_NUDGE
     end
 
-    subgraph COL_GAME ["PHÂN HỆ ĐỐI TÁC, ĐỔI THƯỞNG VÀ CỔNG GAME"]
+    subgraph COL_OPS_AI ["II. CỤM MERCHANT, ĐẠI LÝ & TRỢ LÝ AI"]
         direction TB
-        MOD_REWARD_WALLET["Phân Hệ 4: Liên Thông Ví Phần Thưởng<br/>• Tra cứu Hạng, Điểm, Voucher, Quà tặng<br/>• Khấu trừ đa phương tiện tại quầy đối tác<br/>• Kiểm tra điều kiện chấp nhận tiêu điểm"]
-        MOD_REWARD["Phân Hệ 5: Quản Trị Kho Quà & Đổi Thưởng<br/>• Quản lý kho phiếu giảm giá điện tử<br/>• Đổi điểm lấy tiền hoàn ví & lượt chơi game"]
-        MOD_GAME["Phân Hệ 6: Cổng Game & Trình Chơi Hub<br/>• Quản lý danh mục game và phiên chơi tập trung<br/>• Vòng quay may mắn chính chủ"]
-        MOD_BILLING["Phân Hệ 7: Thanh Toán Ví & Đối Soát<br/>• Thu phí in-game qua số dư ví & Đối soát chia sẻ"]
-        MOD_REWARD_WALLET --> MOD_REWARD
-        MOD_REWARD --> MOD_GAME
-        MOD_GAME --> MOD_BILLING
+        MOD_COALITION["Phân Hệ 7: Merchant Liên Minh & Partner Portal<br/>• Tích nơi này tiêu nơi khác, nhiệm vụ chéo, đồng tài trợ có trần<br/>• Cổng đối tác đa chi nhánh (Pétion-Ville, Delmas 33, Cap-Haïtien)"]
+        MOD_CLEARING["Phân Hệ 8: Ngân Sách, Nhóm Đối Chứng & Đối Soát<br/>• Trần ngân sách từng chương trình, tách Nhóm đối chứng (Control Group)<br/>• Đối soát công nợ bù trừ tự động cuối kỳ"]
+        MOD_SYSTEM["Phân Hệ 9: Quản Trị Hệ Thống & Kết Nối 6 Hệ Thống<br/>• Kết nối Core Ví, Mobile, WSO2, Natcom BCCS, USSD *202#, API Đối tác<br/>• Tích điểm nằm ngoài luồng giao dịch ví"]
+        MOD_AGENT["Phân Hệ 10: Agent & Super Agent<br/>• Agent chăm sóc 100 khách/tháng nhận Voucher, Data (GB), thưởng tiền<br/>• Super Agent đạt từ 50% chỉ tiêu mạng lưới hoặc kích hoạt hỗ trợ"]
+        MOD_AI["Phân Hệ 11: Trợ Lý AI (AI Campaign Copilot)<br/>• Gợi ý chương trình từ mục tiêu & ngân sách, dự báo chi phí<br/>• Cảnh báo trùng nhiệm vụ đang chạy & đánh dấu nghi gian lận"]
+        MOD_COALITION --> MOD_CLEARING --> MOD_SYSTEM --> MOD_AGENT --> MOD_AI
     end
 
-    MOD_MILESTONE --> MOD_REWARD_WALLET
+    MOD_NUDGE --> MOD_COALITION
 ```
 
 ---
@@ -354,14 +355,16 @@ erDiagram
     TENANTS ||--o{ WEBHOOK_OUTBOX : "quan_ly_hop_thu_di"
     TENANTS ||--o{ SYSTEM_AUDIT_LOGS : "ghi_vet_kiem_toan"
     LOYALTY_PARTNERS ||--o{ LOYALTY_ACCEPTANCE_POLICIES : "thiet_lap_chinh_sach"
+    LOYALTY_PARTNERS ||--o{ LOYALTY_PARTNER_BRANCHES : "quan_ly_chi_nhanh"
     LOYALTY_PARTNERS ||--o{ LOYALTY_PAYMENT_HOLDS : "tam_giu_thanh_toan"
     LOYALTY_PARTNERS ||--o{ LOYALTY_CROSS_PARTNER_TRANSACTIONS : "phat_sinh_giao_dich"
     LOYALTY_PARTNERS ||--o{ LOYALTY_CLEARINGHOUSE_SETTLEMENTS : "quyet_toan_bu_tru"
     LOYALTY_PARTNERS ||--o{ LOYALTY_CLEARING_DISPUTES : "kieu_nai_sai_lech"
     LOYALTY_TIERS ||--o{ LOYALTY_ACCOUNTS : "phan_hang"
-    LOYALTY_ACCOUNTS ||--o{ LOYALTY_POINT_LEDGER : "ghi_so_diem"
+    LOYALTY_ACCOUNTS ||--o{ LOYALTY_POINT_LEDGER : "ghi_so_diem_coin"
+    LOYALTY_ACCOUNTS ||--o{ LOYALTY_CURRENCY_BUCKETS : "quan_ly_han_dung_fifo"
     LOYALTY_ACCOUNTS ||--o{ LOYALTY_PAYMENT_HOLDS : "so_huu_khoan_giu"
-    LOYALTY_ACCOUNTS ||--o{ LOYALTY_CROSS_PARTNER_TRANSACTIONS : "thuc_hien_tieu_diem"
+    LOYALTY_ACCOUNTS ||--o{ LOYALTY_CROSS_PARTNER_TRANSACTIONS : "thuc_hien_tieu_coin"
     LOYALTY_ACCOUNTS ||--o{ LOYALTY_USER_MILESTONES : "theo_doi_tien_do"
     LOYALTY_CAMPAIGN_MILESTONES ||--o{ LOYALTY_USER_MILESTONES : "dinh_nghia"
     LOYALTY_ACCOUNTS ||--o{ LOYALTY_COMMUNICATION_LOGS : "ghi_nhan_gui_tin"
@@ -381,39 +384,30 @@ erDiagram
 
 ### 7.2. Bảng Mô Tả Cấu Trúc Dữ Liệu Chi Tiết
 
-#### 1. Nhóm Bảng Cột Mốc Chiến Dịch, Gợi Nhắc & Hộp Thư Đi Webhook & Kiểm Toán
-* **`LOYALTY_CAMPAIGN_MILESTONES`**: Quản lý các chặng cột mốc gắn với sự kiện/khuyến mại/game (`id`, `tenant_id`, `partner_id`, `campaign_code`, `campaign_name`, `milestone_step`, `target_metric`, `target_value`, `reward_points`, `reward_voucher_id`, `reward_game_turns`, `start_date`, `end_date`, `status`).
-* **`LOYALTY_USER_MILESTONES`**: Lưu vết tiến độ hoàn thành cột mốc của từng người dùng (`id`, `user_account_id`, `milestone_id`, `current_progress`, `status`, `completed_at`).
-* **`LOYALTY_ENGAGEMENT_TRIGGERS`**: Cấu hình các kịch bản gợi nhắc thông minh theo ngữ cảnh (`id`, `tenant_id`, `trigger_type`, `threshold_percentage`, `days_in_advance`, `message_template`, `status`).
-* **`LOYALTY_COMMUNICATION_LOGS`**: Lưu vết thông điệp và kiểm soát hạn mức tần suất gửi tin chống làm phiền (`id`, `tenant_id`, `user_account_id`, `channel`, `sent_date`, `trigger_type`, `status`).
-* **`WEBHOOK_OUTBOX`**: Lưu trữ các sự kiện cần gửi sang Hệ thống ví lõi và Đối tác (`id`, `tenant_id`, `event_type`, `payload` định dạng JSONB, `target_url`, `retry_count`, `next_retry_at`, `status`, `created_at`).
-* **`WEBHOOK_DEAD_LETTER`**: Lưu trữ các sự kiện Webhook gửi thất bại sau 5 lần thử (`id`, `tenant_id`, `event_type`, `payload` định dạng JSONB, `error_message`, `failed_at`).
-* **`SYSTEM_AUDIT_LOGS`**: Nhật ký kiểm toán tự động ghi vết 100% thay đổi cấu hình, chính sách, thăng hạng, bù trừ và xử lý khiếu nại (`id`, `tenant_id`, `module`, `table_name`, `operation`, `entity_id`, `actor_username`, `actor_role`, `client_ip`, `before_data` JSONB, `after_data` JSONB, `description`, `status`, `execution_time_ms`, `created_at`).
+#### 1. Nhóm Bảng Chiến Dịch Động, Cột Mốc, Gợi Nhắc 3 Bên & Kiểm Toán
+* **`LOYALTY_UNIVERSAL_CAMPAIGNS` & `LOYALTY_USER_CAMPAIGN_STATES`**: Lưu cấu hình luật nhiệm vụ động 4 bước (`KHI – NẾU – THÌ – GIỚI HẠN` dạng `rule_dsl_json JSONB`), đối tượng áp dụng (`actor_type`: `CUSTOMER`, `AGENT`, `SUPER_AGENT`), tỷ lệ nhóm đối chứng (`control_group_pct`), trần ngân sách và tiến độ thực hiện của từng người dùng (`experiment_group`: `TREATMENT` hoặc `CONTROL_HOLDOUT`).
+* **`LOYALTY_CAMPAIGN_MILESTONES` & `LOYALTY_USER_MILESTONES`**: Quản lý các chặng cột mốc gắn với sự kiện/khuyến mại/game và lưu vết tiến độ hoàn thành của từng người dùng.
+* **`LOYALTY_ENGAGEMENT_TRIGGERS` & `LOYALTY_COMMUNICATION_LOGS`**: Cấu hình các kịch bản gợi nhắc thông minh và kiểm soát chống làm phiền 4 lớp (tối đa 1 tin/ngày, tối đa 3 tin/tuần, khung giờ 08:00–20:00, cờ `notification_opt_out`).
+* **`LOYALTY_OPERATIONAL_ALERTS`**: Lưu trữ và theo dõi cảnh báo tự động cho **Đội vận hành** (`BUDGET_REACHED_80_PCT`, `WORSE_THAN_CONTROL_GROUP`, `FRAUD_ANOMALY_DETECTED`, `RECONCILIATION_MISMATCH`) và **Merchant** (`SETTLEMENT_READY`, `VOUCHER_STOCK_LOW`, `RETURNING_CUSTOMER_DROP`).
+* **`WEBHOOK_OUTBOX`, `WEBHOOK_DEAD_LETTER` & `SYSTEM_AUDIT_LOGS`**: Hộp thư đi đảm bảo gửi sự kiện 2 chiều và nhật ký kiểm toán bất biến định dạng `JSONB`.
 
-#### 2. Nhóm Bảng Quản Trị Thuê Bao, Đối Tác, Thanh Toán Điểm & Quyết Toán Bù Trừ
-* **`TENANTS`**: Quản trị thông tin các đơn vị thuê bao (`id`, `code`, `name`, `api_key`, `secret_key`, `status`).
-* **`LOYALTY_PARTNERS`**: Quản lý danh mục đối tác liên minh (`id`, `tenant_id`, `partner_code`, `partner_name`, `partner_type`, `api_key`, `secret_key`, `webhook_secret`, `ip_whitelist`, `status`).
-* **`LOYALTY_ACCEPTANCE_POLICIES`**: Thiết lập chính sách chấp nhận tiêu điểm và phí sàn của đối tác (`id`, `tenant_id`, `partner_id`, `point_exchange_rate`, `redemption_rate`, `max_burn_percentage`, `min_burn_points`, `max_burn_points_per_tx`, `daily_burn_limit`, `credit_limit_amount`, `mdr_fee_percent`, `fixed_fee_per_tx`, `settlement_cycle`, `min_tier_level`, `allowed_point_types`, `status`).
-* **`LOYALTY_PAYMENT_HOLDS`**: Quản lý các giao dịch tạm giữ điểm theo phương thức 2 pha (`id`, `tenant_id`, `partner_id`, `user_id`, `hold_code`, `bill_amount`, `points_to_burn`, `discount_amount`, `final_amount_to_pay`, `status` [HOLD, CONFIRMED, CANCELLED, EXPIRED], `expires_at`, `created_at`).
-* **`LOYALTY_CROSS_PARTNER_TRANSACTIONS` (hay `CLEARING_TRANSACTIONS`)**: Lưu vết các giao dịch tiêu điểm chéo, áp dụng voucher và đổi quà giữa Đơn vị phát hành và Đơn vị bán lẻ (`id`, `tenant_id`, `transaction_code`, `external_user_id`, `issuer_partner_id`, `redeemer_partner_id`, `points_burned`, `voucher_id_used`, `bill_discount_amount`, `gift_item_id`, `clearing_status` [PENDING, SETTLED], `batch_code`, `created_at`).
-* **`LOYALTY_CLEARINGHOUSE_SETTLEMENTS`**: Báo cáo quyết toán chốt kỳ bất biến (`id`, `tenant_id`, `partner_id`, `period_name`, `batch_code`, `total_points_issued`, `total_points_redeemed`, `total_fiat_receivables`, `total_fiat_payables`, `total_mdr_fee`, `net_settlement_amount`, `status` [PENDING, SETTLED, DISPUTED], `settled_at`, `created_at`).
-* **`LOYALTY_CLEARING_DISPUTES`**: Quản lý khiếu nại sai lệch số liệu đối soát (`id`, `tenant_id`, `partner_id`, `dispute_code`, `batch_code`, `disputed_amount`, `reason`, `status` [PENDING, UNDER_INVESTIGATION, RESOLVED, REJECTED], `resolution_notes`, `resolved_by`, `resolved_at`, `created_at`).
+#### 2. Nhóm Bảng Thuê Bao, Đối Tác Liên Minh, Cổng Merchant Đa Chi Nhánh & Quyết Toán Bù Trừ
+* **`TENANTS` & `LOYALTY_PARTNERS`**: Quản trị thông tin các đơn vị thuê bao và danh mục đối tác liên minh.
+* **`LOYALTY_PARTNER_BRANCHES` & `LOYALTY_PARTNER_STAFF_ACCOUNTS`**: Quản lý danh mục chi nhánh của từng đối tác (ví dụ `Delimart` có `Pétion-Ville`, `Delmas 33`, `Cap-Haïtien`), hạn mức ngân sách chi nhánh và tài khoản nhân viên (`STORE_OWNER`, `BRANCH_MANAGER`, `POS_CASHIER`) trên `Merchant Partner Portal`.
+* **`LOYALTY_MERCHANT_PROGRAM_PROPOSALS`**: Lưu các đề xuất chương trình tại điểm bán (`Propose an in-store program`) do đối tác gửi từ `Merchant Partner Portal` kèm tỷ lệ đồng tài trợ và trần ngân sách tháng.
+* **`LOYALTY_ACCEPTANCE_POLICIES`, `LOYALTY_PAYMENT_HOLDS`, `LOYALTY_CROSS_PARTNER_TRANSACTIONS`, `LOYALTY_CLEARINGHOUSE_SETTLEMENTS` & `LOYALTY_CLEARING_DISPUTES`**: Quản lý chính sách chấp nhận tiêu điểm/coin, tạm giữ 2 pha, giao dịch liên thông, chốt kỳ quyết toán bù trừ và giải quyết khiếu nại.
 
-#### 3. Nhóm Bảng Khách Hàng Thân Thiết, Sổ Cái Điểm & Kho Quà
-* **`LOYALTY_TIERS`**: Định nghĩa 4 hạng hội viên Bạc, Vàng, Bạch Kim, Kim Cương (`id`, `tenant_id`, `code`, `name`, `min_points`, `point_multiplier`, `free_daily_turns`).
-* **`LOYALTY_ACCOUNTS`**: Hồ sơ hội viên và số dư điểm hợp nhất (`id`, `tenant_id`, `external_user_id`, `tier_id`, `current_points`, `tier_points`, `tier_updated_at`).
-* **`LOYALTY_POINT_LEDGER`**: Sổ cái ghi nhận bất biến mọi giao dịch cộng/trừ điểm thưởng (`id`, `tenant_id`, `user_account_id`, `partner_id`, `point_change`, `change_type`, `reference_code`, `expired_at`, `created_at`).
-* **`LOYALTY_VOUCHERS` & `LOYALTY_VOUCHER_REDEMPTIONS`**: Quản trị kho quà phiếu ưu đãi điện tử và lịch sử sở hữu/đổi phiếu của người dùng.
+#### 3. Nhóm Bảng Hội Viên, Điểm Hạng, `Natcash Coin` (`1 Coin = 1 HTG`) & Kho Quà
+* **`LOYALTY_TIERS`**: Định nghĩa 4 hạng hội viên `Silver` (`0` điểm, `×1.0`), `Gold` (`1.000` điểm, `×1.1`), `Platinum` (`5.000` điểm, `×1.25`), `Diamond` (`15.000` điểm, `×1.5`).
+* **`LOYALTY_ACCOUNTS`**: Hồ sơ hội viên, số dư Điểm hạng (`tier_points`), số dư `Natcash Coin` (`current_coins`), chu kỳ xét hạng 12 tháng (`tier_eval_date`, `tier_locked_until_year`) và cờ `notification_opt_out`.
+* **`LOYALTY_POINT_LEDGER` & `LOYALTY_CURRENCY_BUCKETS`**: Sổ cái bất biến ghi nhận mọi biến động `TIER_POINT` / `LOYALTY_COIN` và bảng quản lý lô hạn sử dụng theo quy tắc `FIFO`.
+* **`LOYALTY_VOUCHERS` & `LOYALTY_VOUCHER_REDEMPTIONS`**: Quản trị kho quà phiếu ưu đãi điện tử, gói Data (GB)/Phút gọi viễn thông (`Natcom BCCS`) và lịch sử đổi thưởng.
 
-#### 4. Nhóm Bảng Cổng Game, Trò Chơi & 7 Nhóm Cấu Hình CMS
-* **`GAMES` & `GAME_PARTNERS`**: Quản lý đối tác phát triển game và danh mục trò chơi phát hành (`id`, `tenant_id`, `partner_id`, `game_code`, `game_name`, `category`, `icon_url`, `banner_url`, `h5_bundle_url`, `version`, `screen_orientation`, `status`, `start_time`, `end_time`).
-* **`GAME_CONFIG_METADATA`**: Cấu hình thành phần giao diện, theme/skin mùa lễ hội, số ô đĩa quay, danh mục âm thanh BGM, âm quay, âm thắng giải và hiệu ứng pháo hoa.
-* **`GAME_TURN_POLICIES`**: Cấu hình chính sách tặng lượt miễn phí (đăng ký mới, điểm danh hàng ngày, theo hạng VIP Bạc/Vàng/Bạch Kim/Kim Cương, nhiệm vụ cột mốc), chính sách đổi điểm lấy lượt (`point_cost_per_turn`, `max_redeem_turns_per_day`) và cơ chế vòng đời lượt (`RESET_DAILY_2359` vs `ROLL_OVER_ACCUMULATIVE`).
-* **`GAME_TURN_PACKAGES`**: Quản lý danh mục gói bán lượt chơi combo (`id`, `game_id`, `package_code`, `package_name`, `base_turns`, `bonus_turns`, `price`, `discount_price`, `badge_label`, `status`).
-* **`GAME_TURN_BALANCES`**: Sổ theo dõi số dư lượt chơi của người dùng, phân tách rõ ràng: số lượt miễn phí có hạn trong ngày và số lượt mua/đổi điểm tích lũy vĩnh viễn.
-* **`IN_GAME_TRANSACTIONS`**: Giao dịch trừ tiền ví khi người dùng mua lượt hoặc gói combo trong game qua API xác thực mã PIN.
-* **`PARTNER_SETTLEMENTS`**: Quyết toán doanh thu chia sẻ định kỳ cho từng nhà phát triển game lẻ.
-* **`PRIZES`, `PRIZES_STRUCTURE`, `GAMES_RESULTS`**: Quản lý danh mục giải thưởng (Tiền hoàn ví, Điểm loyalty, Voucher, Hiện vật, Lượt chơi thêm, Miss), ma trận xác suất trúng thưởng (%), hạn mức ngân sách tiền mặt tối đa trong ngày, hạn mức số lượng giải lớn và kết quả trúng thưởng.
+#### 4. Nhóm Bảng Cổng GameHub, Học Tập Đổi Thưởng (`Micro-Learning`), Đại Lý & Trợ Lý AI
+* **`GAMES`, `GAME_PARTNERS`, `GAME_CONFIG_METADATA`, `GAME_TURN_POLICIES`, `GAME_TURN_BALANCES`, `PRIZES`, `PRIZES_STRUCTURE`, `GAMES_RESULTS`**: Quản lý Cổng GameHub phân loại 2 chiều (`ENTERTAINMENT`, `PUZZLE_BRAIN`, `EDUCATION_LEARNING` × `FREE_TO_PLAY`, `PARTNER_MONETIZED`).
+* **`LOYALTY_LEARNING_LESSONS` & `LOYALTY_USER_LEARNING_PROGRESS`**: Quản lý danh mục các khóa học ngắn 3–5 phút (`English Daily`, `Spanish Start`, `Aprann Li`, `Money Smart`), bộ câu hỏi trắc nghiệm và chuỗi ngày học tập của người dùng.
+* **`LOYALTY_AGENT_PROFILES` & `LOYALTY_AGENT_NETWORK_KPIS`**: Quản lý phân cấp `Super Agent → Agent`, theo dõi tiến độ nhiệm vụ chăm sóc 100 khách/tháng của `Agent` và tỷ lệ đạt chỉ tiêu mạng lưới (ngưỡng `50%`) kèm kích hoạt kịch bản hỗ trợ cho `Super Agent`.
+* **`LOYALTY_USER_AI_PROFILES` & `LOYALTY_AI_CAMPAIGN_RECOMMENDATIONS`**: Lưu hồ sơ phân khúc khách hàng từ Data Lake, gợi ý chương trình của `AI Campaign Copilot`, dự báo ngân sách và danh sách cảnh báo trùng lặp nhiệm vụ (`conflict_warnings_json`).
 
 ---
 
@@ -470,15 +464,39 @@ Mọi yêu cầu gọi đến `loyalty-service` đều phải truyền kèm các
 8. **`POST /loyalty/v1/vouchers/redeem`**: Đổi điểm thưởng lấy mã voucher ưu đãi.
 9. **`POST /loyalty/v1/cashback/redeem`**: Đổi điểm thưởng lấy tiền mặt hoàn thẳng vào số dư ví Natcash.
 
-### 8.7. Nhóm Giao Diện Cổng Game, Cấu Hình CMS và Mua Lượt Chơi
-1. **`POST /gamehub/v1/games/list`**: Truy vấn danh sách game theo thể loại, từ khóa tìm kiếm và trạng thái nổi bật.
+### 8.7. Nhóm Giao Diện Cổng GameHub (Giải Trí – Trí Tuệ – Giáo Dục) & Học Tập Đổi Thưởng
+1. **`POST /gamehub/v1/games/list`**: Truy vấn danh sách game theo phân loại 2 chiều (`ENTERTAINMENT`, `PUZZLE_BRAIN`, `EDUCATION_LEARNING` × `FREE_TO_PLAY`, `PARTNER_MONETIZED`).
 2. **`GET /gamehub/v1/games/{gameId}/config`**: Lấy cấu hình đầy đủ của game: Giao diện, theme, âm thanh, luật chơi và ma trận giải thưởng.
-3. **`POST /gamehub/v1/games/{gameId}/packages`**: Lấy danh sách bảng giá mua lượt lẻ và các gói combo ưu đãi.
-4. **`POST /gamehub/v1/games/{gameId}/purchase-turns`**: Thực hiện mua lượt chơi lẻ hoặc gói combo in-game, trừ số dư ví Natcash an toàn qua mã PIN.
-5. **`POST /gamehub/v1/games/{gameId}/redeem-turns`**: Thực hiện đổi điểm Loyalty lấy lượt chơi theo tỷ giá cấu hình.
-6. **`POST /gamehub/v1/games/{gameId}/claim-daily-turns`**: Nhận lượt chơi miễn phí điểm danh hàng ngày hoặc theo cấp bậc hội viên VIP.
-7. **`POST /gamehub/v1/session/init`**: Khởi tạo phiên chơi game tập trung trên GameHub hoặc từ Shortcut động 1 chạm.
+3. **`POST /gamehub/v1/games/{gameId}/claim-daily-turns`**: Nhận lượt chơi miễn phí điểm danh hàng ngày hoặc theo cấp bậc hội viên (`Silver → Diamond`).
+4. **`POST /gamehub/v1/session/init`**: Khởi tạo phiên chơi game tập trung trên GameHub hoặc từ Shortcut động 1 chạm.
+5. **`POST /gamehub/v1/events/ingest`**: Tiếp nhận sự kiện hành động trong game (`LEVEL_UP`, `LESSON_COMPLETED`, `QUIZ_PASSED`) từ SDK hoặc S2S Webhook đối tác.
+6. **`GET /gamehub/v1/learning/courses`**: Lấy danh sách khóa học ngắn (`English Daily`, `Spanish Start`, `Aprann Li`, `Money Smart`) và tiến độ chuỗi ngày học của người dùng.
+7. **`POST /gamehub/v1/learning/lessons/{lessonCode}/submit-quiz`**: Nộp kết quả bài học 3–5 phút và tự động cộng thưởng `Natcash Coin` / Điểm hạng / gói Data.
 8. **`POST /luckydraw/v1/spin`**: Thực hiện lượt quay may mắn và trả thưởng theo thuật toán xác suất có trọng số kết hợp trừ ngân sách nguyên tử Redis `DECRBY`.
+
+### 8.8. Nhóm Giao Diện Phân Hệ Đại Lý (`Agent & Super Agent Loyalty`)
+1. **`GET /loyalty/v1/agents/{agentCode}/dashboard`**: Tra cứu tiến độ nhiệm vụ tháng của `Agent` (số khách hàng đã chăm sóc / mục tiêu 100 khách, số `eKYC` mới, phần thưởng đã mở khóa).
+2. **`POST /loyalty/v1/agents/{agentCode}/claim-mission-reward`**: `Agent` nhận phần thưởng nhiệm vụ tháng (`Voucher`, gói `Data GB` qua `Natcom BCCS` hoặc thưởng tiền về ví đại lý).
+3. **`GET /loyalty/v1/super-agents/{superAgentCode}/network-kpis`**: Tra cứu bảng điều khiển mạng lưới của `Super Agent` (danh sách `Agent` cấp dưới, tỷ lệ đạt chỉ tiêu mạng lưới `%`, trạng thái đạt ngưỡng `≥ 50%` hoặc cảnh báo hỗ trợ `< 50%`).
+4. **`POST /loyalty/v1/super-agents/{superAgentCode}/support-playbook/trigger`**: Kích hoạt hoặc cập nhật kết quả thực hiện kịch bản hỗ trợ kinh doanh cho các điểm đại lý dưới ngưỡng.
+
+### 8.9. Nhóm Giao Diện Cổng Đối Tác Thương Mại Đa Chi Nhánh (`Merchant Partner Portal`)
+1. **`GET /loyalty/v1/partner-portal/overview`**: Lấy chỉ số tổng quan của đối tác (Khách quay lại, Doanh thu từ hội viên, tổng `Natcash Coin` đã tích và đã tiêu).
+2. **`GET /loyalty/v1/partner-portal/branches/analytics`**: Báo cáo hiệu quả tách biệt theo từng chi nhánh (`Pétion-Ville`, `Delmas 33`, `Cap-Haïtien`...) và theo nhóm ngành hàng (`Product Groups`).
+3. **`POST /loyalty/v1/partner-portal/program-proposals`**: Đối tác gửi đề xuất chương trình ưu đãi tại điểm bán (`Propose an in-store program`) kèm tỷ lệ đồng tài trợ và trần ngân sách tháng.
+4. **`PUT /loyalty/v1/partner-portal/budget-caps`**: Cập nhật hạn mức ngân sách thưởng tháng và cấu hình bán chéo liên minh (`Alliance cross-sell`).
+5. **`POST /loyalty/v1/partner-portal/staff-accounts`**: Quản lý tài khoản nhân viên theo chi nhánh (`STORE_OWNER`, `BRANCH_MANAGER`, `POS_CASHIER`).
+
+### 8.10. Nhóm Giao Diện Kết Nối `USSD *202#`, `Natcom BCCS` & Tùy Chọn Chống Làm Phiền
+1. **`POST /loyalty/v1/ussd/session-handler`**: Tiếp nhận phiên tương tác từ `Natcom USSD Gateway` (`*202#`), trả về menu văn bản phản hồi tức thì (< 1,5 giây) để tra cứu số dư `Natcash Coin`, kiểm tra hạng và đổi gói Data/Voucher trên điện thoại phổ thông.
+2. **`POST /loyalty/v1/telco-bccs/provision-reward`**: Gọi sang `Natcom BCCS` để cộng gói `Data (GB)` hoặc phút gọi tức thời khi khách hàng / `Agent` đổi thưởng.
+3. **`PUT /loyalty/v1/profile/notification-preferences`**: Khách hàng chủ động bật/tắt nhận thông báo nhắc nhở khuyến mại (`optOut = true/false`).
+4. **`GET /loyalty/v1/admin/operational-alerts`**: Đội vận hành tra cứu các cảnh báo tự động (chạm 80% ngân sách, kém hơn nhóm đối chứng, nghi gian lận, lệch đối soát).
+
+### 8.11. Nhóm Giao Diện Trợ Lý AI (`AI Campaign Copilot`), Cảnh Báo Trùng Lặp & Nhóm Đối Chứng
+1. **`POST /loyalty/v1/ai-copilot/generate-proposal`**: Nhập mục tiêu ngôn ngữ tự nhiên và ngân sách dự kiến → Trả về cấu hình nhiệm vụ đề xuất, tập khách hàng mục tiêu và bảng dự báo chi phí / tỷ lệ tham gia.
+2. **`POST /loyalty/v1/ai-copilot/detect-conflicts`**: Kiểm tra và cảnh báo sớm nếu chiến dịch dự kiến bị trùng tập khách hàng hoặc trùng hành vi kích hoạt với các nhiệm vụ đang chạy.
+3. **`GET /loyalty/v1/campaigns/{campaignCode}/uplift-report`**: Báo cáo so sánh hiệu quả thực tế giữa Nhóm nhận ưu đãi (`Treatment Group`) và Nhóm đối chứng (`Control Group / Holdout`) để tính `True Net Uplift GMV`.
 
 ---
 
