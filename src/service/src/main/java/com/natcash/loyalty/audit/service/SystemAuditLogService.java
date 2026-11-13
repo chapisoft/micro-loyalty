@@ -74,7 +74,9 @@ public class SystemAuditLogService {
                 predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toTime));
             }
 
-            query.orderBy(cb.desc(root.get("createdAt")));
+            if (query != null) {
+                query.orderBy(cb.desc(root.get("createdAt")));
+            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { ApprovalTargetType } from '@/models';
-import { LoyaltyService, PointPolicyModel } from '@/service/loyalty.service';
+import { LoyaltyService, PolicyRuleModel } from '@/service/loyalty.service';
 
 export const PartnerPointsPolicyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -21,9 +21,9 @@ export const PartnerPointsPolicyPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>(
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
-  const [policies, setPolicies] = useState<PointPolicyModel[]>([]);
+  const [policies, setPolicies] = useState<PolicyRuleModel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editTarget, setEditTarget] = useState<PointPolicyModel | null>(null);
+  const [editTarget, setEditTarget] = useState<PolicyRuleModel | null>(null);
   const [proposedEarnRate, setProposedEarnRate] = useState<number>(1);
   const [proposedReason, setProposedReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -51,12 +51,12 @@ export const PartnerPointsPolicyPage: React.FC = () => {
     try {
       await LoyaltyService.createApprovalRequest(
         {
-          targetType: ApprovalTargetType.POLICY_CHANGE,
+          targetType: ApprovalTargetType.POLICY,
           actionType: 'UPDATE_PARTNER_EARN_RATE',
-          targetId: String(editTarget.id || editTarget.policyCode),
+          targetId: String(editTarget.id || editTarget.policyCode || editTarget.code),
           reason: proposedReason.trim(),
-          beforeData: { earnRateAmount: editTarget.earnRateAmount, earnRatePoints: editTarget.earnRatePoints },
-          afterData: { earnRateAmount: proposedEarnRate, earnRatePoints: editTarget.earnRatePoints },
+          payloadBefore: { earnRatePercent: editTarget.earnRatePercent ?? editTarget.earnRate },
+          payloadAfter: { earnRatePercent: proposedEarnRate },
         },
         selectedTenant
       );
@@ -90,14 +90,14 @@ export const PartnerPointsPolicyPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<PointPolicyModel> value={policies} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chính sách tích điểm áp dụng.' })}>
-            <Column field="policyCode" header={t('policy.code', { defaultValue: 'Mã Chính Sách' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.policyCode}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="policyName" header={t('policy.name', { defaultValue: 'Tên Chính Sách' })} style={{ minWidth: '15rem' }} />
-            <Column field="actionType" header={t('policy.action_type', { defaultValue: 'Loại Giao Dịch' })} body={(r) => <Tag value={r.actionType} severity="info" />} style={{ minWidth: '10rem' }} />
-            <Column header={t('policy.earn_rule', { defaultValue: 'Tỷ Lệ Tích' })} body={(r) => <span className="font-mono">{Number(r.earnRateAmount || 0).toLocaleString()} HTG → +{r.earnRatePoints} đ</span>} style={{ minWidth: '12rem' }} />
-            <Column field="expiryDays" header={t('policy.expiry_days', { defaultValue: 'Hạn Điểm' })} body={(r) => `${r.expiryDays || 365} ngày`} style={{ minWidth: '8rem' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === 'ACTIVE' ? 'success' : 'secondary'} />} style={{ minWidth: '8rem' }} />
-            <Column header={t('common.action', { defaultValue: 'Đề Xuất Sửa' })} body={(r) => <Button icon="pi pi-send" label={t('partner_portal.propose_change', { defaultValue: 'Đề xuất' })} size="small" outlined onClick={() => { setEditTarget(r); setProposedEarnRate(r.earnRateAmount || 100); }} />} style={{ minWidth: '9rem' }} />
+          <DataTable<PolicyRuleModel[]> value={policies} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chính sách tích điểm áp dụng.' })}>
+            <Column field="policyCode" header={t('policy.code', { defaultValue: 'Mã Chính Sách' })} body={(r: PolicyRuleModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.policyCode || r.code || r.partnerCode}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="partnerName" header={t('policy.name', { defaultValue: 'Đối Tác / Chính Sách' })} body={(r: PolicyRuleModel) => r.name || r.partnerName} style={{ minWidth: '15rem' }} />
+            <Column field="type" header={t('policy.action_type', { defaultValue: 'Loại Giao Dịch' })} body={(r: PolicyRuleModel) => <Tag value={r.type || 'EARN_BURN'} severity="info" />} style={{ minWidth: '10rem' }} />
+            <Column header={t('policy.earn_rule', { defaultValue: 'Tỷ Lệ Tích (%)' })} body={(r: PolicyRuleModel) => <span className="font-mono">{Number(r.earnRatePercent ?? r.earnRate ?? 0)}% · Min {Number(r.minBillAmount || 0).toLocaleString()}</span>} style={{ minWidth: '12rem' }} />
+            <Column field="settlementCycle" header={t('policy.settlement_cycle', { defaultValue: 'Chu Kỳ' })} body={(r: PolicyRuleModel) => r.settlementCycle || 'MONTHLY'} style={{ minWidth: '8rem' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PolicyRuleModel) => <Tag value={r.status} severity={r.status === 'ACTIVE' ? 'success' : 'secondary'} />} style={{ minWidth: '8rem' }} />
+            <Column header={t('common.action', { defaultValue: 'Đề Xuất Sửa' })} body={(r: PolicyRuleModel) => <Button icon="pi pi-send" label={t('partner_portal.propose_change', { defaultValue: 'Đề xuất' })} size="small" outlined onClick={() => { setEditTarget(r); setProposedEarnRate(r.earnRatePercent ?? r.earnRate ?? 1); }} />} style={{ minWidth: '9rem' }} />
           </DataTable>
         )}
       </div>

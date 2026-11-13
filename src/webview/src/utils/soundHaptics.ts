@@ -37,7 +37,9 @@ class SoundHapticsEngine {
     this.muted = muted;
     try {
       localStorage.setItem('MICRO_LOYALTY_SOUND_MUTED', String(muted));
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   public toggleMute(): boolean {
@@ -52,7 +54,9 @@ class SoundHapticsEngine {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate(pattern);
-      } catch {}
+      } catch {
+        /* ignore vibrate errors */
+      }
     }
   }
 
@@ -78,7 +82,9 @@ class SoundHapticsEngine {
 
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.05);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -104,7 +110,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.08);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -129,7 +137,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.25);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -154,7 +164,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.12);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -179,7 +191,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.4);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -204,7 +218,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.08);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -229,7 +245,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.08);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -254,7 +272,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.06);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -281,7 +301,9 @@ class SoundHapticsEngine {
         osc.start(now + i * 0.07);
         osc.stop(now + i * 0.07 + 0.12);
       });
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -307,7 +329,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start(now);
       osc.stop(now + 0.2);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -342,7 +366,9 @@ class SoundHapticsEngine {
         osc.start(now + n.t);
         osc.stop(now + n.t + n.d);
       });
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -376,7 +402,9 @@ class SoundHapticsEngine {
         osc.start(now + n.t);
         osc.stop(now + n.t + n.d);
       });
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -401,7 +429,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.03);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -426,7 +456,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.1);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 
   /**
@@ -451,7 +483,9 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.1);
-    } catch {}
+    } catch {
+      /* ignore audio/storage errors */
+    }
   }
 }
 

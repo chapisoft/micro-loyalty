@@ -553,10 +553,9 @@ cd /data/uc1-software/apps/micro-loyalty/deploy && ./scripts/healthcheck.sh
 "
 ```
 
-### Bước 6: Tự động hóa CI/CD chọn lọc với Jenkins
-Pipeline tại [Jenkinsfile](../../Jenkinsfile) (đồng bộ cùng [deploy/micro-loyalty/ci-cd/jenkins/Jenkinsfile](ci-cd/jenkins/Jenkinsfile)) mặc định chạy chế độ `TARGET_SERVICE=auto` trên nhánh `main`:
-- Chỉ kích hoạt build và deploy khi có thay đổi mã nguồn hoặc cấu hình triển khai SaaS kể từ commit triển khai thành công gần nhất; bỏ qua các thay đổi tài liệu (`docs/`, `*.md`), kỹ năng (`.agents/`), hoặc cấu hình môi trường `deploy/natcash/`.
-- Chỉ đóng gói, đồng bộ qua `rsync`/`tar` và chạy `docker compose up -d --build --no-deps <phân_hệ_thay_đổi>` cho đúng các phân hệ phát sinh thay đổi (`loyalty-service`, `loyalty-cms`, `loyalty-webview`, `gateway`).
-- Thông số cấu hình trên Jenkins (`https://jenkins.dip.io.vn/jenkins/`):
-  - Credentials kiểu SSH Username with private key với ID `micro-server-ssh`, Username `root`, khóa riêng tư từ `~/.ssh/jenkins_deploy_dev` (khóa công khai tương ứng đã được nạp vào `/root/.ssh/authorized_keys` trên `35.247.156.176:65000`).
-  - Công cụ toàn cục: JDK `jdk-21` và NodeJS `node-20`.
+### Bước 6: Tự động hóa CI/CD chọn lọc với Jenkins nội bộ trên máy chủ `35.247.156.176` (`192.168.1.200`)
+Pipeline tại [Jenkinsfile](../../Jenkinsfile) (đồng bộ cùng [deploy/micro-loyalty/ci-cd/jenkins/Jenkinsfile](ci-cd/jenkins/Jenkinsfile)) chạy độc lập ngay trên máy chủ `35.247.156.176` / `192.168.1.200` (không tích hợp qua Jenkins DIP), mặc định chạy chế độ `TARGET_SERVICE=auto` trên nhánh `main`:
+- Tự động kích hoạt qua `triggers { githubPush() }` khi nhánh `main` nhận commit mới; chỉ build/deploy các phân hệ SaaS bị thay đổi (`loyalty-service`, `loyalty-cms`, `loyalty-webview`, `gateway`) và bỏ qua các thay đổi tài liệu (`docs/`, `*.md`), kỹ năng (`.agents/`), hoặc cấu hình `deploy/natcash/`.
+- Triển khai trực tiếp vào `/data/uc1-software/apps/micro-loyalty/deploy` qua volume mount + `/var/run/docker.sock` (hoặc tự động fallback qua SSH LAN `192.168.1.200:65000` nếu chạy tách rời), chạy `docker compose up -d --build --no-deps <phân_hệ_thay_đổi>`.
+- Bộ dựng Jenkins chuyên dụng được khai báo tại [deploy/micro-loyalty/ci-cd/jenkins/Dockerfile](ci-cd/jenkins/Dockerfile) và [deploy/micro-loyalty/ci-cd/jenkins/docker-compose.yml](ci-cd/jenkins/docker-compose.yml) (tích hợp sẵn JDK 17, Node.js 20, Docker CLI, Docker Compose v2, `rsync`, lắng nghe nội bộ tại cổng `127.0.0.1:18099`).
+- Điểm truy cập Jenkins nội bộ trên `35.247.156.176`: `https://jenkins.mid.io.vn/` (Job: `micro-loyalty`, GitHub Webhook: `https://jenkins.mid.io.vn/github-webhook/`).

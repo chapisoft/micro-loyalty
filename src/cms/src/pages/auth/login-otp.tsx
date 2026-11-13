@@ -142,7 +142,7 @@ const LoginOtpController: React.FC<LoginOtpControllerProps> = ({ visible, onHide
                   roles: profile?.roles,
                 });
               }
-            } catch (err) {
+            } catch {
               if (setUser) {
                 setUser({ accessToken: res.accessToken });
               }

@@ -207,7 +207,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
       fxRef.current.spawnSmokePuff(p.x, playerBaseY, 6);
     }
-  }, [gameState, startGame]);
+  }, [gameState, startGame, JUMP_FORCE]);
 
   const slide = useCallback(() => {
     if (gameState !== 'RUNNING') return;
@@ -623,7 +623,9 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
                   setHighScore(Math.floor(distRef.current));
                   try {
                     localStorage.setItem('runner_best_distance', String(Math.floor(distRef.current)));
-                  } catch {}
+                  } catch {
+                    /* ignore storage errors */
+                  }
                 }
                 break;
               }
@@ -1475,6 +1477,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     return () => {
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState]);
 
   const claimReward = () => {

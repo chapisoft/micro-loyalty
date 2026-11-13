@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { PaymentBatchStatus } from '@/models';
-import { LoyaltyService, ClearingBatchModel } from '@/service/loyalty.service';
+import { LoyaltyService, PartnerSettlementBatchModel } from '@/service/loyalty.service';
 
 export const PartnerSettlementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -21,9 +21,9 @@ export const PartnerSettlementPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>(
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
-  const [batches, setBatches] = useState<ClearingBatchModel[]>([]);
+  const [batches, setBatches] = useState<PartnerSettlementBatchModel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [claimBatch, setClaimBatch] = useState<ClearingBatchModel | null>(null);
+  const [claimBatch, setClaimBatch] = useState<PartnerSettlementBatchModel | null>(null);
   const [claimAmount, setClaimAmount] = useState<number>(0);
   const [claimReason, setClaimReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +42,7 @@ export const PartnerSettlementPage: React.FC = () => {
     fetchSettlements();
   }, [fetchSettlements]);
 
-  const handleConfirm = async (batch: ClearingBatchModel) => {
+  const handleConfirm = async (batch: PartnerSettlementBatchModel) => {
     setSubmitting(true);
     try {
       await LoyaltyService.confirmPartnerSettlement(batch.batchCode, selectedTenant);
@@ -63,7 +63,7 @@ export const PartnerSettlementPage: React.FC = () => {
     setSubmitting(true);
     try {
       await LoyaltyService.raisePartnerSettlementClaim(
-        { batchCode: claimBatch.batchCode, disputedAmount: claimAmount, reason: claimReason.trim() },
+        { batchCode: claimBatch.batchCode, claimedAmount: claimAmount, reason: claimReason.trim() },
         selectedTenant
       );
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Đã gửi khiếu nại' }), detail: claimBatch.batchCode });
@@ -97,18 +97,18 @@ export const PartnerSettlementPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<ClearingBatchModel> value={batches} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có lô thanh toán đối soát nào.' })}>
-            <Column field="batchCode" header={t('clearing.batch_code', { defaultValue: 'Mã Lô PAY' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.batchCode}</span>} style={{ minWidth: '13rem' }} />
-            <Column header={t('clearing.period', { defaultValue: 'Kỳ Đối Soát' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.periodFrom} → {r.periodTo}</span>} style={{ minWidth: '13rem' }} />
-            <Column field="grossAmount" header={t('clearing.gross_amount', { defaultValue: 'Tổng Giá Trị' })} body={(r) => <span className="font-mono">{Number(r.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-            <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(r) => <span className="font-mono text-orange-600">{Number(r.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-            <Column field="netPayableAmount" header={t('clearing.net_payable', { defaultValue: 'Thực Nhận Ròng' })} body={(r) => <span className="font-mono font-medium text-green-700">{Number(r.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === PaymentBatchStatus.SETTLED ? 'success' : r.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+          <DataTable<PartnerSettlementBatchModel[]> value={batches} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có lô thanh toán đối soát nào.' })}>
+            <Column field="batchCode" header={t('clearing.batch_code', { defaultValue: 'Mã Lô PAY' })} body={(r: PartnerSettlementBatchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.batchCode}</span>} style={{ minWidth: '13rem' }} />
+            <Column header={t('clearing.period', { defaultValue: 'Kỳ Đối Soát' })} body={(r: PartnerSettlementBatchModel) => <span className="font-mono white-space-nowrap text-xs">{r.periodFrom} → {r.periodTo}</span>} style={{ minWidth: '13rem' }} />
+            <Column field="grossAmount" header={t('clearing.gross_amount', { defaultValue: 'Tổng Giá Trị' })} body={(r: PartnerSettlementBatchModel) => <span className="font-mono">{Number(r.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+            <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(r: PartnerSettlementBatchModel) => <span className="font-mono text-orange-600">{Number(r.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+            <Column field="netPayableAmount" header={t('clearing.net_payable', { defaultValue: 'Thực Nhận Ròng' })} body={(r: PartnerSettlementBatchModel) => <span className="font-mono font-medium text-green-700">{Number(r.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PartnerSettlementBatchModel) => <Tag value={r.status} severity={r.status === PaymentBatchStatus.PAID ? 'success' : r.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
             <Column
               header={t('common.action', { defaultValue: 'Thao Tác' })}
-              body={(r) => (
+              body={(r: PartnerSettlementBatchModel) => (
                 <div className="flex gap-1">
-                  {r.status === PaymentBatchStatus.PENDING_PARTNER && (
+                  {r.status === PaymentBatchStatus.PENDING_CONFIRM && (
                     <Button label={t('partner_portal.confirm_batch', { defaultValue: 'Xác nhận' })} icon="pi pi-check" size="small" severity="success" onClick={() => handleConfirm(r)} loading={submitting} />
                   )}
                   <Button label={t('partner_portal.raise_claim', { defaultValue: 'Raise a claim' })} icon="pi pi-exclamation-triangle" size="small" severity="warning" outlined onClick={() => { setClaimBatch(r); setClaimAmount(r.netPayableAmount || 0); setClaimReason(''); }} />

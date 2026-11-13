@@ -38,7 +38,6 @@ public class CustomStrategy implements Strategy {
 
    @Override
    @Nonnull
-   @SuppressWarnings("null")
    public HttpResponse process(@Nonnull HttpRequest request, @Nonnull HttpResponse response) throws IOException {
       List<String> skipPaths = Optional.ofNullable(this.logbookCustomProperties.getSkipBodyPaths())
               .map(Arrays::asList)

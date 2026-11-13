@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class TypeFileConstraint implements ConstraintValidator<ValidTypeFile, List<MultipartFile>> {
    @Generated
    private static final Logger log = LoggerFactory.getLogger(TypeFileConstraint.class);

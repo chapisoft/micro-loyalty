@@ -1,57 +1,59 @@
 import { DEFAULT_PAGE_SIZE } from '@/constants';
-import { IBaseRequestPagingParams } from '@/models';
-import { useGetMerchantsController } from '@/service/general/general';
+import { partnerService } from '@/service/partner.service';
 import { debounce } from 'lodash';
 import React from 'react';
 
 interface DefaultOptionType {
   id: string;
-  name: number;
+  name: string;
 }
 
 const usePartnerOptions = () => {
+  const [allOptions, setAllOptions] = React.useState<DefaultOptionType[]>([]);
   const [options, setOptions] = React.useState<DefaultOptionType[]>([]);
-  const [hasNextPage, setHasNextPage] = React.useState<boolean>(true);
-  const searchParams = React.useRef<IBaseRequestPagingParams>({
-    pageSize: DEFAULT_PAGE_SIZE,
-    pageNumber: 1,
-  });
-
-  const { data, isLoading, refetch } = useGetMerchantsController(searchParams.current);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [limit, setLimit] = React.useState<number>(DEFAULT_PAGE_SIZE);
 
   React.useEffect(() => {
-    if (data) {
-      const newOptions: DefaultOptionType[] = (data?.merchants || []).map((item: any) => ({
-        id: item.id,
-        name: item.name,
-      }));
-      setOptions(newOptions);
-      setHasNextPage(data.totalPages > 1);
-    }
-  }, [data]);
-
-  React.useEffect(() => {
-    searchParams.current = {
-      pageSize: DEFAULT_PAGE_SIZE,
-      pageNumber: 1,
+    let active = true;
+    setIsLoading(true);
+    partnerService
+      .getAll()
+      .then((list) => {
+        if (!active) return;
+        const mapped = (Array.isArray(list) ? list : []).map((item) => ({
+          id: String(item.id),
+          name: item.partnerName || item.partnerCode,
+        }));
+        setAllOptions(mapped);
+        setOptions(mapped.slice(0, DEFAULT_PAGE_SIZE));
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
     };
-    refetch();
-  }, [refetch]);
+  }, []);
+
+  const hasNextPage = options.length < allOptions.length;
 
   const loadMore = React.useCallback(() => {
     if (!hasNextPage || isLoading) return;
-    searchParams.current.pageSize += DEFAULT_PAGE_SIZE;
-    refetch();
-  }, [hasNextPage, isLoading, refetch]);
+    const nextLimit = limit + DEFAULT_PAGE_SIZE;
+    setLimit(nextLimit);
+    setOptions(allOptions.slice(0, nextLimit));
+  }, [allOptions, hasNextPage, isLoading, limit]);
 
   const onSearch = debounce((value: string) => {
-    searchParams.current.pageIndex = 1;
-    searchParams.current.Search = value;
-    refetch();
-  }, 500);
+    const kw = (value || '').trim().toLowerCase();
+    const filtered = kw
+      ? allOptions.filter((o) => o.name.toLowerCase().includes(kw))
+      : allOptions;
+    setOptions(filtered.slice(0, limit));
+  }, 300);
 
   return {
-    search: searchParams.current,
     options,
     isLoading,
     hasNextPage,

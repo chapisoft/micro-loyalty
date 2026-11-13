@@ -31,26 +31,26 @@ const AppSelect: React.FC<AppSelectProps> = ({
 
   const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (dropdownRef.current && dropdownRef.current.getOverlay()) {
-      if (!dropdownRef.current.getOverlay()?.contains(event.target as Node)) {
-        dropdownRef.current.hide();
-        dropdownRef.current.getInput()?.addEventListener('click', () => {
-          setIsDropdownVisible((prev) => !prev);
-        });
-      }
-      if (dropdownRef.current.getElement()?.contains(event.target as Node)) {
-        if (!isDropdownVisible) dropdownRef.current.show();
-      }
-    }
-  };
-
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && dropdownRef.current.getOverlay()) {
+        if (!dropdownRef.current.getOverlay()?.contains(event.target as Node)) {
+          dropdownRef.current.hide();
+          dropdownRef.current.getInput()?.addEventListener('click', () => {
+            setIsDropdownVisible((prev) => !prev);
+          });
+        }
+        if (dropdownRef.current.getElement()?.contains(event.target as Node)) {
+          if (!isDropdownVisible) dropdownRef.current.show();
+        }
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isDropdownVisible]);
   return (
     <AppLabel
       inputId={inputId}

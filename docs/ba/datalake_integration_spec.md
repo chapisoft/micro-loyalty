@@ -1,15 +1,17 @@
 # ĐẶC TẢ DỮ LIỆU CUNG CẤP TỪ DATA LAKE CHO CORE LOYALTY KHAI THÁC
+
 ## Kiến Trúc Liên Hợp Dữ Liệu 360 Độ (Ví Điện Tử – Viễn Thông – Liên Minh Thương Mại)
 
 > **Vai trò biên soạn:** Kiến trúc sư trưởng dự án  
-> **Đối tượng áp dụng:** Hệ sinh thái `micro-loyalty` ([loyalty-service](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service), [loyalty-cms](file:///Users/micro/Source/chapisoft/micro-loyalty/src/cms), [loyalty-webview](file:///Users/micro/Source/chapisoft/micro-loyalty/src/webview)) và Hệ thống Data Lake Trung tâm (`Natcash Core Wallet Data Lake`, `Natcom Telecom Data Lake`, `Coalition Retail Data Lake`)  
-> **Tài liệu liên quan:** [architecture_evolution_v2.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/architecture_evolution_v2.md), [solution.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/solution.md), [detailed_design.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/detailed_design.md)
+> **Đối tượng áp dụng:** Hệ sinh thái `micro-loyalty` ([loyalty-service](../../src/service), [loyalty-cms](../../src/cms), [loyalty-webview](../../src/webview)) và Hệ thống Data Lake Trung tâm (`Natcash Core Wallet Data Lake`, `Natcom Telecom Data Lake`, `Coalition Retail Data Lake`)  
+> **Tài liệu liên quan:** [architecture_evolution_v2.md](architecture_evolution_v2.md), [solution.md](solution.md), [detailed_design.md](detailed_design.md)
 
 ---
 
 ## 1. MỤC TIÊU VÀ NGUYÊN TẮC KIẾN TRÚC KẾT NỐI DATA LAKE
 
 ### 1.1. Mục tiêu nghiệp vụ
+
 Để **Core Loyalty** chuyển dịch từ hệ thống ghi nhận điểm thưởng thụ động sang **Bộ máy Tăng trưởng Tự động**, hệ thống không thể chỉ dựa vào lịch sử tích/tiêu điểm nội bộ trong `loyalty_db`. Core Loyalty cần khai thác nguồn dữ liệu giàu ngữ cảnh từ **Data Lake** của Ví điện tử (`Natcash`), Mạng viễn thông (`Natcom`) và Mạng lưới đối tác liên minh nhằm giải quyết 7 bài toán cốt lõi:
 
 1. **Định danh giá trị khách hàng từ ngày đầu (`Day-1 VIP Recognition`):** Nhận diện ngay các thuê bao viễn thông có cước `ARPU` cao hoặc người dùng ví có số dư lớn nhưng chưa từng tham gia Loyalty để cấp đặc quyền khởi tạo tương xứng.
@@ -26,7 +28,7 @@
 
 1. **Nguyên tắc cô lập cơ sở dữ liệu vận hành:**
    * `loyalty-service` tuyệt đối không truy vấn trực tiếp vào cơ sở dữ liệu giao dịch lõi (`natcash_db` hoặc hệ thống tính cước `OCS` của viễn thông) để tránh gây suy giảm hiệu năng giao dịch tài chính.
-   * Toàn bộ dữ liệu khai thác phải được trích xuất từ tầng **Data Lake / Lakehouse** thông qua `DataLakeConnectorProvider` được cấu hình theo từng thuê bao tại bảng `loyalty_tenant_integrations` ([V12__add_tenant_integrations_schema.sql](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service/src/main/resources/db/migration/V12__add_tenant_integrations_schema.sql)).
+   * Toàn bộ dữ liệu khai thác phải được trích xuất từ tầng **Data Lake / Lakehouse** thông qua `DataLakeConnectorProvider` được cấu hình theo từng thuê bao tại bảng `loyalty_tenant_integrations` ([V12__add_tenant_integrations_schema.sql](../../src/service/src/main/resources/db/migration/V12__add_tenant_integrations_schema.sql)).
 2. **Nguyên tắc tối thiểu hóa dữ liệu và bảo mật quyền riêng tư (`Privacy-By-Design`):**
    * Chỉ đồng bộ **Các chỉ số đặc trưng đã tổng hợp (`Aggregated Feature Vectors`)** và **Tín hiệu sự kiện ngữ cảnh (`Contextual Event Signals`)**.
    * Tuyệt đối không đồng bộ hoặc lưu trữ dữ liệu nhạy cảm thô sang `loyalty_db` (không lấy nhật ký chi tiết cuộc gọi `CDR`, nội dung tin nhắn `SMS`, số giấy tờ tùy thân gốc, lịch sử vị trí tọa độ GPS chính xác từng giây hoặc mã `PIN`).
@@ -157,7 +159,7 @@ Nhóm dữ liệu này phục vụ riêng cho phân hệ số 10 (**`Agent & Sup
 
 ## 3. MA TRẬN ÁNH XẠ KHAI THÁC DỮ LIỆU TẠI TỪNG PHÂN HỆ CORE LOYALTY
 
-Bảng dưới đây tổng hợp cách thức từng phân hệ bên trong [loyalty-service](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service) tiêu thụ các trường dữ liệu từ Data Lake để vận hành nghiệp vụ:
+Bảng dưới đây tổng hợp cách thức từng phân hệ bên trong [loyalty-service](../../src/service) tiêu thụ các trường dữ liệu từ Data Lake để vận hành nghiệp vụ:
 
 | Phân hệ Core Loyalty | Dữ liệu Data Lake đầu vào | Cơ chế vận hành và Khai thác nghiệp vụ tại Core Loyalty |
 | :--- | :--- | :--- |
@@ -174,6 +176,7 @@ Bảng dưới đây tổng hợp cách thức từng phân hệ bên trong [loy
 ## 4. ĐẶC TẢ HỢP ĐỒNG GIAO TIẾP DỮ LIỆU (`DATA CONTRACT & SCHEMAS`)
 
 ### 4.1. Cấu trúc Bản ghi Đồng bộ Đặc trưng Lô (`Batch Feature Sync Schema`)
+
 Dữ liệu đồng bộ định kỳ từ Data Lake sang bảng `loyalty_user_ai_profiles` của Core Loyalty tuân thủ cấu trúc chuẩn hóa dưới đây (hỗ trợ định dạng `JSONL`, `Apache Parquet` hoặc kết quả truy vấn `JDBC/Trino`):
 
 ```json
@@ -265,6 +268,7 @@ Dữ liệu đồng bộ định kỳ từ Data Lake sang bảng `loyalty_user_a
 ---
 
 ### 4.2. Cấu trúc Bản tin Tín hiệu Ngữ cảnh Thời gian thực (`Real-Time Contextual Signal Schema`)
+
 Các sự kiện thời gian thực đẩy từ Streaming Data Lake / Event Bus vào điểm cuối `/api/v1/datalake/signals/ingest` hoặc kênh `Redis Streams` (`loyalty.datalake.signals.{tenantId}`) tuân thủ cấu trúc:
 
 ```json
@@ -290,6 +294,7 @@ Các sự kiện thời gian thực đẩy từ Streaming Data Lake / Event Bus 
 ## 5. QUY CHUẨN CHẤT LƯỢNG DỮ LIỆU, CAM KẾT SLA VÀ LỘ TRÌNH TÍCH HỢP
 
 ### 5.1. Cam kết chất lượng dữ liệu và SLA vận hành
+
 1. **Độ tươi của dữ liệu (`Data Freshness SLA`):**
    * **Luồng Lô (`Batch T+1`):** Toàn bộ dữ liệu đặc trưng tính đến `23:59:59` ngày `T` phải sẵn sàng trên bảng xuất của Data Lake trước `02:30:00` sáng ngày `T+1` để tiến trình `DataLakeFeatureSyncJob` của `loyalty-service` hoàn tất đồng bộ trước `04:30:00` sáng (trước khung giờ người dùng thức dậy).
    * **Luồng Thời gian thực (`Real-Time Signals`):** Độ trễ từ lúc phát sinh sự kiện tại Core Ví / Viễn thông đến khi `loyalty-service` nhận được bản tin P95 ≤ `5 giây`.

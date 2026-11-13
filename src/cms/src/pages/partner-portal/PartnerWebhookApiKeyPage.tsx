@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { ApiKeyStatus } from '@/models';
-import { LoyaltyService, PartnerApiKeyModel } from '@/service/loyalty.service';
+import { LoyaltyService, PartnerApiKeyItemModel } from '@/service/loyalty.service';
 
 export const PartnerWebhookApiKeyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -20,7 +20,7 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>(
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
-  const [keys, setKeys] = useState<PartnerApiKeyModel[]>([]);
+  const [keys, setKeys] = useState<PartnerApiKeyItemModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [rotating, setRotating] = useState(false);
@@ -31,8 +31,14 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
   const fetchKeys = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await LoyaltyService.getPartnerApiKeys(selectedTenant);
-      setKeys(Array.isArray(list) ? list : []);
+      const cfg = await LoyaltyService.getPartnerApiKeys(selectedTenant);
+      setKeys(Array.isArray(cfg?.keys) ? cfg.keys : []);
+      if (cfg?.webhookUrl) {
+        setWebhookUrl(cfg.webhookUrl);
+      }
+      if (cfg?.ipWhitelist) {
+        setIpWhitelist(cfg.ipWhitelist);
+      }
     } finally {
       setLoading(false);
     }
@@ -61,7 +67,7 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
       await LoyaltyService.updatePartnerWebhookConfig(
         {
           webhookUrl: webhookUrl.trim(),
-          ipWhitelist: ipWhitelist.split(',').map((s) => s.trim()).filter(Boolean),
+          ipWhitelist: ipWhitelist.split(',').map((s) => s.trim()).filter(Boolean).join(','),
         },
         selectedTenant
       );
@@ -76,8 +82,8 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
   const handleRotate = async () => {
     setRotating(true);
     try {
-      const res = await LoyaltyService.rotatePartnerApiKey({ graceDays: 7 }, selectedTenant);
-      setNewKeyOnce(res?.newKey || null);
+      const res = await LoyaltyService.rotatePartnerApiKey({ label: `Rotated Key (${new Date().toISOString().slice(0, 10)})` }, selectedTenant);
+      setNewKeyOnce(res?.plainTextKey || null);
       toast.current?.show({
         severity: 'success',
         summary: t('partner.rotate_btn', { defaultValue: 'Xoay vòng API Key' }),
@@ -91,7 +97,7 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
     }
   };
 
-  const handleRevokeOldKey = (k: PartnerApiKeyModel) => {
+  const handleRevokeOldKey = (k: PartnerApiKeyItemModel) => {
     if (!k.id) return;
     confirmDialog({
       message: `${t('partner_portal.confirm_revoke_msg', { defaultValue: 'Thu hồi ngay khóa cũ' })} ${k.keyPrefix}***?`,
@@ -162,15 +168,15 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<PartnerApiKeyModel> value={keys} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('partner.no_keys', { defaultValue: 'Chưa có API Key nào.' })}>
-            <Column field="keyPrefix" header="Key Prefix" body={(r) => <span className="font-mono white-space-nowrap font-medium">{r.keyPrefix}••••••••</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<PartnerApiKeyItemModel[]> value={keys} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('partner.no_keys', { defaultValue: 'Chưa có API Key nào.' })}>
+            <Column field="keyPrefix" header="Key Prefix" body={(r: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap font-medium">{r.keyPrefix}••••••••</span>} style={{ minWidth: '11rem' }} />
             <Column field="label" header={t('common.name', { defaultValue: 'Nhãn Khóa' })} style={{ minWidth: '12rem' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === ApiKeyStatus.ACTIVE ? 'success' : r.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="graceUntil" header="Grace Period (7d)" body={(r) => r.status === ApiKeyStatus.GRACE_PERIOD ? <span className="font-mono text-orange-700 white-space-nowrap">{computeGraceRemaining(r.graceUntil)}</span> : <span className="text-400">--</span>} style={{ minWidth: '10rem' }} />
-            <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Ngày Tạo' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PartnerApiKeyItemModel) => <Tag value={r.status} severity={r.status === ApiKeyStatus.ACTIVE ? 'success' : r.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+            <Column field="graceExpiresAt" header="Grace Period (7d)" body={(r: PartnerApiKeyItemModel) => r.status === ApiKeyStatus.GRACE_PERIOD ? <span className="font-mono text-orange-700 white-space-nowrap">{computeGraceRemaining(r.graceExpiresAt)}</span> : <span className="text-400">--</span>} style={{ minWidth: '10rem' }} />
+            <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Ngày Tạo' })} body={(r: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             <Column
               header={t('common.action', { defaultValue: 'Thu Hồi Khẩn' })}
-              body={(r) =>
+              body={(r: PartnerApiKeyItemModel) =>
                 r.status === ApiKeyStatus.GRACE_PERIOD ? (
                   <Button label={t('partner.revoke_now', { defaultValue: 'Revoke old key now' })} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(r)} />
                 ) : null

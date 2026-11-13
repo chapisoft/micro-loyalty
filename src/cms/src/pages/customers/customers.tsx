@@ -100,6 +100,7 @@ export const Customers: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenant]);
 
   const openMember360 = async (member: LoyaltyMemberAccount) => {

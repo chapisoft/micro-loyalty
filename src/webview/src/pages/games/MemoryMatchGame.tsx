@@ -41,6 +41,7 @@ export interface ThemeCategory {
 // ─────────────────────────────────────────────────────────────
 // 21 DIVERSE, VIBRANT THEMATIC CARD DECKS (20+ CHỦ ĐỀ ĐẶC SẮC)
 // ─────────────────────────────────────────────────────────────
+// eslint-disable-next-line react-refresh/only-export-components
 export const ALL_THEMES: ThemeCategory[] = [
   // 1. Đối Tác & Ví Natcash
   {
@@ -520,6 +521,7 @@ export interface StageConfig {
   pointMultiplier: number;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getStageConfig = (stage: number): StageConfig => {
   const themeIndex = (stage - 1) % ALL_THEMES.length;
   const theme = ALL_THEMES[themeIndex];
@@ -843,7 +845,9 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
                   localStorage.setItem('memory_game_stage', String(nextStageNum));
                   localStorage.setItem('memory_game_score', String(newTotal));
                   localStorage.setItem('memory_game_highest_stage', String(newHighest));
-                } catch {}
+                } catch {
+                  /* ignore storage errors */
+                }
 
                 return newTotal;
               });
@@ -885,7 +889,9 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     try {
       localStorage.setItem('memory_game_stage', '1');
       localStorage.setItem('memory_game_score', '0');
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     initStageDeck(1);
   };
 
@@ -899,7 +905,9 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     try {
       localStorage.setItem('memory_game_stage', '1');
       localStorage.setItem('memory_game_score', '0');
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     setShowRewardModal(false);
   };
 
@@ -992,11 +1000,10 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
             <button
               onClick={handleXRayPeek}
               disabled={!peekAvailable || isPeeking}
-              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${
-                peekAvailable && !isPeeking
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white hover:brightness-110 active:scale-95'
-                  : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
-              }`}
+              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${peekAvailable && !isPeeking
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white hover:brightness-110 active:scale-95'
+                : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+                }`}
               title={t('games.memory.btn_peek', { defaultValue: 'Mắt Thần (1.5s)' })}
             >
               <Eye className="w-3 h-3" />
@@ -1007,11 +1014,10 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
             <button
               onClick={handleTimeFreeze}
               disabled={!freezeAvailable}
-              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${
-                freezeAvailable
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 border-emerald-400 text-white hover:brightness-110 active:scale-95'
-                  : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
-              }`}
+              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${freezeAvailable
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 border-emerald-400 text-white hover:brightness-110 active:scale-95'
+                : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+                }`}
               title={t('games.memory.btn_freeze', { defaultValue: '+10 Giây' })}
             >
               <Zap className="w-3 h-3" />
@@ -1049,15 +1055,13 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
                   className="relative aspect-square rounded-2xl cursor-pointer perspective-1000 transition-transform duration-200 active:scale-95 select-none group"
                 >
                   <div
-                    className={`w-full h-full rounded-2xl transition-transform duration-500 transform-style-3d relative ${
-                      isRevealed ? 'rotate-y-180 shadow-xl' : 'shadow-md'
-                    }`}
+                    className={`w-full h-full rounded-2xl transition-transform duration-500 transform-style-3d relative ${isRevealed ? 'rotate-y-180 shadow-xl' : 'shadow-md'
+                      }`}
                   >
                     {/* Card Back (Facedown - Luxury Gold Pattern) */}
                     <div
-                      className={`absolute inset-0 backface-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-400/60 rounded-2xl flex flex-col items-center justify-center p-1.5 group-hover:border-amber-300 transition overflow-hidden ${
-                        isRevealed ? 'pointer-events-none opacity-0' : 'z-10 opacity-100'
-                      }`}
+                      className={`absolute inset-0 backface-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-400/60 rounded-2xl flex flex-col items-center justify-center p-1.5 group-hover:border-amber-300 transition overflow-hidden ${isRevealed ? 'pointer-events-none opacity-0' : 'z-10 opacity-100'
+                        }`}
                     >
                       <div className="absolute inset-1 rounded-xl border border-amber-400/20 border-dashed" />
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg border border-yellow-200 group-hover:scale-110 transition">
@@ -1070,11 +1074,9 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
 
                     {/* Card Front (Faceup - Thematic Vector Art) */}
                     <div
-                      className={`absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br ${card.bgGradient} rounded-2xl border-2 ${
-                        card.isMatched ? 'border-amber-300 ring-2 ring-amber-400/70 shadow-amber-500/30' : 'border-white/70'
-                      } flex flex-col items-center justify-center p-1.5 text-white shadow-xl overflow-hidden ${
-                        isRevealed ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'
-                      }`}
+                      className={`absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br ${card.bgGradient} rounded-2xl border-2 ${card.isMatched ? 'border-amber-300 ring-2 ring-amber-400/70 shadow-amber-500/30' : 'border-white/70'
+                        } flex flex-col items-center justify-center p-1.5 text-white shadow-xl overflow-hidden ${isRevealed ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'
+                        }`}
                     >
                       <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
 

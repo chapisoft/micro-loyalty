@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { Counter, Rate, Trend } from 'k6/metrics';
+import { Rate, Trend } from 'k6/metrics';
 
 /**
  * KỊCH BẢN KIỂM THỬ TẢI CAO VÀ BẪY TRANH CHẤP SỐ DƯ TÀI CHÍNH (CONCURRENCY DATA INTEGRITY)

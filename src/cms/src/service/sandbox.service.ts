@@ -150,7 +150,7 @@ class SandboxAdminService {
     try {
       const res: any = await cmsApiClient.get(`/api/v1/sandbox/admin/contents/menu/${menuId}`);
       return res?.data || res || { menuId };
-    } catch (e) {
+    } catch {
       return {
         menuId,
         title: 'Hướng Dẫn Tích Hợp Smart OTP',

@@ -3,7 +3,7 @@
 > **Mã tài liệu:** TECH-REPORT-LOYALTY-REUSE-SMART-OTP  
 > **Đơn vị xây dựng:** Nhóm Kiến trúc và Giải pháp Số — Natcash  
 > **Mục đích:** Đánh giá chi tiết khả năng kế thừa kiến trúc đa thuê bao, bộ thư viện nền tảng lõi (`ims-libraries`), cơ chế bảo mật khóa kép, khung giao diện quản trị CMS, hạ tầng triển khai và mô hình tích hợp đối tác từ dự án `smart-otp` sang dự án `micro-loyalty` nhằm tiết kiệm nguồn lực và tối ưu hóa thời gian phát triển.  
-> **Dự án tham chiếu:** Mã nguồn `smart-otp` (`/Users/micro/Source/chapisoft/smart-otp`).
+> **Dự án tham chiếu:** Mã nguồn `smart-otp` (`../smart-otp`).
 
 ---
 

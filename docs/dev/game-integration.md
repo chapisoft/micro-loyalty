@@ -43,7 +43,7 @@ Khi một Đối tác Bên thứ ba muốn đưa một game mới lên hệ th�
 3. Thiết lập tỷ lệ chia sẻ doanh thu mặc định (ví dụ: Game Studio nhận 70%, Nền tảng nhận 30%).
 
 ### 2.2. Khai báo và cài đặt tham số trò chơi (Trang Quản lý Game)
-Quản trị viên mở trang [GameManagementPage.tsx](file:///Users/micro/Source/chapisoft/micro-loyalty/src/cms/src/pages/games/GameManagementPage.tsx) và cấu hình:
+Quản trị viên mở trang [GameManagementPage.tsx](../../src/cms/src/pages/games/GameManagementPage.tsx) và cấu hình:
 * **Thông tin hiển thị:** Mã game (`gameCode`), Tên trò chơi (`gameName`), Thể loại (`category`), Ảnh đại diện (`iconUrl`), Đường dẫn máy chủ của Bên thứ ba (`gameUrl`: ví dụ `https://studio-partner.com/games/candy-crush-h5`).
 * **Quy chế lượt chơi và biểu phí:**
   * Số lượt chơi tặng miễn phí mỗi ngày cho hội viên (`freeTurnsDaily`).
@@ -209,7 +209,7 @@ Vào cuối kỳ đối soát (Hàng ngày T+1 hoặc Ngày cuối cùng của t
 ```
 
 ### 7.2. Trang Demo Game mẫu thực tế
-Mã nguồn trò chơi mẫu hoàn chỉnh có thể tham khảo trực tiếp tại tệp [src/webview/public/demo-game/index.html](file:///Users/micro/Source/chapisoft/micro-loyalty/src/webview/public/demo-game/index.html).
+Mã nguồn trò chơi mẫu hoàn chỉnh có thể tham khảo trực tiếp tại tệp [src/webview/public/demo-game/index.html](../../src/webview/public/demo-game/index.html).
 
 ---
 

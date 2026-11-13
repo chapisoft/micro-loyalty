@@ -1,4 +1,9 @@
-import {AppProps} from "single-spa";
+export interface AppProps {
+  name?: string;
+  singleSpa?: unknown;
+  mountParcel?: unknown;
+  [key: string]: any;
+}
 
 export type MicroAppProp = AppProps & {
   domElement?: HTMLElement;

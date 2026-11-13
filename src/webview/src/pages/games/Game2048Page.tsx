@@ -14,6 +14,28 @@ type Board = number[][];
 
 const BOARD_SIZE = 4;
 
+function addRandomTile(b: Board): boolean {
+  const emptyCells: { r: number; c: number }[] = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (b[r][c] === 0) emptyCells.push({ r, c });
+    }
+  }
+  if (emptyCells.length === 0) return false;
+  const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  b[r][c] = Math.random() < 0.9 ? 2 : 4;
+  return true;
+}
+
+function getInitialBoard(): Board {
+  const newBoard = Array(BOARD_SIZE)
+    .fill(null)
+    .map(() => Array(BOARD_SIZE).fill(0));
+  addRandomTile(newBoard);
+  addRandomTile(newBoard);
+  return newBoard;
+}
+
 export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
 
@@ -43,28 +65,6 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
     GameSounds.setMuted(!next);
   };
 
-  function getInitialBoard(): Board {
-    const newBoard = Array(BOARD_SIZE)
-      .fill(null)
-      .map(() => Array(BOARD_SIZE).fill(0));
-    addRandomTile(newBoard);
-    addRandomTile(newBoard);
-    return newBoard;
-  }
-
-  function addRandomTile(b: Board): boolean {
-    const emptyCells: { r: number; c: number }[] = [];
-    for (let r = 0; r < BOARD_SIZE; r++) {
-      for (let c = 0; c < BOARD_SIZE; c++) {
-        if (b[r][c] === 0) emptyCells.push({ r, c });
-      }
-    }
-    if (emptyCells.length === 0) return false;
-    const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-    b[r][c] = Math.random() < 0.9 ? 2 : 4;
-    return true;
-  }
-
   const resetGame = useCallback(() => {
     const freshBoard = getInitialBoard();
     setBoard(freshBoard);
@@ -76,9 +76,9 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
 
   // Slide and merge one row towards the left
   function slideLeft(row: number[]): { newRow: number[]; scoreGain: number; changed: boolean } {
-    let filtered = row.filter((val) => val !== 0);
+    const filtered = row.filter((val) => val !== 0);
     let scoreGain = 0;
-    let newRow: number[] = [];
+    const newRow: number[] = [];
 
     for (let i = 0; i < filtered.length; i++) {
       if (i < filtered.length - 1 && filtered[i] === filtered[i + 1]) {
@@ -162,7 +162,9 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
         setHighScore(newScore);
         try {
           localStorage.setItem('game2048_best_score', String(newScore));
-        } catch {}
+        } catch {
+          /* ignore storage errors */
+        }
       }
 
       if (totalGain > 0) {
@@ -388,9 +390,8 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
         <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className={`relative w-full aspect-square max-w-[360px] bg-slate-900/90 border-2 border-amber-500/40 rounded-3xl p-3 sm:p-4 shadow-2xl touch-none select-none flex flex-col justify-between transition-transform ${
-            shake ? 'scale-105 rotate-1' : ''
-          }`}
+          className={`relative w-full aspect-square max-w-[360px] bg-slate-900/90 border-2 border-amber-500/40 rounded-3xl p-3 sm:p-4 shadow-2xl touch-none select-none flex flex-col justify-between transition-transform ${shake ? 'scale-105 rotate-1' : ''
+            }`}
         >
           {gainPopup !== null && (
             <div className="absolute -top-4 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
@@ -407,9 +408,8 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
                 return (
                   <div
                     key={`${rIdx}-${cIdx}`}
-                    className={`rounded-2xl flex flex-col items-center justify-center font-mono font-black transition-all duration-150 relative overflow-hidden ${
-                      cell === 0 ? 'bg-slate-800/40 border border-slate-700/30' : `${style.bg} ${style.shadow} transform scale-100 active:scale-95`
-                    }`}
+                    className={`rounded-2xl flex flex-col items-center justify-center font-mono font-black transition-all duration-150 relative overflow-hidden ${cell === 0 ? 'bg-slate-800/40 border border-slate-700/30' : `${style.bg} ${style.shadow} transform scale-100 active:scale-95`
+                      }`}
                   >
                     {cell > 0 && (
                       <>

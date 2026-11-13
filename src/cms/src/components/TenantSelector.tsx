@@ -13,6 +13,7 @@ export interface TenantOption {
   country: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const RAW_TENANTS = [
   {
     id: 'TENANT_NATCASH',

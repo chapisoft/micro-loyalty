@@ -107,7 +107,7 @@ const AppFile: React.FC<AppFileProps> = ({
 
       uploadFileMutation.mutate(formData, {
         onSuccess: (res: any) => {
-          files = [...noUploadFiles, ...res?.data];
+          files = [...noUploadFiles, ...(res?.data || [])];
           emitDataOnChange(files);
         },
         onError: (error: any) => {

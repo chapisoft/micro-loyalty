@@ -58,7 +58,7 @@ export const TierManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [distLoading, setDistLoading] = useState(false);
 
-  const displayTiers = useMemo(() => tiers.map((item) => ({ ...item })), [tiers, i18n.language]);
+  const displayTiers = useMemo(() => tiers.map((item) => ({ ...item })), [tiers]);
 
   const fetchTiers = useCallback(async () => {
     setLoading(true);

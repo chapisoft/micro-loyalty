@@ -98,7 +98,7 @@ export const CustomerSegmentsPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<CustomerSegmentModel>
+          <DataTable<CustomerSegmentModel[]>
             value={segments}
             paginator
             rows={10}
@@ -106,14 +106,14 @@ export const CustomerSegmentsPage: React.FC = () => {
             responsiveLayout="scroll"
             emptyMessage={t('segment.empty', { defaultValue: 'Chưa có dữ liệu phân khúc hội viên trong liên minh này.' })}
           >
-            <Column field="segmentCode" header={t('segment.code', { defaultValue: 'Mã Phân Khúc' })} body={(r) => <Tag value={r.segmentCode} severity="info" className="font-mono" />} style={{ minWidth: '11rem' }} />
+            <Column field="segmentCode" header={t('segment.code', { defaultValue: 'Mã Phân Khúc' })} body={(r: CustomerSegmentModel) => <Tag value={r.segmentCode} severity="info" className="font-mono" />} style={{ minWidth: '11rem' }} />
             <Column field="segmentName" header={t('segment.name', { defaultValue: 'Tên Phân Khúc' })} style={{ minWidth: '14rem' }} />
-            <Column field="ruleExpr" header={t('segment.rule_expr', { defaultValue: 'Điều Kiện Lọc' })} body={(r) => <span className="font-mono text-xs text-600">{r.ruleExpr || '--'}</span>} style={{ minWidth: '16rem' }} />
-            <Column field="memberCount" header={t('segment.member_count', { defaultValue: 'Số Hội Viên' })} body={(r) => <span className="font-mono font-medium">{Number(r.memberCount || 0).toLocaleString()}</span>} style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-            <Column field="lastComputedAt" header={t('segment.last_computed', { defaultValue: 'Cập Nhật Lần Cuối' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.lastComputedAt ? new Date(r.lastComputedAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="ruleSummary" header={t('segment.rule_expr', { defaultValue: 'Điều Kiện Lọc' })} body={(r: CustomerSegmentModel) => <span className="font-mono text-xs text-600">{r.ruleSummary || '--'}</span>} style={{ minWidth: '16rem' }} />
+            <Column field="memberCount" header={t('segment.member_count', { defaultValue: 'Số Hội Viên' })} body={(r: CustomerSegmentModel) => <span className="font-mono font-medium">{Number(r.memberCount || 0).toLocaleString()}</span>} style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+            <Column field="lastCalculatedAt" header={t('segment.last_computed', { defaultValue: 'Cập Nhật Lần Cuối' })} body={(r: CustomerSegmentModel) => <span className="font-mono white-space-nowrap text-xs">{r.lastCalculatedAt ? new Date(r.lastCalculatedAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             <Column
               header={t('common.action', { defaultValue: 'Thao Tác' })}
-              body={(r) => (
+              body={(r: CustomerSegmentModel) => (
                 <div className="flex gap-1">
                   <Button icon="pi pi-users" label={t('segment.view_members', { defaultValue: 'Hội viên' })} size="small" outlined onClick={() => openMembers(r)} />
                   <Button icon="pi pi-sync" label={t('segment.recalculate', { defaultValue: 'Tính lại' })} size="small" outlined severity="warning" loading={recalcId === r.id} onClick={() => handleRecalculate(r)} />
@@ -140,11 +140,11 @@ export const CustomerSegmentsPage: React.FC = () => {
         {membersLoading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.2rem" /><Skeleton height="2.2rem" /></div>
         ) : (
-          <DataTable<SegmentMemberModel> value={members} paginator rows={10} size="small" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có hội viên nào trong phân khúc này.' })}>
-            <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'SĐT / User ID' })} body={(m) => <span className="font-mono white-space-nowrap">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<SegmentMemberModel[]> value={members} paginator rows={10} size="small" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có hội viên nào trong phân khúc này.' })}>
+            <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'SĐT / User ID' })} body={(m: SegmentMemberModel) => <span className="font-mono white-space-nowrap">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
             <Column field="fullName" header={t('customer.name', { defaultValue: 'Họ Tên' })} style={{ minWidth: '12rem' }} />
-            <Column field="tierCode" header={t('tier.code', { defaultValue: 'Hạng' })} body={(m) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem' }} />
-            <Column field="availablePoints" header={t('customer.available_points', { defaultValue: 'Điểm Khả Dụng' })} body={(m) => <span className="font-mono">{Number(m.availablePoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+            <Column field="tierCode" header={t('tier.code', { defaultValue: 'Hạng' })} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem' }} />
+            <Column field="currentPoints" header={t('customer.available_points', { defaultValue: 'Điểm Khả Dụng' })} body={(m: SegmentMemberModel) => <span className="font-mono">{Number(m.currentPoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
           </DataTable>
         )}
       </Dialog>

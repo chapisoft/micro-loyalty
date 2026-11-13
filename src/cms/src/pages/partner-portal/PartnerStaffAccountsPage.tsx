@@ -46,9 +46,9 @@ export const PartnerStaffAccountsPage: React.FC = () => {
       username: '',
       fullName: '',
       roleCode: 'CASHIER',
-      branchCode: '',
-      email: '',
-      phone: '',
+      branchId: 0,
+      branchName: '',
+      phoneNumber: '',
       status: CommonStatus.ACTIVE,
     });
     setShowDialog(true);
@@ -93,15 +93,14 @@ export const PartnerStaffAccountsPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<PartnerStaffAccountModel> value={staffList} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có tài khoản nhân viên nào.' })}>
-            <Column field="username" header={t('partner_portal.username', { defaultValue: 'Tài Khoản' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.username}</span>} style={{ minWidth: '10rem' }} />
+          <DataTable<PartnerStaffAccountModel[]> value={staffList} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có tài khoản nhân viên nào.' })}>
+            <Column field="username" header={t('partner_portal.username', { defaultValue: 'Tài Khoản' })} body={(r: PartnerStaffAccountModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.username}</span>} style={{ minWidth: '10rem' }} />
             <Column field="fullName" header={t('customer.name', { defaultValue: 'Họ Tên' })} style={{ minWidth: '13rem' }} />
-            <Column field="roleCode" header={t('partner_portal.role', { defaultValue: 'Vai Trò' })} body={(r) => <Tag value={r.roleCode} severity="info" />} style={{ minWidth: '10rem' }} />
-            <Column field="branchCode" header={t('partner_portal.branch_code', { defaultValue: 'Chi Nhánh' })} body={(r) => <span className="font-mono text-xs">{r.branchCode || 'ALL'}</span>} style={{ minWidth: '9rem' }} />
-            <Column field="email" header="Email" style={{ minWidth: '13rem' }} />
-            <Column field="phone" header={t('customer.phone', { defaultValue: 'SĐT' })} body={(r) => <span className="font-mono white-space-nowrap">{r.phone || '--'}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-            <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
+            <Column field="roleCode" header={t('partner_portal.role', { defaultValue: 'Vai Trò' })} body={(r: PartnerStaffAccountModel) => <Tag value={r.roleCode} severity="info" />} style={{ minWidth: '10rem' }} />
+            <Column field="branchName" header={t('partner_portal.branch_code', { defaultValue: 'Chi Nhánh' })} body={(r: PartnerStaffAccountModel) => <span className="font-mono text-xs">{r.branchName || (r.branchId ? `BR#${r.branchId}` : 'ALL')}</span>} style={{ minWidth: '9rem' }} />
+            <Column field="phoneNumber" header={t('customer.phone', { defaultValue: 'SĐT' })} body={(r: PartnerStaffAccountModel) => <span className="font-mono white-space-nowrap">{r.phoneNumber || '--'}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PartnerStaffAccountModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+            <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r: PartnerStaffAccountModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
           </DataTable>
         )}
       </div>
@@ -121,18 +120,18 @@ export const PartnerStaffAccountsPage: React.FC = () => {
             <InputText value={formData.fullName || ''} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
           </div>
           <div className="col-6 field">
-            <label className="text-sm font-medium">{t('partner_portal.branch_code', { defaultValue: 'Mã chi nhánh' })}</label>
-            <InputText value={formData.branchCode || ''} onChange={(e) => setFormData({ ...formData, branchCode: e.target.value.toUpperCase() })} className="font-mono" />
+            <label className="text-sm font-medium">{t('partner_portal.branch_code', { defaultValue: 'ID Chi nhánh' })}</label>
+            <InputText value={formData.branchId ? String(formData.branchId) : ''} onChange={(e) => setFormData({ ...formData, branchId: Number(e.target.value) || 0 })} className="font-mono" />
           </div>
           <div className="col-6 field">
             <label className="text-sm font-medium">{t('customer.phone', { defaultValue: 'Số điện thoại' })}</label>
-            <InputText value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="font-mono" />
+            <InputText value={formData.phoneNumber || ''} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} className="font-mono" />
           </div>
-          <div className="col-8 field">
-            <label className="text-sm font-medium">Email</label>
-            <InputText value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+          <div className="col-6 field">
+            <label className="text-sm font-medium">{t('partner_portal.branch_name', { defaultValue: 'Tên chi nhánh' })}</label>
+            <InputText value={formData.branchName || ''} onChange={(e) => setFormData({ ...formData, branchName: e.target.value })} />
           </div>
-          <div className="col-4 field">
+          <div className="col-6 field">
             <label className="text-sm font-medium">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
             <Dropdown value={formData.status} options={[{ label: CommonStatus.ACTIVE, value: CommonStatus.ACTIVE }, { label: CommonStatus.INACTIVE, value: CommonStatus.INACTIVE }]} onChange={(e) => setFormData({ ...formData, status: e.value })} appendTo="self" />
           </div>

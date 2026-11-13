@@ -68,7 +68,6 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
   onSelectGame,
   freeTurns = 0,
   perpetualTurns = 0,
-  points: _points,
   streakDays = 0,
   onUpdateTurns,
 }) => {
@@ -119,7 +118,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
     }
   };
 
-  const handleClaimMissionTurns = (addedTurns: number, _addedPoints: number) => {
+  const handleClaimMissionTurns = (addedTurns: number) => {
     if (onUpdateTurns) {
       onUpdateTurns(safeFreeTurns + addedTurns, safePerpetualTurns);
     }
@@ -438,11 +437,10 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
                 soundHaptics.playClick();
                 setSelectedCategory(cat.key);
               }}
-              className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition flex items-center space-x-1.5 active:scale-95 shrink-0 ${
-                isSelected
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-orange-500/20'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs'
-              }`}
+              className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition flex items-center space-x-1.5 active:scale-95 shrink-0 ${isSelected
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-orange-500/20'
+                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs'
+                }`}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{cat.label}</span>
@@ -465,7 +463,7 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
             >
               {/* Full-Bleed Square Game Tile with Giant Icon (Occupying 80% height) */}
               <div className={`w-full aspect-square rounded-2xl sm:rounded-3xl ${game.bgGradient} flex items-center justify-center relative overflow-hidden shadow-inner group-hover:shadow-xl transition-all duration-300 border border-white/25`}>
-                
+
                 {/* Radial Ambient Glow */}
                 <div className="absolute inset-0 bg-radial from-white/35 via-transparent to-black/25 pointer-events-none" />
                 <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/30 rounded-full blur-xl pointer-events-none" />

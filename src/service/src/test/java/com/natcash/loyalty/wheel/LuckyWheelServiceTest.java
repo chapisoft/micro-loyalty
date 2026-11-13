@@ -25,8 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.redisson.api.RAtomicLong;
-import org.redisson.api.RedissonClient;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -57,12 +55,6 @@ class LuckyWheelServiceTest {
 
     @Mock
     private DistributedLockHelper lockHelper;
-
-    @Mock
-    private RedissonClient redissonClient;
-
-    @Mock
-    private RAtomicLong atomicLong;
 
     @InjectMocks
     private LuckyWheelService luckyWheelService;

@@ -58,7 +58,7 @@ export function SandboxMenusPage() {
     try {
       const content = await sandboxAdminService.getContent(menu.id);
       setContentForm(content);
-    } catch (e) {
+    } catch {
       setContentForm({
         menuId: menu.id,
         title: menu.name,
@@ -84,7 +84,7 @@ export function SandboxMenusPage() {
         life: 2500,
       });
       setShowContentDialog(false);
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
@@ -115,7 +115,7 @@ export function SandboxMenusPage() {
       });
       setShowCreateMenuDialog(false);
       loadData();
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),

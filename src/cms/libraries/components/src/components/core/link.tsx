@@ -38,6 +38,7 @@ export const AppLink = React.forwardRef<HTMLAnchorElement, LinkProps>(function L
   return <Link {...props} ref={ref} />;
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppNavigate = () => {
   // const navigate = useNavigate();
 

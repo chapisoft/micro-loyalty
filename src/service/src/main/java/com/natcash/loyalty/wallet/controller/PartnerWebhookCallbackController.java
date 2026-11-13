@@ -89,6 +89,8 @@ public class PartnerWebhookCallbackController {
 
     @Data
     public static class SettlementAckRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private String batchCode;
         private String partnerCode;
         private String bankReferenceNumber;
@@ -99,6 +101,8 @@ public class PartnerWebhookCallbackController {
 
     @Data
     public static class PaymentCallbackRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private String partnerOrderId;
         private String transactionCode;
         private String status;

@@ -69,13 +69,13 @@ export const PartnerTransactionsPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<PointLedgerItem> value={items} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa phát sinh giao dịch nào tại đối tác.' })}>
-            <Column field="transactionId" header={t('transaction.id', { defaultValue: 'Mã GD' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.transactionId}</span>} style={{ minWidth: '15rem' }} />
-            <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="actionType" header={t('transaction.action_type', { defaultValue: 'Loại GD' })} body={(r) => <Tag value={r.actionType} severity={r.actionType === 'EARN' ? 'success' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-            <Column field="points" header={t('transaction.amount', { defaultValue: 'Biến Động' })} body={(r) => <span className="font-mono">{r.points > 0 ? `+${r.points}` : r.points}</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />
-            <Column field="amount" header={t('partner_portal.bill_amount', { defaultValue: 'Giá Trị Đơn' })} body={(r) => <span className="font-mono">{Number(r.amount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Thời Gian' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '12rem' }} />
+          <DataTable<PointLedgerItem[]> value={items} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa phát sinh giao dịch nào tại đối tác.' })}>
+            <Column field="transactionId" header={t('transaction.id', { defaultValue: 'Mã GD' })} body={(r: PointLedgerItem) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.transactionId}</span>} style={{ minWidth: '15rem' }} />
+            <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r: PointLedgerItem) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="actionType" header={t('transaction.action_type', { defaultValue: 'Loại GD' })} body={(r: PointLedgerItem) => <Tag value={r.actionType} severity={r.actionType === 'EARN' ? 'success' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+            <Column field="points" header={t('transaction.amount', { defaultValue: 'Biến Động' })} body={(r: PointLedgerItem) => <span className="font-mono">{r.points > 0 ? `+${r.points}` : r.points}</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="referenceId" header={t('partner_portal.order_ref', { defaultValue: 'Mã Tham Chiếu' })} body={(r: PointLedgerItem) => <span className="font-mono">{r.referenceId || '--'}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Thời Gian' })} body={(r: PointLedgerItem) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '12rem' }} />
           </DataTable>
         )}
       </div>

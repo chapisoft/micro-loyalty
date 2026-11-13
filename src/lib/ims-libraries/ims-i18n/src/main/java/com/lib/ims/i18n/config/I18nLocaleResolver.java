@@ -10,7 +10,6 @@ import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
 
 
-@SuppressWarnings("null")
 public class I18nLocaleResolver extends AcceptHeaderLocaleResolver {
    private final I18nProperties properties;
 

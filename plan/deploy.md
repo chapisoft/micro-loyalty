@@ -1,7 +1,7 @@
 # KẾ HOẠCH PHÂN TÍCH VÀ PHƯƠNG ÁN TRIỂN KHAI CHI TIẾT HỆ THỐNG LOYALTY LÊN MÁY CHỦ
 **Mã tài liệu:** `HDCD_VH_LOYALTY_v1.0`  
 **Hệ thống áp dụng:** Hệ sinh thái Khách hàng thân thiết liên minh và Cổng Game đa thuê bao (`micro-loyalty`)  
-**Mã nguồn tham chiếu:** `/Users/micro/Source/chapisoft/micro-loyalty`  
+**Mã nguồn tham chiếu:** `./` (thư mục gốc dự án `micro-loyalty`)  
 **Trạng thái phê duyệt:** Sẵn sàng triển khai theo yêu cầu  
 
 ---
@@ -120,11 +120,11 @@ flowchart LR
 ```
 
 ### Bước 1: Đóng Gói Bản Dựng Tại Máy Trạm Cục Bộ
-Thực hiện trong thư mục dự án `/Users/micro/Source/chapisoft/micro-loyalty`:
+Thực hiện tại thư mục gốc dự án (`micro-loyalty/`):
 
 ```bash
 # 1. Đóng gói Backend Java Spring Boot
-cd /Users/micro/Source/chapisoft/micro-loyalty/src/service
+cd src/service
 mvn clean package -DskipTests
 cp target/loyalty-service-1.0.0.jar ../../deploy/micro-loyalty/backend/loyalty-service.jar
 
@@ -141,11 +141,12 @@ npm install
 npm run build
 rm -rf ../../deploy/micro-loyalty/frontend/webview/dist
 cp -r dist ../../deploy/micro-loyalty/frontend/webview/dist
+cd ../..
 ```
 
 ### Bước 2: Đồng Bộ Gói Triển Khai Lên Máy Chủ UAT
 ```bash
-cd /Users/micro/Source/chapisoft/micro-loyalty
+# Thực hiện tại thư mục gốc dự án (micro-loyalty/)
 tar -czf - -C deploy/micro-loyalty . | ssh -i ~/.ssh/jenkins_deploy_dev -p 65000 dip@210.211.102.99 "mkdir -p /home/dip/micro-loyalty/deploy && tar -xzf - -C /home/dip/micro-loyalty/deploy"
 ```
 
@@ -207,17 +208,17 @@ chmod -R 755 /u01/mascom/ringme/loyalty-game
 
 ### Bước 3: Đóng Gói Và Đồng Bộ Mã Nguồn
 ```bash
-# 1. Đóng gói Backend JAR
-cd /Users/micro/Source/chapisoft/micro-loyalty/src/service
+# 1. Đóng gói Backend JAR (từ thư mục gốc dự án micro-loyalty/)
+cd src/service
 mvn clean package -DskipTests
 
 # 2. Truyền file JAR sang máy chủ Natcash
 scp -P 22 target/loyalty-service-1.0.0.jar mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/app/loyalty-service.jar
 
 # 3. Truyền cấu hình và kịch bản vận hành
-scp -P 22 /Users/micro/Source/chapisoft/micro-loyalty/deploy/natcash/config/backend/application-natcash.yml mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/config/application.yml
-scp -P 22 /Users/micro/Source/chapisoft/micro-loyalty/deploy/natcash/scripts/start.sh mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/scripts/start.sh
-scp -P 22 /Users/micro/Source/chapisoft/micro-loyalty/deploy/natcash/scripts/stop.sh mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/scripts/stop.sh
+scp -P 22 ../../deploy/natcash/config/backend/application-natcash.yml mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/config/application.yml
+scp -P 22 ../../deploy/natcash/scripts/start.sh mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/scripts/start.sh
+scp -P 22 ../../deploy/natcash/scripts/stop.sh mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/scripts/stop.sh
 
 # 4. Cấp quyền thực thi kịch bản
 ssh -p 22 mascom@10.228.37.65 "chmod +x /u01/mascom/ringme/loyalty-game/scripts/*.sh"

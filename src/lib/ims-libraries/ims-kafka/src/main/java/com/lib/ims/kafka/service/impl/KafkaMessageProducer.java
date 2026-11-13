@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class KafkaMessageProducer<T> implements MessageProducer<T> {
    @Generated
    private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);

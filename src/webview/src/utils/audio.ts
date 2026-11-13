@@ -80,7 +80,9 @@ class GameAudioEngine {
         source.start(0);
         this.isUnlocked = true;
       }
-    } catch {}
+    } catch {
+      /* ignore audio unlock errors */
+    }
   }
 
   private getOrCreateContext(): AudioContext | null {
@@ -120,7 +122,9 @@ class GameAudioEngine {
           const audio = new Audio(url);
           audio.preload = 'auto';
           this.audioElements.set(name, audio);
-        } catch {}
+        } catch {
+          /* ignore audio preload errors */
+        }
       }
     }
   }
@@ -144,7 +148,9 @@ class GameAudioEngine {
         source.connect(this.masterGain);
         source.start(0);
         return;
-      } catch {}
+      } catch {
+        /* fallback below */
+      }
     }
 
     // 2. Dự phòng 1: Phát qua thẻ HTML5 Audio
@@ -161,7 +167,9 @@ class GameAudioEngine {
           });
         }
         return;
-      } catch {}
+      } catch {
+        /* fallback below */
+      }
     }
 
     // 3. Dự phòng 2: Bộ máy tổng hợp nốt Web Audio Synthesis
@@ -174,7 +182,9 @@ class GameAudioEngine {
     this.isMuted = !this.isMuted;
     try {
       localStorage.setItem('loyalty_game_sound_muted', JSON.stringify(this.isMuted));
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
 
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.9, this.ctx.currentTime);
@@ -263,7 +273,7 @@ class GameAudioEngine {
   /**
    * 7. Tiếng Leo Tầng Tháp Ma Thuật
    */
-  public playClimbStep(_floor: number = 1) {
+  public playClimbStep() {
     this.playFile('tower_climb');
   }
 
@@ -284,7 +294,7 @@ class GameAudioEngine {
   /**
    * 10. Tiếng Đinh Đoong Thang Âm Plinko
    */
-  public playChromaticDing(_step: number = 0) {
+  public playChromaticDing() {
     this.playFile('plinko_bounce');
   }
 
@@ -408,14 +418,18 @@ class GameAudioEngine {
           navigator.vibrate([60, 40, 80]);
           break;
       }
-    } catch {}
+    } catch {
+      /* ignore vibrate errors */
+    }
   }
 
   public setMuted(muted: boolean) {
     this.isMuted = muted;
     try {
       localStorage.setItem('loyalty_game_sound_muted', JSON.stringify(this.isMuted));
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
 
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.9, this.ctx.currentTime);

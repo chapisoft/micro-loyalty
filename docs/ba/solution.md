@@ -439,7 +439,7 @@ Toàn bộ trò chơi và khóa học phát hành trên hệ thống được c�
 
 ## 8. PHÂN HỆ ĐẠI LÝ (`AGENT & SUPER AGENT`), CỔNG MERCHANT ĐA CHI NHÁNH VÀ TRỢ LÝ AI
 
-Để hoàn thiện trọn vẹn 11 phân hệ trên một nền tảng theo thiết kế tổng thể (chi tiết kỹ thuật xem tại [architecture_evolution_v2.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/architecture_evolution_v2.md)), hệ thống bổ sung 3 năng lực chiến lược:
+Để hoàn thiện trọn vẹn 11 phân hệ trên một nền tảng theo thiết kế tổng thể (chi tiết kỹ thuật xem tại [architecture_evolution_v2.md](architecture_evolution_v2.md)), hệ thống bổ sung 3 năng lực chiến lược:
 
 ### 8.1. Phân Hệ Đại Lý & Tổng Đại Lý (`Agent & Super Agent Loyalty`)
 * **Nhiệm vụ và thưởng cho `Agent`:** Khuyến khích `Agent` mở mới khách hàng, hướng dẫn `eKYC` và hỗ trợ nạp/rút/thanh toán. Khi đạt mốc **Chăm sóc thành công 100 khách/tháng**, hệ thống tự động thưởng `Voucher`, gói `Data (GB)` qua `Natcom BCCS` hoặc thưởng hoa hồng tiền mặt vào ví đại lý đối với các nhiệm vụ phát triển mạng lưới đặc thù.

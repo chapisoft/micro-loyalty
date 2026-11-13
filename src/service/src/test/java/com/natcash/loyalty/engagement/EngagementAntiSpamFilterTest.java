@@ -69,6 +69,7 @@ class EngagementAntiSpamFilterTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void evaluate_shouldEnforceDailyWeeklyCapsAndDedup() {
         EngagementAntiSpamFilter filter = new EngagementAntiSpamFilter(preferenceRepository, redissonClient);
         when(preferenceRepository.findByTenantIdAndExternalUserId(TENANT_ID, USER_ID))

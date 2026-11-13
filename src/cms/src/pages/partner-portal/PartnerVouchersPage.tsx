@@ -50,7 +50,7 @@ export const PartnerVouchersPage: React.FC = () => {
     setSubmitting(true);
     try {
       await LoyaltyService.redeemPartnerVoucherAtCounter(
-        { serialCode: serialCode.trim(), branchCode: branchCode.trim(), orderRef: orderRef.trim() || undefined },
+        { voucherCode: serialCode.trim(), branchCode: branchCode.trim(), customerPhone: orderRef.trim() || undefined },
         selectedTenant
       );
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Đã gạch nợ Voucher' }), detail: serialCode.trim() });
@@ -86,12 +86,12 @@ export const PartnerVouchersPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<VoucherItemModel> value={vouchers} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có voucher nào thuộc đối tác.' })}>
-            <Column field="voucherCode" header={t('voucher.code', { defaultValue: 'Mã Voucher' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.voucherCode}</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<VoucherItemModel[]> value={vouchers} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có voucher nào thuộc đối tác.' })}>
+            <Column field="voucherCode" header={t('voucher.code', { defaultValue: 'Mã Voucher' })} body={(r: VoucherItemModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.voucherCode}</span>} style={{ minWidth: '11rem' }} />
             <Column field="title" header={t('voucher.name', { defaultValue: 'Tên Ưu Đãi' })} style={{ minWidth: '15rem' }} />
-            <Column field="discountValue" header={t('voucher.discount', { defaultValue: 'Giá Trị' })} body={(r) => <span className="font-mono">{Number(r.discountValue || 0).toLocaleString()} {r.discountType === 'PERCENTAGE' ? '%' : 'HTG'}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
-            <Column field="remainingQuantity" header={t('voucher.remaining', { defaultValue: 'Còn Lại' })} body={(r) => `${r.remainingQuantity} / ${r.totalQuantity}`} style={{ minWidth: '8rem', textAlign: 'right' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === 'ACTIVE' ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+            <Column field="discountValue" header={t('voucher.discount', { defaultValue: 'Giá Trị' })} body={(r: VoucherItemModel) => <span className="font-mono">{Number(r.discountValue || 0).toLocaleString()} {r.discountType === 'PERCENTAGE' ? '%' : 'HTG'}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+            <Column field="availableQuantity" header={t('voucher.remaining', { defaultValue: 'Còn Lại' })} body={(r: VoucherItemModel) => `${r.availableQuantity} / ${r.totalQuantity}`} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: VoucherItemModel) => <Tag value={r.status} severity={r.status === 'ACTIVE' ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
           </DataTable>
         )}
       </div>

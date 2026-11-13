@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import './animation-outlet.scss';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {
       ['router-outlet']: any;

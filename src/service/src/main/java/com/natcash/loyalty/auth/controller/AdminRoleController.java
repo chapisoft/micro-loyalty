@@ -253,6 +253,7 @@ public class AdminRoleController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RolePayload implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String code;
         private String name;
         private String description;
@@ -264,6 +265,7 @@ public class AdminRoleController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RoleDetailDto implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long roleId;
         private String code;
         private String name;
@@ -279,6 +281,7 @@ public class AdminRoleController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PermissionDto implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long permissionId;
         private String code;
         private String name;
@@ -293,6 +296,7 @@ public class AdminRoleController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RolePageResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private int status;
         private String message;
         private List<RoleDetailDto> data;
@@ -308,6 +312,7 @@ public class AdminRoleController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RoleDetailResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private int status;
         private String message;
         private RoleDetailDto data;
@@ -318,6 +323,7 @@ public class AdminRoleController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PermissionListResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private int status;
         private String message;
         private List<PermissionDto> data;

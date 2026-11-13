@@ -107,34 +107,34 @@ export const PartnerBranchesProductsPage: React.FC = () => {
         <TabView>
           <TabPanel header={t('partner_portal.tab_branches', { defaultValue: `Chi nhánh (${branches.length})` })} leftIcon="pi pi-map-marker mr-2">
             <div className="flex justify-content-end mb-3">
-              <Button icon="pi pi-plus" label={t('partner_portal.add_branch', { defaultValue: 'Thêm Chi nhánh' })} severity="success" size="small" onClick={() => { setBranchForm({ branchCode: '', branchName: '', city: '', address: '', phone: '', status: CommonStatus.ACTIVE }); setShowBranchDialog(true); }} />
+              <Button icon="pi pi-plus" label={t('partner_portal.add_branch', { defaultValue: 'Thêm Chi nhánh' })} severity="success" size="small" onClick={() => { setBranchForm({ branchCode: '', branchName: '', paymentPointCode: '', province: '', address: '', status: CommonStatus.ACTIVE }); setShowBranchDialog(true); }} />
             </div>
             {loading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
             ) : (
-              <DataTable<PartnerBranchModel> value={branches} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chi nhánh nào.' })}>
-                <Column field="branchCode" header={t('partner_portal.branch_code', { defaultValue: 'Mã CN' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.branchCode}</span>} style={{ minWidth: '10rem' }} />
+              <DataTable<PartnerBranchModel[]> value={branches} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có chi nhánh nào.' })}>
+                <Column field="branchCode" header={t('partner_portal.branch_code', { defaultValue: 'Mã CN' })} body={(r: PartnerBranchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.branchCode}</span>} style={{ minWidth: '10rem' }} />
                 <Column field="branchName" header={t('partner_portal.branch_name', { defaultValue: 'Tên Chi Nhánh' })} style={{ minWidth: '14rem' }} />
-                <Column field="city" header={t('payment_point.city', { defaultValue: 'Thành phố' })} style={{ minWidth: '9rem' }} />
+                <Column field="province" header={t('payment_point.province', { defaultValue: 'Tỉnh / Thành phố' })} style={{ minWidth: '9rem' }} />
                 <Column field="address" header={t('payment_point.address', { defaultValue: 'Địa Chỉ' })} style={{ minWidth: '15rem' }} />
-                <Column field="phone" header={t('customer.phone', { defaultValue: 'Điện Thoại' })} body={(r) => <span className="font-mono white-space-nowrap">{r.phone || '--'}</span>} style={{ minWidth: '10rem' }} />
-                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-                <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setBranchForm(r); setShowBranchDialog(true); }} />} style={{ minWidth: '5rem' }} />
+                <Column field="paymentPointCode" header={t('payment_point.code', { defaultValue: 'Mã Điểm Thu' })} body={(r: PartnerBranchModel) => <span className="font-mono white-space-nowrap">{r.paymentPointCode || '--'}</span>} style={{ minWidth: '10rem' }} />
+                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PartnerBranchModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+                <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r: PartnerBranchModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setBranchForm(r); setShowBranchDialog(true); }} />} style={{ minWidth: '5rem' }} />
               </DataTable>
             )}
           </TabPanel>
 
           <TabPanel header={t('partner_portal.tab_product_groups', { defaultValue: `Nhóm Sản phẩm (${productGroups.length})` })} leftIcon="pi pi-tags mr-2">
             <div className="flex justify-content-end mb-3">
-              <Button icon="pi pi-plus" label={t('partner_portal.add_group', { defaultValue: 'Thêm Nhóm Sản phẩm' })} severity="success" size="small" onClick={() => { setGroupForm({ groupCode: '', groupName: '', earnMultiplier: 1, burnAllowed: true, status: CommonStatus.ACTIVE }); setShowGroupDialog(true); }} />
+              <Button icon="pi pi-plus" label={t('partner_portal.add_group', { defaultValue: 'Thêm Nhóm Sản phẩm' })} severity="success" size="small" onClick={() => { setGroupForm({ groupCode: '', groupName: '', earnMultiplier: 1, allowBurn: true, productCount: 0, status: CommonStatus.ACTIVE }); setShowGroupDialog(true); }} />
             </div>
-            <DataTable<PartnerProductGroupModel> value={productGroups} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có nhóm sản phẩm nào.' })}>
-              <Column field="groupCode" header={t('partner_portal.group_code', { defaultValue: 'Mã Nhóm' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.groupCode}</span>} style={{ minWidth: '10rem' }} />
+            <DataTable<PartnerProductGroupModel[]> value={productGroups} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có nhóm sản phẩm nào.' })}>
+              <Column field="groupCode" header={t('partner_portal.group_code', { defaultValue: 'Mã Nhóm' })} body={(r: PartnerProductGroupModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.groupCode}</span>} style={{ minWidth: '10rem' }} />
               <Column field="groupName" header={t('partner_portal.group_name', { defaultValue: 'Tên Nhóm Sản Phẩm' })} style={{ minWidth: '15rem' }} />
-              <Column field="earnMultiplier" header={t('partner_portal.earn_multiplier', { defaultValue: 'Hệ số Tích điểm' })} body={(r) => <Tag value={`x${r.earnMultiplier}`} severity="info" />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-              <Column field="burnAllowed" header={t('partner_portal.burn_allowed', { defaultValue: 'Cho phép Tiêu điểm' })} body={(r) => <Tag value={r.burnAllowed ? 'YES' : 'NO'} severity={r.burnAllowed ? 'success' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-              <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setGroupForm(r); setShowGroupDialog(true); }} />} style={{ minWidth: '5rem' }} />
+              <Column field="earnMultiplier" header={t('partner_portal.earn_multiplier', { defaultValue: 'Hệ số Tích điểm' })} body={(r: PartnerProductGroupModel) => <Tag value={`x${r.earnMultiplier}`} severity="info" />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+              <Column field="allowBurn" header={t('partner_portal.burn_allowed', { defaultValue: 'Cho phép Tiêu điểm' })} body={(r: PartnerProductGroupModel) => <Tag value={r.allowBurn ? 'YES' : 'NO'} severity={r.allowBurn ? 'success' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PartnerProductGroupModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+              <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r: PartnerProductGroupModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setGroupForm(r); setShowGroupDialog(true); }} />} style={{ minWidth: '5rem' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -152,12 +152,12 @@ export const PartnerBranchesProductsPage: React.FC = () => {
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('payment_point.city', { defaultValue: 'Thành phố' })}</label>
-              <InputText value={branchForm.city || ''} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} />
+              <label className="text-sm font-medium">{t('payment_point.province', { defaultValue: 'Tỉnh / Thành phố' })}</label>
+              <InputText value={branchForm.province || ''} onChange={(e) => setBranchForm({ ...branchForm, province: e.target.value })} />
             </div>
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('customer.phone', { defaultValue: 'Điện thoại' })}</label>
-              <InputText value={branchForm.phone || ''} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} className="font-mono" />
+              <label className="text-sm font-medium">{t('payment_point.code', { defaultValue: 'Mã Điểm Thu' })}</label>
+              <InputText value={branchForm.paymentPointCode || ''} onChange={(e) => setBranchForm({ ...branchForm, paymentPointCode: e.target.value.toUpperCase() })} className="font-mono" />
             </div>
           </div>
           <div className="field m-0">
@@ -188,7 +188,7 @@ export const PartnerBranchesProductsPage: React.FC = () => {
             </div>
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('partner_portal.burn_allowed', { defaultValue: 'Cho phép Tiêu điểm' })}</label>
-              <Dropdown value={groupForm.burnAllowed ?? true} options={[{ label: 'Cho phép', value: true }, { label: 'Không áp dụng', value: false }]} onChange={(e) => setGroupForm({ ...groupForm, burnAllowed: e.value })} appendTo="self" />
+              <Dropdown value={groupForm.allowBurn ?? true} options={[{ label: 'Cho phép', value: true }, { label: 'Không áp dụng', value: false }]} onChange={(e) => setGroupForm({ ...groupForm, allowBurn: e.value })} appendTo="self" />
             </div>
           </div>
         </div>

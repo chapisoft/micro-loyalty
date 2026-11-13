@@ -19,16 +19,6 @@ import { LoyaltyApi, WheelPrizeItem } from '../services/api';
 import { soundManager } from '../utils/audio';
 import { GameTutorialModal } from '../components/common/GameTutorialModal';
 
-interface WheelThemeItem {
-  id?: number;
-  themeCode: string;
-  themeName: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  isActive?: boolean;
-}
-
 export interface ThemeConfig {
   nameKey: string;
   icon: string;
@@ -280,7 +270,6 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
   );
   const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
-  const [_availableThemes, setAvailableThemes] = useState<WheelThemeItem[]>([]);
 
   const handleBack = () => {
     if (onBack) {
@@ -301,9 +290,6 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
         setActiveTheme(savedTheme);
       } else if (res?.activeThemeCode) {
         setActiveTheme(res.activeThemeCode);
-      }
-      if (res?.availableThemes) {
-        setAvailableThemes(res.availableThemes);
       }
     } catch {
       // Fallback
@@ -343,7 +329,7 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
   }, [loadWheelConfig, loadThemes]);
 
   // Audio synthesis Web Audio API (Tick & Win Melody)
-  const playSound = (_freq?: number, _type?: OscillatorType, _duration?: number, _gainVal?: number) => {
+  const playSound = () => {
     if (!soundEnabled) return;
     soundManager.playSpinTick();
   };
@@ -731,7 +717,7 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
 
       // Tick sound and pointer micro-wobble
       if (Math.abs(angle - lastTickAngle) >= sliceAngle * 0.9) {
-        playSound(700 + Math.random() * 150, 'triangle', 0.03, 0.12);
+        playSound();
         setPointerWobble(15);
         setTimeout(() => setPointerWobble(0), 60);
         if (navigator.vibrate) navigator.vibrate(10);

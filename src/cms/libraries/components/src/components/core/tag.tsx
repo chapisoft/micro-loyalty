@@ -16,16 +16,7 @@ const AppTag: React.FC<AppTagProps> = ({ severity = 'success', value = '', style
   );
 
   useEffect(() => {
-    if (severity) getStyle();
-  }, [severity]);
-
-  useEffect(() => {
-    if (style) {
-      setTagStyle((prev) => ({ ...prev, ...style }));
-    }
-  }, [style]);
-
-  const getStyle = () => {
+    if (!severity) return;
     switch (severity) {
       case 'success':
         setTagStyle({
@@ -52,7 +43,13 @@ const AppTag: React.FC<AppTagProps> = ({ severity = 'success', value = '', style
         setTagStyle({});
         break;
     }
-  };
+  }, [severity]);
+
+  useEffect(() => {
+    if (style) {
+      setTagStyle((prev) => ({ ...prev, ...style }));
+    }
+  }, [style]);
 
   return (
     <div

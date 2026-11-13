@@ -9,7 +9,7 @@
     ],
     "module": "ESNext",
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -56,5 +56,8 @@
     "src",
     "libraries",
     "../../docs/AI_gen_docs/TenantSelector.tsx"
+  ],
+  "exclude": [
+    "libraries/*/vite.config.ts"
   ]
 }

@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Column, ColumnProps } from 'primereact/column';
 import { DataTable, DataTableProps, DataTableStateEvent, DataTableValueArray, SortOrder } from 'primereact/datatable';
 import './table.scss';
-import { isNullOrUndefined } from 'is-what';
 import { t } from 'i18next';
 export interface HeaderSchema {
   sortableColumn?: boolean;
@@ -14,7 +13,7 @@ export interface HeaderSchema {
   columnProps?: ColumnProps;
 }
 
-export interface ActionSchema extends Omit<HeaderSchema, 'field'> {}
+export type ActionSchema = Omit<HeaderSchema, 'field'>;
 
 type AppTableProps<TValue extends DataTableValueArray> = Omit<DataTableProps<TValue>, 'value'> & {
   tableData: TValue;
@@ -120,8 +119,8 @@ const AppTable: React.FC<AppTableProps<DataTableValueArray>> = ({
           first={first}
           rows={rows}
           paginatorLeft={
-            !isNullOrUndefined(first) &&
-            !isNullOrUndefined(rows) && (
+            first != null &&
+            rows != null && (
               <div>
                 {t('display')} {first + 1}-{first + rows < totalRecords ? first + rows : totalRecords}/ {totalRecords} {t('records')}
               </div>

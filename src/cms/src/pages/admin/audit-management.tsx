@@ -16,7 +16,6 @@ import * as XLSX from 'xlsx';
 
 import { useAuditLogs } from '@/service/admin/audit-hooks';
 import { AuditLog, AuditLogQuery } from '@/service/admin/audit';
-import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 
 import './audit-management.scss';

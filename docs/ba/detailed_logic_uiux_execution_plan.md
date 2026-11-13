@@ -2,7 +2,7 @@
 
 > **Mã tài liệu:** `EXEC-PLAN-LOYALTY-V2.2`  
 > **Ngày lập:** 13/11/2026  
-> **Tài liệu gốc liên kết:** [project_implementation_plan.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/project_implementation_plan.md), [figma_design_evaluation_report.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/figma_design_evaluation_report.md), [detailed_design.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/detailed_design.md), [architecture_evolution_v2.md](file:///Users/micro/Source/chapisoft/micro-loyalty/docs/ba/architecture_evolution_v2.md)  
+> **Tài liệu gốc liên kết:** [project_implementation_plan.md](project_implementation_plan.md), [figma_design_evaluation_report.md](figma_design_evaluation_report.md), [detailed_design.md](detailed_design.md), [architecture_evolution_v2.md](architecture_evolution_v2.md)  
 > **Phạm vi thực thi:** Toàn bộ logic nghiệp vụ trên `src/service` (`V18..V23`, Service, Controller, Job) và 100% UI/UX cho **144 màn hình Figma** (`1168:2725`, tập Node `20634:*`) trên `src/cms`, `src/webview`, `natcash-eu-app` và `USSD *202#`.
 
 ---
@@ -12,21 +12,24 @@
 Trước khi triển khai các phân hệ v2.1, toàn bộ mã nguồn hiện hữu phải được dọn dẹp để đáp ứng tiêu chuẩn Zero-Hardcode và Zero Fake Default Values:
 
 ### 1.1. Dọn dẹp trạng thái giả lập trên Webview và CMS
-* Tại [App.tsx](file:///Users/micro/Source/chapisoft/micro-loyalty/src/webview/src/App.tsx#L80-L109), loại bỏ hoàn toàn các giá trị khởi tạo giả lập gồm: `userPoints` mặc định `2480`, `freeTurns` mặc định `2`, `perpetualTurns` gán cứng `5`, `checkinStreak` gán cứng `3`, và `qrToken` tạo bằng `Math.random()` (`'NATCASH_PAY_TOKEN_' + ...`) ở trình duyệt.
+
+* Tại [App.tsx](../../src/webview/src/App.tsx#L80-L109), loại bỏ hoàn toàn các giá trị khởi tạo giả lập gồm: `userPoints` mặc định `2480`, `freeTurns` mặc định `2`, `perpetualTurns` gán cứng `5`, `checkinStreak` gán cứng `3`, và `qrToken` tạo bằng `Math.random()` (`'NATCASH_PAY_TOKEN_' + ...`) ở trình duyệt.
 * Thay thế bằng luồng nạp 100% từ API máy chủ (`GET /loyalty/v1/accounts/me`, `POST /loyalty/v1/wallet/qr-token`), hiển thị khung chờ tải `Skeleton` trong lúc gọi API và hiển thị `Empty State` nếu người dùng chưa có dữ liệu.
 * Rà soát loại bỏ chuỗi gán cứng trên toàn bộ các tệp `.tsx`, `.ts` và `.java`, đảm bảo mọi chuỗi hiển thị giao diện đi qua hàm dịch `t(...)` và khai báo đầy đủ trong:
   * CMS: `src/cms/src/language/locales/` (`vi.ts`, `en.ts`, `fr.ts`, `ht.ts`).
   * Webview: `src/webview/src/language/locales/` (`vi.ts`, `en.ts`, `fr.ts`, `ht.ts`).
 
 ### 1.2. Mở rộng Domain Enums và Constants tập trung
+
 * Bổ sung các Enum chuẩn hóa tại `src/service/src/main/java/com/natcash/loyalty/domain/enums/`: `CurrencyAssetType` (`TIER_POINT`, `LOYALTY_COIN`), `ApprovalTargetType` (`POLICY`, `PROGRAM`, `POINT_ADJUSTMENT`, `PAYMENT_BATCH`, `SYSTEM_PARAM`), `ApprovalStatus` (`PENDING`, `APPROVED`, `REJECTED`), `PartnerHierarchyLevel` (`PARTNER`, `BRANCH`, `PRODUCT_GROUP`, `PRODUCT`), `CampaignMissionCategory` (`FIRST_TX`, `SPEND_TIERED`, `TX_COUNT`, `STREAK`, `CHECKIN_7D`, `WIN_BACK`, `PARTNER_PURCHASE`, `CROSS_SELL`, `REFERRAL`), `CustomerSegmentCode` (7 mã phân khúc), `GameCategory` (`ENTERTAINMENT`, `PUZZLE_BRAIN`, `LEARNING_EDTECH`), `AgentRoleType` (`AGENT`, `SUPER_AGENT`).
-* Bổ sung các hằng số thời hạn, ngưỡng ngân sách, khung giờ yên tĩnh và mẫu khóa Redis tại [LoyaltyConstants.java](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/constant/LoyaltyConstants.java), [RedisKeys.java](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/constant/RedisKeys.java), [SecurityConstants.java](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/constant/SecurityConstants.java) và [ErrorCode.java](file:///Users/micro/Source/chapisoft/micro-loyalty/src/service/src/main/java/com/natcash/loyalty/constant/ErrorCode.java).
+* Bổ sung các hằng số thời hạn, ngưỡng ngân sách, khung giờ yên tĩnh và mẫu khóa Redis tại [LoyaltyConstants.java](../../src/service/src/main/java/com/natcash/loyalty/constant/LoyaltyConstants.java), [RedisKeys.java](../../src/service/src/main/java/com/natcash/loyalty/constant/RedisKeys.java), [SecurityConstants.java](../../src/service/src/main/java/com/natcash/loyalty/constant/SecurityConstants.java) và [ErrorCode.java](../../src/service/src/main/java/com/natcash/loyalty/constant/ErrorCode.java).
 
 ---
 
 ## 2. KẾ HOẠCH CHI TIẾT HOÀN THIỆN LOGIC NGHIỆP VỤ BACKEND & DATABASE (`src/service`)
 
 ### 2.1. Gói `BE-01` — `V18__add_fifo_buckets_and_approval_queue.sql`
+
 * **Cấu trúc bảng mới và nâng cấp:**
   * `point_expiration_buckets`: Lưu các lô điểm theo từng lần phát sinh (`bucket_id`, `tenant_id`, `account_id`, `asset_type`, `initial_points`, `remaining_points`, `earned_at`, `expired_at`, `source_ref`, `status`), đánh chỉ mục `(tenant_id, account_id, remaining_points, expired_at)` phục vụ truy vấn `FIFO`.
   * `approval_requests`: Hàng đợi duyệt hai cấp dùng chung (`request_id`, `tenant_id`, `target_type`, `target_id`, `action_type`, `payload_before JSONB`, `payload_after JSONB`, `maker_id`, `checker_id`, `status`, `reason`, `reviewed_at`).
@@ -40,6 +43,7 @@ Trước khi triển khai các phân hệ v2.1, toàn bộ mã nguồn hiện h�
   * Nâng cấp `TierEvaluationJob`: Cộng điểm hạng tức thời khi đạt ngưỡng; trước khi hết chu kỳ 12 tháng 30 ngày phát cảnh báo thiếu điểm giữ hạng; hết chu kỳ hạ tối đa 1 bậc.
 
 ### 2.2. Gói `BE-02` — `V19__add_4level_partner_hierarchy_and_payment_batches.sql`
+
 * **Cấu trúc bảng mới và nâng cấp:**
   * `partner_branches` (`branch_id`, `partner_id`, `branch_code`, `payment_point_code`, `province`, `address`, `latitude`, `longitude`, `status`), `partner_product_groups`, `partner_products`, `partner_staff_accounts` (`staff_id`, `partner_id`, `branch_id`, `role_code`, `status`).
   * Nâng cấp `loyalty_acceptance_policies`: Hỗ trợ kế thừa 4 cấp (`PARTNER → BRANCH → PRODUCT_GROUP → PRODUCT`) và đánh số phiên bản (`version_no`, `is_active_version`).
@@ -50,6 +54,7 @@ Trước khi triển khai các phân hệ v2.1, toàn bộ mã nguồn hiện h�
   * Cụm `PartnerPortalController` (`/loyalty/v1/partner-portal/*`): Chặn tuyệt đối lỗi `IDOR` bằng cơ chế `Default Deny`, mọi truy vấn đều lọc cứng `partner_id` và `branch_id` lấy từ phiên đăng nhập hợp lệ.
 
 ### 2.3. Gói `BE-03` — `V20__add_campaign_rules_control_group_and_budgets.sql`
+
 * **Cấu trúc bảng mới:** `campaign_rule_conditions` (lưu DSL 4 tầng `WHEN – IF – THEN – LIMITS`), `campaign_control_groups` (`campaign_id`, `user_id`, `bucket_group` `TEST` hoặc `CONTROL`), `loyalty_monthly_budgets` (`budget_month`, `sponsor_type`, `budget_cap`, `consumed_amount`, `alert_80_sent`).
 * **Logic cốt lõi:**
   * `CampaignRuleEngineService`: Xử lý đủ 9 loại nhiệm vụ (`NV-05` `20634:10206`); kiểm tra trùng điều kiện khuyến mãi, hỗ trợ nhận thưởng thủ công `POST /loyalty/v1/missions/{id}/claim` và khóa phân tán `RedisKeys.lockMissionClaim(...)`.
@@ -57,18 +62,21 @@ Trước khi triển khai các phân hệ v2.1, toàn bộ mã nguồn hiện h�
   * `MonthlyBudgetGuardService`: Dùng `Redis DECRBY` kiểm tra trần ngân sách theo thời gian thực; chạm `80%` bắn cảnh báo vào `system_alerts` (`CN-05`); chạm `100%` tự động chuyển trạng thái chiến dịch sang `PAUSED_BUDGET_EXCEEDED`.
 
 ### 2.4. Gói `BE-04` — `V21__add_segments_and_antispam_notification_engine.sql`
+
 * **Cấu trúc bảng mới:** `customer_segments`, `customer_segment_members`, `user_notification_preferences` (`opt_out_marketing`, `preferred_locale`), `system_alerts`, `partner_notifications` (`CN-08` `20634:16976`), `reminder_scenarios` (`CN-04` `20634:10717`).
 * **Logic cốt lõi:**
   * `SegmentCalculationJob` (chạy `02:00` hằng ngày): Phân loại 7 phân khúc (`NEW_CUSTOMER`, `LOW_ACTIVITY`, `HIGH_VALUE`, `SINGLE_SERVICE`, `WIN_BACK`, `PARTNER_SHOPPER`, `GENERAL`), cung cấp API xuất CSV cho `CN-03` (`20634:10485`).
   * `EngagementAntiSpamFilter` trong `EngagementService`: Kiểm tra tuần tự 4 lớp trước khi đẩy tin: (1) Khung giờ yên tĩnh `20:00–08:00`, (2) Giới hạn `1 Push/ngày` và `3 Push/tuần` lưu bộ đếm trên Redis, (3) Chống trùng thông điệp cùng sự kiện trong cửa sổ cấu hình, (4) Bỏ qua toàn bộ tin tiếp thị nếu `opt_out_marketing = true`.
 
 ### 2.5. Gói `BE-05` — `V22__add_learning_quiz_bank_and_leaderboard.sql`
+
 * **Cấu trúc bảng mới:** `learning_courses`, `learning_questions` (`course_id`, `question_text JSONB`, `options JSONB`, `correct_option_index`, `audio_url`), `learning_user_progress`, `game_monthly_leaderboards`.
 * **Logic cốt lõi:**
   * `LearningQuizService` & `LearningQuizController`: Khởi tạo bài học trừ 1 lượt chơi, chấm điểm đáp án hoàn toàn phía máy chủ, cấp thưởng theo bậc `5 / 10 / 15` câu đúng, cập nhật `Redis Sorted Set` bảng xếp hạng tháng (`ZINCRBY`).
   * Bổ sung `POST /loyalty/v1/admin/learning/questions/import` (nhập CSV câu hỏi cho `GM-09` `20634:8889`), `GET /loyalty/v1/admin/games/statistics` (`GM-07` `20634:8508`) và `POST /gamehub/v1/scratch-card/play` dùng `SecureRandom` trả kết quả thẻ cào `Lucky Scratch Card` (`20634:25913`).
 
 ### 2.6. Gói `BE-06` — `V23__add_agent_loyalty_and_ai_copilot_schemas.sql`
+
 * **Cấu trúc bảng mới:** `agent_loyalty_programs`, `agent_monthly_kpis`, `super_agent_network_kpis`, `support_playbooks`, `ai_campaign_suggestions`.
 * **Logic cốt lõi:**
   * `AgentLoyaltyService`: Đồng bộ số liệu định danh `eKYC` + giao dịch đầu từ Data Lake/WSO2; tính thưởng Agent đạt `100` khách hàng mới/tháng (`2.000 HTG` hoặc `2.000 Natcash Coin`) và Super Agent đạt `≥ 50%` mạng lưới (`10.000 HTG`).
@@ -78,7 +86,7 @@ Trước khi triển khai các phân hệ v2.1, toàn bộ mã nguồn hiện h�
 
 ## 3. KẾ HOẠCH CHI TIẾT HOÀN THIỆN UI/UX KHỐI 1: BACK OFFICE CMS (`src/cms`)
 
-Toàn bộ route mới phải được khai báo tập trung trong [paths.ts](file:///Users/micro/Source/chapisoft/micro-loyalty/src/cms/src/paths.ts), không dùng đường dẫn chuỗi tự do. Các bảng dữ liệu có cột mã dài phải thiết lập `minWidth` cố định, `font-mono` và `white-space: nowrap` (`FE-UX-03`).
+Toàn bộ route mới phải được khai báo tập trung trong [paths.ts](../../src/cms/src/paths.ts), không dùng đường dẫn chuỗi tự do. Các bảng dữ liệu có cột mã dài phải thiết lập `minWidth` cố định, `font-mono` và `white-space: nowrap` (`FE-UX-03`).
 
 | Section Figma | Mã màn hình & Node ID | Đường dẫn mã nguồn (`src/cms/src/pages/`) | Yêu cầu hoàn thiện UI/UX & Liên kết Logic |
 | :--- | :--- | :--- | :--- |
@@ -117,7 +125,7 @@ Toàn bộ màn hình đặt tại `src/cms/src/pages/partner-portal/`, dùng ch
 
 ## 5. KẾ HOẠCH CHI TIẾT HOÀN THIỆN UI/UX KHỐI 3: MOBILE APP, WEBVIEW & USSD (`75` MÀN HÌNH)
 
-Toàn bộ giao diện trong `src/webview/src/` thiết kế theo chuẩn Mobile-First, tích hợp sẵn [LoyaltyJSBridge.ts](file:///Users/micro/Source/chapisoft/micro-loyalty/src/webview/src/bridge/LoyaltyJSBridge.ts) và [LanguageSelector.tsx](file:///Users/micro/Source/chapisoft/micro-loyalty/src/webview/src/components/LanguageSelector.tsx) để đồng bộ chuyển đổi 3 ngôn ngữ (`Kreyòl / Français / English`):
+Toàn bộ giao diện trong `src/webview/src/` thiết kế theo chuẩn Mobile-First, tích hợp sẵn [LoyaltyJSBridge.ts](../../src/webview/src/bridge/LoyaltyJSBridge.ts) và [LanguageSelector.tsx](../../src/webview/src/components/LanguageSelector.tsx) để đồng bộ chuyển đổi 3 ngôn ngữ (`Kreyòl / Français / English`):
 
 | Section Figma | Mã màn hình & Node ID tiêu biểu | Thành phần thực thi (`src/webview/src/` & `natcash-eu-app`) | Yêu cầu UI/UX & Logic chi tiết |
 | :--- | :--- | :--- | :--- |
@@ -141,5 +149,4 @@ Mỗi Sprint kết thúc chỉ được xác nhận hoàn tất khi vượt qua 
 4. **Kiểm tra Tích hợp Thực tế & Bảo mật (Tầng 2 & Tầng 3):**
    * Thực thi kịch bản tải cao trong `test/load/` (`k6_pos_wallet_burn.js`, `k6_lucky_wheel_spin.js`, `k6_minigame_submit.js` cùng kịch bản mở rộng `FIFO`/`Budget`/`Clearing`) kết hợp `sql_concurrency_audit.sql` trên Staging.
    * Thực hiện kiểm thử `IDOR` và `Default Deny` trên 100% endpoint Hội viên và Partner Portal.
-   * Triển khai chọn lọc từng phân hệ qua [Jenkinsfile](file:///Users/micro/Source/chapisoft/micro-loyalty/Jenkinsfile) lên môi trường `deploy/micro-loyalty/` sau khi vượt qua kiểm thử cục bộ.
-
+   * Triển khai chọn lọc từng phân hệ qua [Jenkinsfile](../../Jenkinsfile) lên môi trường `deploy/micro-loyalty/` sau khi vượt qua kiểm thử cục bộ.

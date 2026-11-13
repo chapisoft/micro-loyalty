@@ -34,6 +34,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Yêu cầu tra cứu số dư và chính sách tiêu điểm của khách hàng")
     public static class PartnerInquiryRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã khách hàng hoặc mã QR động không được để trống")
         @Schema(description = "Số điện thoại, ID khách hàng hoặc Dynamic QR Token", example = "50937123456")
         private String customerIdentifier;
@@ -52,6 +53,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Thông tin số dư, hạn mức và danh sách voucher khả dụng")
     public static class PartnerInquiryResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String externalUserId;
         private String customerName;
         private TierLevel tier;
@@ -70,6 +72,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerVoucherItemDto implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long redemptionId;
         private String redemptionCode;
         private String voucherCode;
@@ -90,6 +93,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Yêu cầu tạm giữ điểm theo hóa đơn")
     public static class PartnerPaymentAuthorizeRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã khách hàng không được để trống")
         private String customerIdentifier;
 
@@ -113,6 +117,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Kết quả tạm giữ điểm thành công")
     public static class PartnerPaymentAuthorizeResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String holdCode;
         private String partnerOrderId;
         private String externalUserId;
@@ -135,6 +140,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Yêu cầu xác nhận cấn trừ điểm theo mã Hold")
     public static class PartnerPaymentConfirmRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã phiên giữ điểm holdCode không được để trống")
         private String holdCode;
 
@@ -150,6 +156,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Kết quả xác nhận khấu trừ điểm thành công")
     public static class PartnerPaymentConfirmResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String transactionCode;
         private String holdCode;
         private String partnerOrderId;
@@ -174,6 +181,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Yêu cầu hủy giải phóng phiên tạm giữ điểm")
     public static class PartnerPaymentCancelRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã phiên giữ điểm holdCode không được để trống")
         private String holdCode;
 
@@ -185,6 +193,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerPaymentCancelResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String holdCode;
         private HoldStatus status;
         private BigDecimal pointsReleased;
@@ -201,6 +210,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Yêu cầu thanh toán trừ điểm 1 chạm trực tiếp")
     public static class PartnerPaymentDirectRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã token Dynamic QR không được để trống")
         private String qrToken;
 
@@ -226,6 +236,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerPaymentDirectResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String transactionCode;
         private String partnerOrderId;
         private String externalUserId;
@@ -249,6 +260,7 @@ public final class PartnerGatewayDto {
     @AllArgsConstructor
     @Schema(description = "Yêu cầu hoàn điểm giao dịch hủy hóa đơn")
     public static class PartnerPaymentRefundRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã giao dịch hoàn refundTransactionCode không được để trống")
         private String refundTransactionCode;
 
@@ -266,6 +278,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerPaymentRefundResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String refundTransactionCode;
         private String originalTransactionCode;
         private BigDecimal pointsRefunded;
@@ -282,6 +295,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerPaymentStatusRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String transactionCode;
         private String holdCode;
         private String partnerOrderId;
@@ -292,6 +306,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerPaymentStatusResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String transactionCode;
         private String holdCode;
         private String partnerOrderId;
@@ -314,6 +329,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerReconciliationRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String fromDate; // ISO-8601 hoặc YYYY-MM-DD
         private String toDate;
         private String batchCode;
@@ -324,6 +340,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerReconciliationResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String tenantId;
         private String partnerCode;
         private String partnerName;
@@ -343,6 +360,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerTxDetailDto implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String transactionCode;
         private String partnerOrderId;
         private String externalUserId;
@@ -362,6 +380,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerDisputeRequest implements Serializable {
+        private static final long serialVersionUID = 1L;
         @NotBlank(message = "Mã lô đối soát batchCode không được để trống")
         private String batchCode;
 
@@ -382,6 +401,7 @@ public final class PartnerGatewayDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PartnerDisputeResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String disputeCode;
         private String batchCode;
         private String disputeType;

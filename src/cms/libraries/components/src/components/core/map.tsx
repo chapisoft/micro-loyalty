@@ -128,6 +128,7 @@ const AppMap: React.FC<AppMapProps> = ({
   },
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const zoomRef = useRef<number>(zoom);
   const [map, setMap] = useState<any>(null);
   const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [filteredPositions, setFilteredPositions] = useState<string[]>([]);
@@ -160,7 +161,7 @@ const AppMap: React.FC<AppMapProps> = ({
           container: mapContainerRef.current,
           style: vtmapgl.STYLES.VTRANS,
           center: [initLocation.lng, initLocation.lat],
-          zoom: zoom,
+          zoom: zoomRef.current,
         });
 
         newMap.on('load', () => {
@@ -175,7 +176,7 @@ const AppMap: React.FC<AppMapProps> = ({
             setTimeout(waiting, 200);
           } else {
             newMap.on('zoom', () => {
-              zoom = newMap.getZoom();
+              zoomRef.current = newMap.getZoom();
             });
           }
         };
@@ -222,6 +223,7 @@ const AppMap: React.FC<AppMapProps> = ({
       document.head.removeChild(directionsCss);
       document.head.removeChild(directionsScript);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addMarker = (lng: number, lat: number, map: any) => {

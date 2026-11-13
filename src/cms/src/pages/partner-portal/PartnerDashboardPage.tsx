@@ -19,7 +19,7 @@ export const PartnerDashboardPage: React.FC = () => {
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await LoyaltyService.getPartnerPortalDashboard(selectedTenant);
+      const res = await LoyaltyService.getPartnerPortalDashboard(undefined, selectedTenant);
       setData(res);
     } finally {
       setLoading(false);
@@ -66,36 +66,36 @@ export const PartnerDashboardPage: React.FC = () => {
             <div className="grid mb-4">
               <div className="col-12 md:col-3">
                 <div className="p-3 border-round surface-50 border-1 surface-border">
-                  <div className="text-xs text-500 uppercase">{t('partner_portal.total_tx', { defaultValue: 'Tổng Giao Dịch' })}</div>
-                  <div className="text-2xl font-mono font-semibold text-primary mt-1">{Number(data.totalTransactions || 0).toLocaleString()}</div>
+                  <div className="text-xs text-500 uppercase">{t('partner_portal.paying_customers', { defaultValue: 'Khách Thanh Toán' })}</div>
+                  <div className="text-2xl font-mono font-semibold text-primary mt-1">{Number(data.payingCustomersCount || 0).toLocaleString()}</div>
                 </div>
               </div>
               <div className="col-12 md:col-3">
                 <div className="p-3 border-round surface-50 border-1 surface-border">
-                  <div className="text-xs text-500 uppercase">{t('partner_portal.points_issued', { defaultValue: 'Điểm Đã Phát Hành' })}</div>
-                  <div className="text-2xl font-mono font-semibold text-blue-600 mt-1">{Number(data.totalPointsIssued || 0).toLocaleString()}</div>
+                  <div className="text-xs text-500 uppercase">{t('partner_portal.burn_tx', { defaultValue: 'Giao Dịch Tiêu Điểm' })}</div>
+                  <div className="text-2xl font-mono font-semibold text-blue-600 mt-1">{Number(data.burnTransactionsCount || 0).toLocaleString()}</div>
                 </div>
               </div>
               <div className="col-12 md:col-3">
                 <div className="p-3 border-round surface-50 border-1 surface-border">
-                  <div className="text-xs text-500 uppercase">{t('partner_portal.points_redeemed', { defaultValue: 'Điểm Đã Thu Hồi' })}</div>
-                  <div className="text-2xl font-mono font-semibold text-green-600 mt-1">{Number(data.totalPointsRedeemed || 0).toLocaleString()}</div>
+                  <div className="text-xs text-500 uppercase">{t('partner_portal.new_members', { defaultValue: 'Hội Viên Mới' })}</div>
+                  <div className="text-2xl font-mono font-semibold text-green-600 mt-1">{Number(data.newMembersAcquired || 0).toLocaleString()}</div>
                 </div>
               </div>
               <div className="col-12 md:col-3">
                 <div className="p-3 border-round surface-50 border-1 surface-border">
-                  <div className="text-xs text-500 uppercase">{t('partner_portal.net_settlement', { defaultValue: 'Bù Trừ Ròng Kỳ Này' })}</div>
-                  <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{Number(data.netSettlementAmount || 0).toLocaleString()} HTG</div>
+                  <div className="text-xs text-500 uppercase">{t('partner_portal.net_settlement', { defaultValue: 'Công Nợ Chờ Quyết Toán' })}</div>
+                  <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{Number(data.pendingSettlementAmount || 0).toLocaleString()} HTG</div>
                 </div>
               </div>
             </div>
 
-            <h5 className="mb-2 text-800">{t('partner_portal.top_branches', { defaultValue: 'Hiệu suất Theo Chi nhánh / Điểm bán' })}</h5>
-            <DataTable value={data.topBranches || []} paginator rows={5} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có thống kê theo chi nhánh.' })}>
-              <Column field="branchCode" header={t('partner_portal.branch_code', { defaultValue: 'Mã Chi Nhánh' })} body={(r: any) => <span className="font-mono white-space-nowrap">{r.branchCode}</span>} style={{ minWidth: '10rem' }} />
-              <Column field="branchName" header={t('partner_portal.branch_name', { defaultValue: 'Tên Chi Nhánh' })} style={{ minWidth: '14rem' }} />
-              <Column field="txCount" header={t('partner_portal.total_tx', { defaultValue: 'Số Giao Dịch' })} body={(r: any) => Number(r.txCount || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
-              <Column field="gmvAmount" header={t('partner_portal.gmv', { defaultValue: 'Doanh Số (HTG)' })} body={(r: any) => <span className="font-mono">{Number(r.gmvAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '11rem', textAlign: 'right' }} />
+            <h5 className="mb-2 text-800">{t('partner_portal.recent_tx', { defaultValue: 'Giao dịch Gần đây tại Đối tác' })}</h5>
+            <DataTable value={data.recentTransactions || []} paginator rows={5} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có giao dịch gần đây.' })}>
+              <Column field="transactionId" header={t('transaction.id', { defaultValue: 'Mã GD' })} body={(r: any) => <span className="font-mono white-space-nowrap">{r.transactionId}</span>} style={{ minWidth: '12rem' }} />
+              <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r: any) => <span className="font-mono">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
+              <Column field="actionType" header={t('transaction.action_type', { defaultValue: 'Loại GD' })} style={{ minWidth: '8rem' }} />
+              <Column field="points" header={t('transaction.amount', { defaultValue: 'Điểm' })} body={(r: any) => <span className="font-mono">{Number(r.points || 0).toLocaleString()}</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />
             </DataTable>
           </>
         )}

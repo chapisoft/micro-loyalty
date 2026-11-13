@@ -26,7 +26,7 @@ const EditableList: React.FC<EditableListProps> = ({ control, name, disabled }) 
 
   return (
     <div className="p-fluid">
-      {fields.map((field, index) =>
+      {fields.map((field: any, index) =>
         field.type === 'delete' ? null : ( // skip rendering deleted fields
           <div key={field.id} className="p-inputgroup mb-2">
             <Controller

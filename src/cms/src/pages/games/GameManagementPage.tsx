@@ -73,7 +73,7 @@ interface GamePrizeItem {
 
 export const GameManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const [selectedTenant, setSelectedTenant] = useState('TENANT_NATCASH');
+  const [selectedTenant] = useState('TENANT_NATCASH');
   const [games, setGames] = useState<GameItem[]>([]);
   const [stats, setStats] = useState<GameDashboardStats>({
     totalGames: 0,
@@ -169,7 +169,6 @@ export const GameManagementPage: React.FC = () => {
     loadGamePrizes(game.gameCode);
     setShowPrizeDialog(true);
   };
-  const openPrizeManager = openPrizesManager;
 
   const openNewPrize = () => {
     setPrizeFormData({

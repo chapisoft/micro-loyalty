@@ -72,7 +72,7 @@ export function SandboxGroupsPage() {
       });
       setShowPermissionDialog(false);
       loadData();
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
@@ -103,7 +103,7 @@ export function SandboxGroupsPage() {
       });
       setShowCreateDialog(false);
       loadData();
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),

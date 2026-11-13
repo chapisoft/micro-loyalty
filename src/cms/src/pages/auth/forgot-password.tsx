@@ -6,11 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AppButton, AppInputText } from 'components';
 import AppDialog from 'components/src/components/core/dialog';
 import { t } from 'i18next';
-import { Controller, ControllerFieldState, ControllerRenderProps, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useForm, Controller, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
 import { z } from 'zod';
-
-import { paths } from '@/paths';
 
 interface ForgotPasswordControllerProps {
   visible: boolean;
@@ -34,7 +31,6 @@ const defaultValues = {
 const ForgotPasswordController: React.FC<ForgotPasswordControllerProps> = ({ visible, onHide, email }) => {
   const { showToast } = useToastService();
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const forgotPasswordMutate = useForgotPassword();
 
   const { control, handleSubmit, reset } = useForm<Values>({

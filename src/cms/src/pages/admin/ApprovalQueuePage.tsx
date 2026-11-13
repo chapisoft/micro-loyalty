@@ -53,11 +53,11 @@ export const ApprovalQueuePage: React.FC = () => {
     if (!reviewItem) return;
     setSubmitting(true);
     try {
-      await LoyaltyService.approveRequest(reviewItem.requestId, decisionNote.trim() || undefined, selectedTenant);
+      await LoyaltyService.approveRequest(reviewItem.id, decisionNote.trim() || undefined, selectedTenant);
       toast.current?.show({
         severity: 'success',
         summary: t('approval.approved', { defaultValue: 'Đã phê duyệt' }),
-        detail: `${reviewItem.requestId}`,
+        detail: `${reviewItem.requestCode || reviewItem.id}`,
       });
       setReviewItem(null);
       setDecisionNote('');
@@ -81,11 +81,11 @@ export const ApprovalQueuePage: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      await LoyaltyService.rejectRequest(reviewItem.requestId, decisionNote.trim(), selectedTenant);
+      await LoyaltyService.rejectRequest(reviewItem.id, decisionNote.trim(), selectedTenant);
       toast.current?.show({
         severity: 'info',
         summary: t('approval.rejected', { defaultValue: 'Đã từ chối' }),
-        detail: `${reviewItem.requestId}`,
+        detail: `${reviewItem.requestCode || reviewItem.id}`,
       });
       setReviewItem(null);
       setDecisionNote('');
@@ -103,8 +103,6 @@ export const ApprovalQueuePage: React.FC = () => {
         return 'success';
       case ApprovalStatus.REJECTED:
         return 'danger';
-      case ApprovalStatus.CANCELLED:
-        return 'secondary';
       default:
         return 'warning';
     }
@@ -144,9 +142,11 @@ export const ApprovalQueuePage: React.FC = () => {
                 { label: t('common.all', { defaultValue: 'Tất cả nghiệp vụ' }), value: 'ALL' },
                 { label: ApprovalTargetType.POINT_ADJUSTMENT, value: ApprovalTargetType.POINT_ADJUSTMENT },
                 { label: ApprovalTargetType.MEMBER_LOCK, value: ApprovalTargetType.MEMBER_LOCK },
-                { label: ApprovalTargetType.POLICY_CHANGE, value: ApprovalTargetType.POLICY_CHANGE },
+                { label: ApprovalTargetType.POLICY, value: ApprovalTargetType.POLICY },
+                { label: ApprovalTargetType.PROGRAM, value: ApprovalTargetType.PROGRAM },
                 { label: ApprovalTargetType.PARTNER_PROPOSAL, value: ApprovalTargetType.PARTNER_PROPOSAL },
-                { label: ApprovalTargetType.BUDGET_CAP, value: ApprovalTargetType.BUDGET_CAP },
+                { label: ApprovalTargetType.PAYMENT_BATCH, value: ApprovalTargetType.PAYMENT_BATCH },
+                { label: ApprovalTargetType.SYSTEM_PARAM, value: ApprovalTargetType.SYSTEM_PARAM },
               ]}
               onChange={(e) => setTargetFilter(e.value)}
               className="w-13rem"
@@ -158,7 +158,7 @@ export const ApprovalQueuePage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<ApprovalRequestModel>
+          <DataTable<ApprovalRequestModel[]>
             value={items}
             paginator
             rows={15}
@@ -166,11 +166,11 @@ export const ApprovalQueuePage: React.FC = () => {
             responsiveLayout="scroll"
             emptyMessage={t('approval.empty', { defaultValue: 'Không có yêu cầu nào đang chờ phê duyệt.' })}
           >
-            <Column field="requestId" header={t('approval.request_id', { defaultValue: 'Mã Yêu Cầu' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.requestId}</span>} style={{ minWidth: '13rem' }} />
+            <Column field="requestCode" header={t('approval.request_id', { defaultValue: 'Mã Yêu Cầu' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.requestCode || r.id}</span>} style={{ minWidth: '13rem' }} />
             <Column field="targetType" header={t('approval.target_type', { defaultValue: 'Phân Loại' })} body={(r) => <Tag value={r.targetType} severity="info" />} style={{ minWidth: '11rem' }} />
             <Column field="actionType" header={t('approval.action_type', { defaultValue: 'Hành Động' })} body={(r) => <span className="font-mono text-xs">{r.actionType}</span>} style={{ minWidth: '10rem' }} />
             <Column field="targetId" header={t('approval.target_id', { defaultValue: 'Đối Tượng' })} body={(r) => <span className="font-mono white-space-nowrap">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="makerUsername" header={t('approval.maker', { defaultValue: 'Người Tạo (Maker)' })} style={{ minWidth: '10rem' }} />
+            <Column field="makerUsername" header={t('approval.maker', { defaultValue: 'Người Tạo (Maker)' })} body={(r) => r.makerUsername || r.makerId || '--'} style={{ minWidth: '10rem' }} />
             <Column field="reason" header={t('common.reason', { defaultValue: 'Lý Do' })} style={{ minWidth: '14rem' }} />
             <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Thời Gian' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
@@ -194,7 +194,7 @@ export const ApprovalQueuePage: React.FC = () => {
       <Dialog
         visible={!!reviewItem}
         onHide={() => setReviewItem(null)}
-        header={reviewItem ? `${t('approval.dialog_title', { defaultValue: 'Thẩm định Yêu cầu' })} · ${reviewItem.requestId}` : ''}
+        header={reviewItem ? `${t('approval.dialog_title', { defaultValue: 'Thẩm định Yêu cầu' })} · ${reviewItem.requestCode || reviewItem.id}` : ''}
         style={{ width: '48rem' }}
         breakpoints={{ '641px': '95vw' }}
         modal
@@ -202,7 +202,7 @@ export const ApprovalQueuePage: React.FC = () => {
         {reviewItem && (
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
-              <div className="col-6"><span className="text-500 text-xs block">Maker</span><span>{reviewItem.makerUsername}</span></div>
+              <div className="col-6"><span className="text-500 text-xs block">Maker</span><span>{reviewItem.makerUsername || reviewItem.makerId || '--'}</span></div>
               <div className="col-6"><span className="text-500 text-xs block">Trạng thái</span><Tag value={reviewItem.status} severity={statusSeverity(reviewItem.status)} /></div>
               <div className="col-12 mt-2"><span className="text-500 text-xs block">Lý do trình duyệt</span><span>{reviewItem.reason || '--'}</span></div>
             </div>
@@ -211,13 +211,13 @@ export const ApprovalQueuePage: React.FC = () => {
               <div className="col-12 md:col-6">
                 <div className="text-xs font-medium text-500 mb-1">Payload / Trước thay đổi</div>
                 <pre className="m-0 p-2 border-round surface-50 border-1 surface-border text-xs font-mono overflow-auto" style={{ maxHeight: '14rem' }}>
-                  {JSON.stringify(reviewItem.beforeData || {}, null, 2)}
+                  {JSON.stringify(reviewItem.payloadBefore || {}, null, 2)}
                 </pre>
               </div>
               <div className="col-12 md:col-6">
                 <div className="text-xs font-medium text-500 mb-1">Dữ liệu đề xuất mới (After / Payload)</div>
                 <pre className="m-0 p-2 border-round bg-green-50 border-1 border-green-200 text-xs font-mono overflow-auto" style={{ maxHeight: '14rem' }}>
-                  {JSON.stringify(reviewItem.afterData || reviewItem.payload || {}, null, 2)}
+                  {JSON.stringify(reviewItem.payloadAfter || {}, null, 2)}
                 </pre>
               </div>
             </div>

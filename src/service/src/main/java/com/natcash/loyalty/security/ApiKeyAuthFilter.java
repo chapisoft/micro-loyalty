@@ -12,6 +12,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,7 +46,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     private String masterSecretKey;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
@@ -59,9 +60,9 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         String apiKey = request.getHeader(LoyaltyConstants.API_KEY_HEADER);
         String timestampStr = request.getHeader(LoyaltyConstants.TIMESTAMP_HEADER);
@@ -87,6 +88,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
             try {
                 timestamp = Long.parseLong(timestampStr.trim());
             } catch (NumberFormatException e) {
+                log.debug("[API-KEY-AUTH] Invalid X-Timestamp '{}': {}", timestampStr, e.getMessage());
                 sendErrorResponse(response, HttpStatus.UNAUTHORIZED, ErrorCode.TIMESTAMP_DRIFT_EXCEEDED, "Định dạng X-Timestamp không hợp lệ");
                 return;
             }

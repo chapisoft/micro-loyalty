@@ -37,8 +37,8 @@ const AppTreeSelect: React.FC<AppTreeSelectProps> = ({
       return node && (!node.children || node.children.length === 0);
     };
 
-    if (isLeafNode(value)) {
-      onChange && onChange(e);
+    if (isLeafNode(value) && onChange) {
+      onChange(e);
     }
   };
   return (

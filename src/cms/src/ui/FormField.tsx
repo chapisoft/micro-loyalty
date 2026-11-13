@@ -16,7 +16,7 @@ import {
 } from 'components';
 import dayjs from 'dayjs';
 import { TreeNode } from 'primereact/treenode';
-import { Control, Controller, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
+import { Control, Controller, ControllerFieldState, ControllerRenderProps, FieldValues } from 'react-hook-form';
 
 import './form-field.style.scss';
 
@@ -51,9 +51,9 @@ interface IUploadProps {
   service?: string;
 }
 
-type FormFieldProps = {
+type FormFieldProps<TFieldValues extends FieldValues = any> = {
   name: string;
-  control: Control<any>;
+  control: Control<TFieldValues, any, any>;
   type?: FieldType;
   label?: string;
   required?: boolean;
@@ -81,7 +81,7 @@ type FormFieldProps = {
   autoUpload?: boolean;
 };
 
-const FormField: React.FC<FormFieldProps> = ({
+const FormField = <TFieldValues extends FieldValues = any>({
   name,
   control,
   type = FieldType.TEXT,
@@ -116,7 +116,7 @@ const FormField: React.FC<FormFieldProps> = ({
   isLoading,
   filter = true,
   autoUpload,
-}) => {
+}: FormFieldProps<TFieldValues>) => {
   const [filterValue, setFilterValue] = React.useState('');
   const [selectOptions, setSelectOptions] = React.useState<any[]>(options || []);
   const [expandedKeys, setExpandedKeys] = React.useState<{ [key: number]: boolean }>({});
@@ -227,7 +227,7 @@ const FormField: React.FC<FormFieldProps> = ({
     <div className={'form-field-container'}>
       <Controller
         name={name}
-        control={control}
+        control={control as Control<any>}
         render={({
           field,
           fieldState,

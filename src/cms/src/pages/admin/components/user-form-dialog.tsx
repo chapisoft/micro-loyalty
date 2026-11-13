@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useCreateUser, useUpdateUser, useLockUser, IUser, IUserPayload, useGetRoles } from '@/service/admin/admin';
+import React, { useEffect } from 'react';
+import { useCreateUser, useUpdateUser, IUser, IUserPayload, useGetRoles } from '@/service/admin/admin';
 import useToastService from '@/service/toast/toast-service';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
-import { InputNumber } from 'primereact/inputnumber';
 import { MultiSelect } from 'primereact/multiselect';
 import { Button } from 'primereact/button';
 import { useForm, Controller } from 'react-hook-form';

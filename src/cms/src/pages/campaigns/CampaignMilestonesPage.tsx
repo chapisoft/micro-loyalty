@@ -19,14 +19,15 @@ import { ProgressBar } from 'primereact/progressbar';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
-import { CommonStatus, CampaignMissionCategory } from '@/models';
+import { CommonStatus, CampaignMissionCategory, CustomerSegmentCode } from '@/models';
 import {
   LoyaltyService,
   MilestoneItemModel,
   VoucherItemModel,
   CampaignRuleModel,
-  CampaignTrackingModel,
-  CampaignCopilotResponseModel,
+  CampaignTrackingItemModel,
+  AiCopilotSuggestResponse,
+  AiCopilotConflictItem,
 } from '@/service/loyalty.service';
 
 enum CampaignMetric {
@@ -98,34 +99,38 @@ export const CampaignMilestonesPage: React.FC = () => {
   const [rulesLoading, setRulesLoading] = useState(false);
   const [showRuleDialog, setShowRuleDialog] = useState(false);
   const [ruleForm, setRuleForm] = useState<Partial<CampaignRuleModel>>({
-    missionCategory: CampaignMissionCategory.TOPUP,
+    campaignCode: 'CAMP_DEFAULT',
+    campaignName: '',
+    missionCategory: CampaignMissionCategory.SPEND_TIERED,
     whenEvent: 'TOPUP_SUCCESS',
-    ifConditionExpr: 'amount >= 100',
-    thenRewardType: 'POINTS',
-    thenRewardValue: 50,
-    dailyCap: 1,
-    monthlyCap: 10,
-    totalBudgetCap: 100000,
-    priority: 1,
+    ifMinBillAmount: 100,
+    thenRewardPoints: 50,
+    thenRewardTurns: 0,
+    limitMaxPerUser: 1,
+    limitMaxTotal: 10,
+    limitDailyBudgetCap: 100000,
+    claimExpiryDays: 7,
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
     status: CommonStatus.ACTIVE,
   });
-  const [trackingRows, setTrackingRows] = useState<CampaignTrackingModel[]>([]);
+  const [trackingRows, setTrackingRows] = useState<CampaignTrackingItemModel[]>([]);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [copilotVisible, setCopilotVisible] = useState(false);
   const [copilotPrompt, setCopilotPrompt] = useState('');
   const [copilotLoading, setCopilotLoading] = useState(false);
-  const [copilotResult, setCopilotResult] = useState<CampaignCopilotResponseModel | null>(null);
+  const [copilotResult, setCopilotResult] = useState<AiCopilotSuggestResponse | null>(null);
 
   const missionCategoryOptions = useMemo(() => [
-    { label: t('campaign.cat_topup', { defaultValue: 'Nạp tiền điện thoại (TOPUP)' }), value: CampaignMissionCategory.TOPUP },
-    { label: t('campaign.cat_p2p', { defaultValue: 'Chuyển tiền P2P (P2P_TRANSFER)' }), value: CampaignMissionCategory.P2P_TRANSFER },
-    { label: t('campaign.cat_bill', { defaultValue: 'Thanh toán hóa đơn (BILL_PAYMENT)' }), value: CampaignMissionCategory.BILL_PAYMENT },
-    { label: t('campaign.cat_qr', { defaultValue: 'Thanh toán QR tại quầy (QR_MERCHANT)' }), value: CampaignMissionCategory.QR_MERCHANT },
+    { label: t('campaign.cat_first_tx', { defaultValue: 'Giao dịch đầu tiên (FIRST_TX)' }), value: CampaignMissionCategory.FIRST_TX },
+    { label: t('campaign.cat_spend_tiered', { defaultValue: 'Mức chi tiêu bậc thang (SPEND_TIERED)' }), value: CampaignMissionCategory.SPEND_TIERED },
+    { label: t('campaign.cat_tx_count', { defaultValue: 'Số lượng giao dịch (TX_COUNT)' }), value: CampaignMissionCategory.TX_COUNT },
+    { label: t('campaign.cat_streak', { defaultValue: 'Chuỗi giao dịch liên tiếp (STREAK)' }), value: CampaignMissionCategory.STREAK },
+    { label: t('campaign.cat_checkin_7d', { defaultValue: 'Điểm danh 7 ngày (CHECKIN_7D)' }), value: CampaignMissionCategory.CHECKIN_7D },
+    { label: t('campaign.cat_win_back', { defaultValue: 'Kéo khách quay lại (WIN_BACK)' }), value: CampaignMissionCategory.WIN_BACK },
+    { label: t('campaign.cat_partner_purchase', { defaultValue: 'Mua sắm tại đối tác (PARTNER_PURCHASE)' }), value: CampaignMissionCategory.PARTNER_PURCHASE },
+    { label: t('campaign.cat_cross_sell', { defaultValue: 'Bán chéo dịch vụ (CROSS_SELL)' }), value: CampaignMissionCategory.CROSS_SELL },
     { label: t('campaign.cat_referral', { defaultValue: 'Giới thiệu bạn bè (REFERRAL)' }), value: CampaignMissionCategory.REFERRAL },
-    { label: t('campaign.cat_streak', { defaultValue: 'Điểm danh chuỗi ngày (DAILY_STREAK)' }), value: CampaignMissionCategory.DAILY_STREAK },
-    { label: t('campaign.cat_ekyc', { defaultValue: 'Định danh eKYC / Liên kết ngân hàng' }), value: CampaignMissionCategory.EKYC_ONBOARDING },
-    { label: t('campaign.cat_game', { defaultValue: 'Hoàn thành Mini-game / Quiz' }), value: CampaignMissionCategory.GAME_CHALLENGE },
-    { label: t('campaign.cat_cross_sell', { defaultValue: 'Bán chéo dịch vụ đối tác (CROSS_SELL)' }), value: CampaignMissionCategory.PARTNER_CROSS_SELL },
   ], [t]);
 
   const fetchRulesAndTracking = useCallback(async (tenantId: string) => {
@@ -149,8 +154,8 @@ export const CampaignMilestonesPage: React.FC = () => {
   }, [selectedTenant, fetchRulesAndTracking]);
 
   const handleSaveRule = async () => {
-    if (!ruleForm.ruleCode || !ruleForm.ruleName) {
-      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('campaign.rule_required', { defaultValue: 'Vui lòng nhập Mã luật và Tên luật.' }) });
+    if (!ruleForm.ruleCode || !ruleForm.campaignName) {
+      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('campaign.rule_required', { defaultValue: 'Vui lòng nhập Mã luật và Tên chiến dịch.' }) });
       return;
     }
     setIsSubmitting(true);
@@ -181,7 +186,18 @@ export const CampaignMilestonesPage: React.FC = () => {
     if (!copilotPrompt.trim()) return;
     setCopilotLoading(true);
     try {
-      const res = await LoyaltyService.suggestCampaignCopilot({ prompt: copilotPrompt.trim() }, selectedTenant);
+      const today = new Date().toISOString().slice(0, 10);
+      const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      const res = await LoyaltyService.suggestCampaignCopilot(
+        {
+          objective: copilotPrompt.trim(),
+          targetSegment: CustomerSegmentCode.GENERAL,
+          budgetCap: 100000,
+          startDate: today,
+          endDate: nextMonth,
+        },
+        selectedTenant
+      );
       setCopilotResult(res);
     } catch (err: any) {
       toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
@@ -824,16 +840,19 @@ export const CampaignMilestonesPage: React.FC = () => {
                 <Button icon="pi pi-plus" label={t('campaign.add_rule', { defaultValue: 'Tạo luật nhiệm vụ' })} severity="success" size="small" onClick={() => {
                   setRuleForm({
                     ruleCode: '',
-                    ruleName: '',
-                    missionCategory: CampaignMissionCategory.TOPUP,
+                    campaignCode: 'CAMP_' + Math.floor(1000 + Math.random() * 9000),
+                    campaignName: '',
+                    missionCategory: CampaignMissionCategory.SPEND_TIERED,
                     whenEvent: 'TOPUP_SUCCESS',
-                    ifConditionExpr: 'amount >= 100',
-                    thenRewardType: 'POINTS',
-                    thenRewardValue: 50,
-                    dailyCap: 1,
-                    monthlyCap: 10,
-                    totalBudgetCap: 100000,
-                    priority: 1,
+                    ifMinBillAmount: 100,
+                    thenRewardPoints: 50,
+                    thenRewardTurns: 0,
+                    limitMaxPerUser: 1,
+                    limitMaxTotal: 10,
+                    limitDailyBudgetCap: 100000,
+                    claimExpiryDays: 7,
+                    startDate: new Date().toISOString().slice(0, 10),
+                    endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
                     status: CommonStatus.ACTIVE,
                   });
                   setShowRuleDialog(true);
@@ -845,14 +864,14 @@ export const CampaignMilestonesPage: React.FC = () => {
             {rulesLoading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
             ) : (
-              <DataTable<CampaignRuleModel> value={rules} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('campaign.no_rules', { defaultValue: 'Chưa có luật chiến dịch nào được cấu hình.' })}>
-                <Column field="ruleCode" header={t('campaign.rule_code', { defaultValue: 'Mã Luật' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.ruleCode}</span>} style={{ minWidth: '10rem' }} />
-                <Column field="ruleName" header={t('campaign.rule_name', { defaultValue: 'Tên Luật' })} style={{ minWidth: '14rem' }} />
-                <Column field="missionCategory" header={t('campaign.mission_category', { defaultValue: 'Loại Nhiệm Vụ' })} body={(r) => <Tag value={r.missionCategory} severity="info" />} style={{ minWidth: '11rem' }} />
-                <Column header="WHEN / IF" body={(r) => <div className="text-xs font-mono"><div>WHEN: {r.whenEvent}</div><div className="text-500">IF: {r.ifConditionExpr}</div></div>} style={{ minWidth: '13rem' }} />
-                <Column header="THEN / LIMITS" body={(r) => <div className="text-xs"><div>+{r.thenRewardValue} {r.thenRewardType}</div><div className="text-500">Cap: {r.dailyCap ?? '∞'}/ngày · {r.monthlyCap ?? '∞'}/tháng</div></div>} style={{ minWidth: '12rem' }} />
-                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-                <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(r) => (
+              <DataTable<CampaignRuleModel[]> value={rules} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('campaign.no_rules', { defaultValue: 'Chưa có luật chiến dịch nào được cấu hình.' })}>
+                <Column field="ruleCode" header={t('campaign.rule_code', { defaultValue: 'Mã Luật' })} body={(r: CampaignRuleModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.ruleCode}</span>} style={{ minWidth: '10rem' }} />
+                <Column field="campaignName" header={t('campaign.rule_name', { defaultValue: 'Tên Chiến Dịch / Luật' })} style={{ minWidth: '14rem' }} />
+                <Column field="missionCategory" header={t('campaign.mission_category', { defaultValue: 'Loại Nhiệm Vụ' })} body={(r: CampaignRuleModel) => <Tag value={r.missionCategory} severity="info" />} style={{ minWidth: '11rem' }} />
+                <Column header="WHEN / IF" body={(r: CampaignRuleModel) => <div className="text-xs font-mono"><div>WHEN: {r.whenEvent}</div><div className="text-500">Min Bill: {Number(r.ifMinBillAmount || 0).toLocaleString()}</div></div>} style={{ minWidth: '13rem' }} />
+                <Column header="THEN / LIMITS" body={(r: CampaignRuleModel) => <div className="text-xs"><div>+{r.thenRewardPoints} điểm / +{r.thenRewardTurns} lượt</div><div className="text-500">Max: {r.limitMaxPerUser ?? '∞'}/user · {r.limitMaxTotal ?? '∞'} tổng</div></div>} style={{ minWidth: '12rem' }} />
+                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: CampaignRuleModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+                <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(r: CampaignRuleModel) => (
                   <div className="flex gap-1">
                     <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setRuleForm(r); setShowRuleDialog(true); }} />
                     <Button icon="pi pi-trash" text rounded severity="danger" size="small" onClick={() => handleDeleteRule(r)} />
@@ -866,19 +885,22 @@ export const CampaignMilestonesPage: React.FC = () => {
             {trackingLoading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
             ) : (
-              <DataTable<CampaignTrackingModel> value={trackingRows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu theo dõi tiến độ chiến dịch.' })}>
-                <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến Dịch' })} body={(r) => <span className="font-mono white-space-nowrap font-medium">{r.campaignCode}</span>} style={{ minWidth: '10rem' }} />
+              <DataTable<CampaignTrackingItemModel[]> value={trackingRows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu theo dõi tiến độ chiến dịch.' })}>
+                <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến Dịch' })} body={(r: CampaignTrackingItemModel) => <span className="font-mono white-space-nowrap font-medium">{r.campaignCode}</span>} style={{ minWidth: '10rem' }} />
                 <Column field="campaignName" header={t('campaign.name', { defaultValue: 'Tên Chiến Dịch' })} style={{ minWidth: '14rem' }} />
-                <Column field="enrolledUsers" header={t('campaign.enrolled', { defaultValue: 'Tham Gia' })} body={(r) => Number(r.enrolledUsers || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
-                <Column field="completedUsers" header={t('campaign.completed', { defaultValue: 'Hoàn Thành' })} body={(r) => Number(r.completedUsers || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
-                <Column field="completionRate" header={t('campaign.completion_rate', { defaultValue: 'Tỷ Lệ' })} body={(r) => (
-                  <div className="flex align-items-center gap-2">
-                    <ProgressBar value={Number(r.completionRate || 0)} showValue={false} style={{ height: '6px', width: '5rem' }} />
-                    <span className="text-xs font-mono">{Number(r.completionRate || 0).toFixed(1)}%</span>
-                  </div>
-                )} style={{ minWidth: '10rem' }} />
-                <Column field="totalPointsIssued" header={t('campaign.points_issued', { defaultValue: 'Điểm Đã Cấp' })} body={(r) => Number(r.totalPointsIssued || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
-                <Column field="budgetSpent" header={t('campaign.budget_spent', { defaultValue: 'Ngân Sách Đã Dùng' })} body={(r) => `${Number(r.budgetSpent || 0).toLocaleString()} / ${Number(r.budgetCap || 0).toLocaleString()} HTG`} style={{ minWidth: '12rem', textAlign: 'right' }} />
+                <Column field="participantsCount" header={t('campaign.enrolled', { defaultValue: 'Tham Gia' })} body={(r: CampaignTrackingItemModel) => Number(r.participantsCount || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+                <Column field="completedCount" header={t('campaign.completed', { defaultValue: 'Hoàn Thành' })} body={(r: CampaignTrackingItemModel) => Number(r.completedCount || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+                <Column header={t('campaign.completion_rate', { defaultValue: 'Tỷ Lệ' })} body={(r: CampaignTrackingItemModel) => {
+                  const rate = r.participantsCount > 0 ? (r.completedCount / r.participantsCount) * 100 : 0;
+                  return (
+                    <div className="flex align-items-center gap-2">
+                      <ProgressBar value={rate} showValue={false} style={{ height: '6px', width: '5rem' }} />
+                      <span className="text-xs font-mono">{rate.toFixed(1)}%</span>
+                    </div>
+                  );
+                }} style={{ minWidth: '10rem' }} />
+                <Column field="pointsDistributed" header={t('campaign.points_issued', { defaultValue: 'Điểm Đã Cấp' })} body={(r: CampaignTrackingItemModel) => Number(r.pointsDistributed || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
+                <Column field="budgetUsed" header={t('campaign.budget_spent', { defaultValue: 'Ngân Sách Đã Dùng' })} body={(r: CampaignTrackingItemModel) => `${Number(r.budgetUsed || 0).toLocaleString()} / ${Number(r.budgetCap || 0).toLocaleString()} HTG`} style={{ minWidth: '12rem', textAlign: 'right' }} />
               </DataTable>
             )}
           </TabPanel>
@@ -1134,8 +1156,8 @@ export const CampaignMilestonesPage: React.FC = () => {
             <InputText value={ruleForm.ruleCode || ''} onChange={(e) => setRuleForm({ ...ruleForm, ruleCode: e.target.value.toUpperCase() })} className="font-mono" placeholder="RULE_TOPUP_WEEKEND" />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('campaign.rule_name', { defaultValue: 'Tên Luật' })} *</label>
-            <InputText value={ruleForm.ruleName || ''} onChange={(e) => setRuleForm({ ...ruleForm, ruleName: e.target.value })} />
+            <label className="text-sm font-medium">{t('campaign.rule_name', { defaultValue: 'Tên Chiến Dịch / Luật' })} *</label>
+            <InputText value={ruleForm.campaignName || ''} onChange={(e) => setRuleForm({ ...ruleForm, campaignName: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('campaign.mission_category', { defaultValue: 'Loại Nhiệm Vụ (9 nhóm)' })}</label>
@@ -1146,28 +1168,28 @@ export const CampaignMilestonesPage: React.FC = () => {
             <InputText value={ruleForm.whenEvent || ''} onChange={(e) => setRuleForm({ ...ruleForm, whenEvent: e.target.value })} className="font-mono" />
           </div>
           <div className="col-12 field">
-            <label className="text-sm font-medium">IF (Biểu thức điều kiện)</label>
-            <InputText value={ruleForm.ifConditionExpr || ''} onChange={(e) => setRuleForm({ ...ruleForm, ifConditionExpr: e.target.value })} className="font-mono" placeholder="amount >= 100 && tier in ['GOLD','PLATINUM']" />
+            <label className="text-sm font-medium">IF (Giá trị hóa đơn tối thiểu)</label>
+            <InputNumber value={ruleForm.ifMinBillAmount ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, ifMinBillAmount: e.value || 0 })} min={0} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">THEN (Loại phần thưởng)</label>
-            <Dropdown value={ruleForm.thenRewardType || 'POINTS'} options={[{ label: 'Điểm Loyalty (POINTS)', value: 'POINTS' }, { label: 'Lượt quay Game (SPINS)', value: 'SPINS' }, { label: 'Voucher Quà tặng (VOUCHER)', value: 'VOUCHER' }]} onChange={(e) => setRuleForm({ ...ruleForm, thenRewardType: e.value })} appendTo="self" />
+            <label className="text-sm font-medium">THEN (Điểm thưởng)</label>
+            <InputNumber value={ruleForm.thenRewardPoints ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, thenRewardPoints: e.value || 0 })} min={0} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">THEN (Giá trị thưởng)</label>
-            <InputNumber value={ruleForm.thenRewardValue ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, thenRewardValue: e.value || 0 })} min={0} />
+            <label className="text-sm font-medium">THEN (Lượt quay Game)</label>
+            <InputNumber value={ruleForm.thenRewardTurns ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, thenRewardTurns: e.value || 0 })} min={0} />
           </div>
           <div className="col-12 md:col-4 field">
-            <label className="text-sm font-medium">LIMITS: Trần / ngày</label>
-            <InputNumber value={ruleForm.dailyCap ?? 1} onValueChange={(e) => setRuleForm({ ...ruleForm, dailyCap: e.value || 0 })} min={0} />
+            <label className="text-sm font-medium">LIMITS: Trần / user</label>
+            <InputNumber value={ruleForm.limitMaxPerUser ?? 1} onValueChange={(e) => setRuleForm({ ...ruleForm, limitMaxPerUser: e.value || 0 })} min={0} />
           </div>
           <div className="col-12 md:col-4 field">
-            <label className="text-sm font-medium">LIMITS: Trần / tháng</label>
-            <InputNumber value={ruleForm.monthlyCap ?? 10} onValueChange={(e) => setRuleForm({ ...ruleForm, monthlyCap: e.value || 0 })} min={0} />
+            <label className="text-sm font-medium">LIMITS: Tổng lượt</label>
+            <InputNumber value={ruleForm.limitMaxTotal ?? 10} onValueChange={(e) => setRuleForm({ ...ruleForm, limitMaxTotal: e.value || 0 })} min={0} />
           </div>
           <div className="col-12 md:col-4 field">
-            <label className="text-sm font-medium">LIMITS: Ngân sách tối đa</label>
-            <InputNumber value={ruleForm.totalBudgetCap ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, totalBudgetCap: e.value || 0 })} min={0} />
+            <label className="text-sm font-medium">LIMITS: Ngân sách ngày</label>
+            <InputNumber value={ruleForm.limitDailyBudgetCap ?? 0} onValueChange={(e) => setRuleForm({ ...ruleForm, limitDailyBudgetCap: e.value || 0 })} min={0} />
           </div>
           <div className="col-12 flex align-items-center gap-3">
             <InputSwitch checked={ruleForm.status === CommonStatus.ACTIVE} onChange={(e) => setRuleForm({ ...ruleForm, status: e.value ? CommonStatus.ACTIVE : CommonStatus.INACTIVE })} />
@@ -1192,10 +1214,10 @@ export const CampaignMilestonesPage: React.FC = () => {
               {copilotResult.conflicts && copilotResult.conflicts.length > 0 && (
                 <div className="p-3 border-round bg-orange-50 border-1 border-orange-200">
                   <div className="font-medium text-orange-800 mb-2"><i className="pi pi-exclamation-triangle mr-2" />{t('campaign.conflicts_detected', { defaultValue: 'Phát hiện Xung đột Chiến dịch' })}</div>
-                  {copilotResult.conflicts.map((c, idx) => (
+                  {copilotResult.conflicts.map((c: AiCopilotConflictItem, idx: number) => (
                     <div key={idx} className="text-xs text-orange-900 mb-1">
-                      <Tag value={c.severity} severity={c.severity === 'HIGH' ? 'danger' : 'warning'} className="mr-2" />
-                      <span className="font-mono mr-1">{c.conflictingRuleCode}</span>: {c.message}
+                      <Tag value={c.severity} severity={c.severity === 'CRITICAL' ? 'danger' : 'warning'} className="mr-2" />
+                      <span className="font-mono mr-1">{c.conflictCampaignCode}</span>: {c.reason}
                     </div>
                   ))}
                 </div>
@@ -1203,7 +1225,7 @@ export const CampaignMilestonesPage: React.FC = () => {
 
               <div className="p-3 border-round surface-50 border-1 surface-border">
                 <div className="text-xs text-500 uppercase mb-1">{t('campaign.suggested_rule', { defaultValue: 'Bản nháp Luật đề xuất' })}</div>
-                <div className="text-sm mb-2">{copilotResult.explanation}</div>
+                <div className="text-sm mb-2">{copilotResult.rationale}</div>
                 <pre className="m-0 text-xs font-mono surface-card p-2 border-round overflow-auto">{JSON.stringify(copilotResult.suggestedRule, null, 2)}</pre>
                 <div className="flex justify-content-end mt-3">
                   <Button label={t('campaign.apply_draft', { defaultValue: 'Áp dụng vào Bộ dựng luật' })} icon="pi pi-check" size="small" severity="success" onClick={handleApplyCopilotDraft} />

@@ -11,7 +11,7 @@ interface IDashboardAnalysisParams {
   fieldId?: string;
 }
 
-export interface IDashboardAnalysisResponse extends IDefaultResponse {}
+export type IDashboardAnalysisResponse = IDefaultResponse;
 
 const getDashboardAnalysis = (params: IDashboardAnalysisParams): Promise<any> => {
   const queryParams: Record<string, string> = {};

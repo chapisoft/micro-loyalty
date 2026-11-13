@@ -66,7 +66,8 @@ const Mermaid = ({ chart }: { chart: string }) => {
   );
 };
 
-const PreRenderer = ({ children, ...props }: any) => {
+const PreRenderer = ({ children }: any) => {
+  const [copied, setCopied] = useState(false);
   const childArray = React.Children.toArray(children);
   const firstChild = childArray[0] as any;
   const className = firstChild?.props?.className || '';
@@ -76,7 +77,6 @@ const PreRenderer = ({ children, ...props }: any) => {
     return <Mermaid chart={chart} />;
   }
 
-  const [copied, setCopied] = useState(false);
   const rawCode = String(firstChild?.props?.children || '').replace(/\n$/, '');
   const langMatch = /language-(\w+)/.exec(className);
   const lang = langMatch ? langMatch[1] : '';

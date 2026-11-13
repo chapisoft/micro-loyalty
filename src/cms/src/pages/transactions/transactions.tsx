@@ -45,7 +45,7 @@ export const Transactions: React.FC = () => {
   const [adjustSubmitting, setAdjustSubmitting] = useState<boolean>(false);
   const [adjustUserId, setAdjustUserId] = useState<string>('');
   const [adjustDirection, setAdjustDirection] = useState<AdjustmentDirection>(AdjustmentDirection.CREDIT);
-  const [adjustAssetType, setAdjustAssetType] = useState<CurrencyAssetType>(CurrencyAssetType.POINTS);
+  const [adjustAssetType, setAdjustAssetType] = useState<CurrencyAssetType>(CurrencyAssetType.LOYALTY_COIN);
   const [adjustAmount, setAdjustAmount] = useState<number>(0);
   const [adjustReason, setAdjustReason] = useState<string>('');
   const [adjustTicketRef, setAdjustTicketRef] = useState<string>('');
@@ -62,9 +62,9 @@ export const Transactions: React.FC = () => {
           externalUserId: adjustUserId.trim(),
           direction: adjustDirection,
           assetType: adjustAssetType,
-          amount: adjustAmount,
+          points: adjustAmount,
           reason: adjustReason.trim(),
-          ticketRef: adjustTicketRef.trim() || undefined,
+          referenceDoc: adjustTicketRef.trim() || undefined,
         },
         selectedTenant
       );
@@ -631,7 +631,7 @@ export const Transactions: React.FC = () => {
             </div>
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('transaction.adjust_asset', { defaultValue: 'Loại tài sản' })}</label>
-              <Dropdown value={adjustAssetType} options={[{ label: 'Điểm Loyalty', value: CurrencyAssetType.POINTS }, { label: 'Lượt quay Game', value: CurrencyAssetType.GAME_SPINS }]} onChange={(e) => setAdjustAssetType(e.value)} appendTo="self" />
+              <Dropdown value={adjustAssetType} options={[{ label: 'Điểm Tiêu Dùng (LOYALTY_COIN)', value: CurrencyAssetType.LOYALTY_COIN }, { label: 'Điểm Xét Hạng (TIER_POINT)', value: CurrencyAssetType.TIER_POINT }]} onChange={(e) => setAdjustAssetType(e.value)} appendTo="self" />
             </div>
           </div>
           <div className="grid">

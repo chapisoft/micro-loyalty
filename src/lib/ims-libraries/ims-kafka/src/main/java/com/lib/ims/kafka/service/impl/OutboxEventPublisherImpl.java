@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @Service
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class OutboxEventPublisherImpl implements OutboxEventPublisher {
    private static final Logger log = LoggerFactory.getLogger(OutboxEventPublisherImpl.class);
    private final OutboxEventRepository outboxRepository;

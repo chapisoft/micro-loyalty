@@ -88,9 +88,6 @@ class GameHubServiceTest {
     @Mock
     private RAtomicLong atomicLong;
 
-    @Mock
-    private com.natcash.loyalty.campaign.service.MilestoneService milestoneService;
-
     @InjectMocks
     private GameHubService gameHubService;
 

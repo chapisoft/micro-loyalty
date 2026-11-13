@@ -22,7 +22,6 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
 @Configuration
 @EnableConfigurationProperties({I18nProperties.class})
-@SuppressWarnings("null")
 public class IMSI18nAutoConfiguration implements WebMvcConfigurer {
    private final I18nProperties properties;
    private final MessageSource messageSource;

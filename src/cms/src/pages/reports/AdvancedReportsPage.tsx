@@ -13,11 +13,12 @@ import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
+import { CommonStatus } from '@/models';
 import {
   LoyaltyService,
-  CrossSellMatrixItemModel,
-  PointsLiabilityBucketModel,
-  ReportScheduleModel,
+  CrossSellReportModel,
+  PointsLiabilityReportModel,
+  ScheduledReportModel,
 } from '@/service/loyalty.service';
 
 export const AdvancedReportsPage: React.FC = () => {
@@ -27,14 +28,14 @@ export const AdvancedReportsPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>(
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
-  const [crossSell, setCrossSell] = useState<CrossSellMatrixItemModel[]>([]);
-  const [liability, setLiability] = useState<PointsLiabilityBucketModel[]>([]);
-  const [schedules, setSchedules] = useState<ReportScheduleModel[]>([]);
+  const [crossSell, setCrossSell] = useState<CrossSellReportModel[]>([]);
+  const [liability, setLiability] = useState<PointsLiabilityReportModel | null>(null);
+  const [schedules, setSchedules] = useState<ScheduledReportModel[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState<Partial<ReportScheduleModel>>({});
+  const [scheduleForm, setScheduleForm] = useState<Partial<ScheduledReportModel>>({});
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -45,7 +46,7 @@ export const AdvancedReportsPage: React.FC = () => {
         LoyaltyService.getReportSchedules(selectedTenant),
       ]);
       setCrossSell(Array.isArray(csRes) ? csRes : []);
-      setLiability(Array.isArray(libRes) ? libRes : []);
+      setLiability(libRes || null);
       setSchedules(Array.isArray(schRes) ? schRes : []);
     } finally {
       setLoading(false);
@@ -63,7 +64,7 @@ export const AdvancedReportsPage: React.FC = () => {
       frequency: 'MONTHLY',
       recipients: '',
       format: 'XLSX',
-      enabled: true,
+      status: CommonStatus.ACTIVE,
     });
     setShowScheduleDialog(true);
   };
@@ -75,7 +76,7 @@ export const AdvancedReportsPage: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      await LoyaltyService.saveReportSchedule(scheduleForm as ReportScheduleModel, selectedTenant);
+      await LoyaltyService.saveReportSchedule(scheduleForm as ScheduledReportModel, selectedTenant);
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('report.schedule_saved', { defaultValue: 'Đã lưu lịch gửi báo cáo tự động.' }) });
       setShowScheduleDialog(false);
       fetchAll();
@@ -86,7 +87,7 @@ export const AdvancedReportsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteSchedule = async (item: ReportScheduleModel) => {
+  const handleDeleteSchedule = async (item: ScheduledReportModel) => {
     if (!item.id) return;
     try {
       await LoyaltyService.deleteReportSchedule(item.id, selectedTenant);
@@ -123,12 +124,12 @@ export const AdvancedReportsPage: React.FC = () => {
             {loading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
             ) : (
-              <DataTable<CrossSellMatrixItemModel> value={crossSell} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu luân chuyển điểm chéo đối tác.' })}>
-                <Column field="sourcePartnerName" header={t('report.source_partner', { defaultValue: 'Đối tác Phát hành (Nguồn)' })} body={(r) => <span><span className="font-mono text-xs mr-1">[{r.sourcePartnerCode}]</span>{r.sourcePartnerName}</span>} style={{ minWidth: '14rem' }} />
-                <Column field="targetPartnerName" header={t('report.target_partner', { defaultValue: 'Đối tác Tiêu điểm (Đích)' })} body={(r) => <span><span className="font-mono text-xs mr-1">[{r.targetPartnerCode}]</span>{r.targetPartnerName}</span>} style={{ minWidth: '14rem' }} />
-                <Column field="sharedCustomersCount" header={t('report.shared_customers', { defaultValue: 'Số Khách Chung' })} body={(r) => Number(r.sharedCustomersCount || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
-                <Column field="crossPointsRedeemed" header={t('report.cross_points', { defaultValue: 'Điểm Tiêu Chéo' })} body={(r) => <span className="font-mono">{Number(r.crossPointsRedeemed || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
-                <Column field="crossGmvAmount" header={t('report.cross_gmv', { defaultValue: 'Giá trị Giao dịch (GMV)' })} body={(r) => <span className="font-mono font-medium">{Number(r.crossGmvAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '11rem', textAlign: 'right' }} />
+              <DataTable<CrossSellReportModel[]> value={crossSell} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu luân chuyển điểm chéo đối tác.' })}>
+                <Column field="sourcePartnerName" header={t('report.source_partner', { defaultValue: 'Đối tác Phát hành (Nguồn)' })} body={(r: CrossSellReportModel) => <span><span className="font-mono text-xs mr-1">[{r.sourcePartnerCode}]</span>{r.sourcePartnerName}</span>} style={{ minWidth: '14rem' }} />
+                <Column field="targetPartnerName" header={t('report.target_partner', { defaultValue: 'Đối tác Tiêu điểm (Đích)' })} body={(r: CrossSellReportModel) => <span><span className="font-mono text-xs mr-1">[{r.targetPartnerCode}]</span>{r.targetPartnerName}</span>} style={{ minWidth: '14rem' }} />
+                <Column field="crossUsersCount" header={t('report.shared_customers', { defaultValue: 'Số Khách Chung' })} body={(r: CrossSellReportModel) => Number(r.crossUsersCount || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
+                <Column field="crossTransactionsCount" header={t('report.cross_tx', { defaultValue: 'Số Giao Dịch Chéo' })} body={(r: CrossSellReportModel) => <span className="font-mono">{Number(r.crossTransactionsCount || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+                <Column field="crossGmvAmount" header={t('report.cross_gmv', { defaultValue: 'Giá trị Giao dịch (GMV)' })} body={(r: CrossSellReportModel) => <span className="font-mono font-medium">{Number(r.crossGmvAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '11rem', textAlign: 'right' }} />
               </DataTable>
             )}
           </TabPanel>
@@ -137,13 +138,21 @@ export const AdvancedReportsPage: React.FC = () => {
             {loading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
             ) : (
-              <DataTable<PointsLiabilityBucketModel> value={liability} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu tồn dư nghĩa vụ điểm theo kỳ hết hạn.' })}>
-                <Column field="bucketLabel" header={t('report.expiry_bucket', { defaultValue: 'Kỳ Hết Hạn FIFO' })} body={(r) => <span className="font-mono font-medium">{r.bucketLabel}</span>} style={{ minWidth: '12rem' }} />
-                <Column field="memberCount" header={t('report.member_count', { defaultValue: 'Số Hội Viên' })} body={(r) => Number(r.memberCount || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
-                <Column field="outstandingPoints" header={t('report.outstanding_points', { defaultValue: 'Tổng Điểm Tồn' })} body={(r) => <span className="font-mono">{Number(r.outstandingPoints || 0).toLocaleString()}</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-                <Column field="estimatedFiatLiability" header={t('report.fiat_liability', { defaultValue: 'Dự phòng Tài chính (HTG)' })} body={(r) => <span className="font-mono font-medium text-orange-600">{Number(r.estimatedFiatLiability || 0).toLocaleString()} HTG</span>} style={{ minWidth: '12rem', textAlign: 'right' }} />
-                <Column field="expiringIn30Days" header={t('report.expiring_30d', { defaultValue: 'Sắp hết hạn 30 ngày' })} body={(r) => <span className="font-mono text-red-600">{Number(r.expiringIn30Days || 0).toLocaleString()}</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-              </DataTable>
+              <div className="flex flex-column gap-3">
+                <div className="grid">
+                  <div className="col-12 md:col-3"><div className="p-3 border-round surface-50 border-1 surface-border"><div className="text-xs text-500">Tổng điểm tồn</div><div className="text-xl font-mono font-semibold mt-1">{Number(liability?.totalOutstandingCoins || 0).toLocaleString()}</div></div></div>
+                  <div className="col-12 md:col-3"><div className="p-3 border-round surface-50 border-1 surface-border"><div className="text-xs text-500">Dự phòng tài chính</div><div className="text-xl font-mono font-semibold text-orange-600 mt-1">{Number(liability?.estimatedLiabilityFiat || 0).toLocaleString()} HTG</div></div></div>
+                  <div className="col-12 md:col-3"><div className="p-3 border-round surface-50 border-1 surface-border"><div className="text-xs text-500">Hết hạn 30 ngày</div><div className="text-xl font-mono font-semibold text-red-600 mt-1">{Number(liability?.expiringWithin30Days || 0).toLocaleString()}</div></div></div>
+                  <div className="col-12 md:col-3"><div className="p-3 border-round surface-50 border-1 surface-border"><div className="text-xs text-500">Breakage Rate</div><div className="text-xl font-mono font-semibold mt-1">{Number(liability?.breakageRatePercent || 0).toFixed(2)}%</div></div></div>
+                </div>
+                <DataTable<PointsLiabilityReportModel['byTier']> value={liability?.byTier || []} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có dữ liệu tồn dư nghĩa vụ điểm theo hạng.' })}>
+                  <Column field="tierCode" header={t('tier.code', { defaultValue: 'Mã Hạng' })} body={(r) => <span className="font-mono font-medium">{r.tierCode}</span>} style={{ minWidth: '9rem' }} />
+                  <Column field="tierName" header={t('tier.name', { defaultValue: 'Tên Hạng' })} style={{ minWidth: '12rem' }} />
+                  <Column field="memberCount" header={t('report.member_count', { defaultValue: 'Số Hội Viên' })} body={(r) => Number(r.memberCount || 0).toLocaleString()} style={{ minWidth: '9rem', textAlign: 'right' }} />
+                  <Column field="outstandingCoins" header={t('report.outstanding_points', { defaultValue: 'Tổng Điểm Tồn' })} body={(r) => <span className="font-mono">{Number(r.outstandingCoins || 0).toLocaleString()}</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+                  <Column field="liabilityFiat" header={t('report.fiat_liability', { defaultValue: 'Dự phòng Tài chính (HTG)' })} body={(r) => <span className="font-mono font-medium text-orange-600">{Number(r.liabilityFiat || 0).toLocaleString()} HTG</span>} style={{ minWidth: '12rem', textAlign: 'right' }} />
+                </DataTable>
+              </div>
             )}
           </TabPanel>
 
@@ -151,16 +160,16 @@ export const AdvancedReportsPage: React.FC = () => {
             <div className="flex justify-content-end mb-3">
               <Button icon="pi pi-plus" label={t('report.add_schedule', { defaultValue: 'Tạo Lịch Gửi Báo cáo' })} severity="success" size="small" onClick={openNewSchedule} />
             </div>
-            <DataTable<ReportScheduleModel> value={schedules} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('report.no_schedules', { defaultValue: 'Chưa có lịch gửi báo cáo tự động nào.' })}>
+            <DataTable<ScheduledReportModel[]> value={schedules} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('report.no_schedules', { defaultValue: 'Chưa có lịch gửi báo cáo tự động nào.' })}>
               <Column field="reportName" header={t('report.schedule_name', { defaultValue: 'Tên Báo Cáo' })} style={{ minWidth: '14rem' }} />
-              <Column field="reportType" header={t('report.schedule_type', { defaultValue: 'Loại Báo Cáo' })} body={(r) => <Tag value={r.reportType} severity="info" />} style={{ minWidth: '11rem' }} />
-              <Column field="frequency" header={t('report.frequency', { defaultValue: 'Tần Suất' })} body={(r) => <Tag value={r.frequency} />} style={{ minWidth: '8rem' }} />
+              <Column field="reportType" header={t('report.schedule_type', { defaultValue: 'Loại Báo Cáo' })} body={(r: ScheduledReportModel) => <Tag value={r.reportType} severity="info" />} style={{ minWidth: '11rem' }} />
+              <Column field="frequency" header={t('report.frequency', { defaultValue: 'Tần Suất' })} body={(r: ScheduledReportModel) => <Tag value={r.frequency} />} style={{ minWidth: '8rem' }} />
               <Column field="recipients" header={t('report.recipients', { defaultValue: 'Email Nhận' })} style={{ minWidth: '16rem' }} />
               <Column field="format" header={t('report.format', { defaultValue: 'Định Dạng' })} style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-              <Column field="enabled" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.enabled ? 'ACTIVE' : 'PAUSED'} severity={r.enabled ? 'success' : 'secondary'} />} style={{ minWidth: '7.5rem', textAlign: 'center' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: ScheduledReportModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '7.5rem', textAlign: 'center' }} />
               <Column
                 header={t('common.action', { defaultValue: 'Thao Tác' })}
-                body={(r) => (
+                body={(r: ScheduledReportModel) => (
                   <div className="flex gap-1">
                     <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setScheduleForm(r); setShowScheduleDialog(true); }} />
                     <Button icon="pi pi-trash" text rounded severity="danger" size="small" onClick={() => handleDeleteSchedule(r)} />
@@ -200,7 +209,7 @@ export const AdvancedReportsPage: React.FC = () => {
             </div>
           </div>
           <div className="flex align-items-center gap-2">
-            <InputSwitch checked={!!scheduleForm.enabled} onChange={(e) => setScheduleForm({ ...scheduleForm, enabled: e.value })} />
+            <InputSwitch checked={scheduleForm.status === CommonStatus.ACTIVE} onChange={(e) => setScheduleForm({ ...scheduleForm, status: e.value ? CommonStatus.ACTIVE : CommonStatus.INACTIVE })} />
             <span className="text-sm">{t('common.active', { defaultValue: 'Kích hoạt gửi tự động' })}</span>
           </div>
         </div>

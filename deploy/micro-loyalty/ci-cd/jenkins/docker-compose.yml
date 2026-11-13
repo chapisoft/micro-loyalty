@@ -1,0 +1,26 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: loyalty/jenkins-ci:lts-jdk17-node20
+    container_name: loyalty-jenkins
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "127.0.0.1:18099:8080"
+      - "127.0.0.1:50000:50000"
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false -Xmx1024m"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - jenkins_m2:/root/.m2
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/uc1-software/apps/micro-loyalty/deploy:/data/uc1-software/apps/micro-loyalty/deploy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  jenkins_home:
+  jenkins_m2:

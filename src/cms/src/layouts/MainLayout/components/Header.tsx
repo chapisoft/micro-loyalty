@@ -407,7 +407,7 @@ const Header: React.FC = () => {
       if (stored) {
         return JSON.parse(stored);
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
     return user;

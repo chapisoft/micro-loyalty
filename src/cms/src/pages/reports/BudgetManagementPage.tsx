@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus } from '@/models';
-import { LoyaltyService, ProgramBudgetModel } from '@/service/loyalty.service';
+import { LoyaltyService, MonthlyBudgetModel } from '@/service/loyalty.service';
 
 export const BudgetManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -23,11 +23,11 @@ export const BudgetManagementPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>(
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
-  const [budgets, setBudgets] = useState<ProgramBudgetModel[]>([]);
+  const [budgets, setBudgets] = useState<MonthlyBudgetModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState<Partial<ProgramBudgetModel>>({});
+  const [formData, setFormData] = useState<Partial<MonthlyBudgetModel>>({});
 
   const fetchBudgets = useCallback(async () => {
     setLoading(true);
@@ -47,25 +47,25 @@ export const BudgetManagementPage: React.FC = () => {
     const now = new Date();
     const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     setFormData({
-      budgetCode: '',
-      budgetName: '',
-      periodMonth: ym,
-      monthlyCapAmount: 0,
-      alertThresholdPercent: 80,
-      autoPauseOnExhaust: true,
+      sponsorType: 'NATCASH',
+      partnerCode: '',
+      budgetMonth: ym,
+      budgetCap: 0,
+      alert80Sent: false,
+      autoPausedAt100: true,
       status: CommonStatus.ACTIVE,
     });
     setShowDialog(true);
   };
 
   const handleSave = async () => {
-    if (!formData.budgetCode?.trim() || !formData.budgetName?.trim() || (formData.monthlyCapAmount || 0) <= 0) {
-      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('budget.required', { defaultValue: 'Vui lòng nhập Mã ngân sách, Tên và Trần tháng > 0.' }) });
+    if (!formData.budgetMonth?.trim() || (formData.budgetCap || 0) <= 0) {
+      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('budget.required', { defaultValue: 'Vui lòng nhập Kỳ tháng và Trần ngân sách > 0.' }) });
       return;
     }
     setSubmitting(true);
     try {
-      await LoyaltyService.saveBudget(formData as ProgramBudgetModel, selectedTenant);
+      await LoyaltyService.saveBudget(formData as MonthlyBudgetModel, selectedTenant);
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('budget.saved', { defaultValue: 'Đã lưu cấu hình trần ngân sách.' }) });
       setShowDialog(false);
       fetchBudgets();
@@ -101,58 +101,56 @@ export const BudgetManagementPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<ProgramBudgetModel> value={budgets} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('budget.empty', { defaultValue: 'Chưa có hạng mục ngân sách nào được cấu hình.' })}>
-            <Column field="budgetCode" header={t('budget.code', { defaultValue: 'Mã Ngân Sách' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.budgetCode}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="budgetName" header={t('budget.name', { defaultValue: 'Hạng Mục' })} style={{ minWidth: '14rem' }} />
-            <Column field="periodMonth" header={t('budget.period', { defaultValue: 'Kỳ Tháng' })} body={(r) => <span className="font-mono">{r.periodMonth}</span>} style={{ minWidth: '7.5rem' }} />
-            <Column field="monthlyCapAmount" header={t('budget.cap', { defaultValue: 'Trần Tháng' })} body={(r) => <span className="font-mono">{Number(r.monthlyCapAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="spentAmount" header={t('budget.spent', { defaultValue: 'Đã Tiêu' })} body={(r) => <span className="font-mono">{Number(r.spentAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+          <DataTable<MonthlyBudgetModel[]> value={budgets} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('budget.empty', { defaultValue: 'Chưa có hạng mục ngân sách nào được cấu hình.' })}>
+            <Column field="sponsorType" header={t('budget.sponsor', { defaultValue: 'Nguồn Tài Trợ' })} body={(r: MonthlyBudgetModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.sponsorType}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="partnerName" header={t('budget.partner', { defaultValue: 'Đối Tác' })} body={(r: MonthlyBudgetModel) => r.partnerName || r.partnerCode || '--'} style={{ minWidth: '14rem' }} />
+            <Column field="budgetMonth" header={t('budget.period', { defaultValue: 'Kỳ Tháng' })} body={(r: MonthlyBudgetModel) => <span className="font-mono">{r.budgetMonth}</span>} style={{ minWidth: '7.5rem' }} />
+            <Column field="budgetCap" header={t('budget.cap', { defaultValue: 'Trần Tháng' })} body={(r: MonthlyBudgetModel) => <span className="font-mono">{Number(r.budgetCap || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+            <Column field="consumedAmount" header={t('budget.spent', { defaultValue: 'Đã Tiêu' })} body={(r: MonthlyBudgetModel) => <span className="font-mono">{Number(r.consumedAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
             <Column
               header={t('budget.utilization', { defaultValue: 'Mức Sử Dụng' })}
-              body={(r) => {
-                const pct = r.monthlyCapAmount > 0 ? Math.min(100, (Number(r.spentAmount || 0) / r.monthlyCapAmount) * 100) : 0;
+              body={(r: MonthlyBudgetModel) => {
+                const pct = r.budgetCap > 0 ? Math.min(100, (Number(r.consumedAmount || 0) / r.budgetCap) * 100) : 0;
                 return (
                   <div className="flex align-items-center gap-2">
-                    <ProgressBar value={Number(pct.toFixed(1))} showValue={false} style={{ height: '6px', width: '5rem' }} color={pct >= 100 ? '#ef4444' : pct >= (r.alertThresholdPercent || 80) ? '#f59e0b' : '#10b981'} />
+                    <ProgressBar value={Number(pct.toFixed(1))} showValue={false} style={{ height: '6px', width: '5rem' }} color={pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#10b981'} />
                     <span className="text-xs font-mono">{pct.toFixed(1)}%</span>
                   </div>
                 );
               }}
               style={{ minWidth: '11rem' }}
             />
-            <Column field="autoPauseOnExhaust" header={t('budget.auto_pause', { defaultValue: 'Auto-Pause 100%' })} body={(r) => <Tag value={r.autoPauseOnExhaust ? 'ON' : 'OFF'} severity={r.autoPauseOnExhaust ? 'info' : 'secondary'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'danger'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-            <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
+            <Column field="autoPausedAt100" header={t('budget.auto_pause', { defaultValue: 'Auto-Pause 100%' })} body={(r: MonthlyBudgetModel) => <Tag value={r.autoPausedAt100 ? 'PAUSED' : 'ENABLED'} severity={r.autoPausedAt100 ? 'warning' : 'info'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: MonthlyBudgetModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'danger'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+            <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r: MonthlyBudgetModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
           </DataTable>
         )}
       </div>
 
       <Dialog visible={showDialog} onHide={() => setShowDialog(false)} header={t('budget.dialog_title', { defaultValue: 'Cấu hình Trần Ngân sách Tháng' })} style={{ width: '36rem' }} modal className="p-fluid">
         <div className="flex flex-column gap-3">
-          <div className="field m-0">
-            <label className="text-sm font-medium">{t('budget.code', { defaultValue: 'Mã Ngân Sách' })} *</label>
-            <InputText value={formData.budgetCode || ''} onChange={(e) => setFormData({ ...formData, budgetCode: e.target.value.toUpperCase() })} className="font-mono" />
-          </div>
-          <div className="field m-0">
-            <label className="text-sm font-medium">{t('budget.name', { defaultValue: 'Tên Ngân Sách' })} *</label>
-            <InputText value={formData.budgetName || ''} onChange={(e) => setFormData({ ...formData, budgetName: e.target.value })} />
+          <div className="grid">
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('budget.sponsor', { defaultValue: 'Nguồn Tài Trợ' })} *</label>
+              <InputText value={formData.sponsorType || ''} onChange={(e) => setFormData({ ...formData, sponsorType: e.target.value.toUpperCase() })} className="font-mono" />
+            </div>
+            <div className="col-6 field m-0">
+              <label className="text-sm font-medium">{t('budget.partner_code', { defaultValue: 'Mã Đối Tác' })}</label>
+              <InputText value={formData.partnerCode || ''} onChange={(e) => setFormData({ ...formData, partnerCode: e.target.value.toUpperCase() })} className="font-mono" />
+            </div>
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.period', { defaultValue: 'Kỳ Tháng (YYYY-MM)' })}</label>
-              <InputText value={formData.periodMonth || ''} onChange={(e) => setFormData({ ...formData, periodMonth: e.target.value })} className="font-mono" />
+              <InputText value={formData.budgetMonth || ''} onChange={(e) => setFormData({ ...formData, budgetMonth: e.target.value })} className="font-mono" />
             </div>
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('budget.alert_threshold', { defaultValue: 'Ngưỡng cảnh báo (%)' })}</label>
-              <InputNumber value={formData.alertThresholdPercent ?? 80} onValueChange={(e) => setFormData({ ...formData, alertThresholdPercent: e.value || 80 })} min={10} max={99} suffix="%" />
+              <label className="text-sm font-medium">{t('budget.cap', { defaultValue: 'Trần Ngân Sách (HTG)' })} *</label>
+              <InputNumber value={formData.budgetCap ?? 0} onValueChange={(e) => setFormData({ ...formData, budgetCap: e.value || 0 })} min={0} />
             </div>
           </div>
-          <div className="field m-0">
-            <label className="text-sm font-medium">{t('budget.cap', { defaultValue: 'Trần Ngân Sách Tháng (HTG)' })} *</label>
-            <InputNumber value={formData.monthlyCapAmount ?? 0} onValueChange={(e) => setFormData({ ...formData, monthlyCapAmount: e.value || 0 })} min={0} />
-          </div>
           <div className="flex align-items-center gap-2">
-            <InputSwitch checked={!!formData.autoPauseOnExhaust} onChange={(e) => setFormData({ ...formData, autoPauseOnExhaust: e.value })} />
+            <InputSwitch checked={!!formData.autoPausedAt100} onChange={(e) => setFormData({ ...formData, autoPausedAt100: e.value })} />
             <span className="text-sm">{t('budget.auto_pause_label', { defaultValue: 'Tự động tạm dừng chiến dịch khi đạt 100% trần ngân sách' })}</span>
           </div>
         </div>

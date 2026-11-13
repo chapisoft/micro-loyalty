@@ -489,6 +489,7 @@ export const LoyaltyService = {
         grandTotalPointsRedeemed: 0,
         grandTotalFiatPayable: 0,
         grandTotalFiatReceivable: 0,
+        grandTotalFiatAmount: 0,
         grandTotalNetSettlement: 0,
         partnerSummaries: [],
         generatedAt: new Date().toISOString(),
@@ -1667,12 +1668,16 @@ export interface ApprovalRequestModel {
   targetType: string;
   targetId: string;
   actionType: string;
+  title?: string;
   payloadBefore?: any;
   payloadAfter?: any;
-  makerId: string;
+  makerId?: string;
+  makerUsername?: string;
   checkerId?: string;
+  checkerUsername?: string;
   status: string;
   reason?: string;
+  rejectReason?: string;
   reviewNote?: string;
   createdAt: string;
   reviewedAt?: string;

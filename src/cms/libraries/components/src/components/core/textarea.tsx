@@ -34,7 +34,7 @@ const AppInputTextarea: React.FC<AppInputTextareaProps> = ({
         // Set the value using the native setter
         nativeInputValueSetter.call(textareaRef.current, '');
       }
-      var event = new Event('input', { bubbles: true });
+      const event = new Event('input', { bubbles: true });
       textareaRef.current.dispatchEvent(event);
       props.onChange?.(event as any);
     }

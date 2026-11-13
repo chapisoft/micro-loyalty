@@ -252,6 +252,7 @@ public class AdminUserController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AdminUserPayload implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String username;
         private String email;
         private String fullName;
@@ -265,6 +266,7 @@ public class AdminUserController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AdminUserDto implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long userId;
         private String username;
         private String email;
@@ -285,6 +287,7 @@ public class AdminUserController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AdminRoleDto implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long roleId;
         private String code;
         private String name;
@@ -299,6 +302,7 @@ public class AdminUserController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AdminUserPageResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private int status;
         private String message;
         private List<AdminUserDto> data;
@@ -314,6 +318,7 @@ public class AdminUserController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AdminUserDetailResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
         private int status;
         private String message;
         private AdminUserDto data;

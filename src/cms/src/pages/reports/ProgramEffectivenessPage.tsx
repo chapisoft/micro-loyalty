@@ -32,9 +32,9 @@ export const ProgramEffectivenessPage: React.FC = () => {
     fetchReport();
   }, [fetchReport]);
 
-  const avgLift = rows.length > 0 ? rows.reduce((s, r) => s + Number(r.incrementalLiftPercent || 0), 0) / rows.length : 0;
-  const totalRevenue = rows.reduce((s, r) => s + Number(r.treatmentGroupRevenue || 0), 0);
-  const totalCost = rows.reduce((s, r) => s + Number(r.rewardCost || 0), 0);
+  const avgLift = rows.length > 0 ? rows.reduce((s, r) => s + Number(r.liftPercent || 0), 0) / rows.length : 0;
+  const totalRevenue = rows.reduce((s, r) => s + Number(r.incrementalRevenue || 0), 0);
+  const avgRoi = rows.length > 0 ? rows.reduce((s, r) => s + Number(r.roiPercent || 0), 0) / rows.length : 0;
 
   return (
     <div>
@@ -71,8 +71,8 @@ export const ProgramEffectivenessPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-4">
             <div className="p-3 border-round surface-50 border-1 surface-border">
-              <div className="text-xs text-500 uppercase">{t('report.reward_cost', { defaultValue: 'Chi phí Trả thưởng' })}</div>
-              <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{totalCost.toLocaleString()} HTG</div>
+              <div className="text-xs text-500 uppercase">{t('report.avg_roi', { defaultValue: 'ROI Trung Bình' })}</div>
+              <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{avgRoi.toFixed(1)}%</div>
             </div>
           </div>
         </div>
@@ -80,15 +80,16 @@ export const ProgramEffectivenessPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<ProgramEffectivenessModel> value={rows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('report.no_effectiveness', { defaultValue: 'Chưa có dữ liệu so sánh Lift vs Control Group.' })}>
-            <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến Dịch' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.campaignCode}</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<ProgramEffectivenessModel[]> value={rows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('report.no_effectiveness', { defaultValue: 'Chưa có dữ liệu so sánh Lift vs Control Group.' })}>
+            <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến Dịch' })} body={(r: ProgramEffectivenessModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.campaignCode}</span>} style={{ minWidth: '11rem' }} />
             <Column field="campaignName" header={t('campaign.name', { defaultValue: 'Tên Chiến Dịch' })} style={{ minWidth: '14rem' }} />
-            <Column field="treatmentGroupSize" header="Treatment N" body={(r) => Number(r.treatmentGroupSize || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
-            <Column field="controlGroupSize" header="Control N" body={(r) => Number(r.controlGroupSize || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
-            <Column field="treatmentGroupRevenue" header="Treatment Rev." body={(r) => <span className="font-mono">{Number(r.treatmentGroupRevenue || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="controlGroupRevenue" header="Control Rev." body={(r) => <span className="font-mono">{Number(r.controlGroupRevenue || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="incrementalLiftPercent" header="Incremental Lift" body={(r) => <Tag value={`${Number(r.incrementalLiftPercent || 0) >= 0 ? '+' : ''}${Number(r.incrementalLiftPercent || 0).toFixed(2)}%`} severity={Number(r.incrementalLiftPercent || 0) > 0 ? 'success' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="roiRatio" header="ROI" body={(r) => <span className="font-mono font-medium">{Number(r.roiRatio || 0).toFixed(2)}x</span>} style={{ minWidth: '6.5rem', textAlign: 'right' }} />
+            <Column field="testGroupSize" header="Test N" body={(r: ProgramEffectivenessModel) => Number(r.testGroupSize || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="controlGroupSize" header="Control N" body={(r: ProgramEffectivenessModel) => Number(r.controlGroupSize || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="testConversionRate" header="Test Conv." body={(r: ProgramEffectivenessModel) => <span className="font-mono">{Number(r.testConversionRate || 0).toFixed(2)}%</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="controlConversionRate" header="Control Conv." body={(r: ProgramEffectivenessModel) => <span className="font-mono">{Number(r.controlConversionRate || 0).toFixed(2)}%</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="incrementalRevenue" header="Incremental Rev." body={(r: ProgramEffectivenessModel) => <span className="font-mono">{Number(r.incrementalRevenue || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+            <Column field="liftPercent" header="Incremental Lift" body={(r: ProgramEffectivenessModel) => <Tag value={`${Number(r.liftPercent || 0) >= 0 ? '+' : ''}${Number(r.liftPercent || 0).toFixed(2)}%`} severity={Number(r.liftPercent || 0) > 0 ? 'success' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+            <Column field="roiPercent" header="ROI" body={(r: ProgramEffectivenessModel) => <span className="font-mono font-medium">{Number(r.roiPercent || 0).toFixed(1)}%</span>} style={{ minWidth: '6.5rem', textAlign: 'right' }} />
           </DataTable>
         )}
       </div>

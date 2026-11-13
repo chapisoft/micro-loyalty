@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LocalStorage, useAppProps } from 'micro-sdk';
+import { useAppProps } from 'micro-sdk';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { createGlobalStyle } from 'styled-components';
 
@@ -14,7 +14,6 @@ const GlobalStyles = createGlobalStyle<{ $theme: string }>`
 
 export default function App() {
   const { basename = '/', theme = 'light' } = useAppProps();
-  const token = LocalStorage.getToken();
 
   const router = useMemo(
     () =>
@@ -37,7 +36,7 @@ export default function App() {
           basename: basename,
         }
       ),
-    [basename, token]
+    [basename]
   );
 
   return (

@@ -10,7 +10,7 @@ import { LocalStorage } from 'micro-sdk';
 import { paths } from '@/paths';
 import { useLogin, ILoginParams } from '@/service/auth/login';
 
-interface FormValues extends ILoginParams {}
+type FormValues = ILoginParams;
 
 export function Login() {
   const { t, i18n } = useTranslation();

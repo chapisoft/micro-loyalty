@@ -1,3 +1,4 @@
+/* global __ENV, __VU, __ITER */
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
@@ -95,7 +96,7 @@ function buildHeaders(idempotencyKey) {
 function safeParseJson(body) {
   try {
     return body ? JSON.parse(body) : null;
-  } catch (_err) {
+  } catch {
     return null;
   }
 }

@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { ProposalStatus } from '@/models';
-import { LoyaltyService, PartnerProposalModel } from '@/service/loyalty.service';
+import { LoyaltyService, PartnerProgramProposalModel } from '@/service/loyalty.service';
 
 export const PartnerProgramProposalPage: React.FC = () => {
   const { t } = useTranslation();
@@ -23,11 +23,11 @@ export const PartnerProgramProposalPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>(
     () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
   );
-  const [proposals, setProposals] = useState<PartnerProposalModel[]>([]);
+  const [proposals, setProposals] = useState<PartnerProgramProposalModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState<Partial<PartnerProposalModel>>({});
+  const [formData, setFormData] = useState<Partial<PartnerProgramProposalModel>>({});
 
   const fetchProposals = useCallback(async () => {
     setLoading(true);
@@ -44,24 +44,28 @@ export const PartnerProgramProposalPage: React.FC = () => {
   }, [fetchProposals]);
 
   const openNew = () => {
+    const today = new Date().toISOString().slice(0, 10);
     setFormData({
-      proposalType: 'CO_FUNDED_CAMPAIGN',
-      title: '',
+      fundingType: 'CO_FUNDED_CAMPAIGN',
+      programName: '',
       description: '',
-      proposedBudgetAmount: 0,
-      coFundRatioPercent: 50,
+      proposedBudget: 0,
+      natcashCoFundPercent: 50,
+      earnRateBoostPercent: 10,
+      startDate: today,
+      endDate: today,
     });
     setShowDialog(true);
   };
 
   const handleSubmit = async () => {
-    if (!formData.title?.trim()) {
+    if (!formData.programName?.trim()) {
       toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('partner_portal.proposal_title_required', { defaultValue: 'Vui lòng nhập Tiêu đề Đề xuất.' }) });
       return;
     }
     setSubmitting(true);
     try {
-      await LoyaltyService.createPartnerProposal(formData as PartnerProposalModel, selectedTenant);
+      await LoyaltyService.createPartnerProposal(formData as PartnerProgramProposalModel, selectedTenant);
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Đã gửi đề xuất' }), detail: t('partner_portal.proposal_submitted', { defaultValue: 'Đề xuất đồng tài trợ đã được gửi tới Ban vận hành Loyalty.' }) });
       setShowDialog(false);
       fetchProposals();
@@ -93,14 +97,13 @@ export const PartnerProgramProposalPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<PartnerProposalModel> value={proposals} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có đề xuất chương trình nào.' })}>
-            <Column field="proposalCode" header={t('partner_portal.proposal_code', { defaultValue: 'Mã Đề Xuất' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.proposalCode || '--'}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="proposalType" header={t('partner_portal.proposal_type', { defaultValue: 'Loại Đề Xuất' })} body={(r) => <Tag value={r.proposalType} severity="info" />} style={{ minWidth: '11rem' }} />
-            <Column field="title" header={t('partner_portal.proposal_name', { defaultValue: 'Tiêu Đề' })} style={{ minWidth: '16rem' }} />
-            <Column field="proposedBudgetAmount" header={t('budget.cap', { defaultValue: 'Ngân Sách Đề Xuất' })} body={(r) => <span className="font-mono">{Number(r.proposedBudgetAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="coFundRatioPercent" header={t('partner_portal.cofund_ratio', { defaultValue: 'Tỷ Lệ Đồng Tài Trợ' })} body={(r) => `${r.coFundRatioPercent || 0}%`} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status || ProposalStatus.SUBMITTED} severity={r.status === ProposalStatus.APPROVED ? 'success' : r.status === ProposalStatus.REJECTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-            <Column field="reviewerNote" header={t('approval.checker_note', { defaultValue: 'Phản Hồi' })} style={{ minWidth: '13rem' }} />
+          <DataTable<PartnerProgramProposalModel[]> value={proposals} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có đề xuất chương trình nào.' })}>
+            <Column field="proposalCode" header={t('partner_portal.proposal_code', { defaultValue: 'Mã Đề Xuất' })} body={(r: PartnerProgramProposalModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.proposalCode || '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="fundingType" header={t('partner_portal.proposal_type', { defaultValue: 'Hình Thức Tài Trợ' })} body={(r: PartnerProgramProposalModel) => <Tag value={r.fundingType} severity="info" />} style={{ minWidth: '11rem' }} />
+            <Column field="programName" header={t('partner_portal.proposal_name', { defaultValue: 'Tên Chương Trình' })} style={{ minWidth: '16rem' }} />
+            <Column field="proposedBudget" header={t('budget.cap', { defaultValue: 'Ngân Sách Đề Xuất' })} body={(r: PartnerProgramProposalModel) => <span className="font-mono">{Number(r.proposedBudget || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+            <Column field="natcashCoFundPercent" header={t('partner_portal.cofund_ratio', { defaultValue: 'Natcash Đồng Tài Trợ' })} body={(r: PartnerProgramProposalModel) => `${r.natcashCoFundPercent || 0}%`} style={{ minWidth: '9rem', textAlign: 'center' }} />
+            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: PartnerProgramProposalModel) => <Tag value={r.status || ProposalStatus.PENDING_APPROVAL} severity={r.status === ProposalStatus.APPROVED ? 'success' : r.status === ProposalStatus.REJECTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
           </DataTable>
         )}
       </div>
@@ -109,20 +112,20 @@ export const PartnerProgramProposalPage: React.FC = () => {
         <div className="flex flex-column gap-3">
           <div className="field m-0">
             <label className="text-sm font-medium">{t('partner_portal.proposal_type', { defaultValue: 'Loại Đề Xuất' })}</label>
-            <Dropdown value={formData.proposalType} options={[{ label: 'CO_FUNDED_CAMPAIGN', value: 'CO_FUNDED_CAMPAIGN' }, { label: 'VOUCHER_SUPPLY', value: 'VOUCHER_SUPPLY' }, { label: 'TIER_PERK', value: 'TIER_PERK' }]} onChange={(e) => setFormData({ ...formData, proposalType: e.value })} appendTo="self" />
+            <Dropdown value={formData.fundingType} options={[{ label: 'CO_FUNDED_CAMPAIGN', value: 'CO_FUNDED_CAMPAIGN' }, { label: 'VOUCHER_SUPPLY', value: 'VOUCHER_SUPPLY' }, { label: 'TIER_PERK', value: 'TIER_PERK' }]} onChange={(e) => setFormData({ ...formData, fundingType: e.value })} appendTo="self" />
           </div>
           <div className="field m-0">
-            <label className="text-sm font-medium">{t('partner_portal.proposal_name', { defaultValue: 'Tiêu Đề Đề Xuất' })} *</label>
-            <InputText value={formData.title || ''} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+            <label className="text-sm font-medium">{t('partner_portal.proposal_name', { defaultValue: 'Tên Chương Trình' })} *</label>
+            <InputText value={formData.programName || ''} onChange={(e) => setFormData({ ...formData, programName: e.target.value })} />
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.cap', { defaultValue: 'Ngân sách dự kiến (HTG)' })}</label>
-              <InputNumber value={formData.proposedBudgetAmount ?? 0} onValueChange={(e) => setFormData({ ...formData, proposedBudgetAmount: e.value || 0 })} min={0} />
+              <InputNumber value={formData.proposedBudget ?? 0} onValueChange={(e) => setFormData({ ...formData, proposedBudget: e.value || 0 })} min={0} />
             </div>
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('partner_portal.cofund_ratio', { defaultValue: 'Đối tác góp (%)' })}</label>
-              <InputNumber value={formData.coFundRatioPercent ?? 50} onValueChange={(e) => setFormData({ ...formData, coFundRatioPercent: e.value || 0 })} min={0} max={100} suffix="%" />
+              <label className="text-sm font-medium">{t('partner_portal.cofund_ratio', { defaultValue: 'Natcash đồng tài trợ (%)' })}</label>
+              <InputNumber value={formData.natcashCoFundPercent ?? 50} onValueChange={(e) => setFormData({ ...formData, natcashCoFundPercent: e.value || 0 })} min={0} max={100} suffix="%" />
             </div>
           </div>
           <div className="field m-0">

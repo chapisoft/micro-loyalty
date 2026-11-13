@@ -18,7 +18,7 @@ import { ClearingStatus, PaymentBatchStatus } from '@/models';
 import {
   LoyaltyService,
   ClearingSummaryModel,
-  ClearingBatchModel,
+  ClearingPaymentBatchModel,
   DisputeItemModel,
   PartnerTransactionItemModel,
   PartnerTransactionsResponseModel,
@@ -95,12 +95,12 @@ export const ClearingSettlementPage: React.FC = () => {
   const [detailData, setDetailData] = useState<PartnerTransactionsResponseModel | null>(null);
 
   // LM-07 Payment Batches (PAY-...)
-  const [batches, setBatches] = useState<ClearingBatchModel[]>([]);
+  const [batches, setBatches] = useState<ClearingPaymentBatchModel[]>([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
   const [showCreateBatchDialog, setShowCreateBatchDialog] = useState(false);
   const [batchPartnerId, setBatchPartnerId] = useState<number | null>(null);
   const [batchMdrRate, setBatchMdrRate] = useState<number>(1.5);
-  const [trackBatch, setTrackBatch] = useState<ClearingBatchModel | null>(null);
+  const [trackBatch, setTrackBatch] = useState<ClearingPaymentBatchModel | null>(null);
 
   const fetchClearingData = useCallback(async () => {
     setLoading(true);
@@ -147,7 +147,7 @@ export const ClearingSettlementPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       await LoyaltyService.createClearingBatch(
-        { partnerId: batchPartnerId, periodFrom: fromDate, periodTo: toDate, mdrFeeRate: batchMdrRate },
+        { partnerId: batchPartnerId, periodFrom: fromDate, periodTo: toDate },
         selectedTenant
       );
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('clearing.batch_created', { defaultValue: 'Đã khởi tạo lô thanh toán PAY-... thành công.' }) });
@@ -160,7 +160,7 @@ export const ClearingSettlementPage: React.FC = () => {
     }
   };
 
-  const handleConfirmBatch = async (batch: ClearingBatchModel) => {
+  const handleConfirmBatch = async (batch: ClearingPaymentBatchModel) => {
     setIsSubmitting(true);
     try {
       await LoyaltyService.confirmClearingBatch(batch.batchCode, selectedTenant);
@@ -629,15 +629,15 @@ export const ClearingSettlementPage: React.FC = () => {
                 <Button icon="pi pi-refresh" outlined size="small" onClick={fetchClearingData} loading={batchesLoading} />
               </div>
             </div>
-            <DataTable<ClearingBatchModel> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches', { defaultValue: 'Chưa có lô thanh toán PAY-... nào được tạo trong kỳ.' })}>
-              <Column field="batchCode" header={t('clearing.batch_code', { defaultValue: 'Mã Lô PAY' })} body={(b) => <span className="font-mono white-space-nowrap font-medium text-primary">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
-              <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Đối Tác' })} body={(b) => `${b.partnerCode} - ${b.partnerName || ''}`} style={{ minWidth: '13rem' }} />
-              <Column header={t('clearing.period', { defaultValue: 'Kỳ Đối Soát' })} body={(b) => <span className="font-mono white-space-nowrap text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
-              <Column field="grossAmount" header={t('clearing.gross_amount', { defaultValue: 'Tổng Giá Trị' })} body={(b) => <span className="font-mono">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(b) => <span className="font-mono text-orange-600">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="netPayableAmount" header={t('clearing.net_payable', { defaultValue: 'Thực Nhận Ròng' })} body={(b) => <span className="font-mono font-medium text-green-700">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(b) => <Tag value={b.status} severity={b.status === PaymentBatchStatus.SETTLED ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(b) => (
+            <DataTable<ClearingPaymentBatchModel[]> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches', { defaultValue: 'Chưa có lô thanh toán PAY-... nào được tạo trong kỳ.' })}>
+              <Column field="batchCode" header={t('clearing.batch_code', { defaultValue: 'Mã Lô PAY' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Đối Tác' })} body={(b: ClearingPaymentBatchModel) => `${b.partnerCode} - ${b.partnerName || ''}`} style={{ minWidth: '13rem' }} />
+              <Column header={t('clearing.period', { defaultValue: 'Kỳ Đối Soát' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="grossAmount" header={t('clearing.gross_amount', { defaultValue: 'Tổng Giá Trị' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(b: ClearingPaymentBatchModel) => <span className="font-mono text-orange-600">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="netPayableAmount" header={t('clearing.net_payable', { defaultValue: 'Thực Nhận Ròng' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono font-medium text-green-700">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(b: ClearingPaymentBatchModel) => <Tag value={b.status} severity={b.status === PaymentBatchStatus.PAID ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(b: ClearingPaymentBatchModel) => (
                 <div className="flex gap-1">
                   <Button icon="pi pi-eye" label={t('clearing.track_batch', { defaultValue: 'Theo dõi' })} size="small" outlined onClick={() => setTrackBatch(b)} />
                 </div>
@@ -874,18 +874,18 @@ export const ClearingSettlementPage: React.FC = () => {
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
               <div className="col-6"><span className="text-500 block text-xs">Đối tác</span><span className="font-medium">{trackBatch.partnerCode} - {trackBatch.partnerName}</span></div>
-              <div className="col-6"><span className="text-500 block text-xs">Trạng thái</span><Tag value={trackBatch.status} severity={trackBatch.status === PaymentBatchStatus.SETTLED ? 'success' : 'warning'} /></div>
+              <div className="col-6"><span className="text-500 block text-xs">Trạng thái</span><Tag value={trackBatch.status} severity={trackBatch.status === PaymentBatchStatus.PAID ? 'success' : 'warning'} /></div>
               <div className="col-4 mt-2"><span className="text-500 block text-xs">Tổng giá trị</span><span className="font-mono">{Number(trackBatch.grossAmount || 0).toLocaleString()} HTG</span></div>
               <div className="col-4 mt-2"><span className="text-500 block text-xs" title="Merchant Discount Rate Fee">MDR Fee</span><span className="font-mono text-orange-600">{Number(trackBatch.mdrFeeAmount || 0).toLocaleString()} HTG</span></div>
               <div className="col-4 mt-2"><span className="text-500 block text-xs">Thực nhận ròng</span><span className="font-mono font-medium text-green-700">{Number(trackBatch.netPayableAmount || 0).toLocaleString()} HTG</span></div>
             </div>
             <div>
               <div className="text-xs text-500 mb-1">{t('clearing.settlement_progress', { defaultValue: 'Tiến trình đối soát & giải ngân' })}</div>
-              <ProgressBar value={trackBatch.status === PaymentBatchStatus.SETTLED ? 100 : trackBatch.status === PaymentBatchStatus.PARTNER_CONFIRMED ? 75 : trackBatch.status === PaymentBatchStatus.PENDING_PARTNER ? 40 : 20} />
+              <ProgressBar value={trackBatch.status === PaymentBatchStatus.PAID ? 100 : trackBatch.status === PaymentBatchStatus.PARTNER_CONFIRMED ? 75 : trackBatch.status === PaymentBatchStatus.PENDING_CONFIRM ? 40 : 20} />
             </div>
             <div className="flex justify-content-end gap-2 mt-2">
               <Button label={t('common.close', { defaultValue: 'Đóng' })} outlined onClick={() => setTrackBatch(null)} />
-              {trackBatch.status !== PaymentBatchStatus.SETTLED && (
+              {trackBatch.status !== PaymentBatchStatus.PAID && (
                 <Button label={t('clearing.confirm_settle_batch', { defaultValue: 'Xác nhận Hoàn tất Chi trả' })} icon="pi pi-check-circle" severity="success" onClick={() => handleConfirmBatch(trackBatch)} loading={isSubmitting} />
               )}
             </div>

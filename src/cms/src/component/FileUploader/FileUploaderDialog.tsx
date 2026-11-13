@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { FieldType } from '@/constants';
 import FormField from '@/ui/FormField.tsx';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FileObject, useToast } from 'components';
+import { FileObject } from 'components';
 import AppDialog from 'components/src/components/core/dialog';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +27,7 @@ const FileUploaderDialog: React.FC<FileUploaderDialogProps> = ({ visible, onHide
   const defaultValues = {
     file: null,
   } as Values;
-  const { control, handleSubmit, reset, watch, setValue } = useForm<Values>({
+  const { control, reset } = useForm<Values>({
     defaultValues,
     resolver: zodResolver(schema),
   });
@@ -37,9 +37,6 @@ const FileUploaderDialog: React.FC<FileUploaderDialogProps> = ({ visible, onHide
       file: null,
     });
   }, [reset, visible]);
-
-  // Use react-hook-form with zod for validation
-  const toast = useToast();
 
   return (
     <>

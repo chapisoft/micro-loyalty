@@ -1,6 +1,6 @@
 import { AnimationOutlet } from 'components';
 
-interface AuthLayoutProps {}
+type AuthLayoutProps = Record<string, never>;
 
 const AuthLayout: React.FC<AuthLayoutProps> = () => {
   return (

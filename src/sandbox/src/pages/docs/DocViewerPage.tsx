@@ -359,7 +359,7 @@ class _TransferPageState extends State<TransferPage> {
         _otp = otp;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Mã OTP: \$otp')),
+        SnackBar(content: Text('Mã OTP: ${'$'}otp')),
       );
     }
   }
@@ -378,7 +378,7 @@ class _TransferPageState extends State<TransferPage> {
             ),
             if (_otp != null) ...[
               SizedBox(height: 20),
-              Text('MÃ SMART OTP: \$_otp', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text('MÃ SMART OTP: ${'$'}_otp', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             ]
           ],
         ),

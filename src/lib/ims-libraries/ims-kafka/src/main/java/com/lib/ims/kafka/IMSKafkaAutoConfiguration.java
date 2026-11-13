@@ -35,7 +35,6 @@ import org.springframework.util.backoff.FixedBackOff;
 @ComponentScan(
    basePackages = {"com.lib.ims.kafka"}
 )
-@SuppressWarnings("null")
 public class IMSKafkaAutoConfiguration {
    private final KafkaProperties kafkaProperties;
 

@@ -2,6 +2,7 @@
 
 **Ngày đánh giá cập nhật:** 13/11/2026 (Rà soát toàn diện sau đợt cập nhật 13/11 trên Figma)  
 **Tài liệu đối chiếu:**
+
 * Giải pháp & Tài liệu thiết kế hệ thống: `docs/ba/solution.md`, `docs/ba/detailed_design.md`, `docs/ba/architecture_evolution_v2.md`, `docs/ba/datalake_integration_spec.md`
 * Nguồn Figma chính thức: File `exk9D9x6gHQPD0feUadthB` – Trang `Loyalty` (Node `1168:2725`, tập Node cập nhật `20634:*`)
 * Danh mục đối soát Google Sheet: Bảng tính `Trang tính1` (`gid=578312992`, 74 mã màn hình quy chuẩn)
@@ -144,10 +145,12 @@ Tổng cộng **75 màn hình** trải dài qua 7 Section nghiệp vụ người
 ## 7. ĐÁNH GIÁ LOGIC HỆ THỐNG & KHUYẾN NGHỊ TINH CHỈNH UI/UX KHI TRIỂN KHAI FRONTEND
 
 ### 7.1. Kết luận đánh giá tính năng & logic theo tài liệu thiết kế hệ thống
+
 * **Tính đầy đủ & nhất quán nghiệp vụ (100% Đạt):** Toàn bộ luồng cốt lõi từ quản trị RBAC/Maker-Checker (`QT-01..07`), sổ cái điểm FIFO (`DT-01..03`), vòng đời hạng hội viên (`HV-01..09`), bộ dựng luật 9 loại nhiệm vụ (`NV-01..07`), hệ sinh thái đổi thưởng đa kênh App/Webview/USSD (`VQ-01..05`, `LM-17`), GameHub (`GM-01..09`), đối soát liên minh (`LM-01..11`) đến luồng Đại lý (`AG-01..03`) và Trợ lý AI (`AI-01`) đều khớp logic trong `detailed_design.md` và `solution.md`.
 * **Tính sẵn sàng lập trình:** Đội ngũ thiết kế không cần chỉnh sửa thêm bản vẽ tính năng nào để bắt đầu cắt giao diện và tích hợp API.
 
 ### 7.2. 6 gợi ý tinh chỉnh UI/UX bổ sung trực tiếp trong mã nguồn Frontend (Tùy chọn)
+
 Các điểm sau không phải lỗi thiếu chức năng trên Figma mà là khuyến nghị tối ưu trải nghiệm thực tế khi lập trình `loyalty-cms` và `loyalty-webview`:
 
 1. **Hiển thị đếm lùi `Grace Period` 7 ngày khi xoay vòng API Key (`QT-06` – `20634:5888`):** Tài liệu `detailed_design.md` quy định khóa cũ giữ hiệu lực chuyển tiếp 7 ngày khi Rotate Key. Khi code trên Partner Portal, cần hiển thị bộ đếm ngày hết hạn của khóa cũ kèm nút `Revoke old key now` để đối tác chủ động thu hồi sớm nếu nghi ngờ lộ khóa.

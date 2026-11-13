@@ -148,7 +148,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       birdRef.current.vy = JUMP_FORCE;
       GameSounds.playStart();
     }
-  }, [gameState, initGame]);
+  }, [gameState, initGame, JUMP_FORCE]);
 
   const handleGameOver = useCallback(() => {
     setGameState('GAMEOVER');
@@ -162,7 +162,9 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       setHighScore(currentScore);
       try {
         localStorage.setItem('flappy_best_score', String(currentScore));
-      } catch {}
+      } catch {
+        /* ignore storage errors */
+      }
     }
 
     if (currentScore >= 5) {

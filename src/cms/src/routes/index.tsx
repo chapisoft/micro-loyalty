@@ -330,11 +330,13 @@ const mainAppRoutes: RouteObject = {
   ],
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const routes: RouteObject[] = [
   mainAppRoutes,
   { path: '*', element: <NotFoundPage /> },
 ];
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const noAuthRoutes: RouteObject[] = [
   auth,
   { path: '*', element: <NotFoundPage /> },

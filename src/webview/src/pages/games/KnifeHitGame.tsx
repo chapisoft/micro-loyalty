@@ -48,6 +48,7 @@ export interface KnifeStageTheme {
   bgGlowColor: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const STAGE_THEMES: KnifeStageTheme[] = [
   // Stage 1: Thớt Gỗ Cổ Thụ Caribe
   {
@@ -129,12 +130,14 @@ export const STAGE_THEMES: KnifeStageTheme[] = [
   },
 ];
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getStageTheme = (stageNum: number): KnifeStageTheme => {
   const idx = Math.min(STAGE_THEMES.length - 1, Math.max(0, stageNum - 1));
   return STAGE_THEMES[idx];
 };
 
 // Calculate dynamic target scale factor based on stage
+// eslint-disable-next-line react-refresh/only-export-components
 export const getTargetScale = (stageNum: number): number => {
   if (stageNum === 1) return 1.0;
   if (stageNum === 2) return 0.88;
@@ -145,6 +148,7 @@ export const getTargetScale = (stageNum: number): number => {
 };
 
 // Calculate base rotation speed based on stage
+// eslint-disable-next-line react-refresh/only-export-components
 export const getBaseRotationSpeed = (stageNum: number): number => {
   if (stageNum === 1) return 0.038;
   if (stageNum === 2) return 0.050;
@@ -799,7 +803,9 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
       localStorage.setItem('knife_hit_stage', String(nextS));
       localStorage.setItem('knife_hit_score', String(score));
       localStorage.setItem('knife_hit_highest_stage', String(newHighest));
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     initStage(nextS);
     setShowRewardModal(false);
   };
@@ -809,7 +815,9 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
     try {
       localStorage.setItem('knife_hit_stage', '1');
       localStorage.setItem('knife_hit_score', '0');
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     initStage(1);
   };
 
@@ -821,7 +829,9 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
     try {
       localStorage.setItem('knife_hit_stage', '1');
       localStorage.setItem('knife_hit_score', '0');
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     setShowRewardModal(false);
   };
 

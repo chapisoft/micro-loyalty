@@ -19,6 +19,8 @@ export interface AppConfirmDialogProps {
   loading?: boolean;
   severity?: 'danger' | 'warning' | 'info' | 'primary';
   className?: string;
+  acceptButtonProps?: Record<string, any>;
+  rejectButtonProps?: Record<string, any>;
 }
 
 export const AppConfirmDialog: React.FC<AppConfirmDialogProps> = ({
@@ -38,6 +40,8 @@ export const AppConfirmDialog: React.FC<AppConfirmDialogProps> = ({
   loading,
   severity = 'danger',
   className,
+  acceptButtonProps,
+  rejectButtonProps,
 }) => {
   const finalTitle = header || title || 'Xác nhận';
   const finalMessage = message || '';
@@ -101,6 +105,7 @@ export const AppConfirmDialog: React.FC<AppConfirmDialogProps> = ({
             severity="secondary"
             className="px-4 py-2 font-medium"
             style={{ borderRadius: '8px' }}
+            {...rejectButtonProps}
           />
           <Button
             label={finalAcceptLabel}
@@ -115,6 +120,7 @@ export const AppConfirmDialog: React.FC<AppConfirmDialogProps> = ({
               borderColor: 'transparent',
               color: '#ffffff',
             }}
+            {...acceptButtonProps}
           />
         </div>
       </div>

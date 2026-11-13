@@ -163,7 +163,7 @@ Hệ thống bắt buộc áp dụng tiêu chuẩn Zero-Hardcode toàn diện tr
   * Cấm viết `rowData.status === 'ACTIVE'` hoặc `tier === 'GOLD'`.
   * Bắt buộc khai báo và import các Enums / Constants tập trung tại `src/types/` hoặc `src/constants/` (ví dụ `TierLevel.GOLD`, `VoucherStatus.ACTIVE`, `PolicyStatus.ACTIVE`).
 * **Hằng số đường dẫn và tham số**:
-  * Đường dẫn trang web phải lấy từ `paths.*` trong [paths.ts](file:///Users/micro/Source/chapisoft/micro-loyalty/src/cms/src/paths.ts).
+  * Đường dẫn trang web phải lấy từ `paths.*` trong [paths.ts](../src/cms/src/paths.ts).
   * Cấu hình phân trang, định dạng ngày giờ (`DD/MM/YYYY HH:mm:ss`), tỷ lệ màn hình phải lấy từ `AppConstants`.
 
 #### 4. Trụ Cột Cấu Hình Môi Trường & Bảo Mật (Zero Secret Hardcoding Standard):

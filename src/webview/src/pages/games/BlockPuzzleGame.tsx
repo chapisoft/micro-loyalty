@@ -205,7 +205,9 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
       setHighScore(newScore);
       try {
         localStorage.setItem('block_puzzle_best_score', String(newScore));
-      } catch {}
+      } catch {
+        /* ignore storage errors */
+      }
     }
 
     setGrid(newGrid);

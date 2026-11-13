@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -12,10 +12,11 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { Partner, partnerService } from '@/service/partner.service';
-import { LoyaltyService, SystemIntegrationItemModel, PartnerApiKeyModel } from '@/service/loyalty.service';
+import { LoyaltyService, SystemIntegrationItemModel, PartnerApiKeyItemModel } from '@/service/loyalty.service';
 import { TenantSelector } from '@/components/TenantSelector';
 import { AppBreadcrumb } from 'components';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const PARTNER_TYPES = [
   { value: 'RETAIL', icon: 'pi pi-shopping-cart', badgeColor: '#10B981', translationKey: 'type_retail' },
   { value: 'TELECOM', icon: 'pi pi-phone', badgeColor: '#0284C7', translationKey: 'type_telecom' },
@@ -54,7 +55,7 @@ export const Partners: React.FC = () => {
   const [editWebhookUrl, setEditWebhookUrl] = useState<string>('');
   const [editIpWhitelist, setEditIpWhitelist] = useState<string>('');
   const [rotatedKeyOnce, setRotatedKeyOnce] = useState<string | null>(null);
-  const [partnerKeys, setPartnerKeys] = useState<PartnerApiKeyModel[]>([]);
+  const [partnerKeys, setPartnerKeys] = useState<PartnerApiKeyItemModel[]>([]);
   const [keyLoading, setKeyLoading] = useState<boolean>(false);
 
   // Sinh khóa B2B ngẫu nhiên
@@ -73,7 +74,7 @@ export const Partners: React.FC = () => {
     return `whsec_${randomHex}`;
   };
 
-  const fetchData = async (tenantId: string = selectedTenant) => {
+  const fetchData = useCallback(async (tenantId: string = selectedTenant) => {
     setLoading(true);
     try {
       const data = await partnerService.getAll(tenantId);
@@ -84,9 +85,9 @@ export const Partners: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTenant]);
 
-  const fetchIntegrations = async (tenantId: string = selectedTenant) => {
+  const fetchIntegrations = useCallback(async (tenantId: string = selectedTenant) => {
     setIntegrationsLoading(true);
     try {
       const list = await LoyaltyService.getIntegrationsOverview(tenantId);
@@ -94,12 +95,12 @@ export const Partners: React.FC = () => {
     } finally {
       setIntegrationsLoading(false);
     }
-  };
+  }, [selectedTenant]);
 
   useEffect(() => {
     fetchData(selectedTenant);
     fetchIntegrations(selectedTenant);
-  }, [selectedTenant]);
+  }, [fetchData, fetchIntegrations, selectedTenant]);
 
   const openKeyWebhookDialog = async (p: Partner) => {
     setKeyTargetPartner(p);
@@ -109,8 +110,8 @@ export const Partners: React.FC = () => {
     setShowKeyWebhookDialog(true);
     setKeyLoading(true);
     try {
-      const keys = await LoyaltyService.getPartnerApiKeys(selectedTenant);
-      setPartnerKeys(Array.isArray(keys) ? keys : []);
+      const cfg = await LoyaltyService.getPartnerApiKeys(selectedTenant);
+      setPartnerKeys(Array.isArray(cfg?.keys) ? cfg.keys : []);
     } finally {
       setKeyLoading(false);
     }
@@ -121,7 +122,7 @@ export const Partners: React.FC = () => {
     setKeyLoading(true);
     try {
       await LoyaltyService.updatePartnerWebhookConfig(
-        { webhookUrl: editWebhookUrl.trim(), ipWhitelist: editIpWhitelist.split(',').map((s) => s.trim()).filter(Boolean) },
+        { webhookUrl: editWebhookUrl.trim(), ipWhitelist: editIpWhitelist.split(',').map((s) => s.trim()).filter(Boolean).join(',') },
         selectedTenant
       );
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('partner.webhook_updated', { defaultValue: 'Đã cập nhật cấu hình Webhook & IP Whitelist.' }) });
@@ -136,10 +137,10 @@ export const Partners: React.FC = () => {
   const handleRotateApiKey = async () => {
     setKeyLoading(true);
     try {
-      const res = await LoyaltyService.rotatePartnerApiKey({ graceDays: 7 }, selectedTenant);
-      setRotatedKeyOnce(res?.newKey || null);
-      const keys = await LoyaltyService.getPartnerApiKeys(selectedTenant);
-      setPartnerKeys(Array.isArray(keys) ? keys : []);
+      const res = await LoyaltyService.rotatePartnerApiKey({ label: `Rotated Key (${new Date().toISOString().slice(0, 10)})` }, selectedTenant);
+      setRotatedKeyOnce(res?.plainTextKey || null);
+      const cfg = await LoyaltyService.getPartnerApiKeys(selectedTenant);
+      setPartnerKeys(Array.isArray(cfg?.keys) ? cfg.keys : []);
       toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Xoay vòng API Key' }), detail: t('partner.rotate_success', { defaultValue: 'Khóa mới chỉ hiển thị 1 lần. Khóa cũ còn hiệu lực 7 ngày (Grace Period).' }) });
     } catch (err: any) {
       toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
@@ -697,12 +698,12 @@ export const Partners: React.FC = () => {
                           <div className="font-medium text-900">{sys.systemName}</div>
                           <div className="text-xs font-mono text-500">{sys.systemCode} · {sys.protocol || 'REST/HTTPS'}</div>
                         </div>
-                        <Tag value={sys.status} severity={sys.status === 'HEALTHY' ? 'success' : sys.status === 'DEGRADED' ? 'warning' : 'danger'} />
+                        <Tag value={sys.status} severity={sys.status === 'UP' ? 'success' : sys.status === 'DEGRADED' ? 'warning' : 'danger'} />
                       </div>
                       <div className="text-xs text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap" title={sys.endpointUrl}>{sys.endpointUrl || '--'}</div>
                       <div className="flex justify-content-between text-xs pt-2 border-top-1 surface-border">
                         <span>Latency: <span className="font-mono">{sys.latencyMs ?? 0} ms</span></span>
-                        <span>24h Rate: <span className="font-mono">{Number(sys.successRate24h ?? 0).toFixed(2)}%</span></span>
+                        <span>Uptime: <span className="font-mono">{Number(sys.uptimePercent ?? 0).toFixed(2)}%</span></span>
                       </div>
                     </div>
                   </div>
@@ -1068,11 +1069,11 @@ Content-Type: application/json`}
               </div>
             )}
 
-            <DataTable<PartnerApiKeyModel> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys', { defaultValue: 'Chưa có danh sách khóa từ hệ thống.' })}>
-              <Column field="keyPrefix" header="Prefix" body={(k) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={(k) => <Tag value={k.status} severity={k.status === 'ACTIVE' ? 'success' : k.status === 'GRACE_PERIOD' ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
-              <Column field="graceUntil" header="Grace Period" body={(k) => <span className="font-mono text-xs white-space-nowrap">{k.graceUntil ? new Date(k.graceUntil).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
-              <Column header={t('common.action', { defaultValue: 'Thu hồi' })} body={(k) => k.id && k.status === 'GRACE_PERIOD' ? <Button label={t('partner.revoke_now', { defaultValue: 'Revoke old key now' })} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
+            <DataTable<PartnerApiKeyItemModel[]> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys', { defaultValue: 'Chưa có danh sách khóa từ hệ thống.' })}>
+              <Column field="keyPrefix" header="Prefix" body={(k: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === 'ACTIVE' ? 'success' : k.status === 'GRACE_PERIOD' ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
+              <Column field="graceExpiresAt" header="Grace Period" body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
+              <Column header={t('common.action', { defaultValue: 'Thu hồi' })} body={(k: PartnerApiKeyItemModel) => k.id && k.status === 'GRACE_PERIOD' ? <Button label={t('partner.revoke_now', { defaultValue: 'Revoke old key now' })} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
             </DataTable>
           </div>
         </div>

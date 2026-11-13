@@ -54,14 +54,14 @@ export const ReminderScenariosPage: React.FC = () => {
     setFormData({
       scenarioCode: '',
       scenarioName: '',
-      segmentCode: CustomerSegmentCode.AT_RISK,
+      targetSegment: CustomerSegmentCode.WIN_BACK,
       channel: 'PUSH_INAPP',
-      triggerCondition: 'POINTS_EXPIRING_7D',
-      templateVi: '',
-      templateEn: '',
-      templateFr: '',
-      templateHt: '',
-      antiSpamHours: 72,
+      triggerType: 'POINTS_EXPIRING_7D',
+      bodyVi: '',
+      bodyEn: '',
+      bodyFr: '',
+      bodyHt: '',
+      quietHoursRespect: true,
       maxPerWeek: 2,
       status: CommonStatus.ACTIVE,
     });
@@ -113,25 +113,25 @@ export const ReminderScenariosPage: React.FC = () => {
             {loading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
             ) : (
-              <DataTable<ReminderScenarioModel> value={scenarios} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('scenario.empty', { defaultValue: 'Chưa có kịch bản gợi nhắc nào được cấu hình.' })}>
-                <Column field="scenarioCode" header={t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
+              <DataTable<ReminderScenarioModel[]> value={scenarios} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('scenario.empty', { defaultValue: 'Chưa có kịch bản gợi nhắc nào được cấu hình.' })}>
+                <Column field="scenarioCode" header={t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} body={(r: ReminderScenarioModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
                 <Column field="scenarioName" header={t('scenario.name', { defaultValue: 'Tên Kịch Bản' })} style={{ minWidth: '14rem' }} />
-                <Column field="segmentCode" header={t('segment.code', { defaultValue: 'Phân Khúc' })} body={(r) => <Tag value={r.segmentCode} severity="info" />} style={{ minWidth: '10rem' }} />
-                <Column field="channel" header={t('scenario.channel', { defaultValue: 'Kênh Gửi' })} body={(r) => <Tag value={r.channel} />} style={{ minWidth: '9rem' }} />
-                <Column header={t('scenario.anti_spam', { defaultValue: 'Chống Spam' })} body={(r) => <span className="text-xs font-mono">{r.antiSpamHours}h / tối đa {r.maxPerWeek}/tuần</span>} style={{ minWidth: '11rem' }} />
-                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-                <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
+                <Column field="targetSegment" header={t('segment.code', { defaultValue: 'Phân Khúc' })} body={(r: ReminderScenarioModel) => <Tag value={r.targetSegment} severity="info" />} style={{ minWidth: '10rem' }} />
+                <Column field="channel" header={t('scenario.channel', { defaultValue: 'Kênh Gửi' })} body={(r: ReminderScenarioModel) => <Tag value={r.channel} />} style={{ minWidth: '9rem' }} />
+                <Column header={t('scenario.anti_spam', { defaultValue: 'Chống Spam' })} body={(r: ReminderScenarioModel) => <span className="text-xs font-mono">{r.quietHoursRespect ? 'Quiet Hours · ' : ''}tối đa {r.maxPerWeek}/tuần</span>} style={{ minWidth: '11rem' }} />
+                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: ReminderScenarioModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+                <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r: ReminderScenarioModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
               </DataTable>
             )}
           </TabPanel>
 
           <TabPanel header={t('scenario.tab_logs', { defaultValue: `Nhật ký Gửi (${sendLogs.length})` })} leftIcon="pi pi-history mr-2">
-            <DataTable<ReminderSendLogModel> value={sendLogs} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có lịch sử gửi gợi nhắc.' })}>
-              <Column field="scenarioCode" header={t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} body={(r) => <span className="font-mono white-space-nowrap">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
-              <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
+            <DataTable<ReminderSendLogModel[]> value={sendLogs} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có lịch sử gửi gợi nhắc.' })}>
+              <Column field="scenarioCode" header={t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
               <Column field="channel" header={t('scenario.channel', { defaultValue: 'Kênh' })} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem' }} />
-              <Column field="sentAt" header={t('common.created_at', { defaultValue: 'Thời Gian Gửi' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem' }} />
+              <Column field="sentAt" header={t('common.created_at', { defaultValue: 'Thời Gian Gửi' })} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -149,7 +149,7 @@ export const ReminderScenariosPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-4 field">
             <label className="text-sm font-medium">{t('segment.code', { defaultValue: 'Phân khúc' })}</label>
-            <Dropdown value={formData.segmentCode} options={Object.values(CustomerSegmentCode).map((v) => ({ label: v, value: v }))} onChange={(e) => setFormData({ ...formData, segmentCode: e.value })} appendTo="self" />
+            <Dropdown value={formData.targetSegment} options={Object.values(CustomerSegmentCode).map((v) => ({ label: v, value: v }))} onChange={(e) => setFormData({ ...formData, targetSegment: e.value })} appendTo="self" />
           </div>
           <div className="col-12 md:col-4 field">
             <label className="text-sm font-medium">{t('scenario.channel', { defaultValue: 'Kênh gửi' })}</label>
@@ -157,11 +157,11 @@ export const ReminderScenariosPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-4 field">
             <label className="text-sm font-medium">Trigger</label>
-            <InputText value={formData.triggerCondition || ''} onChange={(e) => setFormData({ ...formData, triggerCondition: e.target.value })} className="font-mono" />
+            <InputText value={formData.triggerType || ''} onChange={(e) => setFormData({ ...formData, triggerType: e.target.value })} className="font-mono" />
           </div>
-          <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">Giãn cách chống spam (giờ)</label>
-            <InputNumber value={formData.antiSpamHours ?? 72} onValueChange={(e) => setFormData({ ...formData, antiSpamHours: e.value || 24 })} min={1} />
+          <div className="col-12 md:col-6 field flex align-items-center gap-2 pt-3">
+            <InputSwitch checked={!!formData.quietHoursRespect} onChange={(e) => setFormData({ ...formData, quietHoursRespect: e.value })} />
+            <label className="text-sm font-medium m-0">Tránh gửi khung giờ nghỉ (Quiet Hours)</label>
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">Trần số lần / tuần</label>
@@ -169,19 +169,19 @@ export const ReminderScenariosPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">Mẫu Tiếng Việt (vi)</label>
-            <InputTextarea rows={2} value={formData.templateVi || ''} onChange={(e) => setFormData({ ...formData, templateVi: e.target.value })} />
+            <InputTextarea rows={2} value={formData.bodyVi || ''} onChange={(e) => setFormData({ ...formData, bodyVi: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">Mẫu Tiếng Anh (en)</label>
-            <InputTextarea rows={2} value={formData.templateEn || ''} onChange={(e) => setFormData({ ...formData, templateEn: e.target.value })} />
+            <InputTextarea rows={2} value={formData.bodyEn || ''} onChange={(e) => setFormData({ ...formData, bodyEn: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">Mẫu Tiếng Pháp (fr)</label>
-            <InputTextarea rows={2} value={formData.templateFr || ''} onChange={(e) => setFormData({ ...formData, templateFr: e.target.value })} />
+            <InputTextarea rows={2} value={formData.bodyFr || ''} onChange={(e) => setFormData({ ...formData, bodyFr: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">Mẫu Tiếng Creole (ht)</label>
-            <InputTextarea rows={2} value={formData.templateHt || ''} onChange={(e) => setFormData({ ...formData, templateHt: e.target.value })} />
+            <InputTextarea rows={2} value={formData.bodyHt || ''} onChange={(e) => setFormData({ ...formData, bodyHt: e.target.value })} />
           </div>
           <div className="col-12 flex align-items-center gap-2">
             <InputSwitch checked={formData.status === CommonStatus.ACTIVE} onChange={(e) => setFormData({ ...formData, status: e.value ? CommonStatus.ACTIVE : CommonStatus.INACTIVE })} />

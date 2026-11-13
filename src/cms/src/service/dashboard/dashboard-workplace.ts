@@ -11,7 +11,7 @@ interface IDashboardWorkplaceParams {
   fieldId?: string;
 }
 
-export interface IDashboardWorkplaceResponse extends IDefaultResponse {}
+export type IDashboardWorkplaceResponse = IDefaultResponse;
 
 const getDashboardWorkplace = (params: IDashboardWorkplaceParams): Promise<any> => {
   const queryParams: Record<string, string> = {};

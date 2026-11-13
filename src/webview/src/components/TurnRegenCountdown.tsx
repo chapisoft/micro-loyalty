@@ -8,13 +8,14 @@ interface TurnRegenCountdownProps {
   onTurnRegenerated?: () => void;
 }
 
+const REGEN_CYCLE_SECONDS = 4 * 3600; // 4 tiếng = 14400 giây
+
 export const TurnRegenCountdown: React.FC<TurnRegenCountdownProps> = ({
   freeTurns,
   maxTurns = 3,
   onTurnRegenerated,
 }) => {
   const { t } = useTranslation();
-  const REGEN_CYCLE_SECONDS = 4 * 3600; // 4 tiếng = 14400 giây
 
   const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
     try {
@@ -24,7 +25,9 @@ export const TurnRegenCountdown: React.FC<TurnRegenCountdownProps> = ({
         const remaining = REGEN_CYCLE_SECONDS - (elapsed % REGEN_CYCLE_SECONDS);
         return remaining > 0 ? remaining : REGEN_CYCLE_SECONDS;
       }
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
     return REGEN_CYCLE_SECONDS;
   });
 
@@ -36,7 +39,9 @@ export const TurnRegenCountdown: React.FC<TurnRegenCountdownProps> = ({
         if (prev <= 1) {
           try {
             localStorage.setItem('MICRO_LOYALTY_LAST_REGEN_TIME', Date.now().toString());
-          } catch {}
+          } catch {
+            /* ignore storage errors */
+          }
           if (onTurnRegenerated) onTurnRegenerated();
           return REGEN_CYCLE_SECONDS;
         }

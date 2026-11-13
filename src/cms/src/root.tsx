@@ -44,7 +44,7 @@ export function Root({ children }: RootProps): React.JSX.Element {
         void e;
       }
     }
-  }, []);
+  }, [setUser]);
   // useEffect(() => {
   //   if (url) navigate(url, { replace: true });
   // }, [url]);

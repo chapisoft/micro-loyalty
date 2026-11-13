@@ -18,26 +18,26 @@ const AppMultiSelect: React.FC<AppMultiSelectProps> = ({
   const multiSelectRef = useRef<MultiSelect>(null);
   const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (multiSelectRef && multiSelectRef.current) {
-      if (!multiSelectRef.current.getOverlay().contains(event.target as Node)) {
-        multiSelectRef.current.hide();
-        multiSelectRef.current.getInput()?.addEventListener('click', () => {
-          setIsDropdownVisible((prev) => !prev);
-        });
-      }
-      if (multiSelectRef.current.getElement().contains(event.target as Node)) {
-        if (!isDropdownVisible) multiSelectRef.current.show();
-      }
-    }
-  };
-
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (multiSelectRef && multiSelectRef.current) {
+        if (!multiSelectRef.current.getOverlay()?.contains(event.target as Node)) {
+          multiSelectRef.current.hide();
+          multiSelectRef.current.getInput()?.addEventListener('click', () => {
+            setIsDropdownVisible((prev) => !prev);
+          });
+        }
+        if (multiSelectRef.current.getElement()?.contains(event.target as Node)) {
+          if (!isDropdownVisible) multiSelectRef.current.show();
+        }
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isDropdownVisible]);
 
   return (
     <AppLabel

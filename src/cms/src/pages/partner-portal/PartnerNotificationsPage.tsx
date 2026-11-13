@@ -33,10 +33,10 @@ export const PartnerNotificationsPage: React.FC = () => {
   }, [fetchNotifications]);
 
   const handleMarkRead = async (n: PartnerNotificationModel) => {
-    if (!n.id || n.read) return;
+    if (!n.id || n.isRead) return;
     try {
       await LoyaltyService.markPartnerNotificationRead(n.id, selectedTenant);
-      setItems((prev) => prev.map((it) => (it.id === n.id ? { ...it, read: true } : it)));
+      setItems((prev) => prev.map((it) => (it.id === n.id ? { ...it, isRead: true } : it)));
     } catch (err: any) {
       toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
     }
@@ -78,14 +78,14 @@ export const PartnerNotificationsPage: React.FC = () => {
                 key={n.id}
                 onClick={() => handleMarkRead(n)}
                 className={`p-3 border-round border-1 flex justify-content-between align-items-start gap-3 cursor-pointer ${
-                  n.read ? 'surface-card surface-border' : 'bg-blue-50 border-blue-200'
+                  n.isRead ? 'surface-card surface-border' : 'bg-blue-50 border-blue-200'
                 }`}
               >
                 <div className="flex flex-column gap-1">
                   <div className="flex align-items-center gap-2">
                     <Tag value={n.category} severity={n.category === 'ALERT' ? 'danger' : n.category === 'SETTLEMENT' ? 'warning' : 'info'} />
-                    <span className={n.read ? 'text-800 font-medium' : 'text-900 font-semibold'}>{n.title}</span>
-                    {!n.read && <Tag value={t('partner_portal.unread', { defaultValue: 'Mới' })} severity="info" />}
+                    <span className={n.isRead ? 'text-800 font-medium' : 'text-900 font-semibold'}>{n.title}</span>
+                    {!n.isRead && <Tag value={t('partner_portal.unread', { defaultValue: 'Mới' })} severity="info" />}
                   </div>
                   <span className="text-sm text-600">{n.message}</span>
                 </div>

@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class CustomStringToListConverter implements Converter<List<String>> {
    @Generated
    private static final Logger log = LoggerFactory.getLogger(CustomStringToListConverter.class);

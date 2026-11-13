@@ -39,8 +39,8 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
   const createRoleMutation = useCreateRole();
   const updateRoleMutation = useUpdateRole();
   const { data: permissionsData } = useGetPermissions();
-  const permissionOptions = (Array.isArray(permissionsData?.data) ? permissionsData.data : []) as any[];
   const permissionGroups = useMemo(() => {
+    const permissionOptions = (Array.isArray(permissionsData?.data) ? permissionsData.data : []) as any[];
     const sortedPermissions = [...permissionOptions].sort((a: any, b: any) => {
       const moduleA = String(a?.module || '').toUpperCase();
       const moduleB = String(b?.module || '').toUpperCase();
@@ -66,7 +66,7 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
       },
       []
     );
-  }, [permissionOptions]);
+  }, [permissionsData]);
 
   const {
     control,

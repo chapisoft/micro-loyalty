@@ -598,7 +598,7 @@ public class ClearingSettlementService {
         if (paymentBatchRepository == null) {
             throw new LoyaltyException(ErrorCode.SYSTEM_ERROR);
         }
-        LoyaltyPartnerEntity partner = partnerRepository.findByIdAndTenantId(partnerId, tenantId)
+        partnerRepository.findByIdAndTenantId(partnerId, tenantId)
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
 
         BigDecimal gross = grossAmount != null ? grossAmount : BigDecimal.ZERO;

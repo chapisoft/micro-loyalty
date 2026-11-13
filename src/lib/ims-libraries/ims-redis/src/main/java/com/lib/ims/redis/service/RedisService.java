@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class RedisService {
    @Generated
    private static final Logger log = LoggerFactory.getLogger(RedisService.class);

@@ -49,10 +49,10 @@ export const ParticleCanvas: React.FC<ParticleCanvasProps> = ({
       const angle = (Math.random() * Math.PI * 2);
       const speed = 4 + Math.random() * 10;
       
-      let startX = width / 2;
-      let startY = height * 0.45;
-      let vx = Math.cos(angle) * speed;
-      let vy = Math.sin(angle) * speed - (type === 'coins' ? 6 : 4);
+      const startX = width / 2;
+      const startY = height * 0.45;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed - (type === 'coins' ? 6 : 4);
 
       if (type === 'coins') {
         newParticles.push({

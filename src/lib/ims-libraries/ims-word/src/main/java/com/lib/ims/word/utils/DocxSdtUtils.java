@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public final class DocxSdtUtils {
    @Generated
    private static final Logger log = LoggerFactory.getLogger(DocxSdtUtils.class);

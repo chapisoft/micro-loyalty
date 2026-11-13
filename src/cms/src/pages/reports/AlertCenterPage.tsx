@@ -79,9 +79,8 @@ export const AlertCenterPage: React.FC = () => {
   const severityTag = (sev: string) => {
     switch (sev) {
       case AlertSeverity.CRITICAL:
-      case AlertSeverity.HIGH:
         return 'danger';
-      case AlertSeverity.MEDIUM:
+      case AlertSeverity.WARNING:
         return 'warning';
       default:
         return 'info';
@@ -141,7 +140,7 @@ export const AlertCenterPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<SystemAlertModel> value={alerts} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('alert.empty', { defaultValue: 'Không có cảnh báo nào khớp bộ lọc hiện tại.' })}>
+          <DataTable<SystemAlertModel[]> value={alerts} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('alert.empty', { defaultValue: 'Không có cảnh báo nào khớp bộ lọc hiện tại.' })}>
             <Column field="alertCode" header={t('alert.code', { defaultValue: 'Mã Cảnh Báo' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.alertCode}</span>} style={{ minWidth: '12rem' }} />
             <Column field="severity" header={t('alert.severity', { defaultValue: 'Mức Độ' })} body={(r) => <Tag value={r.severity} severity={severityTag(r.severity)} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
             <Column field="category" header={t('alert.category', { defaultValue: 'Phân Nhóm' })} body={(r) => <span className="font-mono text-xs">{r.category}</span>} style={{ minWidth: '10rem' }} />

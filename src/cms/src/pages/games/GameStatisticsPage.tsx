@@ -7,7 +7,7 @@ import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
-import { LoyaltyService, GameStatisticsResponseModel, GameStatsSummaryModel, GamePlaySessionModel } from '@/service/loyalty.service';
+import { LoyaltyService, GameStatisticsResponseModel } from '@/service/loyalty.service';
 
 export const GameStatisticsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -59,13 +59,13 @@ export const GameStatisticsPage: React.FC = () => {
           <div className="col-12 md:col-3">
             <div className="p-3 border-round surface-50 border-1 surface-border">
               <div className="text-xs text-500 uppercase">{t('game.total_plays', { defaultValue: 'Tổng Lượt Chơi' })}</div>
-              <div className="text-2xl font-mono font-semibold text-primary mt-1">{Number(stats?.totalPlays || 0).toLocaleString()}</div>
+              <div className="text-2xl font-mono font-semibold text-primary mt-1">{Number(stats?.totalSessions || 0).toLocaleString()}</div>
             </div>
           </div>
           <div className="col-12 md:col-3">
             <div className="p-3 border-round surface-50 border-1 surface-border">
               <div className="text-xs text-500 uppercase">{t('game.unique_players', { defaultValue: 'Người Chơi Duy Nhất' })}</div>
-              <div className="text-2xl font-mono font-semibold text-blue-600 mt-1">{Number(stats?.totalUniquePlayers || 0).toLocaleString()}</div>
+              <div className="text-2xl font-mono font-semibold text-blue-600 mt-1">{Number(stats?.uniquePlayers || 0).toLocaleString()}</div>
             </div>
           </div>
           <div className="col-12 md:col-3">
@@ -76,8 +76,8 @@ export const GameStatisticsPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-3">
             <div className="p-3 border-round surface-50 border-1 surface-border">
-              <div className="text-xs text-500 uppercase">{t('game.vouchers_awarded', { defaultValue: 'Voucher Đã Trúng' })}</div>
-              <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{Number(stats?.totalVouchersAwarded || 0).toLocaleString()}</div>
+              <div className="text-xs text-500 uppercase">{t('game.turns_consumed', { defaultValue: 'Lượt Quay Đã Dùng' })}</div>
+              <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{Number(stats?.totalTurnsConsumed || 0).toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -86,23 +86,22 @@ export const GameStatisticsPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2 mb-4"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
         ) : (
-          <DataTable<GameStatsSummaryModel> value={byGame} paginator rows={5} stripedRows responsiveLayout="scroll" className="mb-4" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có thống kê lượt chơi theo game.' })}>
+          <DataTable<GameStatisticsResponseModel['byGame']> value={byGame} paginator rows={5} stripedRows responsiveLayout="scroll" className="mb-4" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có thống kê lượt chơi theo game.' })}>
             <Column field="gameCode" header={t('game.code', { defaultValue: 'Mã Game' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.gameCode}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="gameTitle" header={t('game.name', { defaultValue: 'Tên Game' })} style={{ minWidth: '14rem' }} />
+            <Column field="gameName" header={t('game.name', { defaultValue: 'Tên Game' })} style={{ minWidth: '14rem' }} />
             <Column field="category" header={t('game.category', { defaultValue: 'Thể Loại' })} body={(r) => <Tag value={r.category} severity="info" />} style={{ minWidth: '9rem' }} />
-            <Column field="totalPlays" header={t('game.total_plays', { defaultValue: 'Lượt Chơi' })} body={(r) => Number(r.totalPlays || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
-            <Column field="uniquePlayers" header={t('game.unique_players', { defaultValue: 'Người Chơi' })} body={(r) => Number(r.uniquePlayers || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
-            <Column field="totalPointsAwarded" header={t('game.points_awarded', { defaultValue: 'Điểm Thưởng' })} body={(r) => <span className="font-mono">{Number(r.totalPointsAwarded || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+            <Column field="sessionsCount" header={t('game.total_plays', { defaultValue: 'Lượt Chơi' })} body={(r) => Number(r.sessionsCount || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
+            <Column field="pointsAwarded" header={t('game.points_awarded', { defaultValue: 'Điểm Thưởng' })} body={(r) => <span className="font-mono">{Number(r.pointsAwarded || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
             <Column field="winRatePercent" header={t('game.win_rate', { defaultValue: 'Tỷ Lệ Trúng' })} body={(r) => <span className="font-mono">{Number(r.winRatePercent || 0).toFixed(1)}%</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />
           </DataTable>
         )}
 
         <h5 className="mb-2 text-800">{t('game.recent_sessions', { defaultValue: 'Nhật ký Phiên Chơi Gần Đây' })}</h5>
-        <DataTable<GamePlaySessionModel> value={recentSessions} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có phiên chơi nào được ghi nhận.' })}>
+        <DataTable<GameStatisticsResponseModel['recentSessions']> value={recentSessions} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có phiên chơi nào được ghi nhận.' })}>
           <Column field="sessionId" header="Session ID" body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.sessionId}</span>} style={{ minWidth: '13rem' }} />
           <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
           <Column field="gameCode" header={t('game.code', { defaultValue: 'Game' })} style={{ minWidth: '9rem' }} />
-          <Column field="rewardLabel" header={t('game.reward', { defaultValue: 'Phần Thưởng' })} style={{ minWidth: '12rem' }} />
+          <Column field="prizeName" header={t('game.reward', { defaultValue: 'Phần Thưởng' })} style={{ minWidth: '12rem' }} />
           <Column field="pointsWon" header={t('common.points', { defaultValue: 'Điểm' })} body={(r) => <span className="font-mono">{r.pointsWon || 0}</span>} style={{ minWidth: '6.5rem', textAlign: 'right' }} />
           <Column field="playedAt" header={t('common.created_at', { defaultValue: 'Thời Gian' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.playedAt ? new Date(r.playedAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
         </DataTable>

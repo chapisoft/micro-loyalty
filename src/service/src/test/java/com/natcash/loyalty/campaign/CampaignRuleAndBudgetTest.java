@@ -1,7 +1,6 @@
 package com.natcash.loyalty.campaign;
 
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
-import com.natcash.loyalty.campaign.entity.CampaignControlGroupEntity;
 import com.natcash.loyalty.campaign.entity.CampaignRuleConditionEntity;
 import com.natcash.loyalty.campaign.entity.LoyaltyMonthlyBudgetEntity;
 import com.natcash.loyalty.campaign.repository.CampaignControlGroupRepository;

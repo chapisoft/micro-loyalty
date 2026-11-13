@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
@@ -54,7 +54,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const [statsData, ledgerData, milestonesData] = await Promise.all([
@@ -77,9 +77,9 @@ export const Dashboard: React.FC = () => {
       console.error('[Dashboard.fetchData] Error:', e);
     }
     setLoading(false);
-  };
+  }, [selectedTenant]);
 
-  const fetchSystemHealth = async () => {
+  const fetchSystemHealth = useCallback(async () => {
     setHealthLoading(true);
     try {
       const res = await LoyaltyService.getSystemHealth(selectedTenant);
@@ -90,17 +90,17 @@ export const Dashboard: React.FC = () => {
       console.error('[Dashboard.fetchHealth] Error:', e);
     }
     setHealthLoading(false);
-  };
+  }, [selectedTenant]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [selectedTenant]);
+  }, [fetchDashboardData]);
 
   useEffect(() => {
     if (showSystemHealth && systemHealth.length === 0) {
       fetchSystemHealth();
     }
-  }, [showSystemHealth]);
+  }, [showSystemHealth, systemHealth.length, fetchSystemHealth]);
 
   const getTierColors = (level: number) => {
     switch (level) {

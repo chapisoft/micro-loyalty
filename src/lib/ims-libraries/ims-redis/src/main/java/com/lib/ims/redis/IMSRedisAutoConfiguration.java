@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ComponentScan(
    basePackages = {"com.lib.ims.redis"}
 )
-@SuppressWarnings({"unchecked", "rawtypes", "null"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class IMSRedisAutoConfiguration {
    private RedisCacheConfiguration createCacheConfiguration(Duration ttl, ObjectMapper objectMapper) {
       return RedisCacheConfiguration.defaultCacheConfig().entryTtl(ttl).serializeKeysWith(SerializationPair.fromSerializer(new StringRedisSerializer())).serializeValuesWith(SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper))).disableCachingNullValues();

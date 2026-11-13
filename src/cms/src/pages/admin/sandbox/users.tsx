@@ -7,8 +7,9 @@ import { InputText } from 'primereact/inputtext';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
-import { sandboxAdminService, SandboxUser, SandboxGroup } from '@/service/sandbox.service';
+import { sandboxAdminService, SandboxUser } from '@/service/sandbox.service';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export enum SandboxUserStatus {
   APPROVED = 'APPROVED',
   PENDING = 'PENDING',
@@ -21,7 +22,6 @@ export function SandboxUsersPage() {
   const toast = useRef<Toast>(null);
 
   const [users, setUsers] = useState<SandboxUser[]>([]);
-  const [groups, setGroups] = useState<SandboxGroup[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
 
@@ -39,12 +39,8 @@ export function SandboxUsersPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [uList, gList] = await Promise.all([
-        sandboxAdminService.getUsers(),
-        sandboxAdminService.getGroups(),
-      ]);
+      const uList = await sandboxAdminService.getUsers();
       setUsers(uList);
-      setGroups(gList);
     } catch (e) {
       console.error(e);
     } finally {
@@ -66,7 +62,7 @@ export function SandboxUsersPage() {
         life: 2500,
       });
       loadData();
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
@@ -87,7 +83,7 @@ export function SandboxUsersPage() {
         life: 2500,
       });
       loadData();
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
@@ -118,7 +114,7 @@ export function SandboxUsersPage() {
       });
       setShowDialog(false);
       loadData();
-    } catch (e) {
+    } catch {
       toast.current?.show({
         severity: 'error',
         summary: t('common.error', { defaultValue: 'Lỗi' }),
