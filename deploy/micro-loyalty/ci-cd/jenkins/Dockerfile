@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && git config --global --add safe.directory '*'
 
+ARG JENKINS_UC_DOWNLOAD=https://ftp.halifax.rwth-aachen.de/jenkins
+ENV JENKINS_UC_DOWNLOAD=${JENKINS_UC_DOWNLOAD}
+
 RUN jenkins-plugin-cli --plugins \
     workflow-aggregator \
     git \
