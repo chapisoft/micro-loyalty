@@ -1,21 +1,21 @@
 # HƯỚNG DẪN TRIỂN KHAI NỀN TẢNG LOYALTY VÀ CỔNG GAME ĐỒNG HẠ TẦNG DIP VÀ SMART-OTP
 
-**Mô hình triển khai:** Đồng máy chủ hạ tầng Nền tảng Tích hợp Kỹ thuật số (DIP Platform) và Smart-OTP  
-**Địa chỉ máy chủ:** `210.211.102.99` (Cổng SSH: `65000`, Tài khoản quản trị: `dip`)  
+**Mô hình triển khai:** Cụm Docker Compose độc lập kết hợp Nginx Master và Cloudflare Tunnel  
+**Địa chỉ máy chủ:** `35.247.156.176` (IP LAN: `192.168.1.200`, Cổng SSH: `65000`, Tài khoản quản trị: `root`)  
 **Hệ điều hành:** Ubuntu Linux 22.04 LTS x86_64 (Kernel 5.15.0)  
 **Tên miền hệ thống chính thức:** `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn` (Gốc: `mid.io.vn`)  
-**Thư mục cài đặt dịch vụ:** `/home/dip/micro-loyalty/deploy/` (hoặc `/opt/micro-loyalty/deploy/`)  
+**Thư mục cài đặt dịch vụ:** `/data/uc1-software/apps/micro-loyalty/deploy/`  
 **Nguyên tắc an toàn vận hành:** Tuyệt đối không tự ý thực thi triển khai (deploy), đồng bộ tệp hay can thiệp máy chủ từ xa khi chưa có yêu cầu tường minh từ người dùng.
 
 ---
 
 ## 1. THÔNG SỐ HIỆN TRẠNG, ĐÁNH GIÁ TÀI NGUYÊN VÀ ĐIỀU KIỆN CẦN BỔ SUNG
 
-### 1.1. Bảng Khảo Sát Hiện Trạng Hạ Tầng Máy Chủ DIP (`210.211.102.99`)
+### 1.1. Bảng Khảo Sát Hiện Trạng Hạ Tầng Máy Chủ (`35.247.156.176` / `192.168.1.200`)
 
-Khảo sát trực tiếp toàn diện hệ thống máy chủ `210.211.102.99` ghi nhận các thông số kỹ thuật hạ tầng:
+Khảo sát trực tiếp toàn diện hệ thống máy chủ `35.247.156.176` (IP LAN `192.168.1.200`) ghi nhận các thông số kỹ thuật hạ tầng:
 
-| Thành phần | Hiện trạng thực tế trên máy chủ 210.211.102.99 | Đánh giá và Yêu cầu đáp ứng |
+| Thành phần | Hiện trạng thực tế trên máy chủ 35.247.156.176 | Đánh giá và Yêu cầu đáp ứng |
 |:---|:---|:---|
 | **Hệ điều hành** | Ubuntu Linux 22.04.4 LTS x86_64 (Kernel 5.15.0) | Môi trường vùng chứa Docker hiện đại, ổn định. |
 | **Năng lực xử lý CPU** | 8 Cores (Intel Xeon CPU E5450 @ 3.00GHz) | Mức tải trung bình dưới 25%, năng lực xử lý rất tốt. |
@@ -25,7 +25,7 @@ Khảo sát trực tiếp toàn diện hệ thống máy chủ `210.211.102.99` 
 | **Máy chủ Web Nginx Host** | Nginx Gateway cổng `80/443` (Chứng chỉ SSL Let's Encrypt) | Đạt chuẩn, cấu hình Virtual Hosts cho `*.mid.io.vn`. |
 | **Hệ thống giám sát APM** | Prometheus cổng `9090`, Grafana cổng `3000`, Alertmanager cổng `9093` | Có sẵn, tích hợp thu thập chỉ số hiệu năng trực tiếp. |
 | **Hệ thống lưu vết ELK** | Elasticsearch cổng `9200`, Logstash cổng `5044`, Kibana cổng `5601` | Có sẵn, tập trung toàn bộ nhật ký dịch vụ qua Filebeat. |
-| **Hệ thống CI/CD** | Jenkins Server cổng `9191` (Giao tiếp nội bộ cổng `50000`) | Có sẵn, tự động hóa toàn bộ quy trình đóng gói và phát hành. |
+| **Định tuyến Công khai** | Cloudflare Tunnel (`cloudflared`) + Nginx Master (`/data/uc3-infra/nginx-master/conf.d/loyalty.conf`) | Đã cấu hình sẵn, định tuyến trực tiếp về cổng `18095`. |
 
 ---
 
@@ -66,9 +66,9 @@ Máy chủ hiện đang vận hành đồng thời ba nhóm hệ thống chính:
 1. **Tận dụng Nginx Host (`80/443`):** Cấu hình Virtual Hosts điều hướng hệ thống tên miền `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn` vào cổng nội bộ `18095`.
 2. **Tận dụng Prometheus và Grafana:** Nạp điểm kiểm tra `/actuator/prometheus` của dịch vụ Loyalty vào máy chủ Prometheus có sẵn (cổng `9090`) và hiển thị bảng biểu giám sát trên Grafana (cổng `3000`).
 3. **Tận dụng ELK Stack:** Đẩy nhật ký dịch vụ dạng cấu trúc JSON về cụm Elasticsearch (cổng `9200`) để tra cứu tập trung trên Kibana (cổng `5601`).
-4. **Tận dụng Jenkins Server:** Sử dụng Jenkins sẵn có (cổng `9191`) để thiết lập đường ống phát hành tự động hóa hoàn toàn.
+4. **Triển khai trực tiếp qua SSH + Docker Compose:** Đóng gói bản dựng bất biến tại máy trạm, đồng bộ lên `/data/uc1-software/apps/micro-loyalty/deploy` và khởi chạy lại các container mục tiêu qua SSH.
 
-**Kết luận đánh giá:** Máy chủ `210.211.102.99` hoàn toàn đáp ứng đầy đủ và an toàn tuyệt đối các tiêu chuẩn kỹ thuật để vận hành hệ sinh thái Loyalty song song cùng DIP và Smart-OTP.
+**Kết luận đánh giá:** Máy chủ `35.247.156.176` (`192.168.1.200`) hoàn toàn đáp ứng đầy đủ các tiêu chuẩn kỹ thuật để vận hành ổn định hệ sinh thái Loyalty.
 
 ---
 
@@ -160,17 +160,17 @@ flowchart LR
 ## 3. CÁC HẠNG MỤC CẦN BỔ SUNG VÀ THIẾT LẬP TRÊN MÁY CHỦ
 
 ### 3.1. Thiết Lập Thư Mục Ứng Dụng Trên Máy Chủ
-Đăng nhập SSH vào máy chủ `210.211.102.99:65000` với tài khoản `dip`:
+Đăng nhập SSH vào máy chủ `35.247.156.176:65000` (IP LAN `192.168.1.200`) với tài khoản `root` (`ssh micro-server`):
 
 ```bash
-mkdir -p /home/dip/micro-loyalty/deploy/{backend,frontend,config/backend,config/frontend,config/nginx,locales,scripts,logs,backups,data/postgres,data/redis}
-chmod -R 755 /home/dip/micro-loyalty/deploy
+mkdir -p /data/uc1-software/apps/micro-loyalty/deploy/{backend,frontend,config/backend,config/frontend,config/nginx,locales,scripts,logs,backups,data/postgres,data/redis}
+chmod -R 755 /data/uc1-software/apps/micro-loyalty/deploy
 ```
 
 ---
 
 ### 3.2. Cấu Hình Khởi Tạo Cơ Sở Dữ Liệu PostgreSQL 15 (`loyalty-postgres`)
-Tệp khởi tạo quyền và cơ sở dữ liệu `/home/dip/micro-loyalty/deploy/config/init-db.sql`:
+Tệp khởi tạo quyền và cơ sở dữ liệu `/data/uc1-software/apps/micro-loyalty/deploy/config/init-db.sql`:
 
 ```sql
 CREATE USER loyalty_app WITH PASSWORD 'Loyalty_SecureDB2026!';
@@ -181,7 +181,7 @@ GRANT ALL PRIVILEGES ON DATABASE loyalty_db TO loyalty_app;
 ---
 
 ### 3.3. Cấu Hình Bộ Nhớ Đệm Redis 7 (`loyalty-redis`)
-Tệp cấu hình `/home/dip/micro-loyalty/deploy/config/redis.conf`:
+Tệp cấu hình `/data/uc1-software/apps/micro-loyalty/deploy/config/redis.conf`:
 
 ```ini
 requirepass Loyalty_RedisPass2026!
@@ -458,23 +458,23 @@ echo "=== TOÀN BỘ CỤM DỊCH VỤ HOẠT ĐỘNG HOÀN HẢO 100% ==="
 
 ## 5. THIẾT LẬP TỰ ĐỘNG HÓA VẬN HÀNH VÀ SAO LƯU
 
-Cấu hình lịch tiến trình tự động Crontab cho người dùng `dip` (`crontab -e`):
+Cấu hình lịch tiến trình tự động Crontab cho người dùng `root` (`crontab -e`):
 
 ```bash
 # 1. Tự động kiểm tra và phục hồi dịch vụ mỗi 2 phút nếu container bị lỗi
-*/2 * * * * cd /home/dip/micro-loyalty/deploy && ./scripts/healthcheck.sh > /dev/null 2>&1 || docker compose -p micro-loyalty up -d
+*/2 * * * * cd /data/uc1-software/apps/micro-loyalty/deploy && ./scripts/healthcheck.sh > /dev/null 2>&1 || docker compose -p deploy up -d
 
 # 2. Tự động sao lưu cơ sở dữ liệu PostgreSQL định kỳ vào 02:00 sáng mỗi ngày
-0 2 * * * docker exec loyalty_postgres pg_dump -U loyalty_app loyalty_db | gzip > /home/dip/micro-loyalty/deploy/backups/db_$(date +\%Y\%m\%d).sql.gz
+0 2 * * * docker exec loyalty-saas-postgres pg_dump -U loyalty_app loyalty_db | gzip > /data/uc1-software/apps/micro-loyalty/deploy/backups/db_$(date +\%Y\%m\%d).sql.gz
 
 # 3. Tự động dọn dẹp toàn bộ tệp nhật ký (log) cũ hơn 3 ngày trên môi trường UAT vào 03:00 sáng mỗi ngày
-0 3 * * * find /home/dip/ -type f \( -name "*.log" -o -name "*.log.gz" -o -name "*.out" -o -name "*.log.*" -o -name "*_log" \) -mtime +3 -delete > /dev/null 2>&1
+0 3 * * * find /data/uc1-software/apps/micro-loyalty/deploy/logs/ -type f \( -name "*.log" -o -name "*.log.gz" -o -name "*.out" -o -name "*.log.*" -o -name "*_log" \) -mtime +3 -delete > /dev/null 2>&1
 
 # 4. Tự động dọn dẹp Docker Build Cache và container/image rác cũ hơn 3 ngày vào 03:30 sáng mỗi ngày
 30 3 * * * docker builder prune -a --filter "until=72h" -f > /dev/null 2>&1 && docker container prune -f > /dev/null 2>&1 && docker image prune -f > /dev/null 2>&1
 
 # 5. Dọn dẹp bản sao lưu cơ sở dữ liệu cũ hơn 7 ngày vào 04:00 sáng Chủ Nhật hàng tuần
-0 4 * * 0 find /home/dip/micro-loyalty/deploy/backups/ -type f -name "*.sql.gz" -mtime +7 -delete > /dev/null 2>&1
+0 4 * * 0 find /data/uc1-software/apps/micro-loyalty/deploy/backups/ -type f -name "*.sql.gz" -mtime +7 -delete > /dev/null 2>&1
 ```
 
 ---
@@ -486,7 +486,7 @@ flowchart LR
     subgraph S_BUILD ["GIAI ĐOẠN 1: ĐÓNG GÓI VÀ CHUYỂN GIAO"]
         direction TB
         B1["Bước 1: Đóng Gói Bản Dựng Tại Máy Trạm<br/>• Biên dịch loyalty-service.jar qua Maven<br/>• Đóng gói Cổng Quản trị CMS ra dist/<br/>• Đóng gói Cổng Webview GameHub ra dist/"]
-        B2["Bước 2: Đồng Bộ Gói Triển Khai Qua SCP<br/>• Đẩy mã nguồn và tệp cấu hình vào /home/dip/<br/>• Đồng bộ từ điển đa ngôn ngữ vào locales/<br/>• Phân quyền thực thi cho thư mục scripts/"]
+        B2["Bước 2: Đồng Bộ Gói Triển Khai Qua SCP/Tar<br/>• Đẩy mã nguồn và tệp cấu hình vào /data/uc1-software/apps/micro-loyalty/deploy/<br/>• Đồng bộ từ điển đa ngôn ngữ vào locales/<br/>• Phân quyền thực thi cho thư mục scripts/"]
         B1 --> B2
     end
 
@@ -517,39 +517,46 @@ cd ../webview
 npm run build
 ```
 
-### Bước 2: Đồng bộ gói triển khai lên máy chủ DIP
+### Bước 2: Đồng bộ gói triển khai lên máy chủ 35.247.156.176 (192.168.1.200)
 ```bash
-# Chuyển toàn bộ gói triển khai sang máy chủ DIP
-tar -czf - -C deploy/micro-loyalty . | ssh -p 65000 dip@210.211.102.99 "mkdir -p /home/dip/micro-loyalty/deploy && tar -xzf - -C /home/dip/micro-loyalty/deploy"
+# Chuyển toàn bộ gói triển khai sang máy chủ (loại bỏ tệp ._ macOS)
+COPYFILE_DISABLE=1 tar --exclude='._*' -czf - -C deploy/micro-loyalty . | ssh -p 65000 root@35.247.156.176 "mkdir -p /data/uc1-software/apps/micro-loyalty/deploy && tar -xzf - -C /data/uc1-software/apps/micro-loyalty/deploy"
 
 # Chuyển tệp JAR và gói tĩnh giao diện
-scp -P 65000 src/service/target/loyalty-service.jar dip@210.211.102.99:/home/dip/micro-loyalty/deploy/backend/
-scp -P 65000 -r src/cms/dist/* dip@210.211.102.99:/home/dip/micro-loyalty/deploy/frontend/cms/
-scp -P 65000 -r src/webview/dist/* dip@210.211.102.99:/home/dip/micro-loyalty/deploy/frontend/webview/
+scp -P 65000 src/service/target/loyalty-service-*.jar root@35.247.156.176:/data/uc1-software/apps/micro-loyalty/deploy/backend/loyalty-service.jar
+scp -P 65000 -r src/cms/dist/* root@35.247.156.176:/data/uc1-software/apps/micro-loyalty/deploy/frontend/cms/dist/
+scp -P 65000 -r src/webview/dist/* root@35.247.156.176:/data/uc1-software/apps/micro-loyalty/deploy/frontend/webview/dist/
 ```
 
 ### Bước 3: Khởi tạo và chạy cụm Docker trên máy chủ
 ```bash
-ssh -p 65000 dip@210.211.102.99 "
-cd /home/dip/micro-loyalty/deploy
+ssh -p 65000 root@35.247.156.176 "
+cd /data/uc1-software/apps/micro-loyalty/deploy
 chmod +x scripts/*.sh
-./scripts/start.sh
+docker compose -p deploy up -d --build
 "
 ```
 
 ### Bước 4: Cấu hình Nginx Host và cấp SSL
 ```bash
 # Nạp cấu hình Nginx Host trên máy chủ
-ssh -p 65000 dip@210.211.102.99 "
-sudo nginx -t
-sudo nginx -s reload
+ssh -p 65000 root@35.247.156.176 "
+nginx -t && nginx -s reload
 "
 ```
 
 ### Bước 5: Kiểm thử và nghiệm thu
 ```bash
 # Kiểm tra sức khỏe toàn bộ cụm dịch vụ
-ssh -p 65000 dip@210.211.102.99 "
-cd /home/dip/micro-loyalty/deploy && ./scripts/healthcheck.sh
+ssh -p 65000 root@35.247.156.176 "
+cd /data/uc1-software/apps/micro-loyalty/deploy && ./scripts/healthcheck.sh
 "
 ```
+
+### Bước 6: Tự động hóa CI/CD chọn lọc với Jenkins
+Pipeline tại [Jenkinsfile](../../Jenkinsfile) (đồng bộ cùng [deploy/micro-loyalty/ci-cd/jenkins/Jenkinsfile](ci-cd/jenkins/Jenkinsfile)) mặc định chạy chế độ `TARGET_SERVICE=auto` trên nhánh `main`:
+- Chỉ kích hoạt build và deploy khi có thay đổi mã nguồn hoặc cấu hình triển khai SaaS kể từ commit triển khai thành công gần nhất; bỏ qua các thay đổi tài liệu (`docs/`, `*.md`), kỹ năng (`.agents/`), hoặc cấu hình môi trường `deploy/natcash/`.
+- Chỉ đóng gói, đồng bộ qua `rsync`/`tar` và chạy `docker compose up -d --build --no-deps <phân_hệ_thay_đổi>` cho đúng các phân hệ phát sinh thay đổi (`loyalty-service`, `loyalty-cms`, `loyalty-webview`, `gateway`).
+- Thông số cấu hình trên Jenkins (`https://jenkins.dip.io.vn/jenkins/`):
+  - Credentials kiểu SSH Username with private key với ID `micro-server-ssh`, Username `root`, khóa riêng tư từ `~/.ssh/jenkins_deploy_dev` (khóa công khai tương ứng đã được nạp vào `/root/.ssh/authorized_keys` trên `35.247.156.176:65000`).
+  - Công cụ toàn cục: JDK `jdk-21` và NodeJS `node-20`.

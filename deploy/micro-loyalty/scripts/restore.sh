@@ -8,7 +8,7 @@ set -e
 
 if [ -z "$1" ]; then
     echo "Sử dụng: bash restore.sh <duong_dan_tep_backup.sql.gz>"
-    echo "Ví dụ: bash restore.sh /home/dip/micro-loyalty/deploy/backups/loyalty_db_20260824_160000.sql.gz"
+    echo "Ví dụ: bash restore.sh /data/uc1-software/apps/micro-loyalty/deploy/backups/loyalty_db_20260824_160000.sql.gz"
     exit 1
 fi
 

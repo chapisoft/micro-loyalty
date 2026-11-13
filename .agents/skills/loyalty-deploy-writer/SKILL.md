@@ -63,7 +63,7 @@ deploy/
 │   └── Dockerfile                  // Dockerfile bất biến cho Spring Boot
 ├── frontend/
 │   └── Dockerfile                  // Dockerfile bất biến cho Nginx SPA
-├── micro-loyalty/                  // 1. MÔ HÌNH SAAS ĐA THUÊ BAO (Server: 210.211.102.99:65000 dip / Docker Co-location DIP & Smart-OTP)
+├── micro-loyalty/                  // 1. MÔ HÌNH SAAS ĐA THUÊ BAO (Server: 35.247.156.176:65000, LAN: 192.168.1.200)
 │   ├── docker-compose.yml
 │   ├── .env
 │   ├── .env.example
@@ -110,9 +110,9 @@ deploy/
 
 1. **Phân Định Bản Chất Hai Môi Trường:**
    * **Môi trường SaaS `micro-loyalty` (`deploy/micro-loyalty/`):**
-     * Triển khai trên máy chủ đám mây `210.211.102.99:65000` (User `dip`, Ubuntu 22.04 LTS).
-     * Chạy theo mô hình vùng chứa Docker Compose / Docker Swarm đồng máy chủ (Co-located) cùng nền tảng **DIP** và **Smart-OTP**.
-     * Cổng mạng chuyên dụng: PostgreSQL `15435`, Redis `16385`, Nginx Gateway nội bộ `18095`, Backend lõi `8088`. Tận dụng Host Nginx (`80/443`), Prometheus APM (`9090`), Grafana (`3000`), ELK Logging (`9200`/`5601`), Jenkins CI/CD (`9191`).
+     * Triển khai trên máy chủ đám mây `35.247.156.176:65000` (IP LAN `192.168.1.200`, User `root`, thư mục `/data/uc1-software/apps/micro-loyalty/deploy`).
+     * Chạy theo mô hình vùng chứa Docker Compose kết hợp Host Nginx Master (`80/443`) và Cloudflare Tunnel (`cloudflared`).
+     * Cổng mạng chuyên dụng: PostgreSQL `15435`, Redis `16385`, Nginx Gateway nội bộ `18095`, Backend lõi `8088`. Tên miền công khai: `api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `docs.mid.io.vn`.
    * **Môi trường On-Premise `natcash` (`deploy/natcash/`):**
      * Triển khai trên máy chủ vật lý độc lập `10.228.37.65:22` (User `mascom`, CentOS Linux 7).
      * Chạy dịch vụ Native trực tiếp qua máy ảo JDK 17 (Cổng `8085`), PostgreSQL có sẵn (Cổng `5432`, DB `natcash_loyalty_db`), Redis có sẵn (Cổng `6379`, Mật khẩu `NatCash2022`), Nginx 1.20.2 phân lập cổng `8443` (Webview/API công khai ngoài Internet) và cổng `8080` (CMS nội bộ VPN).

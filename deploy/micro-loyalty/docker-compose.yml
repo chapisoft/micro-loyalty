@@ -1,6 +1,6 @@
 # ==============================================================================
 # HỆ SINH THÁI LOYALTY — MÔ HÌNH SAAS ĐA THUÊ BAO (MICRO-LOYALTY)
-# Máy chủ: 210.211.102.99:65000 (User: dip) — Đồng máy chủ với DIP & Smart-OTP
+# Máy chủ: 35.247.156.176:65000 (IP LAN: 192.168.1.200, User: root)
 # Vị trí: deploy/micro-loyalty/docker-compose.yml
 # ==============================================================================
 
@@ -12,7 +12,6 @@ networks:
 volumes:
   loyalty_saas_postgres_data:
   loyalty_saas_redis_data:
-  loyalty_saas_logs:
 
 services:
   # 1. PostgreSQL 15+ Độc Lập Chuyên Dụng Cho Loyalty (Cổng Host 15435)
@@ -72,7 +71,7 @@ services:
     networks:
       - loyalty-saas-network
 
-  # 3. Loyalty Service Backend (Bản dựng bất biến tự trị)
+  # 3. Loyalty Service Backend (Bản dựng bất biến + Nạp cấu hình & Locales ngoại vi)
   loyalty-service:
     build:
       context: .
@@ -85,7 +84,9 @@ services:
     env_file:
       - .env
     volumes:
-      - loyalty_saas_logs:/app/logs
+      - ./config/backend:/app/config:ro
+      - ./locales:/app/locales:ro
+      - ./logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,7 +100,7 @@ services:
     networks:
       - loyalty-saas-network
 
-  # 4. Loyalty CMS (Bản dựng bất biến tự trị)
+  # 4. Loyalty CMS (Bản dựng bất biến + Nạp runtime env-config.json & Locales ngoại vi)
   loyalty-cms:
     build:
       context: .
@@ -107,6 +108,9 @@ services:
     image: loyalty/loyalty-cms:latest
     container_name: loyalty-saas-cms
     restart: unless-stopped
+    volumes:
+      - ./config/frontend/env-config.json:/usr/share/nginx/html/config/env-config.json:ro
+      - ./locales:/usr/share/nginx/html/locales:ro
     logging:
       driver: "json-file"
       options:
@@ -115,7 +119,7 @@ services:
     networks:
       - loyalty-saas-network
 
-  # 5. Loyalty Webview (Bản dựng bất biến tự trị)
+  # 5. Loyalty Webview (Bản dựng bất biến + Nạp runtime config & Locales ngoại vi)
   loyalty-webview:
     build:
       context: .
@@ -123,6 +127,9 @@ services:
     image: loyalty/loyalty-webview:latest
     container_name: loyalty-saas-webview
     restart: unless-stopped
+    volumes:
+      - ./config/frontend/env-config.json:/usr/share/nginx/html/config/env-config.json:ro
+      - ./locales:/usr/share/nginx/html/locales:ro
     logging:
       driver: "json-file"
       options:
@@ -141,6 +148,8 @@ services:
     restart: unless-stopped
     ports:
       - "${GATEWAY_HTTP_PORT:-18095}:80"
+    volumes:
+      - ./config/nginx/nginx-saas.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - loyalty-service
       - loyalty-cms

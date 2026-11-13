@@ -51,7 +51,7 @@ FORMATTED_TEXT="${ICON} *${HEADER}*
 ${MESSAGE}
 ━━━━━━━━━━━━━━━━━━━━
 📅 *Thời gian:* $(date '+%Y-%m-%d %H:%M:%S %Z')
-🌐 *Máy chủ:* 210.211.102.99"
+🌐 *Máy chủ:* ${DEPLOY_SERVER_HOST:-35.247.156.176 (LAN: 192.168.1.200)}"
 
 echo "Telegram Message: $FORMATTED_TEXT"
 

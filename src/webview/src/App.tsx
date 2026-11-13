@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { DailyCheckinModal } from './components/DailyCheckinModal';
 import { soundHaptics } from './utils/soundHaptics';
@@ -25,21 +25,21 @@ import {
   Crown
 } from 'lucide-react';
 import { LoyaltyJSBridge } from './bridge/LoyaltyJSBridge';
-import { GameHubPage } from './pages/GameHubPage';
-import { LuckyWheelPage } from './pages/LuckyWheelPage';
-import { FlappyNatcomGame } from './pages/games/FlappyNatcomGame';
-import { Game2048Page } from './pages/games/Game2048Page';
-import { MemoryMatchGame } from './pages/games/MemoryMatchGame';
-import { BubbleShooterGame } from './pages/games/BubbleShooterGame';
-import { FruitSliceGame } from './pages/games/FruitSliceGame';
-import { KnifeHitGame } from './pages/games/KnifeHitGame';
-import { BlockPuzzleGame } from './pages/games/BlockPuzzleGame';
-import { EndlessRunnerGame } from './pages/games/EndlessRunnerGame';
-import { WordleGame } from './pages/games/WordleGame';
-import { ScrewPuzzleGame } from './pages/games/ScrewPuzzleGame';
-import { UntangleRopeGame } from './pages/games/UntangleRopeGame';
-import { PullThePinGame } from './pages/games/PullThePinGame';
-import { UserVoucherPage } from './pages/UserVoucherPage';
+const GameHubPage = lazy(() => import('./pages/GameHubPage').then((m) => ({ default: m.GameHubPage })));
+const LuckyWheelPage = lazy(() => import('./pages/LuckyWheelPage').then((m) => ({ default: m.LuckyWheelPage })));
+const FlappyNatcomGame = lazy(() => import('./pages/games/FlappyNatcomGame').then((m) => ({ default: m.FlappyNatcomGame })));
+const Game2048Page = lazy(() => import('./pages/games/Game2048Page').then((m) => ({ default: m.Game2048Page })));
+const MemoryMatchGame = lazy(() => import('./pages/games/MemoryMatchGame').then((m) => ({ default: m.MemoryMatchGame })));
+const BubbleShooterGame = lazy(() => import('./pages/games/BubbleShooterGame').then((m) => ({ default: m.BubbleShooterGame })));
+const FruitSliceGame = lazy(() => import('./pages/games/FruitSliceGame').then((m) => ({ default: m.FruitSliceGame })));
+const KnifeHitGame = lazy(() => import('./pages/games/KnifeHitGame').then((m) => ({ default: m.KnifeHitGame })));
+const BlockPuzzleGame = lazy(() => import('./pages/games/BlockPuzzleGame').then((m) => ({ default: m.BlockPuzzleGame })));
+const EndlessRunnerGame = lazy(() => import('./pages/games/EndlessRunnerGame').then((m) => ({ default: m.EndlessRunnerGame })));
+const WordleGame = lazy(() => import('./pages/games/WordleGame').then((m) => ({ default: m.WordleGame })));
+const ScrewPuzzleGame = lazy(() => import('./pages/games/ScrewPuzzleGame').then((m) => ({ default: m.ScrewPuzzleGame })));
+const UntangleRopeGame = lazy(() => import('./pages/games/UntangleRopeGame').then((m) => ({ default: m.UntangleRopeGame })));
+const PullThePinGame = lazy(() => import('./pages/games/PullThePinGame').then((m) => ({ default: m.PullThePinGame })));
+const UserVoucherPage = lazy(() => import('./pages/UserVoucherPage').then((m) => ({ default: m.UserVoucherPage })));
 import { GameCoverArt } from './components/game-assets/GameArtAssets';
 import { LanguageSelector } from './components/LanguageSelector';
 import { TierBenefitsModal } from './components/TierBenefitsModal';
@@ -399,6 +399,7 @@ export const App: React.FC = () => {
 
       {/* ── MAIN CONTENT ROUTER ── */}
       <main className="flex-1">
+        <Suspense fallback={<div className="min-h-[40vh] flex items-center justify-center"><div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>}>
         {/* TAB: CỔNG GAME (GAMEHUB) */}
         {currentTab === 'GAMEHUB' && (
           <GameHubPage
@@ -1244,6 +1245,7 @@ export const App: React.FC = () => {
             </div>
           </div>
         )}
+        </Suspense>
       </main>
 
       {/* ── MOBILE BOTTOM NAVIGATION BAR & DESKTOP FOOTER (HIDDEN DURING GAMEPLAY) ── */}

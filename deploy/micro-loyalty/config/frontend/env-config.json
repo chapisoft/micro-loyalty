@@ -1,9 +1,9 @@
 {
   "ENVIRONMENT": "saas-production",
   "DEPLOYMENT_MODE": "MICRO_LOYALTY_SAAS",
-  "API_GATEWAY_URL": "https://loyalty-api.natcash.com",
-  "PUBLIC_CMS_URL": "https://cms-loyalty.natcash.com",
-  "PUBLIC_WEBVIEW_URL": "https://gamehub.natcash.com",
+  "API_GATEWAY_URL": "https://api.mid.io.vn",
+  "PUBLIC_CMS_URL": "https://cms.mid.io.vn",
+  "PUBLIC_WEBVIEW_URL": "https://portal.mid.io.vn",
   "DEFAULT_TENANT_ID": "TENANT_DELIMART",
   "AVAILABLE_TENANTS": ["TENANT_DELIMART", "TENANT_NATCASH", "TENANT_NATCOM"],
   "DEFAULT_LANGUAGE": "vi",

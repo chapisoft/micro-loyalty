@@ -119,9 +119,9 @@
 5. **Nguyên Tắc Phân Lập Môi Trường Triển Khai Tuyệt Đối (Zero Cross-Environment Pollution):**
    * `deploy/micro-loyalty/` và `deploy/natcash/` là **2 môi trường hạ tầng hoàn toàn khác nhau, tuyệt đối không được cập nhật chung, không dùng chung thông số hoặc sao chép lẫn nhau**:
      * **Môi trường 1 (`deploy/micro-loyalty/` — Mô hình SaaS Đa Thuê Bao):**
-       * Hạ tầng máy chủ: `210.211.102.99:65000` (Tài khoản: `dip`, Hệ điều hành: Ubuntu Linux 22.04 LTS).
-       * Phương thức vận hành: Cụm Docker Compose / Docker Swarm đồng máy chủ (Co-located) cùng **DIP Platform** và **Smart-OTP**.
-       * Quy hoạch cổng mạng: PostgreSQL chuyên dụng `15435`, Redis chuyên dụng `16385`, Nginx Gateway nội bộ `18095`, Backend lõi nội bộ Docker `8088`. Tận dụng Host Nginx (`80/443`), Prometheus APM (`9090`), Grafana (`3000`), ELK Logging (`9200`/`5601`), Jenkins CI/CD (`9191`).
+       * Hạ tầng máy chủ: `35.247.156.176:65000` (IP LAN: `192.168.1.200`, Tài khoản: `root`, Thư mục: `/data/uc1-software/apps/micro-loyalty/deploy`).
+       * Phương thức vận hành: Cụm Docker Compose độc lập kết hợp Host Nginx Master (`/data/uc3-infra/nginx-master/conf.d/loyalty.conf`) và Cloudflare Tunnel (`cloudflared`).
+       * Quy hoạch cổng mạng: PostgreSQL chuyên dụng `15435`, Redis chuyên dụng `16385`, Nginx Gateway nội bộ `18095`, Backend lõi nội bộ Docker `8088`. Tên miền công khai: `api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `docs.mid.io.vn`.
      * **Môi trường 2 (`deploy/natcash/` — Mô hình On-Premise Tại Chỗ Ví Natcash):**
        * Hạ tầng máy chủ: Máy chủ vật lý riêng biệt `10.228.37.65:22` (Tài khoản: `mascom`, Hệ điều hành: CentOS Linux 7).
        * Phương thức vận hành: Dịch vụ Native thực thi trực tiếp qua JDK 17 (Cổng `8085`), PostgreSQL có sẵn (Cổng `5432`, DB `natcash_loyalty_db`), Redis có sẵn (Cổng `6379`, Mật khẩu `NatCash2022`), Nginx 1.20.2 phân lập cổng `8443` (Webview/API công khai ngoài Internet) và cổng `8080` (CMS nội bộ qua VPN).

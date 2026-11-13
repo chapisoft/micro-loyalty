@@ -6,7 +6,7 @@
 
 set -e
 
-BACKUP_DIR="${BACKUP_DIR:-/home/dip/micro-loyalty/deploy/backups}"
+BACKUP_DIR="${BACKUP_DIR:-/data/uc1-software/apps/micro-loyalty/deploy/backups}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="${BACKUP_DIR}/loyalty_db_${TIMESTAMP}.sql.gz"
 CONTAINER_NAME="loyalty-saas-postgres"
