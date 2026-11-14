@@ -23,12 +23,12 @@ scrape_configs:
     static_configs:
       - targets: ['cadvisor:8080']
 
-  - job_name: 'authentication-service'
+  - job_name: 'cms-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['authentication-service:8080']
+      - targets: ['cms-service:8081']
         labels:
-          application: 'authentication-service'
+          application: 'cms-service'
 
   - job_name: 'customer-service'
     metrics_path: '/actuator/prometheus'
@@ -37,9 +37,23 @@ scrape_configs:
         labels:
           application: 'customer-service'
 
+  - job_name: 'game-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['game-service:8083']
+        labels:
+          application: 'game-service'
+
+  - job_name: 'campaign-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['campaign-service:8084']
+        labels:
+          application: 'campaign-service'
+
   - job_name: 'partner-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['partner-service:8081']
+      - targets: ['partner-service:8085']
         labels:
           application: 'partner-service'

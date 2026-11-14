@@ -103,7 +103,10 @@ export default {
     "next_turn_in": "Next turn in:",
     "this_week": "This Week",
     "buy_turn_item_name": "Buy {{count}} GameHub Turns",
-    "filter_learning": "Learning"
+    "filter_learning": "Learning",
+    "perk_wordle": "Multilingual Word Puzzle",
+    "perk_screw": "Screw Pin Puzzle",
+    "perk_pullpin": "Gold Vault Rescue"
   },
   "daily_missions": {
     "modal_title": "Daily Missions Station",
@@ -220,7 +223,19 @@ export default {
     "btn_close": "Close",
     "default_prize_name": "Reward Gift",
     "default_lucky_prize": "Lucky Reward",
-    "buy_turns_item_name": "Buy {{count}} Lucky Wheel Turns"
+    "buy_turns_item_name": "Buy {{count}} Lucky Wheel Turns",
+    "default_prize_1": "+100 Bonus Points",
+    "default_prize_2": "50% Discount Voucher",
+    "default_prize_3": "Better Luck Next Time",
+    "default_prize_4": "+200 Bonus Points",
+    "default_prize_5": "500 HTG Cashback",
+    "default_prize_6": "+1 Free Spin",
+    "winner_prize_1": "500 HTG Cashback",
+    "winner_prize_2": "50% Discount Voucher",
+    "winner_prize_3": "+200 Bonus Points",
+    "winner_prize_4": "+100 Bonus Points",
+    "winner_prize_5": "+1 Free Spin",
+    "sound_title": "Toggle Sound"
   },
   "vouchers": {
     "tab_my_vouchers": "My Vouchers",
@@ -361,7 +376,7 @@ export default {
         "scoring": "Pass 1 tower: +1 pt (or +2 pts with 2X Boost). Collect coins: +1 pt. Speed and difficulty ramp up over time!",
         "tips": "Collect Shields 🛡️ for 1 free hit, Magnets 🧲 to pull distant coins, and 2X Stars ⭐ for huge scores."
       },
-      "high_score": "High Score: {{score}}"
+      "high_score": "High Score: {{best}}"
     },
     "game2048": {
       "title": "2048 Natcash Edition",
@@ -422,7 +437,324 @@ export default {
       "moves_unit": "moves",
       "time_bonus_label": "time bonus",
       "next_stage_label": "Next stage",
-      "stage_score_label": "Stage score"
+      "stage_score_label": "Stage score",
+      "decks": {
+        "partners": {
+          "name": "Partners & Natcash Wallet",
+          "c1": "Delimart",
+          "c2": "Total",
+          "c3": "Natcom 4G",
+          "c4": "Natcash",
+          "c5": "Wallet",
+          "c6": "Kredi Card",
+          "c7": "Solar 24/7",
+          "c8": "Supermarket",
+          "c9": "VIP Gift",
+          "c10": "Diamond",
+          "c11": "Gold Coin",
+          "c12": "QR Code"
+        },
+        "carnival": {
+          "name": "Caribe Kanaval Festival",
+          "c1": "Rara Drum",
+          "c2": "Mask",
+          "c3": "Gold Chest",
+          "c4": "Lighthouse",
+          "c5": "Sailboat",
+          "c6": "Pearl",
+          "c7": "Palm Tree",
+          "c8": "Macaw Parrot",
+          "c9": "Dolphin",
+          "c10": "Crown",
+          "c11": "Carnival Horn",
+          "c12": "Fireworks"
+        },
+        "gems": {
+          "name": "Gems & Fortune",
+          "c1": "Diamond",
+          "c2": "Red Ruby",
+          "c3": "Emerald",
+          "c4": "Amethyst",
+          "c5": "Gold Coin",
+          "c6": "Golden Bell",
+          "c7": "Golden Star",
+          "c8": "Sacred Flame",
+          "c9": "4-Leaf Clover",
+          "c10": "Heart",
+          "c11": "Trident",
+          "c12": "Mystic Eye"
+        },
+        "haiti_food": {
+          "name": "Haitian Street Food",
+          "c1": "Pork Griot",
+          "c2": "Pate Pastry",
+          "c3": "Fried Plantain",
+          "c4": "Djon-Djon Rice",
+          "c5": "Soup Joumou",
+          "c6": "Rebo Coffee",
+          "c7": "Coconut Water",
+          "c8": "Conch Lambi",
+          "c9": "Francique Mango",
+          "c10": "Corn Mayi",
+          "c11": "Avocado",
+          "c12": "Barbancourt Punch"
+        },
+        "wild_animals": {
+          "name": "Wild Animals",
+          "c1": "Lion",
+          "c2": "Elephant",
+          "c3": "Tiger",
+          "c4": "Giraffe",
+          "c5": "Panda",
+          "c6": "Leopard",
+          "c7": "Eagle",
+          "c8": "Monkey",
+          "c9": "Hippo",
+          "c10": "Zebra",
+          "c11": "Wolf",
+          "c12": "Kangaroo"
+        },
+        "space": {
+          "name": "Space & Astronomy",
+          "c1": "Rocket",
+          "c2": "Saturn",
+          "c3": "Sun",
+          "c4": "Moon",
+          "c5": "Meteor",
+          "c6": "Telescope",
+          "c7": "Astronaut",
+          "c8": "4G Satellite",
+          "c9": "Milky Way",
+          "c10": "UFO",
+          "c11": "Shooting Star",
+          "c12": "Earth"
+        },
+        "sports": {
+          "name": "Sports & Parkour",
+          "c1": "Football",
+          "c2": "Basketball",
+          "c3": "Running Shoe",
+          "c4": "Medal",
+          "c5": "Trophy",
+          "c6": "Skateboard",
+          "c7": "Tennis",
+          "c8": "Boxing Glove",
+          "c9": "Martial Arts",
+          "c10": "Whistle",
+          "c11": "Badminton",
+          "c12": "Darts"
+        },
+        "technology": {
+          "name": "Tech & Digital",
+          "c1": "Smartphone",
+          "c2": "Laptop",
+          "c3": "Headphones",
+          "c4": "AI Robot",
+          "c5": "Gamepad",
+          "c6": "Drone",
+          "c7": "Microchip",
+          "c8": "Smartwatch",
+          "c9": "VR Headset",
+          "c10": "SSD Drive",
+          "c11": "Keyboard",
+          "c12": "Mouse"
+        },
+        "wonders": {
+          "name": "Natural Wonders",
+          "c1": "Volcano",
+          "c2": "Waterfall",
+          "c3": "Cave",
+          "c4": "Coral Reef",
+          "c5": "Beach",
+          "c6": "Rainbow",
+          "c7": "Jungle",
+          "c8": "Sunset",
+          "c9": "Island",
+          "c10": "Desert",
+          "c11": "Snow Peak",
+          "c12": "Iceberg"
+        },
+        "magic": {
+          "name": "Magic & Sorcery",
+          "c1": "Magic Wand",
+          "c2": "Wizard Hat",
+          "c3": "Elixir",
+          "c4": "Spellbook",
+          "c5": "Crystal Ball",
+          "c6": "Fire Dragon",
+          "c7": "Flying Broom",
+          "c8": "Cloak",
+          "c9": "Ancient Lock",
+          "c10": "Magic Candle",
+          "c11": "Cauldron",
+          "c12": "Fairy Dust"
+        },
+        "fruits": {
+          "name": "Tropical Fruits",
+          "c1": "Watermelon",
+          "c2": "Avocado",
+          "c3": "Pineapple",
+          "c4": "Banana",
+          "c5": "Strawberry",
+          "c6": "Sweet Orange",
+          "c7": "Red Apple",
+          "c8": "Grapes",
+          "c9": "Papaya",
+          "c10": "Lemon",
+          "c11": "Peach",
+          "c12": "Coconut"
+        },
+        "vehicles": {
+          "name": "Vehicles & Speed",
+          "c1": "Tap-Tap Bus",
+          "c2": "Supercar",
+          "c3": "Helicopter",
+          "c4": "Express Train",
+          "c5": "Speedboat",
+          "c6": "Superbike",
+          "c7": "Spaceship",
+          "c8": "Fire Truck",
+          "c9": "Airplane",
+          "c10": "Yacht",
+          "c11": "Hot Air Balloon",
+          "c12": "Tractor"
+        },
+        "music": {
+          "name": "Music & Instruments",
+          "c1": "Electric Guitar",
+          "c2": "Saxophone",
+          "c3": "Piano",
+          "c4": "Jazz Drums",
+          "c5": "Violin",
+          "c6": "Gold Mic",
+          "c7": "Vinyl Record",
+          "c8": "DJ Headphones",
+          "c9": "Music Note",
+          "c10": "Trumpet",
+          "c11": "Sheet Music",
+          "c12": "Wind Chime"
+        },
+        "weather": {
+          "name": "Weather & Seasons",
+          "c1": "Lightning",
+          "c2": "Tornado",
+          "c3": "Snowflake",
+          "c4": "Summer Sun",
+          "c5": "Autumn Leaf",
+          "c6": "Rain Shower",
+          "c7": "White Cloud",
+          "c8": "Whirlwind",
+          "c9": "Rainbow",
+          "c10": "Starry Night",
+          "c11": "Fog",
+          "c12": "Sunrise"
+        },
+        "ancient": {
+          "name": "Ancient Archaeology",
+          "c1": "Pyramid",
+          "c2": "Ancient Vase",
+          "c3": "Roman Coin",
+          "c4": "Scroll",
+          "c5": "Hourglass",
+          "c6": "Compass",
+          "c7": "Gold Lock",
+          "c8": "Royal Scepter",
+          "c9": "Ancient Statue",
+          "c10": "Magic Lamp",
+          "c11": "Treasure Map",
+          "c12": "Bronze Shield"
+        },
+        "farm": {
+          "name": "Happy Farm",
+          "c1": "Windmill",
+          "c2": "Tractor",
+          "c3": "Dairy Cow",
+          "c4": "White Sheep",
+          "c5": "Rooster",
+          "c6": "Sweet Corn",
+          "c7": "Carrot",
+          "c8": "Egg",
+          "c9": "Watering Can",
+          "c10": "Scarecrow",
+          "c11": "Pink Pig",
+          "c12": "Horse"
+        },
+        "detective": {
+          "name": "Spy & Detective",
+          "c1": "Badge",
+          "c2": "Sunglasses",
+          "c3": "Briefcase",
+          "c4": "Walkie-Talkie",
+          "c5": "Siren",
+          "c6": "Handcuffs",
+          "c7": "Night Goggles",
+          "c8": "Fingerprint",
+          "c9": "GPS Tracker",
+          "c10": "Black Box",
+          "c11": "Binoculars",
+          "c12": "Spy Camera"
+        },
+        "ocean": {
+          "name": "Deep Sea Creatures",
+          "c1": "Octopus",
+          "c2": "Blue Whale",
+          "c3": "Starfish",
+          "c4": "Sea Turtle",
+          "c5": "Crab",
+          "c6": "Jellyfish",
+          "c7": "Pufferfish",
+          "c8": "Seashell",
+          "c9": "Shark",
+          "c10": "Squid",
+          "c11": "Red Coral",
+          "c12": "Lobster"
+        },
+        "sweets": {
+          "name": "Sweets & Desserts",
+          "c1": "Birthday Cake",
+          "c2": "Donut",
+          "c3": "Ice Cream Cone",
+          "c4": "Lollipop",
+          "c5": "Cupcake",
+          "c6": "Dark Chocolate",
+          "c7": "Croissant",
+          "c8": "Bubble Tea",
+          "c9": "Gummy Bear",
+          "c10": "Cookie",
+          "c11": "Fruit Tart",
+          "c12": "Sundae"
+        },
+        "knights": {
+          "name": "Knights & Medieval",
+          "c1": "Knight Shield",
+          "c2": "Holy Sword",
+          "c3": "Iron Armor",
+          "c4": "Castle",
+          "c5": "Warhorse",
+          "c6": "Bow & Arrow",
+          "c7": "Torch",
+          "c8": "Banner",
+          "c9": "Battle Axe",
+          "c10": "Turret",
+          "c11": "King Crown",
+          "c12": "Guard Dragon"
+        },
+        "flowers": {
+          "name": "Royal Garden",
+          "c1": "Red Rose",
+          "c2": "Sunflower",
+          "c3": "Lotus",
+          "c4": "Orchid",
+          "c5": "Cactus",
+          "c6": "Mushroom",
+          "c7": "Tulip",
+          "c8": "Daisy",
+          "c9": "Hibiscus",
+          "c10": "Lucky Clover",
+          "c11": "Sprout",
+          "c12": "Ancient Tree"
+        }
+      }
     },
     "bubble": {
       "title": "Kanaval Bubble Shooter",
@@ -473,7 +805,27 @@ export default {
       },
       "record_stage": "Record: Stage {{highestStage}}",
       "knives_label": "Knives",
-      "score_label": "Score"
+      "score_label": "Score",
+      "theme_1_name": "Caribe Ancient Oak Log",
+      "theme_1_badge": "Ancient Oak",
+      "theme_2_name": "Golden Fortune Ring",
+      "theme_2_badge": "24K Gold",
+      "theme_3_name": "Inferno Magma Shield",
+      "theme_3_badge": "Magma Stone",
+      "theme_4_name": "Crystal Ice Matrix",
+      "theme_4_badge": "Crystal Ice",
+      "theme_5_name": "Cosmic Nebula Core VIP",
+      "theme_5_badge": "Nebula",
+      "theme_6_name": "Immortal Diamond Shield",
+      "theme_6_badge": "Supreme",
+      "item_red_envelope": "Lucky Envelope",
+      "item_data_pack": "4G Data Pack",
+      "item_gold_chest": "Gold Chest",
+      "item_diamond": "Diamond",
+      "item_gold_coin": "VIP Coin",
+      "bonus_unused_knives_fx": "EXTRA KNIFE BONUS!",
+      "size_label": "Size: {{size}}%",
+      "early_finish_bonus": "Early clear bonus: +{{bonus}} pts ({{knives}} knives left)"
     },
     "block": {
       "title": "Natcash Diamond Block Puzzle",
@@ -522,7 +874,7 @@ export default {
       "btn_new_word": "New Word",
       "btn_hint": "Topic Hint",
       "hint_title": "Word Clue & Meaning",
-      "topic_label": "Topic: {{topic}}",
+      "topic_label": "Topic: {{topic}} ({{lang}})",
       "legend_correct": "Correct spot",
       "legend_present": "Wrong spot",
       "legend_absent": "Not in word",
@@ -536,7 +888,413 @@ export default {
         "tips": "Tap \"Topic Hint\" to reveal clues about the meaning to narrow down your word selection."
       },
       "unlock_letter_btn": "💡 Unlock 1 random letter",
-      "revealed_letter_info": "✓ Letter at position {{pos}} is: \"{{letter}}\""
+      "revealed_letter_info": "✓ Letter at position {{pos}} is: \"{{letter}}\"",
+      "lang_natcom": "Natcom",
+      "lang_ht": "Kreyòl",
+      "lang_en": "English",
+      "lang_fr": "French",
+      "words": {
+        "w0": {
+          "topic": "Natcom Telecom",
+          "meaning": "Leading telecom carrier in Haiti"
+        },
+        "w1": {
+          "topic": "Loyalty Points",
+          "meaning": "Your loyalty points in Kreyòl (Pwen w)"
+        },
+        "w2": {
+          "topic": "Wallet & Finance",
+          "meaning": "Airtime credit and top-up (Kredi)"
+        },
+        "w3": {
+          "topic": "Gifts & Perks",
+          "meaning": "Extra promotional bonus reward"
+        },
+        "w4": {
+          "topic": "Telecom Infrastructure",
+          "meaning": "Ultra-fast fiber-optic Internet"
+        },
+        "w5": {
+          "topic": "Network Speed",
+          "meaning": "High-speed 4G/5G mobile data"
+        },
+        "w6": {
+          "topic": "Voice Services",
+          "meaning": "High-definition voice calls"
+        },
+        "w7": {
+          "topic": "Mobile Devices",
+          "meaning": "Connected smartphone device"
+        },
+        "w8": {
+          "topic": "Mobile Signal",
+          "meaning": "Wide telecom network coverage"
+        },
+        "w9": {
+          "topic": "Cell Tower",
+          "meaning": "BTS cellular antenna tower"
+        },
+        "w10": {
+          "topic": "Network Hardware",
+          "meaning": "Home Wi-Fi wireless router"
+        },
+        "w11": {
+          "topic": "Online",
+          "meaning": "Unlimited digital connectivity"
+        },
+        "w12": {
+          "topic": "Streaming",
+          "meaning": "Stream videos and music online"
+        },
+        "w13": {
+          "topic": "Info Portal",
+          "meaning": "Online balance check & top-up portal"
+        },
+        "w14": {
+          "topic": "Combo Bundles",
+          "meaning": "Data and voice minutes combo pack"
+        },
+        "w15": {
+          "topic": "Service Plans",
+          "meaning": "Daily/weekly/monthly data packs"
+        },
+        "w16": {
+          "topic": "Quick Top-up",
+          "meaning": "Top up prepaid mobile account"
+        },
+        "w17": {
+          "topic": "Tariff Plans",
+          "meaning": "Flexible tariff pricing plans"
+        },
+        "w18": {
+          "topic": "Wi-Fi Hotspot",
+          "meaning": "Mobile Wi-Fi sharing hotspot"
+        },
+        "w19": {
+          "topic": "Roaming",
+          "meaning": "Stay connected worldwide"
+        },
+        "w20": {
+          "topic": "Wallet & Pay",
+          "meaning": "Cash and shopping payment (Kash)"
+        },
+        "w21": {
+          "topic": "Finance & Wallet",
+          "meaning": "Currency and account balance"
+        },
+        "w22": {
+          "topic": "Haitian Currency",
+          "meaning": "Official Haitian Gourde (HTG)"
+        },
+        "w23": {
+          "topic": "Account Balance",
+          "meaning": "Instant available wallet balance"
+        },
+        "w24": {
+          "topic": "Payment Card",
+          "meaning": "Linked shopping member card"
+        },
+        "w25": {
+          "topic": "Bill Payment",
+          "meaning": "Instant money transfer transaction"
+        },
+        "w26": {
+          "topic": "Agent Point",
+          "meaning": "Natcash cash-in/cash-out agent"
+        },
+        "w27": {
+          "topic": "Partner Store",
+          "meaning": "QR code payment merchant point"
+        },
+        "w28": {
+          "topic": "Safety Vault",
+          "meaning": "Accumulated loyalty points vault"
+        },
+        "w29": {
+          "topic": "Earn Points",
+          "meaning": "Earn reward points per transaction"
+        },
+        "w30": {
+          "topic": "Member Tiers",
+          "meaning": "Tier progression Bronze to Diamond"
+        },
+        "w31": {
+          "topic": "Cashback Reward",
+          "meaning": "Percentage cashback on spending"
+        },
+        "w32": {
+          "topic": "Member Privileges",
+          "meaning": "Exclusive VIP member benefits"
+        },
+        "w33": {
+          "topic": "Special Offers",
+          "meaning": "Exclusive promotional campaign"
+        },
+        "w34": {
+          "topic": "Appreciation Gifts",
+          "meaning": "Lucky gift from the program"
+        },
+        "w35": {
+          "topic": "Security Token",
+          "meaning": "Secure payment auth token"
+        },
+        "w36": {
+          "topic": "Claim Rewards",
+          "meaning": "Redeem gifts directly in-app"
+        },
+        "w37": {
+          "topic": "Point Redemption",
+          "meaning": "Convert points into discount vouchers"
+        },
+        "w38": {
+          "topic": "Digital Assets",
+          "meaning": "Accumulated point value in wallet"
+        },
+        "w39": {
+          "topic": "Smart Tech",
+          "meaning": "Smart digital apps & solutions"
+        },
+        "w40": {
+          "topic": "Energy Partner",
+          "meaning": "Partner TotalEnergies fuel stations"
+        },
+        "w41": {
+          "topic": "Retail Partner",
+          "meaning": "Partner Delimart supermarket chain"
+        },
+        "w42": {
+          "topic": "Places & Shopping",
+          "meaning": "Modern commercial shopping plaza"
+        },
+        "w43": {
+          "topic": "Convenience Mart",
+          "meaning": "Shop and earn points daily"
+        },
+        "w44": {
+          "topic": "Market & Hub",
+          "meaning": "Bustling shopping marketplace"
+        },
+        "w45": {
+          "topic": "Resort & Hotel",
+          "meaning": "Partner premium hospitality service"
+        },
+        "w46": {
+          "topic": "Coffee & Dining",
+          "meaning": "Enjoy specialty Haitian coffee"
+        },
+        "w47": {
+          "topic": "Restaurant",
+          "meaning": "Rich culinary dining experience"
+        },
+        "w48": {
+          "topic": "Fast Food",
+          "meaning": "Quick convenient meal with friends"
+        },
+        "w49": {
+          "topic": "Beverages",
+          "meaning": "Fresh tropical cold refreshments"
+        },
+        "w50": {
+          "topic": "Fuel & Petrol",
+          "meaning": "Refuel and earn at partner stations"
+        },
+        "w51": {
+          "topic": "Clean Energy",
+          "meaning": "Eco-friendly solar energy"
+        },
+        "w52": {
+          "topic": "Quality Service",
+          "meaning": "Clean civilized shopping space"
+        },
+        "w53": {
+          "topic": "Fresh Produce",
+          "meaning": "Fresh clean food every day"
+        },
+        "w54": {
+          "topic": "Caribe Specialty",
+          "meaning": "Famous sweet Haitian mango"
+        },
+        "w55": {
+          "topic": "Sweet Treats",
+          "meaning": "Pastries and sweet desserts"
+        },
+        "w56": {
+          "topic": "Fresh Bakery",
+          "meaning": "Warm freshly baked morning bread"
+        },
+        "w57": {
+          "topic": "Natural Juice",
+          "meaning": "Cool tropical natural fruit juice"
+        },
+        "w58": {
+          "topic": "Snacks",
+          "meaning": "Convenient daytime snack"
+        },
+        "w59": {
+          "topic": "Fashion & Style",
+          "meaning": "Stylish fashionable outfits"
+        },
+        "w60": {
+          "topic": "Sea & Islands",
+          "meaning": "Beautiful tropical Caribbean sea"
+        },
+        "w61": {
+          "topic": "Festivals & Music",
+          "meaning": "Vibrant music and cultural festival"
+        },
+        "w62": {
+          "topic": "Blue Ocean",
+          "meaning": "Crystal blue sea and white sand"
+        },
+        "w63": {
+          "topic": "Resort Beach",
+          "meaning": "Ideal coastal vacation spot"
+        },
+        "w64": {
+          "topic": "Tropical Sun",
+          "meaning": "Warm sunny climate all year round"
+        },
+        "w65": {
+          "topic": "Paradise Island",
+          "meaning": "Pearl island in the Caribbean"
+        },
+        "w66": {
+          "topic": "Cultural Music",
+          "meaning": "Lively Haitian Kompa rhythms"
+        },
+        "w67": {
+          "topic": "Festival Dance",
+          "meaning": "Energetic Kanaval dance moves"
+        },
+        "w68": {
+          "topic": "Traditional Drums",
+          "meaning": "Resonant Haitian folk percussion"
+        },
+        "w69": {
+          "topic": "Bright Smile",
+          "meaning": "Warm hospitality of local people"
+        },
+        "w70": {
+          "topic": "Joy of Life",
+          "meaning": "Daily joy and happiness"
+        },
+        "w71": {
+          "topic": "Unity",
+          "meaning": "Motto of community strength"
+        },
+        "w72": {
+          "topic": "Peace & Harmony",
+          "meaning": "Peaceful and prosperous life"
+        },
+        "w73": {
+          "topic": "Royal Luxury",
+          "meaning": "Gold-standard service excellence"
+        },
+        "w74": {
+          "topic": "Magic Moments",
+          "meaning": "Delightful surprising experiences"
+        },
+        "w75": {
+          "topic": "Future Dreams",
+          "meaning": "Aspiration toward digital future"
+        },
+        "w76": {
+          "topic": "Shining Stars",
+          "meaning": "Top achievement on the leaderboard"
+        },
+        "w77": {
+          "topic": "Festival Queen",
+          "meaning": "Graceful symbol of the festival"
+        },
+        "w78": {
+          "topic": "Festival King",
+          "meaning": "Leader of the Kanaval parade"
+        },
+        "w79": {
+          "topic": "Champion",
+          "meaning": "Top leader of GameHub tournaments"
+        },
+        "w80": {
+          "topic": "Politeness",
+          "meaning": "Sincere thank you in French"
+        },
+        "w81": {
+          "topic": "Lucky Games",
+          "meaning": "Good luck and big prize wins"
+        },
+        "w82": {
+          "topic": "Praise & Cheers",
+          "meaning": "Cheers for an awesome victory"
+        },
+        "w83": {
+          "topic": "Great Performance",
+          "meaning": "Outstanding impressive achievement"
+        },
+        "w84": {
+          "topic": "Peak Form",
+          "meaning": "Sharp reasoning and puzzle skills"
+        },
+        "w85": {
+          "topic": "Quick Reflexes",
+          "meaning": "Lightning-fast answer solving"
+        },
+        "w86": {
+          "topic": "Sharp Mind",
+          "meaning": "Excellent logical analysis"
+        },
+        "w87": {
+          "topic": "Logic Rules",
+          "meaning": "Accurate deductive puzzle thinking"
+        },
+        "w88": {
+          "topic": "Deep Focus",
+          "meaning": "Stay locked on the winning goal"
+        },
+        "w89": {
+          "topic": "Challenge Level",
+          "meaning": "Increasingly exciting challenges"
+        },
+        "w90": {
+          "topic": "Record Score",
+          "meaning": "Reach the hall of fame"
+        },
+        "w91": {
+          "topic": "Discovery Quest",
+          "meaning": "Conquer daily quests"
+        },
+        "w92": {
+          "topic": "Precision Match",
+          "meaning": "Find the exact matching pairs"
+        },
+        "w93": {
+          "topic": "Vibrant Colors",
+          "meaning": "Vivid and engaging visuals"
+        },
+        "w94": {
+          "topic": "Guiding Light",
+          "meaning": "Smart hint lighting the way"
+        },
+        "w95": {
+          "topic": "Breakthrough Power",
+          "meaning": "Boost your way to first place"
+        },
+        "w96": {
+          "topic": "Agile Brain",
+          "meaning": "Train memory and reflexes"
+        },
+        "w97": {
+          "topic": "Problem Solving",
+          "meaning": "Overcome every tricky puzzle"
+        },
+        "w98": {
+          "topic": "Account Shield",
+          "meaning": "Multi-layer account security"
+        },
+        "w99": {
+          "topic": "Instant Flash",
+          "meaning": "Instant reaction to challenges"
+        }
+      }
     },
     "wheel": {
       "tutorial": {
@@ -566,7 +1324,29 @@ export default {
       "add_hole_btn": "Add hole",
       "hammer_btn": "Hammer",
       "hammer_tooltip": "Smash a stuck pin",
-      "screw_box_label": "Screw box"
+      "screw_box_label": "Screw box",
+      "level_1_name": "Unscrew Warmup",
+      "plate_l1_1": "Blue Plate",
+      "plate_l1_2": "Amber Plate",
+      "level_2_name": "Interlocked Triangle",
+      "plate_l2_1": "Blue Diagonal Bar",
+      "plate_l2_2": "Red Diagonal Bar",
+      "plate_l2_3": "Gold Horizontal Bar",
+      "level_3_name": "4-Blade Windmill",
+      "plate_l3_1": "Vertical Blade",
+      "plate_l3_2": "Horizontal Blade",
+      "plate_l3_3": "Inner Square Frame",
+      "level_4_name": "Criss-Cross Grid",
+      "plate_l4_1": "Top Bar",
+      "plate_l4_2": "Bottom Bar",
+      "plate_l4_3": "Left Bar",
+      "plate_l4_4": "Right Bar",
+      "level_5_name": "Master Metal Unscrew",
+      "plate_l5_1": "Cross Center Frame",
+      "plate_l5_2": "Diagonal Bar 1",
+      "plate_l5_3": "Diagonal Bar 2",
+      "plate_l5_4": "Base Plate",
+      "plate_l5_5": "Arch Crown"
     },
     "untangle": {
       "title": "Tangle Master 3D",
@@ -597,7 +1377,37 @@ export default {
         "controls": "Tap a pin bar to slide and remove it from its chamber slot.",
         "scoring": "Defeat the thief: +50 points. Safe treasure retrieval: +100 points.",
         "tips": "Pour water onto fire/lava first to solidify it, then drop iron weights on the thief before releasing the treasure chest."
-      }
+      },
+      "level_1_name": "Iron Weight Warmup",
+      "l1_ent_weight": "500kg Iron Weight",
+      "l1_ent_thief": "Thief",
+      "l1_ent_treasure": "Gold Chest",
+      "l1_ent_police": "Natcom Police",
+      "level_2_name": "Water Quenches Lava",
+      "l2_ent_water": "Blue Water Tank",
+      "l2_ent_lava": "Fiery Lava",
+      "l2_ent_thief": "Thief",
+      "l2_ent_police": "Police",
+      "level_3_name": "3-Chamber Vault Rescue",
+      "l3_ent_weight": "Boulder",
+      "l3_ent_gold": "Natcash Treasure",
+      "l3_ent_thief": "Robber",
+      "l3_ent_police": "Police",
+      "level_4_name": "Fire & Water Trap Maze",
+      "l4_ent_water": "Water",
+      "l4_ent_lava": "Magma",
+      "l4_ent_thief": "Thief",
+      "l4_ent_gold": "Gold Chest",
+      "l4_ent_police": "Police",
+      "level_5_name": "Boss Thief Showdown",
+      "l5_ent_water": "Water Tank",
+      "l5_ent_lava": "Lava",
+      "l5_ent_weight": "Iron Weight",
+      "l5_ent_thief": "Boss Thief",
+      "l5_ent_treasure": "Super Gold Vault",
+      "ent_eliminated": "Eliminated!",
+      "ent_stone_rock": "Solid Stone",
+      "fail_hint": "A thief or trap ruined the mission! Try pulling the pins in a different order."
     },
     "pin": {
       "retry_btn": "Play again"
@@ -686,7 +1496,7 @@ export default {
     "rule_explanation": "By FIFO rule, batches with the earliest expiration date are always used first when redeeming or paying.",
     "earned_at": "Earned: {{date}}",
     "expires_at": "Expires: {{date}}",
-    "expiring_soon_badge": "Expiring soon",
+    "expiring_soon_badge": "Expiring soon ({{days}}d)",
     "default_source": "Reward batch",
     "empty_title": "No expiring batches found",
     "empty_desc": "You have no Natcash Coin batches expiring soon.",
@@ -709,7 +1519,7 @@ export default {
     "status_ekyc_verified": "eKYC Verified",
     "status_pending_ekyc": "Pending eKYC",
     "no_friends_title": "No referrals yet",
-    "no_friends_desc": "Share your QR code or invite link with friends to start earning.",
+    "no_friends_desc": "Share your QR code or invite link to earn +{{reward}} bonus points per referral!",
     "empty_title": "No referral data",
     "empty_desc": "Unable to retrieve your referral summary right now.",
     "load_error": "Failed to load referral information."
@@ -898,5 +1708,30 @@ export default {
     "empty_sub_agents": "No subordinate agents",
     "empty_sub_agents_desc": "Assigned sub-agents will appear here.",
     "load_error": "Unable to load agent dashboard."
+  },
+  "sdk": {
+    "game_code_required": "Game identifier (gameCode) is required.",
+    "submit_result_error": "Server error submitting game result ({{status}}).",
+    "buy_turns_desc": "Buy {{count}} game turns ({{gameCode}})",
+    "payment_request_sent": "Payment request sent to e-wallet.",
+    "buy_turns_error": "Failed to initiate turn purchase ({{status}})."
+  },
+  "sso": {
+    "exchange_failed_http": "SSO authentication failed (HTTP {{status}}).",
+    "auth_failed": "SSO authentication failed. Please try again."
+  },
+  "notification": {
+    "dice_title": "Dice Roll Bet!",
+    "dice_badge": "GAME ALERT",
+    "farm_title": "Happy Farm",
+    "farm_badge": "HARVEST",
+    "success_title": "Success!",
+    "success_badge": "COMPLETED",
+    "warning_title": "Notice",
+    "warning_badge": "ATTENTION",
+    "error_title": "Action Failed",
+    "error_badge": "ERROR",
+    "event_title": "Events & Perks",
+    "event_badge": "VIP EVENT"
   }
 };

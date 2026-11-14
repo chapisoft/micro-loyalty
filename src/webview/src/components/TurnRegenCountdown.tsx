@@ -56,7 +56,7 @@ export const TurnRegenCountdown: React.FC<TurnRegenCountdownProps> = ({
     return (
       <div className="flex items-center space-x-1.5 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-2xl text-emerald-400 text-xs font-bold shadow-xs">
         <Zap className="w-3.5 h-3.5 fill-emerald-400" />
-        <span>{t('gamehub.energy_full', { defaultValue: 'ĐẦY LƯỢT MIỄN PHÍ' })}</span>
+        <span>{t('gamehub.energy_full')}</span>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export const TurnRegenCountdown: React.FC<TurnRegenCountdownProps> = ({
   return (
     <div className="flex items-center space-x-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-2xl text-amber-300 text-xs font-mono font-bold shadow-xs">
       <Clock className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-      <span className="text-[10px] text-amber-200/80 font-sans">{t('gamehub.next_turn_in', { defaultValue: 'Hồi 1 lượt sau:' })}</span>
+      <span className="text-[10px] text-amber-200/80 font-sans">{t('gamehub.next_turn_in')}</span>
       <span className="font-black text-amber-300">{timeFormatted}</span>
     </div>
   );

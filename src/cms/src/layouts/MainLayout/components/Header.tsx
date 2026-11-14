@@ -95,7 +95,6 @@ const Header: React.FC = () => {
     paths.advancedReports,
   ].some((p) => location.pathname.startsWith(p));
 
-  const isPartnerPortalActive = location.pathname.startsWith('/partner-portal');
 
   const isAdminActive = [
     paths.userManagement,
@@ -109,204 +108,147 @@ const Header: React.FC = () => {
   const menuItems: MenuItem[] = React.useMemo(
     () => [
       {
-        label: t('nav.dashboard', { defaultValue: 'Tổng quan' }),
+        label: t('nav.dashboard'),
         icon: 'pi pi-chart-bar',
         className: isDashboardActive ? 'menu-pill-active' : 'menu-pill-item',
         command: () => handleNavigate(paths.dashboard),
       },
       {
-        label: t('nav.loyalty_policies', { defaultValue: 'Chính sách Loyalty' }),
+        label: t('nav.loyalty_policies'),
         icon: 'pi pi-star',
         className: isPolicyGroupActive ? 'menu-pill-active' : 'menu-pill-item',
         items: [
           {
-            label: t('nav.tiers', { defaultValue: 'Hạng Hội viên' }),
+            label: t('nav.tiers'),
             icon: 'pi pi-star-fill',
             command: () => handleNavigate(paths.tierManagement),
           },
           {
-            label: t('nav.policies', { defaultValue: 'Chính sách Điểm' }),
+            label: t('nav.policies'),
             icon: 'pi pi-sliders-h',
             command: () => handleNavigate(paths.policyConfig),
           },
           {
-            label: t('nav.campaigns', { defaultValue: 'Chiến dịch & Cột mốc' }),
+            label: t('nav.campaigns'),
             icon: 'pi pi-flag',
             command: () => handleNavigate(paths.campaignMilestones),
           },
           { separator: true },
           {
-            label: t('nav.customers', { defaultValue: 'Hội viên & Member 360' }),
+            label: t('nav.customers'),
             icon: 'pi pi-users',
             command: () => handleNavigate(paths.customers),
           },
           {
-            label: t('nav.segments', { defaultValue: 'Phân khúc Khách hàng (CN-03)' }),
+            label: t('nav.segments'),
             icon: 'pi pi-filter',
             command: () => handleNavigate(paths.customerSegments),
           },
           {
-            label: t('nav.scenarios', { defaultValue: 'Kịch bản Gợi nhắc (CN-04)' }),
+            label: t('nav.scenarios'),
             icon: 'pi pi-bell',
             command: () => handleNavigate(paths.reminderScenarios),
           },
         ],
       },
       {
-        label: t('nav.rewards_games', { defaultValue: 'Khuyến mãi & Game' }),
+        label: t('nav.rewards_games'),
         icon: 'pi pi-gift',
         className: isRewardsGroupActive ? 'menu-pill-active' : 'menu-pill-item',
         items: [
           {
-            label: t('nav.vouchers', { defaultValue: 'Kho Voucher' }),
+            label: t('nav.vouchers'),
             icon: 'pi pi-ticket',
             command: () => handleNavigate(paths.voucherManagement),
           },
           {
-            label: t('nav.game_catalog', { defaultValue: 'Danh mục Trò chơi' }),
+            label: t('nav.game_catalog'),
             icon: 'pi pi-th-large',
             command: () => handleNavigate(paths.gameManagement),
           },
           {
-            label: t('nav.game_hub_config', { defaultValue: 'Cấu hình Chung Cổng Game' }),
+            label: t('nav.game_hub_config'),
             icon: 'pi pi-cog',
             command: () => handleNavigate(paths.gameHubConfig),
           },
           {
-            label: t('nav.learning_quiz', { defaultValue: 'Ngân hàng Câu hỏi Ngoại ngữ' }),
+            label: t('nav.learning_quiz'),
             icon: 'pi pi-book',
             command: () => handleNavigate(paths.learningQuizBank),
           },
           {
-            label: t('nav.game_stats', { defaultValue: 'Thống kê & Phiên chơi Game' }),
+            label: t('nav.game_stats'),
             icon: 'pi pi-chart-line',
             command: () => handleNavigate(paths.gameStatistics),
           },
         ],
       },
       {
-        label: t('nav.partner_network', { defaultValue: 'Đối tác & Giao dịch' }),
+        label: t('nav.partner_network'),
         icon: 'pi pi-building',
         className: isPartnerGroupActive ? 'menu-pill-active' : 'menu-pill-item',
         items: [
           {
-            label: t('nav.partners', { defaultValue: 'Danh sách Đối tác' }),
+            label: t('nav.partners'),
             icon: 'pi pi-building',
             command: () => handleNavigate(paths.partners),
           },
           {
-            label: t('nav.payment_points', { defaultValue: 'Chi nhánh & Điểm Thanh toán' }),
+            label: t('nav.payment_points'),
             icon: 'pi pi-map-marker',
             command: () => handleNavigate(paths.natcashPaymentPoints),
           },
           {
-            label: t('nav.transactions', { defaultValue: 'Sổ Cái & Giao Dịch' }),
+            label: t('nav.transactions'),
             icon: 'pi pi-history',
             command: () => handleNavigate(paths.transactions),
           },
           {
-            label: t('nav.clearing', { defaultValue: 'Quyết Toán Bù Trừ' }),
+            label: t('nav.clearing'),
             icon: 'pi pi-chart-pie',
             command: () => handleNavigate(paths.clearingSettlement),
           },
           {
-            label: t('nav.agent_loyalty', { defaultValue: 'Loyalty Đại lý (AG-03)' }),
+            label: t('nav.agent_loyalty'),
             icon: 'pi pi-briefcase',
             command: () => handleNavigate(paths.agentLoyaltyManagement),
           },
         ],
       },
       {
-        label: t('nav.reports_budget', { defaultValue: 'Báo cáo & Ngân sách' }),
+        label: t('nav.reports_budget'),
         icon: 'pi pi-chart-line',
         className: isReportsGroupActive ? 'menu-pill-active' : 'menu-pill-item',
         items: [
           {
-            label: t('nav.budgets', { defaultValue: 'Ngân sách Tháng (NS-01)' }),
+            label: t('nav.budgets'),
             icon: 'pi pi-wallet',
             command: () => handleNavigate(paths.budgetManagement),
           },
           {
-            label: t('nav.effectiveness', { defaultValue: 'Hiệu quả & Lift (NS-03)' }),
+            label: t('nav.effectiveness'),
             icon: 'pi pi-percentage',
             command: () => handleNavigate(paths.programEffectiveness),
           },
           {
-            label: t('nav.alerts', { defaultValue: 'Trung tâm Cảnh báo (CN-05)' }),
+            label: t('nav.alerts'),
             icon: 'pi pi-exclamation-triangle',
             command: () => handleNavigate(paths.alertCenter),
           },
           {
-            label: t('nav.advanced_reports', { defaultValue: 'Báo cáo Chuyên sâu (NS-05..07)' }),
+            label: t('nav.advanced_reports'),
             icon: 'pi pi-file-excel',
             command: () => handleNavigate(paths.advancedReports),
           },
         ],
       },
       {
-        label: t('nav.partner_portal', { defaultValue: 'Partner Portal (Đối tác)' }),
-        icon: 'pi pi-id-card',
-        className: isPartnerPortalActive ? 'menu-pill-active' : 'menu-pill-item',
-        items: [
-          {
-            label: t('partner_portal.nav_dashboard', { defaultValue: 'Tổng quan Đối tác (NS-04)' }),
-            icon: 'pi pi-home',
-            command: () => handleNavigate(paths.partnerPortalDashboard),
-          },
-          {
-            label: t('partner_portal.nav_branches', { defaultValue: 'Chi nhánh & Sản phẩm (LM-08)' }),
-            icon: 'pi pi-sitemap',
-            command: () => handleNavigate(paths.partnerPortalBranches),
-          },
-          {
-            label: t('partner_portal.nav_policy', { defaultValue: 'Chính sách Điểm (LM-09)' }),
-            icon: 'pi pi-sliders-h',
-            command: () => handleNavigate(paths.partnerPortalPolicy),
-          },
-          {
-            label: t('partner_portal.nav_staff', { defaultValue: 'Nhân viên & Phân quyền (QT-03)' }),
-            icon: 'pi pi-users',
-            command: () => handleNavigate(paths.partnerPortalStaff),
-          },
-          {
-            label: t('partner_portal.nav_proposals', { defaultValue: 'Đề xuất Chương trình (NV-07)' }),
-            icon: 'pi pi-send',
-            command: () => handleNavigate(paths.partnerPortalProposals),
-          },
-          {
-            label: t('partner_portal.nav_vouchers', { defaultValue: 'Voucher & Gạch nợ Quầy (VQ-05)' }),
-            icon: 'pi pi-qrcode',
-            command: () => handleNavigate(paths.partnerPortalVouchers),
-          },
-          {
-            label: t('partner_portal.nav_transactions', { defaultValue: 'Giao dịch Đối tác (LM-11)' }),
-            icon: 'pi pi-list',
-            command: () => handleNavigate(paths.partnerPortalTransactions),
-          },
-          {
-            label: t('partner_portal.nav_settlement', { defaultValue: 'Đối soát & Thanh toán (LM-10)' }),
-            icon: 'pi pi-money-bill',
-            command: () => handleNavigate(paths.partnerPortalSettlement),
-          },
-          {
-            label: t('partner_portal.nav_notifications', { defaultValue: 'Thông báo (CN-08)' }),
-            icon: 'pi pi-bell',
-            command: () => handleNavigate(paths.partnerPortalNotifications),
-          },
-          {
-            label: t('partner_portal.nav_api_keys', { defaultValue: 'Webhook & API Keys (QT-06)' }),
-            icon: 'pi pi-key',
-            command: () => handleNavigate(paths.partnerPortalApiKeys),
-          },
-        ],
-      },
-      {
-        label: t('nav.admin', { defaultValue: 'Quản trị hệ thống' }),
+        label: t('nav.admin'),
         icon: 'pi pi-shield',
         className: isAdminActive ? 'menu-pill-active' : 'menu-pill-item',
         items: [
           {
-            label: t('nav.approvals', { defaultValue: 'Hàng đợi Phê duyệt 2 lớp (QT-04)' }),
+            label: t('nav.approvals'),
             icon: 'pi pi-check-square',
             command: () => handleNavigate(paths.approvalQueue),
           },
@@ -314,12 +256,12 @@ const Header: React.FC = () => {
             separator: true,
           },
           {
-            label: t('user.management', { defaultValue: 'Quản lý Tài khoản' }),
+            label: t('user.management'),
             icon: 'pi pi-user-edit',
             command: () => handleNavigate(paths.userManagement),
           },
           {
-            label: t('role.management', { defaultValue: 'Quản lý Vai trò' }),
+            label: t('role.management'),
             icon: 'pi pi-lock',
             command: () => handleNavigate(paths.roleManagement),
           },
@@ -327,17 +269,17 @@ const Header: React.FC = () => {
             separator: true,
           },
           {
-            label: t('nav.system_parameters', { defaultValue: 'Tham số Nền tảng Loyalty' }),
+            label: t('nav.system_parameters'),
             icon: 'pi pi-cog',
             command: () => handleNavigate(paths.systemParameters),
           },
           {
-            label: t('nav.audit_logs', { defaultValue: 'Nhật ký Hoạt động' }),
+            label: t('nav.audit_logs'),
             icon: 'pi pi-list',
             command: () => handleNavigate(paths.auditManagement),
           },
           {
-            label: t('nav.dead_letter', { defaultValue: 'Lỗi Webhook (Dead-Letter)' }),
+            label: t('nav.dead_letter'),
             icon: 'pi pi-exclamation-circle',
             command: () => handleNavigate(paths.deadLetterManagement),
           },
@@ -352,7 +294,6 @@ const Header: React.FC = () => {
       isRewardsGroupActive,
       isPartnerGroupActive,
       isReportsGroupActive,
-      isPartnerPortalActive,
       isAdminActive,
     ]
   );
@@ -415,8 +356,8 @@ const Header: React.FC = () => {
 
   const rawName = currentUser?.fullName || currentUser?.userName || (currentUser as any)?.username;
   const displayName = React.useMemo(() => {
-    if (!rawName) return t('common.administrator', { defaultValue: 'Quản Trị Viên' });
-    if (rawName.toLowerCase() === 'admin') return t('common.system_admin', { defaultValue: 'Quản Trị Viên Hệ Thống' });
+    if (!rawName) return t('common.administrator');
+    if (rawName.toLowerCase() === 'admin') return t('common.system_admin');
     return rawName;
   }, [rawName, t]);
 
@@ -505,7 +446,7 @@ const Header: React.FC = () => {
               }}
             >
               <i className="pi pi-user text-primary mr-2" />
-              <span>{t('profile.change_profile', { defaultValue: 'Thông tin cá nhân' })}</span>
+              <span>{t('profile.change_profile')}</span>
             </div>
             <div
               className="custom-dropdown-item"
@@ -515,7 +456,7 @@ const Header: React.FC = () => {
               }}
             >
               <i className="pi pi-key text-primary mr-2" />
-              <span>{t('profile.change_password', { defaultValue: 'Đổi mật khẩu' })}</span>
+              <span>{t('profile.change_password')}</span>
             </div>
             <div className="border-top-1 surface-border my-1" />
             <div
@@ -526,7 +467,7 @@ const Header: React.FC = () => {
               }}
             >
               <i className="pi pi-sign-out text-red-500 mr-2" />
-              <span>{t('common.logout', { defaultValue: 'Đăng xuất' })}</span>
+              <span>{t('common.logout')}</span>
             </div>
           </div>
         )}
@@ -562,12 +503,10 @@ const Header: React.FC = () => {
         visible={visibleLogout}
         onHide={offLogout}
         onAccept={onConfirmLogout}
-        header={t('common.confirm_logout', { defaultValue: 'Xác nhận Đăng xuất' })}
-        message={t('common.confirm_logout_message', {
-          defaultValue: 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống Loyalty CMS?',
-        })}
-        acceptLabel={t('common.logout', { defaultValue: 'Đăng xuất' })}
-        rejectLabel={t('common.cancel', { defaultValue: 'Hủy bỏ' })}
+        header={t('common.confirm_logout')}
+        message={t('common.confirm_logout_message')}
+        acceptLabel={t('common.logout')}
+        rejectLabel={t('common.cancel')}
         severity="danger"
       />
     </header>

@@ -357,7 +357,7 @@ export const UntangleRopeGame: React.FC<UntangleRopeGameProps> = ({ onBack, onCl
             >
               {totalCrossings > 0
                 ? t('games.untangle.crossings', { count: totalCrossings })
-                : t('games.untangle.completed_no_crossings', { defaultValue: '✨ 0 GIAO ĐIỂM (HOÀN THÀNH)' })}
+                : t('games.untangle.completed_no_crossings')}
             </span>
           </div>
 

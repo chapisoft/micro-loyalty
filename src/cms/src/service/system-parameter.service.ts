@@ -1,69 +1,80 @@
 import { cmsApiClient } from './config';
 
+export type ParamValueType =
+  | 'STRING'
+  | 'BOOLEAN'
+  | 'INTEGER'
+  | 'DECIMAL'
+  | 'ENUM'
+  | 'TIME_WINDOW'
+  | 'JSON';
+
 export interface SystemParameter {
   id?: number;
   paramKey: string;
+  paramName?: string;
   paramValue: string;
+  defaultValue?: string;
+  valueType?: ParamValueType | string;
+  groupCode?: string;
+  allowedValues?: string | null;
   description?: string;
   status?: number;
+  updatedBy?: string;
+  fromDefault?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
-const DEFAULT_LOYALTY_PARAMS: SystemParameter[] = [
-  {
-    id: 1,
-    paramKey: 'LOYALTY_POINT_EXCHANGE_RATE_HTG',
-    paramValue: '1.0',
-    description: 'Tỷ giá quy đổi điểm thưởng sang tiền tệ thanh toán (1 Điểm = 1 HTG)',
-    status: 1,
-  },
-  {
-    id: 2,
-    paramKey: 'REWARD_WALLET_DYNAMIC_QR_TTL_SECONDS',
-    paramValue: '60',
-    description: 'Thời gian sống (TTL) của mã QR động thanh toán Ví Phần Thưởng tại POS',
-    status: 1,
-  },
-  {
-    id: 3,
-    paramKey: 'REDISSON_LOCK_BURN_TIMEOUT_MS',
-    paramValue: '3000',
-    description: 'Thời gian chờ khóa phân tán Redisson RLock chống tiêu điểm kép',
-    status: 1,
-  },
-  {
-    id: 4,
-    paramKey: 'HMAC_DRIFT_TOLERANCE_SECONDS',
-    paramValue: '300',
-    description: 'Dung sai lệch thời gian chữ ký số bảo mật HMAC-SHA256 (±300 giây)',
-    status: 1,
-  },
-  {
-    id: 5,
-    paramKey: 'TIER_EVALUATION_CYCLE_MONTHS',
-    paramValue: '12',
-    description: 'Chu kỳ tự động đánh giá thăng hạng và hạ hạng hội viên (12 tháng)',
-    status: 1,
-  },
-  {
-    id: 6,
-    paramKey: 'GAME_LUCKY_DRAW_FREE_DAILY_TURNS',
-    paramValue: '2',
-    description: 'Số lượt quay thưởng GameHub miễn phí mỗi ngày cho hội viên',
-    status: 1,
-  },
-];
+export interface SystemParamSpecItem {
+  code: string;
+  paramName?: string;
+  groupCode: string;
+  valueType: ParamValueType | string;
+  defaultValue: string;
+  allowedValues?: string | null;
+  description?: string;
+}
+
+export interface SysCodeTypeConfig {
+  id?: number;
+  codeType: string;
+  description?: string;
+  formatTemplate: string;
+  staticPrefix: string;
+  dateFormat: string;
+  seqPadding: number;
+  seqName: string;
+  batchAllocationSize?: number;
+  immutableAfterCreate?: boolean;
+  status: number;
+  samplePreview?: string;
+  updatedAt?: string;
+}
+
+export interface CacheRefreshResult {
+  tenantId: string;
+  parametersCached: number;
+  codeTypesCached: number;
+}
+
+export interface CodePreviewResult {
+  codeType: string;
+  preview: string;
+}
 
 class SystemParameterService {
-  async getAllParameters(): Promise<SystemParameter[]> {
+  async getAllParameters(groupCode?: string, keyword?: string): Promise<SystemParameter[]> {
     try {
-      const response: any = await cmsApiClient.get('/api/v1/system-parameters');
-      if (Array.isArray(response) && response.length > 0) return response;
-      if (response && Array.isArray(response.data) && response.data.length > 0) return response.data;
-      return DEFAULT_LOYALTY_PARAMS;
+      const params: Record<string, string> = {};
+      if (groupCode && groupCode !== 'ALL') params.groupCode = groupCode;
+      if (keyword && keyword.trim()) params.keyword = keyword.trim();
+      const response: any = await cmsApiClient.get('/api/v1/system-parameters', { params });
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
     } catch {
-      return DEFAULT_LOYALTY_PARAMS;
+      return [];
     }
   }
 
@@ -72,18 +83,62 @@ class SystemParameterService {
     return response?.data || response;
   }
 
-  async createParameter(data: SystemParameter): Promise<SystemParameter> {
+  async getParameterSpecs(): Promise<SystemParamSpecItem[]> {
+    try {
+      const response: any = await cmsApiClient.get('/api/v1/system-parameters/specs');
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  async createParameter(data: Partial<SystemParameter>): Promise<SystemParameter> {
     const response: any = await cmsApiClient.post('/api/v1/system-parameters', data);
     return response?.data || response;
   }
 
-  async updateParameter(paramKey: string, data: SystemParameter): Promise<SystemParameter> {
+  async updateParameter(paramKey: string, data: Partial<SystemParameter>): Promise<SystemParameter> {
     const response: any = await cmsApiClient.put(`/api/v1/system-parameters/${paramKey}`, data);
     return response?.data || response;
   }
 
   async deleteParameter(paramKey: string): Promise<void> {
     await cmsApiClient.delete(`/api/v1/system-parameters/${paramKey}`);
+  }
+
+  async refreshCache(): Promise<CacheRefreshResult> {
+    const response: any = await cmsApiClient.post('/api/v1/system-parameters/refresh-cache');
+    return response?.data || response;
+  }
+
+  async getCodeTypes(): Promise<SysCodeTypeConfig[]> {
+    try {
+      const response: any = await cmsApiClient.get('/api/v1/system-parameters/code-types');
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  async updateCodeType(codeType: string, data: Partial<SysCodeTypeConfig>): Promise<SysCodeTypeConfig> {
+    const response: any = await cmsApiClient.put(`/api/v1/system-parameters/code-types/${codeType}`, data);
+    return response?.data || response;
+  }
+
+  async previewCodeType(
+    codeType: string,
+    config: Partial<SysCodeTypeConfig>,
+    sampleParams?: Record<string, string>
+  ): Promise<CodePreviewResult> {
+    const response: any = await cmsApiClient.post(`/api/v1/system-parameters/code-types/${codeType}/preview`, {
+      config,
+      sampleParams: sampleParams || {}
+    });
+    return response?.data || response;
   }
 }
 

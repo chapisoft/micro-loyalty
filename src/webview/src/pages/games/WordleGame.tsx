@@ -14,119 +14,119 @@ interface WordEntry {
   word: string;
   topic: string;
   meaning: string;
-  language: 'Kreyòl' | 'Français' | 'English' | 'Natcom';
+  language: 'games.wordle.lang_ht' | 'games.wordle.lang_fr' | 'games.wordle.lang_en' | 'games.wordle.lang_natcom';
 }
 
 const WORD_DATABASE: WordEntry[] = [
   // ── NHÓM 1: VIỄN THÔNG & NATCOM (25 TỪ) ──
-  { word: 'NATCO', topic: 'Viễn Thông Natcom', meaning: 'Nhà mạng viễn thông hàng đầu Haiti', language: 'Natcom' },
-  { word: 'PWENW', topic: 'Điểm Thưởng Loyalty', meaning: 'Điểm thưởng của bạn trong Kreyòl (Pwen w)', language: 'Kreyòl' },
-  { word: 'KREDI', topic: 'Ví & Tài Chính', meaning: 'Tín dụng & tiền nạp điện thoại (Kredi)', language: 'Kreyòl' },
-  { word: 'BONUS', topic: 'Quà Tặng & Ưu Đãi', meaning: 'Phần thưởng khuyến mại tặng thêm', language: 'English' },
-  { word: 'FIBER', topic: 'Hạ Tầng Viễn Thông', meaning: 'Cáp quang Internet siêu tốc độ', language: 'English' },
-  { word: 'SPEED', topic: 'Tốc Độ Mạng', meaning: 'Tốc độ truy cập mạng 4G/5G', language: 'English' },
-  { word: 'VOICE', topic: 'Dịch Vụ Thoại', meaning: 'Cuộc gọi thoại chất lượng cao HD', language: 'English' },
-  { word: 'PHONE', topic: 'Thiết Bị Di Động', meaning: 'Điện thoại thông minh kết nối', language: 'English' },
-  { word: 'SIGNAL', topic: 'Sóng Di Động', meaning: 'Tín hiệu sóng viễn thông phủ rộng', language: 'English' },
-  { word: 'TOWER', topic: 'Trạm Phát Sóng', meaning: 'Tháp ăng-ten phát sóng BTS', language: 'English' },
-  { word: 'ROUTER', topic: 'Thiết Bị Mạng', meaning: 'Bộ phát sóng Wi-Fi gia đình', language: 'English' },
-  { word: 'ONLINE', topic: 'Trực Tuyến', meaning: 'Kết nối thế giới số không giới hạn', language: 'English' },
-  { word: 'STREAM', topic: 'Truyền Phát Số', meaning: 'Xem video và nghe nhạc trực tuyến', language: 'English' },
-  { word: 'PORTAL', topic: 'Cổng Thông Tin', meaning: 'Cổng tra cứu & nạp cước trực tuyến', language: 'English' },
-  { word: 'BUNDLE', topic: 'Gói Cước Tích Hợp', meaning: 'Gói combo Data kèm phút gọi', language: 'English' },
-  { word: 'PACKS', topic: 'Gói Dịch Vụ', meaning: 'Gói cước data theo ngày/tuần/tháng', language: 'English' },
-  { word: 'RECHAR', topic: 'Nạp Tiền Nhanh', meaning: 'Nạp cước tài khoản trả trước', language: 'Français' },
-  { word: 'PLANS', topic: 'Kế Hoạch Cước', meaning: 'Bảng giá gói cước linh hoạt', language: 'English' },
-  { word: 'HOTSP', topic: 'Điểm Phát Sóng', meaning: 'Điểm chia sẻ Internet Wi-Fi di động', language: 'English' },
-  { word: 'ROAMY', topic: 'Chuyển Vùng Quốc Tế', meaning: 'Giữ kết nối liên lạc toàn cầu', language: 'English' },
+  { word: 'NATCO', topic: 'games.wordle.words.w0.topic', meaning: 'games.wordle.words.w0.meaning', language: 'games.wordle.lang_natcom' },
+  { word: 'PWENW', topic: 'games.wordle.words.w1.topic', meaning: 'games.wordle.words.w1.meaning', language: 'games.wordle.lang_ht' },
+  { word: 'KREDI', topic: 'games.wordle.words.w2.topic', meaning: 'games.wordle.words.w2.meaning', language: 'games.wordle.lang_ht' },
+  { word: 'BONUS', topic: 'games.wordle.words.w3.topic', meaning: 'games.wordle.words.w3.meaning', language: 'games.wordle.lang_en' },
+  { word: 'FIBER', topic: 'games.wordle.words.w4.topic', meaning: 'games.wordle.words.w4.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SPEED', topic: 'games.wordle.words.w5.topic', meaning: 'games.wordle.words.w5.meaning', language: 'games.wordle.lang_en' },
+  { word: 'VOICE', topic: 'games.wordle.words.w6.topic', meaning: 'games.wordle.words.w6.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PHONE', topic: 'games.wordle.words.w7.topic', meaning: 'games.wordle.words.w7.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SIGNAL', topic: 'games.wordle.words.w8.topic', meaning: 'games.wordle.words.w8.meaning', language: 'games.wordle.lang_en' },
+  { word: 'TOWER', topic: 'games.wordle.words.w9.topic', meaning: 'games.wordle.words.w9.meaning', language: 'games.wordle.lang_en' },
+  { word: 'ROUTER', topic: 'games.wordle.words.w10.topic', meaning: 'games.wordle.words.w10.meaning', language: 'games.wordle.lang_en' },
+  { word: 'ONLINE', topic: 'games.wordle.words.w11.topic', meaning: 'games.wordle.words.w11.meaning', language: 'games.wordle.lang_en' },
+  { word: 'STREAM', topic: 'games.wordle.words.w12.topic', meaning: 'games.wordle.words.w12.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PORTAL', topic: 'games.wordle.words.w13.topic', meaning: 'games.wordle.words.w13.meaning', language: 'games.wordle.lang_en' },
+  { word: 'BUNDLE', topic: 'games.wordle.words.w14.topic', meaning: 'games.wordle.words.w14.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PACKS', topic: 'games.wordle.words.w15.topic', meaning: 'games.wordle.words.w15.meaning', language: 'games.wordle.lang_en' },
+  { word: 'RECHAR', topic: 'games.wordle.words.w16.topic', meaning: 'games.wordle.words.w16.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'PLANS', topic: 'games.wordle.words.w17.topic', meaning: 'games.wordle.words.w17.meaning', language: 'games.wordle.lang_en' },
+  { word: 'HOTSP', topic: 'games.wordle.words.w18.topic', meaning: 'games.wordle.words.w18.meaning', language: 'games.wordle.lang_en' },
+  { word: 'ROAMY', topic: 'games.wordle.words.w19.topic', meaning: 'games.wordle.words.w19.meaning', language: 'games.wordle.lang_en' },
 
   // ── NHÓM 2: VÍ NATCASH & TÀI CHÍNH SỐ (25 TỪ) ──
-  { word: 'KASHA', topic: 'Ví & Thanh Toán', meaning: 'Tiền mặt & thanh toán mua sắm (Kash)', language: 'Kreyòl' },
-  { word: 'MONEY', topic: 'Tài Chính & Ví', meaning: 'Tiền tệ và số dư tài khoản', language: 'English' },
-  { word: 'GOURD', topic: 'Tiền Tệ Haiti', meaning: 'Đồng Gourde (HTG) chính thức', language: 'Kreyòl' },
-  { word: 'SOLDE', topic: 'Số Dư Tài Khoản', meaning: 'Số dư ví khả dụng tức thì', language: 'Français' },
-  { word: 'CARTE', topic: 'Thẻ Thanh Toán', meaning: 'Thẻ thành viên liên kết mua sắm', language: 'Français' },
-  { word: 'PAYER', topic: 'Thanh Toán Hóa Đơn', meaning: 'Giao dịch chuyển tiền tức thì', language: 'Français' },
-  { word: 'AGENT', topic: 'Điểm Đại Lý', meaning: 'Đại lý nạp rút tiền mặt Natcash', language: 'English' },
-  { word: 'STORE', topic: 'Cửa Hàng Đối Tác', meaning: 'Điểm chấp nhận thanh toán quét mã', language: 'English' },
-  { word: 'VAULT', topic: 'Két An Toàn', meaning: 'Kho lưu trữ điểm thưởng tích lũy', language: 'English' },
-  { word: 'EARNS', topic: 'Tích Lũy Điểm', meaning: 'Nhận điểm thưởng sau mỗi giao dịch', language: 'English' },
-  { word: 'TIERS', topic: 'Hạng Hội Viên', meaning: 'Phân hạng từ Đồng đến Kim Cương', language: 'English' },
-  { word: 'CASHB', topic: 'Hoàn Tiền Thưởng', meaning: 'Hoàn trả phần trăm chi tiêu', language: 'English' },
-  { word: 'PRIME', topic: 'Đặc Quyền Hội Viên', meaning: 'Quyền lợi dành riêng cho VIP', language: 'English' },
-  { word: 'OFFER', topic: 'Ưu Đãi Đặc Biệt', meaning: 'Chương trình khuyến mại độc quyền', language: 'English' },
-  { word: 'GIFTS', topic: 'Quà Tặng Tri Ân', meaning: 'Món quà may mắn từ chương trình', language: 'English' },
-  { word: 'TOKEN', topic: 'Mã Bảo Mật', meaning: 'Mã xác thực thanh toán an toàn', language: 'English' },
-  { word: 'CLAIM', topic: 'Nhận Phần Thưởng', meaning: 'Đổi quà tặng ngay trên ứng dụng', language: 'English' },
-  { word: 'TRADE', topic: 'Giao Dịch Đổi Điểm', meaning: 'Chuyển đổi điểm lấy voucher giảm giá', language: 'English' },
-  { word: 'ASSET', topic: 'Tài Sản Số', meaning: 'Giá trị điểm tích lũy trong ví', language: 'English' },
-  { word: 'SMART', topic: 'Công Nghệ Thông Minh', meaning: 'Giải pháp số và ứng dụng thông minh', language: 'English' },
+  { word: 'KASHA', topic: 'games.wordle.words.w20.topic', meaning: 'games.wordle.words.w20.meaning', language: 'games.wordle.lang_ht' },
+  { word: 'MONEY', topic: 'games.wordle.words.w21.topic', meaning: 'games.wordle.words.w21.meaning', language: 'games.wordle.lang_en' },
+  { word: 'GOURD', topic: 'games.wordle.words.w22.topic', meaning: 'games.wordle.words.w22.meaning', language: 'games.wordle.lang_ht' },
+  { word: 'SOLDE', topic: 'games.wordle.words.w23.topic', meaning: 'games.wordle.words.w23.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'CARTE', topic: 'games.wordle.words.w24.topic', meaning: 'games.wordle.words.w24.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'PAYER', topic: 'games.wordle.words.w25.topic', meaning: 'games.wordle.words.w25.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'AGENT', topic: 'games.wordle.words.w26.topic', meaning: 'games.wordle.words.w26.meaning', language: 'games.wordle.lang_en' },
+  { word: 'STORE', topic: 'games.wordle.words.w27.topic', meaning: 'games.wordle.words.w27.meaning', language: 'games.wordle.lang_en' },
+  { word: 'VAULT', topic: 'games.wordle.words.w28.topic', meaning: 'games.wordle.words.w28.meaning', language: 'games.wordle.lang_en' },
+  { word: 'EARNS', topic: 'games.wordle.words.w29.topic', meaning: 'games.wordle.words.w29.meaning', language: 'games.wordle.lang_en' },
+  { word: 'TIERS', topic: 'games.wordle.words.w30.topic', meaning: 'games.wordle.words.w30.meaning', language: 'games.wordle.lang_en' },
+  { word: 'CASHB', topic: 'games.wordle.words.w31.topic', meaning: 'games.wordle.words.w31.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PRIME', topic: 'games.wordle.words.w32.topic', meaning: 'games.wordle.words.w32.meaning', language: 'games.wordle.lang_en' },
+  { word: 'OFFER', topic: 'games.wordle.words.w33.topic', meaning: 'games.wordle.words.w33.meaning', language: 'games.wordle.lang_en' },
+  { word: 'GIFTS', topic: 'games.wordle.words.w34.topic', meaning: 'games.wordle.words.w34.meaning', language: 'games.wordle.lang_en' },
+  { word: 'TOKEN', topic: 'games.wordle.words.w35.topic', meaning: 'games.wordle.words.w35.meaning', language: 'games.wordle.lang_en' },
+  { word: 'CLAIM', topic: 'games.wordle.words.w36.topic', meaning: 'games.wordle.words.w36.meaning', language: 'games.wordle.lang_en' },
+  { word: 'TRADE', topic: 'games.wordle.words.w37.topic', meaning: 'games.wordle.words.w37.meaning', language: 'games.wordle.lang_en' },
+  { word: 'ASSET', topic: 'games.wordle.words.w38.topic', meaning: 'games.wordle.words.w38.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SMART', topic: 'games.wordle.words.w39.topic', meaning: 'games.wordle.words.w39.meaning', language: 'games.wordle.lang_en' },
 
   // ── NHÓM 3: ĐỐI TÁC LIÊN MINH & MUA SẮM (25 TỪ) ──
-  { word: 'TOTAL', topic: 'Đối Tác Năng Lượng', meaning: 'Chuỗi trạm xăng dầu đối tác TotalEnergies', language: 'English' },
-  { word: 'DELIM', topic: 'Đối Tác Bán Lẻ', meaning: 'Hệ thống siêu thị đối tác Delimart', language: 'English' },
-  { word: 'PLAZA', topic: 'Địa Điểm & Mua Sắm', meaning: 'Trung tâm thương mại hiện đại', language: 'English' },
-  { word: 'SUPER', topic: 'Siêu Thị Tiện Lợi', meaning: 'Mua sắm tích điểm mỗi ngày', language: 'English' },
-  { word: 'MARKT', topic: 'Chợ & Trung Tâm', meaning: 'Khu thương mại sầm uất', language: 'English' },
-  { word: 'HOTEL', topic: 'Khách Sạn Nghỉ Dưỡng', meaning: 'Dịch vụ lưu trú cao cấp đối tác', language: 'English' },
-  { word: 'CAFEZ', topic: 'Cà Phê & Ẩm Thực', meaning: 'Thưởng thức cà phê đặc sản Haiti', language: 'Français' },
-  { word: 'RESTO', topic: 'Nhà Hàng Ẩm Thực', meaning: 'Trải nghiệm ẩm thực phong phú', language: 'Français' },
-  { word: 'PIZZA', topic: 'Ẩm Thực Nhanh', meaning: 'Bữa ăn nhanh tiện lợi cùng bạn bè', language: 'English' },
-  { word: 'DRINK', topic: 'Đồ Uống Giải Khát', meaning: 'Nước giải khát nhiệt đới tươi ngon', language: 'English' },
-  { word: 'PETRO', topic: 'Nhiên Liệu Xăng Dầu', meaning: 'Đổ xăng tích điểm tại trạm đối tác', language: 'English' },
-  { word: 'SOLAR', topic: 'Năng Lượng Sạch', meaning: 'Năng lượng mặt trời sinh thái', language: 'English' },
-  { word: 'CLEAN', topic: 'Dịch Vụ Tiêu Chuẩn', meaning: 'Không gian mua sắm văn minh', language: 'English' },
-  { word: 'FRESH', topic: 'Nông Sản Tươi Sống', meaning: 'Thực phẩm sạch mỗi ngày', language: 'English' },
-  { word: 'MANGO', topic: 'Đặc Sản Caribe', meaning: 'Xoài ngọt ngon nổi tiếng Haiti', language: 'English' },
-  { word: 'SWEET', topic: 'Hương Vị Ngọt Ngào', meaning: 'Bánh ngọt và món tráng miệng', language: 'English' },
-  { word: 'BREAD', topic: 'Bánh Mì Tươi Mới', meaning: 'Bánh mì nướng nóng hổi mỗi sáng', language: 'English' },
-  { word: 'JUICE', topic: 'Nước Ép Tự Nhiên', meaning: 'Nước ép hoa quả nhiệt đới tươi mát', language: 'English' },
-  { word: 'SNACK', topic: 'Món Ăn Vặt', meaning: 'Bữa phụ tiện lợi trong ngày', language: 'English' },
-  { word: 'FASHT', topic: 'Thời Trang May Mặc', meaning: 'Trang phục phong cách sành điệu', language: 'English' },
+  { word: 'TOTAL', topic: 'games.wordle.words.w40.topic', meaning: 'games.wordle.words.w40.meaning', language: 'games.wordle.lang_en' },
+  { word: 'DELIM', topic: 'games.wordle.words.w41.topic', meaning: 'games.wordle.words.w41.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PLAZA', topic: 'games.wordle.words.w42.topic', meaning: 'games.wordle.words.w42.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SUPER', topic: 'games.wordle.words.w43.topic', meaning: 'games.wordle.words.w43.meaning', language: 'games.wordle.lang_en' },
+  { word: 'MARKT', topic: 'games.wordle.words.w44.topic', meaning: 'games.wordle.words.w44.meaning', language: 'games.wordle.lang_en' },
+  { word: 'HOTEL', topic: 'games.wordle.words.w45.topic', meaning: 'games.wordle.words.w45.meaning', language: 'games.wordle.lang_en' },
+  { word: 'CAFEZ', topic: 'games.wordle.words.w46.topic', meaning: 'games.wordle.words.w46.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'RESTO', topic: 'games.wordle.words.w47.topic', meaning: 'games.wordle.words.w47.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'PIZZA', topic: 'games.wordle.words.w48.topic', meaning: 'games.wordle.words.w48.meaning', language: 'games.wordle.lang_en' },
+  { word: 'DRINK', topic: 'games.wordle.words.w49.topic', meaning: 'games.wordle.words.w49.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PETRO', topic: 'games.wordle.words.w50.topic', meaning: 'games.wordle.words.w50.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SOLAR', topic: 'games.wordle.words.w51.topic', meaning: 'games.wordle.words.w51.meaning', language: 'games.wordle.lang_en' },
+  { word: 'CLEAN', topic: 'games.wordle.words.w52.topic', meaning: 'games.wordle.words.w52.meaning', language: 'games.wordle.lang_en' },
+  { word: 'FRESH', topic: 'games.wordle.words.w53.topic', meaning: 'games.wordle.words.w53.meaning', language: 'games.wordle.lang_en' },
+  { word: 'MANGO', topic: 'games.wordle.words.w54.topic', meaning: 'games.wordle.words.w54.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SWEET', topic: 'games.wordle.words.w55.topic', meaning: 'games.wordle.words.w55.meaning', language: 'games.wordle.lang_en' },
+  { word: 'BREAD', topic: 'games.wordle.words.w56.topic', meaning: 'games.wordle.words.w56.meaning', language: 'games.wordle.lang_en' },
+  { word: 'JUICE', topic: 'games.wordle.words.w57.topic', meaning: 'games.wordle.words.w57.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SNACK', topic: 'games.wordle.words.w58.topic', meaning: 'games.wordle.words.w58.meaning', language: 'games.wordle.lang_en' },
+  { word: 'FASHT', topic: 'games.wordle.words.w59.topic', meaning: 'games.wordle.words.w59.meaning', language: 'games.wordle.lang_en' },
 
   // ── NHÓM 4: VĂN HÓA, DU LỊCH & LỄ HỘI CARIBE (25 TỪ) ──
-  { word: 'CARIB', topic: 'Địa Lý & Biển Đảo', meaning: 'Vùng biển nhiệt đới Caribe xinh đẹp', language: 'English' },
-  { word: 'FESTA', topic: 'Lễ Hội & Âm Nhạc', meaning: 'Lễ hội âm nhạc và văn hóa sôi động', language: 'Kreyòl' },
-  { word: 'OCEAN', topic: 'Đại Dương Xanh', meaning: 'Bờ biển trong xanh cát trắng', language: 'English' },
-  { word: 'BEACH', topic: 'Bãi Biển Nghỉ Dưỡng', meaning: 'Điểm đến du lịch lý tưởng', language: 'English' },
-  { word: 'SUNNY', topic: 'Ánh Nắng Nhiệt Đới', meaning: 'Khí hậu ấm áp quanh năm', language: 'English' },
-  { word: 'ISLAN', topic: 'Hòn Đảo Thiên Đường', meaning: 'Đảo ngọc giữa đại dương Caribe', language: 'English' },
-  { word: 'MUSIC', topic: 'Âm Nhạc Bản Sắc', meaning: 'Giai điệu Kompa rộn ràng', language: 'English' },
-  { word: 'DANCE', topic: 'Vũ Điệu Lễ Hội', meaning: 'Những bước nhảy sôi động Kanaval', language: 'English' },
-  { word: 'DRUMS', topic: 'Nhịp Trống Truyền Thống', meaning: 'Âm vang nhạc cụ dân tộc Haiti', language: 'English' },
-  { word: 'SMILE', topic: 'Nụ Cười Rạng Rỡ', meaning: 'Sự thân thiện mến khách của người dân', language: 'English' },
-  { word: 'HAPPY', topic: 'Niềm Vui Cuộc Sống', meaning: 'Hạnh phúc ngập tràn mỗi ngày', language: 'English' },
-  { word: 'UNITY', topic: 'Đoàn Kết Gắn Bó', meaning: 'Khẩu hiệu sức mạnh cộng đồng', language: 'English' },
-  { word: 'PEACE', topic: 'Hòa Bình Yên Vui', meaning: 'Cuộc sống an lành thịnh vượng', language: 'English' },
-  { word: 'ROYAL', topic: 'Hoàng Gia Sang Trọng', meaning: 'Chất lượng dịch vụ chuẩn mực', language: 'English' },
-  { word: 'MAGIC', topic: 'Kỳ Diệu Thần Tiên', meaning: 'Những trải nghiệm bất ngờ thú vị', language: 'English' },
-  { word: 'DREAM', topic: 'Ước Mơ Tương Lai', meaning: 'Khát vọng vươn tầm số hóa', language: 'English' },
-  { word: 'STARS', topic: 'Ngôi Sao Sáng Ngời', meaning: 'Thành tích xuất sắc trên bảng xếp hạng', language: 'English' },
-  { word: 'QUEEN', topic: 'Nữ Hoàng Sắc Đẹp', meaning: 'Biểu tượng duyên dáng lễ hội', language: 'English' },
-  { word: 'KINGS', topic: 'Vua Lễ Hội', meaning: 'Nhân vật dẫn dắt vũ hội Kanaval', language: 'English' },
-  { word: 'CHAMP', topic: 'Nhà Vô Địch', meaning: 'Người dẫn đầu các giải đấu GameHub', language: 'English' },
+  { word: 'CARIB', topic: 'games.wordle.words.w60.topic', meaning: 'games.wordle.words.w60.meaning', language: 'games.wordle.lang_en' },
+  { word: 'FESTA', topic: 'games.wordle.words.w61.topic', meaning: 'games.wordle.words.w61.meaning', language: 'games.wordle.lang_ht' },
+  { word: 'OCEAN', topic: 'games.wordle.words.w62.topic', meaning: 'games.wordle.words.w62.meaning', language: 'games.wordle.lang_en' },
+  { word: 'BEACH', topic: 'games.wordle.words.w63.topic', meaning: 'games.wordle.words.w63.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SUNNY', topic: 'games.wordle.words.w64.topic', meaning: 'games.wordle.words.w64.meaning', language: 'games.wordle.lang_en' },
+  { word: 'ISLAN', topic: 'games.wordle.words.w65.topic', meaning: 'games.wordle.words.w65.meaning', language: 'games.wordle.lang_en' },
+  { word: 'MUSIC', topic: 'games.wordle.words.w66.topic', meaning: 'games.wordle.words.w66.meaning', language: 'games.wordle.lang_en' },
+  { word: 'DANCE', topic: 'games.wordle.words.w67.topic', meaning: 'games.wordle.words.w67.meaning', language: 'games.wordle.lang_en' },
+  { word: 'DRUMS', topic: 'games.wordle.words.w68.topic', meaning: 'games.wordle.words.w68.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SMILE', topic: 'games.wordle.words.w69.topic', meaning: 'games.wordle.words.w69.meaning', language: 'games.wordle.lang_en' },
+  { word: 'HAPPY', topic: 'games.wordle.words.w70.topic', meaning: 'games.wordle.words.w70.meaning', language: 'games.wordle.lang_en' },
+  { word: 'UNITY', topic: 'games.wordle.words.w71.topic', meaning: 'games.wordle.words.w71.meaning', language: 'games.wordle.lang_en' },
+  { word: 'PEACE', topic: 'games.wordle.words.w72.topic', meaning: 'games.wordle.words.w72.meaning', language: 'games.wordle.lang_en' },
+  { word: 'ROYAL', topic: 'games.wordle.words.w73.topic', meaning: 'games.wordle.words.w73.meaning', language: 'games.wordle.lang_en' },
+  { word: 'MAGIC', topic: 'games.wordle.words.w74.topic', meaning: 'games.wordle.words.w74.meaning', language: 'games.wordle.lang_en' },
+  { word: 'DREAM', topic: 'games.wordle.words.w75.topic', meaning: 'games.wordle.words.w75.meaning', language: 'games.wordle.lang_en' },
+  { word: 'STARS', topic: 'games.wordle.words.w76.topic', meaning: 'games.wordle.words.w76.meaning', language: 'games.wordle.lang_en' },
+  { word: 'QUEEN', topic: 'games.wordle.words.w77.topic', meaning: 'games.wordle.words.w77.meaning', language: 'games.wordle.lang_en' },
+  { word: 'KINGS', topic: 'games.wordle.words.w78.topic', meaning: 'games.wordle.words.w78.meaning', language: 'games.wordle.lang_en' },
+  { word: 'CHAMP', topic: 'games.wordle.words.w79.topic', meaning: 'games.wordle.words.w79.meaning', language: 'games.wordle.lang_en' },
 
   // ── NHÓM 5: GIAO TIẾP & TRÍ TUỆ (25 TỪ) ──
-  { word: 'MERCI', topic: 'Giao Tiếp & Lịch Sự', meaning: 'Lời cảm ơn chân thành trong tiếng Pháp', language: 'Français' },
-  { word: 'LUCKY', topic: 'Trò Chơi May Mắn', meaning: 'Sự may mắn và trúng thưởng lớn', language: 'English' },
-  { word: 'BRAVO', topic: 'Tán Thưởng Khích Lệ', meaning: 'Lời chúc mừng xuất sắc chiến thắng', language: 'Français' },
-  { word: 'GREAT', topic: 'Tuyệt Vời Xuất Chúng', meaning: 'Thành tích ấn tượng vượt trội', language: 'English' },
-  { word: 'SUPER', topic: 'Đỉnh Cao Phong Độ', meaning: 'Kỹ năng suy luận nhạy bén', language: 'English' },
-  { word: 'QUICK', topic: 'Nhanh Nhẹn Phản Xạ', meaning: 'Tốc độ tìm ra đáp án chớp nhoáng', language: 'English' },
-  { word: 'SHARP', topic: 'Tư Duy Sắc Bén', meaning: 'Khả năng phân tích logic xuất sắc', language: 'English' },
-  { word: 'LOGIC', topic: 'Quy Luật Suy Luận', meaning: 'Tư duy logic giải đố chuẩn xác', language: 'English' },
-  { word: 'FOCUS', topic: 'Tập Trung Cao Độ', meaning: 'Khóa chặt mục tiêu chiến thắng', language: 'English' },
-  { word: 'LEVEL', topic: 'Màn Chơi Thử Thách', meaning: 'Cấp độ thử thách ngày càng cao', language: 'English' },
-  { word: 'SCORE', topic: 'Điểm Số Kỷ Lục', meaning: 'Ghi danh bảng vàng thành tích', language: 'English' },
-  { word: 'QUEST', topic: 'Nhiệm Vụ Khám Phá', meaning: 'Chinh phục các thử thách mỗi ngày', language: 'English' },
-  { word: 'MATCH', topic: 'Ghép Nối Chuẩn Xác', meaning: 'Tìm kiếm những sự trùng khớp', language: 'English' },
-  { word: 'COLOR', topic: 'Sắc Màu Rực Rỡ', meaning: 'Giao diện sinh động cuốn hút', language: 'English' },
-  { word: 'LIGHT', topic: 'Ánh Sáng Dẫn Lối', meaning: 'Gợi ý thông minh mở đường', language: 'English' },
-  { word: 'POWER', topic: 'Sức Mạnh Bứt Phá', meaning: 'Trợ lực vươn lên vị trí dẫn đầu', language: 'English' },
-  { word: 'BRAIN', topic: 'Trí Não Nhạy Bén', meaning: 'Rèn luyện trí nhớ và phản xạ', language: 'English' },
-  { word: 'SOLVE', topic: 'Giải Quyết Vấn Đề', meaning: 'Vượt qua mọi câu đố hóc búa', language: 'English' },
-  { word: 'GUARD', topic: 'Bảo Vệ Tài Khoản', meaning: 'An toàn bảo mật đa lớp', language: 'English' },
-  { word: 'FLASH', topic: 'Tốc Biến Chớp Mắt', meaning: 'Phản ứng tức thì trước thử thách', language: 'English' },
+  { word: 'MERCI', topic: 'games.wordle.words.w80.topic', meaning: 'games.wordle.words.w80.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'LUCKY', topic: 'games.wordle.words.w81.topic', meaning: 'games.wordle.words.w81.meaning', language: 'games.wordle.lang_en' },
+  { word: 'BRAVO', topic: 'games.wordle.words.w82.topic', meaning: 'games.wordle.words.w82.meaning', language: 'games.wordle.lang_fr' },
+  { word: 'GREAT', topic: 'games.wordle.words.w83.topic', meaning: 'games.wordle.words.w83.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SUPER', topic: 'games.wordle.words.w84.topic', meaning: 'games.wordle.words.w84.meaning', language: 'games.wordle.lang_en' },
+  { word: 'QUICK', topic: 'games.wordle.words.w85.topic', meaning: 'games.wordle.words.w85.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SHARP', topic: 'games.wordle.words.w86.topic', meaning: 'games.wordle.words.w86.meaning', language: 'games.wordle.lang_en' },
+  { word: 'LOGIC', topic: 'games.wordle.words.w87.topic', meaning: 'games.wordle.words.w87.meaning', language: 'games.wordle.lang_en' },
+  { word: 'FOCUS', topic: 'games.wordle.words.w88.topic', meaning: 'games.wordle.words.w88.meaning', language: 'games.wordle.lang_en' },
+  { word: 'LEVEL', topic: 'games.wordle.words.w89.topic', meaning: 'games.wordle.words.w89.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SCORE', topic: 'games.wordle.words.w90.topic', meaning: 'games.wordle.words.w90.meaning', language: 'games.wordle.lang_en' },
+  { word: 'QUEST', topic: 'games.wordle.words.w91.topic', meaning: 'games.wordle.words.w91.meaning', language: 'games.wordle.lang_en' },
+  { word: 'MATCH', topic: 'games.wordle.words.w92.topic', meaning: 'games.wordle.words.w92.meaning', language: 'games.wordle.lang_en' },
+  { word: 'COLOR', topic: 'games.wordle.words.w93.topic', meaning: 'games.wordle.words.w93.meaning', language: 'games.wordle.lang_en' },
+  { word: 'LIGHT', topic: 'games.wordle.words.w94.topic', meaning: 'games.wordle.words.w94.meaning', language: 'games.wordle.lang_en' },
+  { word: 'POWER', topic: 'games.wordle.words.w95.topic', meaning: 'games.wordle.words.w95.meaning', language: 'games.wordle.lang_en' },
+  { word: 'BRAIN', topic: 'games.wordle.words.w96.topic', meaning: 'games.wordle.words.w96.meaning', language: 'games.wordle.lang_en' },
+  { word: 'SOLVE', topic: 'games.wordle.words.w97.topic', meaning: 'games.wordle.words.w97.meaning', language: 'games.wordle.lang_en' },
+  { word: 'GUARD', topic: 'games.wordle.words.w98.topic', meaning: 'games.wordle.words.w98.meaning', language: 'games.wordle.lang_en' },
+  { word: 'FLASH', topic: 'games.wordle.words.w99.topic', meaning: 'games.wordle.words.w99.meaning', language: 'games.wordle.lang_en' },
 ];
 
 const MAX_GUESSES = 6;
@@ -335,7 +335,7 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
               <div className="min-w-0">
                 <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">
-                  {t('games.wordle.topic_label', { topic: currentEntry.topic, lang: currentEntry.language })}
+                  {t('games.wordle.topic_label', { topic: t(currentEntry.topic), lang: t(currentEntry.language) })}
                 </span>
               </div>
             </div>
@@ -355,21 +355,20 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-medium">
-                  <strong className="text-amber-300">{t('games.wordle.hint_title')}:</strong> {currentEntry.meaning}
+                  <strong className="text-amber-300">{t('games.wordle.hint_title')}:</strong> {t(currentEntry.meaning)}
                 </p>
                 {revealedLetterIdx === null ? (
                   <button
                     onClick={revealOneLetterHint}
                     className="text-[10px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md hover:bg-amber-400 transition"
                   >
-                    {t('games.wordle.unlock_letter_btn', { defaultValue: '💡 Mở khóa 1 chữ cái ngẫu nhiên' })}
+                    {t('games.wordle.unlock_letter_btn')}
                   </button>
                 ) : (
                   <p className="text-[11px] text-emerald-400 font-bold">
                     {t('games.wordle.revealed_letter_info', {
                       pos: revealedLetterIdx + 1,
                       letter: secretWord[revealedLetterIdx],
-                      defaultValue: `✓ Chữ cái ở vị trí thứ ${revealedLetterIdx + 1} là: "${secretWord[revealedLetterIdx]}"`,
                     })}
                   </p>
                 )}
@@ -451,7 +450,7 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
         {/* Secret Word Reveal on Game Over */}
         {isGameOver && !isWon && (
           <div className="bg-red-950/80 border border-red-500/50 px-4 py-2 rounded-xl text-center text-xs text-red-300 font-mono my-1 shadow-lg animate-fade-in">
-            {t('games.wordle.correct_word', { word: secretWord, meaning: currentEntry.meaning })}
+            {t('games.wordle.correct_word', { word: secretWord, meaning: t(currentEntry.meaning) })}
           </div>
         )}
 
@@ -501,7 +500,7 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
             <div>
               <h3 className="text-lg font-black text-white">{t('games.wordle.win_title')}</h3>
               <p className="text-xs text-amber-300 mt-1 font-mono font-bold">
-                &quot;{secretWord}&quot; • {currentEntry.meaning}
+                &quot;{secretWord}&quot; • {t(currentEntry.meaning)}
               </p>
               <div className="text-3xl font-black text-amber-400 font-mono mt-2">
                 +{rewardAmount} {t('nav.points_unit')}

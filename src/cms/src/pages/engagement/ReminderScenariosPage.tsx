@@ -70,17 +70,17 @@ export const ReminderScenariosPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.scenarioCode?.trim() || !formData.scenarioName?.trim()) {
-      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('scenario.required', { defaultValue: 'Vui lòng nhập Mã kịch bản và Tên kịch bản.' }) });
+      toast.current?.show({ severity: 'warn', summary: t('common.warn'), detail: t('scenario.required') });
       return;
     }
     setSubmitting(true);
     try {
       await LoyaltyService.saveReminderScenario(formData as ReminderScenarioModel, selectedTenant);
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('scenario.saved', { defaultValue: 'Đã lưu kịch bản gợi nhắc.' }) });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('scenario.saved') });
       setShowDialog(false);
       fetchData();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setSubmitting(false);
     }
@@ -89,70 +89,79 @@ export const ReminderScenariosPage: React.FC = () => {
   return (
     <div>
       <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.scenarios', { defaultValue: 'Kịch bản Gợi nhắc (CN-04)' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.scenarios') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
           <div>
             <h4 className="m-0 text-primary font-semibold">
-              {t('scenario.title', { defaultValue: 'Kịch bản Gợi nhắc Đa kênh & Chống Làm phiền (CN-04)' })}
+              {t('scenario.title')}
             </h4>
             <p className="m-0 text-xs text-500 mt-1">
-              {t('scenario.subtitle', { defaultValue: 'Thiết lập mẫu thông điệp 4 ngôn ngữ (VI/EN/FR/HT) kèm trần gửi chống spam và nhật ký gửi.' })}
+              {t('scenario.subtitle')}
             </p>
           </div>
           <div className="flex gap-2 align-items-center">
             <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button label={t('scenario.add_new', { defaultValue: 'Tạo kịch bản' })} icon="pi pi-plus" severity="success" size="small" onClick={openNew} />
+            <Button label={t('scenario.add_new')} icon="pi pi-plus" severity="success" size="small" onClick={openNew} />
             <Button icon="pi pi-refresh" outlined rounded onClick={fetchData} loading={loading} />
           </div>
         </div>
 
         <TabView>
-          <TabPanel header={t('scenario.tab_list', { defaultValue: 'Danh sách Kịch bản' })} leftIcon="pi pi-bell mr-2">
+          <TabPanel header={t('scenario.tab_list')} leftIcon="pi pi-bell mr-2">
             {loading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
             ) : (
-              <DataTable<ReminderScenarioModel[]> value={scenarios} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('scenario.empty', { defaultValue: 'Chưa có kịch bản gợi nhắc nào được cấu hình.' })}>
-                <Column field="scenarioCode" header={t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} body={(r: ReminderScenarioModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
-                <Column field="scenarioName" header={t('scenario.name', { defaultValue: 'Tên Kịch Bản' })} style={{ minWidth: '14rem' }} />
-                <Column field="targetSegment" header={t('segment.code', { defaultValue: 'Phân Khúc' })} body={(r: ReminderScenarioModel) => <Tag value={r.targetSegment} severity="info" />} style={{ minWidth: '10rem' }} />
-                <Column field="channel" header={t('scenario.channel', { defaultValue: 'Kênh Gửi' })} body={(r: ReminderScenarioModel) => <Tag value={r.channel} />} style={{ minWidth: '9rem' }} />
-                <Column header={t('scenario.anti_spam', { defaultValue: 'Chống Spam' })} body={(r: ReminderScenarioModel) => <span className="text-xs font-mono">{r.quietHoursRespect ? 'Quiet Hours · ' : ''}tối đa {r.maxPerWeek}/tuần</span>} style={{ minWidth: '11rem' }} />
-                <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: ReminderScenarioModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-                <Column header={t('common.action', { defaultValue: 'Sửa' })} body={(r: ReminderScenarioModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
+              <DataTable<ReminderScenarioModel[]> value={scenarios} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('scenario.empty')}>
+                <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderScenarioModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
+                <Column field="scenarioName" header={t('scenario.name')} style={{ minWidth: '14rem' }} />
+                <Column field="targetSegment" header={t('segment.code')} body={(r: ReminderScenarioModel) => <Tag value={r.targetSegment} severity="info" />} style={{ minWidth: '10rem' }} />
+                <Column field="channel" header={t('scenario.channel')} body={(r: ReminderScenarioModel) => <Tag value={r.channel} />} style={{ minWidth: '9rem' }} />
+                <Column
+                  header={t('scenario.anti_spam')}
+                  body={(r: ReminderScenarioModel) => (
+                    <span className="text-xs font-mono">
+                      {r.quietHoursRespect ? `${t('scenario.quiet_hours_short')} · ` : ''}
+                      {t('scenario.max_per_week_short', { count: r.maxPerWeek })}
+                    </span>
+                  )}
+                  style={{ minWidth: '11rem' }}
+                />
+                <Column field="status" header={t('common.status')} body={(r: ReminderScenarioModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+                <Column header={t('common.action')} body={(r: ReminderScenarioModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
               </DataTable>
             )}
           </TabPanel>
 
-          <TabPanel header={t('scenario.tab_logs', { defaultValue: `Nhật ký Gửi (${sendLogs.length})` })} leftIcon="pi pi-history mr-2">
-            <DataTable<ReminderSendLogModel[]> value={sendLogs} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có lịch sử gửi gợi nhắc.' })}>
-              <Column field="scenarioCode" header={t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
-              <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'Hội Viên' })} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
-              <Column field="channel" header={t('scenario.channel', { defaultValue: 'Kênh' })} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem' }} />
-              <Column field="sentAt" header={t('common.created_at', { defaultValue: 'Thời Gian Gửi' })} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+          <TabPanel header={t('scenario.tab_logs', { count: sendLogs.length })} leftIcon="pi pi-history mr-2">
+            <DataTable<ReminderSendLogModel[]> value={sendLogs} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')}>
+              <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="externalUserId" header={t('customer.phone')} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
+              <Column field="channel" header={t('scenario.channel')} style={{ minWidth: '8rem' }} />
+              <Column field="status" header={t('common.status')} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem' }} />
+              <Column field="sentAt" header={t('common.created_at')} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             </DataTable>
           </TabPanel>
         </TabView>
       </div>
 
-      <Dialog visible={showDialog} onHide={() => setShowDialog(false)} header={t('scenario.dialog_title', { defaultValue: 'Cấu hình Kịch bản Gợi nhắc' })} style={{ width: '48rem' }} modal className="p-fluid">
+      <Dialog visible={showDialog} onHide={() => setShowDialog(false)} header={t('scenario.dialog_title')} style={{ width: '48rem' }} modal className="p-fluid">
         <div className="grid">
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('scenario.code', { defaultValue: 'Mã Kịch Bản' })} *</label>
+            <label className="text-sm font-medium">{t('scenario.code')} *</label>
             <InputText value={formData.scenarioCode || ''} onChange={(e) => setFormData({ ...formData, scenarioCode: e.target.value.toUpperCase() })} className="font-mono" />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('scenario.name', { defaultValue: 'Tên Kịch Bản' })} *</label>
+            <label className="text-sm font-medium">{t('scenario.name')} *</label>
             <InputText value={formData.scenarioName || ''} onChange={(e) => setFormData({ ...formData, scenarioName: e.target.value })} />
           </div>
           <div className="col-12 md:col-4 field">
-            <label className="text-sm font-medium">{t('segment.code', { defaultValue: 'Phân khúc' })}</label>
+            <label className="text-sm font-medium">{t('segment.code')}</label>
             <Dropdown value={formData.targetSegment} options={Object.values(CustomerSegmentCode).map((v) => ({ label: v, value: v }))} onChange={(e) => setFormData({ ...formData, targetSegment: e.value })} appendTo="self" />
           </div>
           <div className="col-12 md:col-4 field">
-            <label className="text-sm font-medium">{t('scenario.channel', { defaultValue: 'Kênh gửi' })}</label>
+            <label className="text-sm font-medium">{t('scenario.channel')}</label>
             <Dropdown value={formData.channel} options={[{ label: 'PUSH_INAPP', value: 'PUSH_INAPP' }, { label: 'SMS', value: 'SMS' }, { label: 'EMAIL', value: 'EMAIL' }, { label: 'USSD_FLASH', value: 'USSD_FLASH' }]} onChange={(e) => setFormData({ ...formData, channel: e.value })} appendTo="self" />
           </div>
           <div className="col-12 md:col-4 field">
@@ -161,36 +170,36 @@ export const ReminderScenariosPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-6 field flex align-items-center gap-2 pt-3">
             <InputSwitch checked={!!formData.quietHoursRespect} onChange={(e) => setFormData({ ...formData, quietHoursRespect: e.value })} />
-            <label className="text-sm font-medium m-0">Tránh gửi khung giờ nghỉ (Quiet Hours)</label>
+            <label className="text-sm font-medium m-0">{t('scenario.quiet_hours_label')}</label>
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">Trần số lần / tuần</label>
-            <InputNumber value={formData.maxPerWeek ?? 2} onValueChange={(e) => setFormData({ ...formData, maxPerWeek: e.value || 1 })} min={1} />
+            <label className="text-sm font-medium">{t('scenario.max_per_week')}</label>
+            <InputNumber value={formData.maxPerWeek ?? undefined} onValueChange={(e) => setFormData({ ...formData, maxPerWeek: e.value ?? undefined })} min={1} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">Mẫu Tiếng Việt (vi)</label>
+            <label className="text-sm font-medium">{t('scenario.template_vi')}</label>
             <InputTextarea rows={2} value={formData.bodyVi || ''} onChange={(e) => setFormData({ ...formData, bodyVi: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">Mẫu Tiếng Anh (en)</label>
+            <label className="text-sm font-medium">{t('scenario.template_en')}</label>
             <InputTextarea rows={2} value={formData.bodyEn || ''} onChange={(e) => setFormData({ ...formData, bodyEn: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">Mẫu Tiếng Pháp (fr)</label>
+            <label className="text-sm font-medium">{t('scenario.template_fr')}</label>
             <InputTextarea rows={2} value={formData.bodyFr || ''} onChange={(e) => setFormData({ ...formData, bodyFr: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">Mẫu Tiếng Creole (ht)</label>
+            <label className="text-sm font-medium">{t('scenario.template_ht')}</label>
             <InputTextarea rows={2} value={formData.bodyHt || ''} onChange={(e) => setFormData({ ...formData, bodyHt: e.target.value })} />
           </div>
           <div className="col-12 flex align-items-center gap-2">
             <InputSwitch checked={formData.status === CommonStatus.ACTIVE} onChange={(e) => setFormData({ ...formData, status: e.value ? CommonStatus.ACTIVE : CommonStatus.INACTIVE })} />
-            <span className="text-sm">{formData.status === CommonStatus.ACTIVE ? CommonStatus.ACTIVE : CommonStatus.INACTIVE}</span>
+            <span className="text-sm">{formData.status === CommonStatus.ACTIVE ? t('common.active') : t('common.inactive')}</span>
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-3">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} outlined onClick={() => setShowDialog(false)} />
-          <Button label={t('common.save', { defaultValue: 'Lưu kịch bản' })} icon="pi pi-check" onClick={handleSave} loading={submitting} />
+          <Button label={t('common.cancel')} outlined onClick={() => setShowDialog(false)} />
+          <Button label={t('common.save')} icon="pi pi-check" onClick={handleSave} loading={submitting} />
         </div>
       </Dialog>
     </div>

@@ -80,7 +80,7 @@ class LoyaltyJSBridgeManager {
         window.ReactNativeWebView.postMessage(message);
       } else {
         // Mock fallback khi chạy thử nghiệm trên trình duyệt PC / Sandbox
-        console.warn(`[LoyaltyJSBridge] Đang chạy trên trình duyệt web, giả lập gọi action: ${action}`, payload);
+        console.warn(`[LoyaltyJSBridge] Browser simulation mode for action: ${action}`, payload);
         setTimeout(() => {
           if (action === 'requestPayment') {
             resolve({ success: true, transactionId: 'TXN_SIMULATED_' + Date.now() });

@@ -482,6 +482,20 @@ export enum AgentRoleType {
   SUPER_AGENT = 'SUPER_AGENT',
 }
 
+export enum AgentKpiRewardStatus {
+  INELIGIBLE = 'INELIGIBLE',
+  ELIGIBLE = 'ELIGIBLE',
+  APPROVED = 'APPROVED',
+  PAID = 'PAID',
+}
+
+export enum DisputeStatus {
+  OPEN = 'OPEN',
+  INVESTIGATING = 'INVESTIGATING',
+  RESOLVED = 'RESOLVED',
+  REJECTED = 'REJECTED',
+}
+
 export enum PaymentBatchStatus {
   DRAFT = 'DRAFT',
   PENDING_CONFIRM = 'PENDING_CONFIRM',

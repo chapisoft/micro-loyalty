@@ -120,13 +120,13 @@ export const Dashboard: React.FC = () => {
     const val = Number(value || 0).toLocaleString();
     switch (metric) {
       case 'BILL_AMOUNT':
-        return `${t('dashboard.metric_bill', { defaultValue: 'Chi tiêu tích lũy' })} ${val} HTG`;
+        return `${t('dashboard.metric_bill')} ${val} HTG`;
       case 'TRANSACTION_COUNT':
-        return `${t('dashboard.metric_tx_count', { defaultValue: 'Số giao dịch' })} ${val} ${t('dashboard.unit_times', { defaultValue: 'lần' })}`;
+        return `${t('dashboard.metric_tx_count')} ${val} ${t('dashboard.unit_times')}`;
       case 'EARN_POINTS':
-        return `${t('dashboard.metric_points', { defaultValue: 'Điểm tích lũy' })} ${val} ${t('common.points', { defaultValue: 'điểm' })}`;
+        return `${t('dashboard.metric_points')} ${val} ${t('common.points')}`;
       case 'GAME_SPINS':
-        return `${t('dashboard.metric_spins', { defaultValue: 'Lượt quay game' })} ${val} ${t('common.spins', { defaultValue: 'lượt' })}`;
+        return `${t('dashboard.metric_spins')} ${val} ${t('common.spins')}`;
       default:
         return val ? `${val} ${metric || ''}` : '-';
     }
@@ -135,16 +135,16 @@ export const Dashboard: React.FC = () => {
   const getRewardSummary = (camp: MilestoneItemModel) => {
     const rewards: string[] = [];
     if (camp.rewardPoints && camp.rewardPoints > 0) {
-      rewards.push(`+${camp.rewardPoints.toLocaleString()} ${t('common.points', { defaultValue: 'Điểm' })}`);
+      rewards.push(`+${camp.rewardPoints.toLocaleString()} ${t('common.points')}`);
     }
     if (camp.rewardGameTurns && camp.rewardGameTurns > 0) {
-      rewards.push(`+${camp.rewardGameTurns} ${t('common.spins', { defaultValue: 'Lượt quay' })}`);
+      rewards.push(`+${camp.rewardGameTurns} ${t('common.spins')}`);
     }
     if (camp.rewardVoucherId) {
-      rewards.push(`+1 ${t('dashboard.reward_voucher_label', { defaultValue: 'Voucher' })}`);
+      rewards.push(`+1 ${t('dashboard.reward_voucher_label')}`);
     }
     if (rewards.length === 0) {
-      return t('dashboard.default_reward', { defaultValue: 'Quà tri ân hội viên' });
+      return t('dashboard.default_reward');
     }
     return rewards.join(' • ');
   };
@@ -152,17 +152,17 @@ export const Dashboard: React.FC = () => {
   const actionTypeBodyTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value={t('action_type.earn', { defaultValue: 'TÍCH ĐIỂM (EARN)' })} icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value={t('action_type.earn')} icon="pi pi-arrow-up-right" />;
       case 'BURN':
-        return <Tag severity="danger" value={t('action_type.burn', { defaultValue: 'TIÊU ĐIỂM (BURN)' })} icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value={t('action_type.burn')} icon="pi pi-arrow-down-left" />;
       case 'REWARD':
-        return <Tag severity="info" value={t('action_type.reward', { defaultValue: 'THƯỞNG CỘT MỐC' })} icon="pi pi-gift" />;
+        return <Tag severity="info" value={t('action_type.reward')} icon="pi pi-gift" />;
       case 'SPIN':
-        return <Tag severity="warning" value={t('action_type.spin', { defaultValue: 'VÒNG QUAY' })} icon="pi pi-compass" />;
+        return <Tag severity="warning" value={t('action_type.spin')} icon="pi pi-compass" />;
       case 'VOUCHER':
-        return <Tag severity="info" value={t('action_type.voucher', { defaultValue: 'ĐỔI VOUCHER' })} icon="pi pi-ticket" />;
+        return <Tag severity="info" value={t('action_type.voucher')} icon="pi pi-ticket" />;
       default:
-        return <Tag severity="secondary" value={rowData.actionType || t('common.actions', { defaultValue: 'GIAO DỊCH' })} />;
+        return <Tag severity="secondary" value={rowData.actionType || t('common.actions')} />;
     }
   };
 
@@ -170,7 +170,7 @@ export const Dashboard: React.FC = () => {
     const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
     return (
       <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
-        {isPositive ? `+${rowData.points}` : `-${rowData.points}`} {t('common.points', { defaultValue: 'Điểm' })}
+        {isPositive ? `+${rowData.points}` : `-${rowData.points}`} {t('common.points')}
       </span>
     );
   };
@@ -178,13 +178,13 @@ export const Dashboard: React.FC = () => {
   const statusBodyTemplate = (row: PointLedgerItem) => {
     const status = (row.status || 'SUCCESS').toUpperCase();
     if (status === 'SUCCESS') {
-      return <Tag severity="success" value={t('common.success', { defaultValue: 'Thành Công' })} />;
+      return <Tag severity="success" value={t('common.success')} />;
     }
     if (status === 'PENDING') {
-      return <Tag severity="warning" value={t('common.pending', { defaultValue: 'Đang Xử Lý' })} />;
+      return <Tag severity="warning" value={t('common.pending')} />;
     }
     if (status === 'FAILED') {
-      return <Tag severity="danger" value={t('common.failed', { defaultValue: 'Thất Bại' })} />;
+      return <Tag severity="danger" value={t('common.failed')} />;
     }
     return <Tag severity="secondary" value={status} />;
   };
@@ -203,7 +203,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="grid">
       <div className="col-12 flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
-        <AppBreadcrumb items={[{ label: t('dashboard.title', { defaultValue: 'Tổng quan Nền tảng Loyalty & GameHub' }) }]} />
+        <AppBreadcrumb items={[{ label: t('dashboard.title') }]} />
         <div className="flex align-items-center gap-3">
           {/* Scalable Tenant / Partner Dropdown */}
           <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
@@ -218,8 +218,8 @@ export const Dashboard: React.FC = () => {
             onClick={() => setShowSystemHealth(!showSystemHealth)}
             tooltip={
               showSystemHealth
-                ? t('dashboard.toggle_infra_hide', { defaultValue: 'Ẩn thông tin hạ tầng' })
-                : t('dashboard.toggle_infra_show', { defaultValue: 'Xem thông tin hạ tầng hệ thống' })
+                ? t('dashboard.toggle_infra_hide')
+                : t('dashboard.toggle_infra_show')
             }
             className="p-button-sm opacity-60 hover:opacity-100"
           />
@@ -240,7 +240,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex justify-content-between align-items-start mb-3">
             <div>
               <span className="block text-600 font-semibold text-sm mb-2">
-                {t('dashboard.total_members', { defaultValue: 'Tổng Hội viên Liên minh' })}
+                {t('dashboard.total_members')}
               </span>
               <div className="text-900 font-extrabold text-3xl line-height-1">
                 {(stats.totalMembers || 0).toLocaleString()}
@@ -262,8 +262,7 @@ export const Dashboard: React.FC = () => {
             <i className="pi pi-check-circle text-emerald-600 text-xs font-bold" />
             <span className="text-xs font-medium text-emerald-600">
               {t('dashboard.active_members_info', {
-                count: stats.activeMembers || 0,
-                defaultValue: `${(stats.activeMembers || 0).toLocaleString()} hội viên đang hoạt động`,
+                count: stats.activeMembers || 0
               })}
             </span>
           </div>
@@ -283,7 +282,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex justify-content-between align-items-start mb-3">
             <div>
               <span className="block text-600 font-semibold text-sm mb-2">
-                {t('dashboard.points_issued', { defaultValue: 'Tổng Điểm Đã Phát hành' })}
+                {t('dashboard.points_issued')}
               </span>
               <div className="text-900 font-extrabold text-3xl line-height-1">
                 {(stats.totalEarnedPoints || 0).toLocaleString()}
@@ -305,8 +304,7 @@ export const Dashboard: React.FC = () => {
             <i className="pi pi-check-circle text-emerald-600 text-xs" />
             <span className="text-xs font-normal text-600">
               {t('dashboard.exchange_rate_info', {
-                amount: (stats.totalEarnedPoints || 0).toLocaleString(),
-                defaultValue: `Quy đổi 1:1 HTG (Tương đương ${(stats.totalEarnedPoints || 0).toLocaleString()} HTG)`,
+                amount: (stats.totalEarnedPoints || 0).toLocaleString()
               })}
             </span>
           </div>
@@ -326,7 +324,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex justify-content-between align-items-start mb-3">
             <div>
               <span className="block text-600 font-semibold text-sm mb-2">
-                {t('dashboard.points_redeemed', { defaultValue: 'Tổng Điểm Đã Tiêu dùng' })}
+                {t('dashboard.points_redeemed')}
               </span>
               <div className="text-900 font-extrabold text-3xl line-height-1">
                 {Math.abs(stats.totalBurnedPoints || 0).toLocaleString()}
@@ -348,8 +346,7 @@ export const Dashboard: React.FC = () => {
             <i className="pi pi-percentage text-amber-600 text-xs" />
             <span className="text-xs font-normal text-amber-700">
               {t('dashboard.clearing_settled_info', {
-                amount: (stats.clearingSettledAmount || 0).toLocaleString(),
-                defaultValue: `Quyết toán bù trừ: ${(stats.clearingSettledAmount || 0).toLocaleString()} HTG`,
+                amount: (stats.clearingSettledAmount || 0).toLocaleString()
               })}
             </span>
           </div>
@@ -369,12 +366,12 @@ export const Dashboard: React.FC = () => {
           <div className="flex justify-content-between align-items-start mb-3">
             <div>
               <span className="block text-600 font-semibold text-sm mb-2">
-                {t('dashboard.active_vouchers', { defaultValue: 'Kho Voucher Đang Mở Đổi' })}
+                {t('dashboard.active_vouchers')}
               </span>
               <div className="text-900 font-extrabold text-3xl line-height-1 flex align-items-baseline gap-2">
                 <span>{(stats.activeVouchers || 0).toLocaleString()}</span>
                 <span className="text-base font-semibold text-500">
-                  {t('dashboard.voucher_unit', { defaultValue: 'voucher' })}
+                  {t('dashboard.voucher_unit')}
                 </span>
               </div>
             </div>
@@ -394,8 +391,7 @@ export const Dashboard: React.FC = () => {
             <i className="pi pi-bolt text-purple-600 text-xs" />
             <span className="text-xs font-normal text-purple-700">
               {t('dashboard.total_txs_info', {
-                count: stats.totalTransactions || 0,
-                defaultValue: `Tổng ${(stats.totalTransactions || 0).toLocaleString()} giao dịch điểm`,
+                count: stats.totalTransactions || 0
               })}
             </span>
           </div>
@@ -404,7 +400,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Dynamic Tier Distribution Card */}
       <div className={showSystemHealth ? 'col-12 lg:col-4' : 'col-12 lg:col-6'}>
-        <Card title={t('dashboard.tier_distribution', { defaultValue: 'Phân bố Hội viên theo Hạng thẻ' })} className="h-full shadow-2 border-round-2xl">
+        <Card title={t('dashboard.tier_distribution')} className="h-full shadow-2 border-round-2xl">
           <div className="flex flex-column gap-4">
             {stats.tierDistributions && stats.tierDistributions.length > 0 ? (
               stats.tierDistributions.map((tier) => {
@@ -417,7 +413,7 @@ export const Dashboard: React.FC = () => {
                         {tier.tierName || tier.tierCode} ({tier.pointMultiplier}x)
                       </span>
                       <span className="text-sm font-medium text-slate-800">
-                        {tier.memberCount.toLocaleString()} {t('dashboard.member_count_unit', { defaultValue: 'hội viên' })} ({tier.percentage}%)
+                        {tier.memberCount.toLocaleString()} {t('dashboard.member_count_unit')} ({tier.percentage}%)
                       </span>
                     </div>
                     <ProgressBar
@@ -432,15 +428,15 @@ export const Dashboard: React.FC = () => {
             ) : (
               <div className="text-center py-4 text-500 text-sm">
                 <i className="pi pi-info-circle mr-2" />
-                {t('dashboard.no_tiers_configured', { defaultValue: 'Chưa có hạng hội viên nào được cấu hình' })}
+                {t('dashboard.no_tiers_configured')}
               </div>
             )}
           </div>
 
           <div className="mt-4 pt-3 border-top-1 surface-border flex justify-content-between align-items-center">
-            <span className="text-xs text-500">{t('dashboard.evaluation_cycle', { defaultValue: 'Chu kỳ tự động đánh giá: 12 tháng' })}</span>
+            <span className="text-xs text-500">{t('dashboard.evaluation_cycle')}</span>
             <Button
-              label={t('dashboard.view_tier_config', { defaultValue: 'Xem cấu hình hạng' })}
+              label={t('dashboard.view_tier_config')}
               text
               size="small"
               onClick={() => navigate(paths.tierManagement)}
@@ -452,7 +448,7 @@ export const Dashboard: React.FC = () => {
       {/* Dynamic Featured Campaigns */}
       <div className={showSystemHealth ? 'col-12 lg:col-4' : 'col-12 lg:col-6'}>
         <Card
-          title={t('dashboard.top_campaigns', { defaultValue: 'Chiến dịch Cột mốc & Nhiệm vụ Nổi bật' })}
+          title={t('dashboard.top_campaigns')}
           className="h-full shadow-2 border-round-2xl"
         >
           <div className="flex flex-column gap-3">
@@ -465,24 +461,24 @@ export const Dashboard: React.FC = () => {
                         <span className="font-semibold text-sm text-900 block">{camp.campaignName || camp.campaignCode}</span>
                         <Tag
                           severity="info"
-                          value={t('dashboard.step_prefix', { step: camp.milestoneStep || 1, defaultValue: `Chặng ${camp.milestoneStep || 1}` })}
+                          value={t('dashboard.step_prefix', { step: camp.milestoneStep || 1 })}
                           className="text-xs"
                         />
                       </div>
                       <span className="text-xs text-600">
-                        <span className="font-medium text-500">{t('dashboard.target_label', { defaultValue: 'Mục tiêu:' })}</span>{' '}
+                        <span className="font-medium text-500">{t('dashboard.target_label')}</span>{' '}
                         {getTargetMetricText(camp.targetMetric, camp.targetValue)}
                       </span>
                     </div>
                     <Tag
                       severity={camp.status === 'ACTIVE' ? 'success' : 'secondary'}
-                      value={camp.status === 'ACTIVE' ? t('common.active', { defaultValue: 'Đang diễn ra' }) : t('common.inactive', { defaultValue: 'Đã kết thúc' })}
+                      value={camp.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
                     />
                   </div>
                   <div className="text-xs text-blue-700 font-medium flex align-items-center gap-1">
                     <i className="pi pi-gift text-amber-500" />
                     <span>
-                      <span className="font-medium text-500">{t('dashboard.reward_label', { defaultValue: 'Phần thưởng:' })}</span>{' '}
+                      <span className="font-medium text-500">{t('dashboard.reward_label')}</span>{' '}
                       {getRewardSummary(camp)}
                     </span>
                   </div>
@@ -492,10 +488,10 @@ export const Dashboard: React.FC = () => {
               <div className="text-center py-4">
                 <i className="pi pi-calendar-times text-400 text-3xl mb-2" />
                 <p className="text-500 text-sm m-0 mb-3">
-                  {t('dashboard.no_campaigns', { defaultValue: 'Chưa có chiến dịch nào được cấu hình cho đối tác này' })}
+                  {t('dashboard.no_campaigns')}
                 </p>
                 <Button
-                  label={t('dashboard.create_campaign_cta', { defaultValue: '+ Tạo Chiến Dịch Mới' })}
+                  label={t('dashboard.create_campaign_cta')}
                   size="small"
                   outlined
                   onClick={() => navigate(paths.campaignMilestones)}
@@ -505,7 +501,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="mt-3 text-right">
             <Button
-              label={t('dashboard.manage_campaigns', { defaultValue: 'Quản lý chiến dịch' })}
+              label={t('dashboard.manage_campaigns')}
               icon="pi pi-arrow-right"
               iconPos="right"
               text
@@ -523,7 +519,7 @@ export const Dashboard: React.FC = () => {
             title={
               <div className="flex align-items-center justify-content-between">
                 <span className="font-bold text-xl">
-                  {t('dashboard.services_status', { defaultValue: 'Trạng thái Hạ tầng Microservices' })}
+                  {t('dashboard.services_status')}
                 </span>
                 <Button
                   icon="pi pi-refresh"
@@ -532,7 +528,7 @@ export const Dashboard: React.FC = () => {
                   size="small"
                   loading={healthLoading}
                   onClick={fetchSystemHealth}
-                  tooltip={t('dashboard.refresh_status', { defaultValue: 'Làm mới trạng thái' })}
+                  tooltip={t('dashboard.refresh_status')}
                 />
               </div>
             }
@@ -562,7 +558,7 @@ export const Dashboard: React.FC = () => {
                     <div>
                       <div className="font-medium text-900 text-xs line-height-1">{service.displayName}</div>
                       <div className="text-500 text-xs mt-1 font-mono">
-                        {t('dashboard.port_label', { defaultValue: 'Cổng:' })} {service.port}
+                        {t('dashboard.port_label')} {service.port}
                       </div>
                     </div>
                   </div>
@@ -580,59 +576,59 @@ export const Dashboard: React.FC = () => {
       {/* Recent Point Ledger Activity Table */}
       <div className="col-12">
         <Card
-          title={t('dashboard.recent_transactions', { defaultValue: 'Giao dịch Sổ cái Điểm Gần đây' })}
+          title={t('dashboard.recent_transactions')}
           className="shadow-2 border-round-2xl"
         >
           <DataTable
             value={recentTransactions}
             loading={loading}
-            emptyMessage={t('common.no_data', { defaultValue: 'Chưa có giao dịch biến động điểm nào' })}
+            emptyMessage={t('common.no_data')}
             responsiveLayout="scroll"
           >
             <Column
               field="transactionId"
-              header={t('dashboard.tx_code', { defaultValue: 'Mã Giao Dịch' })}
+              header={t('dashboard.tx_code')}
               body={(row: PointLedgerItem) => (
                 <span className="font-mono text-xs font-semibold text-slate-700">{row.transactionId}</span>
               )}
             />
             <Column
               field="partnerCode"
-              header={t('dashboard.partner_pos', { defaultValue: 'Điểm bán / Đối tác' })}
+              header={t('dashboard.partner_pos')}
               body={(row: PointLedgerItem) => <Tag value={row.partnerCode || selectedTenant} severity="info" />}
             />
             <Column
               field="externalUserId"
-              header={t('dashboard.customer_id', { defaultValue: 'Mã Khách Hàng' })}
+              header={t('dashboard.customer_id')}
               body={(row: PointLedgerItem) => <span className="font-mono text-xs">{row.externalUserId}</span>}
             />
-            <Column header={t('dashboard.action', { defaultValue: 'Loại Giao Dịch' })} body={actionTypeBodyTemplate} />
-            <Column header={t('dashboard.points_delta', { defaultValue: 'Biến Động Điểm' })} body={pointsBodyTemplate} />
+            <Column header={t('dashboard.action')} body={actionTypeBodyTemplate} />
+            <Column header={t('dashboard.points_delta')} body={pointsBodyTemplate} />
             <Column
               field="status"
-              header={t('dashboard.status', { defaultValue: 'Trạng Thái' })}
+              header={t('dashboard.status')}
               body={statusBodyTemplate}
             />
             <Column
               field="createdAt"
-              header={t('dashboard.time', { defaultValue: 'Thời Gian' })}
+              header={t('dashboard.time')}
               body={dateTemplate}
             />
           </DataTable>
           <div className="mt-3 flex flex-wrap justify-content-between align-items-center gap-2">
             <span className="text-xs text-500">
-              {t('dashboard.sync_note', { defaultValue: 'Đồng bộ hai chiều với cơ sở dữ liệu PostgreSQL 15+ độc lập' })}
+              {t('dashboard.sync_note')}
             </span>
             <div className="flex align-items-center gap-2">
               <Button
-                label={t('dashboard.view_clearing_report', { defaultValue: 'Xem Báo Cáo Đối Soát Bù Trừ' })}
+                label={t('dashboard.view_clearing_report')}
                 icon="pi pi-chart-line"
                 text
                 size="small"
                 onClick={() => navigate(paths.clearingSettlement)}
               />
               <Button
-                label={t('dashboard.view_all_transactions', { defaultValue: 'Xem Toàn Bộ Sổ Cái' })}
+                label={t('dashboard.view_all_transactions')}
                 icon="pi pi-external-link"
                 text
                 size="small"

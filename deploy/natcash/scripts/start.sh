@@ -8,7 +8,12 @@ echo "==========================================================================
 echo " [START-NATCASH] Khởi chạy hệ sinh thái Loyalty On-Premise Ví Natcash..."
 echo "=============================================================================="
 
-docker compose up -d
+if [ "$#" -gt 0 ]; then
+  echo ">>> Khởi chạy chọn lọc (Rolling Update --build --no-deps): $*"
+  docker compose up -d --build --no-deps "$@"
+else
+  docker compose up -d
+fi
 
 echo ""
 echo "[START-NATCASH] Dịch vụ đã khởi chạy thành công!"

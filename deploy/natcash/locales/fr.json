@@ -1,0 +1,27 @@
+{
+  "common": {
+    "system_title": "Programme de Fidélité du Portefeuille Natcash",
+    "search": "Rechercher...",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "status": "Statut"
+  },
+  "loyalty": {
+    "points": "Points Natcash",
+    "tier_silver": "Membre Argent Natcash",
+    "tier_gold": "Membre Or Natcash",
+    "tier_platinum": "Membre Platine Natcash",
+    "tier_diamond": "Membre Diamant Natcash",
+    "burn_points": "Échanger des récompenses",
+    "earn_points": "Gagner des points par transaction",
+    "qr_reward_title": "QR Code du Portefeuille Natcash"
+  },
+  "game": {
+    "spin_now": "Tourner maintenant",
+    "remaining_turns": "Tours Natcash restants",
+    "buy_turns": "Acheter des tours",
+    "gamehub_title": "Espace Jeux Natcash",
+    "win_congrats": "Félicitations, vous avez gagné une récompense Natcash !"
+  }
+}

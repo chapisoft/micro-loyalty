@@ -78,8 +78,8 @@ export default function AuditLogPage() {
       if (diff < 0) {
         toast.current?.show({
           severity: 'warn',
-          summary: t('audit.invalid_range', { defaultValue: 'Khoảng ngày không hợp lệ' }),
-          detail: t('audit.from_before_to', { defaultValue: 'Từ ngày phải trước hoặc bằng Đến ngày' }),
+          summary: t('audit.invalid_range'),
+          detail: t('audit.from_before_to'),
           life: 3000,
         });
         return;
@@ -87,8 +87,8 @@ export default function AuditLogPage() {
       if (diff > 31) {
         toast.current?.show({
           severity: 'warn',
-          summary: t('audit.too_much', { defaultValue: 'Khoảng thời gian quá lớn' }),
-          detail: t('audit.max_31', { defaultValue: 'Khoảng thời gian tìm kiếm tối đa 31 ngày' }),
+          summary: t('audit.too_much'),
+          detail: t('audit.max_31'),
           life: 4000,
         });
         return;
@@ -131,8 +131,8 @@ export default function AuditLogPage() {
     if (rawList.length === 0) {
       toast.current?.show({
         severity: 'warn',
-        summary: t('common.notice', { defaultValue: 'Thông báo' }),
-        detail: t('audit.no_data', { defaultValue: 'Không có dữ liệu để xuất Excel' }),
+        summary: t('common.notice'),
+        detail: t('audit.no_data'),
         life: 3000,
       });
       return;
@@ -143,21 +143,21 @@ export default function AuditLogPage() {
     const fileName = `Bao_Cao_Kiem_Toan_${selectedTenant}_${fromStr}_${toStr}.xlsx`;
 
     const exportData = rawList.map((item, index) => ({
-      [t('common.no_order', { defaultValue: 'STT' })]: index + 1,
-      [t('audit.id', { defaultValue: 'ID' })]: item.id,
-      [t('audit.timestamp', { defaultValue: 'Thời gian' })]: item.timestamp ? new Date(item.timestamp).toLocaleString() : '',
-      [t('audit.tenant', { defaultValue: 'Thuê bao' })]: item.tenantId || selectedTenant,
-      [t('audit.module', { defaultValue: 'Phân hệ' })]: item.module || '',
-      [t('audit.table', { defaultValue: 'Bảng dữ liệu' })]: item.tableName,
-      [t('audit.operation', { defaultValue: 'Thao tác' })]: item.operation,
-      [t('audit.entity_id', { defaultValue: 'Mã đối tượng' })]: item.entityId,
-      [t('audit.actor', { defaultValue: 'Người thực hiện' })]: item.username,
-      [t('audit.client_ip', { defaultValue: 'Địa chỉ IP' })]: item.clientIp || '',
-      [t('audit.status', { defaultValue: 'Trạng thái' })]: item.status || 'SUCCESS',
-      [t('audit.execution_time', { defaultValue: 'Thời gian xử lý (ms)' })]: item.executionTimeMs || 0,
-      [t('audit.description', { defaultValue: 'Diễn giải nghiệp vụ' })]: item.description || '',
-      [t('audit.before', { defaultValue: 'Dữ liệu trước' })]: item.beforeData || '',
-      [t('audit.after', { defaultValue: 'Dữ liệu sau' })]: item.afterData || '',
+      [t('common.no_order')]: index + 1,
+      [t('audit.id')]: item.id,
+      [t('audit.timestamp')]: item.timestamp ? new Date(item.timestamp).toLocaleString() : '',
+      [t('audit.tenant')]: item.tenantId || selectedTenant,
+      [t('audit.module')]: item.module || '',
+      [t('audit.table')]: item.tableName,
+      [t('audit.operation')]: item.operation,
+      [t('audit.entity_id')]: item.entityId,
+      [t('audit.actor')]: item.username,
+      [t('audit.client_ip')]: item.clientIp || '',
+      [t('audit.status')]: item.status || 'SUCCESS',
+      [t('audit.execution_time')]: item.executionTimeMs || 0,
+      [t('audit.description')]: item.description || '',
+      [t('audit.before')]: item.beforeData || '',
+      [t('audit.after')]: item.afterData || '',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -185,10 +185,9 @@ export default function AuditLogPage() {
 
     toast.current?.show({
       severity: 'success',
-      summary: t('common.success', { defaultValue: 'Thành Công' }),
+      summary: t('common.success'),
       detail: t('audit.export_success', {
-        name: fileName,
-        defaultValue: `Đã xuất báo cáo kiểm toán thành công: ${fileName}`,
+        name: fileName
       }),
       life: 3000,
     });
@@ -280,7 +279,7 @@ export default function AuditLogPage() {
         severity="info"
         size="small"
         onClick={() => handleOpenDetail(rowData)}
-        tooltip={t('audit.view_diff', { defaultValue: 'Xem chi tiết thay đổi' })}
+        tooltip={t('audit.view_diff')}
       />
     );
   };
@@ -317,7 +316,7 @@ export default function AuditLogPage() {
   };
 
   const renderJsonPretty = (jsonStr?: string) => {
-    if (!jsonStr) return <span className="text-400 italic font-mono">- {t('no_data_available', { defaultValue: 'Không có dữ liệu' })} -</span>;
+    if (!jsonStr) return <span className="text-400 italic font-mono">- {t('no_data_available')} -</span>;
     try {
       const parsed = JSON.parse(jsonStr);
       return (
@@ -354,21 +353,21 @@ export default function AuditLogPage() {
           <div>
             <h2 className="text-2xl font-bold text-800 m-0 flex align-items-center gap-2">
               <i className="pi pi-history text-primary text-xl" />
-              {t('audit.management', { defaultValue: 'Nhật ký Hoạt động Hệ thống' })}
+              {t('audit.management')}
             </h2>
             <p className="text-500 text-sm m-0 mt-1">
-              {t('audit.subtitle', { defaultValue: 'Theo dõi và tra cứu 100% các thay đổi quản trị, chính sách và giao dịch nghiệp vụ trên toàn hệ thống' })}
+              {t('audit.subtitle')}
             </p>
           </div>
           <div className="flex align-items-center gap-2">
             <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
             <Button
               icon="pi pi-file-excel"
-              label={t('audit.export_excel', { defaultValue: 'Xuất Excel Nhật Ký' })}
+              label={t('audit.export_excel')}
               severity="success"
               outlined
               onClick={handleExportExcel}
-              tooltip={t('audit.export_excel_tooltip', { defaultValue: 'Xuất toàn bộ danh sách nhật ký hoạt động ra file Excel (.xlsx)' })}
+              tooltip={t('audit.export_excel_tooltip')}
             />
             <Button
               icon="pi pi-refresh"
@@ -376,7 +375,7 @@ export default function AuditLogPage() {
               outlined
               size="small"
               onClick={() => refetch()}
-              tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+              tooltip={t('common.refresh')}
             />
           </div>
         </div>
@@ -391,17 +390,17 @@ export default function AuditLogPage() {
             <div className="w-16rem">
               <Dropdown
                 className="w-full"
-                placeholder={t('audit.table_name', { defaultValue: 'Bảng dữ liệu' })}
+                placeholder={t('audit.table_name')}
                 value={query.tableName || ''}
                 options={[
-                  { label: t('audit.all_tables', { defaultValue: 'Tất cả bảng dữ liệu' }), value: '' },
-                  { label: 'Chính Sách Loyalty (loyalty_policies)', value: 'loyalty_policies' },
-                  { label: 'Hạng Hội Viên (loyalty_tiers)', value: 'loyalty_tiers' },
-                  { label: 'Kho Voucher (loyalty_vouchers)', value: 'loyalty_vouchers' },
-                  { label: 'Cấu Hình Game (loyalty_games)', value: 'loyalty_games' },
-                  { label: 'Giải Thưởng Game (loyalty_game_prizes)', value: 'loyalty_game_prizes' },
-                  { label: 'Đối Tác Liên Minh (loyalty_partners)', value: 'loyalty_partners' },
-                  { label: 'Người Dùng Quản Trị (admin_users)', value: 'admin_users' },
+                  { label: t('audit.all_tables'), value: '' },
+                  { label: `${t('audit.table_loyalty_policies')} (loyalty_policies)`, value: 'loyalty_policies' },
+                  { label: `${t('audit.table_loyalty_tiers')} (loyalty_tiers)`, value: 'loyalty_tiers' },
+                  { label: `${t('audit.table_loyalty_vouchers')} (loyalty_vouchers)`, value: 'loyalty_vouchers' },
+                  { label: `${t('audit.table_loyalty_games')} (loyalty_games)`, value: 'loyalty_games' },
+                  { label: `${t('audit.table_loyalty_game_prizes')} (loyalty_game_prizes)`, value: 'loyalty_game_prizes' },
+                  { label: `${t('audit.table_loyalty_partners')} (loyalty_partners)`, value: 'loyalty_partners' },
+                  { label: `${t('audit.table_admin_users')} (admin_users)`, value: 'admin_users' },
                 ]}
                 onChange={e => setQuery(q => ({ ...q, tableName: e.value }))}
                 showClear
@@ -412,16 +411,16 @@ export default function AuditLogPage() {
             <div className="w-13rem">
               <Dropdown
                 className="w-full"
-                placeholder={t('audit.operation', { defaultValue: 'Loại thao tác' })}
+                placeholder={t('audit.operation')}
                 value={query.operation || ''}
                 options={[
-                  { label: t('audit.all_operations', { defaultValue: 'Tất cả thao tác' }), value: '' },
-                  { label: t('audit.op_insert', { defaultValue: 'INSERT (Thêm mới)' }), value: 'INSERT' },
-                  { label: t('audit.op_update', { defaultValue: 'UPDATE (Cập nhật)' }), value: 'UPDATE' },
-                  { label: t('audit.op_delete', { defaultValue: 'DELETE (Xóa bỏ)' }), value: 'DELETE' },
-                  { label: t('audit.op_settlement', { defaultValue: 'SETTLEMENT (Quyết toán)' }), value: 'SETTLEMENT' },
-                  { label: t('audit.op_lock', { defaultValue: 'LOCK (Khóa bảo mật)' }), value: 'LOCK' },
-                  { label: t('audit.op_unlock', { defaultValue: 'UNLOCK (Mở khóa)' }), value: 'UNLOCK' },
+                  { label: t('audit.all_operations'), value: '' },
+                  { label: t('audit.op_insert'), value: 'INSERT' },
+                  { label: t('audit.op_update'), value: 'UPDATE' },
+                  { label: t('audit.op_delete'), value: 'DELETE' },
+                  { label: t('audit.op_settlement'), value: 'SETTLEMENT' },
+                  { label: t('audit.op_lock'), value: 'LOCK' },
+                  { label: t('audit.op_unlock'), value: 'UNLOCK' },
                 ]}
                 onChange={e => setQuery(q => ({ ...q, operation: e.value }))}
                 showClear
@@ -434,7 +433,7 @@ export default function AuditLogPage() {
                 <i className="pi pi-user text-400" />
                 <InputText
                   className="w-full"
-                  placeholder={t('audit.username', { defaultValue: 'Tên người thực hiện' })}
+                  placeholder={t('audit.username')}
                   value={query.username || ''}
                   onChange={e => setQuery(q => ({ ...q, username: e.target.value }))}
                   onKeyDown={e => {
@@ -449,7 +448,7 @@ export default function AuditLogPage() {
               <Calendar
                 value={fromDate}
                 onChange={e => setFromDate(e.value ?? null)}
-                placeholder={t('audit.from_date', { defaultValue: 'Từ ngày' })}
+                placeholder={t('audit.from_date')}
                 dateFormat="yy-mm-dd"
                 showIcon
                 className="w-8rem audit-calendar-input"
@@ -458,7 +457,7 @@ export default function AuditLogPage() {
               <Calendar
                 value={toDate}
                 onChange={e => setToDate(e.value ?? null)}
-                placeholder={t('audit.to_date', { defaultValue: 'Đến ngày' })}
+                placeholder={t('audit.to_date')}
                 dateFormat="yy-mm-dd"
                 showIcon
                 className="w-8rem audit-calendar-input"
@@ -468,14 +467,14 @@ export default function AuditLogPage() {
             {/* 5. Nút Thao Tác (Tìm kiếm & Đặt lại) */}
             <div className="flex align-items-center gap-2">
               <Button
-                label={t('audit.filter', { defaultValue: 'Tìm kiếm' })}
+                label={t('audit.filter')}
                 icon="pi pi-search"
                 className="p-button-primary px-3"
                 size="small"
                 onClick={handleFilter}
               />
               <Button
-                label={t('audit.reset', { defaultValue: 'Đặt lại' })}
+                label={t('audit.reset')}
                 icon="pi pi-refresh"
                 severity="secondary"
                 outlined
@@ -501,24 +500,24 @@ export default function AuditLogPage() {
           totalRecords={totalRecords}
           rowsPerPageOptions={[10, 20, 50]}
           className="p-datatable-striped p-datatable-gridlines text-sm"
-          emptyMessage={t('audit.no_data', { defaultValue: 'Không có dữ liệu nhật ký hoạt động nào phù hợp' })}
+          emptyMessage={t('audit.no_data')}
         >
           <Column
             field="id"
-            header={<span title={t('audit.id_tooltip', { defaultValue: 'Mã bản ghi kiểm toán' })}>{t('audit.id', { defaultValue: 'ID' })}</span>}
+            header={<span title={t('audit.id_tooltip')}>{t('audit.id')}</span>}
             body={idBodyTemplate}
             style={{ minWidth: '85px', textAlign: 'center' }}
             headerStyle={{ textAlign: 'center' }}
           />
           <Column
             field="timestamp"
-            header={<span title={t('audit.timestamp_tooltip', { defaultValue: 'Thời điểm ghi nhận thay đổi' })}>{t('audit.timestamp', { defaultValue: 'Thời gian' })}</span>}
+            header={<span title={t('audit.timestamp_tooltip')}>{t('audit.timestamp')}</span>}
             body={timestampBodyTemplate}
             style={{ minWidth: '175px' }}
           />
           <Column
             field="tenantId"
-            header={t('audit.tenant', { defaultValue: 'Thuê bao' })}
+            header={t('audit.tenant')}
             body={(rowData: AuditLog) => (
               <span className="text-primary text-xs font-mono white-space-nowrap">{rowData.tenantId || selectedTenant}</span>
             )}
@@ -526,19 +525,19 @@ export default function AuditLogPage() {
           />
           <Column
             field="tableName"
-            header={t('audit.table', { defaultValue: 'Bảng dữ liệu' })}
+            header={t('audit.table')}
             body={tableBodyTemplate}
             style={{ minWidth: '190px' }}
           />
           <Column
             field="operation"
-            header={t('audit.operation', { defaultValue: 'Thao tác' })}
+            header={t('audit.operation')}
             body={operationBodyTemplate}
             style={{ minWidth: '115px' }}
           />
           <Column
             field="entityId"
-            header={<span title={t('audit.entity_id_tooltip', { defaultValue: 'Mã định danh đối tượng bị thay đổi' })}>{t('audit.entity_id', { defaultValue: 'Mã đối tượng' })}</span>}
+            header={<span title={t('audit.entity_id_tooltip')}>{t('audit.entity_id')}</span>}
             body={(rowData: AuditLog) => (
               <span className="font-mono text-xs text-800 white-space-nowrap">{rowData.entityId}</span>
             )}
@@ -546,18 +545,18 @@ export default function AuditLogPage() {
           />
           <Column
             field="username"
-            header={t('audit.actor', { defaultValue: 'Người thực hiện' })}
+            header={t('audit.actor')}
             body={actorBodyTemplate}
             style={{ minWidth: '150px' }}
           />
           <Column
             field="description"
-            header={t('audit.description', { defaultValue: 'Diễn giải nghiệp vụ' })}
+            header={t('audit.description')}
             body={descriptionBodyTemplate}
             style={{ minWidth: '220px' }}
           />
           <Column
-            header={t('audit.actions', { defaultValue: 'Chi tiết' })}
+            header={t('audit.actions')}
             body={actionBodyTemplate}
             style={{ minWidth: '80px', textAlign: 'center' }}
           />
@@ -570,7 +569,7 @@ export default function AuditLogPage() {
           <div className="flex align-items-center gap-2">
             <i className="pi pi-shield text-primary text-xl" />
             <span className="font-bold text-lg">
-              {t('audit.diff_title', { id: selectedLog?.id, defaultValue: `Chi tiết Nhật ký Kiểm toán #${selectedLog?.id}` })}
+              {t('audit.diff_title', { id: selectedLog?.id })}
             </span>
           </div>
         }
@@ -580,7 +579,7 @@ export default function AuditLogPage() {
         footer={
           <div className="flex justify-content-end">
             <Button
-              label={t('common.close', { defaultValue: 'Đóng' })}
+              label={t('common.close')}
               icon="pi pi-times"
               onClick={() => setShowDetailDialog(false)}
             />
@@ -592,35 +591,35 @@ export default function AuditLogPage() {
             {/* Thẻ Thông Tin Hành Động */}
             <div className="grid surface-50 p-3 border-round border-1 surface-border">
               <div className="col-12 sm:col-4">
-                <span className="text-500 text-xs block">{t('audit.tenant', { defaultValue: 'Đơn vị Thuê bao' })}</span>
+                <span className="text-500 text-xs block">{t('audit.tenant')}</span>
                 <span className="font-semibold text-primary">{selectedLog.tenantId || selectedTenant}</span>
               </div>
               <div className="col-12 sm:col-4">
-                <span className="text-500 text-xs block">{t('audit.table', { defaultValue: 'Bảng CSDL' })}</span>
+                <span className="text-500 text-xs block">{t('audit.table')}</span>
                 <span className="font-mono text-sm text-900">{selectedLog.tableName}</span>
               </div>
               <div className="col-12 sm:col-4">
-                <span className="text-500 text-xs block">{t('audit.operation', { defaultValue: 'Thao tác' })}</span>
+                <span className="text-500 text-xs block">{t('audit.operation')}</span>
                 {operationBodyTemplate(selectedLog)}
               </div>
               <div className="col-12 sm:col-4 mt-2">
-                <span className="text-500 text-xs block">{t('audit.entity_id', { defaultValue: 'Mã đối tượng (Entity ID)' })}</span>
+                <span className="text-500 text-xs block">{t('audit.entity_id')}</span>
                 <span className="font-mono text-sm text-900">{selectedLog.entityId}</span>
               </div>
               <div className="col-12 sm:col-4 mt-2">
-                <span className="text-500 text-xs block">{t('audit.actor', { defaultValue: 'Người thực hiện' })}</span>
+                <span className="text-500 text-xs block">{t('audit.actor')}</span>
                 <span className="font-semibold text-sm">{selectedLog.username}</span>
                 {selectedLog.actorRole && (
                   <Tag severity="secondary" value={selectedLog.actorRole} className="ml-2 text-xs" />
                 )}
               </div>
               <div className="col-12 sm:col-4 mt-2">
-                <span className="text-500 text-xs block">{t('audit.client_ip', { defaultValue: 'Địa chỉ IP' })}</span>
+                <span className="text-500 text-xs block">{t('audit.client_ip')}</span>
                 <span className="font-mono text-xs">{selectedLog.clientIp || 'N/A'}</span>
               </div>
               {selectedLog.description && (
                 <div className="col-12 mt-2">
-                  <span className="text-500 text-xs block">{t('audit.description', { defaultValue: 'Diễn giải nghiệp vụ' })}</span>
+                  <span className="text-500 text-xs block">{t('audit.description')}</span>
                   <span className="text-sm font-medium text-800">{selectedLog.description}</span>
                 </div>
               )}
@@ -630,23 +629,23 @@ export default function AuditLogPage() {
 
             {/* So Sánh Diff Before / After Dữ Liệu (QT-04) */}
             <TabView>
-              <TabPanel header={t('audit.diff_table_tab', { defaultValue: 'Bảng đối chiếu thay đổi (JSONB Diff)' })} leftIcon="pi pi-arrows-h mr-2">
+              <TabPanel header={t('audit.diff_table_tab')} leftIcon="pi pi-arrows-h mr-2">
                 <DataTable
                   value={computeJsonDiff(selectedLog.beforeData, selectedLog.afterData)}
                   size="small"
                   stripedRows
-                  emptyMessage={t('no_data_available', { defaultValue: 'Không có thay đổi trường dữ liệu' })}
+                  emptyMessage={t('no_data_available')}
                   responsiveLayout="scroll"
                 >
                   <Column
                     field="field"
-                    header={t('audit.diff_field', { defaultValue: 'Trường dữ liệu' })}
+                    header={t('audit.diff_field')}
                     body={(row: any) => <span className="font-mono text-xs text-900 white-space-nowrap">{row.field}</span>}
                     style={{ minWidth: '160px' }}
                   />
                   <Column
                     field="changeType"
-                    header={t('audit.diff_type', { defaultValue: 'Biến động' })}
+                    header={t('audit.diff_type')}
                     body={(row: any) => {
                       const sev =
                         row.changeType === 'ADDED'
@@ -662,7 +661,7 @@ export default function AuditLogPage() {
                   />
                   <Column
                     field="beforeValue"
-                    header={t('audit.before', { defaultValue: 'Giá trị trước' })}
+                    header={t('audit.before')}
                     body={(row: any) => (
                       <span
                         className={`font-mono text-xs block p-1 border-round ${
@@ -678,7 +677,7 @@ export default function AuditLogPage() {
                   />
                   <Column
                     field="afterValue"
-                    header={t('audit.after', { defaultValue: 'Giá trị sau' })}
+                    header={t('audit.after')}
                     body={(row: any) => (
                       <span
                         className={`font-mono text-xs block p-1 border-round ${
@@ -694,14 +693,14 @@ export default function AuditLogPage() {
                   />
                 </DataTable>
               </TabPanel>
-              <TabPanel header={t('audit.raw_json_tab', { defaultValue: 'Dữ liệu JSON gốc' })} leftIcon="pi pi-code mr-2">
+              <TabPanel header={t('audit.raw_json_tab')} leftIcon="pi pi-code mr-2">
                 <div className="grid">
                   <div className="col-12 md:col-6">
                     <div className="border-1 border-orange-200 border-round p-3 surface-card">
                       <div className="flex align-items-center justify-content-between mb-2 pb-2 border-bottom-1 border-orange-100">
                         <span className="font-medium text-orange-700 text-sm">
                           <i className="pi pi-history mr-2" />
-                          {t('audit.before', { defaultValue: 'Dữ liệu trước (Before Snapshot)' })}
+                          {t('audit.before')}
                         </span>
                       </div>
                       {renderJsonPretty(selectedLog.beforeData)}
@@ -713,7 +712,7 @@ export default function AuditLogPage() {
                       <div className="flex align-items-center justify-content-between mb-2 pb-2 border-bottom-1 border-green-100">
                         <span className="font-medium text-green-700 text-sm">
                           <i className="pi pi-check mr-2" />
-                          {t('audit.after', { defaultValue: 'Dữ liệu sau (After Snapshot)' })}
+                          {t('audit.after')}
                         </span>
                       </div>
                       {renderJsonPretty(selectedLog.afterData)}

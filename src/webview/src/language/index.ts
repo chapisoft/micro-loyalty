@@ -16,6 +16,7 @@ const initialLang =
   'vi';
 
 i18next.use(initReactI18next).init({
+  debug: false,
   lng: initialLang,
   fallbackLng: 'vi',
   interpolation: {

@@ -15,7 +15,7 @@ i18next.use(initReactI18next).init({
   compatibilityJSON: 'v4',
   lng: savedLanguage,
   fallbackLng: 'vi',
-  debug: true,
+  debug: false,
   resources: {
     vi: {
       translation: vi,

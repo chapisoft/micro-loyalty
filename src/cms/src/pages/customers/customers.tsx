@@ -79,7 +79,7 @@ export const Customers: React.FC = () => {
             phoneNumber: response.phoneNumber || response.externalUserId,
             fullName:
               response.fullName ||
-              t('customer.default_member', { defaultValue: 'Hội viên Thân thiết' }),
+              t('customer.default_member'),
             currentPoints: response.currentPoints || 0,
             tierPoints: response.tierPoints || 0,
             tier: response.tier,
@@ -143,10 +143,8 @@ export const Customers: React.FC = () => {
     if (!lockReason.trim()) {
       toastRef.current?.show({
         severity: 'warn',
-        summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
-        detail: t('customer.lock_reason_required', {
-          defaultValue: 'Vui lòng nhập lý do khóa hoặc mở khóa hội viên!',
-        }),
+        summary: t('common.warning'),
+        detail: t('customer.lock_reason_required'),
         life: 3000,
       });
       return;
@@ -165,10 +163,8 @@ export const Customers: React.FC = () => {
       );
       toastRef.current?.show({
         severity: 'success',
-        summary: t('common.success', { defaultValue: 'Thành công' }),
-        detail: t('customer.lock_request_submitted', {
-          defaultValue: 'Đã gửi yêu cầu khóa/mở khóa sang hàng đợi phê duyệt 2 lớp!',
-        }),
+        summary: t('common.success'),
+        detail: t('customer.lock_request_submitted'),
         life: 3500,
       });
       setLockDialogVisible(false);
@@ -176,13 +172,11 @@ export const Customers: React.FC = () => {
       console.error('[handleSubmitLockRequest] Error:', e);
       toastRef.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
+        summary: t('common.error'),
         detail:
           e?.response?.data?.message ||
           e?.message ||
-          t('customer.lock_request_failed', {
-            defaultValue: 'Không thể gửi yêu cầu phê duyệt khóa/mở khóa!',
-          }),
+          t('customer.lock_request_failed'),
         life: 4000,
       });
     } finally {
@@ -197,7 +191,7 @@ export const Customers: React.FC = () => {
         return (
           <Tag
             severity="info"
-            value={rowData.tier?.name || t('tier.tier_diamond', { defaultValue: 'Kim Cương' })}
+            value={rowData.tier?.name || t('tier.tier_diamond')}
             icon="pi pi-crown"
           />
         );
@@ -205,7 +199,7 @@ export const Customers: React.FC = () => {
         return (
           <Tag
             severity="info"
-            value={rowData.tier?.name || t('tier.tier_platinum', { defaultValue: 'Bạch Kim' })}
+            value={rowData.tier?.name || t('tier.tier_platinum')}
             icon="pi pi-crown"
           />
         );
@@ -213,7 +207,7 @@ export const Customers: React.FC = () => {
         return (
           <Tag
             severity="warning"
-            value={rowData.tier?.name || t('tier.tier_gold', { defaultValue: 'Vàng' })}
+            value={rowData.tier?.name || t('tier.tier_gold')}
             icon="pi pi-star-fill"
           />
         );
@@ -221,7 +215,7 @@ export const Customers: React.FC = () => {
         return (
           <Tag
             severity="secondary"
-            value={rowData.tier?.name || t('tier.tier_silver', { defaultValue: 'Bạc' })}
+            value={rowData.tier?.name || t('tier.tier_silver')}
             icon="pi pi-star"
           />
         );
@@ -229,7 +223,7 @@ export const Customers: React.FC = () => {
         return (
           <Tag
             severity="secondary"
-            value={rowData.tier?.name || t('tier.tier_bronze', { defaultValue: 'Đồng' })}
+            value={rowData.tier?.name || t('tier.tier_bronze')}
           />
         );
     }
@@ -240,14 +234,14 @@ export const Customers: React.FC = () => {
       return (
         <Tag
           severity="success"
-          value={t('customer.status_active', { defaultValue: 'Đang hoạt động' })}
+          value={t('customer.status_active')}
         />
       );
     }
     return (
       <Tag
         severity="danger"
-        value={t('customer.status_inactive', { defaultValue: 'Tạm khóa' })}
+        value={t('customer.status_inactive')}
       />
     );
   };
@@ -273,7 +267,7 @@ export const Customers: React.FC = () => {
           severity="info"
           size="small"
           onClick={() => openMember360(rowData)}
-          tooltip={t('customer.view_360', { defaultValue: 'Hồ sơ Member 360' })}
+          tooltip={t('customer.view_360')}
         />
         <Button
           icon={isLocked ? 'pi pi-unlock' : 'pi pi-lock'}
@@ -282,9 +276,7 @@ export const Customers: React.FC = () => {
           severity={isLocked ? 'success' : 'danger'}
           size="small"
           onClick={() => openLockDialog(rowData)}
-          tooltip={t('customer.lock_unlock_tooltip', {
-            defaultValue: 'Yêu cầu khóa / mở khóa tài khoản',
-          })}
+          tooltip={t('customer.lock_unlock_tooltip')}
         />
       </div>
     );
@@ -294,9 +286,7 @@ export const Customers: React.FC = () => {
     <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
       <div className="flex align-items-center gap-3">
         <h4 className="m-0 text-primary font-bold">
-          {t('customer.management_title', {
-            defaultValue: 'Quản Lý Hội Viên & Khách Hàng Loyalty',
-          })}
+          {t('customer.management_title')}
         </h4>
         <TenantSelector
           value={selectedTenant}
@@ -315,12 +305,12 @@ export const Customers: React.FC = () => {
             onKeyDown={(e) => {
               if (e.key === 'Enter') fetchData();
             }}
-            placeholder={t('customer.search_placeholder', { defaultValue: 'Tìm theo SĐT...' })}
+            placeholder={t('customer.search_placeholder')}
             className="p-inputtext-sm"
           />
         </span>
         <Button
-          label={t('common.search', { defaultValue: 'Tìm Kiếm' })}
+          label={t('common.search')}
           icon="pi pi-search"
           onClick={fetchData}
           loading={loading}
@@ -339,11 +329,11 @@ export const Customers: React.FC = () => {
 
   const lockActionOptions = [
     {
-      label: t('customer.action_lock', { defaultValue: 'Khóa tài khoản hội viên (LOCK)' }),
+      label: t('customer.action_lock'),
       value: 'LOCK',
     },
     {
-      label: t('customer.action_unlock', { defaultValue: 'Mở khóa tài khoản hội viên (UNLOCK)' }),
+      label: t('customer.action_unlock'),
       value: 'UNLOCK',
     },
   ];
@@ -351,7 +341,7 @@ export const Customers: React.FC = () => {
   return (
     <div>
       <Toast ref={toastRef} position="top-center" />
-      <AppBreadcrumb items={[{ label: t('nav.customers', { defaultValue: 'Hội Viên' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.customers') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
@@ -362,19 +352,19 @@ export const Customers: React.FC = () => {
           paginator
           rows={10}
           rowsPerPageOptions={[10, 25, 50]}
-          emptyMessage={t('common.no_data', { defaultValue: 'Không tìm thấy dữ liệu hội viên' })}
+          emptyMessage={t('common.no_data')}
           stripedRows
           responsiveLayout="scroll"
         >
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
+            header={t('common.stt')}
             body={(_, { rowIndex }) => (
               <span className="font-mono text-xs text-600">{rowIndex + 1}</span>
             )}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions', { defaultValue: 'Thao Tác' })}
+            header={t('common.actions')}
             body={actionBodyTemplate}
             style={{ minWidth: '7rem', textAlign: 'center' }}
           />
@@ -382,11 +372,9 @@ export const Customers: React.FC = () => {
             field="externalUserId"
             header={
               <span
-                title={t('customer.phone_tooltip', {
-                  defaultValue: 'Số điện thoại hoặc mã hội viên',
-                })}
+                title={t('customer.phone_tooltip')}
               >
-                {t('customer.phone_number', { defaultValue: 'Mã Hội Viên' })}
+                {t('customer.phone_number')}
               </span>
             }
             body={(row: LoyaltyMemberAccount) => (
@@ -402,7 +390,7 @@ export const Customers: React.FC = () => {
           />
           <Column
             field="fullName"
-            header={t('customer.full_name', { defaultValue: 'Họ Và Tên' })}
+            header={t('customer.full_name')}
             sortable
             style={{ minWidth: '12rem' }}
           />
@@ -410,17 +398,15 @@ export const Customers: React.FC = () => {
             field="currentPoints"
             header={
               <span
-                title={t('customer.current_points_tooltip', {
-                  defaultValue: 'Số điểm khả dụng dùng để tiêu dùng hoặc đổi quà',
-                })}
+                title={t('customer.current_points_tooltip')}
               >
-                {t('customer.current_points', { defaultValue: 'Điểm Khả Dụng' })}
+                {t('customer.current_points')}
               </span>
             }
             body={(row: LoyaltyMemberAccount) => (
               <span className="font-mono text-orange-600 white-space-nowrap">
                 {row.currentPoints?.toLocaleString()}{' '}
-                {t('common.points', { defaultValue: 'Điểm' })}
+                {t('common.points')}
               </span>
             )}
             sortable
@@ -430,37 +416,35 @@ export const Customers: React.FC = () => {
             field="tierPoints"
             header={
               <span
-                title={t('customer.tier_points_tooltip', {
-                  defaultValue: 'Điểm tích lũy dùng để xét phân hạng trong chu kỳ',
-                })}
+                title={t('customer.tier_points_tooltip')}
               >
-                {t('customer.tier_points', { defaultValue: 'Điểm Xét Hạng' })}
+                {t('customer.tier_points')}
               </span>
             }
             body={(row: LoyaltyMemberAccount) => (
               <span className="font-mono text-blue-600 white-space-nowrap">
-                {row.tierPoints?.toLocaleString()} {t('common.points', { defaultValue: 'Điểm' })}
+                {row.tierPoints?.toLocaleString()} {t('common.points')}
               </span>
             )}
             sortable
             style={{ minWidth: '9.5rem', textAlign: 'center' }}
           />
           <Column
-            header={t('customer.tier_name', { defaultValue: 'Hạng Hội Viên' })}
+            header={t('customer.tier_name')}
             body={tierBadgeTemplate}
             style={{ minWidth: '9rem', textAlign: 'center' }}
           />
           <Column
             field="status"
             body={statusBodyTemplate}
-            header={t('common.status', { defaultValue: 'Trạng Thái' })}
+            header={t('common.status')}
             sortable
             style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
           <Column
             field="createdAt"
             body={dateTemplate}
-            header={t('common.created_at', { defaultValue: 'Ngày Tham Gia' })}
+            header={t('common.created_at')}
             sortable
             style={{ minWidth: '9.5rem' }}
           />
@@ -477,9 +461,7 @@ export const Customers: React.FC = () => {
           <div className="flex align-items-center gap-2">
             <i className="pi pi-id-card text-primary text-xl" />
             <span className="font-bold text-lg text-900">
-              {t('customer.member_360_title', {
-                defaultValue: 'Hồ Sơ Hội Viên 360°',
-              })}
+              {t('customer.member_360_title')}
             </span>
             {selectedMember && (
               <Tag
@@ -519,7 +501,7 @@ export const Customers: React.FC = () => {
                   {profile360?.phoneNumber || selectedMember?.phoneNumber} •{' '}
                   {profile360?.segmentName ||
                     profile360?.segmentCode ||
-                    t('customer.segment_general', { defaultValue: 'Phổ thông' })}
+                    t('customer.segment_general')}
                 </div>
               </div>
               <div className="flex align-items-center gap-2">
@@ -527,7 +509,7 @@ export const Customers: React.FC = () => {
                 {selectedMember && statusBodyTemplate(selectedMember)}
                 {selectedMember && (
                   <Button
-                    label={t('customer.lock_unlock_btn', { defaultValue: 'Khóa / Mở khóa' })}
+                    label={t('customer.lock_unlock_btn')}
                     icon="pi pi-shield"
                     size="small"
                     severity="warning"
@@ -543,7 +525,7 @@ export const Customers: React.FC = () => {
               <div className="col-12 sm:col-4">
                 <div className="surface-card border-1 surface-border border-round p-3">
                   <span className="text-xs text-500 block">
-                    {t('customer.current_points', { defaultValue: 'Điểm Khả Dụng' })}
+                    {t('customer.current_points')}
                   </span>
                   <span className="text-xl font-mono font-medium text-orange-600">
                     {(profile360?.currentPoints ?? selectedMember?.currentPoints ?? 0).toLocaleString()}
@@ -553,7 +535,7 @@ export const Customers: React.FC = () => {
               <div className="col-12 sm:col-4">
                 <div className="surface-card border-1 surface-border border-round p-3">
                   <span className="text-xs text-500 block">
-                    {t('customer.tier_points', { defaultValue: 'Điểm Xét Hạng' })}
+                    {t('customer.tier_points')}
                   </span>
                   <span className="text-xl font-mono font-medium text-blue-600">
                     {(profile360?.tierPoints ?? selectedMember?.tierPoints ?? 0).toLocaleString()}
@@ -563,7 +545,7 @@ export const Customers: React.FC = () => {
               <div className="col-12 sm:col-4">
                 <div className="surface-card border-1 surface-border border-round p-3">
                   <span className="text-xs text-500 block">
-                    {t('customer.keep_tier_target', { defaultValue: 'Mục tiêu giữ hạng / Chu kỳ' })}
+                    {t('customer.keep_tier_target')}
                   </span>
                   <span className="text-sm font-mono text-800">
                     {(profile360?.keepTierPoints ?? 0).toLocaleString()}{' '}
@@ -579,7 +561,7 @@ export const Customers: React.FC = () => {
             <TabView>
               <TabPanel
                 header={t('customer.fifo_buckets_tab', {
-                  defaultValue: `Lô điểm sắp hết hạn FIFO (${fifoBuckets.length})`,
+                  count: fifoBuckets.length,
                 })}
                 leftIcon="pi pi-clock mr-2"
               >
@@ -587,14 +569,12 @@ export const Customers: React.FC = () => {
                   value={fifoBuckets}
                   size="small"
                   stripedRows
-                  emptyMessage={t('customer.no_fifo_buckets', {
-                    defaultValue: 'Không có lô điểm FIFO nào đang chờ hết hạn',
-                  })}
+                  emptyMessage={t('customer.no_fifo_buckets')}
                   responsiveLayout="scroll"
                 >
                   <Column
                     field="bucketId"
-                    header={t('customer.bucket_id', { defaultValue: 'Mã Lô' })}
+                    header={t('customer.bucket_id')}
                     body={(r: PointExpirationBucketModel) => (
                       <span className="font-mono text-xs white-space-nowrap">{r.bucketId}</span>
                     )}
@@ -602,7 +582,7 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="remainingPoints"
-                    header={t('customer.remaining_points', { defaultValue: 'Điểm còn lại' })}
+                    header={t('customer.remaining_points')}
                     body={(r: PointExpirationBucketModel) => (
                       <span className="font-mono text-orange-600">
                         {Number(r.remainingPoints || 0).toLocaleString()} /{' '}
@@ -613,7 +593,7 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="expiredAt"
-                    header={t('customer.expired_at', { defaultValue: 'Ngày hết hạn' })}
+                    header={t('customer.expired_at')}
                     body={(r: PointExpirationBucketModel) => (
                       <span className="font-mono text-xs white-space-nowrap">
                         {r.expiredAt ? new Date(r.expiredAt).toLocaleDateString() : '-'}
@@ -623,7 +603,7 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="sourceRef"
-                    header={t('customer.source_ref', { defaultValue: 'Nguồn gốc' })}
+                    header={t('customer.source_ref')}
                     body={(r: PointExpirationBucketModel) => (
                       <span className="font-mono text-xs white-space-nowrap">{r.sourceRef || '-'}</span>
                     )}
@@ -631,7 +611,7 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="status"
-                    header={t('common.status', { defaultValue: 'Trạng Thái' })}
+                    header={t('common.status')}
                     body={(r: PointExpirationBucketModel) => (
                       <Tag
                         value={r.status}
@@ -645,19 +625,19 @@ export const Customers: React.FC = () => {
               </TabPanel>
 
               <TabPanel
-                header={t('customer.recent_tx_tab', { defaultValue: 'Giao dịch gần đây' })}
+                header={t('customer.recent_tx_tab')}
                 leftIcon="pi pi-history mr-2"
               >
                 <DataTable
                   value={profile360?.recentTransactions || []}
                   size="small"
                   stripedRows
-                  emptyMessage={t('common.no_data', { defaultValue: 'Chưa có giao dịch gần đây' })}
+                  emptyMessage={t('common.no_data')}
                   responsiveLayout="scroll"
                 >
                   <Column
                     field="transactionId"
-                    header={t('transaction.id', { defaultValue: 'Mã GD' })}
+                    header={t('transaction.id')}
                     body={(r: any) => (
                       <span className="font-mono text-xs white-space-nowrap">{r.transactionId}</span>
                     )}
@@ -665,12 +645,12 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="actionType"
-                    header={t('transaction.action_type', { defaultValue: 'Loại GD' })}
+                    header={t('transaction.action_type')}
                     style={{ minWidth: '7rem' }}
                   />
                   <Column
                     field="points"
-                    header={t('transaction.amount', { defaultValue: 'Điểm' })}
+                    header={t('transaction.amount')}
                     body={(r: any) => (
                       <span className="font-mono text-xs">{Number(r.points || 0).toLocaleString()}</span>
                     )}
@@ -678,7 +658,7 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="createdAt"
-                    header={t('common.created_at', { defaultValue: 'Thời gian' })}
+                    header={t('common.created_at')}
                     body={(r: any) => (
                       <span className="font-mono text-xs white-space-nowrap">
                         {r.createdAt ? new Date(r.createdAt).toLocaleString() : '-'}
@@ -690,19 +670,19 @@ export const Customers: React.FC = () => {
               </TabPanel>
 
               <TabPanel
-                header={t('customer.recent_vouchers_tab', { defaultValue: 'Voucher sở hữu' })}
+                header={t('customer.recent_vouchers_tab')}
                 leftIcon="pi pi-ticket mr-2"
               >
                 <DataTable
                   value={profile360?.recentVouchers || []}
                   size="small"
                   stripedRows
-                  emptyMessage={t('common.no_data', { defaultValue: 'Chưa có voucher nào' })}
+                  emptyMessage={t('common.no_data')}
                   responsiveLayout="scroll"
                 >
                   <Column
                     field="voucherCode"
-                    header={t('voucher.code', { defaultValue: 'Mã Voucher' })}
+                    header={t('voucher.code')}
                     body={(r: any) => (
                       <span className="font-mono text-xs white-space-nowrap">{r.voucherCode}</span>
                     )}
@@ -710,12 +690,12 @@ export const Customers: React.FC = () => {
                   />
                   <Column
                     field="title"
-                    header={t('voucher.title_label', { defaultValue: 'Tiêu Đề' })}
+                    header={t('voucher.title_label')}
                     style={{ minWidth: '12rem' }}
                   />
                   <Column
                     field="status"
-                    header={t('common.status', { defaultValue: 'Trạng Thái' })}
+                    header={t('common.status')}
                     style={{ minWidth: '7rem' }}
                   />
                 </DataTable>
@@ -730,9 +710,7 @@ export const Customers: React.FC = () => {
         visible={lockDialogVisible}
         style={{ width: '34rem' }}
         breakpoints={{ '960px': '75vw', '641px': '95vw' }}
-        header={t('customer.lock_unlock_dialog_title', {
-          defaultValue: 'Yêu cầu Khóa / Mở khóa Tài khoản Hội viên (Duyệt 2 lớp)',
-        })}
+        header={t('customer.lock_unlock_dialog_title')}
         modal
         className="p-fluid"
         onHide={() => setLockDialogVisible(false)}
@@ -749,7 +727,7 @@ export const Customers: React.FC = () => {
 
             <div className="field mb-0">
               <label className="font-medium text-sm">
-                {t('customer.lock_action_label', { defaultValue: 'Hành động đề xuất' })}
+                {t('customer.lock_action_label')}
               </label>
               <Dropdown
                 value={lockAction}
@@ -761,7 +739,7 @@ export const Customers: React.FC = () => {
 
             <div className="field mb-0">
               <label className="font-medium text-sm">
-                {t('customer.lock_ticket_ref', { defaultValue: 'Mã hồ sơ / Ticket hỗ trợ' })}
+                {t('customer.lock_ticket_ref')}
               </label>
               <InputText
                 value={lockTicketRef}
@@ -773,37 +751,32 @@ export const Customers: React.FC = () => {
 
             <div className="field mb-0">
               <label className="font-medium text-sm">
-                {t('customer.lock_reason_label', { defaultValue: 'Lý do thực hiện' })}{' '}
+                {t('customer.lock_reason_label')}{' '}
                 <span className="text-red-500">*</span>
               </label>
               <InputTextarea
                 rows={3}
                 value={lockReason}
                 onChange={(e) => setLockReason(e.target.value)}
-                placeholder={t('customer.lock_reason_placeholder', {
-                  defaultValue: 'Mô tả chi tiết lý do nghi ngờ gian lận hoặc yêu cầu mở khóa...',
-                })}
+                placeholder={t('customer.lock_reason_placeholder')}
               />
             </div>
 
             <div className="p-2 border-round bg-orange-50 text-orange-800 text-xs">
               <i className="pi pi-info-circle mr-2" />
-              {t('customer.lock_maker_checker_note', {
-                defaultValue:
-                  'Yêu cầu sẽ được chuyển sang Hàng đợi Phê duyệt Hai cấp (QT-04) để Checker thẩm định trước khi có hiệu lực.',
-              })}
+              {t('customer.lock_maker_checker_note')}
             </div>
 
             <div className="flex justify-content-end gap-2 mt-2">
               <Button
-                label={t('common.cancel', { defaultValue: 'Hủy' })}
+                label={t('common.cancel')}
                 icon="pi pi-times"
                 outlined
                 onClick={() => setLockDialogVisible(false)}
                 disabled={lockSubmitting}
               />
               <Button
-                label={t('customer.submit_approval', { defaultValue: 'Gửi duyệt 2 lớp' })}
+                label={t('customer.submit_approval')}
                 icon="pi pi-send"
                 severity={lockAction === 'LOCK' ? 'danger' : 'success'}
                 onClick={handleSubmitLockRequest}

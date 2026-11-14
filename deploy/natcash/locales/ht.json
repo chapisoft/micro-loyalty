@@ -1,0 +1,27 @@
+{
+  "common": {
+    "system_title": "Pwogram Fidelite Pòtfèy Natcash",
+    "search": "Chèche...",
+    "confirm": "Konfime",
+    "cancel": "Anile",
+    "save": "Anrejistre chanjman yo",
+    "status": "Estati"
+  },
+  "loyalty": {
+    "points": "Pwen Natcash",
+    "tier_silver": "Manm Ajan Natcash",
+    "tier_gold": "Manm Lò Natcash",
+    "tier_platinum": "Manm Platin Natcash",
+    "tier_diamond": "Manm Dyaman Natcash",
+    "burn_points": "Echanje pwen pou rekonpans",
+    "earn_points": "Ranmase pwen sou tranzaksyon",
+    "qr_reward_title": "Kòd QR Pòtfèy Rekonpans Natcash"
+  },
+  "game": {
+    "spin_now": "Vire kounye a",
+    "remaining_turns": "Tou Natcash ki rete",
+    "buy_turns": "Achte plis tou",
+    "gamehub_title": "Espas Jwèt Pòtfèy Natcash",
+    "win_congrats": "Felisitasyon, ou genyen yon kado nan men Natcash!"
+  }
+}

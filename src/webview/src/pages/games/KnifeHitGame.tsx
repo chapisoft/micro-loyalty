@@ -50,10 +50,10 @@ export interface KnifeStageTheme {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const STAGE_THEMES: KnifeStageTheme[] = [
-  // Stage 1: Thớt Gỗ Cổ Thụ Caribe
+  // Stage 1: Caribe Ancient Wood
   {
-    name: 'Thớt Gỗ Cổ Thụ Caribe',
-    badge: 'Gỗ Sồi Cổ',
+    name: 'games.knife.theme_1_name',
+    badge: 'games.knife.theme_1_badge',
     coreGradient: ['#D97706', '#B45309', '#92400E', '#451A03'],
     ringColor: 'rgba(69, 26, 3, 0.45)',
     rimColor: '#F59E0B',
@@ -63,10 +63,10 @@ export const STAGE_THEMES: KnifeStageTheme[] = [
     particleColor: '#F59E0B',
     bgGlowColor: 'rgba(245, 158, 11, 0.22)',
   },
-  // Stage 2: Vòng Kim Tiền Hoàng Kim
+  // Stage 2: Golden Fortune Ring
   {
-    name: 'Vòng Kim Tiền Hoàng Kim',
-    badge: 'Thần Tài 24K',
+    name: 'games.knife.theme_2_name',
+    badge: 'games.knife.theme_2_badge',
     coreGradient: ['#FFFBEB', '#FDE047', '#EAB308', '#854D0E'],
     ringColor: 'rgba(161, 98, 7, 0.4)',
     rimColor: '#FEF08A',
@@ -76,10 +76,10 @@ export const STAGE_THEMES: KnifeStageTheme[] = [
     particleColor: '#FDE047',
     bgGlowColor: 'rgba(234, 179, 8, 0.25)',
   },
-  // Stage 3: Khiên Dung Nham Hỏa Ngục
+  // Stage 3: Inferno Magma Shield
   {
-    name: 'Khiên Dung Nham Hỏa Ngục',
-    badge: 'Hỏa Thạch',
+    name: 'games.knife.theme_3_name',
+    badge: 'games.knife.theme_3_badge',
     coreGradient: ['#F97316', '#DC2626', '#991B1B', '#1E1B4B'],
     ringColor: 'rgba(239, 68, 68, 0.5)',
     rimColor: '#F87171',
@@ -89,10 +89,10 @@ export const STAGE_THEMES: KnifeStageTheme[] = [
     particleColor: '#EF4444',
     bgGlowColor: 'rgba(239, 68, 68, 0.28)',
   },
-  // Stage 4: Ma Trận Băng Tuyết Tinh Thể
+  // Stage 4: Crystal Ice Matrix
   {
-    name: 'Ma Trận Băng Tuyết Tinh Thể',
-    badge: 'Băng Pha Lê',
+    name: 'games.knife.theme_4_name',
+    badge: 'games.knife.theme_4_badge',
     coreGradient: ['#E0F2FE', '#38BDF8', '#0284C7', '#082F49'],
     ringColor: 'rgba(56, 189, 248, 0.4)',
     rimColor: '#BAE6FD',
@@ -102,10 +102,10 @@ export const STAGE_THEMES: KnifeStageTheme[] = [
     particleColor: '#38BDF8',
     bgGlowColor: 'rgba(56, 189, 248, 0.25)',
   },
-  // Stage 5: Lõi Không Gian Vũ Trụ
+  // Stage 5: Cosmic Nebula Core
   {
-    name: 'Lõi Không Gian Vũ Trụ VIP',
-    badge: 'Tinh Vân',
+    name: 'games.knife.theme_5_name',
+    badge: 'games.knife.theme_5_badge',
     coreGradient: ['#F5D0FE', '#C084FC', '#7E22CE', '#1E1B4B'],
     ringColor: 'rgba(192, 132, 252, 0.45)',
     rimColor: '#F0ABFC',
@@ -115,10 +115,10 @@ export const STAGE_THEMES: KnifeStageTheme[] = [
     particleColor: '#C084FC',
     bgGlowColor: 'rgba(168, 85, 247, 0.28)',
   },
-  // Stage 6+: Khiên Kim Cương Bất Diệt
+  // Stage 6+: Immortal Diamond Shield
   {
-    name: 'Khiên Kim Cương Bất Diệt',
-    badge: 'Tối Thượng',
+    name: 'games.knife.theme_6_name',
+    badge: 'games.knife.theme_6_badge',
     coreGradient: ['#F0FDFA', '#5EEAD4', '#0D9488', '#134E4A'],
     ringColor: 'rgba(94, 234, 212, 0.4)',
     rimColor: '#99F6E4',
@@ -160,6 +160,8 @@ export const getBaseRotationSpeed = (stageNum: number): number => {
 
 export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimReward }) => {
   const { t } = useTranslation();
+  const tRef = useRef(t);
+  tRef.current = t;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [stage, setStage] = useState<number>(() => {
@@ -259,34 +261,34 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
     const newTargets: TargetItem[] = [];
     if (stageNum === 1) {
       newTargets.push(
-        { id: 't1', angle: Math.PI * 0.25, icon: '🧧', label: 'Bao Lì Xì', type: 'RED_ENVELOPE', points: 30, collected: false },
-        { id: 't2', angle: Math.PI * 1.65, icon: '📶', label: 'Gói Data 4G', type: 'DATA_PACK', points: 50, collected: false }
+        { id: 't1', angle: Math.PI * 0.25, icon: '🧧', label: 'games.knife.item_red_envelope', type: 'RED_ENVELOPE', points: 30, collected: false },
+        { id: 't2', angle: Math.PI * 1.65, icon: '📶', label: 'games.knife.item_data_pack', type: 'DATA_PACK', points: 50, collected: false }
       );
     } else if (stageNum === 2) {
       newTargets.push(
-        { id: 't1', angle: Math.PI * 0.15, icon: '🧧', label: 'Bao Lì Xì', type: 'RED_ENVELOPE', points: 35, collected: false },
-        { id: 't2', angle: Math.PI * 0.95, icon: '📶', label: 'Gói Data 4G', type: 'DATA_PACK', points: 50, collected: false },
-        { id: 't3', angle: Math.PI * 1.75, icon: '🧧', label: 'Bao Lì Xì', type: 'RED_ENVELOPE', points: 35, collected: false }
+        { id: 't1', angle: Math.PI * 0.15, icon: '🧧', label: 'games.knife.item_red_envelope', type: 'RED_ENVELOPE', points: 35, collected: false },
+        { id: 't2', angle: Math.PI * 0.95, icon: '📶', label: 'games.knife.item_data_pack', type: 'DATA_PACK', points: 50, collected: false },
+        { id: 't3', angle: Math.PI * 1.75, icon: '🧧', label: 'games.knife.item_red_envelope', type: 'RED_ENVELOPE', points: 35, collected: false }
       );
     } else if (stageNum === 3) {
       newTargets.push(
-        { id: 't1', angle: Math.PI * 0.18, icon: '👑', label: 'Rương Vàng', type: 'GOLD_CHEST', points: 80, collected: false },
-        { id: 't2', angle: Math.PI * 0.78, icon: '📶', label: 'Gói Data 4G', type: 'DATA_PACK', points: 50, collected: false },
-        { id: 't3', angle: Math.PI * 1.8, icon: '🧧', label: 'Bao Lì Xì', type: 'RED_ENVELOPE', points: 40, collected: false }
+        { id: 't1', angle: Math.PI * 0.18, icon: '👑', label: 'games.knife.item_gold_chest', type: 'GOLD_CHEST', points: 80, collected: false },
+        { id: 't2', angle: Math.PI * 0.78, icon: '📶', label: 'games.knife.item_data_pack', type: 'DATA_PACK', points: 50, collected: false },
+        { id: 't3', angle: Math.PI * 1.8, icon: '🧧', label: 'games.knife.item_red_envelope', type: 'RED_ENVELOPE', points: 40, collected: false }
       );
     } else if (stageNum === 4) {
       newTargets.push(
-        { id: 't1', angle: Math.PI * 0.12, icon: '💎', label: 'Kim Cương', type: 'DIAMOND', points: 120, collected: false },
-        { id: 't2', angle: Math.PI * 0.65, icon: '📶', label: 'Gói Data 4G', type: 'DATA_PACK', points: 60, collected: false },
-        { id: 't3', angle: Math.PI * 1.15, icon: '👑', label: 'Rương Vàng', type: 'GOLD_CHEST', points: 90, collected: false },
-        { id: 't4', angle: Math.PI * 1.82, icon: '🧧', label: 'Bao Lì Xì', type: 'RED_ENVELOPE', points: 50, collected: false }
+        { id: 't1', angle: Math.PI * 0.12, icon: '💎', label: 'games.knife.item_diamond', type: 'DIAMOND', points: 120, collected: false },
+        { id: 't2', angle: Math.PI * 0.65, icon: '📶', label: 'games.knife.item_data_pack', type: 'DATA_PACK', points: 60, collected: false },
+        { id: 't3', angle: Math.PI * 1.15, icon: '👑', label: 'games.knife.item_gold_chest', type: 'GOLD_CHEST', points: 90, collected: false },
+        { id: 't4', angle: Math.PI * 1.82, icon: '🧧', label: 'games.knife.item_red_envelope', type: 'RED_ENVELOPE', points: 50, collected: false }
       );
     } else {
       newTargets.push(
-        { id: 't1', angle: Math.PI * 0.1, icon: '🪙', label: 'Xu VIP', type: 'GOLD_COIN', points: 150, collected: false },
-        { id: 't2', angle: Math.PI * 0.6, icon: '💎', label: 'Kim Cương', type: 'DIAMOND', points: 150, collected: false },
-        { id: 't3', angle: Math.PI * 1.1, icon: '📶', label: 'Gói Data 4G', type: 'DATA_PACK', points: 80, collected: false },
-        { id: 't4', angle: Math.PI * 1.6, icon: '👑', label: 'Rương Vàng', type: 'GOLD_CHEST', points: 100, collected: false }
+        { id: 't1', angle: Math.PI * 0.1, icon: '🪙', label: 'games.knife.item_gold_coin', type: 'GOLD_COIN', points: 150, collected: false },
+        { id: 't2', angle: Math.PI * 0.6, icon: '💎', label: 'games.knife.item_diamond', type: 'DIAMOND', points: 150, collected: false },
+        { id: 't3', angle: Math.PI * 1.1, icon: '📶', label: 'games.knife.item_data_pack', type: 'DATA_PACK', points: 80, collected: false },
+        { id: 't4', angle: Math.PI * 1.6, icon: '👑', label: 'games.knife.item_gold_chest', type: 'GOLD_CHEST', points: 100, collected: false }
       );
     }
 
@@ -636,7 +638,7 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
                     fxRef.current.spawnFloatText(
                       logCenterX,
                       logCenterY + logRadius + 45,
-                      `+${item.points} ${item.label} ${item.icon}`,
+                      `+${item.points} ${tRef.current(item.label)} ${item.icon}`,
                       '#F43F5E'
                     );
                     fxRef.current.addScreenShake(0.35);
@@ -674,7 +676,7 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
                   fxRef.current.spawnFloatText(
                     logCenterX,
                     logCenterY - 40,
-                    `+${unusedKnivesBonus} THƯỞNG DAO DƯ! 🎯`,
+                    `+${unusedKnivesBonus} ${tRef.current('games.knife.bonus_unused_knives_fx')} 🎯`,
                     '#10B981'
                   );
                   setScore((s) => s + unusedKnivesBonus);
@@ -841,8 +843,8 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
         title={t('games.knife.title')}
         subtitle={
           highestStage > 1
-            ? `${t('games.knife.record_stage', { highestStage, defaultValue: `Kỷ lục: Màn ${highestStage}` })} • ${t('games.knife.stage', { stage })}: ${currentTheme.badge}`
-            : `${t('games.knife.stage', { stage })}: ${currentTheme.badge}`
+              ? `${t('games.knife.record_stage', { highestStage })} • ${t('games.knife.stage', { stage })}: ${t(currentTheme.badge)}`
+              : `${t('games.knife.stage', { stage })}: ${t(currentTheme.badge)}`
         }
         onBack={onBack}
         soundEnabled={soundEnabled}
@@ -862,17 +864,17 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
                 {t('games.knife.stage', { stage })}
               </span>
               <span className="text-[11px] font-extrabold text-slate-200 truncate">
-                {currentTheme.name}
+                {t(currentTheme.name)}
               </span>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <div className="bg-slate-800/90 border border-slate-700/80 px-2 py-0.5 rounded-xl text-center flex items-center gap-1">
-                <span className="text-[10px] text-slate-400 font-bold">{t('games.knife.knives_label', { defaultValue: 'Dao:' })}</span>
+                <span className="text-[10px] text-slate-400 font-bold">{t('games.knife.knives_label')}</span>
                 <span className="font-mono font-black text-amber-400 text-xs">{knivesLeft}</span>
               </div>
               <div className="bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-xl text-center flex items-center gap-1">
-                <span className="text-[10px] text-amber-300 font-bold">{t('games.knife.score_label', { defaultValue: 'Điểm:' })}</span>
+                <span className="text-[10px] text-amber-300 font-bold">{t('games.knife.score_label')}</span>
                 <span className="font-mono font-black text-white text-xs">{score}</span>
               </div>
             </div>
@@ -884,22 +886,21 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
               {targetItems.map((item) => (
                 <div
                   key={item.id}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold transition-all duration-300 ${
-                    item.collected
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold transition-all duration-300 ${item.collected
                       ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 line-through opacity-85 shadow-sm'
                       : 'bg-amber-500/15 border border-amber-500/30 text-amber-300 animate-pulse'
-                  }`}
+                    }`}
                 >
                   <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                  <span className="text-[10px] opacity-80">+{item.points}đ</span>
+                  <span>{t(item.label)}</span>
+                  <span className="text-[10px] opacity-80">+{item.points} {t('nav.points_unit')}</span>
                   {item.collected && <span className="text-emerald-400 font-black not-italic">✓</span>}
                 </div>
               ))}
             </div>
 
             <div className="shrink-0 text-[10px] font-bold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700">
-              Kích cỡ: {Math.round(currentTargetScale * 100)}%
+              {t('games.knife.size_label', { size: Math.round(currentTargetScale * 100) })}
             </div>
           </div>
         </div>
@@ -948,14 +949,14 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
             </div>
             <div>
               <h3 className="text-lg font-black text-white">{t('games.knife.stage_clear')}</h3>
-              <p className="text-xs text-slate-400 mt-1">{t('games.knife.stage', { stage })}: {currentTheme.name}</p>
+              <p className="text-xs text-slate-400 mt-1">{t('games.knife.stage', { stage })}: {t(currentTheme.name)}</p>
               <div className="text-3xl font-black text-amber-400 font-mono mt-2">
                 +{rewardAmount} {t('nav.points_unit')}
               </div>
 
               {rewardBreakdown.unusedKnivesBonus > 0 && (
                 <p className="text-xs font-bold text-emerald-400 mt-1">
-                  🎯 Thưởng hoàn thành sớm: +{rewardBreakdown.unusedKnivesBonus} điểm ({knivesLeft} dao dư)
+                  🎯 {t('games.knife.early_finish_bonus', { bonus: rewardBreakdown.unusedKnivesBonus, knives: knivesLeft })}
                 </p>
               )}
             </div>

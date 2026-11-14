@@ -38,16 +38,16 @@ export const ProgramEffectivenessPage: React.FC = () => {
 
   return (
     <div>
-      <AppBreadcrumb items={[{ label: t('nav.effectiveness', { defaultValue: 'Hiệu quả Chương trình (NS-03)' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.effectiveness') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
           <div>
             <h4 className="m-0 text-primary font-semibold">
-              {t('report.effectiveness_title', { defaultValue: 'Đo lường Hiệu quả & Tăng trưởng Lift so với Nhóm Đối chứng (NS-03)' })}
+              {t('report.effectiveness_title')}
             </h4>
             <p className="m-0 text-xs text-500 mt-1">
-              {t('report.effectiveness_subtitle', { defaultValue: 'So sánh trực tiếp Nhóm Tác động (Treatment) và Nhóm Đối chứng (Control Group) cùng ROI.' })}
+              {t('report.effectiveness_subtitle')}
             </p>
           </div>
           <div className="flex gap-2 align-items-center">
@@ -59,19 +59,19 @@ export const ProgramEffectivenessPage: React.FC = () => {
         <div className="grid mb-4">
           <div className="col-12 md:col-4">
             <div className="p-3 border-round surface-50 border-1 surface-border">
-              <div className="text-xs text-500 uppercase">{t('report.avg_lift', { defaultValue: 'Mức tăng trưởng trung bình (Lift)' })}</div>
+              <div className="text-xs text-500 uppercase">{t('report.avg_lift')}</div>
               <div className="text-2xl font-mono font-semibold text-green-600 mt-1">+{avgLift.toFixed(2)}%</div>
             </div>
           </div>
           <div className="col-12 md:col-4">
             <div className="p-3 border-round surface-50 border-1 surface-border">
-              <div className="text-xs text-500 uppercase">{t('report.treatment_revenue', { defaultValue: 'Doanh thu Nhóm Tác động' })}</div>
+              <div className="text-xs text-500 uppercase">{t('report.treatment_revenue')}</div>
               <div className="text-2xl font-mono font-semibold text-primary mt-1">{totalRevenue.toLocaleString()} HTG</div>
             </div>
           </div>
           <div className="col-12 md:col-4">
             <div className="p-3 border-round surface-50 border-1 surface-border">
-              <div className="text-xs text-500 uppercase">{t('report.avg_roi', { defaultValue: 'ROI Trung Bình' })}</div>
+              <div className="text-xs text-500 uppercase">{t('report.avg_roi')}</div>
               <div className="text-2xl font-mono font-semibold text-orange-600 mt-1">{avgRoi.toFixed(1)}%</div>
             </div>
           </div>
@@ -80,9 +80,9 @@ export const ProgramEffectivenessPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<ProgramEffectivenessModel[]> value={rows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('report.no_effectiveness', { defaultValue: 'Chưa có dữ liệu so sánh Lift vs Control Group.' })}>
-            <Column field="campaignCode" header={t('campaign.code', { defaultValue: 'Mã Chiến Dịch' })} body={(r: ProgramEffectivenessModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.campaignCode}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="campaignName" header={t('campaign.name', { defaultValue: 'Tên Chiến Dịch' })} style={{ minWidth: '14rem' }} />
+          <DataTable<ProgramEffectivenessModel[]> value={rows} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('report.no_effectiveness')}>
+            <Column field="campaignCode" header={t('campaign.code')} body={(r: ProgramEffectivenessModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.campaignCode}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="campaignName" header={t('campaign.name')} style={{ minWidth: '14rem' }} />
             <Column field="testGroupSize" header="Test N" body={(r: ProgramEffectivenessModel) => Number(r.testGroupSize || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
             <Column field="controlGroupSize" header="Control N" body={(r: ProgramEffectivenessModel) => Number(r.controlGroupSize || 0).toLocaleString()} style={{ minWidth: '8rem', textAlign: 'right' }} />
             <Column field="testConversionRate" header="Test Conv." body={(r: ProgramEffectivenessModel) => <span className="font-mono">{Number(r.testConversionRate || 0).toFixed(2)}%</span>} style={{ minWidth: '8rem', textAlign: 'right' }} />

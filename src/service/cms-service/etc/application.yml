@@ -1,0 +1,129 @@
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /loyalty-service
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: cms-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:T3st$2025}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: LoyaltyHikariCP
+      maximum-pool-size: 30
+      minimum-idle: 10
+      idle-timeout: 30000
+      connection-timeout: 5000
+      max-lifetime: 1200000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        show_sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:NatCash2022}
+      timeout: 3000ms
+
+# Cấu hình nghiệp vụ, bảo mật & tham số vận hành tập trung của Loyalty Service
+loyalty:
+  security:
+    timestamp-drift-tolerance-seconds: ${DRIFT_TOLERANCE_SECONDS:300}
+    timestamp-tolerance-seconds: ${DRIFT_TOLERANCE_SECONDS:300}
+    master-key: ${LOYALTY_MASTER_KEY:}
+  tenant:
+    default-tenant: ${LOYALTY_DEFAULT_TENANT:NATCASH}
+    header-name: X-Tenant-Id
+  qr:
+    token-ttl-seconds: ${LOYALTY_QR_TOKEN_TTL_SECONDS:60}
+    default-ttl-seconds: ${LOYALTY_QR_DEFAULT_TTL_SECONDS:60}
+  wallet:
+    max-burn-percent-per-bill: ${LOYALTY_MAX_BURN_PERCENT_PER_BILL:50.00}
+    default-point-expiration-months: ${LOYALTY_DEFAULT_POINT_EXPIRATION_MONTHS:12}
+  session:
+    ticket-ttl-seconds: ${LOYALTY_SESSION_TICKET_TTL_SECONDS:60}
+    access-token-ttl-seconds: ${LOYALTY_SESSION_ACCESS_TOKEN_TTL_SECONDS:900}
+  webhook:
+    max-retries: ${LOYALTY_WEBHOOK_MAX_RETRIES:5}
+  lock:
+    wait-time-ms: ${LOYALTY_LOCK_WAIT_TIME_MS:3000}
+    lease-time-ms: ${LOYALTY_LOCK_LEASE_TIME_MS:10000}
+    short-lease-time-ms: ${LOYALTY_LOCK_SHORT_LEASE_TIME_MS:5000}
+  engagement:
+    quiet-hours-start-hour: ${LOYALTY_QUIET_HOURS_START:20}
+    quiet-hours-end-hour: ${LOYALTY_QUIET_HOURS_END:8}
+    timezone: ${LOYALTY_ENGAGEMENT_TIMEZONE:America/Port-au-Prince}
+    max-push-per-day: ${LOYALTY_MAX_PUSH_PER_DAY:1}
+    max-push-per-week: ${LOYALTY_MAX_PUSH_PER_WEEK:3}
+    default-dedup-window-hours: ${LOYALTY_DEFAULT_DEDUP_WINDOW_HOURS:24}
+  budget:
+    alert-threshold-percent: ${LOYALTY_BUDGET_ALERT_THRESHOLD_PERCENT:80}
+    hard-stop-percent: ${LOYALTY_BUDGET_HARD_STOP_PERCENT:100}
+  partner:
+    api-key-grace-period-days: ${LOYALTY_API_KEY_GRACE_PERIOD_DAYS:7}
+    lookback-days: ${LOYALTY_PARTNER_LOOKBACK_DAYS:180}
+    tx-page-size: ${LOYALTY_PARTNER_TX_PAGE_SIZE:200}
+    recent-tx-limit: ${LOYALTY_PARTNER_RECENT_TX_LIMIT:20}
+    default-max-burn-percent: ${LOYALTY_PARTNER_DEFAULT_MAX_BURN_PERCENT:50.00}
+  tier:
+    expiry-warning-days: ${LOYALTY_TIER_EXPIRY_WARNING_DAYS:30}
+  settlement:
+    confirm-deadline-days: ${LOYALTY_SETTLEMENT_CONFIRM_DEADLINE_DAYS:3}
+    default-mdr-fee-percent: ${LOYALTY_DEFAULT_MDR_FEE_PERCENT:1.50}
+  campaign:
+    default-control-group-percent: ${LOYALTY_DEFAULT_CONTROL_GROUP_PERCENT:5}
+  agent:
+    monthly-new-customer-target: ${LOYALTY_AGENT_MONTHLY_TARGET:100}
+    reward-htg: ${LOYALTY_AGENT_REWARD_HTG:2000}
+    super-agent-min-achievement-pct: ${LOYALTY_SUPER_AGENT_MIN_ACHIEVEMENT_PCT:50}
+    super-agent-reward-htg: ${LOYALTY_SUPER_AGENT_REWARD_HTG:10000}
+  learning:
+    tier1-correct: ${LOYALTY_LEARNING_TIER1_CORRECT:5}
+    tier2-correct: ${LOYALTY_LEARNING_TIER2_CORRECT:10}
+    tier3-correct: ${LOYALTY_LEARNING_TIER3_CORRECT:15}
+  approval:
+    default-point-adjustment-max-limit: ${LOYALTY_DEFAULT_POINT_ADJUSTMENT_MAX_LIMIT:100000.00}
+  system-param:
+    default-value-type: ${LOYALTY_PARAM_DEFAULT_VALUE_TYPE:STRING}
+    default-group-code: ${LOYALTY_PARAM_DEFAULT_GROUP_CODE:GENERAL}
+  integration:
+    natcash:
+      base-url: ${NATCASH_WALLET_BASE_URL:}
+      api-key: ${NATCASH_WALLET_API_KEY:}
+    sms:
+      gateway-url: ${NATCOM_SMS_GATEWAY_URL:}
+      brandname: ${NATCOM_SMS_BRANDNAME:}
+
+# Cấu hình OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Cấu hình Giám sát Micrometer & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always

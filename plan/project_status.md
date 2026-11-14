@@ -1,98 +1,63 @@
-# BẢNG THEO DÕI TIẾN ĐỘ DỰ ÁN (WBS MASTER TRACKER)
+# BẢNG THEO DÕI TIẾN ĐỘ DỰ ÁN
 
 **Dự án:** Hệ Sinh Thái Khách Hàng Thân Thiết Liên Minh và Cổng Game Đa Thuê Bao (`micro-loyalty`)  
-**Thời điểm thẩm định:** 25/08/2026 — Đã Hoàn Tất Toàn Bộ Giai Đoạn 1, 2, 3, 4 (Sprint 7, 8, 9, 10) & Khung Tích Hợp Đa Thuê Bao  
+**Thời điểm thẩm định:** 14/11/2026 — Hoàn tất tái cấu trúc **5 Microservices + API Gateway + 3 Frontend**, vượt qua CI cục bộ `./ci-local.sh` và triển khai vận hành cụm **11 vùng chứa** trên máy chủ SaaS `35.247.156.176:65000`  
 **Quy chuẩn áp dụng:** Nguyên tắc Bằng chứng thực chứng (Zero Over-Reporting) và Quy chuẩn Đánh giá Tiến độ 3 Tầng Độc lập.  
-**Môi trường hiện tại:** Môi trường cục bộ & Cụm Docker (PostgreSQL 15, Redis 7, Nginx Gateway, Webview, CMS).
+**Môi trường hiện tại:** Cụm SaaS Docker (`35.247.156.176:65000`, `11` vùng chứa gồm 5 Microservices + PostgreSQL 15 + Redis 7 + 3 Frontend + Nginx API Gateway `18095`) và gói chuẩn bị On-Premise (`deploy/natcash/`).
 
 ---
 
-## 1. TỔNG KẾT TIẾN ĐỘ THỰC CHỨNG 3 TẦNG ĐỘC LẬP (3-TIER VALUATION)
+## 1. TỔNG KẾT TIẾN ĐỘ THỰC CHỨNG 3 TẦNG ĐỘC LẬP
 
-```mermaid
-flowchart LR
-    subgraph S_TIER_LEFT ["TẦNG 1 & TẦNG 2: MÃ NGUỒN VÀ TÍCH HỢP ĐỐI TÁC"]
-        direction TB
-        T1["TẦNG 1: MÃ NGUỒN CHỨC NĂNG NỘI BỘ (60% / 60%) — HOÀN TẤT 100%<br/>• Backend: 15 phân hệ, Flyway V1-V12, 67/67 bài test pass 100%<br/>• Frontend: CMS 12 màn hình CRUD DB thật, Webview 13 trò chơi gọi API thật<br/>• Gamification: Web Audio 15 hiệu ứng, Rung xúc giác, Chuỗi điểm danh 7 ngày<br/>• Quầy thu ngân: Mã vạch Code128 vector SVG, QR động 60s, Cảnh báo hạn điểm"]
-        T2["TẦNG 2: TÍCH HỢP ĐỐI TÁC THỰC TẾ (15% / 20%) — SẴN SÀNG KẾT NỐI<br/>• Khung Tích Hợp Đa Thuê Bao: PaymentGatewayProvider & SmsGatewayProvider<br/>• Nạp động cấu hình theo tenantId từ Redis Cache & Database V12<br/>• Hỗ trợ Ví Natcash, SMS Natcom, Ngân hàng đối tác, Twilio & Cổng REST tùy biến<br/>• Bộ test tự động toàn trình FullLifecycleE2ETest & TenantIntegrationServiceTest"]
-        T1 --> T2
-    end
-
-    subgraph S_TIER_RIGHT ["TẦNG 3: KIỂM THỬ PHI CHỨC NĂNG VÀ VẬN HÀNH"]
-        direction TB
-        T3_STRESS["TẦNG 3.1: Stress Test Tải Cao & Bẫy Dữ Liệu (10% / 10%)<br/>• Bộ kịch bản k6 đo tải 1.000 - 2.000 RPS (k6_pos_wallet_burn.js, k6_lucky_wheel_spin.js, k6_minigame_submit.js)<br/>• Bộ truy vấn SQL 4 bẫy dữ liệu đối soát toàn vẹn sổ cái (sql_concurrency_audit.sql)"]
-        T3_OPS["TẦNG 3.2: An Ninh, UAT & Đóng Gói Vận Hành (0% / 10%)<br/>• Chờ thực thi đo kiểm trực tiếp trên cụm máy chủ Staging phân tán<br/>• Chờ ký biên bản Pentest an ninh độc lập và Pilot UAT tập khách hàng thật"]
-        T3_STRESS --> T3_OPS
-    end
-
-    T2 --> T3_STRESS
-```
-
-### Bảng Điểm Thực Chứng Toàn Dự Án:
-
-| Tầng Đánh Giá | Hạng Mục Nghiệp Vụ & Kỹ Thuật | Điểm Tối Đa | Điểm Thực Chứng | Tình Trạng Nghiệm Thu |
+| Tầng Đánh Giá | Hạng Mục Nghiệp Vụ & Kỹ Thuật | Điểm Tối Đa | Điểm Thực Chứng | Tình Trạng Nghiệm Thu Thực Tế |
 | :--- | :--- | :---: | :---: | :--- |
-| **Tầng 1** | **Mã nguồn chức năng nội bộ (BE, FE, DB, Unit Tests, Gamification, Barcode)** | **60%** | **60%** | <span style="color:#1a7f37;font-weight:bold;">HOÀN TẤT 100% (67/67 Tests Pass, Build Webview/CMS OK)</span> |
-| **Tầng 2** | **Tích hợp Đối tác Thực tế & Khung Đa Thuê Bao (Bank, SMS, Core Ví, E2E Suite)** | **20%** | **15%** | <span style="color:#1a7f37;font-weight:bold;">HOÀN TẤT MÃ NGUỒN (Khung Đa Thuê Bao Sẵn Sàng Staging)</span> |
-| **Tầng 3.1** | **Bộ kịch bản k6 tải cao 1.000 - 2.000 RPS & SQL bẫy tranh chấp số dư** | **10%** | **10%** | <span style="color:#1a7f37;font-weight:bold;">HOÀN TẤT BỘ KỊCH BẢN (Sẵn sàng chạy trên Staging)</span> |
-| **Tầng 3.2** | **Nghiệm thu an ninh mạng độc lập (Pentest) & Pilot UAT thực tế trên Staging** | **10%** | **0%** | <span style="color:#888;font-weight:bold;">Chờ thực thi tại môi trường Staging máy chủ</span> |
-| **TỔNG CỘNG** | **TOÀN BỘ HỆ SINH THÁI LOYALTY & GAMEHUB** | **100%** | **85%** | <span style="color:#1a7f37;font-weight:bold;">MÃ NGUỒN HOÀN CHỈNH 100% (ĐẠT 85% ĐIỂM TIẾN ĐỘ)</span> |
+| **Tầng 1** | **Mã nguồn chức năng nội bộ (BE 20 modules Maven, 5 Microservices `Thin-JAR`, V1–V27, 3 Frontend, CI cục bộ `./ci-local.sh`)** | **60%** | **60%** | **HOÀN TẤT 100%** (`109` Unit Test Backend pass qua `./ci-local.sh`, build `cms`/`webview`/`partner-portal` đạt chuẩn, cụm SaaS `11` vùng chứa `7/7` healthcheck `healthy` trên `35.247.156.176`) |
+| **Tầng 2** | **Tích hợp Đối tác Thực tế (Core Ví Natcash, SMS Brandname Natcom, POS Merchant thật trên môi trường đích)** | **20%** | **0%** | **CHỜ KẾT NỐI ĐỐI TÁC THẬT (0%)** (Mã nguồn Adapter `NatcashWalletClient`, `NatcomSmsClient`, `TenantIntegrationService`, Webhook Outbox HMAC-SHA256 đã sẵn sàng; chưa cấu hình chứng thư và endpoint sản xuất thật) |
+| **Tầng 3.1** | **Thực thi Load Test tải cao & Kiểm tra toàn vẹn dữ liệu đồng thời trên Staging** | **10%** | **0%** | **CHỜ THỰC THI ĐO KIỂM (0%)** (Đã chuẩn bị bộ kịch bản [lucky_wheel_loadtest.js](../scripts/loadtest/lucky_wheel_loadtest.js) và [pos_wallet_loadtest.js](../scripts/loadtest/pos_wallet_loadtest.js); chưa thực thi đo tải k6 trên hạ tầng Staging) |
+| **Tầng 3.2** | **Nghiệm thu an ninh mạng độc lập (Pentest) & Pilot UAT thực tế trên Staging** | **10%** | **0%** | **CHỜ NGHIỆM THU (0%)** (Đã chuẩn bị kịch bản [security_pentest_suite.py](../scripts/security/security_pentest_suite.py); chờ thực thi Pentest độc lập và Pilot UAT cùng người dùng thật) |
+| **TỔNG CỘNG** | **TOÀN BỘ HỆ SINH THÁI LOYALTY & GAMEHUB** | **100%** | **60%** | **HOÀN TẤT MÃ NGUỒN VÀ HẠ TẦNG SAAS MICROSERVICES; CHỜ TÍCH HỢP ĐỐI TÁC THẬT, LOAD TEST, PENTEST & PILOT UAT** |
 
 ---
 
-## 2. MA TRẬN ĐÁNH GIÁ CHI TIẾT THEO TỪNG PHÂN HỆ (DOMAIN TRACKER)
+## 2. MA TRẬN ĐÁNH GIÁ CHI TIẾT THEO TỪNG PHÂN HỆ
 
-| Phân hệ | Tên Phân Hệ Nghiệp Vụ | BE % | UI % | Test / QA % | Tiến Độ Thực | Tình Trạng & Hạng Mục Đã Hoàn Tất / Sẵn Sàng Vận Hành |
+| Phân hệ | Tên Phân Hệ & Thành Phần Mã Nguồn | BE % | UI % | Tích hợp / QA thực tế | Tiến Độ Tổng | Tình Trạng & Bằng Chứng Thực Tế |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **D0** | **Hạ tầng, Thư viện Lõi & Container hóa** | 100% | N/A | 100% | **100%** | Đóng gói Docker đa tầng, Java 17 LTS, PostgreSQL 15, Redis 7. |
-| **D1** | **Đa Thuê Bao & Quản Trị Đối Tác Liên Minh** | 100% | 100% | 100% | **100%** | Lọc `tenant_id`, ký HMAC-SHA256, bảng `loyalty_partners` và `loyalty_tenant_integrations` (V12) hoàn chỉnh. |
-| **D2** | **Sổ Cái Điểm & Phân Hạng Hội Viên 4 Cấp** | 100% | 100% | 100% | **100%** | Khóa Redisson RLock + Pessimistic Lock. Ghi sổ cái bất biến `loyalty_point_ledger`. Cảnh báo điểm hết hạn thông minh. |
-| **D3** | **Kho Quà Phiếu Ưu Đãi Điện Tử (Vouchers)** | 100% | 100% | 100% | **100%** | **Hoàn tất:** Modal phóng to Mã vạch Code128 vector SVG & Mã QR động; CMS nhập lô CSV & kiểm kho. |
-| **D4** | **Liên Thông Ví Phần Thưởng POS Siêu Thị** | 100% | 100% | 100% | **100%** | QR động 60s, Mã vạch Barcode quầy thu ngân, Khung nạp động Cổng Ngân hàng/Ví theo bên thuê. |
-| **D5** | **Cột Mốc Chiến Dịch & Gợi Nhắc Ngữ Cảnh** | 100% | 100% | 100% | **100%** | **Hoàn tất:** Chuỗi điểm danh 7 ngày thưởng lũy tiến & Rương báu Hoàng kim; CMS Milestone CRUD DB thật. |
-| **D6** | **Cổng GameHub & 13 Tựa Game HTML5** | 100% | 100% | 100% | **100%** | **Hoàn tất:** 13 game gọi API thật, Web Audio 15 hiệu ứng âm thanh, Rung xúc giác, Hồi phục lượt chơi 4h, Chống gian lận điểm số. |
-| **D7** | **Đối Soát Bù Trừ Tài Chính Đa Phương** | 100% | 100% | 100% | **100%** | **Hoàn tất:** Nối đối tác thật, tính công nợ 2 chiều, báo cáo quyết toán kỳ. |
-| **D8** | **Đồng Bộ Webhook Hai Chiều & Outbox** | 100% | N/A | 100% | **100%** | Transactional Outbox + Redis Streams hoạt động ổn định. |
-| **D9** | **Cổng Quản Trị Trung Tâm (`loyalty-cms`)** | N/A | 100% | 100% | **100%** | **Hoàn tất:** 100% các trang Policy, Voucher, Clearing, Milestone gọi API DB thật, build pass 0 lỗi. |
-| **D10** | **Cổng Webview Nhúng (`loyalty-webview`)** | N/A | 100% | 100% | **100%** | 13 game đồ họa vector 3D sắc nét, âm thanh Web Audio, mã vạch Code128 SVG, 4 thứ tiếng, build pass 0 lỗi. |
-| **D11** | **Tác Vụ Hàng Loạt & Lập Lịch Định Kỳ** | 100% | N/A | 100% | **100%** | **Hoàn tất:** `PointExpirationJob` phân trang Chunk 500 FIFO an toàn không tràn RAM. |
-| **GW** | **Tích Hợp API Gateway & Đa Thuê Bao** | 100% | N/A | 100% | **100%** | Khung tích hợp nạp động `TenantIntegrationService` hỗ trợ đa ngân hàng và đa cổng SMS theo từng bên thuê. |
-| **QA** | **Đo Kiểm Tải Cao & Bẫy Dữ Liệu Đồng Thời** | 100% | 100% | 100% | **100%** | Bộ kịch bản k6 (1.000 - 2.000 RPS) và file SQL 4 bẫy đối soát dữ liệu sau tải. |
-| **OPS** | **An Ninh Mạng, UAT & Sổ Tay Vận Hành** | 80% | N/A | 50% | **65%** | Đã có tài liệu Runbook, kịch bản triển khai độc lập SaaS/On-Premise. Chờ Pentest & Pilot UAT trên Staging. |
+| **D0** | **Kiến Trúc 20 Module Maven & Hạ Tầng Docker** (`pom.xml`, `ims-libraries`, `loyalty-common`, `deploy/`) | 100% | N/A | CI + SaaS Live | **80%** | Đóng gói 5 `Thin-JAR` (`8081..8085`) + `245` thư viện `lib/` + `etc/`; SaaS `11` vùng chứa đang `Up` & `healthy` tại `35.247.156.176:65000`. |
+| **D1** | **Đa Thuê Bao & Đối Tác** (`partner-service:8085`, `loyalty-common`) | 100% | 100% | Chờ nối đối tác | **70%** | Lọc `tenant_id`, HMAC-SHA256, `TenantIntegrationService`, Migration `V1`–`V27`. Chờ chứng thư môi trường thật. |
+| **D2** | **Sổ Cái Điểm & Phân Hạng** (`customer-service:8082`) | 100% | 100% | Chờ Load Test | **70%** | Khóa phân tán Redisson + `PointBucketFifoService`, sổ cái `loyalty_point_ledger`. |
+| **D3** | **Kho Quà Phiếu Ưu Đãi Điện Tử** (`campaign-service:8084`) | 100% | 100% | Unit Test OK | **70%** | Mã vạch Code128 vector SVG & Mã QR động; CMS nhập lô và kiểm kho DB thật. |
+| **D4** | **Liên Thông Ví Phần Thưởng POS** (`customer-service:8082`, `partner-service:8085`) | 100% | 100% | Chờ UAT POS | **70%** | QR động 60 giây, khấu trừ an toàn đa luồng (`ConcurrentPointBurnTest`), chờ kết nối POS thật. |
+| **D5** | **Cột Mốc Chiến Dịch & Gợi Nhắc** (`campaign-service:8084`) | 100% | 100% | Unit Test OK | **70%** | Điểm danh 7 ngày, rương thưởng, bộ lọc chống làm phiền 4 lớp (`EngagementAntiSpamFilterTest`). |
+| **D6** | **Cổng GameHub & Vòng Quay** (`game-service:8083`, `loyalty-webview`) | 100% | 100% | `12` Game Tests OK | **70%** | Web Audio, rung xúc giác, Cloud Save, `SecureRandom`, `DECRBY` Redis; tách service triển khai riêng không gián đoạn core. |
+| **D7** | **Đối Soát Bù Trừ Tài Chính Đa Phương** (`partner-service:8085`, `loyalty-partner-portal`) | 100% | 100% | Unit Test OK | **70%** | Tách riêng ứng dụng `loyalty-partner-portal` (`partner.mid.io.vn`), tính công nợ 2 chiều và quyết toán kỳ. |
+| **D8** | **Đồng Bộ Webhook Hai Chiều & Outbox** (`partner-service:8085`, `loyalty-common`) | 100% | N/A | Unit Test OK | **70%** | Transactional Outbox + Redis Streams ký số HMAC-SHA256. |
+| **D9** | **Cổng Quản Trị & Đối Tác Web** (`loyalty-cms`, `loyalty-partner-portal`) | N/A | 100% | Build Pass | **80%** | Đóng gói qua Vite + PrimeReact, nạp runtime `env-config.json`, truy cập `HTTP 200` tại `cms.mid.io.vn` và `partner.mid.io.vn`. |
+| **D10** | **Cổng Webview Nhúng** (`loyalty-webview`) | N/A | 100% | Build Pass | **80%** | Đồ họa vector, Web Audio, đa ngôn ngữ ngoại vi, truy cập `HTTP 200` tại `portal.mid.io.vn`. |
+| **GW** | **API Gateway Định Tuyến Microservices** (`nginx-saas.conf`, `nginx-natcash.conf`) | 100% | N/A | SaaS Live | **80%** | Cổng `18095` định tuyến 5 dải API về `8081..8085`, `/gateway-health` + `docs.mid.io.vn/swagger-ui/index.html` trả `HTTP 200`. |
+| **QA** | **Kịch Bản Đo Tải & Kiểm Tra An Ninh** (`scripts/loadtest/`, `scripts/security/`) | 100% | N/A | **0% Thực thi** | **30%** | Đã có kịch bản `lucky_wheel_loadtest.js`, `pos_wallet_loadtest.js`, `security_pentest_suite.py`; chờ lệnh thực thi đo kiểm tải & Pentest trên Staging. |
+| **OPS** | **CI Cục Bộ & Sổ Tay Vận Hành** (`ci-local.sh`, `deploy/`, `docs/ops/`) | 100% | N/A | SaaS Live | **75%** | `./ci-local.sh` vượt qua toàn bộ build + `109` Unit Test; SaaS `11` container chạy ổn định; On-Premise Natcash sẵn sàng chờ chỉ thị triển khai. |
 
 ---
 
-## 3. NHẬT KÝ KHẮC PHỤC KHOẢNG TRỐNG KỸ THUẬT (REMEDIATION AUDIT LOG)
+## 3. NHẬT KÝ HOÀN THIỆN KIẾN TRÚC VÀ MÃ NGUỒN ĐÃ NGHIỆM THU
 
-### Các Khoảng Trống Đã Được Khắc Phục 100%:
-1. **[CRIT-01] Minigame Gọi API Ghi Nhận Điểm Thật:**
-   * *Kết quả:* Toàn bộ 13 minigame Webview gọi `submitGameResult` đồng bộ vào bảng `loyalty_point_ledger` PostgreSQL.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-2. **[CRIT-02] Cổng Quản Trị CMS Lưu Dữ Liệu Thực Tế Vào Database:**
-   * *Kết quả:* Xóa bỏ 100% `setTimeout` giả lập. 100% các màn hình CRUD Policy, Voucher, Clearing, Milestone gọi API Backend lưu DB.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-3. **[CRIT-03] Tiến Trình Quét Điểm Hết Hạn `PointExpirationJob`:**
-   * *Kết quả:* Viết lại phân trang Chunk 500 bản ghi FIFO theo chuẩn Spring Batch.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-4. **[CRIT-04] Động Cơ Bù Trừ Tài Chính Đa Phương:**
-   * *Kết quả:* Nối bảng thực thể `loyalty_partners`, tính toán công nợ 2 chiều, ghi nhận kết chuyển kỳ.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-5. **[CRIT-05] Nâng Cấp Gamification & Trải Nghiệm Người Dùng Chuẩn Siêu Ứng Dụng:**
-   * *Kết quả:* Động cơ tổng hợp Web Audio API (15 hiệu ứng) + Rung xúc giác Vibration API; Chuỗi điểm danh 7 ngày & Rương vàng; Hồi phục lượt chơi 4h; Mã vạch Code128 vector SVG & QR quầy thu ngân; Cảnh báo hạn điểm thông minh; Nút bật/tắt âm thanh toàn cục.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-6. **[CRIT-06] An Ninh Mật Mã & Chống Gian Lận Backend:**
-   * *Kết quả:* Sử dụng `SecureRandom` cho Vòng quay & GameHub; khống chế trần điểm số mỗi ván; tạo bộ 3 kịch bản k6 tải cao 1.000 - 2.000 RPS và file SQL 4 bẫy đối soát dữ liệu sau tải.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-7. **[CRIT-07] Adapter Tích Hợp Thật & Kịch Bản E2E Tự Động:**
-   * *Kết quả:* Xây dựng `NatcashWalletClient.java`, `NatcomSmsClient.java` và kịch bản `FullLifecycleE2ETest.java`.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
-8. **[CRIT-08] Khung Tích Hợp Đa Thuê Bao Nạp Động (Multi-Tenant Dynamic Integration):**
-   * *Kết quả:* Xây dựng bảng `loyalty_tenant_integrations` (Migration V12), `PaymentGatewayProvider` (Natcash, Generic REST), `SmsGatewayProvider` (Natcom, Twilio, Generic REST), `TenantIntegrationService` nạp động từ Redis Cache (15 phút) và Database, REST API `/loyalty/v1/integrations` có kiểm tra kết nối thử nghiệm. Bài kiểm thử `TenantIntegrationServiceTest` nâng tổng số bài test backend lên `67/67` pass 100%.
-   * *Tình trạng:* **ĐÃ HOÀN THÀNH (RESOLVED).**
+1. **Chuyển đổi hoàn toàn sang Kiến trúc 5 Microservices + API Gateway:**
+   * Tách `loyalty-service` đơn khối trước đây thành **5 Microservices độc lập** (`cms-service:8081`, `customer-service:8082`, `game-service:8083`, `campaign-service:8084`, `partner-service:8085`) dùng chung `loyalty-common` (`V1`–`V27`) và `loyalty-engine`, đóng gói dạng `Thin-JAR` dùng chung `245` thư viện `lib/`.
+   * Thiết lập API Gateway qua `nginx-saas.conf` (`18095`) và `nginx-natcash.conf` (`8443`/`8080`), phục vụ đồng bộ 3 ứng dụng Frontend (`loyalty-cms`, `loyalty-webview`, `loyalty-partner-portal`).
+2. **Thiết lập Cổng Kiểm Thử & Đóng Gói Cục Bộ (`./ci-local.sh`):**
+   * Xác thực toàn bộ 20 module Maven, chạy `109` Unit Test Backend (`96` `loyalty-common`, `1` `cms-service`, `12` `game-service`), build `3` Frontend và kiểm tra cú pháp cả 2 tệp `docker-compose.yml` + 2 tệp Nginx trong một lệnh duy nhất.
+3. **Khắc phục lỗ hổng Hardcode & Chuẩn hóa Cấu Hình DB:**
+   * Đưa các tham số hệ thống (`PERCENT_DIVISOR`, `ISO_LOCAL_DATE_LENGTH`, `DEFAULT_WHEEL_CODE`, cấu hình game/chiến dịch) sang quản trị tập trung và enum chuẩn mực.
+4. **Triển khai Thành Công Trên Hạ Tầng SaaS (`35.247.156.176:65000`):**
+   * Toàn bộ **11 vùng chứa** đang hoạt động ổn định (`7/7` healthcheck `healthy`), `bash scripts/healthcheck.sh` thoát mã `0`, và 5 tên miền công khai (`api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `docs.mid.io.vn/swagger-ui/index.html`) đạt `HTTP 200`.
 
 ---
 
-## 4. KẾT LUẬN & SẴN SÀNG BÀN GIAO TRIỂN KHAI STAGING
+## 4. KẾT LUẬN VÀ CÁC HẠNG MỤC CẦN LÀM TIẾP THEO
 
-* **Tổng thể mã nguồn dự án:** Đạt **100% Zero-Hardcode, Clean Imports, 67/67 Tests Pass, CMS & Webview Build Pass 0 lỗi**.
-* **Tiến độ thực chứng đạt được:** **85%** (Đủ điều kiện đóng gói bàn giao sang môi trường Staging/Pre-Production để vận hành thử nghiệm, đo kiểm tải thực tế và nghiệm thu Pentest/UAT).
+* **Kết quả hiện tại:** Hoàn tất **100% Tầng 1** (mã nguồn Microservices + Frontend + `109` Unit Tests + CI cục bộ) và đã triển khai vận hành ổn định trên môi trường **SaaS (`35.247.156.176:65000`)**. Theo quy chuẩn đánh giá 3 tầng, điểm thực chứng hiện đạt **60% / 100%**.
+* **Các bước tiếp theo để đạt 100% Go-Live:**
+  1. Cung cấp chứng thư và thông số kết nối thực tế tới Core Ví Natcash / SMS Brandname Natcom để hoàn tất Tầng 2 (`20%`).
+  2. Thực thi bộ kịch bản tải cao `scripts/loadtest/{lucky_wheel_loadtest.js,pos_wallet_loadtest.js}` trên Staging kết hợp truy vấn đối soát DB sau tải (`10%`).
+  3. Thực thi rà soát an ninh `scripts/security/security_pentest_suite.py`, Pentest độc lập và Pilot UAT cùng người dùng thật (`10%`), sau đó triển khai On-Premise Natcash (`10.228.37.65`) khi có yêu cầu.

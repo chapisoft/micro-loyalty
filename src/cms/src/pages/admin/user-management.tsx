@@ -56,21 +56,21 @@ const UserManagementPage: React.FC = () => {
   };
 
   const handleDeleteUser = (userId: number) => {
-    if (window.confirm(t('common.confirm_delete', { defaultValue: 'Bạn có chắc chắn muốn xóa bản ghi này?' }))) {
+    if (window.confirm(t('common.confirm_delete'))) {
       deleteUserMutation.mutate(userId, {
         onSuccess: () => {
           showToast({
             severity: 'success',
-            summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: t('user.delete_success', { defaultValue: 'Xóa người dùng thành công' }),
+            summary: t('common.success'),
+            detail: t('user.delete_success'),
           });
           queryClient.invalidateQueries({ queryKey: [QueryKey.GET_ALL_USERS] });
         },
         onError: (error: any) => {
           showToast({
             severity: 'error',
-            summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: error?.response?.data?.message || t('user.delete_failed', { defaultValue: 'Xóa người dùng thất bại' }),
+            summary: t('common.error'),
+            detail: error?.response?.data?.message || t('user.delete_failed'),
           });
         },
       });
@@ -82,16 +82,16 @@ const UserManagementPage: React.FC = () => {
       onSuccess: () => {
         showToast({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('user.lock_success', { defaultValue: 'Khóa tài khoản thành công' }),
+          summary: t('common.success'),
+          detail: t('user.lock_success'),
         });
         queryClient.invalidateQueries({ queryKey: [QueryKey.GET_ALL_USERS] });
       },
       onError: (error: any) => {
         showToast({
           severity: 'error',
-          summary: t('common.error', { defaultValue: 'Lỗi' }),
-          detail: error?.response?.data?.message || t('user.lock_failed', { defaultValue: 'Khóa tài khoản thất bại' }),
+          summary: t('common.error'),
+          detail: error?.response?.data?.message || t('user.lock_failed'),
         });
       },
     });
@@ -102,16 +102,16 @@ const UserManagementPage: React.FC = () => {
       onSuccess: () => {
         showToast({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('user.unlock_success', { defaultValue: 'Mở khóa tài khoản thành công' }),
+          summary: t('common.success'),
+          detail: t('user.unlock_success'),
         });
         queryClient.invalidateQueries({ queryKey: [QueryKey.GET_ALL_USERS] });
       },
       onError: (error: any) => {
         showToast({
           severity: 'error',
-          summary: t('common.error', { defaultValue: 'Lỗi' }),
-          detail: error?.response?.data?.message || t('user.unlock_failed', { defaultValue: 'Mở khóa tài khoản thất bại' }),
+          summary: t('common.error'),
+          detail: error?.response?.data?.message || t('user.unlock_failed'),
         });
       },
     });
@@ -123,28 +123,28 @@ const UserManagementPage: React.FC = () => {
         icon="pi pi-pencil"
         className="p-button-rounded p-button-warning"
         onClick={() => handleEditUser(rowData)}
-        tooltip={t('common.edit', { defaultValue: 'Sửa' })}
+        tooltip={t('common.edit')}
       />
       {rowData.isLocked !== 0 ? (
         <Button
           icon="pi pi-lock-open"
           className="p-button-rounded p-button-info"
           onClick={() => handleUnlockUser(rowData.userId)}
-          tooltip={t('user.unlock', { defaultValue: 'Mở khóa' })}
+          tooltip={t('user.unlock')}
         />
       ) : (
         <Button
           icon="pi pi-lock"
           className="p-button-rounded p-button-secondary"
           onClick={() => handleLockUser(rowData.userId)}
-          tooltip={t('user.lock', { defaultValue: 'Khóa' })}
+          tooltip={t('user.lock')}
         />
       )}
       <Button
         icon="pi pi-trash"
         className="p-button-rounded p-button-danger"
         onClick={() => handleDeleteUser(rowData.userId)}
-        tooltip={t('common.delete', { defaultValue: 'Xóa' })}
+        tooltip={t('common.delete')}
       />
     </div>
   );
@@ -153,13 +153,13 @@ const UserManagementPage: React.FC = () => {
     if (rowData.isLocked !== 0) {
       return (
         <span className="status-badge inactive" style={{ backgroundColor: '#e74c3c' }}>
-          {t('user.locked', { defaultValue: 'Đã khóa' })}
+          {t('user.locked')}
         </span>
       );
     }
     return (
       <span className={`status-badge ${rowData.isActive !== 0 ? 'active' : 'inactive'}`}>
-        {rowData.isActive !== 0 ? t('common.active', { defaultValue: 'Đang hoạt động' }) : t('common.inactive', { defaultValue: 'Ngừng hoạt động' })}
+        {rowData.isActive !== 0 ? t('common.active') : t('common.inactive')}
       </span>
     );
   };
@@ -171,20 +171,20 @@ const UserManagementPage: React.FC = () => {
   return (
     <div className="user-management-page">
       <div className="page-header">
-        <h1>{t('user.management', { defaultValue: 'Quản lý Người dùng & Phân quyền' })}</h1>
+        <h1>{t('user.management')}</h1>
       </div>
 
       <div className="toolbar">
         <div className="search-box">
           <InputText
-            placeholder={t('common.search', { defaultValue: 'Tìm kiếm...' })}
+            placeholder={t('common.search')}
             value={searchKeyword}
             onChange={(e) => handleSearch(e.target.value)}
             className="search-input"
           />
         </div>
         <Button
-          label={t('user.create_new', { defaultValue: 'Thêm Người dùng' })}
+          label={t('user.create_new')}
           icon="pi pi-plus"
           onClick={handleCreateUser}
           className="p-button-success"
@@ -213,21 +213,21 @@ const UserManagementPage: React.FC = () => {
 
           {/* Cột 2: STT */}
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
+            header={t('common.stt')}
             body={(_, options) => options.rowIndex + 1}
             style={{ width: '4rem', textAlign: 'center' }}
           />
 
           {/* Cột 3: Thao tác / Hành động */}
-          <Column header={t('common.actions', { defaultValue: 'Thao tác' })} body={actionTemplate} style={{ width: '12rem' }} />
+          <Column header={t('common.actions')} body={actionTemplate} style={{ width: '12rem' }} />
 
           {/* Cột 4 trở đi: Dữ liệu nghiệp vụ */}
-          <Column field="username" header={t('user.username', { defaultValue: 'Tên đăng nhập' })} style={{ width: '15%' }} />
-          <Column field="fullName" header={t('user.full_name', { defaultValue: 'Họ và tên' })} style={{ width: '18%' }} />
-          <Column field="email" header={t('user.email', { defaultValue: 'Email' })} style={{ width: '20%' }} />
-          <Column field="phone" header={t('user.phone', { defaultValue: 'Số điện thoại' })} style={{ width: '12%' }} />
-          <Column header={t('user.roles', { defaultValue: 'Vai trò' })} body={rolesTemplate} style={{ width: '15%' }} />
-          <Column header={t('common.status', { defaultValue: 'Trạng thái' })} body={statusTemplate} style={{ width: '10%' }} />
+          <Column field="username" header={t('user.username')} style={{ width: '15%' }} />
+          <Column field="fullName" header={t('user.full_name')} style={{ width: '18%' }} />
+          <Column field="email" header={t('user.email')} style={{ width: '20%' }} />
+          <Column field="phone" header={t('user.phone')} style={{ width: '12%' }} />
+          <Column header={t('user.roles')} body={rolesTemplate} style={{ width: '15%' }} />
+          <Column header={t('common.status')} body={statusTemplate} style={{ width: '10%' }} />
         </DataTable>
       </div>
 

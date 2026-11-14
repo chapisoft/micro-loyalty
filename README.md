@@ -6,41 +6,30 @@ Tài liệu tổng quan hệ sinh thái phần mềm Dịch vụ Khách hàng th
 
 ## 1. TỔNG QUAN HỆ THỐNG VÀ BỘ SẢN PHẨM BÀN GIAO
 
-Hệ thống được thiết kế theo kiến trúc dịch vụ vi mô độc lập, phục vụ mô hình phần mềm dịch vụ đa thuê bao bao trùm dịch vụ ví điện tử Natcash, mạng viễn thông Natcom và mạng lưới các đối tác thương mại bán lẻ liên minh.
+Hệ thống được thiết kế theo kiến trúc Microservices độc lập kết hợp Nginx API Gateway tập trung, phục vụ mô hình SaaS đa thuê bao bao trùm dịch vụ ví điện tử Natcash, mạng viễn thông Natcom và mạng lưới các đối tác thương mại bán lẻ liên minh.
 
-```mermaid
-flowchart LR
-    subgraph S_PORTAL ["TẦNG TRÌNH DIỄN VÀ QUẢN TRỊ"]
-        direction TB
-        P_APP["1. Ứng Dụng Di Động Natcash<br/>• Ứng dụng ví di động (React Native)<br/>• Trung tâm Loyalty, GameHub, Vòng quay<br/>• Mã QR Ví Phần Thưởng động 60 giây"]
-        P_WEBVIEW["2. Cổng Webview Nhúng Đối Tác<br/>• loyalty-webview (ReactJS / Vite / Nginx)<br/>• Nhúng trực tiếp vào ứng dụng đối tác<br/>• Cầu nối JSBridge hai chiều & Tùy biến giao diện"]
-        P_CMS["3. Cổng Quản Trị Trung Tâm<br/>• loyalty-cms (ReactJS / Vite / Nginx)<br/>• Cấu hình chính sách, hạn mức, đối soát<br/>• Quản lý danh mục game, sự kiện, kho quà"]
-        P_APP --> P_WEBVIEW
-        P_WEBVIEW --> P_CMS
-    end
-
-    subgraph S_BACKEND ["TẦNG MÁY CHỦ VÀ DỮ LIỆU ĐỘC LẬP"]
-        direction TB
-        B_GW["4. Cổng Chuyển Tiếp API Gateway<br/>• natcash-eu-api (Spring Boot Reverse Proxy)<br/>• Xác thực JWT, gắn tiêu đề X-Tenant-Id<br/>• Đồng bộ hai chiều qua API & Webhook"]
-        B_SVC["5. Dịch Vụ Độc Lập loyalty-service<br/>• Java 17 LTS / Spring Boot 3.5.3<br/>• 7 phân hệ nghiệp vụ, sổ cái điểm, gợi nhắc<br/>• Tiến trình quét Webhook Outbox & Batch Jobs"]
-        B_DATA["6. Hạ Tầng Dữ Liệu Độc Lập<br/>• PostgreSQL 15+ độc lập (loyalty_db)<br/>• Redis 7.x Cluster (Redisson Lock & Đệm)<br/>• Redis Streams (Hàng đợi sự kiện tinh gọn)"]
-        B_GW --> B_SVC
-        B_SVC <--> B_DATA
-    end
-
-    P_CMS --> B_SVC
-    P_APP --> B_GW
-    P_WEBVIEW --> B_SVC
-```
+<p align="center">
+  <a href="diagrams/ecosystem-architecture.html" target="_blank" title="Bấm để mở sơ đồ tương tác toàn màn hình">
+    <img src="diagrams/ecosystem-architecture.png" alt="Kiến Trúc Microservices & API Gateway Hệ Sinh Thái Micro-Loyalty" width="100%" style="width: 100%; max-width: 100%; height: auto; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);" />
+  </a>
+</p>
 
 ### Bộ Sản Phẩm Bàn Giao Cốt Lõi:
-1. **Dịch vụ máy chủ nghiệp vụ độc lập (`loyalty-service`):** Xây dựng trên nền tảng Java 17 LTS và Spring Boot 3.5.3, quản lý cơ sở dữ liệu quan hệ độc lập `loyalty_db` trên PostgreSQL 15+ (tách biệt 100% với `natcash_db`). Vận hành 7 phân hệ nghiệp vụ, cơ chế Outbound Webhook có ký số HMAC-SHA256, kiểm soát khóa phân tán Redisson RLock và 61/61 bài kiểm thử tự động.
-2. **Cổng thông tin quản trị trung tâm (`loyalty-cms`):** Xây dựng trên nền tảng ReactJS 18+, TypeScript, Vite, Ant Design 5.x, nạp cấu hình đối tác, tỷ lệ chia sẻ doanh thu và tham số động JSONB.
-3. **Cổng Webview nhúng đa nền tảng (`loyalty-webview`):** Xây dựng trên nền tảng ReactJS 18+, Vite, TailwindCSS Mobile-First, tích hợp thư viện cầu nối `LoyaltyJSBridge`, đĩa quay Canvas 60 FPS và sảnh minigame.
-4. **Bộ thư viện SDK Tích hợp Game HTML5 (`gamehub-sdk.js` & `gamehub-sdk.ts`):** Thư viện JavaScript siêu nhẹ (0 phụ thuộc) cho phép Game Studio bên thứ ba nhúng game, tự động nhận diện token phiên, gửi điểm số nhận thưởng và mua lượt chơi.
-5. **Cổng nhà phát triển và trình giả lập (`loyalty-sandbox`):** Cổng tự phục vụ dành cho nhà phát triển đối tác để tra cứu API, tính chữ ký HMAC-SHA256 và thử nghiệm bắn Webhook.
-6. **Bộ tích hợp Ứng dụng di động (`natcash-eu-app`):** Tích hợp màn hình Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60 giây, Cổng Game và Vòng quay may mắn trên ứng dụng React Native.
-7. **Cổng chuyển tiếp trung gian (`natcash-eu-api`):** Đóng vai trò Cổng kết nối chuyển tiếp xác thực người dùng, đồng bộ hai chiều và tiếp nhận Webhook.
+
+| Thành phần | Mô tả kỹ thuật & Vai trò kiến trúc | Cổng mặc định |
+| :--- | :--- | :---: |
+| **`cms-service`** | Quản trị hệ thống, tham số động, phân quyền IAM/RBAC, chính sách điểm, đối tác, phê duyệt, dashboard và báo cáo | `8081` |
+| **`customer-service`** | Tài khoản hội viên, phân hạng, sổ cái điểm FIFO, đổi quà Voucher, QR Ví Phần Thưởng động, SSO, USSD và đại lý | `8082` |
+| **`game-service`** | Cổng GameHub, Vòng quay may mắn và ngân hàng câu hỏi Micro-Learning | `8083` |
+| **`campaign-service`** | Chiến dịch, cột mốc nhiệm vụ, phân khúc hội viên, ngân sách đồng tài trợ, cảnh báo và AI Copilot | `8084` |
+| **`partner-service`** | Đối soát bù trừ đa phương, cổng thanh toán bằng điểm, chi nhánh đối tác, Partner Portal API và Webhook Outbox | `8085` |
+| **`loyalty-common`, `loyalty-engine`, `ims-libraries`** | Bộ thư viện lõi dùng chung cho cả 5 Microservices trên nền tảng Java 17 LTS / Spring Boot 3.5.3, quản lý cơ sở dữ liệu độc lập `loyalty_db` trên PostgreSQL 15+ (Flyway `V1`–`V27`) và khóa phân tán Redis 7 | Thư viện dùng chung |
+| **`loyalty-saas-gateway`** | Nginx API Gateway điều phối lưu lượng công khai và nội bộ theo tiền tố đường dẫn URI tới 5 Microservices và 3 cổng giao diện | `18095` |
+| **`loyalty-cms`** | Cổng thông tin quản trị trung tâm (ReactJS 18 / TypeScript / Vite / PrimeReact / Nginx) | `8990` (dev) |
+| **`loyalty-webview`** | Cổng Webview nhúng di động (ReactJS 18 / TypeScript / Vite / TailwindCSS) tích hợp `LoyaltyJSBridge`, đĩa quay Canvas 60 FPS và sảnh GameHub | `3001` (dev) |
+| **`loyalty-partner-portal`** | Cổng thông tin tự phục vụ dành cho đối tác liên minh đối soát bù trừ, quản lý chi nhánh và Voucher | `8991` (dev) |
+| **`gamehub-sdk.js` / `loyalty-sandbox`** | Bộ SDK JavaScript tích hợp game HTML5 và cổng trình giả lập dành cho đối tác kiểm thử API & chữ ký HMAC-SHA256 | `8995` (dev) |
+| **`natcash-eu-app` & `natcash-eu-api`** | Phân hệ tích hợp trên ứng dụng di động React Native và cổng chuyển tiếp API xác thực JWT của hệ sinh thái Natcash | Tích hợp ngoài |
 
 ---
 
@@ -49,29 +38,47 @@ flowchart LR
 ```
 micro-loyalty/
 ├── .agents/                            # Quy chuẩn phiên làm việc và kỹ năng tự động
-├── deploy/                             # Gói đóng gói và triển khai phân lập theo môi trường
-│   ├── backend/                        # Dockerfile bất biến cho Java Spring Boot
-│   ├── frontend/                       # Dockerfile bất biến cho Nginx SPA
-│   ├── micro-loyalty/                  # Môi trường SaaS Đa Thuê Bao (210.211.102.99:65000 dip)
-│   │   ├── config/                     # Cấu hình ngoại vi Backend, Frontend & Nginx Virtual Hosts
-│   │   ├── scripts/                    # Kịch bản quản trị start.sh, stop.sh, healthcheck.sh
-│   │   ├── docker-compose.yml          # Cụm 6 vùng chứa SaaS khép kín
+├── ci-local.sh                         # Kịch bản CI cục bộ kiểm thử 20 module Maven, 3 Frontend & Docker Compose
+├── diagrams/                           # Bộ sơ đồ kiến trúc và bản xuất tĩnh độ phân giải cao
+├── deploy/                             # Gói đóng gói và triển khai phân lập theo 2 mô hình
+│   ├── micro-loyalty/                  # Môi trường SaaS Đa Thuê Bao (35.247.156.176:65000 root)
+│   │   ├── backend/                    # Dockerfile đa tầng Thin-JAR & gói xuất bản module/*.jar, lib/, etc/
+│   │   ├── frontend/                   # Gói tĩnh & Dockerfile cho cms, webview, partner-portal
+│   │   ├── gateway/                    # Dockerfile Nginx API Gateway
+│   │   ├── config/                     # Cấu hình ngoại vi Backend, env-config.json & Nginx Virtual Hosts
+│   │   ├── locales/                    # Từ điển đa ngôn ngữ ngoại vi (vi, en, fr, ht...)
+│   │   ├── ci-cd/                      # Jenkinsfile Pipeline SaaS tự động theo phân hệ thay đổi
+│   │   ├── monitoring/                 # Cấu hình giám sát hệ thống
+│   │   ├── scripts/                    # Kịch bản quản trị start.sh, stop.sh, backup.sh, restore.sh, healthcheck.sh
+│   │   ├── docker-compose.yml          # Cụm 11 vùng chứa SaaS khép kín (5 Microservices + Gateway + 3 FE + DB + Redis)
 │   │   ├── deploy-guild.md             # Hướng dẫn chi tiết triển khai môi trường SaaS
 │   │   └── .env.example                # Mẫu biến môi trường SaaS
 │   └── natcash/                        # Môi trường On-Premise Tại Chỗ (10.228.37.65:22 mascom)
-│       ├── config/                     # Cấu hình Native JVM, Nginx & Database Natcash
-│       ├── scripts/                    # Kịch bản cài đặt, nạp cấu hình và khởi chạy Native
+│       ├── backend/                    # Dockerfile & gói Thin-JAR phân lập cho Natcash
+│       ├── frontend/                   # Gói tĩnh & Dockerfile Frontend phân lập cho Natcash
+│       ├── config/                     # Cấu hình Backend, Nginx 8443/8080 & env-config.json Natcash
+│       ├── locales/                    # Từ điển đa ngôn ngữ ngoại vi riêng của Natcash
+│       ├── scripts/                    # Kịch bản cài đặt, nạp cấu hình và vận hành On-Premise
+│       ├── docker-compose.yml          # Tệp Compose phục vụ triển khai container On-Premise
 │       ├── deploy-guild.md             # Hướng dẫn chi tiết triển khai môi trường On-Premise
 │       └── .env.example                # Mẫu biến môi trường Natcash
-├── docs/                               # Hồ sơ tài liệu thiết kế và giải pháp
-│   ├── ba/                             # Khối tài liệu nghiệp vụ (solution.md, detailed_design.md)
-│   └── dev/                            # Khối tài liệu kỹ thuật (codebase.md)
-├── plan/                               # Kế hoạch sản xuất và theo dõi tiến độ WBS
+├── docs/                               # Hồ sơ tài liệu nghiệp vụ, kiến trúc và vận hành
+│   ├── ba/                             # Tài liệu nghiệp vụ & thiết kế tiến hóa giải pháp
+│   ├── dev/                            # Tài liệu kỹ thuật mã nguồn & tích hợp GameHub SDK
+│   └── ops/                            # Sổ tay vận hành Pilot và xử lý sự cố
+├── plan/                               # Kế hoạch triển khai, bảo trì và báo cáo tiến độ WBS
+├── scripts/                            # Kịch bản CI cục bộ, tải cao (k6) và kiểm thử an ninh (Python)
 └── src/                                # Toàn bộ mã nguồn triển khai thực tế
-    ├── lib/                            # Thư viện dùng chung (ims-libraries, loyalty-engine)
-    ├── service/                        # Máy chủ nghiệp vụ Java 17 LTS / Spring Boot 3.5.3 (loyalty-service)
-    ├── cms/                            # Cổng quản trị trung tâm ReactJS 18 / Ant Design 5 (loyalty-cms)
+    ├── lib/                            # Thư viện lõi dùng chung (ims-libraries 11 module, loyalty-engine, loyalty-common)
+    ├── service/                        # 5 Microservices Java 17 LTS / Spring Boot 3.5.3 độc lập
+    │   ├── cms-service/                # Cổng 8081 — Quản trị, Tham số hệ thống, Chính sách & Báo cáo
+    │   ├── customer-service/           # Cổng 8082 — Hội viên, Phân hạng, Sổ cái FIFO, Voucher & Ví QR
+    │   ├── game-service/               # Cổng 8083 — GameHub, Vòng quay & Micro-Learning
+    │   ├── campaign-service/           # Cổng 8084 — Chiến dịch, Cột mốc, Ngân sách & AI Copilot
+    │   └── partner-service/            # Cổng 8085 — Đối soát bù trừ, POS điểm & Webhook Outbox
+    ├── cms/                            # Cổng quản trị trung tâm ReactJS 18 / PrimeReact (loyalty-cms)
     ├── webview/                        # Cổng Webview nhúng di động TailwindCSS (loyalty-webview)
+    ├── partner-portal/                 # Cổng đối tác liên minh ReactJS 18 / PrimeReact (loyalty-partner-portal)
     └── sandbox/                        # Cổng nhà phát triển đối tác (loyalty-sandbox)
 ```
 
@@ -105,22 +112,33 @@ docker compose ps
 
 ---
 
-### 3.3. Bước 2: Biên Dịch Và Khởi Chạy Máy Chủ Nghiệp Vụ (`loyalty-service`)
+### 3.3. Bước 2: Biên Dịch, Kiểm Thử Cục Bộ Và Chạy Từng Microservice
+
+Để kiểm thử toàn trình 20 module Maven, đóng gói 5 Microservices chuẩn Thin-JAR (`module/*.jar` + 245 thư viện trong `lib/` + cấu hình `etc/`), biên dịch 3 cổng giao diện và kiểm tra hợp lệ Docker Compose / Nginx trước khi triển khai, chạy trực tiếp kịch bản tự động ở thư mục gốc:
 
 ```bash
-# 1. Di chuyển vào thư mục mã nguồn Backend
-cd src/service
+# Chạy đầy đủ kiểm thử Backend (109 ca kiểm thử đơn vị), Frontend và thẩm định cấu hình triển khai
+./ci-local.sh
 
-# 2. Biên dịch và đóng gói bỏ qua kiểm thử
-mvn clean package -DskipTests
-
-# 3. Khởi chạy ứng dụng máy chủ với cấu hình cục bộ
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# Các chế độ rút gọn hữu ích khi phát triển từng phần:
+./ci-local.sh --backend-only
+./ci-local.sh --frontend-only
+./ci-local.sh --skip-tests
 ```
 
-* Điểm cuối kiểm tra sức khỏe cục bộ: `http://localhost:8088/actuator/health`
-* Giao diện tra cứu OpenAPI Swagger UI: `http://localhost:8088/swagger-ui/index.html`
-* Tệp đặc tả JSON OpenAPI 3: `http://localhost:8088/v3/api-docs`
+Khi cần chạy trực tiếp từng Microservice cục bộ bằng Maven (ví dụ `cms-service` cổng `8081` hoặc `game-service` cổng `8083`):
+
+```bash
+# Biên dịch toàn bộ module và chạy thử nghiệm các bài kiểm thử đơn vị
+./mvnw clean test -B
+
+# Khởi chạy riêng một Microservice ở cấu hình dev (nạp từ src/service/<tên-service>)
+./mvnw -pl src/service/cms-service spring-boot:run -Dspring-boot.run.profiles=dev
+./mvnw -pl src/service/game-service spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+* Điểm cuối kiểm tra sức khỏe của từng dịch vụ: `http://localhost:<8081..8085>/actuator/health`
+* Giao diện tra cứu OpenAPI Swagger UI: `http://localhost:<8081..8085>/swagger-ui/index.html`
 
 ---
 
@@ -132,7 +150,7 @@ cd src/cms
 npm install
 npm run dev
 ```
-* Ứng dụng chạy tại: `http://localhost:5173/`
+* Ứng dụng chạy tại: `http://localhost:8990/`
 
 #### Khởi chạy Cổng Webview GameHub (`webview`):
 ```bash
@@ -140,7 +158,15 @@ cd src/webview
 npm install
 npm run dev
 ```
-* Ứng dụng chạy tại: `http://localhost:5174/`
+* Ứng dụng chạy tại: `http://localhost:3001/`
+
+#### Khởi chạy Cổng Đối Tác Liên Minh (`partner-portal`):
+```bash
+cd src/partner-portal
+npm install
+npm run dev
+```
+* Ứng dụng chạy tại: `http://localhost:8991/`
 
 #### Khởi chạy Cổng Sandbox Nhà Phát Triển (`sandbox`):
 ```bash
@@ -148,16 +174,15 @@ cd src/sandbox
 npm install
 npm run dev
 ```
-* Ứng dụng chạy tại: `http://localhost:5175/`
+* Ứng dụng chạy tại: `http://localhost:8995/`
 
 ---
 
-### 3.5. Bước 4: Chạy Kiểm Thử Đơn Vị Tự Động (Unit Tests)
+### 3.5. Bước 4: Chạy Kiểm Thử Toàn Diện Trước Khi Đóng Gói (`ci-local.sh`)
 
 ```bash
-# Chạy toàn bộ 56 ca kiểm thử tự động tầng Backend
-cd src/service
-mvn clean test
+# Kiểm thử tự động toàn bộ 109 bài kiểm thử Backend, kiểm tra cú pháp TypeScript và cấu hình Compose
+./ci-local.sh
 ```
 
 ---
@@ -170,38 +195,25 @@ mvn clean test
 ---
 
 ### 4.1. Môi Trường 1: SaaS Đa Thuê Bao (`deploy/micro-loyalty/`)
-* **Hạ tầng máy chủ:** `210.211.102.99:65000` (Tài khoản: `dip`, Ubuntu Linux 22.04 LTS).
-* **Đồng hạ tầng:** Vận hành cùng cụm Nền tảng DIP và Smart-OTP.
-* **Hệ thống tên miền:** `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn` (Gốc: `mid.io.vn`).
+* **Hạ tầng máy chủ:** `35.247.156.176:65000` (IP LAN: `192.168.1.200`, Tài khoản: `root`, Thư mục: `/data/uc1-software/apps/micro-loyalty/deploy`).
+* **Hệ thống tên miền:** `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`.
 
 #### Quy Trình Đóng Gói Và Triển Khai SaaS:
 ```bash
-# Bước 1: Đóng gói bản dựng Backend
-cd src/service
-mvn clean package -DskipTests
-cp target/loyalty-service-1.0.0.jar ../../deploy/micro-loyalty/backend/loyalty-service.jar
+# Bước 1: Kiểm thử và tự động xuất bản gói Thin-JAR + 3 Frontend vào deploy/micro-loyalty/ và deploy/natcash/
+./ci-local.sh
 
-# Bước 2: Đóng gói bản dựng Frontend CMS & Webview
-cd ../cms
-npm run build
-rm -rf ../../deploy/micro-loyalty/frontend/cms/dist
-cp -r dist ../../deploy/micro-loyalty/frontend/cms/dist
+# Bước 2: Đồng bộ gói triển khai lên máy chủ SaaS (trừ .env và logs/ dữ liệu sản xuất)
+rsync -avz --delete -e "ssh -p 65000" \
+  deploy/micro-loyalty/{backend,frontend,gateway,config,locales,scripts,docker-compose.yml} \
+  root@35.247.156.176:/data/uc1-software/apps/micro-loyalty/deploy/
 
-cd ../webview
-npm run build
-rm -rf ../../deploy/micro-loyalty/frontend/webview/dist
-cp -r dist ../../deploy/micro-loyalty/frontend/webview/dist
-
-# Bước 3: Đồng bộ gói triển khai lên máy chủ UAT
-cd ../../
-tar -czf - -C deploy/micro-loyalty . | ssh -i ~/.ssh/jenkins_deploy_dev -p 65000 dip@210.211.102.99 "mkdir -p /home/dip/micro-loyalty/deploy && tar -xzf - -C /home/dip/micro-loyalty/deploy"
-
-# Bước 4: Nạp cấu hình Nginx Virtual Host và khởi chạy vùng chứa trên máy chủ
-ssh -i ~/.ssh/jenkins_deploy_dev -p 65000 dip@210.211.102.99 "
-cat /home/dip/micro-loyalty/deploy/config/nginx/host-loyalty-vhost.conf > /home/dip/dip/deploy/gateway/config/conf.d/micro-loyalty.conf
-docker exec \$(docker ps -q --filter 'name=gateway_stack_nginx') nginx -s reload
-cd /home/dip/micro-loyalty/deploy
-docker compose -p micro-loyalty up -d --build
+# Bước 3: Nạp cấu hình Nginx Host và khởi chạy cụm 11 vùng chứa trên máy chủ
+ssh -p 65000 root@35.247.156.176 "
+  cp /data/uc1-software/apps/micro-loyalty/deploy/config/nginx/host-loyalty-vhost.conf /data/uc3-infra/nginx-master/conf.d/loyalty.conf
+  nginx -t && nginx -s reload
+  cd /data/uc1-software/apps/micro-loyalty/deploy
+  docker compose up -d --build --remove-orphans
 "
 ```
 
@@ -209,88 +221,94 @@ docker compose -p micro-loyalty up -d --build
 
 ### 4.2. Môi Trường 2: On-Premise Tại Chỗ Ví Natcash (`deploy/natcash/`)
 * **Hạ tầng máy chủ:** Máy chủ vật lý riêng biệt `10.228.37.65:22` (Tài khoản: `mascom`, CentOS Linux 7).
-* **Phương thức vận hành:** Dịch vụ Native Java thực thi trực tiếp qua JDK 17 (Cổng `8085`), PostgreSQL có sẵn (Cổng `5432`), Redis có sẵn (Cổng `6379`), Nginx phân lập cổng `8443` và cổng `8080`.
+* **Phương thức vận hành:** Triển khai 5 Microservices Thin-JAR (`8081..8085`) định tuyến qua `config/nginx/nginx-natcash.conf` (cổng `8443` HTTPS Internet cho Webview/API và cổng `8080` HTTP VPN nội bộ cho CMS), dùng PostgreSQL (`5432`) và Redis (`6379`).
 
-#### Quy Trình Triển Khai On-Premise:
+#### Quy Trình Đóng Gói Và Đồng Bộ Gói Triển Khai On-Premise:
 ```bash
-# 1. Đóng gói bản dựng Backend
-cd src/service
-mvn clean package -DskipTests
+# 1. Kiểm thử & xuất bản 5 Thin-JAR + lib/ + etc/ và 3 gói Frontend vào deploy/natcash/
+./ci-local.sh
 
-# 2. Truyền tệp thực thi sang máy chủ Natcash
-scp -P 22 target/loyalty-service-1.0.0.jar mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/app/loyalty-service.jar
-
-# 3. Khởi động lại dịch vụ Native qua kịch bản start.sh
-ssh -p 22 mascom@10.228.37.65 "bash /u01/mascom/ringme/loyalty-game/scripts/start.sh"
+# 2. Đồng bộ gói triển khai độc lập sang máy chủ Natcash khi được chỉ thị
+rsync -avz -e "ssh -p 22" \
+  deploy/natcash/{backend,frontend,config,locales,scripts,docker-compose.yml} \
+  mascom@10.228.37.65:/u01/mascom/ringme/loyalty-game/
 ```
 
 ---
 
-## 5. HƯỚNG DẪN KIỂM TRA NHẬT KÝ VẬN HÀNH THỦ CÔNG (LOG INSPECTION)
+## 5. HƯỚNG DẪN KIỂM TRA NHẬT KÝ VẬN HÀNH THỦ CÔNG
 
 ### 5.1. Xem Nhật Ký Trực Tiếp Trên Môi Trường SaaS (Docker Containers)
 
 | Dịch vụ cần kiểm tra | Câu lệnh xem nhật ký thời gian thực | Câu lệnh lọc lỗi hoặc cảnh báo |
 | :--- | :--- | :--- |
-| **Máy chủ Backend (`loyalty-service`)** | `docker logs -f --tail 100 loyalty-saas-service` | `docker logs loyalty-saas-service \| grep -E 'ERROR\|WARN'` |
+| **`cms-service` (`:8081`)** | `docker logs -f --tail 100 loyalty-saas-cms-service` | `docker logs loyalty-saas-cms-service \| grep -E 'ERROR\|WARN'` |
+| **`customer-service` (`:8082`)** | `docker logs -f --tail 100 loyalty-saas-customer-service` | `docker logs loyalty-saas-customer-service \| grep -E 'ERROR\|WARN'` |
+| **`game-service` (`:8083`)** | `docker logs -f --tail 100 loyalty-saas-game-service` | `docker logs loyalty-saas-game-service \| grep -E 'ERROR\|WARN'` |
+| **`campaign-service` (`:8084`)** | `docker logs -f --tail 100 loyalty-saas-campaign-service` | `docker logs loyalty-saas-campaign-service \| grep -E 'ERROR\|WARN'` |
+| **`partner-service` (`:8085`)** | `docker logs -f --tail 100 loyalty-saas-partner-service` | `docker logs loyalty-saas-partner-service \| grep -E 'ERROR\|WARN'` |
 | **Cổng Nginx Gateway Nội Bộ** | `docker logs -f --tail 100 loyalty-saas-gateway` | `docker logs loyalty-saas-gateway \| grep -E ' 499 \| 500 \| 502 \| 504 '` |
-| **Cổng Nginx Host Gateway Trung Tâm** | `docker logs -f --tail 100 \$(docker ps -q --filter 'name=gateway_stack_nginx')` | `docker exec \$(docker ps -q --filter 'name=gateway_stack_nginx') tail -n 50 /var/log/nginx/loyalty_api_error.log` |
 | **Cơ sở dữ liệu PostgreSQL 15** | `docker logs -f --tail 50 loyalty-saas-postgres` | `docker logs loyalty-saas-postgres \| grep -i 'error'` |
 | **Bộ nhớ đệm Redis 7** | `docker logs -f --tail 50 loyalty-saas-redis` | `docker logs loyalty-saas-redis \| grep -i 'warning'` |
-| **Cổng Quản Trị CMS** | `docker logs -f --tail 50 loyalty-saas-cms` | `docker logs loyalty-saas-cms \| grep -i 'error'` |
-| **Cổng Webview GameHub** | `docker logs -f --tail 50 loyalty-saas-webview` | `docker logs loyalty-saas-webview \| grep -i 'error'` |
+| **3 Cổng Giao Diện (`CMS` / `Webview` / `Partner`)** | `docker logs -f --tail 50 loyalty-saas-cms` | `docker logs loyalty-saas-partner-portal \| grep -i 'error'` |
 
 ---
 
-### 5.2. Xem Tệp Nhật Ký Ghi Đĩa Theo Chu Kỳ Xoay Vòng (File Log)
+### 5.2. Xem Tệp Nhật Ký Ghi Đĩa Theo Chu Kỳ Xoay Vòng
 
-Backend `loyalty-service` ghi nhật ký xoay vòng 3 ngày vào thư mục `/app/logs/` bên trong vùng chứa (được mount ra thư mục `/home/dip/micro-loyalty/deploy/logs/` trên máy chủ):
+Các Microservices ghi nhật ký xoay vòng 3 ngày vào thư mục `/app/logs/` bên trong từng vùng chứa (được gắn ra thư mục `/data/uc1-software/apps/micro-loyalty/deploy/logs/<tên-service>/` trên máy chủ):
 
 ```bash
-# Xem tệp nhật ký ứng dụng tổng hợp
-tail -f -n 100 /home/dip/micro-loyalty/deploy/logs/application.log
+# Xem tệp nhật ký ứng dụng theo từng dịch vụ (ví dụ: customer-service hoặc game-service)
+tail -f -n 100 /data/uc1-software/apps/micro-loyalty/deploy/logs/customer-service/application.log
 
-# Xem tệp nhật ký ghi nhận lỗi riêng biệt
-tail -f -n 100 /home/dip/micro-loyalty/deploy/logs/error.log
-
-# Lọc các giao dịch trừ điểm theo mã định danh
-grep "POINT-BURN" /home/dip/micro-loyalty/deploy/logs/application.log
+# Lọc các giao dịch trừ điểm trong customer-service hoặc lỗi đồng bộ partner-service
+grep "POINT-BURN" /data/uc1-software/apps/micro-loyalty/deploy/logs/customer-service/application.log
 ```
 
 ---
 
-## 6. THÔNG TIN VÀ KỊCH BẢN KIỂM THỬ MÔI TRƯỜNG MÁY CHỦ (SERVER VERIFICATION)
+## 6. THÔNG TIN VÀ KỊCH BẢN KIỂM THỬ MÔI TRƯỜNG MÁY CHỦ
 
-### 6.1. Ma Trận Cổng Mạng Và Tên Miền Môi Trường Máy Chủ UAT (`210.211.102.99`)
+### 6.1. Ma Trận Cổng Mạng Và Tên Miền Môi Trường Máy Chủ SaaS (`35.247.156.176`)
 
 | Tên Miền / Cổng Mạng | Phân Hệ Nghiệp Vụ Đích | Phương Thức | Điểm Cuối Kiểm Tra Sức Khỏe |
 | :--- | :--- | :---: | :--- |
-| **`api.mid.io.vn`** | API Nghiệp Vụ Backend Lõi | HTTP/HTTPS | `GET http://api.mid.io.vn/actuator/health` |
-| **`docs.mid.io.vn`** | Tài Liệu Kỹ Thuật Swagger UI & OpenAPI | HTTP/HTTPS | `GET http://docs.mid.io.vn/v3/api-docs` |
-| **`cms.mid.io.vn`** | Cổng Quản Trị Trung Tâm Loyalty CMS | HTTP/HTTPS | `GET http://cms.mid.io.vn/index.html` |
-| **`portal.mid.io.vn`** | Cổng Khách Hàng Webview & GameHub | HTTP/HTTPS | `GET http://portal.mid.io.vn/index.html` |
-| **Cổng Host `18095`** | Cổng Điều Phối Nginx Gateway SaaS | HTTP | `GET http://210.211.102.99:18095/loyalty/actuator/health` |
-| **Cổng Host `15435`** | Cơ Sở Dữ Liệu PostgreSQL 15 SaaS | TCP | Kết nối `psql -h 210.211.102.99 -p 15435 -U loyalty_app -d loyalty_db` |
-| **Cổng Host `16385`** | Bộ Nhớ Đệm Redis 7 SaaS | TCP | Kết nối `redis-cli -h 210.211.102.99 -p 16385 -a Loyalty_RedisPass2026!` |
+| **`api.mid.io.vn`** | API Nghiệp Vụ qua Nginx API Gateway | HTTPS | `GET https://api.mid.io.vn/gateway-health` |
+| **`docs.mid.io.vn`** | Tài Liệu Kỹ Thuật Swagger UI & OpenAPI | HTTPS | `GET https://docs.mid.io.vn/swagger-ui/index.html` |
+| **`cms.mid.io.vn`** | Cổng Quản Trị Trung Tâm Loyalty CMS | HTTPS | `GET https://cms.mid.io.vn/` |
+| **`portal.mid.io.vn`** | Cổng Khách Hàng Webview & GameHub | HTTPS | `GET https://portal.mid.io.vn/` |
+| **`partner.mid.io.vn`** | Cổng Thông Tin Đối Tác Partner Portal | HTTPS | `GET https://partner.mid.io.vn/` |
+| **Cổng Host `18095`** | Cổng Điều Phối Nginx Gateway SaaS | HTTP | `GET http://127.0.0.1:18095/gateway-health` |
+| **Cổng Nội Bộ `8081..8085`** | 5 Microservices (`cms`, `customer`, `game`, `campaign`, `partner`) | HTTP nội bộ Docker | `GET http://127.0.0.1:8081..8085/actuator/health/liveness` |
+| **Cổng Host `15435`** | Cơ Sở Dữ Liệu PostgreSQL 15 SaaS | TCP | Kết nối `psql -h 127.0.0.1 -p 15435 -U loyalty_app -d loyalty_db` |
+| **Cổng Host `16385`** | Bộ Nhớ Đệm Redis 7 SaaS | TCP | Kết nối `redis-cli -h 127.0.0.1 -p 16385` |
 
 ---
 
 ### 6.2. Chạy Kịch Bản Kiểm Tra Sức Khỏe Tự Động (`healthcheck.sh`)
 
-Trên máy chủ UAT, thực thi kịch bản kiểm tra toàn diện:
+Trên máy chủ SaaS (`35.247.156.176:65000`), thực thi kịch bản kiểm tra toàn diện:
 
 ```bash
-ssh -i ~/.ssh/jenkins_deploy_dev -p 65000 dip@210.211.102.99 "bash /home/dip/micro-loyalty/deploy/scripts/healthcheck.sh"
+ssh -p 65000 root@35.247.156.176 "bash /data/uc1-software/apps/micro-loyalty/deploy/scripts/healthcheck.sh"
 ```
 
-**Kết quả kỳ vọng:**
-```
-=== [HEALTHCHECK-SAAS] KIỂM TRA SỨC KHỎE HỆ THỐNG LOYALTY (PORT 18095) ===
-1. Kiểm tra Liveness Backend: OK
-2. Kiểm tra Readiness Backend: OK
+**Kết quả thực tế đã kiểm chứng:**
+```text
+=== [HEALTHCHECK-SAAS] KIỂM TRA SỨC KHỎE CỤM MICROSERVICES LOYALTY (PORT 18095) ===
+0. Kiểm tra API Gateway (/gateway-health): OK
+   - Kiểm tra trực tiếp loyalty-saas-cms-service (8081): OK
+   - Kiểm tra trực tiếp loyalty-saas-customer-service (8082): OK
+   - Kiểm tra trực tiếp loyalty-saas-game-service (8083): OK
+   - Kiểm tra trực tiếp loyalty-saas-campaign-service (8084): OK
+   - Kiểm tra trực tiếp loyalty-saas-partner-service (8085): OK
+1. Kiểm tra Liveness qua Gateway: OK
+2. Kiểm tra Readiness qua Gateway: OK
 3. Kiểm tra Cổng Quản Trị CMS: OK
 4. Kiểm tra Cổng Webview GameHub: OK
-=== [HEALTHCHECK-SAAS] TOÀN BỘ CỤM DỊCH VỤ HOẠT ĐỘNG HOÀN HẢO 100% ===
+5. Kiểm tra Cổng Đối Tác Partner Portal: OK
+=== [HEALTHCHECK-SAAS] TOÀN BỘ 5 MICROSERVICES, API GATEWAY VÀ 3 CỔNG GIAO DIỆN HOẠT ĐỘNG HOÀN HẢO 100% ===
 ```
 
 ---
@@ -298,31 +316,33 @@ ssh -i ~/.ssh/jenkins_deploy_dev -p 65000 dip@210.211.102.99 "bash /home/dip/mic
 ### 6.3. Lệnh Kiểm Thử Thủ Công Từng Điểm Cuối Qua `curl`
 
 ```bash
-# 1. Kiểm tra trạng thái sống của Backend qua domain API
-curl -i -H "Host: api.mid.io.vn" http://210.211.102.99/actuator/health
+# 1. Kiểm tra API Gateway & Liveness Backend công khai qua tên miền
+curl -i https://api.mid.io.vn/gateway-health
+curl -i https://api.mid.io.vn/actuator/health/liveness
 
-# 2. Kiểm tra tài liệu Swagger UI & đặc tả OpenAPI qua domain Docs
-curl -i -H "Host: docs.mid.io.vn" http://210.211.102.99/
-curl -i -H "Host: docs.mid.io.vn" http://210.211.102.99/v3/api-docs
+# 2. Kiểm tra tài liệu Swagger UI qua domain Docs
+curl -i https://docs.mid.io.vn/swagger-ui/index.html
 
-# 3. Kiểm tra trang đơn tĩnh Cổng Quản Trị qua domain CMS
-curl -i -H "Host: cms.mid.io.vn" http://210.211.102.99/index.html
+# 3. Kiểm tra 3 cổng giao diện Web qua tên miền công khai
+curl -i https://cms.mid.io.vn/
+curl -i https://portal.mid.io.vn/
+curl -i https://partner.mid.io.vn/
 
-# 4. Kiểm tra trang đơn tĩnh Cổng Webview qua domain Portal
-curl -i -H "Host: portal.mid.io.vn" http://210.211.102.99/index.html
-
-# 5. Kiểm tra trực tiếp qua Cổng Gateway nội bộ 18095
-curl -i http://210.211.102.99:18095/loyalty/actuator/health
-curl -i http://210.211.102.99:18095/index.html
-curl -i http://210.211.102.99:18095/gamehub/index.html
+# 4. Kiểm tra trực tiếp qua Cổng Gateway nội bộ 18095 trên máy chủ
+curl -i http://127.0.0.1:18095/gateway-health
+curl -i http://127.0.0.1:18095/loyalty/v1/system-parameters
+curl -i http://127.0.0.1:18095/loyalty/v1/tiers
+curl -i http://127.0.0.1:18095/gamehub/v1/leaderboard
+curl -i http://127.0.0.1:18095/loyalty/v1/budgets
+curl -i http://127.0.0.1:18095/loyalty/v1/partners/locations
 ```
 
 ---
 
 ## 7. DANH MỤC TÀI KHOẢN VÀ THÔNG SỐ XÁC THỰC KIỂM THỬ
 
-### 7.1. Tài Khoản Đăng Nhập Cổng Quản Trị Trung Tâm (CMS Admin)
-* **Địa chỉ truy cập:** `https://cms.mid.io.vn` (hoặc `http://localhost:5173`)
+### 7.1. Tài Khoản Đăng Nhập Cổng Quản Trị Trung Tâm
+* **Địa chỉ truy cập:** `https://cms.mid.io.vn` (hoặc `http://localhost:8990` ở cục bộ)
 
 | Vai trò / Nhóm quyền | Tên đăng nhập (`username`) | Mật khẩu (`password`) | Quyền hạn và Phạm vi sử dụng |
 | :--- | :--- | :--- | :--- |
@@ -336,7 +356,8 @@ curl -i http://210.211.102.99:18095/gamehub/index.html
 
 ### 7.2. Thông Số Xác Thực Cổng Trải Nghiệm Khách Hàng Webview & GameHub Cho 2 Mô Hình
 
-* **Địa chỉ truy cập Webview:** `https://portal.mid.io.vn` (hoặc `http://localhost:5174`)
+* **Địa chỉ truy cập Webview:** `https://portal.mid.io.vn` (hoặc `http://localhost:3001`)
+* **Địa chỉ truy cập Partner Portal:** `https://partner.mid.io.vn` (hoặc `http://localhost:8991`)
 
 | Thuộc tính phân biệt | Mô hình 1: Ví Điện Tử Natcash (`TENANT_NATCASH`) | Mô hình 2: Liên Minh Bán Lẻ & CRM (`TENANT_MICRO_CRM`) |
 | :--- | :--- | :--- |
@@ -364,7 +385,7 @@ curl -i http://210.211.102.99:18095/gamehub/index.html
 
 ### 7.4. Tài Khoản Quản Trị Cơ Sở Dữ Liệu & Bộ Nhớ Đệm (Dev / Ops)
 
-| Phân hệ hạ tầng | Môi trường SaaS UAT (`210.211.102.99`) | Môi trường On-Premise (`10.228.37.65`) |
+| Phân hệ hạ tầng | Môi trường SaaS UAT (`35.247.156.176`) | Môi trường On-Premise (`10.228.37.65`) |
 | :--- | :--- | :--- |
 | **PostgreSQL** | Cổng: `15435`<br/>User: `loyalty_app`<br/>Pass: `Loyalty_SecureDB2026!`<br/>DB: `loyalty_db` | Cổng: `5432`<br/>User: `natcash_loyalty`<br/>Pass: `Natcash$SecureDB2026!`<br/>DB: `natcash_loyalty_db` |
 | **Redis Cache** | Cổng: `16385`<br/>Pass: `Loyalty_RedisPass2026!` | Cổng: `6379`<br/>Pass: `NatCash2022` |

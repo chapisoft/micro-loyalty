@@ -12,13 +12,13 @@ interface DailyCheckinModalProps {
 }
 
 const CHECKIN_REWARDS = [
-  { day: 1, points: 10, label: '+10 Điểm' },
-  { day: 2, points: 20, label: '+20 Điểm' },
-  { day: 3, points: 30, label: '+30 Điểm' },
-  { day: 4, points: 40, label: '+40 Điểm' },
-  { day: 5, points: 50, label: '+50 Điểm' },
-  { day: 6, points: 80, label: '+80 Điểm' },
-  { day: 7, points: 200, label: 'RƯƠNG VÀNG: +200 Điểm & Voucher', isChest: true },
+  { day: 1, points: 10 },
+  { day: 2, points: 20 },
+  { day: 3, points: 30 },
+  { day: 4, points: 40 },
+  { day: 5, points: 50 },
+  { day: 6, points: 80 },
+  { day: 7, points: 200, isChest: true },
 ];
 
 export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
@@ -45,7 +45,7 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
   const handleClaim = () => {
     if (checkedToday) return;
     const reward = CHECKIN_REWARDS[currentDayIndex - 1] || CHECKIN_REWARDS[0];
-    
+
     if (reward.isChest) {
       soundHaptics.playVictoryFanfare();
     } else {
@@ -76,10 +76,10 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-base sm:text-lg text-amber-300">
-                {t('checkin.title', { defaultValue: 'Chuỗi Điểm Danh 7 Ngày' })}
+                {t('checkin.title')}
               </h3>
               <p className="text-xs text-slate-400">
-                {t('checkin.subtitle', { defaultValue: 'Điểm danh mỗi ngày để mở Rương Báu Hoàng Kim' })}
+                {t('checkin.subtitle')}
               </p>
             </div>
           </div>
@@ -103,16 +103,15 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
             return (
               <div
                 key={item.day}
-                className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all duration-300 relative ${
-                  isCompleted
+                className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all duration-300 relative ${isCompleted
                     ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
                     : isCurrent
-                    ? 'bg-gradient-to-b from-amber-500/25 to-yellow-500/10 border-amber-400 shadow-md shadow-amber-500/20 scale-105 animate-pulse'
-                    : 'bg-slate-800/40 border-slate-700/50 text-slate-400 opacity-60'
-                }`}
+                      ? 'bg-gradient-to-b from-amber-500/25 to-yellow-500/10 border-amber-400 shadow-md shadow-amber-500/20 scale-105 animate-pulse'
+                      : 'bg-slate-800/40 border-slate-700/50 text-slate-400 opacity-60'
+                  }`}
               >
                 <span className="text-[11px] font-bold uppercase tracking-wider">
-                  {t('checkin.day_label', { day: item.day, defaultValue: `Ngày ${item.day}` })}
+                  {t('checkin.day_label', { day: item.day })}
                 </span>
                 <div className="my-1 text-lg">
                   {isCompleted ? (
@@ -123,31 +122,30 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
                     '🪙'
                   )}
                 </div>
-                <span className="text-[10px] font-black text-amber-200">+{item.points}đ</span>
+                <span className="text-[10px] font-black text-amber-200">+{item.points} {t('nav.points_unit')}</span>
               </div>
             );
           })}
 
           {/* Day 7 Chest (Spans 2 cols) */}
           <div
-            className={`col-span-2 flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 relative ${
-              streak >= 7 && checkedToday
+            className={`col-span-2 flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 relative ${streak >= 7 && checkedToday
                 ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
                 : streak >= 7 && !checkedToday
-                ? 'bg-gradient-to-r from-amber-500/30 to-yellow-500/20 border-amber-400 shadow-lg shadow-amber-500/30 animate-bounce'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-400 opacity-70'
-            }`}
+                  ? 'bg-gradient-to-r from-amber-500/30 to-yellow-500/20 border-amber-400 shadow-lg shadow-amber-500/30 animate-bounce'
+                  : 'bg-slate-800/40 border-slate-700/50 text-slate-400 opacity-70'
+              }`}
           >
             <div className="flex items-center space-x-2.5">
               <div className="text-2xl animate-spin-slow">🎁</div>
               <div>
                 <div className="flex items-center space-x-1">
                   <span className="text-xs font-black text-amber-300 uppercase">
-                    {t('checkin.day_7_chest', { defaultValue: 'Ngày 7: Rương Vàng' })}
+                    {t('checkin.day_7_chest')}
                   </span>
                   <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-ping" />
                 </div>
-                <p className="text-[10px] text-amber-200 font-semibold">{t('checkin.day_7_reward_desc', { defaultValue: '+200 Điểm & Voucher' })}</p>
+                <p className="text-[10px] text-amber-200 font-semibold">{t('checkin.day_7_reward_desc')}</p>
               </div>
             </div>
             {streak >= 7 && checkedToday ? (
@@ -163,7 +161,7 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
         {/* Claim Success Notification */}
         {claimedAnim && (
           <div className="my-2 p-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-center font-extrabold text-sm shadow-xl animate-bounce">
-            🎉 {t('checkin.claimed_success', { defaultValue: 'Điểm danh thành công! Đã cộng điểm vào tài khoản.' })}
+            🎉 {t('checkin.claimed_success')}
           </div>
         )}
 
@@ -172,17 +170,16 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
           <button
             onClick={handleClaim}
             disabled={checkedToday}
-            className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm uppercase tracking-wider transition duration-300 flex items-center justify-center space-x-2 shadow-lg ${
-              checkedToday
+            className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm uppercase tracking-wider transition duration-300 flex items-center justify-center space-x-2 shadow-lg ${checkedToday
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                 : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 hover:brightness-110 active:scale-98 shadow-amber-500/25 cursor-pointer'
-            }`}
+              }`}
           >
             <Gift className="w-4 h-4" />
             <span>
               {checkedToday
-                ? t('checkin.btn_checked', { defaultValue: 'ĐÃ ĐIỂM DANH HÔM NAY' })
-                : t('checkin.btn_claim', { defaultValue: 'NHẬN THƯỞNG ĐIỂM DANH' })}
+                ? t('checkin.btn_checked')
+                : t('checkin.btn_claim')}
             </span>
           </button>
         </div>

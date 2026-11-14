@@ -67,8 +67,8 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
     if (!formData.branchCode?.trim() || !formData.branchName?.trim() || !formData.paymentPointCode?.trim()) {
       toast.current?.show({
         severity: 'warn',
-        summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }),
-        detail: t('payment_point.required_fields', { defaultValue: 'Vui lòng nhập Mã chi nhánh, Tên chi nhánh và Mã điểm thanh toán.' }),
+        summary: t('common.warn'),
+        detail: t('payment_point.required_fields'),
       });
       return;
     }
@@ -81,13 +81,13 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
       }
       toast.current?.show({
         severity: 'success',
-        summary: t('common.success', { defaultValue: 'Thành công' }),
-        detail: t('payment_point.saved', { defaultValue: 'Đã lưu thông tin chi nhánh / điểm thanh toán.' }),
+        summary: t('common.success'),
+        detail: t('payment_point.saved'),
       });
       setShowDialog(false);
       fetchData();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setSubmitting(false);
     }
@@ -96,24 +96,24 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
   const handleDelete = (item: NatcashPaymentPointModel) => {
     if (!item.id) return;
     confirmDialog({
-      message: `${t('common.confirm_delete', { defaultValue: 'Xác nhận xóa điểm thanh toán' })} ${item.paymentPointCode}?`,
-      header: t('common.confirm', { defaultValue: 'Xác nhận' }),
+      message: `${t('common.confirm_delete')} ${item.paymentPointCode}?`,
+      header: t('common.confirm'),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
       accept: async () => {
         try {
           await LoyaltyService.deletePaymentPoint(item.id!, selectedTenant);
-          toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Đã xóa' }), detail: item.paymentPointCode });
+          toast.current?.show({ severity: 'success', summary: t('common.success'), detail: item.paymentPointCode });
           fetchData();
         } catch (err: any) {
-          toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+          toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
         }
       },
     });
   };
 
   const statusFilterOptions = [
-    { label: t('common.all', { defaultValue: 'Tất cả trạng thái' }), value: 'ALL' },
+    { label: t('common.all'), value: 'ALL' },
     { label: CommonStatus.ACTIVE, value: CommonStatus.ACTIVE },
     { label: CommonStatus.INACTIVE, value: CommonStatus.INACTIVE },
   ];
@@ -122,16 +122,16 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
     <div>
       <Toast ref={toast} />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.payment_points', { defaultValue: 'Chi nhánh & Điểm Thanh toán (LM-02)' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.payment_points') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
           <div>
             <h4 className="m-0 text-primary font-semibold">
-              {t('payment_point.title', { defaultValue: 'Mạng lưới Chi nhánh Natcash & Điểm Thanh toán QR (LM-02)' })}
+              {t('payment_point.title')}
             </h4>
             <p className="m-0 text-xs text-500 mt-1">
-              {t('payment_point.subtitle', { defaultValue: 'Quản lý cây phân cấp Thương hiệu → Chi nhánh → Quầy thu ngân / Payment Point.' })}
+              {t('payment_point.subtitle')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 align-items-center">
@@ -139,9 +139,9 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
             <Dropdown value={statusFilter} options={statusFilterOptions} onChange={(e) => setStatusFilter(e.value)} className="w-13rem" />
             <span className="p-input-icon-left">
               <i className="pi pi-search" />
-              <InputText value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t('common.search', { defaultValue: 'Tìm mã điểm, địa chỉ...' })} className="w-14rem p-inputtext-sm" />
+              <InputText value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t('common.search')} className="w-14rem p-inputtext-sm" />
             </span>
-            <Button label={t('payment_point.add_new', { defaultValue: 'Thêm điểm thu' })} icon="pi pi-plus" severity="success" size="small" onClick={openNew} />
+            <Button label={t('payment_point.add_new')} icon="pi pi-plus" severity="success" size="small" onClick={openNew} />
             <Button icon="pi pi-refresh" outlined rounded onClick={fetchData} loading={loading} />
           </div>
         </div>
@@ -159,17 +159,17 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
             rows={15}
             stripedRows
             responsiveLayout="scroll"
-            emptyMessage={t('payment_point.empty', { defaultValue: 'Chưa có chi nhánh hoặc điểm thanh toán nào trong liên minh này.' })}
+            emptyMessage={t('payment_point.empty')}
           >
-            <Column field="branchCode" header={t('payment_point.branch_code', { defaultValue: 'Mã Chi Nhánh' })} body={(r: NatcashPaymentPointModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.branchCode}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="branchName" header={t('payment_point.name', { defaultValue: 'Tên Chi Nhánh' })} style={{ minWidth: '14rem' }} />
-            <Column field="paymentPointCode" header={t('payment_point.code', { defaultValue: 'Mã Điểm Thu' })} body={(r: NatcashPaymentPointModel) => <span className="font-mono white-space-nowrap">{r.paymentPointCode}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="province" header={t('payment_point.city', { defaultValue: 'Tỉnh / Thành' })} style={{ minWidth: '9rem' }} />
-            <Column field="address" header={t('payment_point.address', { defaultValue: 'Địa Chỉ' })} style={{ minWidth: '15rem' }} />
-            <Column field="managerPhone" header={t('payment_point.phone', { defaultValue: 'SĐT Quản Lý' })} body={(r: NatcashPaymentPointModel) => <span className="font-mono white-space-nowrap text-xs">{r.managerPhone || '--'}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r: NatcashPaymentPointModel) => <Tag value={r.status || CommonStatus.ACTIVE} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+            <Column field="branchCode" header={t('payment_point.branch_code')} body={(r: NatcashPaymentPointModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.branchCode}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="branchName" header={t('payment_point.name')} style={{ minWidth: '14rem' }} />
+            <Column field="paymentPointCode" header={t('payment_point.code')} body={(r: NatcashPaymentPointModel) => <span className="font-mono white-space-nowrap">{r.paymentPointCode}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="province" header={t('payment_point.city')} style={{ minWidth: '9rem' }} />
+            <Column field="address" header={t('payment_point.address')} style={{ minWidth: '15rem' }} />
+            <Column field="managerPhone" header={t('payment_point.phone')} body={(r: NatcashPaymentPointModel) => <span className="font-mono white-space-nowrap text-xs">{r.managerPhone || '--'}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="status" header={t('common.status')} body={(r: NatcashPaymentPointModel) => <Tag value={r.status || CommonStatus.ACTIVE} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
             <Column
-              header={t('common.action', { defaultValue: 'Thao Tác' })}
+              header={t('common.action')}
               body={(r: NatcashPaymentPointModel) => (
                 <div className="flex gap-1">
                   <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />
@@ -185,34 +185,34 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
       <Dialog
         visible={showDialog}
         onHide={() => setShowDialog(false)}
-        header={formData.id ? t('payment_point.edit_title', { defaultValue: 'Cập nhật Điểm Thanh Toán' }) : t('payment_point.create_title', { defaultValue: 'Thêm Chi nhánh / Điểm Thanh Toán' })}
+        header={formData.id ? t('payment_point.edit_title') : t('payment_point.create_title')}
         style={{ width: '40rem' }}
         modal
         className="p-fluid"
       >
         <div className="grid">
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('payment_point.branch_code', { defaultValue: 'Mã Chi Nhánh' })} *</label>
+            <label className="text-sm font-medium">{t('payment_point.branch_code')} *</label>
             <InputText value={formData.branchCode || ''} onChange={(e) => setFormData({ ...formData, branchCode: e.target.value.toUpperCase() })} className="font-mono" disabled={!!formData.id} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('payment_point.code', { defaultValue: 'Mã Điểm Thu' })} *</label>
+            <label className="text-sm font-medium">{t('payment_point.code')} *</label>
             <InputText value={formData.paymentPointCode || ''} onChange={(e) => setFormData({ ...formData, paymentPointCode: e.target.value.toUpperCase() })} className="font-mono" disabled={!!formData.id} />
           </div>
           <div className="col-12 field">
-            <label className="text-sm font-medium">{t('payment_point.name', { defaultValue: 'Tên Chi Nhánh' })} *</label>
+            <label className="text-sm font-medium">{t('payment_point.name')} *</label>
             <InputText value={formData.branchName || ''} onChange={(e) => setFormData({ ...formData, branchName: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('payment_point.phone', { defaultValue: 'SĐT Quản Lý' })}</label>
+            <label className="text-sm font-medium">{t('payment_point.phone')}</label>
             <InputText value={formData.managerPhone || ''} onChange={(e) => setFormData({ ...formData, managerPhone: e.target.value })} className="font-mono" />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('payment_point.city', { defaultValue: 'Tỉnh / Thành' })}</label>
+            <label className="text-sm font-medium">{t('payment_point.city')}</label>
             <InputText value={formData.province || ''} onChange={(e) => setFormData({ ...formData, province: e.target.value })} />
           </div>
           <div className="col-12 md:col-6 field">
-            <label className="text-sm font-medium">{t('common.status', { defaultValue: 'Trạng Thái' })}</label>
+            <label className="text-sm font-medium">{t('common.status')}</label>
             <Dropdown
               value={formData.status || CommonStatus.ACTIVE}
               options={[{ label: CommonStatus.ACTIVE, value: CommonStatus.ACTIVE }, { label: CommonStatus.INACTIVE, value: CommonStatus.INACTIVE }]}
@@ -221,13 +221,13 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
             />
           </div>
           <div className="col-12 field">
-            <label className="text-sm font-medium">{t('payment_point.address', { defaultValue: 'Địa Chỉ' })}</label>
+            <label className="text-sm font-medium">{t('payment_point.address')}</label>
             <InputText value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-3">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
-          <Button label={t('common.save', { defaultValue: 'Lưu' })} icon="pi pi-check" onClick={handleSave} loading={submitting} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
+          <Button label={t('common.save')} icon="pi pi-check" onClick={handleSave} loading={submitting} />
         </div>
       </Dialog>
     </div>

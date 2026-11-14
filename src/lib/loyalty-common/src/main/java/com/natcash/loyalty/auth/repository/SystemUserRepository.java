@@ -1,0 +1,21 @@
+package com.natcash.loyalty.auth.repository;
+
+import com.natcash.loyalty.auth.entity.SystemUserEntity;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface SystemUserRepository extends JpaRepository<SystemUserEntity, Long> {
+
+    Optional<SystemUserEntity> findByUsernameIgnoreCase(String username);
+
+    Optional<SystemUserEntity> findByEmailIgnoreCase(String email);
+
+    List<SystemUserEntity> findByTenantIdOrderByIdAsc(String tenantId);
+
+    Optional<SystemUserEntity> findByIdAndTenantId(Long id, String tenantId);
+}

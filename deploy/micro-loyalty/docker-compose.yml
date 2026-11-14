@@ -71,27 +71,209 @@ services:
     networks:
       - loyalty-saas-network
 
-  # 3. Loyalty Service Backend (Bản dựng bất biến + Nạp cấu hình & Locales ngoại vi)
-  loyalty-service:
+  # 3. Các Microservices Backend Độc Lập (Dùng chung PostgreSQL 15+ & Redis 7)
+  cms-service:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    image: loyalty/loyalty-service:latest
-    container_name: loyalty-saas-service
+      args:
+        SERVICE_NAME: cms-service
+    image: loyalty/cms-service:latest
+    container_name: loyalty-saas-cms-service
     restart: unless-stopped
     expose:
-      - "8088"
+      - "8081"
     env_file:
       - .env
+    environment:
+      SERVER_PORT: 8081
+      LOYALTY_SERVICE_PORT: 8081
+      SPRING_APPLICATION_NAME: cms-service
+      SPRING_FLYWAY_ENABLED: "true"
+      JAVA_OPTS: ${LOYALTY_JVM_OPTS:--Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError}
     volumes:
       - ./config/backend:/app/config:ro
       - ./locales:/app/locales:ro
-      - ./logs:/app/logs
+      - ./logs/cms-service:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8081/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-saas-network
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        SERVICE_NAME: customer-service
+    image: loyalty/customer-service:latest
+    container_name: loyalty-saas-customer-service
+    restart: unless-stopped
+    expose:
+      - "8082"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8082
+      LOYALTY_SERVICE_PORT: 8082
+      SPRING_APPLICATION_NAME: customer-service
+      SPRING_FLYWAY_ENABLED: "false"
+      JAVA_OPTS: ${LOYALTY_JVM_OPTS:--Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError}
+    volumes:
+      - ./config/backend:/app/config:ro
+      - ./locales:/app/locales:ro
+      - ./logs/customer-service:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8082/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-saas-network
+
+  game-service:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        SERVICE_NAME: game-service
+    image: loyalty/game-service:latest
+    container_name: loyalty-saas-game-service
+    restart: unless-stopped
+    expose:
+      - "8083"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8083
+      LOYALTY_SERVICE_PORT: 8083
+      SPRING_APPLICATION_NAME: game-service
+      SPRING_FLYWAY_ENABLED: "false"
+      JAVA_OPTS: ${LOYALTY_JVM_OPTS:--Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError}
+    volumes:
+      - ./config/backend:/app/config:ro
+      - ./locales:/app/locales:ro
+      - ./logs/game-service:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8083/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-saas-network
+
+  campaign-service:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        SERVICE_NAME: campaign-service
+    image: loyalty/campaign-service:latest
+    container_name: loyalty-saas-campaign-service
+    restart: unless-stopped
+    expose:
+      - "8084"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8084
+      LOYALTY_SERVICE_PORT: 8084
+      SPRING_APPLICATION_NAME: campaign-service
+      SPRING_FLYWAY_ENABLED: "false"
+      JAVA_OPTS: ${LOYALTY_JVM_OPTS:--Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError}
+    volumes:
+      - ./config/backend:/app/config:ro
+      - ./locales:/app/locales:ro
+      - ./logs/campaign-service:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8084/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-saas-network
+
+  partner-service:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        SERVICE_NAME: partner-service
+    image: loyalty/partner-service:latest
+    container_name: loyalty-saas-partner-service
+    restart: unless-stopped
+    expose:
+      - "8085"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8085
+      LOYALTY_SERVICE_PORT: 8085
+      SPRING_APPLICATION_NAME: partner-service
+      SPRING_FLYWAY_ENABLED: "false"
+      JAVA_OPTS: ${LOYALTY_JVM_OPTS:--Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError}
+    volumes:
+      - ./config/backend:/app/config:ro
+      - ./locales:/app/locales:ro
+      - ./logs/partner-service:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8085/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     logging:
       driver: "json-file"
       options:
@@ -138,6 +320,25 @@ services:
     networks:
       - loyalty-saas-network
 
+  # 5B. Loyalty Partner Portal (Bản dựng bất biến + Nạp runtime config & Locales ngoại vi)
+  loyalty-partner-portal:
+    build:
+      context: .
+      dockerfile: frontend/partner-portal/Dockerfile
+    image: loyalty/loyalty-partner-portal:latest
+    container_name: loyalty-saas-partner-portal
+    restart: unless-stopped
+    volumes:
+      - ./config/frontend/env-config.json:/usr/share/nginx/html/config/env-config.json:ro
+      - ./locales:/usr/share/nginx/html/locales:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - loyalty-saas-network
+
   # 6. Nginx Gateway Reverse Proxy (Cổng Host 18095)
   gateway:
     build:
@@ -151,9 +352,14 @@ services:
     volumes:
       - ./config/nginx/nginx-saas.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - loyalty-service
+      - cms-service
+      - customer-service
+      - game-service
+      - campaign-service
+      - partner-service
       - loyalty-cms
       - loyalty-webview
+      - loyalty-partner-portal
     logging:
       driver: "json-file"
       options:

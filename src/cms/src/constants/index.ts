@@ -1,14 +1,13 @@
 const origin = typeof window !== 'undefined' && window.location && window.location.origin ? window.location.origin : '';
-const defaultApiUrl = 'https://api.mid.io.vn';
-const defaultAuthUrl = 'https://api.mid.io.vn';
-
 const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const isSaasDomain = typeof window !== 'undefined' && window.location.hostname.includes('mid.io.vn');
+const resolvedDefaultApiUrl = isLocal ? (origin || '') : (isSaasDomain ? `${window.location.protocol}//api.mid.io.vn` : (origin || 'https://api.mid.io.vn'));
 
 export const envVariables = {
-  MODE: window.__ENV__?.VITE_MODE ?? import.meta.env.VITE_MODE ?? 'production',
-  API_URL: window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:8080/loyalty-service' : defaultApiUrl),
-  API_AUTH_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || (isLocal ? 'http://localhost:8080/loyalty-service' : defaultAuthUrl),
-  CMS_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || (isLocal ? 'http://localhost:8080/loyalty-service' : defaultAuthUrl),
+  MODE: window.__ENV__?.VITE_MODE ?? import.meta.env.VITE_MODE ?? (isLocal ? 'development' : 'production'),
+  API_URL: window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || resolvedDefaultApiUrl,
+  API_AUTH_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || resolvedDefaultApiUrl,
+  CMS_URL: window.__ENV__?.VITE_API_AUTH_URL || import.meta.env.VITE_API_AUTH_URL || resolvedDefaultApiUrl,
   ACCESS_TOKEN: window.__ENV__?.VITE_ACCESS_TOKEN ?? import.meta.env.VITE_ACCESS_TOKEN ?? '',
   CONTEXT_PATH: window.__ENV__?.VITE_CONTEXT_PATH ?? import.meta.env.VITE_CONTEXT_PATH ?? '/',
   IMAGE_URL: window.__ENV__?.VITE_IMAGE_URL || import.meta.env.VITE_IMAGE_URL || (origin ? `${origin}/` : 'https://cms.mid.io.vn/'),

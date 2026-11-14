@@ -94,10 +94,8 @@ export const TierManagementPage: React.FC = () => {
       setTiers([]);
       toastRef.current?.show({
         severity: 'error',
-        summary: t('toast.error', { defaultValue: 'Lỗi' }),
-        detail: t('tier.load_failed', {
-          defaultValue: 'Không thể tải dữ liệu hạng hội viên từ máy chủ',
-        }),
+        summary: t('toast.error'),
+        detail: t('tier.load_failed'),
         life: 3000,
       });
     } finally {
@@ -152,10 +150,8 @@ export const TierManagementPage: React.FC = () => {
 
       toastRef.current?.show({
         severity: 'success',
-        summary: t('toast.success', { defaultValue: 'Thành công' }),
-        detail: t('tier.save_success', {
-          defaultValue: 'Cập nhật cấu hình hạng hội viên thành công',
-        }),
+        summary: t('toast.success'),
+        detail: t('tier.save_success'),
         life: 3000,
       });
 
@@ -164,10 +160,8 @@ export const TierManagementPage: React.FC = () => {
     } catch {
       toastRef.current?.show({
         severity: 'error',
-        summary: t('toast.error', { defaultValue: 'Lỗi' }),
-        detail: t('tier.save_failed', {
-          defaultValue: 'Cập nhật cấu hình hạng hội viên thất bại',
-        }),
+        summary: t('toast.error'),
+        detail: t('tier.save_failed'),
         life: 3000,
       });
     } finally {
@@ -188,26 +182,22 @@ export const TierManagementPage: React.FC = () => {
             warningDaysBeforeEnd,
             maxDowngradeSteps,
           },
-          reason: `Cấu hình chu kỳ xét hạng ${cycleMonths} tháng, cảnh báo trước ${warningDaysBeforeEnd} ngày, hạ tối đa ${maxDowngradeSteps} bậc`,
+          reason: t('tier.config_update_reason', { cycleMonths, warningDaysBeforeEnd, maxDowngradeSteps }),
         },
         selectedTenant
       );
       toastRef.current?.show({
         severity: 'success',
-        summary: t('toast.success', { defaultValue: 'Thành công' }),
-        detail: t('tier.period_saved', {
-          defaultValue: 'Đã gửi cấu hình chu kỳ xét hạng sang hàng đợi phê duyệt!',
-        }),
+        summary: t('toast.success'),
+        detail: t('tier.period_saved'),
         life: 3000,
       });
       setShowPeriodDialog(false);
     } catch {
       toastRef.current?.show({
         severity: 'error',
-        summary: t('toast.error', { defaultValue: 'Lỗi' }),
-        detail: t('tier.period_save_failed', {
-          defaultValue: 'Không thể lưu cấu hình chu kỳ xét hạng',
-        }),
+        summary: t('toast.error'),
+        detail: t('tier.period_save_failed'),
         life: 3000,
       });
     } finally {
@@ -224,7 +214,7 @@ export const TierManagementPage: React.FC = () => {
         severity="warning"
         size="small"
         onClick={() => editItem(rowData)}
-        tooltip={t('common.edit', { defaultValue: 'Sửa' })}
+        tooltip={t('common.edit')}
       />
     </div>
   );
@@ -250,14 +240,14 @@ export const TierManagementPage: React.FC = () => {
   const pointsTemplate = (rowData: TierConfig) => (
     <span className="text-800 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
       {(rowData.minPoints ?? 0).toLocaleString()}{' '}
-      <span className="text-500 text-xs">{t('tier.points_unit', { defaultValue: 'điểm' })}</span>
+      <span className="text-500 text-xs">{t('tier.points_unit')}</span>
     </span>
   );
 
   const keepPointsTemplate = (rowData: TierConfig) => (
     <span className="text-teal-700 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
       {(rowData.keepTierPoints ?? 0).toLocaleString()}{' '}
-      <span className="text-500 text-xs">{t('tier.points_unit', { defaultValue: 'điểm' })}</span>
+      <span className="text-500 text-xs">{t('tier.points_unit')}</span>
     </span>
   );
 
@@ -270,7 +260,7 @@ export const TierManagementPage: React.FC = () => {
   const turnsTemplate = (rowData: TierConfig) => (
     <span className="text-700 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
       {rowData.freeDailyTurns}{' '}
-      <span className="text-500 text-xs">{t('tier.turns_unit', { defaultValue: 'lượt' })}</span>
+      <span className="text-500 text-xs">{t('tier.turns_unit')}</span>
     </span>
   );
 
@@ -282,16 +272,16 @@ export const TierManagementPage: React.FC = () => {
 
   const statusTemplate = (rowData: TierConfig) => {
     return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active', { defaultValue: 'Hoạt động' })} />
+      <Tag severity="success" value={t('common.active')} />
     ) : (
-      <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Tạm dừng' })} />
+      <Tag severity="danger" value={t('common.inactive')} />
     );
   };
 
   const statusOptions = useMemo(
     () => [
-      { label: t('common.active', { defaultValue: 'Hoạt động' }), value: CommonStatus.ACTIVE },
-      { label: t('common.inactive', { defaultValue: 'Tạm dừng' }), value: CommonStatus.INACTIVE },
+      { label: t('common.active'), value: CommonStatus.ACTIVE },
+      { label: t('common.inactive'), value: CommonStatus.INACTIVE },
     ],
     [t]
   );
@@ -305,9 +295,7 @@ export const TierManagementPage: React.FC = () => {
     <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
       <div className="flex align-items-center gap-2">
         <h4 className="m-0 text-primary font-bold">
-          {t('tier.management_title', {
-            defaultValue: 'Quản trị Hạng Hội Viên & Ma Trận Đặc Quyền',
-          })}
+          {t('tier.management_title')}
         </h4>
       </div>
       <div className="flex flex-wrap align-items-center gap-2">
@@ -328,7 +316,7 @@ export const TierManagementPage: React.FC = () => {
             fetchDistribution();
           }}
           loading={loading || distLoading}
-          tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+          tooltip={t('common.refresh')}
         />
       </div>
     </div>
@@ -338,7 +326,7 @@ export const TierManagementPage: React.FC = () => {
     <div>
       <Toast ref={toastRef} />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.tiers', { defaultValue: 'Hạng Hội Viên' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.tiers') }]} />
 
       {/* HV-04 Banner với ngưỡng chuẩn 0 / 1.000 / 5.000 / 15.000 và nút gọn trong banner */}
       <div className="card shadow-1 border-round surface-card p-3 mb-3 border-left-3 border-primary">
@@ -347,22 +335,16 @@ export const TierManagementPage: React.FC = () => {
             <div className="flex align-items-center gap-2">
               <i className="pi pi-star-fill text-primary" />
               <span className="font-semibold text-900">
-                {t('tier.cycle_banner_title', {
-                  defaultValue:
-                    'Chuẩn xét hạng 12 tháng: Lên hạng tức thời (0 / 1.000 / 5.000 / 15.000 điểm)',
-                })}
+                {t('tier.cycle_banner_title')}
               </span>
             </div>
             <span className="text-xs text-600">
-              {t('tier.cycle_banner_desc', {
-                defaultValue:
-                  'Ngưỡng giữ hạng tương ứng 0 / 800 / 4.000 / 12.000 điểm • Cảnh báo trước 30 ngày • Hạ tối đa 1 bậc mỗi chu kỳ',
-              })}
+              {t('tier.cycle_banner_desc')}
             </span>
           </div>
           <div className="flex flex-wrap align-items-center gap-2">
             <Button
-              label={t('tier.period_settings', { defaultValue: 'Period settings' })}
+              label={t('tier.period_settings')}
               icon="pi pi-calendar-times"
               size="small"
               outlined
@@ -370,7 +352,7 @@ export const TierManagementPage: React.FC = () => {
               onClick={() => setShowPeriodDialog(true)}
             />
             <Button
-              label={t('tier.view_distribution', { defaultValue: 'View tier distribution' })}
+              label={t('tier.view_distribution')}
               icon="pi pi-chart-pie"
               size="small"
               outlined
@@ -384,7 +366,7 @@ export const TierManagementPage: React.FC = () => {
       <div className="card shadow-1 border-round surface-card p-4">
         <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)}>
           <TabPanel
-            header={t('tier.tab_config', { defaultValue: 'Cấu hình Hạng Hội viên (HV-04)' })}
+            header={t('tier.tab_config')}
             leftIcon="pi pi-sliders-h mr-2"
           >
             <DataTable<any>
@@ -397,15 +379,13 @@ export const TierManagementPage: React.FC = () => {
               dataKey="id"
               paginator
               rows={10}
-              emptyMessage={t('common.no_data', {
-                defaultValue: 'Không có dữ liệu hạng hội viên',
-              })}
+              emptyMessage={t('common.no_data')}
               stripedRows
               responsiveLayout="scroll"
             >
               <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
               <Column
-                header={t('common.stt', { defaultValue: 'STT' })}
+                header={t('common.stt')}
                 body={(_, options) => (
                   <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
                 )}
@@ -414,15 +394,15 @@ export const TierManagementPage: React.FC = () => {
               <Column
                 body={actionTemplate}
                 exportable={false}
-                header={t('common.actions', { defaultValue: 'Thao tác' })}
+                header={t('common.actions')}
                 style={{ width: '5rem', textAlign: 'center' }}
               />
               <Column
                 field="code"
                 body={codeTemplate}
                 header={
-                  <span title={t('tier.code_tooltip', { defaultValue: 'Mã định danh hạng hội viên' })}>
-                    {t('tier.code', { defaultValue: 'Mã Hạng' })}
+                  <span title={t('tier.code_tooltip')}>
+                    {t('tier.code')}
                   </span>
                 }
                 sortable
@@ -432,8 +412,8 @@ export const TierManagementPage: React.FC = () => {
                 field="name"
                 body={nameTemplate}
                 header={
-                  <span title={t('tier.name_tooltip', { defaultValue: 'Tên cấu hình hạng hội viên' })}>
-                    {t('tier.name', { defaultValue: 'Tên Hạng' })}
+                  <span title={t('tier.name_tooltip')}>
+                    {t('tier.name')}
                   </span>
                 }
                 sortable
@@ -443,8 +423,8 @@ export const TierManagementPage: React.FC = () => {
                 field="tierLevel"
                 body={levelTemplate}
                 header={
-                  <span title={t('tier.level_tooltip', { defaultValue: 'Cấp độ phân hạng (1 đến 4)' })}>
-                    {t('tier.level', { defaultValue: 'Cấp' })}
+                  <span title={t('tier.level_tooltip')}>
+                    {t('tier.level')}
                   </span>
                 }
                 sortable
@@ -455,11 +435,9 @@ export const TierManagementPage: React.FC = () => {
                 body={pointsTemplate}
                 header={
                   <span
-                    title={t('tier.min_points_tooltip', {
-                      defaultValue: 'Ngưỡng điểm lên hạng tích lũy (0 / 1.000 / 5.000 / 15.000)',
-                    })}
+                    title={t('tier.min_points_tooltip')}
                   >
-                    {t('tier.upgrade_points', { defaultValue: 'Ngưỡng Lên Hạng' })}
+                    {t('tier.upgrade_points')}
                   </span>
                 }
                 sortable
@@ -470,11 +448,9 @@ export const TierManagementPage: React.FC = () => {
                 body={keepPointsTemplate}
                 header={
                   <span
-                    title={t('tier.keep_points_tooltip', {
-                      defaultValue: 'Ngưỡng điểm giữ hạng cuối chu kỳ (0 / 800 / 4.000 / 12.000)',
-                    })}
+                    title={t('tier.keep_points_tooltip')}
                   >
-                    {t('tier.keep_tier', { defaultValue: 'Giữ Hạng (Keep tier)' })}
+                    {t('tier.keep_tier')}
                   </span>
                 }
                 sortable
@@ -485,11 +461,9 @@ export const TierManagementPage: React.FC = () => {
                 body={multiplierTemplate}
                 header={
                   <span
-                    title={t('tier.multiplier_tooltip', {
-                      defaultValue: 'Hệ số nhân điểm thưởng khi tích điểm',
-                    })}
+                    title={t('tier.multiplier_tooltip')}
                   >
-                    {t('tier.multiplier', { defaultValue: 'Hệ Số' })}
+                    {t('tier.multiplier')}
                   </span>
                 }
                 sortable
@@ -500,11 +474,9 @@ export const TierManagementPage: React.FC = () => {
                 body={turnsTemplate}
                 header={
                   <span
-                    title={t('tier.free_turns_tooltip', {
-                      defaultValue: 'Số lượt quay may mắn miễn phí mỗi ngày',
-                    })}
+                    title={t('tier.free_turns_tooltip')}
                   >
-                    {t('tier.free_turns', { defaultValue: 'Lượt/Ngày' })}
+                    {t('tier.free_turns')}
                   </span>
                 }
                 sortable
@@ -515,11 +487,9 @@ export const TierManagementPage: React.FC = () => {
                 body={descriptionTemplate}
                 header={
                   <span
-                    title={t('tier.description_tooltip', {
-                      defaultValue: 'Mô tả quyền lợi và chính sách hạng',
-                    })}
+                    title={t('tier.description_tooltip')}
                   >
-                    {t('tier.description', { defaultValue: 'Mô Tả' })}
+                    {t('tier.description')}
                   </span>
                 }
                 style={{ minWidth: '12rem' }}
@@ -529,11 +499,9 @@ export const TierManagementPage: React.FC = () => {
                 body={statusTemplate}
                 header={
                   <span
-                    title={t('common.status_tooltip', {
-                      defaultValue: 'Trạng thái hoạt động',
-                    })}
+                    title={t('common.status_tooltip')}
                   >
-                    {t('common.status', { defaultValue: 'Trạng Thái' })}
+                    {t('common.status')}
                   </span>
                 }
                 sortable
@@ -543,25 +511,22 @@ export const TierManagementPage: React.FC = () => {
           </TabPanel>
 
           <TabPanel
-            header={t('tier.tab_distribution', { defaultValue: 'Phân bổ Hạng Hội viên (HV-06)' })}
+            header={t('tier.tab_distribution')}
             leftIcon="pi pi-chart-pie mr-2"
           >
             <div className="flex justify-content-between align-items-center mb-3">
               <div>
                 <h5 className="m-0 text-900 font-bold">
-                  {t('tier.distribution_title', {
-                    defaultValue: 'Phân bổ Hội viên theo Hạng (Chuẩn 0 / 1.000 / 5.000 / 15.000)',
-                  })}
+                  {t('tier.distribution_title')}
                 </h5>
                 <span className="text-xs text-500">
                   {t('tier.distribution_total', {
-                    count: totalMembersInDistribution,
-                    defaultValue: `Tổng số hội viên ghi nhận: ${totalMembersInDistribution.toLocaleString()}`,
+                    count: totalMembersInDistribution
                   })}
                 </span>
               </div>
               <Button
-                label={t('common.refresh', { defaultValue: 'Làm mới' })}
+                label={t('common.refresh')}
                 icon="pi pi-refresh"
                 size="small"
                 outlined
@@ -579,14 +544,12 @@ export const TierManagementPage: React.FC = () => {
               <DataTable
                 value={distribution}
                 stripedRows
-                emptyMessage={t('tier.distribution_empty', {
-                  defaultValue: 'Chưa có dữ liệu phân bổ hội viên từ máy chủ',
-                })}
+                emptyMessage={t('tier.distribution_empty')}
                 responsiveLayout="scroll"
               >
                 <Column
                   field="tierCode"
-                  header={t('tier.code', { defaultValue: 'Mã Hạng' })}
+                  header={t('tier.code')}
                   body={(r: TierDistributionModel) => (
                     <span className="font-mono text-primary white-space-nowrap">{r.tierCode}</span>
                   )}
@@ -594,16 +557,16 @@ export const TierManagementPage: React.FC = () => {
                 />
                 <Column
                   field="tierName"
-                  header={t('tier.name', { defaultValue: 'Tên Hạng' })}
+                  header={t('tier.name')}
                   style={{ minWidth: '12rem' }}
                 />
                 <Column
-                  header={t('tier.threshold_range', { defaultValue: 'Khoảng Điểm Xét Hạng' })}
+                  header={t('tier.threshold_range')}
                   body={(r: TierDistributionModel) => {
                     const std = STANDARD_THRESHOLD_MAP[r.tierLevel];
                     return (
                       <span className="font-mono text-xs text-700 white-space-nowrap">
-                        {std ? `${std.rangeLabel} điểm (Giữ: ${std.keep.toLocaleString()})` : '—'}
+                        {std ? t('tier.points_keep_summary', { rangeLabel: std.rangeLabel, keep: std.keep.toLocaleString() }) : '—'}
                       </span>
                     );
                   }}
@@ -611,7 +574,7 @@ export const TierManagementPage: React.FC = () => {
                 />
                 <Column
                   field="pointMultiplier"
-                  header={t('tier.multiplier', { defaultValue: 'Hệ Số' })}
+                  header={t('tier.multiplier')}
                   body={(r: TierDistributionModel) => (
                     <span className="font-mono text-primary">
                       ×{Number(r.pointMultiplier || 1).toFixed(2)}
@@ -621,7 +584,7 @@ export const TierManagementPage: React.FC = () => {
                 />
                 <Column
                   field="memberCount"
-                  header={t('tier.member_count', { defaultValue: 'Số Hội Viên' })}
+                  header={t('tier.member_count')}
                   body={(r: TierDistributionModel) => (
                     <span className="font-mono">{Number(r.memberCount || 0).toLocaleString()}</span>
                   )}
@@ -629,7 +592,7 @@ export const TierManagementPage: React.FC = () => {
                 />
                 <Column
                   field="percentage"
-                  header={t('tier.percentage', { defaultValue: 'Tỷ Lệ (%)' })}
+                  header={t('tier.percentage')}
                   body={(r: TierDistributionModel) => (
                     <div className="flex align-items-center gap-2">
                       <ProgressBar
@@ -653,14 +616,14 @@ export const TierManagementPage: React.FC = () => {
         visible={showDialog}
         style={{ width: '34rem' }}
         breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header={t('tier.edit_title', { defaultValue: 'Cập nhật Cấu hình Hạng Hội Viên' })}
+        header={t('tier.edit_title')}
         modal
         className="p-fluid"
         onHide={() => setShowDialog(false)}
       >
         <div className="field mb-3">
           <label htmlFor="tierName" className="font-medium">
-            {t('tier.name', { defaultValue: 'Tên Hạng' })}
+            {t('tier.name')}
           </label>
           <InputText
             id="tierName"
@@ -672,7 +635,7 @@ export const TierManagementPage: React.FC = () => {
         <div className="formgrid grid mb-3">
           <div className="field col-6 mb-0">
             <label htmlFor="minPoints" className="font-medium">
-              {t('tier.upgrade_points', { defaultValue: 'Ngưỡng Lên Hạng' })}
+              {t('tier.upgrade_points')}
             </label>
             <InputNumber
               id="minPoints"
@@ -683,7 +646,7 @@ export const TierManagementPage: React.FC = () => {
           </div>
           <div className="field col-6 mb-0">
             <label htmlFor="keepTierPoints" className="font-medium">
-              {t('tier.keep_tier', { defaultValue: 'Ngưỡng Giữ Hạng' })}
+              {t('tier.keep_tier')}
             </label>
             <InputNumber
               id="keepTierPoints"
@@ -696,7 +659,7 @@ export const TierManagementPage: React.FC = () => {
         <div className="formgrid grid mb-3">
           <div className="field col-6 mb-0">
             <label htmlFor="pointMultiplier" className="font-medium">
-              {t('tier.multiplier', { defaultValue: 'Hệ số nhân điểm' })}
+              {t('tier.multiplier')}
             </label>
             <InputNumber
               id="pointMultiplier"
@@ -708,7 +671,7 @@ export const TierManagementPage: React.FC = () => {
           </div>
           <div className="field col-6 mb-0">
             <label htmlFor="freeDailyTurns" className="font-medium">
-              {t('tier.free_turns', { defaultValue: 'Lượt quay/ngày' })}
+              {t('tier.free_turns')}
             </label>
             <InputNumber
               id="freeDailyTurns"
@@ -720,7 +683,7 @@ export const TierManagementPage: React.FC = () => {
         </div>
         <div className="field mb-3">
           <label htmlFor="tierDescription" className="font-medium">
-            {t('tier.description', { defaultValue: 'Mô tả quyền lợi' })}
+            {t('tier.description')}
           </label>
           <InputText
             id="tierDescription"
@@ -730,7 +693,7 @@ export const TierManagementPage: React.FC = () => {
         </div>
         <div className="field mb-3">
           <label htmlFor="status" className="font-medium">
-            {t('common.status', { defaultValue: 'Trạng thái' })}
+            {t('common.status')}
           </label>
           <Dropdown
             id="status"
@@ -741,14 +704,14 @@ export const TierManagementPage: React.FC = () => {
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
-            label={t('common.cancel', { defaultValue: 'Hủy' })}
+            label={t('common.cancel')}
             icon="pi pi-times"
             outlined
             onClick={() => setShowDialog(false)}
             disabled={isSubmitting}
           />
           <Button
-            label={t('common.save', { defaultValue: 'Lưu thay đổi' })}
+            label={t('common.save')}
             icon="pi pi-check"
             onClick={saveItem}
             loading={isSubmitting}
@@ -761,14 +724,14 @@ export const TierManagementPage: React.FC = () => {
       <Dialog
         visible={showPeriodDialog}
         style={{ width: '30rem' }}
-        header={t('tier.period_settings_title', { defaultValue: 'Cài đặt Chu kỳ Xét hạng (HV-04)' })}
+        header={t('tier.period_settings_title')}
         modal
         className="p-fluid"
         onHide={() => setShowPeriodDialog(false)}
       >
         <div className="field mb-3">
           <label className="font-medium text-sm">
-            {t('tier.cycle_months', { defaultValue: 'Độ dài chu kỳ xét hạng (tháng)' })}
+            {t('tier.cycle_months')}
           </label>
           <InputNumber
             value={cycleMonths}
@@ -779,7 +742,7 @@ export const TierManagementPage: React.FC = () => {
         </div>
         <div className="field mb-3">
           <label className="font-medium text-sm">
-            {t('tier.warning_days', { defaultValue: 'Cảnh báo thiếu điểm giữ hạng trước (ngày)' })}
+            {t('tier.warning_days')}
           </label>
           <InputNumber
             value={warningDaysBeforeEnd}
@@ -790,7 +753,7 @@ export const TierManagementPage: React.FC = () => {
         </div>
         <div className="field mb-3">
           <label className="font-medium text-sm">
-            {t('tier.max_downgrade_steps', { defaultValue: 'Số bậc hạ tối đa mỗi chu kỳ' })}
+            {t('tier.max_downgrade_steps')}
           </label>
           <InputNumber
             value={maxDowngradeSteps}
@@ -801,13 +764,13 @@ export const TierManagementPage: React.FC = () => {
         </div>
         <div className="flex justify-content-end gap-2 mt-3">
           <Button
-            label={t('common.cancel', { defaultValue: 'Hủy' })}
+            label={t('common.cancel')}
             icon="pi pi-times"
             outlined
             onClick={() => setShowPeriodDialog(false)}
           />
           <Button
-            label={t('common.save', { defaultValue: 'Lưu & Gửi duyệt' })}
+            label={t('common.save')}
             icon="pi pi-check"
             onClick={handleSavePeriodSettings}
             loading={isSubmitting}

@@ -45,10 +45,10 @@ export const CustomerSegmentsPage: React.FC = () => {
     setRecalcId(seg.id);
     try {
       await LoyaltyService.recalculateSegment(seg.id, selectedTenant);
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: `${t('segment.recalculated', { defaultValue: 'Đã tính toán lại phân khúc' })} ${seg.segmentCode}` });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: `${t('segment.recalculated')} ${seg.segmentCode}` });
       fetchSegments();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setRecalcId(null);
     }
@@ -77,16 +77,16 @@ export const CustomerSegmentsPage: React.FC = () => {
   return (
     <div>
       <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.segments', { defaultValue: 'Phân khúc Khách hàng (CN-03)' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.segments') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
           <div>
             <h4 className="m-0 text-primary font-semibold">
-              {t('segment.title', { defaultValue: '7 Phân khúc Hội viên Động (CN-03)' })}
+              {t('segment.title')}
             </h4>
             <p className="m-0 text-xs text-500 mt-1">
-              {t('segment.subtitle', { defaultValue: 'VIP, NEW_30D, AT_RISK, CHURN_90D, HIGH_FREQUENCY, GAME_LOVERS, VOUCHER_HUNTERS — tự động đồng bộ với kịch bản gợi nhắc.' })}
+              {t('segment.subtitle')}
             </p>
           </div>
           <div className="flex gap-2 align-items-center">
@@ -104,19 +104,19 @@ export const CustomerSegmentsPage: React.FC = () => {
             rows={10}
             stripedRows
             responsiveLayout="scroll"
-            emptyMessage={t('segment.empty', { defaultValue: 'Chưa có dữ liệu phân khúc hội viên trong liên minh này.' })}
+            emptyMessage={t('segment.empty')}
           >
-            <Column field="segmentCode" header={t('segment.code', { defaultValue: 'Mã Phân Khúc' })} body={(r: CustomerSegmentModel) => <Tag value={r.segmentCode} severity="info" className="font-mono" />} style={{ minWidth: '11rem' }} />
-            <Column field="segmentName" header={t('segment.name', { defaultValue: 'Tên Phân Khúc' })} style={{ minWidth: '14rem' }} />
-            <Column field="ruleSummary" header={t('segment.rule_expr', { defaultValue: 'Điều Kiện Lọc' })} body={(r: CustomerSegmentModel) => <span className="font-mono text-xs text-600">{r.ruleSummary || '--'}</span>} style={{ minWidth: '16rem' }} />
-            <Column field="memberCount" header={t('segment.member_count', { defaultValue: 'Số Hội Viên' })} body={(r: CustomerSegmentModel) => <span className="font-mono font-medium">{Number(r.memberCount || 0).toLocaleString()}</span>} style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-            <Column field="lastCalculatedAt" header={t('segment.last_computed', { defaultValue: 'Cập Nhật Lần Cuối' })} body={(r: CustomerSegmentModel) => <span className="font-mono white-space-nowrap text-xs">{r.lastCalculatedAt ? new Date(r.lastCalculatedAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="segmentCode" header={t('segment.code')} body={(r: CustomerSegmentModel) => <Tag value={r.segmentCode} severity="info" className="font-mono" />} style={{ minWidth: '11rem' }} />
+            <Column field="segmentName" header={t('segment.name')} style={{ minWidth: '14rem' }} />
+            <Column field="ruleSummary" header={t('segment.rule_expr')} body={(r: CustomerSegmentModel) => <span className="font-mono text-xs text-600">{r.ruleSummary || '--'}</span>} style={{ minWidth: '16rem' }} />
+            <Column field="memberCount" header={t('segment.member_count')} body={(r: CustomerSegmentModel) => <span className="font-mono font-medium">{Number(r.memberCount || 0).toLocaleString()}</span>} style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+            <Column field="lastCalculatedAt" header={t('segment.last_computed')} body={(r: CustomerSegmentModel) => <span className="font-mono white-space-nowrap text-xs">{r.lastCalculatedAt ? new Date(r.lastCalculatedAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             <Column
-              header={t('common.action', { defaultValue: 'Thao Tác' })}
+              header={t('common.action')}
               body={(r: CustomerSegmentModel) => (
                 <div className="flex gap-1">
-                  <Button icon="pi pi-users" label={t('segment.view_members', { defaultValue: 'Hội viên' })} size="small" outlined onClick={() => openMembers(r)} />
-                  <Button icon="pi pi-sync" label={t('segment.recalculate', { defaultValue: 'Tính lại' })} size="small" outlined severity="warning" loading={recalcId === r.id} onClick={() => handleRecalculate(r)} />
+                  <Button icon="pi pi-users" label={t('segment.view_members')} size="small" outlined onClick={() => openMembers(r)} />
+                  <Button icon="pi pi-sync" label={t('segment.recalculate')} size="small" outlined severity="warning" loading={recalcId === r.id} onClick={() => handleRecalculate(r)} />
                 </div>
               )}
               style={{ minWidth: '13rem' }}
@@ -134,17 +134,17 @@ export const CustomerSegmentsPage: React.FC = () => {
         modal
       >
         <div className="flex justify-content-between align-items-center mb-3">
-          <span className="text-sm text-600">{t('segment.members_preview', { defaultValue: 'Danh sách hội viên thuộc phân khúc' })}</span>
-          <Button icon="pi pi-download" label={t('common.export_csv', { defaultValue: 'Xuất CSV' })} size="small" outlined onClick={handleExportCsv} disabled={members.length === 0} />
+          <span className="text-sm text-600">{t('segment.members_preview')}</span>
+          <Button icon="pi pi-download" label={t('common.export_csv')} size="small" outlined onClick={handleExportCsv} disabled={members.length === 0} />
         </div>
         {membersLoading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.2rem" /><Skeleton height="2.2rem" /></div>
         ) : (
-          <DataTable<SegmentMemberModel[]> value={members} paginator rows={10} size="small" emptyMessage={t('common.no_data', { defaultValue: 'Chưa có hội viên nào trong phân khúc này.' })}>
-            <Column field="externalUserId" header={t('customer.phone', { defaultValue: 'SĐT / User ID' })} body={(m: SegmentMemberModel) => <span className="font-mono white-space-nowrap">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="fullName" header={t('customer.name', { defaultValue: 'Họ Tên' })} style={{ minWidth: '12rem' }} />
-            <Column field="tierCode" header={t('tier.code', { defaultValue: 'Hạng' })} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem' }} />
-            <Column field="currentPoints" header={t('customer.available_points', { defaultValue: 'Điểm Khả Dụng' })} body={(m: SegmentMemberModel) => <span className="font-mono">{Number(m.currentPoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+          <DataTable<SegmentMemberModel[]> value={members} paginator rows={10} size="small" emptyMessage={t('common.no_data')}>
+            <Column field="externalUserId" header={t('customer.phone')} body={(m: SegmentMemberModel) => <span className="font-mono white-space-nowrap">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="fullName" header={t('customer.name')} style={{ minWidth: '12rem' }} />
+            <Column field="tierCode" header={t('tier.code')} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem' }} />
+            <Column field="currentPoints" header={t('customer.available_points')} body={(m: SegmentMemberModel) => <span className="font-mono">{Number(m.currentPoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
           </DataTable>
         )}
       </Dialog>

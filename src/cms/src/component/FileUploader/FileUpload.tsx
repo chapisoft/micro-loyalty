@@ -50,10 +50,10 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({
     const { name, size: fileSize } = file;
     const fileExtension = name.substring(name.lastIndexOf('.')).toLowerCase();
     if (accept && !accept.toLowerCase().includes(fileExtension)) {
-      return t('common.upload_invalid_format', { accept, defaultValue: `File không đúng định dạng. Chỉ chấp nhận: ${accept}` });
+      return t('common.upload_invalid_format', { accept });
     }
     if (fileSize > size * 1024 * 1024) {
-      return t('common.upload_max_size', { size, defaultValue: `File không được phép vượt quá ${size}MB` });
+      return t('common.upload_max_size', { size });
     }
     return '';
   };
@@ -97,7 +97,6 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({
       const error = validateFile(selectedFile);
       setInternalError(error);
       if (!error) {
-        console.log('Selected file:', selectedFile); // Debug log
         onChange(selectedFile);
       } else {
         onChange(null);
@@ -114,12 +113,11 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({
       }
 
       if (!error && totalSize > size * 1024 * 1024) {
-        error = t('common.upload_total_size', { size, defaultValue: `Tổng kích thước các file không được phép vượt quá ${size}MB` });
+        error = t('common.upload_total_size', { size });
         setInternalError(error);
       }
 
       if (!error) {
-        console.log('Selected files:', newFiles); // Debug log
         onChange([...existingFiles, ...newFiles]);
       } else {
         onChange(files);
@@ -153,17 +151,17 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({
       >
         <div className="relative">
           <div className="text-lg text-center">
-            {t('common.drag_drop_or_browse', { defaultValue: 'Kéo thả file hoặc' })}{' '}
-            <b className="text-primary-500">{t('common.choose_file_btn', { defaultValue: 'Chọn tệp' })}</b>{' '}
-            {t('common.to_upload', { defaultValue: 'để tải lên' })}
+            {t('common.drag_drop_or_browse')}{' '}
+            <b className="text-primary-500">{t('common.choose_file_btn')}</b>{' '}
+            {t('common.to_upload')}
           </div>
           {accept ? (
             <div className="text-center mt-2">
-              {t('common.max_size_accept', { size, accept, defaultValue: `(Cho phép dung lượng tối đa ${size}MB và chỉ chấp nhận định dạng ${accept})` })}
+              {t('common.max_size_accept', { size, accept })}
             </div>
           ) : (
             <div className="text-center mt-2">
-              {t('common.max_size_only', { size, defaultValue: `(Cho phép dung lượng tối đa ${size}MB)` })}
+              {t('common.max_size_only', { size })}
             </div>
           )}
           <AppLoading loading={false} />

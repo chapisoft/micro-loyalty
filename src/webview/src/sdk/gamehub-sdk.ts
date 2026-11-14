@@ -3,6 +3,8 @@
  * Dành cho Nhà phát triển Trò chơi Bên Thứ Ba xây dựng Game bằng TypeScript / ES Module
  */
 
+import i18n from 'i18next';
+
 export interface GameHubInitConfig {
   apiBase?: string;
   tenantId?: string;
@@ -86,7 +88,7 @@ class GameHubSDKInstance {
 
   public async submitScore(score: number, details?: Record<string, any> | string): Promise<SubmitScoreResponse> {
     if (!this.config.gameCode) {
-      throw new Error('GameCode không được để trống.');
+      throw new Error(i18n.t('sdk.game_code_required'));
     }
 
     const detailStr = typeof details === 'object' ? JSON.stringify(details) : details || '';
@@ -109,7 +111,7 @@ class GameHubSDKInstance {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `Lỗi gửi kết quả chơi game (HTTP ${res.status})`);
+      throw new Error(err.message || i18n.t('sdk.submit_result_error', { status: res.status }));
     }
 
     const result: SubmitScoreResponse = await res.json();
@@ -119,7 +121,10 @@ class GameHubSDKInstance {
 
   public async buyTurns(turns: number = 1, paymentAmount: number = 10, paymentMethod: 'POINTS' | 'WALLET' = 'POINTS'): Promise<BuyTurnsResponse> {
     if (typeof window !== 'undefined' && (window as any).LoyaltyJSBridge && paymentMethod === 'WALLET') {
-      (window as any).LoyaltyJSBridge.requestPayment(paymentAmount, `Mua ${turns} lượt chơi game ${this.config.gameCode}`);
+      (window as any).LoyaltyJSBridge.requestPayment(
+        paymentAmount,
+        i18n.t('sdk.buy_turns_desc', { count: turns, gameCode: this.config.gameCode })
+      );
       return {
         transactionCode: 'REQ_BRIDGE',
         sessionToken: this.config.sessionToken || '',
@@ -127,7 +132,7 @@ class GameHubSDKInstance {
         amountDeducted: paymentAmount,
         paymentMethod: 'WALLET',
         remainingPointBalance: 0,
-        message: 'Đã gửi yêu cầu thanh toán tới ví ứng dụng',
+        message: i18n.t('sdk.payment_request_sent'),
         timestamp: new Date().toISOString(),
       };
     }
@@ -152,7 +157,7 @@ class GameHubSDKInstance {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `Lỗi mua lượt chơi (HTTP ${res.status})`);
+      throw new Error(err.message || i18n.t('sdk.buy_turns_error', { status: res.status }));
     }
 
     const result: BuyTurnsResponse = await res.json();

@@ -33,11 +33,11 @@ const Breadcrumb: React.FC = () => {
     .filter(Boolean)
     .map((path, index, array) => {
       const fullPath = `/${array.slice(0, index + 1).join('/')}`;
-      const translationKey = pathToLabelMap[path] || path;
+      const translationKey = pathToLabelMap[path];
       const isClickable = exactValidPaths.includes(fullPath as any) && index !== array.length - 1;
 
       return {
-        label: t(translationKey, { defaultValue: path }),
+        label: translationKey ? t(translationKey) : path,
         command: isClickable ? () => navigate(fullPath) : undefined,
       };
     });

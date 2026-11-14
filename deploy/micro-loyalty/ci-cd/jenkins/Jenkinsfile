@@ -3,8 +3,8 @@
 //  Server: 35.247.156.176 (LAN: 192.168.1.200, Host: micro)
 //  Path:   /data/uc1-software/apps/micro-loyalty/deploy
 //  Chính sách: Chạy trực tiếp trên Jenkins tại server 35.247.156.176/192.168.1.200
-//              (không phụ thuộc Jenkins DIP). Chỉ CI/CD khi nhánh main có thay
-//              đổi mã nguồn/cấu hình SaaS và chỉ build/cập nhật phân hệ thay đổi.
+//              (không phụ thuộc Jenkins ngoài). Chỉ CI/CD khi nhánh main có thay
+//              đổi và chỉ build/deploy đúng Microservice hoặc Frontend có cập nhật.
 // ═════════════════════════════════════════════════════════════════════════════
 pipeline {
     agent any
@@ -23,13 +23,26 @@ pipeline {
     parameters {
         choice(
             name: 'TARGET_SERVICE',
-            choices: ['auto', 'loyalty-service', 'loyalty-cms', 'loyalty-webview', 'gateway', 'all'],
-            description: 'auto: Tự động phát hiện và chỉ build/deploy phân hệ có thay đổi; hoặc chọn thủ công phân hệ mục tiêu'
+            choices: [
+                'auto',
+                'cms-service',
+                'customer-service',
+                'game-service',
+                'campaign-service',
+                'partner-service',
+                'all-backend',
+                'loyalty-cms',
+                'loyalty-webview',
+                'loyalty-partner-portal',
+                'gateway',
+                'all'
+            ],
+            description: 'auto: Tự động phát hiện và chỉ build/deploy đúng Microservice/Frontend có thay đổi; hoặc chọn thủ công phân hệ mục tiêu'
         )
         booleanParam(
             name: 'SKIP_TESTS',
             defaultValue: false,
-            description: 'Bỏ qua Unit Test khi build Backend (chỉ áp dụng khi loyalty-service được build)'
+            description: 'Bỏ qua Unit Test khi build Backend (chỉ áp dụng cho các Microservice Backend được build)'
         )
         booleanParam(
             name: 'DRY_RUN',
@@ -45,9 +58,10 @@ pipeline {
         DEPLOY_SERVER_USER = 'root'
         DEPLOY_PATH        = '/data/uc1-software/apps/micro-loyalty/deploy'
         SSH_CREDENTIAL_ID  = 'micro-server-ssh'
-        PUBLIC_API_URL     = 'https://api.mid.io.vn/actuator/health'
+        PUBLIC_API_URL     = 'https://api.mid.io.vn/gateway-health'
         PUBLIC_CMS_URL     = 'https://cms.mid.io.vn/'
         PUBLIC_PORTAL_URL  = 'https://portal.mid.io.vn/'
+        PUBLIC_PARTNER_URL = 'https://partner.mid.io.vn/'
     }
 
     stages {
@@ -73,18 +87,34 @@ pipeline {
                     }
 
                     env.DETECTED_BRANCH = branch
-                    env.IS_MAIN_BRANCH = (branch == 'main') ? 'true' : 'false'
-                    env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD 2>/dev/null || echo latest', returnStdout: true).trim()
+                    env.IS_MAIN_BRANCH  = (branch == 'main') ? 'true' : 'false'
+                    env.IMAGE_TAG       = sh(script: 'git rev-parse --short HEAD 2>/dev/null || echo latest', returnStdout: true).trim()
 
-                    env.DEPLOY_BACKEND     = 'false'
-                    env.DEPLOY_CMS         = 'false'
-                    env.DEPLOY_WEBVIEW     = 'false'
-                    env.DEPLOY_GATEWAY     = 'false'
-                    env.SYNC_SCRIPTS       = 'false'
-                    env.SYNC_COMPOSE       = 'false'
-                    env.HAS_DEPLOY_CHANGES = 'false'
-                    env.TARGET_SERVICES_LIST = ''
-                    env.CHANGED_FILES_SUMMARY = ''
+                    env.DEPLOY_CMS_SERVICE      = 'false'
+                    env.DEPLOY_CUSTOMER_SERVICE = 'false'
+                    env.DEPLOY_GAME_SERVICE     = 'false'
+                    env.DEPLOY_CAMPAIGN_SERVICE = 'false'
+                    env.DEPLOY_PARTNER_SERVICE  = 'false'
+                    env.DEPLOY_SHARED_BACKEND   = 'false'
+                    env.DEPLOY_BACKEND          = 'false'
+
+                    env.DEPLOY_CMS              = 'false'
+                    env.DEPLOY_WEBVIEW          = 'false'
+                    env.DEPLOY_PARTNER_PORTAL   = 'false'
+                    env.DEPLOY_GATEWAY          = 'false'
+
+                    env.SYNC_BACKEND_CONFIG     = 'false'
+                    env.SYNC_FRONTEND_CONFIG    = 'false'
+                    env.SYNC_LOCALES            = 'false'
+                    env.SYNC_SCRIPTS            = 'false'
+                    env.SYNC_COMPOSE            = 'false'
+                    env.HAS_DEPLOY_CHANGES      = 'false'
+
+                    env.BACKEND_SERVICES_TO_BUILD = ''
+                    env.MAVEN_PL_MODULES          = ''
+                    env.TARGET_SERVICES_LIST      = ''
+                    env.RESTART_SERVICES_LIST     = ''
+                    env.CHANGED_FILES_SUMMARY     = ''
 
                     if (env.IS_MAIN_BRANCH != 'true') {
                         echo "Nhánh [${branch}] (raw: '${rawBranch}') không phải 'main'. Bỏ qua toàn bộ quy trình build và deploy."
@@ -95,21 +125,54 @@ pipeline {
                     if (params.TARGET_SERVICE != 'auto') {
                         switch (params.TARGET_SERVICE) {
                             case 'all':
-                                env.DEPLOY_BACKEND = 'true'
-                                env.DEPLOY_CMS     = 'true'
-                                env.DEPLOY_WEBVIEW = 'true'
-                                env.DEPLOY_GATEWAY = 'true'
-                                env.SYNC_SCRIPTS   = 'true'
-                                env.SYNC_COMPOSE   = 'true'
+                                env.DEPLOY_CMS_SERVICE      = 'true'
+                                env.DEPLOY_CUSTOMER_SERVICE = 'true'
+                                env.DEPLOY_GAME_SERVICE     = 'true'
+                                env.DEPLOY_CAMPAIGN_SERVICE = 'true'
+                                env.DEPLOY_PARTNER_SERVICE  = 'true'
+                                env.DEPLOY_SHARED_BACKEND   = 'true'
+                                env.DEPLOY_CMS              = 'true'
+                                env.DEPLOY_WEBVIEW          = 'true'
+                                env.DEPLOY_PARTNER_PORTAL   = 'true'
+                                env.DEPLOY_GATEWAY          = 'true'
+                                env.SYNC_BACKEND_CONFIG     = 'true'
+                                env.SYNC_FRONTEND_CONFIG    = 'true'
+                                env.SYNC_LOCALES            = 'true'
+                                env.SYNC_SCRIPTS            = 'true'
+                                env.SYNC_COMPOSE            = 'true'
                                 break
+                            case 'all-backend':
                             case 'loyalty-service':
-                                env.DEPLOY_BACKEND = 'true'
+                                env.DEPLOY_CMS_SERVICE      = 'true'
+                                env.DEPLOY_CUSTOMER_SERVICE = 'true'
+                                env.DEPLOY_GAME_SERVICE     = 'true'
+                                env.DEPLOY_CAMPAIGN_SERVICE = 'true'
+                                env.DEPLOY_PARTNER_SERVICE  = 'true'
+                                env.DEPLOY_SHARED_BACKEND   = 'true'
+                                break
+                            case 'cms-service':
+                                env.DEPLOY_CMS_SERVICE = 'true'
+                                break
+                            case 'customer-service':
+                                env.DEPLOY_CUSTOMER_SERVICE = 'true'
+                                break
+                            case 'game-service':
+                                env.DEPLOY_GAME_SERVICE = 'true'
+                                break
+                            case 'campaign-service':
+                                env.DEPLOY_CAMPAIGN_SERVICE = 'true'
+                                break
+                            case 'partner-service':
+                                env.DEPLOY_PARTNER_SERVICE = 'true'
                                 break
                             case 'loyalty-cms':
                                 env.DEPLOY_CMS = 'true'
                                 break
                             case 'loyalty-webview':
                                 env.DEPLOY_WEBVIEW = 'true'
+                                break
+                            case 'loyalty-partner-portal':
+                                env.DEPLOY_PARTNER_PORTAL = 'true'
                                 break
                             case 'gateway':
                                 env.DEPLOY_GATEWAY = 'true'
@@ -141,86 +204,127 @@ pipeline {
                                     continue
                                 }
 
-                                // Bỏ qua tài liệu, kế hoạch, skills, cấu hình Jenkins và môi trường Natcash
-                                if (f.startsWith('docs/') || f.startsWith('plan/') || f.startsWith('.agents/') ||
+                                // Bỏ qua tài liệu, kế hoạch, sơ đồ, skills, CI cục bộ, kịch bản đo tải/an ninh và môi trường Natcash
+                                if (f.startsWith('docs/') || f.startsWith('plan/') || f.startsWith('diagrams/') || f.startsWith('.agents/') ||
                                     f.startsWith('deploy/natcash/') || f.startsWith('deploy/micro-loyalty/ci-cd/') ||
-                                    f == 'Jenkinsfile' || f == 'README.md' || f.endsWith('.md')) {
+                                    f == 'Jenkinsfile' || f == 'ci-local.sh' || f == 'scripts/ci-local.sh' ||
+                                    f.startsWith('scripts/loadtest/') || f.startsWith('scripts/security/') ||
+                                    f == 'README.md' || f.endsWith('.md')) {
                                     continue
                                 }
 
-                                if (f.startsWith('src/service/') || f.startsWith('src/lib/') ||
-                                    f == 'pom.xml' || f == 'mvnw' || f == 'mvnw.cmd' || f.startsWith('.mvn/') ||
-                                    f.startsWith('deploy/micro-loyalty/backend/') || f.startsWith('deploy/micro-loyalty/config/backend/')) {
-                                    env.DEPLOY_BACKEND = 'true'
-                                }
-
-                                if (f.startsWith('src/cms/') || f.startsWith('deploy/micro-loyalty/frontend/cms/') ||
-                                    f.startsWith('deploy/micro-loyalty/config/frontend/')) {
+                                // Phân tách thay đổi theo từng Microservice Backend độc lập
+                                if (f.startsWith('src/service/cms-service/')) {
+                                    env.DEPLOY_CMS_SERVICE = 'true'
+                                } else if (f.startsWith('src/service/customer-service/')) {
+                                    env.DEPLOY_CUSTOMER_SERVICE = 'true'
+                                } else if (f.startsWith('src/service/game-service/')) {
+                                    env.DEPLOY_GAME_SERVICE = 'true'
+                                } else if (f.startsWith('src/service/campaign-service/')) {
+                                    env.DEPLOY_CAMPAIGN_SERVICE = 'true'
+                                } else if (f.startsWith('src/service/partner-service/')) {
+                                    env.DEPLOY_PARTNER_SERVICE = 'true'
+                                } else if (f.startsWith('src/lib/') || f == 'pom.xml' || f == 'mvnw' || f == 'mvnw.cmd' ||
+                                           f.startsWith('.mvn/') || f.startsWith('deploy/micro-loyalty/backend/')) {
+                                    env.DEPLOY_SHARED_BACKEND   = 'true'
+                                    env.DEPLOY_CMS_SERVICE      = 'true'
+                                    env.DEPLOY_CUSTOMER_SERVICE = 'true'
+                                    env.DEPLOY_GAME_SERVICE     = 'true'
+                                    env.DEPLOY_CAMPAIGN_SERVICE = 'true'
+                                    env.DEPLOY_PARTNER_SERVICE  = 'true'
+                                } else if (f.startsWith('deploy/micro-loyalty/config/backend/')) {
+                                    env.SYNC_BACKEND_CONFIG = 'true'
+                                } else if (f.startsWith('src/cms/') || f.startsWith('deploy/micro-loyalty/frontend/cms/')) {
                                     env.DEPLOY_CMS = 'true'
-                                }
-
-                                if (f.startsWith('src/webview/') || f.startsWith('deploy/micro-loyalty/frontend/webview/') ||
-                                    f.startsWith('deploy/micro-loyalty/config/frontend/')) {
+                                } else if (f.startsWith('src/webview/') || f.startsWith('deploy/micro-loyalty/frontend/webview/')) {
                                     env.DEPLOY_WEBVIEW = 'true'
-                                }
-
-                                if (f.startsWith('deploy/micro-loyalty/locales/')) {
-                                    env.DEPLOY_BACKEND = 'true'
-                                    env.DEPLOY_CMS     = 'true'
-                                    env.DEPLOY_WEBVIEW = 'true'
-                                }
-
-                                if (f.startsWith('deploy/micro-loyalty/gateway/') ||
-                                    f == 'deploy/micro-loyalty/config/nginx/nginx-saas.conf') {
+                                } else if (f.startsWith('src/partner-portal/') || f.startsWith('deploy/micro-loyalty/frontend/partner-portal/')) {
+                                    env.DEPLOY_PARTNER_PORTAL = 'true'
+                                } else if (f.startsWith('deploy/micro-loyalty/config/frontend/')) {
+                                    env.SYNC_FRONTEND_CONFIG = 'true'
+                                } else if (f.startsWith('deploy/micro-loyalty/locales/')) {
+                                    env.SYNC_LOCALES = 'true'
+                                } else if (f.startsWith('deploy/micro-loyalty/gateway/') ||
+                                           f == 'deploy/micro-loyalty/config/nginx/nginx-saas.conf') {
                                     env.DEPLOY_GATEWAY = 'true'
-                                }
-
-                                if (f.startsWith('deploy/micro-loyalty/scripts/')) {
+                                } else if (f.startsWith('deploy/micro-loyalty/scripts/')) {
                                     env.SYNC_SCRIPTS = 'true'
-                                }
-
-                                if (f == 'deploy/micro-loyalty/docker-compose.yml') {
+                                } else if (f == 'deploy/micro-loyalty/docker-compose.yml') {
                                     env.SYNC_COMPOSE = 'true'
                                 }
                             }
                         }
                     }
 
-                    def services = []
-                    if (env.DEPLOY_BACKEND == 'true') services.add('loyalty-service')
-                    if (env.DEPLOY_CMS     == 'true') services.add('loyalty-cms')
-                    if (env.DEPLOY_WEBVIEW == 'true') services.add('loyalty-webview')
-                    if (env.DEPLOY_GATEWAY == 'true') services.add('gateway')
+                    def allBackendNames = ['cms-service', 'customer-service', 'game-service', 'campaign-service', 'partner-service']
+                    def backendServices = []
+                    if (env.DEPLOY_CMS_SERVICE      == 'true') backendServices.add('cms-service')
+                    if (env.DEPLOY_CUSTOMER_SERVICE == 'true') backendServices.add('customer-service')
+                    if (env.DEPLOY_GAME_SERVICE     == 'true') backendServices.add('game-service')
+                    if (env.DEPLOY_CAMPAIGN_SERVICE == 'true') backendServices.add('campaign-service')
+                    if (env.DEPLOY_PARTNER_SERVICE  == 'true') backendServices.add('partner-service')
 
-                    env.TARGET_SERVICES_LIST = services.join(' ')
-                    if (services.size() > 0 || env.SYNC_COMPOSE == 'true' || env.SYNC_SCRIPTS == 'true') {
+                    env.BACKEND_SERVICES_TO_BUILD = backendServices.join(' ')
+                    env.MAVEN_PL_MODULES          = backendServices.collect { "src/service/${it}" }.join(',')
+                    env.DEPLOY_BACKEND            = (backendServices.size() > 0) ? 'true' : 'false'
+
+                    def targetServices = []
+                    targetServices.addAll(backendServices)
+                    if (env.DEPLOY_CMS            == 'true') targetServices.add('loyalty-cms')
+                    if (env.DEPLOY_WEBVIEW        == 'true') targetServices.add('loyalty-webview')
+                    if (env.DEPLOY_PARTNER_PORTAL == 'true') targetServices.add('loyalty-partner-portal')
+                    if (env.DEPLOY_GATEWAY        == 'true') targetServices.add('gateway')
+
+                    def restartServices = []
+                    if (env.SYNC_BACKEND_CONFIG == 'true' || env.SYNC_LOCALES == 'true') {
+                        for (String svc : allBackendNames) {
+                            if (!targetServices.contains(svc)) {
+                                restartServices.add(svc)
+                            }
+                        }
+                    }
+                    if (env.SYNC_FRONTEND_CONFIG == 'true' || env.SYNC_LOCALES == 'true') {
+                        for (String feSvc : ['loyalty-cms', 'loyalty-webview', 'loyalty-partner-portal']) {
+                            if (!targetServices.contains(feSvc)) {
+                                restartServices.add(feSvc)
+                            }
+                        }
+                    }
+
+                    env.TARGET_SERVICES_LIST  = targetServices.join(' ')
+                    env.RESTART_SERVICES_LIST = restartServices.join(' ')
+                    if (targetServices.size() > 0 || restartServices.size() > 0 ||
+                        env.SYNC_COMPOSE == 'true' || env.SYNC_SCRIPTS == 'true' ||
+                        env.SYNC_BACKEND_CONFIG == 'true' || env.SYNC_FRONTEND_CONFIG == 'true' || env.SYNC_LOCALES == 'true') {
                         env.HAS_DEPLOY_CHANGES = 'true'
                     }
 
                     echo """
-=== TỔNG HỢP PHẠM VI CI/CD ===
-• Branch         : ${env.DETECTED_BRANCH} (${env.IMAGE_TAG})
-• Mode           : ${params.TARGET_SERVICE} | DRY_RUN=${params.DRY_RUN}
-• Backend        : ${env.DEPLOY_BACKEND}
-• CMS            : ${env.DEPLOY_CMS}
-• Webview        : ${env.DEPLOY_WEBVIEW}
-• Gateway        : ${env.DEPLOY_GATEWAY}
-• Scripts/Compose: scripts=${env.SYNC_SCRIPTS}, compose=${env.SYNC_COMPOSE}
-• Docker Targets : ${env.TARGET_SERVICES_LIST ?: '(Không có container cần build lại)'}
+=== TỔNG HỢP PHẠM VI CI/CD CHỌN LỌC ===
+• Branch           : ${env.DETECTED_BRANCH} (${env.IMAGE_TAG})
+• Mode             : ${params.TARGET_SERVICE} | DRY_RUN=${params.DRY_RUN}
+• Backend Services : ${env.BACKEND_SERVICES_TO_BUILD ?: '(Không có)'} (shared=${env.DEPLOY_SHARED_BACKEND})
+• Frontends        : cms=${env.DEPLOY_CMS}, webview=${env.DEPLOY_WEBVIEW}, partner-portal=${env.DEPLOY_PARTNER_PORTAL}
+• Gateway          : ${env.DEPLOY_GATEWAY}
+• Config/Locales   : beConfig=${env.SYNC_BACKEND_CONFIG}, feConfig=${env.SYNC_FRONTEND_CONFIG}, locales=${env.SYNC_LOCALES}
+• Scripts/Compose  : scripts=${env.SYNC_SCRIPTS}, compose=${env.SYNC_COMPOSE}
+• Rolling Rebuild  : ${env.TARGET_SERVICES_LIST ?: '(Không có container cần build lại)'}
+• Restart Config   : ${env.RESTART_SERVICES_LIST ?: '(Không có container cần restart)'}
                     """.stripIndent()
 
+                    def summaryTarget = env.TARGET_SERVICES_LIST ?: (env.RESTART_SERVICES_LIST ? "restart:${env.RESTART_SERVICES_LIST}" : 'scripts/compose')
                     if (env.HAS_DEPLOY_CHANGES != 'true') {
                         currentBuild.description = "SKIPPED (No SaaS code changes)"
                     } else if (params.DRY_RUN) {
-                        currentBuild.description = "DRY-RUN: ${env.TARGET_SERVICES_LIST ?: 'scripts/compose'}"
+                        currentBuild.description = "DRY-RUN: ${summaryTarget}"
                     } else {
-                        currentBuild.description = "Deploy: ${env.TARGET_SERVICES_LIST ?: 'scripts/compose'}"
+                        currentBuild.description = "Deploy: ${summaryTarget}"
                     }
                 }
             }
         }
 
-        stage('1. Build Backend (loyalty-service)') {
+        stage('1. Build Changed Backend Microservices') {
             when {
                 allOf {
                     expression { env.IS_MAIN_BRANCH == 'true' }
@@ -229,19 +333,43 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Đóng gói Backend Spring Boot (Java 17 / Reactor 15 Modules)..."
+                    echo "Đóng gói chọn lọc Microservices Backend: [${env.BACKEND_SERVICES_TO_BUILD}] (shared=${env.DEPLOY_SHARED_BACKEND})..."
                     sh 'java -version && chmod +x ./mvnw'
-                    if (params.SKIP_TESTS) {
-                        sh './mvnw clean package -DskipTests -B'
+
+                    if (env.DEPLOY_SHARED_BACKEND == 'true') {
+                        if (params.SKIP_TESTS) {
+                            sh "./mvnw clean package -DskipTests -pl ${env.MAVEN_PL_MODULES} -am -B"
+                        } else {
+                            sh "./mvnw clean package -pl ${env.MAVEN_PL_MODULES} -am -B"
+                        }
                     } else {
-                        sh './mvnw clean package -B'
+                        sh './mvnw test-compile install -DskipTests -pl src/lib/loyalty-common -am -B'
+                        if (params.SKIP_TESTS) {
+                            sh "./mvnw clean package -DskipTests -pl ${env.MAVEN_PL_MODULES} -B"
+                        } else {
+                            sh "./mvnw clean package -pl ${env.MAVEN_PL_MODULES} -B"
+                        }
                     }
+
                     sh '''
-                        mkdir -p deploy/micro-loyalty/backend
-                        JAR_FILE=$(ls -1 src/service/target/loyalty-service-*.jar | grep -vF '.original' | head -n 1)
-                        test -n "$JAR_FILE"
-                        cp "$JAR_FILE" deploy/micro-loyalty/backend/loyalty-service.jar
-                        ls -lh deploy/micro-loyalty/backend/loyalty-service.jar
+                        set -e
+                        mkdir -p deploy/micro-loyalty/backend/module deploy/micro-loyalty/backend/lib deploy/micro-loyalty/backend/etc
+                        if [ "${DEPLOY_SHARED_BACKEND}" = "true" ]; then
+                            rm -rf deploy/micro-loyalty/backend/lib/* deploy/micro-loyalty/backend/etc/*
+                        fi
+
+                        for svc in ${BACKEND_SERVICES_TO_BUILD}; do
+                            JAR_FILE=$(ls -1 src/service/${svc}/target/module/${svc}-*.jar | head -n 1)
+                            test -n "$JAR_FILE"
+                            cp "$JAR_FILE" "deploy/micro-loyalty/backend/module/${svc}.jar"
+                            if [ -d "src/service/${svc}/target/lib" ]; then
+                                cp -Rf "src/service/${svc}/target/lib/." deploy/micro-loyalty/backend/lib/
+                            fi
+                            if [ -d "src/service/${svc}/target/etc" ]; then
+                                cp -Rf "src/service/${svc}/target/etc/." deploy/micro-loyalty/backend/etc/
+                            fi
+                        done
+                        ls -lh deploy/micro-loyalty/backend/module/
                     '''
                 }
             }
@@ -285,6 +413,29 @@ pipeline {
                         rm -rf ../../deploy/micro-loyalty/frontend/webview/dist
                         mkdir -p ../../deploy/micro-loyalty/frontend/webview/dist
                         cp -R dist/. ../../deploy/micro-loyalty/frontend/webview/dist/
+                    '''
+                }
+            }
+        }
+
+        stage('3B. Build Partner Portal Frontend (loyalty-partner-portal)') {
+            when {
+                allOf {
+                    expression { env.IS_MAIN_BRANCH == 'true' }
+                    expression { env.DEPLOY_PARTNER_PORTAL == 'true' }
+                }
+            }
+            steps {
+                dir('src/partner-portal') {
+                    sh '''
+                        node -v && npm -v
+                        npm ci
+                        npx tsc --noEmit
+                        npm run lint
+                        npm run build
+                        rm -rf ../../deploy/micro-loyalty/frontend/partner-portal/dist
+                        mkdir -p ../../deploy/micro-loyalty/frontend/partner-portal/dist
+                        cp -R dist/. ../../deploy/micro-loyalty/frontend/partner-portal/dist/
                     '''
                 }
             }
@@ -338,7 +489,19 @@ pipeline {
                                 else
                                     echo "Container loyalty-saas-postgres chưa chạy, bỏ qua bước sao lưu trước deploy."
                                 fi
-                                sync_local "deploy/micro-loyalty/backend" "backend" "delete"
+
+                                LIB_SYNC_MODE="keep"
+                                if [ "${DEPLOY_SHARED_BACKEND}" = "true" ]; then
+                                    LIB_SYNC_MODE="delete"
+                                fi
+
+                                cp -f deploy/micro-loyalty/backend/Dockerfile "${DEPLOY_PATH}/backend/Dockerfile"
+                                sync_local "deploy/micro-loyalty/backend/module" "backend/module" "keep"
+                                sync_local "deploy/micro-loyalty/backend/lib" "backend/lib" "${LIB_SYNC_MODE}"
+                                sync_local "deploy/micro-loyalty/backend/etc" "backend/etc" "${LIB_SYNC_MODE}"
+                            fi
+
+                            if [ "${DEPLOY_BACKEND}" = "true" ] || [ "${SYNC_BACKEND_CONFIG}" = "true" ]; then
                                 sync_local "deploy/micro-loyalty/config/backend" "config/backend" "keep"
                             fi
 
@@ -352,11 +515,16 @@ pipeline {
                                 sync_local "deploy/micro-loyalty/frontend/webview" "frontend/webview" "delete"
                             fi
 
-                            if [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ]; then
+                            if [ "${DEPLOY_PARTNER_PORTAL}" = "true" ]; then
+                                echo "Đồng bộ gói Partner Portal..."
+                                sync_local "deploy/micro-loyalty/frontend/partner-portal" "frontend/partner-portal" "delete"
+                            fi
+
+                            if [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ] || [ "${DEPLOY_PARTNER_PORTAL}" = "true" ] || [ "${SYNC_FRONTEND_CONFIG}" = "true" ]; then
                                 sync_local "deploy/micro-loyalty/config/frontend" "config/frontend" "keep"
                             fi
 
-                            if [ "${DEPLOY_BACKEND}" = "true" ] || [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ]; then
+                            if [ "${DEPLOY_BACKEND}" = "true" ] || [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ] || [ "${DEPLOY_PARTNER_PORTAL}" = "true" ] || [ "${SYNC_LOCALES}" = "true" ]; then
                                 sync_local "deploy/micro-loyalty/locales" "locales" "keep"
                             fi
 
@@ -390,6 +558,11 @@ pipeline {
                             elif [ "${SYNC_COMPOSE}" = "true" ]; then
                                 echo "Áp dụng thay đổi docker-compose.yml..."
                                 docker compose up -d --no-build
+                            fi
+
+                            if [ -n "${RESTART_SERVICES_LIST}" ]; then
+                                echo "Khởi động lại nhẹ các container nhận config/locales mới: ${RESTART_SERVICES_LIST}"
+                                docker compose restart ${RESTART_SERVICES_LIST}
                             fi
 
                             docker ps --filter 'name=loyalty-saas-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
@@ -427,7 +600,7 @@ pipeline {
                                     fi
                                 }
 
-                                ssh $SSH_OPTS "$REMOTE" "mkdir -p '${DEPLOY_PATH}'"
+                                ssh $SSH_OPTS "$REMOTE" "mkdir -p '${DEPLOY_PATH}/backend/module' '${DEPLOY_PATH}/backend/lib' '${DEPLOY_PATH}/backend/etc'"
                                 if [ "${DEPLOY_BACKEND}" = "true" ]; then
                                     ssh $SSH_OPTS "$REMOTE" "
                                         if docker ps --format '{{.Names}}' | grep -qx 'loyalty-saas-postgres'; then
@@ -435,7 +608,18 @@ pipeline {
                                             docker exec loyalty-saas-postgres pg_dump -U loyalty_app loyalty_db | gzip > '${DEPLOY_PATH}/backups/loyalty_db_pre_jenkins_\$(date +%Y%m%d_%H%M%S).sql.gz'
                                         fi
                                     "
-                                    sync_dir "deploy/micro-loyalty/backend" "backend" "delete"
+                                    LIB_SYNC_MODE="keep"
+                                    if [ "${DEPLOY_SHARED_BACKEND}" = "true" ]; then
+                                        LIB_SYNC_MODE="delete"
+                                    fi
+
+                                    scp $SSH_OPTS deploy/micro-loyalty/backend/Dockerfile "${REMOTE}:${DEPLOY_PATH}/backend/Dockerfile"
+                                    sync_dir "deploy/micro-loyalty/backend/module" "backend/module" "keep"
+                                    sync_dir "deploy/micro-loyalty/backend/lib" "backend/lib" "${LIB_SYNC_MODE}"
+                                    sync_dir "deploy/micro-loyalty/backend/etc" "backend/etc" "${LIB_SYNC_MODE}"
+                                fi
+
+                                if [ "${DEPLOY_BACKEND}" = "true" ] || [ "${SYNC_BACKEND_CONFIG}" = "true" ]; then
                                     sync_dir "deploy/micro-loyalty/config/backend" "config/backend" "keep"
                                 fi
 
@@ -447,11 +631,15 @@ pipeline {
                                     sync_dir "deploy/micro-loyalty/frontend/webview" "frontend/webview" "delete"
                                 fi
 
-                                if [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ]; then
+                                if [ "${DEPLOY_PARTNER_PORTAL}" = "true" ]; then
+                                    sync_dir "deploy/micro-loyalty/frontend/partner-portal" "frontend/partner-portal" "delete"
+                                fi
+
+                                if [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ] || [ "${DEPLOY_PARTNER_PORTAL}" = "true" ] || [ "${SYNC_FRONTEND_CONFIG}" = "true" ]; then
                                     sync_dir "deploy/micro-loyalty/config/frontend" "config/frontend" "keep"
                                 fi
 
-                                if [ "${DEPLOY_BACKEND}" = "true" ] || [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ]; then
+                                if [ "${DEPLOY_BACKEND}" = "true" ] || [ "${DEPLOY_CMS}" = "true" ] || [ "${DEPLOY_WEBVIEW}" = "true" ] || [ "${DEPLOY_PARTNER_PORTAL}" = "true" ] || [ "${SYNC_LOCALES}" = "true" ]; then
                                     sync_dir "deploy/micro-loyalty/locales" "locales" "keep"
                                 fi
 
@@ -466,13 +654,17 @@ pipeline {
                                 fi
 
                                 if [ "${SYNC_COMPOSE}" = "true" ]; then
-                                    scp -P "${DEPLOY_SERVER_PORT}" -i "${SSH_KEY}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null deploy/micro-loyalty/docker-compose.yml "${REMOTE}:${DEPLOY_PATH}/docker-compose.yml"
+                                    scp $SSH_OPTS deploy/micro-loyalty/docker-compose.yml "${REMOTE}:${DEPLOY_PATH}/docker-compose.yml"
                                 fi
 
                                 if [ -n "${TARGET_SERVICES_LIST}" ]; then
                                     ssh $SSH_OPTS "$REMOTE" "cd '${DEPLOY_PATH}' && docker compose up -d --build --no-deps ${TARGET_SERVICES_LIST}"
                                 elif [ "${SYNC_COMPOSE}" = "true" ]; then
                                     ssh $SSH_OPTS "$REMOTE" "cd '${DEPLOY_PATH}' && docker compose up -d --no-build"
+                                fi
+
+                                if [ -n "${RESTART_SERVICES_LIST}" ]; then
+                                    ssh $SSH_OPTS "$REMOTE" "cd '${DEPLOY_PATH}' && docker compose restart ${RESTART_SERVICES_LIST}"
                                 fi
 
                                 ssh $SSH_OPTS "$REMOTE" "docker ps --filter 'name=loyalty-saas-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
@@ -493,23 +685,51 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
+                    def isLocalDocker = sh(script: "[ -d '${env.DEPLOY_PATH}' ] && command -v docker >/dev/null 2>&1", returnStatus: true) == 0
+
+                    def checkScript = '''
                         set -e
                         GATEWAY_HOST="127.0.0.1"
-                        if ! curl -s -m 2 -o /dev/null "http://127.0.0.1:18095/index.html"; then
-                            if curl -s -m 2 -o /dev/null "http://host.docker.internal:18095/index.html"; then
+                        if ! curl -s -m 2 -o /dev/null "http://127.0.0.1:18095/gateway-health"; then
+                            if curl -s -m 2 -o /dev/null "http://host.docker.internal:18095/gateway-health"; then
                                 GATEWAY_HOST="host.docker.internal"
                             else
                                 GATEWAY_HOST="${DEPLOY_SERVER_LAN}"
                             fi
                         fi
 
+                        service_port() {
+                            case "$1" in
+                                cms-service) echo 8081 ;;
+                                customer-service) echo 8082 ;;
+                                game-service) echo 8083 ;;
+                                campaign-service) echo 8084 ;;
+                                partner-service) echo 8085 ;;
+                                *) echo 8081 ;;
+                            esac
+                        }
+
                         OK=0
                         for i in $(seq 1 20); do
-                            if curl -s -f "http://${GATEWAY_HOST}:18095/actuator/health/liveness" > /dev/null && \
-                               curl -s -f "http://${GATEWAY_HOST}:18095/actuator/health/readiness" > /dev/null && \
-                               curl -s -f "http://${GATEWAY_HOST}:18095/index.html" > /dev/null && \
-                               curl -s -f "http://${GATEWAY_HOST}:18095/portal/index.html" > /dev/null; then
+                            ALL_UP=1
+                            if ! curl -s -f "http://${GATEWAY_HOST}:18095/gateway-health" > /dev/null || \
+                               ! curl -s -f "http://${GATEWAY_HOST}:18095/index.html" > /dev/null || \
+                               ! curl -s -f "http://${GATEWAY_HOST}:18095/portal/index.html" > /dev/null || \
+                               ! curl -s -f "http://${GATEWAY_HOST}:18095/partner-portal/index.html" > /dev/null; then
+                                ALL_UP=0
+                            fi
+
+                            if [ "$ALL_UP" -eq 1 ] && [ -n "${BACKEND_SERVICES_TO_BUILD}" ] && command -v docker >/dev/null 2>&1; then
+                                for svc in ${BACKEND_SERVICES_TO_BUILD}; do
+                                    SVC_PORT=$(service_port "$svc")
+                                    if ! docker exec "loyalty-saas-${svc}" curl -s -f "http://127.0.0.1:${SVC_PORT}/actuator/health/liveness" > /dev/null 2>&1; then
+                                        ALL_UP=0
+                                        break
+                                    fi
+                                done
+                            fi
+
+                            if [ "$ALL_UP" -eq 1 ]; then
                                 OK=1
                                 break
                             fi
@@ -521,12 +741,34 @@ pipeline {
                             echo "Healthcheck nội bộ trên server thất bại."
                             exit 1
                         fi
+                    '''
 
+                    sh checkScript
+
+                    if (!isLocalDocker && env.BACKEND_SERVICES_TO_BUILD) {
+                        withCredentials([sshUserPrivateKey(
+                            credentialsId: env.SSH_CREDENTIAL_ID,
+                            keyFileVariable: 'SSH_KEY',
+                            usernameVariable: 'SSH_USER_CRED'
+                        )]) {
+                            sh '''
+                                set -e
+                                SSH_USER="${SSH_USER_CRED:-$DEPLOY_SERVER_USER}"
+                                SSH_OPTS="-i ${SSH_KEY} -p ${DEPLOY_SERVER_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                                REMOTE="${SSH_USER}@${DEPLOY_SERVER_LAN}"
+                                ssh $SSH_OPTS "$REMOTE" "cd '${DEPLOY_PATH}' && bash scripts/healthcheck.sh"
+                            '''
+                        }
+                    }
+
+                    sh '''
+                        set -e
                         API_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_API_URL}" || echo "000")
                         CMS_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_CMS_URL}" || echo "000")
                         PORTAL_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_PORTAL_URL}" || echo "000")
-                        echo "Public Verify -> api=${API_CODE}, cms=${CMS_CODE}, portal=${PORTAL_CODE}"
-                        test "$API_CODE" = "200" -a "$CMS_CODE" = "200" -a "$PORTAL_CODE" = "200"
+                        PARTNER_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_PARTNER_URL}" || echo "000")
+                        echo "Public Verify -> api=${API_CODE}, cms=${CMS_CODE}, portal=${PORTAL_CODE}, partner=${PARTNER_CODE}"
+                        test "$API_CODE" = "200" -a "$CMS_CODE" = "200" -a "$PORTAL_CODE" = "200" -a "$PARTNER_CODE" = "200"
                     '''
                 }
             }
@@ -537,7 +779,8 @@ pipeline {
         success {
             script {
                 if (env.IS_MAIN_BRANCH == 'true' && env.HAS_DEPLOY_CHANGES == 'true' && !params.DRY_RUN) {
-                    sendDeployNotification('SUCCESS', "Phân hệ cập nhật: ${env.TARGET_SERVICES_LIST ?: 'scripts/compose'}")
+                    def scopeDesc = env.TARGET_SERVICES_LIST ?: (env.RESTART_SERVICES_LIST ? "restart:${env.RESTART_SERVICES_LIST}" : 'scripts/compose')
+                    sendDeployNotification('SUCCESS', "Phân hệ cập nhật: ${scopeDesc}")
                 } else {
                     echo "Không phát sinh triển khai mới (IS_MAIN_BRANCH=${env.IS_MAIN_BRANCH}, HAS_DEPLOY_CHANGES=${env.HAS_DEPLOY_CHANGES}, DRY_RUN=${params.DRY_RUN})."
                 }
@@ -574,7 +817,7 @@ def sendDeployNotification(String status, String detail) {
     def commitTag = env.IMAGE_TAG ?: 'latest'
     def buildUrl  = env.BUILD_URL ?: 'https://jenkins.mid.io.vn/job/micro-loyalty/'
     def duration  = currentBuild.durationString ?: ''
-    def msg = "Build #${buildNum} | Nhánh: ${env.DETECTED_BRANCH} (${commitTag})\n${detail}\nThời gian: ${duration}\nURLs: ${env.PUBLIC_CMS_URL} | ${env.PUBLIC_PORTAL_URL} | ${env.PUBLIC_API_URL}\nJenkins: ${buildUrl}console"
+    def msg = "Build #${buildNum} | Nhánh: ${env.DETECTED_BRANCH} (${commitTag})\n${detail}\nThời gian: ${duration}\nURLs: ${env.PUBLIC_CMS_URL} | ${env.PUBLIC_PORTAL_URL} | ${env.PUBLIC_PARTNER_URL} | ${env.PUBLIC_API_URL}\nJenkins: ${buildUrl}console"
 
     env.NOTIFY_STATUS = status
     env.NOTIFY_MSG    = msg

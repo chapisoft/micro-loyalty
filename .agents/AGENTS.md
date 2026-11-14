@@ -7,11 +7,18 @@
 `micro-loyalty` là hệ sinh thái **Nền Tảng Khách Hàng Thân Thiết Liên Minh và Cổng Game Đa Thuê Bao (Standalone Loyalty & Multi-tenant GameHub Platform)** của Chapisoft/Natcash. Hệ thống cung cấp cơ chế tích điểm hợp nhất, phân tầng hội viên, liên thông Ví Phần Thưởng (Reward Wallet) tại quầy thu ngân đối tác, động cơ cột mốc chiến dịch, gợi nhắc thông minh và phân hệ Cổng Game HTML5 đa năng.
 
 ### Bộ Sản Phẩm Bàn Giao Cốt Lõi:
-1. **`loyalty-service`:** Máy chủ nghiệp vụ độc lập (Java 17 LTS / Spring Boot 2.7.14+), cơ sở dữ liệu độc lập `loyalty_db` trên **PostgreSQL 15+** (tách biệt 100% với `natcash_db`).
-2. **`loyalty-cms`:** Cổng thông tin quản trị trung tâm (ReactJS 18+ / TypeScript / Vite / Ant Design 5.x / Nginx).
-3. **`loyalty-webview`:** Cổng trải nghiệm Webview nhúng đa nền tảng (ReactJS 18+ / TypeScript / Vite / TailwindCSS Mobile-First / Nginx) với cầu nối `LoyaltyJSBridge`.
-4. **`natcash-eu-app`:** Tích hợp màn hình Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60 giây và Cổng Game trên React Native.
-5. **`natcash-eu-api`:** Cổng kết nối chuyển tiếp (Spring Boot Reverse Proxy) xác thực JWT, gán tiêu đề `X-Tenant-Id` và tiếp nhận Webhook.
+1. **Cụm 5 Microservices Backend Độc Lập (Java 17 LTS / Spring Boot 3.5.3):** Dùng chung thư viện lõi `ims-libraries`, `loyalty-engine`, `loyalty-common` và cơ sở dữ liệu độc lập `loyalty_db` trên **PostgreSQL 15+** (tách biệt 100% với `natcash_db`):
+   * `cms-service` (`8081`): Quản trị hệ thống, tham số động, phân quyền IAM, chính sách điểm, đối tác, phê duyệt, dashboard và báo cáo.
+   * `customer-service` (`8082`): Hội viên, phân hạng, sổ cái FIFO, Voucher, mã QR Ví Phần Thưởng động 60 giây, SSO, USSD và đại lý.
+   * `game-service` (`8083`): Cổng GameHub, Vòng quay may mắn và ngân hàng câu hỏi Micro-Learning.
+   * `campaign-service` (`8084`): Chiến dịch, cột mốc nhiệm vụ, phân khúc, ngân sách đồng tài trợ, cảnh báo và AI Copilot.
+   * `partner-service` (`8085`): Đối soát bù trừ tài chính, điểm chấp nhận thanh toán POS, Partner Portal API và Webhook Outbox.
+2. **`loyalty-saas-gateway` (Nginx API Gateway, cổng `18095`):** Định tuyến lưu lượng API công khai và nội bộ theo tiền tố URI tới 5 Microservices (`8081..8085`) và phân phối 3 cổng giao diện.
+3. **`loyalty-cms`:** Cổng thông tin quản trị trung tâm (ReactJS 18 / TypeScript / Vite / PrimeReact / Nginx).
+4. **`loyalty-webview`:** Cổng trải nghiệm Webview nhúng đa nền tảng (ReactJS 18 / TypeScript / Vite / TailwindCSS / Nginx) với cầu nối `LoyaltyJSBridge`.
+5. **`loyalty-partner-portal`:** Cổng tự phục vụ cho đối tác thương mại liên minh đối soát bù trừ, quản lý chi nhánh và kho Voucher (ReactJS 18 / TypeScript / Vite / PrimeReact / Nginx).
+6. **`natcash-eu-app`:** Tích hợp màn hình Trung tâm Loyalty, Mã QR Ví Phần Thưởng động 60 giây và Cổng Game trên React Native.
+7. **`natcash-eu-api`:** Cổng kết nối chuyển tiếp (Spring Boot Reverse Proxy) xác thực JWT, gán tiêu đề `X-Tenant-Id` và tiếp nhận Webhook.
 
 ---
 
@@ -66,18 +73,18 @@
    * Cấm tự ý can thiệp, dọn dẹp đĩa cứng, thay đổi cấu hình Nginx host, tác động lên cơ sở dữ liệu hoặc khởi động lại các tiến trình/dịch vụ trên máy chủ thử nghiệm/vận hành khi chưa có chỉ đạo trực tiếp từ người dùng.
 
 ### 3.2. Quy chuẩn đóng gói dịch vụ phía máy chủ
-1. **Đóng gói ứng dụng máy chủ:**
-   * Biên dịch và đóng gói tệp thực thi Java chuẩn hóa:
+1. **Đóng gói ứng dụng máy chủ theo chuẩn Thin-JAR dùng chung thư viện:**
+   * Biên dịch và xuất bản toàn bộ 20 module Maven qua `./ci-local.sh` hoặc Maven Wrapper:
      ```bash
-     mvn clean package -DskipTests
+     ./mvnw clean package -DskipTests -B
      ```
+   * Gói triển khai Backend phân tách thành `module/<tên-service>.jar` (5 Microservices siêu nhẹ), thư mục `lib/` dùng chung (`245` thư viện phụ thuộc) và `etc/` (tài nguyên cấu hình mặc định).
 2. **Xây dựng ảnh vùng chứa chuẩn hóa đa tầng:**
-   * Tầng 1 (Trình dựng): Sử dụng Maven kết hợp JDK 17 để biên dịch mã nguồn và đóng gói tệp `.jar`.
-   * Tầng 2 (Môi trường thực thi): Sử dụng Eclipse Temurin JRE 17 Alpine siêu nhẹ, tạo người dùng không có đặc quyền quản trị `appuser` để đảm bảo an ninh tối đa cho vùng chứa.
-3. **Cấu hình tham số bộ nhớ máy ảo tối ưu:**
-   * Cấu hình bộ thu gom rác G1GC và tỷ lệ cấp phát bộ nhớ tự động theo kích thước vùng chứa:
+   * Nhận tham số build `--build-arg SERVICE_NAME=<cms-service|customer-service|game-service|campaign-service|partner-service>` từ gói Thin-JAR đã biên dịch, đóng trên nền Eclipse Temurin JRE 17 Alpine kèm `curl` phục vụ healthcheck và người dùng không có đặc quyền quản trị `appuser`.
+3. **Cấu hình tham số bộ nhớ máy ảo tối ưu cho từng Microservice:**
+   * Mỗi Microservice giới hạn Heap ổn định kết hợp bộ thu gom rác G1GC để 5 dịch vụ vận hành đồng thời an toàn trên cụm Docker:
      ```bash
-     -XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError
+     -Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError
      ```
 
 ### 3.3. Quy chuẩn đóng gói cổng quản trị và trang nhúng
@@ -106,8 +113,8 @@
    * Tệp thực thi Backend (`.jar`) và gói tĩnh Frontend (`dist/`) phải là bản dựng bất biến duy nhất, không phụ thuộc vào môi trường máy chủ.
    * **Tuyệt đối cấm:** Đóng cứng cấu hình kết nối máy chủ (PostgreSQL, Redis, RabbitMQ, API URLs, Domain), khóa bí mật hoặc tệp từ điển ngôn ngữ vào trong Docker Image hoặc Dockerfile.
 2. **Cơ Chế Nạp Cấu Hình Ngoại Vi (Externalized Configuration):**
-   * **Máy chủ Backend (`loyalty-service`):** Nạp cấu hình động qua thư mục ngoại vi `--spring.config.additional-location=file:/app/config/` kết hợp biến môi trường (`.env`). Thư mục `/app/config/` được mount qua Docker Volume từ môi trường máy chủ (SaaS hoặc On-Premise).
-   * **Giao diện Frontend (`loyalty-cms` & `loyalty-webview`):** Nạp cấu hình động lúc thực thi (Runtime) qua tệp `/config/env-config.json` hoặc `window.__RUNTIME_CONFIG__` được Nginx phục vụ trực tiếp. Đảm bảo thay đổi URL Backend, Tenant ID hoặc Brand ID không cần chạy lại `npm run build`.
+   * **5 Microservices Backend (`cms-service`, `customer-service`, `game-service`, `campaign-service`, `partner-service`):** Nạp cấu hình động theo thứ tự ưu tiên qua `--spring.config.additional-location=optional:file:/app/etc/,optional:file:/app/config/` kết hợp biến môi trường (`.env`). Thư mục `/app/config/` được gắn qua Docker Volume từ môi trường máy chủ (SaaS hoặc On-Premise), giúp `application-saas.yml` / `application-natcash.yml` ghi đè cấu hình mặc định trong `/app/etc/`.
+   * **Giao diện Frontend (`loyalty-cms`, `loyalty-webview`, `loyalty-partner-portal`):** Nạp cấu hình động lúc thực thi qua tệp `/config/env-config.json` hoặc `window.__RUNTIME_CONFIG__` được Nginx phục vụ trực tiếp. Đảm bảo thay đổi URL API Gateway, Tenant ID hoặc Brand ID không cần chạy lại `npm run build`.
 3. **Cơ Chế Nạp Đa Ngôn Ngữ Ngoại Vi (Externalized Localization):**
    * Tệp từ điển đa ngôn ngữ (`locales/*.json`) được lưu độc lập tại thư mục ngoại vi và mount vào máy chủ Nginx `/usr/share/nginx/html/locales/` hoặc Backend `/app/locales/`.
    * Cho phép quản trị viên hoặc đối tác On-Premise chỉnh sửa trực tiếp nội dung văn bản hiển thị, thông điệp thông báo và nhãn thương hiệu đối tác mà không cần can thiệp mã nguồn hay build lại gói phần mềm.
@@ -120,11 +127,11 @@
    * `deploy/micro-loyalty/` và `deploy/natcash/` là **2 môi trường hạ tầng hoàn toàn khác nhau, tuyệt đối không được cập nhật chung, không dùng chung thông số hoặc sao chép lẫn nhau**:
      * **Môi trường 1 (`deploy/micro-loyalty/` — Mô hình SaaS Đa Thuê Bao):**
        * Hạ tầng máy chủ: `35.247.156.176:65000` (IP LAN: `192.168.1.200`, Tài khoản: `root`, Thư mục: `/data/uc1-software/apps/micro-loyalty/deploy`).
-       * Phương thức vận hành: Cụm Docker Compose độc lập kết hợp Host Nginx Master (`/data/uc3-infra/nginx-master/conf.d/loyalty.conf`) và Cloudflare Tunnel (`cloudflared`).
-       * Quy hoạch cổng mạng: PostgreSQL chuyên dụng `15435`, Redis chuyên dụng `16385`, Nginx Gateway nội bộ `18095`, Backend lõi nội bộ Docker `8088`. Tên miền công khai: `api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `docs.mid.io.vn`.
+       * Phương thức vận hành: Cụm 11 vùng chứa Docker Compose (`postgres`, `redis`, 5 Microservices Thin-JAR `cms-service`/`customer-service`/`game-service`/`campaign-service`/`partner-service`, 3 Frontend `loyalty-cms`/`loyalty-webview`/`loyalty-partner-portal`, `loyalty-saas-gateway`) kết hợp Host Nginx Master (`/data/uc3-infra/nginx-master/conf.d/loyalty.conf`) và Cloudflare Tunnel (`cloudflared`).
+       * Quy hoạch cổng mạng: PostgreSQL chuyên dụng `15435`, Redis chuyên dụng `16385`, Nginx API Gateway nội bộ `18095`, 5 Microservices nội bộ Docker `8081..8085` (chỉ mở nội bộ mạng Docker qua `expose`). Tên miền công khai: `api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `docs.mid.io.vn`.
      * **Môi trường 2 (`deploy/natcash/` — Mô hình On-Premise Tại Chỗ Ví Natcash):**
        * Hạ tầng máy chủ: Máy chủ vật lý riêng biệt `10.228.37.65:22` (Tài khoản: `mascom`, Hệ điều hành: CentOS Linux 7).
-       * Phương thức vận hành: Dịch vụ Native thực thi trực tiếp qua JDK 17 (Cổng `8085`), PostgreSQL có sẵn (Cổng `5432`, DB `natcash_loyalty_db`), Redis có sẵn (Cổng `6379`, Mật khẩu `NatCash2022`), Nginx 1.20.2 phân lập cổng `8443` (Webview/API công khai ngoài Internet) và cổng `8080` (CMS nội bộ qua VPN).
+       * Phương thức vận hành: Định tuyến Nginx phân lập cổng `8443` (Webview/API công khai ngoài Internet) và cổng `8080` (CMS nội bộ qua VPN) theo `config/nginx/nginx-natcash.conf` tới 5 Microservices (`8081..8085`), PostgreSQL (Cổng `5432`, DB `natcash_loyalty_db`) và Redis (Cổng `6379`).
    * **Cấm tuyệt đối:** Không áp dụng chéo thông số IP, tài khoản SSH, cổng mạng, đường dẫn tệp hay kịch bản giữa 2 môi trường này. Mọi tài liệu hoặc cấu hình cho môi trường nào chỉ được cập nhật độc lập trong thư mục tương ứng.
 
 ---
@@ -339,11 +346,18 @@ Hệ thống tuân thủ nghiêm ngặt bộ tiêu chuẩn thiết kế giao di�
 
 ## 7. KIỂM THỬ VÀ XÁC THỰC CỤC BỘ (PRE-COMMIT VERIFICATION)
 
-Trước khi báo cáo hoàn thành một tác vụ có thay đổi mã nguồn, bắt buộc phải chạy lệnh kiểm tra kiểm thử cục bộ:
+Trước khi báo cáo hoàn thành một tác vụ có thay đổi mã nguồn hoặc trước khi triển khai lên máy chủ, bắt buộc phải chạy kịch bản kiểm tra tích hợp cục bộ toàn trình:
+```bash
+# Kiểm thử tự động toàn bộ 20 module Maven (109 ca kiểm thử Backend), 3 Frontend & thẩm định Compose/Gateway
+./ci-local.sh
+```
+Hoặc chạy riêng từng phần khi kiểm tra cục bộ:
 ```bash
 # Kiểm thử Backend
-mvn clean test
-# Kiểm thử Frontend (CMS & Webview)
-npm run lint && npm run build
+./mvnw clean test -B
+# Kiểm thử Frontend (CMS, Webview, Partner Portal)
+cd src/cms && npm run build
+cd src/webview && npm run build
+cd src/partner-portal && npm run lint && npm run build
 ```
-Đảm bảo 100% các ca kiểm thử đơn vị, kiểm tra kiểu dữ liệu TypeScript và ESLint đều đạt kết quả thành công hoàn toàn, không có bất kỳ lỗi đỏ nào.
+Đảm bảo 100% các ca kiểm thử đơn vị, kiểm tra kiểu dữ liệu TypeScript, ESLint và cú pháp Docker Compose đều đạt kết quả thành công hoàn toàn, không có bất kỳ lỗi đỏ nào.

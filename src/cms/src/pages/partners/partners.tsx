@@ -125,10 +125,10 @@ export const Partners: React.FC = () => {
         { webhookUrl: editWebhookUrl.trim(), ipWhitelist: editIpWhitelist.split(',').map((s) => s.trim()).filter(Boolean).join(',') },
         selectedTenant
       );
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('partner.webhook_updated', { defaultValue: 'Đã cập nhật cấu hình Webhook & IP Whitelist.' }) });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('partner.webhook_updated') });
       fetchData(selectedTenant);
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setKeyLoading(false);
     }
@@ -141,9 +141,9 @@ export const Partners: React.FC = () => {
       setRotatedKeyOnce(res?.plainTextKey || null);
       const cfg = await LoyaltyService.getPartnerApiKeys(selectedTenant);
       setPartnerKeys(Array.isArray(cfg?.keys) ? cfg.keys : []);
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Xoay vòng API Key' }), detail: t('partner.rotate_success', { defaultValue: 'Khóa mới chỉ hiển thị 1 lần. Khóa cũ còn hiệu lực 7 ngày (Grace Period).' }) });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('partner.rotate_success') });
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setKeyLoading(false);
     }
@@ -155,9 +155,9 @@ export const Partners: React.FC = () => {
       await LoyaltyService.revokePartnerApiKey(keyId, selectedTenant);
       const keys = await LoyaltyService.getPartnerApiKeys(selectedTenant);
       setPartnerKeys(Array.isArray(keys) ? keys : []);
-      toast.current?.show({ severity: 'info', summary: t('common.success', { defaultValue: 'Đã thu hồi' }), detail: t('partner.key_revoked', { defaultValue: 'Đã thu hồi khóa API cũ ngay lập tức.' }) });
+      toast.current?.show({ severity: 'info', summary: t('common.success'), detail: t('partner.key_revoked') });
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setKeyLoading(false);
     }
@@ -172,8 +172,8 @@ export const Partners: React.FC = () => {
     navigator.clipboard.writeText(text);
     toast.current?.show({
       severity: 'info',
-      summary: t('common.success', { defaultValue: 'Thành công' }),
-      detail: `${label}: ${t('partner.copied_key', { defaultValue: 'Đã sao chép vào bộ nhớ tạm!' })}`,
+      summary: t('common.success'),
+      detail: `${label}: ${t('partner.copied_key')}`,
       life: 2500,
     });
   };
@@ -220,19 +220,19 @@ export const Partners: React.FC = () => {
   const deleteItem = async (item: Partner) => {
     if (!item.id) return;
     confirmDialog({
-      message: t('partner.confirm_delete_msg', { name: item.partnerName, defaultValue: `Bạn có chắc chắn muốn xóa đối tác "${item.partnerName}" khỏi hệ thống không?` }),
-      header: t('common.confirm_delete', { defaultValue: 'Xác nhận Xóa Đối Tác' }),
+      message: t('partner.confirm_delete_msg', { name: item.partnerName }),
+      header: t('common.confirm_delete'),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
-      acceptLabel: t('common.delete', { defaultValue: 'Xóa' }),
-      rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+      acceptLabel: t('common.delete'),
+      rejectLabel: t('common.cancel'),
       accept: async () => {
         try {
           await partnerService.delete(item.id!, selectedTenant);
           toast.current?.show({
             severity: 'success',
-            summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: t('partner.delete_success', { defaultValue: 'Đã xóa đối tác thành công!' }),
+            summary: t('common.success'),
+            detail: t('partner.delete_success'),
             life: 3000,
           });
           fetchData(selectedTenant);
@@ -240,8 +240,8 @@ export const Partners: React.FC = () => {
           console.error('[Partners.deleteItem] Error:', e);
           toast.current?.show({
             severity: 'error',
-            summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: t('partner.delete_failed', { defaultValue: 'Xóa đối tác thất bại' }) + ': ' + (e?.message || ''),
+            summary: t('common.error'),
+            detail: t('partner.delete_failed') + ': ' + (e?.message || ''),
             life: 4000,
           });
         }
@@ -267,16 +267,16 @@ export const Partners: React.FC = () => {
         await partnerService.update(formData.id, payload, selectedTenant);
         toast.current?.show({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('partner.update_success', { defaultValue: 'Cập nhật thông tin đối tác thành công!' }),
+          summary: t('common.success'),
+          detail: t('partner.update_success'),
           life: 3000,
         });
       } else {
         await partnerService.create(payload, selectedTenant);
         toast.current?.show({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('partner.create_success', { defaultValue: 'Thêm mới đối tác thành công!' }),
+          summary: t('common.success'),
+          detail: t('partner.create_success'),
           life: 3000,
         });
       }
@@ -286,8 +286,8 @@ export const Partners: React.FC = () => {
       console.error('[Partners.saveItem] Error:', e);
       toast.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: t('partner.save_failed', { defaultValue: 'Lưu đối tác thất bại' }) + ': ' + (e?.message || ''),
+        summary: t('common.error'),
+        detail: t('partner.save_failed') + ': ' + (e?.message || ''),
         life: 4000,
       });
     }
@@ -297,8 +297,8 @@ export const Partners: React.FC = () => {
     if (!formData.partnerCode || !formData.partnerName) {
       toast.current?.show({
         severity: 'warn',
-        summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
-        detail: t('partner.enter_required_fields', { defaultValue: 'Vui lòng nhập Mã đối tác và Tên đối tác!' }),
+        summary: t('common.warning'),
+        detail: t('partner.enter_required_fields'),
         life: 3000,
       });
       return;
@@ -306,11 +306,11 @@ export const Partners: React.FC = () => {
 
     if (isEdit) {
       confirmDialog({
-        message: t('partner.confirm_update_msg', { name: formData.partnerName || '', defaultValue: `Bạn có chắc chắn muốn lưu các thay đổi cho đối tác "${formData.partnerName || ''}"?` }),
-        header: t('common.confirm_update', { defaultValue: 'Xác nhận Cập Nhật' }),
+        message: t('partner.confirm_update_msg', { name: formData.partnerName || '' }),
+        header: t('common.confirm_update'),
         icon: 'pi pi-question-circle',
-        acceptLabel: t('common.confirm', { defaultValue: 'Xác nhận' }),
-        rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+        acceptLabel: t('common.confirm'),
+        rejectLabel: t('common.cancel'),
         accept: executeSave,
       });
     } else {
@@ -322,7 +322,7 @@ export const Partners: React.FC = () => {
   const partnerTypeOptions = useMemo(() => {
     return PARTNER_TYPES.map((pt) => ({
       value: pt.value,
-      label: t(`partner.${pt.translationKey}`, { defaultValue: pt.value }),
+      label: t(`partner.${pt.translationKey}`),
       icon: pt.icon,
       color: pt.badgeColor,
     }));
@@ -359,14 +359,14 @@ export const Partners: React.FC = () => {
       <div className="inline-flex align-items-center gap-1 px-2 py-1 border-round-md" style={{ backgroundColor: `${pt.badgeColor}15`, color: pt.badgeColor }}>
         <i className={`${pt.icon} text-xs`} />
         <span className="font-medium text-xs">
-          {t(`partner.${pt.translationKey}`, { defaultValue: rowData.partnerType || 'OTHER' })}
+          {t(`partner.${pt.translationKey}`)}
         </span>
       </div>
     );
   };
 
   const apiKeyTemplate = (rowData: Partner) => {
-    if (!rowData.apiKey) return <span className="text-400 text-xs italic">Chưa cấp</span>;
+    if (!rowData.apiKey) return <span className="text-400 text-xs italic">{t('partner.not_issued')}</span>;
     return (
       <div className="flex align-items-center gap-1">
         <code className="px-2 py-1 border-round bg-bluegray-50 text-bluegray-800 text-xs font-mono font-medium">
@@ -383,7 +383,7 @@ export const Partners: React.FC = () => {
             e.stopPropagation();
             copyToClipboard(rowData.apiKey || '', 'API Key');
           }}
-          tooltip={t('partner.copy_api_key', { defaultValue: 'Sao chép API Key' })}
+          tooltip={t('partner.copy_api_key')}
         />
       </div>
     );
@@ -391,7 +391,7 @@ export const Partners: React.FC = () => {
 
   const webhookTemplate = (rowData: Partner) => {
     if (!rowData.webhookUrl) {
-      return <span className="text-400 text-xs italic">Chưa cấu hình</span>;
+      return <span className="text-400 text-xs italic">{t('partner.not_configured')}</span>;
     }
     return (
       <div className="flex align-items-center gap-1" title={rowData.webhookUrl}>
@@ -426,7 +426,7 @@ export const Partners: React.FC = () => {
           severity="info"
           size="small"
           onClick={() => openDetail(rowData)}
-          tooltip={t('partner.detail_title', { defaultValue: 'Xem thông tin tích hợp' })}
+          tooltip={t('partner.detail_title')}
         />
         <Button
           icon="pi pi-key"
@@ -435,7 +435,7 @@ export const Partners: React.FC = () => {
           severity="help"
           size="small"
           onClick={() => openKeyWebhookDialog(rowData)}
-          tooltip={t('partner.manage_key_webhook', { defaultValue: 'Xoay vòng API Key & IP/Webhook' })}
+          tooltip={t('partner.manage_key_webhook')}
         />
         <Button
           icon="pi pi-pencil"
@@ -444,7 +444,7 @@ export const Partners: React.FC = () => {
           severity="warning"
           size="small"
           onClick={() => editItem(rowData)}
-          tooltip={t('common.edit', { defaultValue: 'Chỉnh sửa' })}
+          tooltip={t('common.edit')}
         />
         <Button
           icon="pi pi-trash"
@@ -453,7 +453,7 @@ export const Partners: React.FC = () => {
           severity="danger"
           size="small"
           onClick={() => deleteItem(rowData)}
-          tooltip={t('common.delete', { defaultValue: 'Xóa đối tác' })}
+          tooltip={t('common.delete')}
         />
       </div>
     );
@@ -462,9 +462,9 @@ export const Partners: React.FC = () => {
   const statusBodyTemplate = (rowData: Partner) => {
     const isActive = Number(rowData.status) === 1 || String(rowData.status) === 'ACTIVE';
     return isActive ? (
-      <Tag severity="success" value={t('common.active', { defaultValue: 'Hoạt động' })} />
+      <Tag severity="success" value={t('common.active')} />
     ) : (
-      <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Ngừng hoạt động' })} />
+      <Tag severity="danger" value={t('common.inactive')} />
     );
   };
 
@@ -480,19 +480,19 @@ export const Partners: React.FC = () => {
   };
 
   const statusOptions = [
-    { label: t('common.active', { defaultValue: 'Đang hoạt động' }), value: 1 },
-    { label: t('common.inactive', { defaultValue: 'Ngừng hoạt động' }), value: 0 },
+    { label: t('common.active'), value: 1 },
+    { label: t('common.inactive'), value: 0 },
   ];
 
   const typeFilterOptions = [
-    { label: t('partner.all_types', { defaultValue: 'Tất cả lĩnh vực' }), value: 'ALL' },
+    { label: t('partner.all_types'), value: 'ALL' },
     ...partnerTypeOptions,
   ];
 
   const statusFilterOptions = [
-    { label: t('common.all', { defaultValue: 'Tất cả trạng thái' }), value: 'ALL' },
-    { label: t('common.active', { defaultValue: 'Đang hoạt động' }), value: 'ACTIVE' },
-    { label: t('common.inactive', { defaultValue: 'Ngừng hoạt động' }), value: 'INACTIVE' },
+    { label: t('common.all'), value: 'ALL' },
+    { label: t('common.active'), value: 'ACTIVE' },
+    { label: t('common.inactive'), value: 'INACTIVE' },
   ];
 
   const header = (
@@ -500,14 +500,14 @@ export const Partners: React.FC = () => {
       {/* Top Bar: Title & Action Buttons */}
       <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
         <div>
-          <h4 className="m-0 text-primary font-bold">{t('partner.management_title', { defaultValue: 'Quản lý Đối tác Liên minh' })}</h4>
+          <h4 className="m-0 text-primary font-bold">{t('partner.management_title')}</h4>
           <p className="m-0 text-500 text-xs mt-1">
-            {t('partner.subtitle', { defaultValue: 'Quản lý danh sách đối tác kết nối, phân loại lĩnh vực, thông tin xác thực API và Webhook' })}
+            {t('partner.subtitle')}
           </p>
         </div>
         <div className="flex gap-2 align-items-center">
           <Button
-            label={t('partner.add_new', { defaultValue: 'Thêm Đối tác' })}
+            label={t('partner.add_new')}
             icon="pi pi-plus"
             severity="success"
             onClick={openNew}
@@ -518,7 +518,7 @@ export const Partners: React.FC = () => {
             rounded
             outlined
             onClick={() => fetchData(selectedTenant)}
-            tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+            tooltip={t('common.refresh')}
           />
         </div>
       </div>
@@ -532,14 +532,14 @@ export const Partners: React.FC = () => {
             options={typeFilterOptions}
             onChange={(e) => setFilterType(e.value)}
             className="w-14rem"
-            placeholder={t('partner.filter_partner_type', { defaultValue: 'Lọc theo lĩnh vực' })}
+            placeholder={t('partner.filter_partner_type')}
           />
           <Dropdown
             value={filterStatus}
             options={statusFilterOptions}
             onChange={(e) => setFilterStatus(e.value)}
             className="w-12rem"
-            placeholder={t('common.select_status', { defaultValue: 'Trạng thái' })}
+            placeholder={t('common.select_status')}
           />
         </div>
         <div className="p-input-icon-left w-16rem">
@@ -547,7 +547,7 @@ export const Partners: React.FC = () => {
           <InputText
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('common.search', { defaultValue: 'Tìm kiếm mã, tên, API Key...' })}
+            placeholder={t('common.search')}
             className="w-full p-inputtext-sm"
           />
         </div>
@@ -559,11 +559,11 @@ export const Partners: React.FC = () => {
     <div>
       <Toast ref={toast} position="top-right" />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.partners', { defaultValue: 'Đối tác' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.partners') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <TabView>
-          <TabPanel header={t('partner.tab_directory', { defaultValue: 'Danh mục Đối tác Liên minh' })} leftIcon="pi pi-building mr-2">
+          <TabPanel header={t('partner.tab_directory')} leftIcon="pi pi-building mr-2">
         <DataTable<any>
           value={filteredItems}
           selection={selectedItems}
@@ -574,7 +574,7 @@ export const Partners: React.FC = () => {
           paginator
           rows={10}
           rowsPerPageOptions={[10, 25, 50]}
-          emptyMessage={t('common.no_data', { defaultValue: 'Không có dữ liệu đối tác' })}
+          emptyMessage={t('common.no_data')}
           stripedRows
           responsiveLayout="scroll"
           className="p-datatable-sm"
@@ -584,7 +584,7 @@ export const Partners: React.FC = () => {
 
           {/* Cột 2: STT */}
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
+            header={t('common.stt')}
             body={(_, options) => options.rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
@@ -593,14 +593,14 @@ export const Partners: React.FC = () => {
           <Column
             body={actionBodyTemplate}
             exportable={false}
-            header={t('common.actions', { defaultValue: 'Thao tác' })}
+            header={t('common.actions')}
             style={{ width: '7.5rem', textAlign: 'center' }}
           />
 
           {/* Cột 4: Mã Đối tác */}
           <Column
             field="partnerCode"
-            header={t('partner.code', { defaultValue: 'Mã Đối tác' })}
+            header={t('partner.code')}
             body={(rowData) => <span className="font-mono font-bold text-primary">{rowData.partnerCode}</span>}
             sortable
             style={{ minWidth: '11rem' }}
@@ -609,7 +609,7 @@ export const Partners: React.FC = () => {
           {/* Cột 5: Tên Đối tác */}
           <Column
             field="partnerName"
-            header={t('partner.name', { defaultValue: 'Tên Đối tác' })}
+            header={t('partner.name')}
             body={(rowData) => <span className="font-semibold text-900">{rowData.partnerName}</span>}
             sortable
             style={{ minWidth: '14rem' }}
@@ -618,7 +618,7 @@ export const Partners: React.FC = () => {
           {/* Cột 6: Lĩnh vực kinh doanh */}
           <Column
             field="partnerType"
-            header={t('partner.type', { defaultValue: 'Lĩnh vực' })}
+            header={t('partner.type')}
             body={partnerTypeTemplate}
             sortable
             style={{ minWidth: '11rem' }}
@@ -627,7 +627,7 @@ export const Partners: React.FC = () => {
           {/* Cột 7: API Key */}
           <Column
             field="apiKey"
-            header={t('partner.api_key', { defaultValue: 'API Key (B2B)' })}
+            header={t('partner.api_key')}
             body={apiKeyTemplate}
             style={{ minWidth: '13rem' }}
           />
@@ -635,7 +635,7 @@ export const Partners: React.FC = () => {
           {/* Cột 8: Webhook Callback */}
           <Column
             field="webhookUrl"
-            header={t('partner.webhook_title', { defaultValue: 'Webhook' })}
+            header={t('partner.webhook_title')}
             body={webhookTemplate}
             style={{ minWidth: '11rem' }}
           />
@@ -643,7 +643,7 @@ export const Partners: React.FC = () => {
           {/* Cột 9: IP Whitelist */}
           <Column
             field="ipWhitelist"
-            header={t('partner.ip_whitelist', { defaultValue: 'IP Whitelist' })}
+            header={t('partner.ip_whitelist')}
             body={ipWhitelistTemplate}
             style={{ minWidth: '9rem' }}
           />
@@ -652,7 +652,7 @@ export const Partners: React.FC = () => {
           <Column
             field="status"
             body={statusBodyTemplate}
-            header={t('common.status', { defaultValue: 'Trạng thái' })}
+            header={t('common.status')}
             sortable
             style={{ minWidth: '8.5rem' }}
           />
@@ -661,20 +661,20 @@ export const Partners: React.FC = () => {
           <Column
             field="createdAt"
             body={dateTemplate}
-            header={t('common.created_at', { defaultValue: 'Ngày tạo' })}
+            header={t('common.created_at')}
             sortable
             style={{ minWidth: '11rem' }}
           />
         </DataTable>
           </TabPanel>
 
-          <TabPanel header={t('partner.tab_connections_overview', { defaultValue: 'QT-06 · Tổng quan kết nối (6 hệ thống)' })} leftIcon="pi pi-sitemap mr-2">
+          <TabPanel header={t('partner.tab_connections_overview')} leftIcon="pi pi-sitemap mr-2">
             <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
               <div>
-                <h5 className="m-0 font-medium text-900">{t('partner.qt06_title', { defaultValue: 'Giám sát Tích hợp Hệ thống Lõi (WSO2, Mobile Service, Payment Point, BCCS, USSD *202#, Data Lake)' })}</h5>
-                <span className="text-xs text-500">{t('partner.qt06_desc', { defaultValue: 'Trạng thái kết nối thời gian thực, độ trễ và tỷ lệ thành công 24h.' })}</span>
+                <h5 className="m-0 font-medium text-900">{t('partner.qt06_title')}</h5>
+                <span className="text-xs text-500">{t('partner.qt06_desc')}</span>
               </div>
-              <Button icon="pi pi-refresh" label={t('common.refresh', { defaultValue: 'Kiểm tra lại' })} outlined size="small" onClick={() => fetchIntegrations(selectedTenant)} loading={integrationsLoading} />
+              <Button icon="pi pi-refresh" label={t('common.refresh')} outlined size="small" onClick={() => fetchIntegrations(selectedTenant)} loading={integrationsLoading} />
             </div>
 
             {integrationsLoading ? (
@@ -686,7 +686,7 @@ export const Partners: React.FC = () => {
             ) : integrations.length === 0 ? (
               <div className="text-center p-5 border-1 surface-border border-round surface-50 text-500">
                 <i className="pi pi-sitemap text-3xl mb-2 block text-400" />
-                {t('partner.no_integrations', { defaultValue: 'Chưa nhận được dữ liệu trạng thái từ 6 hệ thống lõi.' })}
+                {t('partner.no_integrations')}
               </div>
             ) : (
               <div className="grid">
@@ -719,7 +719,7 @@ export const Partners: React.FC = () => {
         visible={showDialog}
         style={{ width: '46rem' }}
         breakpoints={{ '960px': '75vw', '641px': '95vw' }}
-        header={isEdit ? t('partner.edit_title', { defaultValue: 'Cập nhật Thông tin Đối tác' }) : t('partner.create_title', { defaultValue: 'Thêm mới Đối tác Liên minh' })}
+        header={isEdit ? t('partner.edit_title') : t('partner.create_title')}
         modal
         className="p-fluid"
         onHide={() => setShowDialog(false)}
@@ -729,12 +729,12 @@ export const Partners: React.FC = () => {
           <div className="p-3 border-round surface-50 border-1 surface-border">
             <h5 className="m-0 mb-3 text-900 font-bold flex align-items-center gap-2">
               <i className="pi pi-id-card text-primary" />
-              {t('common.basic_info', { defaultValue: 'Thông tin Định danh Đối tác' })}
+              {t('common.basic_info')}
             </h5>
             <div className="grid">
               <div className="col-12 md:col-6 field mb-3">
                 <label htmlFor="partnerCode" className="font-semibold text-xs text-700">
-                  {t('partner.code', { defaultValue: 'Mã Đối tác' })} <span className="text-red-500">*</span>
+                  {t('partner.code')} <span className="text-red-500">*</span>
                 </label>
                 <InputText
                   id="partnerCode"
@@ -743,35 +743,35 @@ export const Partners: React.FC = () => {
                   required
                   autoFocus
                   disabled={isEdit}
-                  placeholder={t('partner.code_placeholder', { defaultValue: 'Ví dụ: DELIMART_RETAIL' })}
+                  placeholder={t('partner.code_placeholder')}
                   className="p-inputtext-sm font-mono"
                 />
               </div>
 
               <div className="col-12 md:col-6 field mb-3">
                 <label htmlFor="partnerName" className="font-semibold text-xs text-700">
-                  {t('partner.name', { defaultValue: 'Tên Đối tác' })} <span className="text-red-500">*</span>
+                  {t('partner.name')} <span className="text-red-500">*</span>
                 </label>
                 <InputText
                   id="partnerName"
                   value={formData.partnerName || ''}
                   onChange={(e) => setFormData({ ...formData, partnerName: e.target.value })}
                   required
-                  placeholder={t('partner.name_placeholder', { defaultValue: 'Ví dụ: Hệ Thống Siêu Thị Delimart' })}
+                  placeholder={t('partner.name_placeholder')}
                   className="p-inputtext-sm"
                 />
               </div>
 
               <div className="col-12 md:col-6 field mb-3">
                 <label htmlFor="partnerType" className="font-semibold text-xs text-700">
-                  {t('partner.type', { defaultValue: 'Lĩnh vực kinh doanh' })}
+                  {t('partner.type')}
                 </label>
                 <Dropdown
                   id="partnerType"
                   value={formData.partnerType || 'RETAIL'}
                   options={partnerTypeOptions}
                   onChange={(e) => setFormData({ ...formData, partnerType: e.value })}
-                  placeholder={t('partner.type_placeholder', { defaultValue: 'Chọn lĩnh vực hoạt động...' })}
+                  placeholder={t('partner.type_placeholder')}
                   className="p-inputtext-sm"
                   itemTemplate={(option) => (
                     <div className="flex align-items-center gap-2">
@@ -784,7 +784,7 @@ export const Partners: React.FC = () => {
 
               <div className="col-12 md:col-6 field mb-3">
                 <label htmlFor="status" className="font-semibold text-xs text-700">
-                  {t('common.status', { defaultValue: 'Trạng thái' })}
+                  {t('common.status')}
                 </label>
                 <Dropdown
                   id="status"
@@ -802,10 +802,10 @@ export const Partners: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-3">
               <h5 className="m-0 text-900 font-bold flex align-items-center gap-2">
                 <i className="pi pi-shield text-primary" />
-                {t('partner.credentials_title', { defaultValue: 'Thông tin Xác thực B2B Dual-Key (Bảo mật API)' })}
+                {t('partner.credentials_title')}
               </h5>
               <Button
-                label={t('partner.generate_keys', { defaultValue: 'Tạo cặp khóa mới' })}
+                label={t('partner.generate_keys')}
                 icon="pi pi-sync"
                 size="small"
                 outlined
@@ -818,8 +818,8 @@ export const Partners: React.FC = () => {
                   });
                   toast.current?.show({
                     severity: 'info',
-                    summary: t('common.success', { defaultValue: 'Thành công' }),
-                    detail: 'Đã sinh cặp khóa B2B mới!',
+                    summary: t('common.success'),
+                    detail: t('partner.b2b_keys_generated'),
                     life: 2000,
                   });
                 }}
@@ -829,13 +829,13 @@ export const Partners: React.FC = () => {
             <div className="grid">
               <div className="col-12 field mb-3">
                 <label className="font-semibold text-xs text-700">
-                  {t('partner.api_key', { defaultValue: 'API Key (Public Key)' })}
+                  {t('partner.api_key')}
                 </label>
                 <div className="p-inputgroup">
                   <InputText
                     value={formData.apiKey || ''}
                     onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                    placeholder={t('partner.api_key_placeholder', { defaultValue: 'pk_live_...' })}
+                    placeholder={t('partner.api_key_placeholder')}
                     className="p-inputtext-sm font-mono"
                   />
                   <Button
@@ -843,21 +843,21 @@ export const Partners: React.FC = () => {
                     severity="secondary"
                     outlined
                     onClick={() => copyToClipboard(formData.apiKey || '', 'API Key')}
-                    tooltip={t('partner.copy_api_key', { defaultValue: 'Sao chép API Key' })}
+                    tooltip={t('partner.copy_api_key')}
                   />
                 </div>
               </div>
 
               <div className="col-12 field mb-3">
                 <label className="font-semibold text-xs text-700">
-                  {t('partner.secret_key', { defaultValue: 'Secret Key (Khóa bí mật HMAC)' })}
+                  {t('partner.secret_key')}
                 </label>
                 <div className="p-inputgroup">
                   <InputText
                     type={showSecret ? 'text' : 'password'}
                     value={formData.secretKey || ''}
                     onChange={(e) => setFormData({ ...formData, secretKey: e.target.value })}
-                    placeholder={t('partner.secret_key_placeholder', { defaultValue: 'sk_live_...' })}
+                    placeholder={t('partner.secret_key_placeholder')}
                     className="p-inputtext-sm font-mono"
                   />
                   <Button
@@ -865,27 +865,27 @@ export const Partners: React.FC = () => {
                     severity="secondary"
                     outlined
                     onClick={() => setShowSecret(!showSecret)}
-                    tooltip={showSecret ? t('partner.hide_secret', { defaultValue: 'Ẩn Secret Key' }) : t('partner.show_secret', { defaultValue: 'Hiển thị Secret Key' })}
+                    tooltip={showSecret ? t('partner.hide_secret') : t('partner.show_secret')}
                   />
                   <Button
                     icon="pi pi-copy"
                     severity="secondary"
                     outlined
                     onClick={() => copyToClipboard(formData.secretKey || '', 'Secret Key')}
-                    tooltip={t('partner.copy_secret_key', { defaultValue: 'Sao chép Secret Key' })}
+                    tooltip={t('partner.copy_secret_key')}
                   />
                 </div>
               </div>
 
               <div className="col-12 field mb-0">
                 <label className="font-semibold text-xs text-700 flex align-items-center gap-1">
-                  {t('partner.ip_whitelist', { defaultValue: 'Danh sách IP Whitelist' })}
-                  <i className="pi pi-info-circle text-500 text-xs" title={t('partner.ip_whitelist_tooltip', { defaultValue: 'Địa chỉ IP được phép gọi API tích/tiêu điểm' })} />
+                  {t('partner.ip_whitelist')}
+                  <i className="pi pi-info-circle text-500 text-xs" title={t('partner.ip_whitelist_tooltip')} />
                 </label>
                 <InputText
                   value={formData.ipWhitelist || ''}
                   onChange={(e) => setFormData({ ...formData, ipWhitelist: e.target.value })}
-                  placeholder={t('partner.ip_whitelist_placeholder', { defaultValue: 'Ví dụ: 192.168.1.1, 10.0.0.0/24 hoặc 0.0.0.0/0' })}
+                  placeholder={t('partner.ip_whitelist_placeholder')}
                   className="p-inputtext-sm font-mono"
                 />
               </div>
@@ -896,17 +896,17 @@ export const Partners: React.FC = () => {
           <div className="p-3 border-round surface-50 border-1 surface-border">
             <h5 className="m-0 mb-3 text-900 font-bold flex align-items-center gap-2">
               <i className="pi pi-send text-primary" />
-              {t('partner.webhook_title', { defaultValue: 'Cấu hình Webhook Sự kiện' })}
+              {t('partner.webhook_title')}
             </h5>
             <div className="grid">
               <div className="col-12 field mb-3">
                 <label className="font-semibold text-xs text-700">
-                  {t('partner.webhook_url', { defaultValue: 'Webhook Callback URL' })}
+                  {t('partner.webhook_url')}
                 </label>
                 <InputText
                   value={formData.webhookUrl || ''}
                   onChange={(e) => setFormData({ ...formData, webhookUrl: e.target.value })}
-                  placeholder={t('partner.webhook_url_placeholder', { defaultValue: 'https://api.partner.com/loyalty/webhook' })}
+                  placeholder={t('partner.webhook_url_placeholder')}
                   className="p-inputtext-sm font-mono"
                 />
               </div>
@@ -914,10 +914,10 @@ export const Partners: React.FC = () => {
               <div className="col-12 field mb-0">
                 <div className="flex justify-content-between align-items-center mb-1">
                   <label className="font-semibold text-xs text-700">
-                    {t('partner.webhook_secret', { defaultValue: 'Webhook Secret (Ký X-Loyalty-Signature)' })}
+                    {t('partner.webhook_secret')}
                   </label>
                   <Button
-                    label={t('partner.generate_webhook_secret', { defaultValue: 'Tạo mã mới' })}
+                    label={t('partner.generate_webhook_secret')}
                     icon="pi pi-key"
                     text
                     size="small"
@@ -929,7 +929,7 @@ export const Partners: React.FC = () => {
                   <InputText
                     value={formData.webhookSecret || ''}
                     onChange={(e) => setFormData({ ...formData, webhookSecret: e.target.value })}
-                    placeholder={t('partner.webhook_secret_placeholder', { defaultValue: 'whsec_...' })}
+                    placeholder={t('partner.webhook_secret_placeholder')}
                     className="p-inputtext-sm font-mono"
                   />
                   <Button
@@ -945,8 +945,8 @@ export const Partners: React.FC = () => {
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
-          <Button label={t('common.save', { defaultValue: 'Lưu thông tin' })} icon="pi pi-check" severity="success" onClick={saveItem} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
+          <Button label={t('common.save')} icon="pi pi-check" severity="success" onClick={saveItem} />
         </div>
       </Dialog>
 
@@ -955,7 +955,7 @@ export const Partners: React.FC = () => {
         visible={showDetailDialog}
         style={{ width: '40rem' }}
         breakpoints={{ '960px': '75vw', '641px': '95vw' }}
-        header={t('partner.detail_title', { defaultValue: 'Thông số Tích hợp Kỹ thuật B2B' })}
+        header={t('partner.detail_title')}
         modal
         onHide={() => setShowDetailDialog(false)}
       >
@@ -970,25 +970,25 @@ export const Partners: React.FC = () => {
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">{t('partner.api_key_header', { defaultValue: 'API Key (X-Api-Key Header)' })}</label>
+              <label className="font-semibold text-xs text-500">{t('partner.api_key_header')}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.apiKey || t('partner.not_issued', { defaultValue: 'Chưa cấp' })} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.apiKey || t('partner.not_issued')} readOnly className="p-inputtext-sm font-mono bg-50" />
                 <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.apiKey || '', 'API Key')} />
               </div>
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">{t('partner.secret_key_sign', { defaultValue: 'Secret Key (Ký HMAC-SHA256)' })}</label>
+              <label className="font-semibold text-xs text-500">{t('partner.secret_key_sign')}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.secretKey || t('partner.not_issued', { defaultValue: 'Chưa cấp' })} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.secretKey || t('partner.not_issued')} readOnly className="p-inputtext-sm font-mono bg-50" />
                 <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.secretKey || '', 'Secret Key')} />
               </div>
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">{t('partner.webhook_url_label', { defaultValue: 'Webhook URL' })}</label>
+              <label className="font-semibold text-xs text-500">{t('partner.webhook_url_label')}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.webhookUrl || t('partner.not_configured', { defaultValue: 'Chưa cấu hình' })} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.webhookUrl || t('partner.not_configured')} readOnly className="p-inputtext-sm font-mono bg-50" />
                 {detailPartner.webhookUrl && (
                   <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.webhookUrl || '', 'Webhook URL')} />
                 )}
@@ -996,9 +996,9 @@ export const Partners: React.FC = () => {
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">{t('partner.webhook_secret_label', { defaultValue: 'Webhook Secret (X-Loyalty-Signature)' })}</label>
+              <label className="font-semibold text-xs text-500">{t('partner.webhook_secret_label')}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.webhookSecret || t('partner.not_configured', { defaultValue: 'Chưa cấu hình' })} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText value={detailPartner.webhookSecret || t('partner.not_configured')} readOnly className="p-inputtext-sm font-mono bg-50" />
                 {detailPartner.webhookSecret && (
                   <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.webhookSecret || '', 'Webhook Secret')} />
                 )}
@@ -1006,12 +1006,12 @@ export const Partners: React.FC = () => {
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">{t('partner.ip_whitelist_label', { defaultValue: 'IP Whitelist' })}</label>
+              <label className="font-semibold text-xs text-500">{t('partner.ip_whitelist_label')}</label>
               <InputText value={detailPartner.ipWhitelist || '0.0.0.0/0'} readOnly className="p-inputtext-sm font-mono bg-50" />
             </div>
 
             <div className="p-3 border-round surface-100 border-1 surface-border mt-2">
-              <div className="font-semibold text-xs text-700 mb-1">{t('partner.http_headers_sample', { defaultValue: 'Mẫu HTTP Headers khi gọi API từ POS / Backend Đối tác:' })}</div>
+              <div className="font-semibold text-xs text-700 mb-1">{t('partner.http_headers_sample')}</div>
               <pre className="m-0 text-xs font-mono text-800 line-height-3 bg-white p-2 border-round">
 {`X-Tenant-Id: ${selectedTenant}
 X-Api-Key: ${detailPartner.apiKey || 'pk_live_...'}
@@ -1023,7 +1023,7 @@ Content-Type: application/json`}
           </div>
         )}
         <div className="flex justify-content-end mt-3">
-          <Button label={t('common.close', { defaultValue: 'Đóng' })} icon="pi pi-times" onClick={() => setShowDetailDialog(false)} />
+          <Button label={t('common.close')} icon="pi pi-times" onClick={() => setShowDetailDialog(false)} />
         </div>
       </Dialog>
 
@@ -1031,36 +1031,36 @@ Content-Type: application/json`}
       <Dialog
         visible={showKeyWebhookDialog}
         onHide={() => setShowKeyWebhookDialog(false)}
-        header={keyTargetPartner ? `${t('partner.key_webhook_title', { defaultValue: 'Cấu hình IP/Webhook & API Key' })} · ${keyTargetPartner.partnerCode}` : ''}
+        header={keyTargetPartner ? `${t('partner.key_webhook_title')} · ${keyTargetPartner.partnerCode}` : ''}
         style={{ width: '44rem' }}
         breakpoints={{ '641px': '95vw' }}
         modal
       >
         <div className="flex flex-column gap-3">
           <div className="p-3 border-round surface-50 border-1 surface-border">
-            <div className="font-medium text-sm mb-2">{t('partner.webhook_ip_section', { defaultValue: '1. Cấu hình Webhook & IP Whitelist' })}</div>
+            <div className="font-medium text-sm mb-2">{t('partner.webhook_ip_section')}</div>
             <div className="flex flex-column gap-2">
               <label className="text-xs text-600">Webhook Callback URL</label>
               <InputText value={editWebhookUrl} onChange={(e) => setEditWebhookUrl(e.target.value)} className="font-mono p-inputtext-sm" placeholder="https://partner.example.com/loyalty/webhook" />
-              <label className="text-xs text-600 mt-1">IP Whitelist (phân cách bằng dấu phẩy)</label>
+              <label className="text-xs text-600 mt-1">{t('partner.ip_whitelist_comma_label')}</label>
               <InputText value={editIpWhitelist} onChange={(e) => setEditIpWhitelist(e.target.value)} className="font-mono p-inputtext-sm" placeholder="103.1.2.3/32, 103.1.2.4/32" />
               <div className="flex justify-content-end mt-2">
-                <Button label={t('common.save', { defaultValue: 'Lưu cấu hình' })} icon="pi pi-save" size="small" onClick={handleSaveWebhookAndIp} loading={keyLoading} />
+                <Button label={t('common.save')} icon="pi pi-save" size="small" onClick={handleSaveWebhookAndIp} loading={keyLoading} />
               </div>
             </div>
           </div>
 
           <div className="p-3 border-round surface-50 border-1 surface-border">
             <div className="flex justify-content-between align-items-center mb-2">
-              <span className="font-medium text-sm">{t('partner.rotate_section', { defaultValue: '2. Xoay vòng API Key (Grace Period 7 ngày)' })}</span>
-              <Button label={t('partner.rotate_btn', { defaultValue: 'Xoay vòng API Key' })} icon="pi pi-sync" severity="warning" size="small" onClick={handleRotateApiKey} loading={keyLoading} />
+              <span className="font-medium text-sm">{t('partner.rotate_section')}</span>
+              <Button label={t('partner.rotate_btn')} icon="pi pi-sync" severity="warning" size="small" onClick={handleRotateApiKey} loading={keyLoading} />
             </div>
 
             {rotatedKeyOnce && (
               <div className="p-3 border-round bg-green-50 border-1 border-green-300 mb-3">
                 <div className="text-xs font-medium text-green-800 mb-1">
                   <i className="pi pi-exclamation-circle mr-1" />
-                  {t('partner.show_once_warning', { defaultValue: 'Khóa mới chỉ hiển thị DUY NHẤT 1 LẦN. Vui lòng sao chép và lưu trữ an toàn ngay:' })}
+                  {t('partner.show_once_warning')}
                 </div>
                 <div className="flex align-items-center gap-2">
                   <code className="flex-1 p-2 border-round bg-white font-mono text-sm text-green-900">{rotatedKeyOnce}</code>
@@ -1069,11 +1069,11 @@ Content-Type: application/json`}
               </div>
             )}
 
-            <DataTable<PartnerApiKeyItemModel[]> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys', { defaultValue: 'Chưa có danh sách khóa từ hệ thống.' })}>
+            <DataTable<PartnerApiKeyItemModel[]> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys')}>
               <Column field="keyPrefix" header="Prefix" body={(k: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng thái' })} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === 'ACTIVE' ? 'success' : k.status === 'GRACE_PERIOD' ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
+              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === 'ACTIVE' ? 'success' : k.status === 'GRACE_PERIOD' ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
               <Column field="graceExpiresAt" header="Grace Period" body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
-              <Column header={t('common.action', { defaultValue: 'Thu hồi' })} body={(k: PartnerApiKeyItemModel) => k.id && k.status === 'GRACE_PERIOD' ? <Button label={t('partner.revoke_now', { defaultValue: 'Revoke old key now' })} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
+              <Column header={t('common.action')} body={(k: PartnerApiKeyItemModel) => k.id && k.status === 'GRACE_PERIOD' ? <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
             </DataTable>
           </div>
         </div>

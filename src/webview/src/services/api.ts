@@ -4,18 +4,27 @@
  */
 
 const getApiBaseUrl = (): string => {
+  const runtimeApiGatewayUrl = (
+    window as unknown as { __RUNTIME_CONFIG__?: { API_GATEWAY_URL?: string } }
+  ).__RUNTIME_CONFIG__?.API_GATEWAY_URL;
+  const envApiUrl = (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL;
+  const configuredBaseUrl = runtimeApiGatewayUrl || envApiUrl;
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/+$/, '');
+  }
+
   const hostname = window.location.hostname;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
   const origin = window.location.origin;
   const protocol = window.location.protocol;
 
   if (isLocal) {
-    return 'http://localhost:8088';
+    return '';
   }
   if (hostname.includes('portal.mid.io.vn') || hostname.includes('mid.io.vn')) {
     return `${protocol}//api.mid.io.vn`;
   }
-  return `${origin}/loyalty`;
+  return origin;
 };
 
 export const getTenantId = (): string => {
@@ -33,10 +42,7 @@ export const getDefaultUserId = (): string => {
   if (paramUser) return paramUser;
   const storedUser = sessionStorage.getItem('loyalty_user');
   if (storedUser) return storedUser;
-  const tenant = getTenantId();
-  if (tenant === 'TENANT_MICRO_CRM') return '84977777777';
-  if (tenant === 'TENANT_DELIMART') return '84988888888';
-  return '50937123456';
+  return '';
 };
 
 const API_BASE = getApiBaseUrl();

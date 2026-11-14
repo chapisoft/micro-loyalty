@@ -56,7 +56,7 @@ interface LevelData {
 const LEVELS: LevelData[] = [
   {
     level: 1,
-    name: 'Khởi Động Tháo Vít',
+    name: 'games.screw.level_1_name',
     freeHoles: [
       { id: 'free_1', x: 25, y: 8, isExtra: true },
       { id: 'free_2', x: 50, y: 8, isExtra: true },
@@ -70,7 +70,7 @@ const LEVELS: LevelData[] = [
     plates: [
       {
         id: 1,
-        name: 'Thanh Lam',
+        name: 'games.screw.plate_l1_1',
         shape: 'RECT_H',
         x: 50,
         y: 35,
@@ -87,7 +87,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 2,
-        name: 'Thanh Hổ Phách',
+        name: 'games.screw.plate_l1_2',
         shape: 'RECT_V',
         x: 50,
         y: 50,
@@ -112,7 +112,7 @@ const LEVELS: LevelData[] = [
   },
   {
     level: 2,
-    name: 'Tam Giác Liên Hoàn',
+    name: 'games.screw.level_2_name',
     freeHoles: [
       { id: 'free_1', x: 20, y: 8, isExtra: true },
       { id: 'free_2', x: 40, y: 8, isExtra: true },
@@ -128,7 +128,7 @@ const LEVELS: LevelData[] = [
     plates: [
       {
         id: 1,
-        name: 'Thanh Chéo Xanh',
+        name: 'games.screw.plate_l2_1',
         shape: 'BAR_DIAG_R',
         x: 50,
         y: 50,
@@ -145,7 +145,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 2,
-        name: 'Thanh Chéo Đỏ',
+        name: 'games.screw.plate_l2_2',
         shape: 'BAR_DIAG_L',
         x: 50,
         y: 50,
@@ -162,7 +162,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 3,
-        name: 'Thanh Ngang Vàng',
+        name: 'games.screw.plate_l2_3',
         shape: 'RECT_H',
         x: 50,
         y: 30,
@@ -188,7 +188,7 @@ const LEVELS: LevelData[] = [
   },
   {
     level: 3,
-    name: 'Cối Xay Gió 4 Cánh',
+    name: 'games.screw.level_3_name',
     freeHoles: [
       { id: 'free_1', x: 20, y: 8, isExtra: true },
       { id: 'free_2', x: 40, y: 8, isExtra: true },
@@ -205,7 +205,7 @@ const LEVELS: LevelData[] = [
     plates: [
       {
         id: 1,
-        name: 'Cánh Thẳng Đứng',
+        name: 'games.screw.plate_l3_1',
         shape: 'RECT_V',
         x: 50,
         y: 50,
@@ -222,7 +222,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 2,
-        name: 'Cánh Nằm Ngang',
+        name: 'games.screw.plate_l3_2',
         shape: 'RECT_H',
         x: 50,
         y: 50,
@@ -239,7 +239,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 3,
-        name: 'Khung Vuông Phụ',
+        name: 'games.screw.plate_l3_3',
         shape: 'RECT_H',
         x: 50,
         y: 25,
@@ -266,7 +266,7 @@ const LEVELS: LevelData[] = [
   },
   {
     level: 4,
-    name: 'Khung Lưới Đan Chéo',
+    name: 'games.screw.level_4_name',
     freeHoles: [
       { id: 'free_1', x: 15, y: 8, isExtra: true },
       { id: 'free_2', x: 38, y: 8, isExtra: true },
@@ -283,7 +283,7 @@ const LEVELS: LevelData[] = [
     plates: [
       {
         id: 1,
-        name: 'Thanh Ngang Trên',
+        name: 'games.screw.plate_l4_1',
         shape: 'RECT_H',
         x: 50,
         y: 30,
@@ -300,7 +300,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 2,
-        name: 'Thanh Ngang Dưới',
+        name: 'games.screw.plate_l4_2',
         shape: 'RECT_H',
         x: 50,
         y: 70,
@@ -317,7 +317,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 3,
-        name: 'Thanh Dọc Trái',
+        name: 'games.screw.plate_l4_3',
         shape: 'RECT_V',
         x: 25,
         y: 50,
@@ -334,7 +334,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 4,
-        name: 'Thanh Dọc Phải',
+        name: 'games.screw.plate_l4_4',
         shape: 'RECT_V',
         x: 75,
         y: 50,
@@ -361,7 +361,7 @@ const LEVELS: LevelData[] = [
   },
   {
     level: 5,
-    name: 'Bậc Thầy Gỡ Vít Kim Loại',
+    name: 'games.screw.level_5_name',
     freeHoles: [
       { id: 'free_1', x: 15, y: 8, isExtra: true },
       { id: 'free_2', x: 38, y: 8, isExtra: true },
@@ -380,7 +380,7 @@ const LEVELS: LevelData[] = [
     plates: [
       {
         id: 1,
-        name: 'Khung Tâm Chữ Thập',
+        name: 'games.screw.plate_l5_1',
         shape: 'CROSS',
         x: 50,
         y: 50,
@@ -397,7 +397,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 2,
-        name: 'Thanh Chéo 1',
+        name: 'games.screw.plate_l5_2',
         shape: 'BAR_DIAG_R',
         x: 50,
         y: 50,
@@ -414,7 +414,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 3,
-        name: 'Thanh Chéo 2',
+        name: 'games.screw.plate_l5_3',
         shape: 'BAR_DIAG_L',
         x: 50,
         y: 50,
@@ -431,7 +431,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 4,
-        name: 'Đế Đáy',
+        name: 'games.screw.plate_l5_4',
         shape: 'RECT_H',
         x: 50,
         y: 72,
@@ -448,7 +448,7 @@ const LEVELS: LevelData[] = [
       },
       {
         id: 5,
-        name: 'Đỉnh Vòm',
+        name: 'games.screw.plate_l5_5',
         shape: 'RECT_H',
         x: 50,
         y: 28,
@@ -739,10 +739,10 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
                   ? 'bg-red-600 border-red-400 text-white animate-pulse shadow-md shadow-red-500/30'
                   : 'bg-slate-800 border-slate-700 text-slate-200 hover:text-white active:scale-95'
               }`}
-              title={t('games.screw.hammer_tooltip', { defaultValue: 'Búa Phá Ốc' })}
+              title={t('games.screw.hammer_tooltip')}
             >
               <Hammer className="w-3.5 h-3.5" />
-              <span>{t('games.screw.hammer_btn', { defaultValue: 'Búa' })}</span>
+              <span>{t('games.screw.hammer_btn')}</span>
             </button>
 
             {/* Add Extra Hole */}
@@ -757,7 +757,7 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
               title={t('games.screw.btn_add_hole')}
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>{t('games.screw.add_hole_btn', { defaultValue: '+1 Lỗ' })}</span>
+              <span>{t('games.screw.add_hole_btn')}</span>
             </button>
           </div>
         </div>
@@ -769,7 +769,7 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
 
           {/* Top Free Holes Tray Header */}
           <div className="absolute top-2 inset-x-2 h-12 bg-slate-950/70 backdrop-blur-md rounded-2xl border border-slate-800/80 flex items-center px-2 z-10">
-            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider mr-2">{t('games.screw.screw_box_label', { defaultValue: 'Hộp Ốc:' })}</span>
+            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider mr-2">{t('games.screw.screw_box_label')}</span>
           </div>
 
           {/* 1. RENDER ALL HOLES (Free Holes on top & Board Holes) */}
@@ -848,7 +848,7 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/30 pointer-events-none" />
                   <span className="text-[10px] font-black tracking-widest text-white/70 uppercase select-none drop-shadow">
-                    {plate.name}
+                    {t(plate.name)}
                   </span>
                 </div>
               </div>
@@ -872,7 +872,7 @@ export const ScrewPuzzleGame: React.FC<ScrewPuzzleGameProps> = ({ onBack, onClai
             <div>
               <h3 className="text-lg font-black text-white">{t('games.screw.win_title')}</h3>
               <p className="text-xs text-slate-400 mt-1">
-                {levelData.name} • {t('games.screw.level_label', { level: currentLevelIdx + 1 })}
+                {t(levelData.name)} • {t('games.screw.level_label', { level: currentLevelIdx + 1 })}
               </p>
               <div className="text-3xl font-black text-amber-400 font-mono mt-2 flex items-center justify-center gap-1.5">
                 <Sparkles className="w-6 h-6 text-yellow-300 animate-spin" />

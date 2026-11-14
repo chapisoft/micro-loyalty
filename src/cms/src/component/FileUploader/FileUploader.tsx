@@ -73,7 +73,6 @@ export const FileUploader = ({
     if (initializedRef.current || !files) return;
 
     initializedRef.current = true; // mark as initialized
-    console.log('Initializing file data from props.files:', files);
 
     const initialFiles = files?.map((image, index) => ({
       fileId: image.fileId ?? index,

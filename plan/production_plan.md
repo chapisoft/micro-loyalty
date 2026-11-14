@@ -1,50 +1,21 @@
 # KẾ HOẠCH SẢN XUẤT VÀ LỘ TRÌNH KHẮC PHỤC ĐỦ ĐIỀU KIỆN GO-LIVE
 ## Hệ Sinh Thái Khách Hàng Thân Thiết Liên Minh và Cổng Game Đa Thuê Bao (`micro-loyalty`)
 
-> **Người lập kế hoạch:** Giám đốc Sản phẩm (Product Owner)  
-> **Cập nhật:** 25/08/2026 — Đã Hoàn Thành 100% Khối Lượng Phát Triển (Giai Đoạn 1, 2, 3, 4) & Khung Tích Hợp Đa Thuê Bao  
-> **Mục tiêu sản xuất:** Khắc phục triệt để các khoảng trống kỹ thuật cốt lõi, nâng cấp trải nghiệm người dùng đạt chuẩn siêu ứng dụng thị trường, hoàn tất khung tích hợp đối tác nạp động và nghiệm thu an ninh đo tải để đủ điều kiện kinh doanh thương mại (Commercial Go-Live).
+> **Người lập kế hoạch:** Giám đốc Sản phẩm  
+> **Cập nhật:** 14/11/2026 — Hoàn thành tái cấu trúc 5 Microservices + API Gateway + 3 Frontend và triển khai ổn định trên cụm SaaS `35.247.156.176:65000`  
+> **Mục tiêu sản xuất:** Hoàn thiện kiến trúc Microservices triển khai độc lập từng phân hệ, nâng cấp trải nghiệm người dùng, chuẩn bị khung tích hợp đối tác nạp động và hoàn tất các bước kiểm thử tải / Pentest / Pilot UAT để đạt đủ điều kiện kinh doanh thương mại.
 
 ---
 
-## 1. TỔNG QUAN LỘ TRÌNH 4 GIAI ĐOẠN (GO-LIVE ROADMAP)
+## 1. TỔNG QUAN LỘ TRÌNH 5 GIAI ĐOẠN
 
-```mermaid
-flowchart LR
-    subgraph S_SPRINT_7 ["GIAI ĐOẠN 1: KHẮC PHỤC LÕI & LƯU VẾT DB (100%)"]
-        direction TB
-        SP7_1["1. Đấu Nối 13 Game Với API Máy Chủ<br/>• Gọi submitGameResult thật khi thắng<br/>• Ghi sổ cái bất biến loyalty_point_ledger"]
-        SP7_2["2. Đấu Nối CMS Với Cơ Sở Dữ Liệu<br/>• Xóa bỏ mock state và setTimeout<br/>• Gọi API CRUD Policy, Voucher, Clearing"]
-        SP7_3["3. Tối Ưu Hóa Batch Quét Hạn Điểm<br/>• Phân trang Spring Batch 500 bản ghi<br/>• Trừ điểm theo sổ cái FIFO chính xác"]
-        SP7_1 --> SP7_2 --> SP7_3
-    end
-
-    subgraph S_SPRINT_8 ["GIAI ĐOẠN 2: NÂNG CẤP GAMIFICATION & VÍ (100%)"]
-        direction TB
-        SP8_1["4. Âm Thanh & Phản Hồi Rung 13 Game<br/>• Web Audio API 15 hiệu ứng & Vibration API<br/>• Nhạc nền, âm thanh chém/nổ/thắng/thua/nút"]
-        SP8_2["5. Chuỗi Điểm Danh 7 Ngày & Hồi Lượt<br/>• Rương Báu Hoàng Kim ngày thứ 7 (+200đ + Voucher)<br/>• Đồng hồ đếm lùi hồi 1 lượt sau mỗi 4 giờ"]
-        SP8_3["6. Màn Hình Mã Vạch Voucher Quầy Thu Ngân<br/>• Mã vạch vector Code128 SVG & QR độ sáng cao<br/>• Cảnh báo hạn điểm chi tiết trên thẻ VIP"]
-        SP8_1 --> SP8_2 --> SP8_3
-    end
-
-    subgraph S_SPRINT_9 ["GIAI ĐOẠN 3: AN NINH & STRESS TEST (100%)"]
-        direction TB
-        SP9_1["7. Chống Gian Lận Điểm Minigame<br/>• Chuẩn mật mã SecureRandom cho Vòng quay & Game<br/>• Giới hạn trần điểm số mỗi ván theo thuật toán"]
-        SP9_2["8. Kịch Bản Tải Cao k6 & SQL Bẫy Dữ Liệu<br/>• 3 kịch bản k6 đo tải 1.000 - 2.000 RPS<br/>• File SQL 4 bẫy đối soát toàn vẹn sổ cái"]
-        SP9_1 --> SP9_2
-    end
-
-    subgraph S_SPRINT_10 ["GIAI ĐOẠN 4: ĐỐI TÁC THẬT & ĐA THUÊ BAO (100%)"]
-        direction TB
-        SP10_1["9. Khung Tích Hợp Đa Thuê Bao Nạp Động<br/>• Bảng loyalty_tenant_integrations (V12)<br/>• PaymentGatewayProvider & SmsGatewayProvider<br/>• Nạp cấu hình động từng bên thuê qua Redis/DB"]
-        SP10_2["10. Bộ Kịch Bản E2E & Unit Test Tự Động<br/>• FullLifecycleE2ETest & TenantIntegrationServiceTest<br/>• 67/67 bài test backend pass 100%"]
-        SP10_1 --> SP10_2
-    end
-
-    S_SPRINT_7 --> S_SPRINT_8
-    S_SPRINT_8 --> S_SPRINT_9
-    S_SPRINT_9 --> S_SPRINT_10
-```
+| Giai Đoạn | Tên Giai Đoạn | Hạng Mục Trọng Tâm | Trạng Thái |
+| :---: | :--- | :--- | :---: |
+| **Giai đoạn 1** | Khắc phục lõi & lưu vết cơ sở dữ liệu | Đấu nối 13 minigame với sổ cái thật, xóa mock CMS, batch quét hạn điểm `PointExpirationJob` theo lô 500 FIFO, đối soát bù trừ `ClearingSettlementService` | Hoàn tất mã nguồn |
+| **Giai đoạn 2** | Nâng cấp Gamification & Ví | Âm thanh Web Audio & rung xúc giác, chuỗi điểm danh 7 ngày & hồi lượt 4 giờ, mã vạch Code128 SVG & cảnh báo hạn điểm | Hoàn tất mã nguồn |
+| **Giai đoạn 3** | An ninh, chống gian lận & kịch bản đo tải | `SecureRandom` cho GameHub/Vòng quay, trần điểm số mỗi ván, chuẩn bị bộ kịch bản [lucky_wheel_loadtest.js](../scripts/loadtest/lucky_wheel_loadtest.js), [pos_wallet_loadtest.js](../scripts/loadtest/pos_wallet_loadtest.js) và [security_pentest_suite.py](../scripts/security/security_pentest_suite.py) | Mã kịch bản sẵn sàng; **chờ thực thi đo kiểm** |
+| **Giai đoạn 4** | Khung đa thuê bao & E2E tự động | Bảng `loyalty_tenant_integrations`, `NatcashWalletClient`, `NatcomSmsClient`, `TenantIntegrationService`, `FullLifecycleE2ETest` | Hoàn tất mã nguồn; **chờ kết nối đối tác thật** |
+| **Giai đoạn 5** | Tách 5 Microservices, API Gateway & CI/CD SaaS | Chuyển sang 20 module Maven (`5 Thin-JAR` + `245 lib/` + `etc/`), API Gateway (`18095` SaaS / `8443`,`8080` On-Premise), bổ sung `loyalty-partner-portal`, CI `./ci-local.sh` (`109` Unit Tests pass) & triển khai sống `11` vùng chứa tại `35.247.156.176:65000` | **Hoàn tất & Đang chạy ổn định** |
 
 ---
 
@@ -78,44 +49,38 @@ flowchart LR
 
 ---
 
-### GIAI ĐOẠN 3: AN NINH, CHỐNG GIAN LẬN & ĐO KIỂM TẢI CAO STAGING (SPRINT 9 — ĐÃ HOÀN TẤT 100%)
+### GIAI ĐOẠN 3: AN NINH, CHỐNG GIAN LẬN & CHUẨN BỊ ĐO KIỂM TẢI CAO
 
-* **Mục tiêu:** Bảo vệ an toàn tài chính, ngăn chặn gian lận điểm số và chứng minh năng lực chịu tải.
-* **Thời gian hoàn thành:** 25/08/2026.
+* **Mục tiêu:** Bảo vệ an toàn tài chính, ngăn chặn gian lận điểm số và chuẩn bị bộ công cụ đo kiểm tải / an ninh.
+* **Thời gian cập nhật:** 14/11/2026.
 * **Kết quả nghiệm thu kỹ thuật:**
   1. **An Toàn Mật Mã & Chống Gian Lận Điểm Minigame:** Sử dụng `java.security.SecureRandom` cho Vòng quay và GameHub; kiểm tra và khống chế trần điểm số tối đa mỗi ván; kiểm tra hạn mức ngân sách ngày qua Redis Atomic.
-  2. **Bộ Kịch Bản Đo Kiểm Tải Cao k6:**
-     * `test/load/k6_pos_wallet_burn.js`: Đo tải 1.000 RPS dồn dập tại quầy thu ngân POS.
-     * `test/load/k6_lucky_wheel_spin.js`: Đo tải 2.000 RPS Vòng quay may mắn khung giờ vàng.
-     * `test/load/k6_minigame_submit.js`: Đo tải 1.000 RPS submit kết quả 13 Minigame.
-  3. **Bộ Truy Vấn SQL Đối Soát Toàn Vẹn Sổ Cái Sau Tải (`test/load/sql_concurrency_audit.sql`):** 4 bẫy kiểm tra nghiêm ngặt: lệch số dư tài khoản - sổ cái, trùng lặp Idempotency-Key, số dư âm, và sai lệch toán học Before/After.
+  2. **Bộ Kịch Bản Đo Kiểm Tải Cao k6 (đã tạo mã kịch bản, chờ chạy thực tế trên Staging):**
+     * [lucky_wheel_loadtest.js](../scripts/loadtest/lucky_wheel_loadtest.js): Đo tải kịch bản Vòng quay may mắn.
+     * [pos_wallet_loadtest.js](../scripts/loadtest/pos_wallet_loadtest.js): Đo tải giao dịch quầy thu ngân POS và kiểm tra tính nhất quán số dư.
+  3. **Bộ Kiểm Thử An Ninh Tự Động (`scripts/security/`):** Chuẩn bị kịch bản [security_pentest_suite.py](../scripts/security/security_pentest_suite.py), sẵn sàng chạy rà soát lỗ hổng bảo mật trên Staging.
 
 ---
 
-### GIAI ĐOẠN 4: TÍCH HỢP ĐỐI TÁC THỰC TẾ, KHUNG ĐA THUÊ BAO & BÀN GIAO STAGING (SPRINT 10 — ĐÃ HOÀN TẤT 100%)
+### GIAI ĐOẠN 4 & 5: TÍCH HỢP ĐA THUÊ BAO, TÁCH 5 MICROSERVICES & TRIỂN KHAI SAAS
 
-* **Mục tiêu:** Sẵn sàng kết nối hạ tầng dịch vụ đối tác thật (SaaS & On-Premise) và đảm bảo kiểm thử toàn trình 100% tự động.
-* **Thời gian hoàn thành:** 25/08/2026.
+* **Mục tiêu:** Tách nhỏ dịch vụ thành **5 Microservices độc lập + API Gateway**, sẵn sàng kết nối hạ tầng đối tác thật (SaaS & On-Premise) và đảm bảo kiểm thử tự động qua `./ci-local.sh`.
+* **Thời gian hoàn thành:** 14/11/2026.
 * **Kết quả nghiệm thu kỹ thuật:**
   1. **Khung Tích Hợp Đa Thuê Bao Nạp Động (`loyalty_tenant_integrations` & `TenantIntegrationService`):**
-     * Hỗ trợ lưu trữ cấu hình Cổng Ngân hàng/Ví và Cổng SMS Brandname riêng biệt cho từng Tenant trong Database PostgreSQL 15+ (Migration V12).
-     * Nạp động cấu hình theo `tenantId`, tối ưu tốc độ bằng Redis Cache 15 phút, tự động giải phóng cache khi cập nhật.
-     * Giao diện `PaymentGatewayProvider` triển khai cho: Ví Natcash, Cổng REST Ngân hàng/Ví đối tác (`API_KEY`, `BEARER_TOKEN`, `BASIC_AUTH`).
-     * Giao diện `SmsGatewayProvider` triển khai cho: SMS Brandname Natcom, Cổng SMS Twilio Quốc tế, Cổng SMS REST tùy biến của từng nhà mạng.
-     * Cung cấp REST API Quản trị `/loyalty/v1/integrations` có tính năng kiểm tra kết nối thử nghiệm (Test Connection).
-  2. **Adapter Kết Nối Core Ví Natcash Thật (`NatcashWalletClient.java`):** Hỗ trợ nạp động endpoint qua cấu hình `loyalty.integration.natcash.*`, xác nhận và khấu trừ số dư ví với cơ chế dự phòng an toàn.
-  3. **Adapter Kết Nối Cổng Tin Nhắn SMS Brandname Natcom (`NatcomSmsClient.java`):** Hỗ trợ gửi tin biến động số dư và thông báo sự kiện qua SMS Brandname chính thức.
-  4. **Bộ Kịch Bản Kiểm Thử Toàn Trình & Đa Thuê Bao:**
-     * `FullLifecycleE2ETest.java`: Kiểm chứng toàn bộ chu trình khép kín: Tích điểm → Nâng hạng VIP → Bù trừ tài chính đối tác → Quét điểm hết hạn FIFO.
-     * `TenantIntegrationServiceTest.java`: Kiểm chứng định tuyến động Cổng Ngân hàng & SMS theo từng bên thuê.
-  5. **Nghiệm Thu Bản Dựng:** `67/67` bài test backend pass 100%, CMS build pass trong 3.82s, Webview build pass trong 2.16s với 0 lỗi cú pháp.
+     * Hỗ trợ lưu trữ cấu hình Cổng Ngân hàng/Ví và Cổng SMS Brandname riêng biệt cho từng Tenant trong PostgreSQL 15+ (Migration `V1` đến `V27`).
+     * Nạp động cấu hình theo `tenantId`, tối ưu tốc độ bằng Redis Cache, tự động giải phóng cache khi cập nhật.
+     * Cung cấp `NatcashPaymentProvider`, `NatcomSmsProvider` cùng `NatcashWalletClient.java` và `NatcomSmsClient.java`.
+  2. **Kiến Trúc 5 Microservices & API Gateway (`./ci-local.sh`):**
+     * Tách cụm Backend thành 5 Microservices `Thin-JAR` (`cms-service:8081`, `customer-service:8082`, `game-service:8083`, `campaign-service:8084`, `partner-service:8085`) dùng chung `245` thư viện `lib/`, kết hợp `loyalty-saas-gateway` (`18095`) và 3 Frontend (`loyalty-cms`, `loyalty-webview`, `loyalty-partner-portal`).
+     * **Nghiệm thu CI cục bộ (`./ci-local.sh`):** Biên dịch sạch `20` module Maven, pass `109` Unit Test Backend (`96` `loyalty-common`, `1` `cms-service` `FullLifecycleE2ETest`, `12` `game-service`), build pass `3` Frontend (`cms`, `webview`, `partner-portal`) và hợp lệ hóa cả 2 cấu hình Docker Compose / Nginx.
 
 ---
 
-## 3. SẴN SÀNG TRIỂN KHAI VẬN HÀNH THỬ NGHIỆM TRÊN MÁY CHỦ (NEXT STEPS)
+## 3. HẠNG MỤC VẬN HÀNH ĐÃ HOÀN THÀNH VÀ CÁC BƯỚC TIẾP THEO
 
-Khi người dùng ra chỉ thị triển khai lên máy chủ thử nghiệm (Staging Server `210.211.102.99:65000` hoặc On-Premise `10.228.37.65:22`), các bước kích hoạt vận hành sẽ được thực hiện theo đúng quy trình:
-1. Đồng bộ cấu hình môi trường ngoại vi (`deploy/micro-loyalty/` hoặc `deploy/natcash/`).
-2. Khởi động dịch vụ và nạp Flyway Migration (V1 đến V12).
-3. Kích hoạt bài đo tải `k6` và chạy truy vấn `sql_concurrency_audit.sql` để lấy biên bản nghiệm thu tải thực tế trên hạ tầng.
-4. Mời đơn vị bảo mật thực hiện Pentest an ninh độc lập và khởi động chương trình Pilot UAT.
+1. **Đã triển khai ổn định trên môi trường SaaS (`35.247.156.176:65000`):** Khởi chạy thành công **11 vùng chứa** Docker (`7/7` healthcheck `healthy`), đồng bộ schema Flyway và xác nhận `HTTP 200` trên cả 5 tên miền (`api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `docs.mid.io.vn/swagger-ui/index.html`).
+2. **Các bước tiếp theo để hoàn tất thương mại hóa (Go-Live):**
+   * Kết nối chứng thư & endpoint thật tới Core Ví Natcash / SMS Brandname Natcom và triển khai gói On-Premise (`deploy/natcash/` lên `10.228.37.65:22`) khi có chỉ thị.
+   * Thực thi các bài đo tải [lucky_wheel_loadtest.js](../scripts/loadtest/lucky_wheel_loadtest.js), [pos_wallet_loadtest.js](../scripts/loadtest/pos_wallet_loadtest.js) và đối soát toàn vẹn sổ cái DB sau tải trên môi trường Staging.
+   * Thực thi bộ rà soát an ninh [security_pentest_suite.py](../scripts/security/security_pentest_suite.py), nghiệm thu Pentest độc lập và triển khai Pilot UAT cùng tập người dùng thật.

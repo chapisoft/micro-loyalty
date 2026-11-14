@@ -56,14 +56,14 @@ export const ApprovalQueuePage: React.FC = () => {
       await LoyaltyService.approveRequest(reviewItem.id, decisionNote.trim() || undefined, selectedTenant);
       toast.current?.show({
         severity: 'success',
-        summary: t('approval.approved', { defaultValue: 'Đã phê duyệt' }),
+        summary: t('approval.approved'),
         detail: `${reviewItem.requestCode || reviewItem.id}`,
       });
       setReviewItem(null);
       setDecisionNote('');
       fetchApprovals();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setSubmitting(false);
     }
@@ -74,8 +74,8 @@ export const ApprovalQueuePage: React.FC = () => {
     if (!decisionNote.trim()) {
       toast.current?.show({
         severity: 'warn',
-        summary: t('common.warn', { defaultValue: 'Thiếu lý do' }),
-        detail: t('approval.reject_reason_required', { defaultValue: 'Vui lòng nhập lý do từ chối.' }),
+        summary: t('common.warn'),
+        detail: t('approval.reject_reason_required'),
       });
       return;
     }
@@ -84,14 +84,14 @@ export const ApprovalQueuePage: React.FC = () => {
       await LoyaltyService.rejectRequest(reviewItem.id, decisionNote.trim(), selectedTenant);
       toast.current?.show({
         severity: 'info',
-        summary: t('approval.rejected', { defaultValue: 'Đã từ chối' }),
+        summary: t('approval.rejected'),
         detail: `${reviewItem.requestCode || reviewItem.id}`,
       });
       setReviewItem(null);
       setDecisionNote('');
       fetchApprovals();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setSubmitting(false);
     }
@@ -111,16 +111,16 @@ export const ApprovalQueuePage: React.FC = () => {
   return (
     <div>
       <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.approvals', { defaultValue: 'Hàng đợi Phê duyệt 2 lớp (QT-04)' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.approvals') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
           <div>
             <h4 className="m-0 text-primary font-semibold">
-              {t('approval.title', { defaultValue: 'Hàng đợi Phê duyệt Maker-Checker (QT-04)' })}
+              {t('approval.title')}
             </h4>
             <p className="m-0 text-xs text-500 mt-1">
-              {t('approval.subtitle', { defaultValue: 'Kiểm soát 2 lớp đối với điều chỉnh điểm, khóa/mở khóa hội viên, thay đổi chính sách và đề xuất đối tác.' })}
+              {t('approval.subtitle')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 align-items-center">
@@ -128,7 +128,7 @@ export const ApprovalQueuePage: React.FC = () => {
             <Dropdown
               value={statusFilter}
               options={[
-                { label: t('common.all', { defaultValue: 'Tất cả trạng thái' }), value: 'ALL' },
+                { label: t('common.all'), value: 'ALL' },
                 { label: ApprovalStatus.PENDING, value: ApprovalStatus.PENDING },
                 { label: ApprovalStatus.APPROVED, value: ApprovalStatus.APPROVED },
                 { label: ApprovalStatus.REJECTED, value: ApprovalStatus.REJECTED },
@@ -139,7 +139,7 @@ export const ApprovalQueuePage: React.FC = () => {
             <Dropdown
               value={targetFilter}
               options={[
-                { label: t('common.all', { defaultValue: 'Tất cả nghiệp vụ' }), value: 'ALL' },
+                { label: t('common.all'), value: 'ALL' },
                 { label: ApprovalTargetType.POINT_ADJUSTMENT, value: ApprovalTargetType.POINT_ADJUSTMENT },
                 { label: ApprovalTargetType.MEMBER_LOCK, value: ApprovalTargetType.MEMBER_LOCK },
                 { label: ApprovalTargetType.POLICY, value: ApprovalTargetType.POLICY },
@@ -164,21 +164,21 @@ export const ApprovalQueuePage: React.FC = () => {
             rows={15}
             stripedRows
             responsiveLayout="scroll"
-            emptyMessage={t('approval.empty', { defaultValue: 'Không có yêu cầu nào đang chờ phê duyệt.' })}
+            emptyMessage={t('approval.empty')}
           >
-            <Column field="requestCode" header={t('approval.request_id', { defaultValue: 'Mã Yêu Cầu' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.requestCode || r.id}</span>} style={{ minWidth: '13rem' }} />
-            <Column field="targetType" header={t('approval.target_type', { defaultValue: 'Phân Loại' })} body={(r) => <Tag value={r.targetType} severity="info" />} style={{ minWidth: '11rem' }} />
-            <Column field="actionType" header={t('approval.action_type', { defaultValue: 'Hành Động' })} body={(r) => <span className="font-mono text-xs">{r.actionType}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="targetId" header={t('approval.target_id', { defaultValue: 'Đối Tượng' })} body={(r) => <span className="font-mono white-space-nowrap">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="makerUsername" header={t('approval.maker', { defaultValue: 'Người Tạo (Maker)' })} body={(r) => r.makerUsername || r.makerId || '--'} style={{ minWidth: '10rem' }} />
-            <Column field="reason" header={t('common.reason', { defaultValue: 'Lý Do' })} style={{ minWidth: '14rem' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-            <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Thời Gian' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="requestCode" header={t('approval.request_id')} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.requestCode || r.id}</span>} style={{ minWidth: '13rem' }} />
+            <Column field="targetType" header={t('approval.target_type')} body={(r) => <Tag value={r.targetType} severity="info" />} style={{ minWidth: '11rem' }} />
+            <Column field="actionType" header={t('approval.action_type')} body={(r) => <span className="font-mono text-xs">{r.actionType}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="targetId" header={t('approval.target_id')} body={(r) => <span className="font-mono white-space-nowrap">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="makerUsername" header={t('approval.maker')} body={(r) => r.makerUsername || r.makerId || '--'} style={{ minWidth: '10rem' }} />
+            <Column field="reason" header={t('common.reason')} style={{ minWidth: '14rem' }} />
+            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+            <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             <Column
-              header={t('common.action', { defaultValue: 'Kiểm Duyệt' })}
+              header={t('common.action')}
               body={(r) => (
                 <Button
-                  label={r.status === ApprovalStatus.PENDING ? t('approval.review_btn', { defaultValue: 'Xem & Duyệt' }) : t('common.detail', { defaultValue: 'Chi tiết' })}
+                  label={r.status === ApprovalStatus.PENDING ? t('approval.review_btn') : t('common.detail')}
                   icon="pi pi-search"
                   size="small"
                   outlined
@@ -194,7 +194,7 @@ export const ApprovalQueuePage: React.FC = () => {
       <Dialog
         visible={!!reviewItem}
         onHide={() => setReviewItem(null)}
-        header={reviewItem ? `${t('approval.dialog_title', { defaultValue: 'Thẩm định Yêu cầu' })} · ${reviewItem.requestCode || reviewItem.id}` : ''}
+        header={reviewItem ? `${t('approval.dialog_title')} · ${reviewItem.requestCode || reviewItem.id}` : ''}
         style={{ width: '48rem' }}
         breakpoints={{ '641px': '95vw' }}
         modal
@@ -203,19 +203,19 @@ export const ApprovalQueuePage: React.FC = () => {
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
               <div className="col-6"><span className="text-500 text-xs block">Maker</span><span>{reviewItem.makerUsername || reviewItem.makerId || '--'}</span></div>
-              <div className="col-6"><span className="text-500 text-xs block">Trạng thái</span><Tag value={reviewItem.status} severity={statusSeverity(reviewItem.status)} /></div>
-              <div className="col-12 mt-2"><span className="text-500 text-xs block">Lý do trình duyệt</span><span>{reviewItem.reason || '--'}</span></div>
+              <div className="col-6"><span className="text-500 text-xs block">{t('common.status')}</span><Tag value={reviewItem.status} severity={statusSeverity(reviewItem.status)} /></div>
+              <div className="col-12 mt-2"><span className="text-500 text-xs block">{t('approval.reason')}</span><span>{reviewItem.reason || '--'}</span></div>
             </div>
 
             <div className="grid">
               <div className="col-12 md:col-6">
-                <div className="text-xs font-medium text-500 mb-1">Payload / Trước thay đổi</div>
+                <div className="text-xs font-medium text-500 mb-1">{t('approval.payload_before')}</div>
                 <pre className="m-0 p-2 border-round surface-50 border-1 surface-border text-xs font-mono overflow-auto" style={{ maxHeight: '14rem' }}>
                   {JSON.stringify(reviewItem.payloadBefore || {}, null, 2)}
                 </pre>
               </div>
               <div className="col-12 md:col-6">
-                <div className="text-xs font-medium text-500 mb-1">Dữ liệu đề xuất mới (After / Payload)</div>
+                <div className="text-xs font-medium text-500 mb-1">{t('approval.payload_after')}</div>
                 <pre className="m-0 p-2 border-round bg-green-50 border-1 border-green-200 text-xs font-mono overflow-auto" style={{ maxHeight: '14rem' }}>
                   {JSON.stringify(reviewItem.payloadAfter || {}, null, 2)}
                 </pre>
@@ -224,17 +224,17 @@ export const ApprovalQueuePage: React.FC = () => {
 
             {reviewItem.status === ApprovalStatus.PENDING && (
               <div className="flex flex-column gap-2">
-                <label className="text-sm font-medium">{t('approval.checker_note', { defaultValue: 'Ghi chú của Checker (bắt buộc nếu Từ chối)' })}</label>
+                <label className="text-sm font-medium">{t('approval.checker_note')}</label>
                 <InputTextarea rows={2} value={decisionNote} onChange={(e) => setDecisionNote(e.target.value)} className="w-full" />
               </div>
             )}
 
             <div className="flex justify-content-end gap-2 mt-2">
-              <Button label={t('common.close', { defaultValue: 'Đóng' })} outlined onClick={() => setReviewItem(null)} />
+              <Button label={t('common.close')} outlined onClick={() => setReviewItem(null)} />
               {reviewItem.status === ApprovalStatus.PENDING && (
                 <>
-                  <Button label={t('approval.reject_btn', { defaultValue: 'Từ chối' })} icon="pi pi-times" severity="danger" outlined onClick={handleReject} loading={submitting} />
-                  <Button label={t('approval.approve_btn', { defaultValue: 'Phê duyệt' })} icon="pi pi-check" severity="success" onClick={handleApprove} loading={submitting} />
+                  <Button label={t('approval.reject_btn')} icon="pi pi-times" severity="danger" outlined onClick={handleReject} loading={submitting} />
+                  <Button label={t('approval.approve_btn')} icon="pi pi-check" severity="success" onClick={handleApprove} loading={submitting} />
                 </>
               )}
             </div>

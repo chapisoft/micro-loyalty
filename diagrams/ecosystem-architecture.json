@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kiến Trúc Microservices & API Gateway Hệ Sinh Thái Micro-Loyalty",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "client-to-gateway",
+        "label": "Kênh truy cập và Gateway",
+        "focus": ["clients", "portals", "api_gateway"],
+        "note": "Lưu lượng từ ứng dụng khách hàng, quản trị và đối tác đi qua Nginx API Gateway."
+      },
+      {
+        "id": "domain-microservices",
+        "label": "5 Microservices độc lập",
+        "focus": ["api_gateway", "cms_svc", "customer_svc", "game_svc", "campaign_svc", "partner_svc"],
+        "note": "Định tuyến theo tiền tố đường dẫn tới từng dịch vụ Thin-JAR triển khai độc lập."
+      },
+      {
+        "id": "shared-data-tier",
+        "label": "Tầng dữ liệu và sự kiện",
+        "focus": ["cms_svc", "customer_svc", "game_svc", "campaign_svc", "partner_svc", "postgres", "redis", "outbox"],
+        "note": "Dùng chung cơ sở dữ liệu PostgreSQL 15+, khóa phân tán Redis 7 và Webhook Outbox."
+      }
+    ]
+  },
+  "components": [
+    { "id": "clients", "type": "frontend", "label": "App & Webview", "sublabel": "portal.mid.io.vn", "pos": [48, 140], "size": [168, 62] },
+    { "id": "portals", "type": "frontend", "label": "CMS & Partner Portal", "sublabel": "cms / partner.mid.io.vn", "pos": [48, 300], "size": [168, 62] },
+
+    { "id": "api_gateway", "type": "security", "label": "Nginx API Gateway", "sublabel": ":18095 | api.mid.io.vn", "pos": [290, 220], "size": [182, 68], "tag": "Routing" },
+
+    { "id": "cms_svc", "type": "backend", "label": "cms-service", "sublabel": ":8081 | Admin & Policy", "pos": [560, 48], "size": [190, 60] },
+    { "id": "customer_svc", "type": "backend", "label": "customer-service", "sublabel": ":8082 | Điểm, Hạng, Ví QR", "pos": [560, 134], "size": [190, 60] },
+    { "id": "game_svc", "type": "backend", "label": "game-service", "sublabel": ":8083 | GameHub & Wheel", "pos": [560, 220], "size": [190, 60] },
+    { "id": "campaign_svc", "type": "backend", "label": "campaign-service", "sublabel": ":8084 | Chiến dịch & AI", "pos": [560, 306], "size": [190, 60] },
+    { "id": "partner_svc", "type": "backend", "label": "partner-service", "sublabel": ":8085 | Bù trừ & Outbox", "pos": [560, 392], "size": [190, 60] },
+
+    { "id": "postgres", "type": "database", "label": "PostgreSQL 15+", "sublabel": ":15435 | loyalty_db (V1..V27)", "pos": [845, 90], "size": [196, 64] },
+    { "id": "redis", "type": "database", "label": "Redis 7", "sublabel": ":16385 | RLock & Cache", "pos": [845, 220], "size": [196, 64] },
+    { "id": "outbox", "type": "messagebus", "label": "Outbox & Webhook", "sublabel": "HMAC-SHA256 | Đối soát", "pos": [845, 350], "size": [196, 64] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "Cụm 5 Microservices Thin-JAR", "wraps": ["cms_svc", "customer_svc", "game_svc", "campaign_svc", "partner_svc"], "pad": 18 },
+    { "kind": "region", "label": "Tầng Dữ Liệu & Hạ Tầng Dùng Chung", "wraps": ["postgres", "redis", "outbox"], "pad": 18 }
+  ],
+  "connections": [
+    { "from": "clients", "to": "api_gateway", "label": "HTTPS", "variant": "emphasis" },
+    { "from": "portals", "to": "api_gateway" },
+
+    { "from": "api_gateway", "to": "cms_svc" },
+    { "from": "api_gateway", "to": "customer_svc" },
+    { "from": "api_gateway", "to": "game_svc", "variant": "emphasis" },
+    { "from": "api_gateway", "to": "campaign_svc" },
+    { "from": "api_gateway", "to": "partner_svc" },
+
+    { "from": "cms_svc", "to": "postgres" },
+    { "from": "customer_svc", "to": "postgres" },
+    { "from": "game_svc", "to": "redis", "variant": "dashed" },
+    { "from": "campaign_svc", "to": "outbox", "variant": "dashed" },
+    { "from": "partner_svc", "to": "outbox", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Phân Tách Microservices Độc Lập",
+      "items": [
+        "Đóng gói Thin-JAR dùng chung thư viện lib/ và cấu hình ngoại vi etc/",
+        "Triển khai độc lập từng dịch vụ qua Docker Compose không ảnh hưởng phân hệ khác"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Điều Phối API Gateway Tập Trung",
+      "items": [
+        "Nginx Gateway cổng 18095 định tuyến theo tiền tố URI về cổng 8081 đến 8085",
+        "Đồng bộ cấu hình runtime qua env-config.json cho CMS, Webview và Partner Portal"
+      ]
+    }
+  ]
+}

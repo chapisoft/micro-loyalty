@@ -291,17 +291,17 @@ export const LoyaltyService = {
         id: p.id,
         policyCode: p.code || `POL_${p.id}`,
         partnerId: p.partnerId,
-        partnerCode: p.partnerCode || 'DELIMART',
-        partnerName: p.partnerName || 'Siêu Thị Delimart',
-        type: p.type || 'BURN',
-        earnRate: p.earnRatePercent !== undefined ? p.earnRatePercent : 1,
-        earnRatePercent: p.earnRatePercent !== undefined ? p.earnRatePercent : 1,
-        exchangeRate: p.exchangeRate !== undefined ? p.exchangeRate : 1,
-        maxBurnPercent: p.maxBurnPercentage !== undefined ? p.maxBurnPercentage : 50,
-        maxBurnPercentage: p.maxBurnPercentage !== undefined ? p.maxBurnPercentage : 50,
-        minBillAmount: p.minBillAmount !== undefined ? p.minBillAmount : 10,
-        status: p.status || 'ACTIVE',
-        effectiveDate: p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : new Date().toLocaleDateString('vi-VN'),
+        partnerCode: p.partnerCode || '',
+        partnerName: p.partnerName || '',
+        type: p.type || '',
+        earnRate: p.earnRatePercent,
+        earnRatePercent: p.earnRatePercent,
+        exchangeRate: p.exchangeRate,
+        maxBurnPercent: p.maxBurnPercentage,
+        maxBurnPercentage: p.maxBurnPercentage,
+        minBillAmount: p.minBillAmount,
+        status: p.status || '',
+        effectiveDate: p.updatedAt ? new Date(p.updatedAt).toLocaleString() : '',
         description: p.description || '',
       }));
     } catch {
@@ -333,12 +333,12 @@ export const LoyaltyService = {
       partnerId: data.partnerId,
       partnerCode: data.partnerCode,
       partnerName: data.partnerName,
-      earnRatePercent: data.earnRate || data.earnRatePercent || 1,
-      exchangeRate: data.exchangeRate || 1,
-      minBillAmount: data.minBillAmount || 10,
-      maxBurnPercentage: data.maxBurnPercent || data.maxBurnPercentage || 50,
-      status: data.status || 'ACTIVE',
-      description: data.description || '',
+      earnRatePercent: data.earnRate ?? data.earnRatePercent,
+      exchangeRate: data.exchangeRate,
+      minBillAmount: data.minBillAmount,
+      maxBurnPercentage: data.maxBurnPercent ?? data.maxBurnPercentage,
+      status: data.status,
+      description: data.description,
     };
     const response: any = await apiClient.post('/loyalty/v1/policies', payload, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -502,7 +502,7 @@ export const LoyaltyService = {
     const to = toDate || new Date().toISOString();
     const response: any = await apiClient.post(
       '/loyalty/v1/clearinghouse/settle-period',
-      { fromDate: from, toDate: to, remarks: remarks || 'Quyết toán bù trừ định kỳ' },
+      { fromDate: from, toDate: to, remarks: remarks || '' },
       { headers: { 'X-Tenant-Id': tenantId } }
     );
     return response?.data || response;
@@ -623,7 +623,7 @@ export const LoyaltyService = {
       const mappedItems: PointLedgerItem[] = rawList.map((item: any) => ({
         id: item.id,
         transactionId: item.referenceCode || item.transactionId || `TX_${item.id}`,
-        externalUserId: item.externalUserId || 'Khách hàng',
+        externalUserId: item.externalUserId || '',
         actionType: item.changeType || item.actionType || 'EARN',
         points: item.pointChange != null ? Math.abs(Number(item.pointChange)) : (item.points || 0),
         balanceBefore: item.balanceBefore != null ? Number(item.balanceBefore) : undefined,
@@ -688,13 +688,7 @@ export const LoyaltyService = {
       return response?.data || response;
     } catch (e) {
       console.error('[getGlobalGameConfig] Error:', e);
-      return {
-        pointsPerTurnExchange: 50,
-        goldenHourEnabled: true,
-        maintenanceMode: false,
-        maxDailyTurnsPerUser: 10,
-        welcomeBannerText: 'Tham gia minigame mỗi ngày nhận quà siêu khủng từ Natcash!',
-      };
+      return null;
     }
   },
 
@@ -783,10 +777,10 @@ export const LoyaltyService = {
         yesterdaySpins: 0,
         spinGrowthPercent: 0,
         todaySpentAmount: 0,
-        dailyBudgetLimit: 50000,
+        dailyBudgetLimit: 0,
         budgetUsagePercent: 0,
         uniquePlayersToday: 0,
-        lockMechanism: 'Redisson RLock',
+        lockMechanism: '',
       };
     }
   },
@@ -2029,8 +2023,8 @@ export interface AgentLoyaltyItemModel {
 export interface AgentTargetConfigModel {
   roleType: string;
   month: string;
-  targetCustomers: number;
-  rewardAmount: number;
+  targetCustomers?: number;
+  rewardAmount?: number;
   minQualifiedNetworkPercent?: number;
 }
 

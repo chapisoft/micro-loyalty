@@ -17,7 +17,7 @@ import { loyaltyService, LoyaltyService, PointLedgerItem } from '@/service/loyal
 import { partnerService, Partner } from '@/service/partner.service';
 
 export const Transactions: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toastRef = React.useRef<Toast>(null);
 
   const [items, setItems] = useState<PointLedgerItem[]>([]);
@@ -52,7 +52,7 @@ export const Transactions: React.FC = () => {
 
   const handleSubmitAdjustment = async () => {
     if (!adjustUserId.trim() || adjustAmount <= 0 || !adjustReason.trim()) {
-      toastRef.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('transaction.adjust_required', { defaultValue: 'Vui lòng nhập Hội viên, Số điểm > 0 và Lý do điều chỉnh.' }) });
+      toastRef.current?.show({ severity: 'warn', summary: t('common.warn'), detail: t('transaction.adjust_required') });
       return;
     }
     setAdjustSubmitting(true);
@@ -70,8 +70,8 @@ export const Transactions: React.FC = () => {
       );
       toastRef.current?.show({
         severity: 'success',
-        summary: t('common.success', { defaultValue: 'Thành công' }),
-        detail: t('transaction.adjust_submitted', { defaultValue: 'Đã gửi yêu cầu điều chỉnh điểm sang hàng đợi phê duyệt 2 lớp.' }),
+        summary: t('common.success'),
+        detail: t('transaction.adjust_submitted'),
       });
       setAdjustVisible(false);
       setAdjustUserId('');
@@ -79,7 +79,7 @@ export const Transactions: React.FC = () => {
       setAdjustReason('');
       setAdjustTicketRef('');
     } catch (err: any) {
-      toastRef.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toastRef.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setAdjustSubmitting(false);
     }
@@ -163,10 +163,10 @@ export const Transactions: React.FC = () => {
     const allCodes = Array.from(new Set([...staticCodes, ...liveCodes]));
 
     return [
-      { label: t('transaction.filter_partner', { defaultValue: 'Tất cả Đối tác' }), value: 'ALL' },
+      { label: t('transaction.filter_partner'), value: 'ALL' },
       ...allCodes.map((code) => {
         const found = tenantPartners.find((p) => p.partnerCode === code);
-        const name = found ? found.partnerName : t(`alliance_partners.${code}`, { defaultValue: code });
+        const name = found ? found.partnerName : (i18n.exists(`alliance_partners.${code}`) ? t(`alliance_partners.${code}`) : code);
         return {
           label: `${code} — ${name}`,
           value: code,
@@ -176,23 +176,23 @@ export const Transactions: React.FC = () => {
   }, [tenantPartners, t]);
 
   const actionTypeOptions = useMemo(() => [
-    { label: t('transaction.filter_action', { defaultValue: 'Tất cả Loại GD' }), value: 'ALL' },
-    { label: t('action_type.earn', { defaultValue: 'TÍCH ĐIỂM (EARN)' }), value: 'EARN' },
-    { label: t('action_type.burn', { defaultValue: 'TIÊU ĐIỂM (BURN)' }), value: 'BURN' },
-    { label: t('action_type.reward', { defaultValue: 'THƯỞNG CỘT MỐC (REWARD)' }), value: 'REWARD' },
-    { label: t('action_type.spin', { defaultValue: 'VÒNG QUAY (SPIN)' }), value: 'SPIN' },
-    { label: t('action_type.voucher', { defaultValue: 'ĐỔI VOUCHER (VOUCHER)' }), value: 'VOUCHER' },
-    { label: t('action_type.refund', { defaultValue: 'HOÀN ĐIỂM (REFUND)' }), value: 'REFUND' },
-    { label: t('action_type.expire', { defaultValue: 'HẾT HẠN (EXPIRE)' }), value: 'EXPIRE' },
-    { label: t('action_type.adjust', { defaultValue: 'ĐIỀU CHỈNH (ADJUST)' }), value: 'ADJUST' },
+    { label: t('transaction.filter_action'), value: 'ALL' },
+    { label: t('action_type.earn'), value: 'EARN' },
+    { label: t('action_type.burn'), value: 'BURN' },
+    { label: t('action_type.reward'), value: 'REWARD' },
+    { label: t('action_type.spin'), value: 'SPIN' },
+    { label: t('action_type.voucher'), value: 'VOUCHER' },
+    { label: t('action_type.refund'), value: 'REFUND' },
+    { label: t('action_type.expire'), value: 'EXPIRE' },
+    { label: t('action_type.adjust'), value: 'ADJUST' },
   ], [t]);
 
   const copyToClipboard = (text: string, msgKey: string) => {
     navigator.clipboard.writeText(text);
     toastRef.current?.show({
       severity: 'success',
-      summary: t('common.success', { defaultValue: 'Thành công' }),
-      detail: t(msgKey, { defaultValue: 'Đã sao chép vào bộ nhớ tạm!' }),
+      summary: t('common.success'),
+      detail: t(msgKey),
       life: 2500,
     });
   };
@@ -212,7 +212,7 @@ export const Transactions: React.FC = () => {
           text
           severity="info"
           onClick={() => openDetailDialog(rowData)}
-          tooltip={t('transaction.view_detail', { defaultValue: 'Xem chi tiết đối soát' })}
+          tooltip={t('transaction.view_detail')}
           tooltipOptions={{ position: 'top' }}
         />
       </div>
@@ -222,21 +222,21 @@ export const Transactions: React.FC = () => {
   const actionTypeTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value={t('action_type.earn', { defaultValue: 'Tích Điểm' })} icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value={t('action_type.earn')} icon="pi pi-arrow-up-right" />;
       case 'BURN':
-        return <Tag severity="danger" value={t('action_type.burn', { defaultValue: 'Tiêu Điểm' })} icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value={t('action_type.burn')} icon="pi pi-arrow-down-left" />;
       case 'REWARD':
-        return <Tag severity="info" value={t('action_type.reward', { defaultValue: 'Thưởng Cột Mốc' })} icon="pi pi-gift" />;
+        return <Tag severity="info" value={t('action_type.reward')} icon="pi pi-gift" />;
       case 'SPIN':
-        return <Tag severity="warning" value={t('action_type.spin', { defaultValue: 'Vòng Quay' })} icon="pi pi-compass" />;
+        return <Tag severity="warning" value={t('action_type.spin')} icon="pi pi-compass" />;
       case 'VOUCHER':
-        return <Tag severity="info" value={t('action_type.voucher', { defaultValue: 'Đổi Voucher' })} icon="pi pi-ticket" />;
+        return <Tag severity="info" value={t('action_type.voucher')} icon="pi pi-ticket" />;
       case 'REFUND':
-        return <Tag severity="info" value={t('action_type.refund', { defaultValue: 'Hoàn Điểm' })} icon="pi pi-replay" />;
+        return <Tag severity="info" value={t('action_type.refund')} icon="pi pi-replay" />;
       case 'EXPIRE':
-        return <Tag severity="secondary" value={t('action_type.expire', { defaultValue: 'Hết Hạn' })} icon="pi pi-clock" />;
+        return <Tag severity="secondary" value={t('action_type.expire')} icon="pi pi-clock" />;
       default:
-        return <Tag severity="secondary" value={rowData.actionType || t('common.actions', { defaultValue: 'Giao Dịch' })} />;
+        return <Tag severity="secondary" value={rowData.actionType || t('common.actions')} />;
     }
   };
 
@@ -244,7 +244,7 @@ export const Transactions: React.FC = () => {
     const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
     return (
       <span className={`font-semibold font-mono ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
-        {isPositive ? `+${rowData.points.toLocaleString()}` : `-${rowData.points.toLocaleString()}`} {t('common.points', { defaultValue: 'Điểm' })}
+        {isPositive ? `+${rowData.points.toLocaleString()}` : `-${rowData.points.toLocaleString()}`} {t('common.points')}
       </span>
     );
   };
@@ -252,13 +252,13 @@ export const Transactions: React.FC = () => {
   const balanceAfterTemplate = (rowData: PointLedgerItem) => {
     return (
       <span className="font-normal font-mono text-700">
-        {rowData.balanceAfter != null ? rowData.balanceAfter.toLocaleString() : '-'} {t('common.points', { defaultValue: 'Điểm' })}
+        {rowData.balanceAfter != null ? rowData.balanceAfter.toLocaleString() : '-'} {t('common.points')}
       </span>
     );
   };
 
   const partnerTemplate = (rowData: PointLedgerItem) => {
-    const name = rowData.partnerName || t(`alliance_partners.${rowData.partnerCode}`, { defaultValue: rowData.partnerCode });
+    const name = rowData.partnerName || (i18n.exists(`alliance_partners.${rowData.partnerCode}`) ? t(`alliance_partners.${rowData.partnerCode}`) : rowData.partnerCode);
     return (
       <div className="flex flex-column">
         <span className="font-medium text-800">{name}</span>
@@ -282,12 +282,12 @@ export const Transactions: React.FC = () => {
     const status = rowData.status || (rowData.actionType === 'REFUND' ? 'REFUNDED' : rowData.actionType === 'EXPIRE' ? 'EXPIRED' : 'COMPLETED');
     switch (status) {
       case 'REFUNDED':
-        return <Tag severity="warning" value={t('transaction.status_refunded', { defaultValue: 'Đã hoàn' })} />;
+        return <Tag severity="warning" value={t('transaction.status_refunded')} />;
       case 'EXPIRED':
-        return <Tag severity="danger" value={t('transaction.status_expired', { defaultValue: 'Hết hạn' })} />;
+        return <Tag severity="danger" value={t('transaction.status_expired')} />;
       case 'COMPLETED':
       default:
-        return <Tag severity="success" value={t('transaction.status_completed', { defaultValue: 'Hoàn tất' })} />;
+        return <Tag severity="success" value={t('transaction.status_completed')} />;
     }
   };
 
@@ -296,10 +296,10 @@ export const Transactions: React.FC = () => {
       <div className="flex flex-wrap align-items-center gap-3">
         <div>
           <h4 className="m-0 text-primary font-bold">
-            {t('transaction.management_title', { defaultValue: 'Nhật ký Biến động Sổ cái Điểm & Giao dịch Loyalty' })}
+            {t('transaction.management_title')}
           </h4>
           <p className="text-xs text-500 m-0 mt-1">
-            {t('transaction.subtitle', { defaultValue: 'Kiểm toán biến động điểm thưởng bất biến theo chuẩn kế toán liên minh đa đối tác' })}
+            {t('transaction.subtitle')}
           </p>
         </div>
         <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
@@ -309,14 +309,14 @@ export const Transactions: React.FC = () => {
           value={selectedPartner}
           options={partnerOptions}
           onChange={(e) => setSelectedPartner(e.value)}
-          placeholder={t('transaction.filter_partner', { defaultValue: 'Đối tác' })}
+          placeholder={t('transaction.filter_partner')}
           className="w-13rem"
         />
         <Dropdown
           value={selectedActionType}
           options={actionTypeOptions}
           onChange={(e) => setSelectedActionType(e.value)}
-          placeholder={t('transaction.filter_action', { defaultValue: 'Loại GD' })}
+          placeholder={t('transaction.filter_action')}
           className="w-12rem"
         />
         <span className="p-input-icon-left">
@@ -326,12 +326,12 @@ export const Transactions: React.FC = () => {
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            placeholder={t('transaction.search_placeholder', { defaultValue: 'Tìm theo Mã GD, SĐT, Đối tác...' })}
+            placeholder={t('transaction.search_placeholder')}
             className="w-14rem md:w-18rem"
           />
         </span>
         <Button
-          label={t('transaction.manual_adjust_btn', { defaultValue: 'Điều chỉnh điểm' })}
+          label={t('transaction.manual_adjust_btn')}
           icon="pi pi-sliders-h"
           severity="warning"
           outlined
@@ -343,7 +343,7 @@ export const Transactions: React.FC = () => {
           rounded
           outlined
           onClick={handleRefresh}
-          tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+          tooltip={t('common.refresh')}
         />
       </div>
     </div>
@@ -352,7 +352,7 @@ export const Transactions: React.FC = () => {
   return (
     <div>
       <Toast ref={toastRef} />
-      <AppBreadcrumb items={[{ label: t('nav.transactions', { defaultValue: 'Sổ Cái & Giao Dịch' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.transactions') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable
@@ -367,7 +367,7 @@ export const Transactions: React.FC = () => {
           header={header}
           dataKey="id"
           rowsPerPageOptions={[15, 30, 50]}
-          emptyMessage={t('common.no_data', { defaultValue: 'Chưa có biến động giao dịch điểm nào phù hợp với bộ lọc' })}
+          emptyMessage={t('common.no_data')}
           stripedRows
           responsiveLayout="scroll"
         >
@@ -380,7 +380,7 @@ export const Transactions: React.FC = () => {
 
           {/* Cột 2: Thao tác (Xem chi tiết) */}
           <Column
-            header={t('transaction.actions', { defaultValue: 'Thao tác' })}
+            header={t('transaction.actions')}
             body={actionBodyTemplate}
             style={{ width: '4.5rem', textAlign: 'center' }}
           />
@@ -388,7 +388,7 @@ export const Transactions: React.FC = () => {
           {/* Cột 3: Mã GD */}
           <Column
             field="transactionId"
-            header={<span title={t('transaction.id_tooltip', { defaultValue: 'Mã định danh giao dịch sổ cái duy nhất' })}>{t('transaction.id', { defaultValue: 'Mã GD' })}</span>}
+            header={<span title={t('transaction.id_tooltip')}>{t('transaction.id')}</span>}
             body={(row: PointLedgerItem) => (
               <div className="flex align-items-center gap-1">
                 <span className="font-mono white-space-nowrap font-medium text-primary text-sm">{row.transactionId}</span>
@@ -399,7 +399,7 @@ export const Transactions: React.FC = () => {
                   className="p-1 text-400 hover:text-primary"
                   style={{ width: '1.5rem', height: '1.5rem' }}
                   onClick={() => copyToClipboard(row.transactionId, 'transaction.copied_tx_code')}
-                  tooltip={t('transaction.copy_tx_code', { defaultValue: 'Sao chép mã GD' })}
+                  tooltip={t('transaction.copy_tx_code')}
                   tooltipOptions={{ position: 'top' }}
                 />
               </div>
@@ -410,7 +410,7 @@ export const Transactions: React.FC = () => {
           {/* Cột 4: Số Điện Thoại / User ID */}
           <Column
             field="externalUserId"
-            header={<span title={t('transaction.phone_tooltip', { defaultValue: 'Số điện thoại hoặc mã định danh hội viên' })}>{t('transaction.phone', { defaultValue: 'Số Điện Thoại' })}</span>}
+            header={<span title={t('transaction.phone_tooltip')}>{t('transaction.phone')}</span>}
             body={(row: PointLedgerItem) => <span className="font-mono white-space-nowrap text-800">{row.externalUserId}</span>}
             style={{ minWidth: '12rem' }}
           />
@@ -419,7 +419,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="actionType"
             body={actionTypeTemplate}
-            header={<span title={t('transaction.action_tooltip', { defaultValue: 'Loại biến động điểm trong hệ thống' })}>{t('transaction.action_type', { defaultValue: 'Loại GD' })}</span>}
+            header={<span title={t('transaction.action_tooltip')}>{t('transaction.action_type')}</span>}
             style={{ minWidth: '9rem', textAlign: 'center' }}
           />
 
@@ -427,7 +427,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="points"
             body={pointsTemplate}
-            header={<span title={t('transaction.amount_tooltip', { defaultValue: 'Số lượng điểm cộng hoặc trừ' })}>{t('transaction.amount', { defaultValue: 'Biến Động' })}</span>}
+            header={<span title={t('transaction.amount_tooltip')}>{t('transaction.amount')}</span>}
             style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
 
@@ -435,7 +435,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="balanceAfter"
             body={balanceAfterTemplate}
-            header={<span title={t('transaction.balance_after_tooltip', { defaultValue: 'Số dư khả dụng của hội viên sau giao dịch' })}>{t('transaction.balance_after', { defaultValue: 'Số Dư Sau' })}</span>}
+            header={<span title={t('transaction.balance_after_tooltip')}>{t('transaction.balance_after')}</span>}
             style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
 
@@ -443,7 +443,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="partnerCode"
             body={partnerTemplate}
-            header={<span title={t('transaction.partner_tooltip', { defaultValue: 'Đơn vị đối tác liên minh phát sinh giao dịch' })}>{t('transaction.partner', { defaultValue: 'Đối Tác' })}</span>}
+            header={<span title={t('transaction.partner_tooltip')}>{t('transaction.partner')}</span>}
             style={{ minWidth: '12rem' }}
           />
 
@@ -451,14 +451,14 @@ export const Transactions: React.FC = () => {
           <Column
             field="createdAt"
             body={dateTemplate}
-            header={t('common.created_at', { defaultValue: 'Thời Gian' })}
+            header={t('common.created_at')}
             className="font-mono white-space-nowrap"
             style={{ minWidth: '12rem' }}
           />
 
           {/* Cột 10: Trạng Thái */}
           <Column
-            header={t('transaction.status', { defaultValue: 'Trạng Thái' })}
+            header={t('transaction.status')}
             body={statusTemplate}
             style={{ width: '7.5rem', textAlign: 'center' }}
           />
@@ -471,8 +471,8 @@ export const Transactions: React.FC = () => {
           <div className="flex align-items-center gap-2">
             <i className="pi pi-book text-primary text-xl" />
             <div>
-              <div className="font-bold text-lg text-primary">{t('transaction.detail_title', { defaultValue: 'Chi Tiết Giao Dịch Sổ Cái Điểm' })}</div>
-              <div className="text-xs text-500 font-normal">{t('transaction.detail_subtitle', { defaultValue: 'Chứng từ kế toán & kiểm toán biến động điểm bất biến' })}</div>
+              <div className="font-bold text-lg text-primary">{t('transaction.detail_title')}</div>
+              <div className="text-xs text-500 font-normal">{t('transaction.detail_subtitle')}</div>
             </div>
           </div>
         }
@@ -482,7 +482,7 @@ export const Transactions: React.FC = () => {
         onHide={() => setDetailDialogVisible(false)}
         footer={
           <Button
-            label={t('common.close', { defaultValue: 'Đóng' })}
+            label={t('common.close')}
             icon="pi pi-times"
             outlined
             onClick={() => setDetailDialogVisible(false)}
@@ -494,19 +494,19 @@ export const Transactions: React.FC = () => {
             {/* KHỐI CÂN BẰNG SỔ CÁI KẾ TOÁN (DOUBLE-ENTRY BALANCE) */}
             <div className="surface-100 p-3 border-round border-1 surface-border">
               <div className="font-semibold text-700 text-xs mb-2 uppercase tracking-wide">
-                {t('transaction.double_entry_title', { defaultValue: 'Cân Bằng Sổ Cái Điểm (Double-Entry Balance)' })}
+                {t('transaction.double_entry_title')}
               </div>
               <div className="grid text-center align-items-center">
                 <div className="col-4">
-                  <div className="text-xs text-500 mb-1">{t('transaction.balance_before', { defaultValue: 'Số Dư Trước' })}</div>
+                  <div className="text-xs text-500 mb-1">{t('transaction.balance_before')}</div>
                   <div className="font-mono font-bold text-lg text-700">
                     {detailItem.balanceBefore != null ? detailItem.balanceBefore.toLocaleString() : '-'}
                   </div>
-                  <div className="text-xs text-400">{t('common.points', { defaultValue: 'Điểm' })}</div>
+                  <div className="text-xs text-400">{t('common.points')}</div>
                 </div>
 
                 <div className="col-4">
-                  <div className="text-xs text-500 mb-1">{t('transaction.amount', { defaultValue: 'Biến Động' })}</div>
+                  <div className="text-xs text-500 mb-1">{t('transaction.amount')}</div>
                   <div className={`font-mono font-bold text-xl ${(detailItem.actionType === 'EARN' || detailItem.actionType === 'REWARD' || detailItem.actionType === 'SPIN') ? 'text-green-600' : 'text-orange-600'}`}>
                     {(detailItem.actionType === 'EARN' || detailItem.actionType === 'REWARD' || detailItem.actionType === 'SPIN') ? `+${detailItem.points.toLocaleString()}` : `-${detailItem.points.toLocaleString()}`}
                   </div>
@@ -514,11 +514,11 @@ export const Transactions: React.FC = () => {
                 </div>
 
                 <div className="col-4">
-                  <div className="text-xs text-500 mb-1">{t('transaction.balance_after', { defaultValue: 'Số Dư Sau' })}</div>
+                  <div className="text-xs text-500 mb-1">{t('transaction.balance_after')}</div>
                   <div className="font-mono font-bold text-lg text-primary">
                     {detailItem.balanceAfter != null ? detailItem.balanceAfter.toLocaleString() : '-'}
                   </div>
-                  <div className="text-xs text-400">{t('common.points', { defaultValue: 'Điểm' })}</div>
+                  <div className="text-xs text-400">{t('common.points')}</div>
                 </div>
               </div>
             </div>
@@ -527,11 +527,11 @@ export const Transactions: React.FC = () => {
             <div className="border-1 surface-border border-round p-3">
               <div className="font-semibold text-primary text-sm mb-3">
                 <i className="pi pi-receipt mr-2" />
-                {t('transaction.tx_info_title', { defaultValue: 'Thông Tin Giao Dịch & Tham Chiếu' })}
+                {t('transaction.tx_info_title')}
               </div>
               <div className="grid">
                 <div className="col-6">
-                  <span className="text-500 text-xs">{t('transaction.tx_id', { defaultValue: 'Mã Giao Dịch Sổ Cái' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.tx_id')}:</span>
                   <div className="font-mono font-bold text-sm text-primary flex align-items-center gap-1 mt-1">
                     <span>{detailItem.transactionId}</span>
                     <Button
@@ -546,26 +546,26 @@ export const Transactions: React.FC = () => {
                 </div>
 
                 <div className="col-6">
-                  <span className="text-500 text-xs">{t('transaction.reference_code', { defaultValue: 'Mã Tham Chiếu Gốc (POS / Bill)' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.reference_code')}:</span>
                   <div className="font-mono text-sm text-800 mt-1">
                     {detailItem.referenceId || detailItem.transactionId}
                   </div>
                 </div>
 
                 <div className="col-6 mt-2">
-                  <span className="text-500 text-xs">{t('transaction.created_at', { defaultValue: 'Thời Gian Ghi Sổ' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.created_at')}:</span>
                   <div className="font-normal text-sm text-700 mt-1">{dateTemplate(detailItem)}</div>
                 </div>
 
                 <div className="col-6 mt-2">
-                  <span className="text-500 text-xs">{t('transaction.status', { defaultValue: 'Trạng Thái' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.status')}:</span>
                   <div className="mt-1">{statusTemplate(detailItem)}</div>
                 </div>
 
                 <div className="col-12 mt-2">
-                  <span className="text-500 text-xs">{t('transaction.description', { defaultValue: 'Diễn Giải Nội Dung' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.description')}:</span>
                   <div className="text-sm text-800 surface-50 p-2 border-round mt-1">
-                    {detailItem.description || t('common.no_description', { defaultValue: 'Không có ghi chú' })}
+                    {detailItem.description || t('common.no_description')}
                   </div>
                 </div>
               </div>
@@ -575,28 +575,28 @@ export const Transactions: React.FC = () => {
             <div className="border-1 surface-border border-round p-3">
               <div className="font-semibold text-primary text-sm mb-3">
                 <i className="pi pi-users mr-2" />
-                {t('transaction.member_info_title', { defaultValue: 'Thông Tin Hội Viên & Đối Tác' })}
+                {t('transaction.member_info_title')}
               </div>
               <div className="grid">
                 <div className="col-6">
-                  <span className="text-500 text-xs">{t('transaction.member_phone', { defaultValue: 'Số Điện Thoại / User ID' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.member_phone')}:</span>
                   <div className="font-mono font-bold text-sm text-800 mt-1">{detailItem.externalUserId}</div>
                 </div>
 
                 <div className="col-6">
-                  <span className="text-500 text-xs">{t('transaction.tenant_name', { defaultValue: 'Đơn Vị Thuê Bao' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.tenant_name')}:</span>
                   <div className="font-medium text-sm text-primary mt-1">{selectedTenant}</div>
                 </div>
 
                 <div className="col-6 mt-2">
-                  <span className="text-500 text-xs">{t('transaction.partner_name', { defaultValue: 'Tên Đơn Vị Đối Tác' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.partner_name')}:</span>
                   <div className="font-medium text-sm text-800 mt-1">
-                    {detailItem.partnerName || t(`alliance_partners.${detailItem.partnerCode}`, { defaultValue: detailItem.partnerCode })}
+                    {detailItem.partnerName || (i18n.exists(`alliance_partners.${detailItem.partnerCode}`) ? t(`alliance_partners.${detailItem.partnerCode}`) : detailItem.partnerCode)}
                   </div>
                 </div>
 
                 <div className="col-6 mt-2">
-                  <span className="text-500 text-xs">{t('transaction.partner_code', { defaultValue: 'Mã Đối Tác' })}:</span>
+                  <span className="text-500 text-xs">{t('transaction.partner_code')}:</span>
                   <div className="font-mono text-sm text-600 mt-1">{detailItem.partnerCode}</div>
                 </div>
               </div>
@@ -609,7 +609,7 @@ export const Transactions: React.FC = () => {
       <Dialog
         visible={adjustVisible}
         onHide={() => setAdjustVisible(false)}
-        header={t('transaction.dt02_title', { defaultValue: 'Tạo Điều chỉnh Điểm thủ công (DT-02)' })}
+        header={t('transaction.dt02_title')}
         style={{ width: '36rem' }}
         breakpoints={{ '641px': '95vw' }}
         modal
@@ -618,40 +618,56 @@ export const Transactions: React.FC = () => {
         <div className="flex flex-column gap-3">
           <div className="p-3 border-round bg-blue-50 border-1 border-blue-200 text-xs text-blue-900">
             <i className="pi pi-shield mr-2" />
-            {t('transaction.dt02_approval_hint', { defaultValue: 'Mọi lệnh cộng/trừ điểm thủ công đều đi qua quy trình phê duyệt 2 lớp (Maker-Checker) và kiểm soát hạn mức ngày/tháng.' })}
+            {t('transaction.dt02_approval_hint')}
           </div>
           <div className="field m-0">
-            <label className="text-sm font-medium">{t('transaction.phone', { defaultValue: 'SĐT / Mã hội viên' })} *</label>
+            <label className="text-sm font-medium">{t('transaction.phone')} *</label>
             <InputText value={adjustUserId} onChange={(e) => setAdjustUserId(e.target.value)} className="font-mono" placeholder="+509..." />
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('transaction.adjust_direction', { defaultValue: 'Chiều điều chỉnh' })}</label>
-              <Dropdown value={adjustDirection} options={[{ label: 'Cộng điểm (CREDIT)', value: AdjustmentDirection.CREDIT }, { label: 'Trừ điểm (DEBIT)', value: AdjustmentDirection.DEBIT }]} onChange={(e) => setAdjustDirection(e.value)} appendTo="self" />
+              <label className="text-sm font-medium">{t('transaction.adjust_direction')}</label>
+              <Dropdown
+                value={adjustDirection}
+                options={[
+                  { label: t('transaction.dir_credit'), value: AdjustmentDirection.CREDIT },
+                  { label: t('transaction.dir_debit'), value: AdjustmentDirection.DEBIT },
+                ]}
+                onChange={(e) => setAdjustDirection(e.value)}
+                appendTo="self"
+              />
             </div>
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('transaction.adjust_asset', { defaultValue: 'Loại tài sản' })}</label>
-              <Dropdown value={adjustAssetType} options={[{ label: 'Điểm Tiêu Dùng (LOYALTY_COIN)', value: CurrencyAssetType.LOYALTY_COIN }, { label: 'Điểm Xét Hạng (TIER_POINT)', value: CurrencyAssetType.TIER_POINT }]} onChange={(e) => setAdjustAssetType(e.value)} appendTo="self" />
+              <label className="text-sm font-medium">{t('transaction.adjust_asset')}</label>
+              <Dropdown
+                value={adjustAssetType}
+                options={[
+                  { label: t('transaction.asset_coin'), value: CurrencyAssetType.LOYALTY_COIN },
+                  { label: t('transaction.asset_tier'), value: CurrencyAssetType.TIER_POINT },
+                ]}
+                onChange={(e) => setAdjustAssetType(e.value)}
+                appendTo="self"
+              />
             </div>
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('transaction.adjust_amount', { defaultValue: 'Số lượng' })} *</label>
+              <label className="text-sm font-medium">{t('transaction.adjust_amount')} *</label>
               <InputNumber value={adjustAmount} onValueChange={(e) => setAdjustAmount(e.value || 0)} min={1} />
             </div>
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('transaction.ticket_ref', { defaultValue: 'Mã Ticket đối soát' })}</label>
+              <label className="text-sm font-medium">{t('transaction.ticket_ref')}</label>
               <InputText value={adjustTicketRef} onChange={(e) => setAdjustTicketRef(e.target.value)} className="font-mono" placeholder="INC-2026-001" />
             </div>
           </div>
           <div className="field m-0">
-            <label className="text-sm font-medium">{t('common.reason', { defaultValue: 'Lý do điều chỉnh' })} *</label>
+            <label className="text-sm font-medium">{t('common.reason')} *</label>
             <InputTextarea rows={3} value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} />
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setAdjustVisible(false)} />
-          <Button label={t('transaction.submit_adjust', { defaultValue: 'Gửi duyệt 2 lớp' })} icon="pi pi-send" severity="warning" onClick={handleSubmitAdjustment} loading={adjustSubmitting} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setAdjustVisible(false)} />
+          <Button label={t('transaction.submit_adjust')} icon="pi pi-send" severity="warning" onClick={handleSubmitAdjustment} loading={adjustSubmitting} />
         </div>
       </Dialog>
     </div>

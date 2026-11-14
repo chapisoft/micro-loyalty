@@ -66,18 +66,18 @@ export const PolicyConfigurationPage: React.FC = () => {
           data.map((item) => ({
             id: item.id,
             partnerId: item.partnerId,
-            partnerCode: item.partnerCode || 'DELIMART',
-            partnerName: item.partnerName || t('partner.sample_delimart', { defaultValue: 'Siêu Thị Delimart' }),
-            earnRate: item.earnRate || 1.0,
-            maxBurnPercentage: item.maxBurnPercentage || item.maxBurnPercent || 50,
-            exchangeRate: item.exchangeRate || 1.0,
-            commissionRatePercent: item.commissionRatePercent || 0,
-            fixedFeePerTx: item.fixedFeePerTx || 0,
-            maxBurnPointsPerTx: item.maxBurnPointsPerTx || 5000,
-            settlementCreditLimit: item.settlementCreditLimit || 500000,
-            settlementCycle: item.settlementCycle || 'DAILY',
+            partnerCode: item.partnerCode || '',
+            partnerName: item.partnerName || '',
+            earnRate: item.earnRate ?? 0,
+            maxBurnPercentage: item.maxBurnPercentage ?? item.maxBurnPercent ?? 0,
+            exchangeRate: item.exchangeRate ?? 0,
+            commissionRatePercent: item.commissionRatePercent,
+            fixedFeePerTx: item.fixedFeePerTx,
+            maxBurnPointsPerTx: item.maxBurnPointsPerTx,
+            settlementCreditLimit: item.settlementCreditLimit,
+            settlementCycle: item.settlementCycle || '',
             status: (item.status as CommonStatus) || CommonStatus.ACTIVE,
-            updatedAt: item.effectiveDate || new Date().toLocaleDateString('vi-VN'),
+            updatedAt: item.effectiveDate || '--',
             description: item.description || '',
           }))
         );
@@ -137,21 +137,21 @@ export const PolicyConfigurationPage: React.FC = () => {
   }, [partners, configuredPartnerIds]);
 
   const burnOptions = useMemo(() => [
-    { label: `20% (${t('policy.burn_standard', { defaultValue: 'Tiêu chuẩn' })})`, value: 20 },
-    { label: `30% (${t('policy.burn_popular', { defaultValue: 'Phổ biến' })})`, value: 30 },
-    { label: `50% (${t('policy.burn_attractive', { defaultValue: 'Hấp dẫn' })})`, value: 50 },
-    { label: `100% (${t('policy.burn_full', { defaultValue: 'Tối đa 100%' })})`, value: 100 },
+    { label: `20% (${t('policy.burn_standard')})`, value: 20 },
+    { label: `30% (${t('policy.burn_popular')})`, value: 30 },
+    { label: `50% (${t('policy.burn_attractive')})`, value: 50 },
+    { label: `100% (${t('policy.burn_full')})`, value: 100 },
   ], [t]);
 
   const cycleOptions = useMemo(() => [
-    { label: t('clearing.cycle_daily', { defaultValue: 'Hàng ngày (T+1)' }), value: 'DAILY' },
-    { label: t('clearing.cycle_weekly', { defaultValue: 'Hàng tuần (W+1)' }), value: 'WEEKLY' },
-    { label: t('clearing.cycle_monthly', { defaultValue: 'Hàng tháng (M+1)' }), value: 'MONTHLY' },
+    { label: t('clearing.cycle_daily'), value: 'DAILY' },
+    { label: t('clearing.cycle_weekly'), value: 'WEEKLY' },
+    { label: t('clearing.cycle_monthly'), value: 'MONTHLY' },
   ], [t]);
 
   const statusOptions = useMemo(() => [
-    { label: t('common.active', { defaultValue: 'Đang hoạt động' }), value: 'ACTIVE' },
-    { label: t('common.inactive', { defaultValue: 'Ngừng hoạt động' }), value: 'INACTIVE' },
+    { label: t('common.active'), value: 'ACTIVE' },
+    { label: t('common.inactive'), value: 'INACTIVE' },
   ], [t]);
 
   const partnerOptionTemplate = (option: any) => {
@@ -166,7 +166,7 @@ export const PolicyConfigurationPage: React.FC = () => {
         </div>
         <div className="flex align-items-center gap-1">
           {isConfigured && !isEdit && (
-            <Tag value={t('policy.already_has_policy', { defaultValue: 'Đã có chính sách' })} severity="warning" className="text-xs" />
+            <Tag value={t('policy.already_has_policy')} severity="warning" className="text-xs" />
           )}
           <Tag value={p.partnerCode} severity="info" className="text-xs font-mono" />
         </div>
@@ -189,21 +189,7 @@ export const PolicyConfigurationPage: React.FC = () => {
   };
 
   const openNew = () => {
-    const availablePartner =
-      partners.find((p) => !configuredPartnerIds.has(p.id)) || (partners.length > 0 ? partners[0] : null);
-
     setFormData({
-      partnerId: availablePartner ? availablePartner.id : undefined,
-      partnerCode: availablePartner ? availablePartner.partnerCode : '',
-      partnerName: availablePartner ? availablePartner.partnerName : '',
-      earnRate: 1.0,
-      maxBurnPercentage: 50,
-      exchangeRate: 1.0,
-      commissionRatePercent: 1.5,
-      fixedFeePerTx: 0,
-      maxBurnPointsPerTx: 5000,
-      settlementCreditLimit: 500000,
-      settlementCycle: 'DAILY',
       status: CommonStatus.ACTIVE,
       description: '',
     });
@@ -220,22 +206,21 @@ export const PolicyConfigurationPage: React.FC = () => {
   const deleteItem = (item: PolicyRule) => {
     confirmDialog({
       message: t('policy.delete_confirm_msg', {
-        name: item.partnerName,
-        defaultValue: `Bạn có chắc chắn muốn xóa chính sách của đối tác "${item.partnerName}"?`,
+        name: item.partnerName
       }),
-      header: t('policy.delete_confirm_title', { defaultValue: 'Xác nhận Xóa Chính Sách' }),
+      header: t('policy.delete_confirm_title'),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
-      acceptLabel: t('common.delete', { defaultValue: 'Xóa' }),
-      rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+      acceptLabel: t('common.delete'),
+      rejectLabel: t('common.cancel'),
       accept: async () => {
         setLoading(true);
         try {
           await LoyaltyService.deletePolicy(item.id, selectedTenant);
           toast.current?.show({
             severity: 'success',
-            summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: t('policy.delete_success', { defaultValue: 'Đã xóa chính sách thành công!' }),
+            summary: t('common.success'),
+            detail: t('policy.delete_success'),
             life: 3000,
           });
           await fetchPolicies(selectedTenant);
@@ -243,8 +228,8 @@ export const PolicyConfigurationPage: React.FC = () => {
           console.error('[deletePolicy] Error:', e);
           toast.current?.show({
             severity: 'error',
-            summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: e?.message || t('policy.delete_failed', { defaultValue: 'Không thể xóa chính sách' }),
+            summary: t('common.error'),
+            detail: e?.message || t('policy.delete_failed'),
             life: 4000,
           });
         } finally {
@@ -258,8 +243,8 @@ export const PolicyConfigurationPage: React.FC = () => {
     if (!formData.partnerId && !isEdit) {
       toast.current?.show({
         severity: 'warn',
-        summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
-        detail: t('policy.partner_required', { defaultValue: 'Vui lòng chọn Đối tác liên minh' }),
+        summary: t('common.warning'),
+        detail: t('policy.partner_required'),
         life: 3000,
       });
       return;
@@ -289,24 +274,24 @@ export const PolicyConfigurationPage: React.FC = () => {
         );
         toast.current?.show({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('policy.update_success', { defaultValue: 'Cập nhật chính sách thành công!' }),
+          summary: t('common.success'),
+          detail: t('policy.update_success'),
           life: 3000,
         });
       } else {
         await LoyaltyService.createPolicy(
           {
             partnerId: formData.partnerId,
-            partnerCode: formData.partnerCode || 'NEW_PARTNER',
-            partnerName: formData.partnerName || t('partner.new_partner', { defaultValue: 'Đối Tác Mới' }),
-            earnRatePercent: formData.earnRate || 1.0,
-            maxBurnPercentage: formData.maxBurnPercentage || 50,
-            exchangeRate: formData.exchangeRate || 1.0,
-            commissionRatePercent: formData.commissionRatePercent || 0,
-            fixedFeePerTx: formData.fixedFeePerTx || 0,
-            maxBurnPointsPerTx: formData.maxBurnPointsPerTx || 5000,
-            settlementCreditLimit: formData.settlementCreditLimit || 500000,
-            settlementCycle: formData.settlementCycle || 'DAILY',
+            partnerCode: formData.partnerCode || '',
+            partnerName: formData.partnerName || '',
+            earnRatePercent: formData.earnRate,
+            maxBurnPercentage: formData.maxBurnPercentage,
+            exchangeRate: formData.exchangeRate,
+            commissionRatePercent: formData.commissionRatePercent,
+            fixedFeePerTx: formData.fixedFeePerTx,
+            maxBurnPointsPerTx: formData.maxBurnPointsPerTx,
+            settlementCreditLimit: formData.settlementCreditLimit,
+            settlementCycle: formData.settlementCycle,
             status: formData.status || CommonStatus.ACTIVE,
             description: formData.description || '',
           },
@@ -314,8 +299,8 @@ export const PolicyConfigurationPage: React.FC = () => {
         );
         toast.current?.show({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('policy.create_success', { defaultValue: 'Thêm mới chính sách thành công!' }),
+          summary: t('common.success'),
+          detail: t('policy.create_success'),
           life: 3000,
         });
       }
@@ -325,8 +310,8 @@ export const PolicyConfigurationPage: React.FC = () => {
       console.error('[savePolicy] Error:', e);
       toast.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || t('policy.save_failed', { defaultValue: 'Không thể lưu chính sách vào hệ thống' }),
+        summary: t('common.error'),
+        detail: e?.message || t('policy.save_failed'),
         life: 4000,
       });
     } finally {
@@ -343,7 +328,7 @@ export const PolicyConfigurationPage: React.FC = () => {
         severity="warning"
         size="small"
         onClick={() => editItem(rowData)}
-        tooltip={t('common.edit', { defaultValue: 'Sửa' })}
+        tooltip={t('common.edit')}
       />
       <Button
         icon="pi pi-trash"
@@ -352,16 +337,16 @@ export const PolicyConfigurationPage: React.FC = () => {
         severity="danger"
         size="small"
         onClick={() => deleteItem(rowData)}
-        tooltip={t('common.delete', { defaultValue: 'Xóa' })}
+        tooltip={t('common.delete')}
       />
     </div>
   );
 
   const statusTemplate = (rowData: PolicyRule) => {
     return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active', { defaultValue: 'Đang áp dụng' })} />
+      <Tag severity="success" value={t('common.active')} />
     ) : (
-      <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Tạm dừng' })} />
+      <Tag severity="danger" value={t('common.inactive')} />
     );
   };
 
@@ -380,7 +365,7 @@ export const PolicyConfigurationPage: React.FC = () => {
     <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3">
       <div>
         <h4 className="m-0 text-primary font-bold text-xl">
-          {t('policy.management_title', { defaultValue: 'Cấu hình Chính sách Tích & Tiêu Điểm' })}
+          {t('policy.management_title')}
         </h4>
       </div>
 
@@ -393,7 +378,7 @@ export const PolicyConfigurationPage: React.FC = () => {
             type="search"
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={t('common.search', { defaultValue: 'Tìm kiếm...' })}
+            placeholder={t('common.search')}
             className="p-inputtext-sm"
           />
         </span>
@@ -403,11 +388,11 @@ export const PolicyConfigurationPage: React.FC = () => {
           rounded
           outlined
           onClick={() => fetchPolicies(selectedTenant)}
-          tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+          tooltip={t('common.refresh')}
         />
 
         <Button
-          label={t('policy.create_new', { defaultValue: 'Thêm Chính Sách' })}
+          label={t('policy.create_new')}
           icon="pi pi-plus"
           severity="success"
           onClick={openNew}
@@ -421,7 +406,7 @@ export const PolicyConfigurationPage: React.FC = () => {
       <Toast ref={toast} position="top-right" />
       <ConfirmDialog />
       
-      <AppBreadcrumb items={[{ label: t('nav.policies', { defaultValue: 'Chính sách Tích & Tiêu điểm' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.policies') }]} />
       
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable
@@ -433,45 +418,45 @@ export const PolicyConfigurationPage: React.FC = () => {
           paginator
           rows={10}
           rowsPerPageOptions={[5, 10, 25]}
-          emptyMessage={t('common.no_data', { defaultValue: 'Không có dữ liệu chính sách' })}
+          emptyMessage={t('common.no_data')}
           stripedRows
           responsiveLayout="scroll"
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
+            header={t('common.stt')}
             body={(_, { rowIndex }) => rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
-          <Column header={t('common.actions', { defaultValue: 'Thao tác' })} body={actionTemplate} exportable={false} style={{ width: '7rem', textAlign: 'center' }} />
-          <Column field="partnerName" header={t('policy.partner_name', { defaultValue: 'Đối Tác' })} body={(row: PolicyRule) => <div><div className="font-semibold">{row.partnerName}</div><div className="text-xs text-500 font-mono">{row.partnerCode}</div></div>} sortable style={{ minWidth: '11rem' }} />
-          <Column field="exchangeRate" header={<span title={t('policy.exchange_rate_tooltip', { defaultValue: 'Tỷ giá quy đổi: 1 Điểm = ? Đơn vị tiền tệ (HTG/VND)' })}>{t('policy.exchange_rate', { defaultValue: 'Tỷ Giá' })}</span>} body={(row: PolicyRule) => <span className="font-medium font-mono">{row.exchangeRate} HTG</span>} sortable style={{ minWidth: '7rem', textAlign: 'center' }} />
-          <Column field="maxBurnPercentage" header={<span title={t('policy.max_burn_tooltip', { defaultValue: 'Giới hạn tỷ lệ khấu trừ tối đa bằng điểm trên một hóa đơn' })}>{t('policy.max_burn', { defaultValue: 'Khấu Trừ Max' })}</span>} body={burnPercentageTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-          <Column field="commissionRatePercent" header={<span title="Tỷ lệ phí hoa hồng nền tảng (MDR %) thu trên giá trị điểm tiêu">Phí MDR</span>} body={(row: PolicyRule) => <span className="font-medium font-mono text-orange-600">{row.commissionRatePercent || 0}%</span>} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-          <Column field="maxBurnPointsPerTx" header={<span title="Số điểm tối đa được phép khấu trừ trong 1 giao dịch đơn lẻ">Max Điểm/GD</span>} body={(row: PolicyRule) => <span className="font-mono text-sm">{(row.maxBurnPointsPerTx || 5000).toLocaleString()}</span>} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
-          <Column field="settlementCycle" header={<span title="Chu kỳ quyết toán công nợ bù trừ (Ngày/Tuần/Tháng)">Chu Kỳ</span>} body={cycleTemplate} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-          <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '7.5rem', textAlign: 'center' }} />
-          <Column field="updatedAt" header={t('common.updated_at', { defaultValue: 'Cập Nhật' })} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+          <Column header={t('common.actions')} body={actionTemplate} exportable={false} style={{ width: '7rem', textAlign: 'center' }} />
+          <Column field="partnerName" header={t('policy.partner_name')} body={(row: PolicyRule) => <div><div className="font-semibold">{row.partnerName}</div><div className="text-xs text-500 font-mono">{row.partnerCode}</div></div>} sortable style={{ minWidth: '11rem' }} />
+          <Column field="exchangeRate" header={<span title={t('policy.exchange_rate_tooltip')}>{t('policy.exchange_rate')}</span>} body={(row: PolicyRule) => <span className="font-medium font-mono">{row.exchangeRate} HTG</span>} sortable style={{ minWidth: '7rem', textAlign: 'center' }} />
+          <Column field="maxBurnPercentage" header={<span title={t('policy.max_burn_tooltip')}>{t('policy.max_burn')}</span>} body={burnPercentageTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="commissionRatePercent" header={<span title={t('policy.mdr_rate_tooltip')}>{t('policy.mdr_rate')}</span>} body={(row: PolicyRule) => <span className="font-medium font-mono text-orange-600">{row.commissionRatePercent != null ? `${row.commissionRatePercent}%` : '--'}</span>} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
+          <Column field="maxBurnPointsPerTx" header={<span title={t('policy.max_burn_points_tooltip')}>{t('policy.max_burn_points')}</span>} body={(row: PolicyRule) => <span className="font-mono text-sm">{row.maxBurnPointsPerTx != null ? row.maxBurnPointsPerTx.toLocaleString() : '--'}</span>} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+          <Column field="settlementCycle" header={<span title={t('policy.settlement_cycle_tooltip')}>{t('policy.settlement_cycle')}</span>} body={cycleTemplate} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
+          <Column field="status" header={t('common.status')} body={statusTemplate} sortable style={{ minWidth: '7.5rem', textAlign: 'center' }} />
+          <Column field="updatedAt" header={t('common.updated_at')} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 
       <Dialog
         visible={showDialog}
         style={{ width: '650px' }}
-        header={isEdit ? t('policy.edit_title', { defaultValue: 'Chỉnh Sửa Chính Sách' }) : t('policy.create_title', { defaultValue: 'Thêm Mới Chính Sách' })}
+        header={isEdit ? t('policy.edit_title') : t('policy.create_title')}
         modal
         className="p-fluid"
         footer={
           <div className="flex justify-content-end gap-2">
-            <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
-            <Button label={t('common.save', { defaultValue: 'Lưu Chính Sách' })} icon="pi pi-check" severity="success" onClick={saveItem} loading={isSubmitting} />
+            <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
+            <Button label={t('common.save')} icon="pi pi-check" severity="success" onClick={saveItem} loading={isSubmitting} />
           </div>
         }
         onHide={() => setShowDialog(false)}
       >
         <div className="field mb-3">
           <label htmlFor="partnerSelect" className="font-bold text-900">
-            {t('policy.select_partner_label', { defaultValue: 'Đối Tác Liên Minh' })} <span className="text-red-500">*</span>
+            {t('policy.select_partner_label')} <span className="text-red-500">*</span>
           </label>
           <Dropdown
             id="partnerSelect"
@@ -490,7 +475,7 @@ export const PolicyConfigurationPage: React.FC = () => {
             optionValue="value"
             itemTemplate={partnerOptionTemplate}
             valueTemplate={selectedPartnerValueTemplate}
-            placeholder={t('policy.select_partner_placeholder', { defaultValue: 'Chọn đối tác áp dụng chính sách...' })}
+            placeholder={t('policy.select_partner_placeholder')}
             disabled={isEdit}
             filter
             className="w-full"
@@ -501,12 +486,12 @@ export const PolicyConfigurationPage: React.FC = () => {
         <div className="grid">
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="exchangeRate" className="font-bold text-900">
-              {t('policy.exchange_rate', { defaultValue: 'Tỷ giá quy đổi (1 Điểm = ? HTG)' })}
+              {t('policy.exchange_rate')}
             </label>
             <InputNumber
               id="exchangeRate"
-              value={formData.exchangeRate}
-              onValueChange={(e) => setFormData({ ...formData, exchangeRate: e.value || 1.0 })}
+              value={formData.exchangeRate ?? null}
+              onValueChange={(e) => setFormData({ ...formData, exchangeRate: e.value ?? undefined })}
               mode="decimal"
               minFractionDigits={2}
               maxFractionDigits={4}
@@ -517,14 +502,14 @@ export const PolicyConfigurationPage: React.FC = () => {
 
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="maxBurnPercentage" className="font-bold text-900">
-              {t('policy.max_burn_percentage', { defaultValue: 'Khấu trừ tối đa (% Hóa đơn)' })}
+              {t('policy.max_burn_percentage')}
             </label>
             <Dropdown
               id="maxBurnPercentage"
               value={formData.maxBurnPercentage}
               options={burnOptions}
               onChange={(e) => setFormData({ ...formData, maxBurnPercentage: e.value })}
-              placeholder={t('policy.select_burn', { defaultValue: 'Chọn tỷ lệ khấu trừ' })}
+              placeholder={t('policy.select_burn')}
               appendTo="self"
             />
           </div>
@@ -533,12 +518,12 @@ export const PolicyConfigurationPage: React.FC = () => {
         <div className="grid">
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="commissionRate" className="font-bold text-900">
-              Phí hoa hồng sàn MDR (%)
+              {t('policy.mdr_rate_label')}
             </label>
             <InputNumber
               id="commissionRate"
-              value={formData.commissionRatePercent}
-              onValueChange={(e) => setFormData({ ...formData, commissionRatePercent: e.value || 0 })}
+              value={formData.commissionRatePercent ?? null}
+              onValueChange={(e) => setFormData({ ...formData, commissionRatePercent: e.value ?? undefined })}
               mode="decimal"
               minFractionDigits={1}
               maxFractionDigits={2}
@@ -550,12 +535,12 @@ export const PolicyConfigurationPage: React.FC = () => {
 
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="fixedFee" className="font-bold text-900">
-              Phí cố định / Giao dịch (HTG)
+              {t('policy.fixed_fee_label')}
             </label>
             <InputNumber
               id="fixedFee"
-              value={formData.fixedFeePerTx}
-              onValueChange={(e) => setFormData({ ...formData, fixedFeePerTx: e.value || 0 })}
+              value={formData.fixedFeePerTx ?? null}
+              onValueChange={(e) => setFormData({ ...formData, fixedFeePerTx: e.value ?? undefined })}
               mode="decimal"
               minFractionDigits={2}
               min={0}
@@ -567,21 +552,21 @@ export const PolicyConfigurationPage: React.FC = () => {
         <div className="grid">
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="maxBurnPerTx" className="font-bold text-900">
-              Điểm tiêu tối đa / Giao dịch
+              {t('policy.max_burn_points_label')}
             </label>
             <InputNumber
               id="maxBurnPerTx"
-              value={formData.maxBurnPointsPerTx}
-              onValueChange={(e) => setFormData({ ...formData, maxBurnPointsPerTx: e.value || 5000 })}
+              value={formData.maxBurnPointsPerTx ?? null}
+              onValueChange={(e) => setFormData({ ...formData, maxBurnPointsPerTx: e.value ?? undefined })}
               mode="decimal"
               min={10}
-              suffix=" Điểm"
+              suffix={` ${t('common.points_unit')}`}
             />
           </div>
 
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="settlementCycle" className="font-bold text-900">
-              Chu kỳ quyết toán bù trừ
+              {t('policy.settlement_cycle_label')}
             </label>
             <Dropdown
               id="settlementCycle"
@@ -595,7 +580,7 @@ export const PolicyConfigurationPage: React.FC = () => {
 
         <div className="field mb-3">
           <label htmlFor="status" className="font-bold text-900">
-            {t('common.status', { defaultValue: 'Trạng thái' })}
+            {t('common.status')}
           </label>
           <Dropdown
             id="status"

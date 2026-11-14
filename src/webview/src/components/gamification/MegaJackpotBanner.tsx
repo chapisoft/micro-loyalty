@@ -29,20 +29,20 @@ export const MegaJackpotBanner: React.FC = () => {
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1">
                   <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  {t('gamehub.jackpot_title', { defaultValue: 'Hũ Rồng Vàng Siêu Cấp' })}
+                  {t('gamehub.jackpot_title')}
                 </span>
                 <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase animate-pulse">
                   HOT
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">{t('gamehub.jackpot_desc', { defaultValue: 'Tích lũy toàn hệ thống tuần này' })}</p>
+              <p className="text-[11px] text-slate-400">{t('gamehub.jackpot_desc')}</p>
             </div>
           </div>
 
           <div className="text-right">
             <span className="inline-flex items-center gap-1 text-[10px] text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
               <Sparkles className="w-3 h-3 text-amber-300" />
-              {t('gamehub.jackpot_random_chance', { defaultValue: '100% Trúng Ngẫu Nhiên' })}
+              {t('gamehub.jackpot_random_chance')}
             </span>
           </div>
         </div>
@@ -53,7 +53,7 @@ export const MegaJackpotBanner: React.FC = () => {
             {jackpotAmount.toLocaleString()} <span className="text-sm font-sans font-bold text-amber-400">HTG</span>
           </div>
           <div className="text-[11px] text-slate-400 mt-0.5">
-            {t('gamehub.jackpot_points_equiv', { points: Math.round(jackpotAmount / 5).toLocaleString(), defaultValue: `Tương đương ${Math.round(jackpotAmount / 5).toLocaleString()} Điểm Thưởng Loyalty` })}
+            {t('gamehub.jackpot_points_equiv', { points: Math.round(jackpotAmount / 5).toLocaleString() })}
           </div>
         </div>
       </div>

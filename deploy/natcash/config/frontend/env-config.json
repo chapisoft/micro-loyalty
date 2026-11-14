@@ -1,7 +1,7 @@
 {
   "ENVIRONMENT": "onpremise-production",
   "DEPLOYMENT_MODE": "NATCASH_ONPREMISE",
-  "API_GATEWAY_URL": "https://testeuapi.natcom.com.ht:8443/api/v1/loyalty",
+  "API_GATEWAY_URL": "https://loyalty.natcom.com.ht:8443",
   "PUBLIC_CMS_URL": "https://loyalty.natcom.com.ht:8443",
   "PUBLIC_WEBVIEW_URL": "https://loyalty.natcom.com.ht:8443/gamehub",
   "DEFAULT_TENANT_ID": "TENANT_NATCASH",

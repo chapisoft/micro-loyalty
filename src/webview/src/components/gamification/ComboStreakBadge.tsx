@@ -23,10 +23,10 @@ export const ComboStreakBadge: React.FC<ComboStreakBadgeProps> = ({ streak }) =>
     >
       <Flame className={`w-3.5 h-3.5 ${isFrenzy ? 'fill-yellow-300 text-yellow-300 animate-spin' : 'fill-slate-950'}`} />
       <span>
-        {isFrenzy ? t('gamehub.streak_frenzy', { defaultValue: 'CHẾ ĐỘ FRENZY' }) : t('gamehub.streak_label', { count: streak, defaultValue: `CHUỖI THẮNG ${streak} VÁN` })}
+        {isFrenzy ? t('gamehub.streak_frenzy') : t('gamehub.streak_label', { count: streak })}
       </span>
       <span className="bg-black/25 text-white px-1.5 py-0.2 rounded-md text-[10px] tracking-wide">
-        {t('gamehub.streak_multiplier', { multiplier, defaultValue: `${multiplier} ĐIỂM` })}
+        {t('gamehub.streak_multiplier', { multiplier })}
       </span>
     </div>
   );

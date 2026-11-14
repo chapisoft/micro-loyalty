@@ -93,7 +93,7 @@ export const VoucherManagementPage: React.FC = () => {
             description: item.description,
             partnerId: item.partnerId || null,
             partnerCode: item.partnerCode || 'ALL',
-            partnerName: item.partnerName || (item.partnerId ? `Đối tác #${item.partnerId}` : 'Toàn Hệ Sinh Thái'),
+            partnerName: item.partnerName || (item.partnerId ? t('voucher.partner_fallback', { id: item.partnerId }) : t('voucher.all_ecosystem')),
             discountType: (item.discountType as DiscountType) || DiscountType.FIXED_AMOUNT,
             discountValue: item.discountValue || 0,
             minOrderValue: item.minBillAmount || 0,
@@ -145,7 +145,7 @@ export const VoucherManagementPage: React.FC = () => {
   const partnerDropdownOptions = useMemo(() => {
     return [
       {
-        label: `🌟 ${t('voucher.scope_all_alliance', { defaultValue: 'Toàn Hệ Sinh Thái (Tất cả đối tác liên minh)' })}`,
+        label: `🌟 ${t('voucher.scope_all_alliance')}`,
         value: null,
       },
       ...partners.map((p) => ({
@@ -215,22 +215,21 @@ export const VoucherManagementPage: React.FC = () => {
     confirmDialog({
       message: t('voucher.confirm_delete_msg', {
         code: item.voucherCode,
-        title: item.title,
-        defaultValue: `Bạn có chắc chắn muốn xóa voucher "${item.voucherCode}" (${item.title}) khỏi hệ thống?`,
+        title: item.title
       }),
-      header: t('common.confirm_delete', { defaultValue: 'Xác nhận xóa voucher' }),
+      header: t('common.confirm_delete'),
       icon: 'pi pi-exclamation-triangle',
       acceptClassName: 'p-button-danger',
-      acceptLabel: t('common.yes', { defaultValue: 'Xác nhận xóa' }),
-      rejectLabel: t('common.no', { defaultValue: 'Hủy' }),
+      acceptLabel: t('common.yes'),
+      rejectLabel: t('common.no'),
       accept: async () => {
         setLoading(true);
         try {
           await LoyaltyService.deleteVoucher(item.id, selectedTenant);
           toastRef.current?.show({
             severity: 'success',
-            summary: t('common.success', { defaultValue: 'Thành công' }),
-            detail: t('voucher.delete_success', { code: item.voucherCode, defaultValue: `Đã xóa thành công voucher ${item.voucherCode}!` }),
+            summary: t('common.success'),
+            detail: t('voucher.delete_success', { code: item.voucherCode }),
             life: 3000,
           });
           await fetchVouchers(selectedTenant);
@@ -238,8 +237,8 @@ export const VoucherManagementPage: React.FC = () => {
           console.error('[deleteVoucher] Error:', e);
           toastRef.current?.show({
             severity: 'error',
-            summary: t('common.error', { defaultValue: 'Lỗi' }),
-            detail: e?.message || t('voucher.delete_failed', { defaultValue: 'Không thể xóa voucher, vui lòng thử lại sau!' }),
+            summary: t('common.error'),
+            detail: e?.message || t('voucher.delete_failed'),
             life: 4000,
           });
         } finally {
@@ -273,16 +272,16 @@ export const VoucherManagementPage: React.FC = () => {
         await LoyaltyService.updateVoucher(formData.id, payload, selectedTenant);
         toastRef.current?.show({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('voucher.update_success', { code: formData.voucherCode || '', defaultValue: `Cập nhật thành công voucher ${formData.voucherCode || ''}!` }),
+          summary: t('common.success'),
+          detail: t('voucher.update_success', { code: formData.voucherCode || '' }),
           life: 3000,
         });
       } else {
         await LoyaltyService.createVoucher(payload, selectedTenant);
         toastRef.current?.show({
           severity: 'success',
-          summary: t('common.success', { defaultValue: 'Thành công' }),
-          detail: t('voucher.create_success', { defaultValue: 'Thêm mới voucher vào kho thành công!' }),
+          summary: t('common.success'),
+          detail: t('voucher.create_success'),
           life: 3000,
         });
       }
@@ -292,8 +291,8 @@ export const VoucherManagementPage: React.FC = () => {
       console.error('[saveVoucher] Error:', e);
       toastRef.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || t('voucher.save_failed', { defaultValue: 'Không thể lưu voucher, vui lòng kiểm tra lại dữ liệu!' }),
+        summary: t('common.error'),
+        detail: e?.message || t('voucher.save_failed'),
         life: 4000,
       });
     } finally {
@@ -305,8 +304,8 @@ export const VoucherManagementPage: React.FC = () => {
     if (!formData.voucherCode || !formData.title) {
       toastRef.current?.show({
         severity: 'warn',
-        summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
-        detail: 'Vui lòng nhập đầy đủ Mã voucher và Tiêu đề voucher!',
+        summary: t('common.warning'),
+        detail: t('voucher.code_title_required'),
         life: 3000,
       });
       return;
@@ -314,11 +313,11 @@ export const VoucherManagementPage: React.FC = () => {
 
     if (isEdit) {
       confirmDialog({
-        message: t('voucher.confirm_update_msg', { code: formData.voucherCode || '', defaultValue: `Bạn có chắc chắn muốn cập nhật thay đổi cho voucher ${formData.voucherCode || ''}?` }),
-        header: t('common.confirm_update', { defaultValue: 'Xác nhận cập nhật voucher' }),
+        message: t('voucher.confirm_update_msg', { code: formData.voucherCode || '' }),
+        header: t('common.confirm_update'),
         icon: 'pi pi-info-circle',
-        acceptLabel: t('common.save', { defaultValue: 'Lưu thay đổi' }),
-        rejectLabel: t('common.cancel', { defaultValue: 'Hủy' }),
+        acceptLabel: t('common.save'),
+        rejectLabel: t('common.cancel'),
         accept: handleSaveConfirmed,
       });
     } else {
@@ -331,10 +330,7 @@ export const VoucherManagementPage: React.FC = () => {
     const csvContent =
       '\uFEFF' +
       'CODE,TITLE,DISCOUNT_VAL,POINTS_COST,TOTAL_QTY,DISCOUNT_TYPE,PARTNER_CODE,MIN_ORDER\n' +
-      'DELIMART_GIAM_50K,Voucher Mua Sắm Siêu Thị Delimart 50 HTG,50,50,500,FIXED_AMOUNT,DELIMART_RETAIL,200\n' +
-      'NATCOM_DATA_1GB,Gói Data 4G Natcom 1GB Tốc Độ Cao,30,40,2000,FIXED_AMOUNT,NATCOM_TELCO,0\n' +
-      'NATCASH_CASHBACK_10,Voucher Hoàn Tiền Ví Natcash 10%,10,100,1000,PERCENTAGE,NATCASH_WALLET,150\n' +
-      'ALLIANCE_CHAO_BAN_MOI,Voucher Chào Mừng Hội Viên Mới Giảm 20 HTG,20,0,5000,FIXED_AMOUNT,,100\n';
+      t('voucher.csv_sample_rows') + '\n';
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -374,8 +370,8 @@ export const VoucherManagementPage: React.FC = () => {
       if (lines.length <= 1) {
         toastRef.current?.show({
           severity: 'warn',
-          summary: t('common.warning', { defaultValue: 'Cảnh báo' }),
-          detail: t('voucher.csv_empty', { defaultValue: 'Tệp CSV không có dữ liệu' }),
+          summary: t('common.warning'),
+          detail: t('voucher.csv_empty'),
         });
         return;
       }
@@ -398,25 +394,25 @@ export const VoucherManagementPage: React.FC = () => {
         const minOrder = Number(parts[7] || 0);
 
         const errors: string[] = [];
-        if (!code) errors.push(t('voucher.csv_err_code', { defaultValue: 'Thiếu mã CODE' }));
+        if (!code) errors.push(t('voucher.csv_err_code'));
         if (code && seenCodesInFile.has(code)) {
-          errors.push(t('voucher.csv_err_dup_file', { defaultValue: 'Trùng mã trong file CSV' }));
+          errors.push(t('voucher.csv_err_dup_file'));
         }
         if (code && existingCodes.has(code)) {
-          errors.push(t('voucher.csv_err_dup_db', { defaultValue: 'Mã đã tồn tại trong kho' }));
+          errors.push(t('voucher.csv_err_dup_db'));
         }
-        if (!title) errors.push(t('voucher.csv_err_title', { defaultValue: 'Thiếu tiêu đề' }));
+        if (!title) errors.push(t('voucher.csv_err_title'));
         if (isNaN(discountVal) || discountVal <= 0) {
-          errors.push(t('voucher.csv_err_discount', { defaultValue: 'Mức giảm không hợp lệ' }));
+          errors.push(t('voucher.csv_err_discount'));
         }
         if (isNaN(pointsCost) || pointsCost < 0) {
-          errors.push(t('voucher.csv_err_points', { defaultValue: 'Điểm đổi phải >= 0' }));
+          errors.push(t('voucher.csv_err_points'));
         }
         if (isNaN(totalQty) || totalQty <= 0) {
-          errors.push(t('voucher.csv_err_qty', { defaultValue: 'Số lượng phải > 0' }));
+          errors.push(t('voucher.csv_err_qty'));
         }
         if (discountType === DiscountType.PERCENTAGE && discountVal > 100) {
-          errors.push(t('voucher.csv_err_pct', { defaultValue: 'Phần trăm giảm tối đa 100%' }));
+          errors.push(t('voucher.csv_err_pct'));
         }
 
         if (code) seenCodesInFile.add(code);
@@ -446,8 +442,8 @@ export const VoucherManagementPage: React.FC = () => {
       console.error('[handleCsvFileCheck] Error:', e);
       toastRef.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể đọc tệp CSV' }),
+        summary: t('common.error'),
+        detail: e?.message || t('voucher.import_failed'),
       });
     }
   };
@@ -479,18 +475,17 @@ export const VoucherManagementPage: React.FC = () => {
       await fetchVouchers(selectedTenant);
       toastRef.current?.show({
         severity: 'success',
-        summary: t('common.success', { defaultValue: 'Thành công' }),
+        summary: t('common.success'),
         detail: t('voucher.import_success', {
-          defaultValue: `Đã nhập thành công ${validRows.length} mã voucher từ CSV`,
-          count: validRows.length,
+          count: validRows.length
         }),
       });
     } catch (e: any) {
       console.error('[handleConfirmImportCsv] Error:', e);
       toastRef.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.message || t('voucher.import_failed', { defaultValue: 'Không thể lưu lô voucher từ CSV' }),
+        summary: t('common.error'),
+        detail: e?.message || t('voucher.import_failed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -507,7 +502,7 @@ export const VoucherManagementPage: React.FC = () => {
         severity="warning"
         size="small"
         onClick={() => editItem(rowData)}
-        tooltip={t('common.edit', { defaultValue: 'Sửa' })}
+        tooltip={t('common.edit')}
       />
       <Button
         icon="pi pi-trash"
@@ -516,22 +511,22 @@ export const VoucherManagementPage: React.FC = () => {
         severity="danger"
         size="small"
         onClick={() => deleteItem(rowData)}
-        tooltip={t('common.delete', { defaultValue: 'Xóa' })}
+        tooltip={t('common.delete')}
       />
     </div>
   );
 
   const statusTemplate = (rowData: VoucherItem) => {
     return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active', { defaultValue: 'Đang áp dụng' })} />
+      <Tag severity="success" value={t('common.active')} />
     ) : (
-      <Tag severity="danger" value={t('common.inactive', { defaultValue: 'Tạm dừng' })} />
+      <Tag severity="danger" value={t('common.inactive')} />
     );
   };
 
   const discountBadgeTemplate = (rowData: VoucherItem) => {
     return rowData.discountType === DiscountType.PERCENTAGE ? (
-      <span className="text-primary font-medium font-mono">Giảm {rowData.discountValue}%</span>
+      <span className="text-primary font-medium font-mono">{t('voucher.discount_percent_value', { value: rowData.discountValue })}</span>
     ) : (
       <span className="text-green-600 font-medium font-mono">-{rowData.discountValue} HTG</span>
     );
@@ -543,7 +538,7 @@ export const VoucherManagementPage: React.FC = () => {
         <Tag
           severity="info"
           icon="pi pi-globe"
-          value={t('voucher.scope_all_short', { defaultValue: 'Toàn Hệ Sinh Thái' })}
+          value={t('voucher.scope_all_short')}
           className="text-xs"
         />
       );
@@ -559,13 +554,13 @@ export const VoucherManagementPage: React.FC = () => {
   };
 
   const discountTypeOptions = [
-    { label: t('voucher.fixed_amount', { defaultValue: 'Số tiền cố định (HTG)' }), value: DiscountType.FIXED_AMOUNT },
-    { label: t('voucher.percentage', { defaultValue: 'Phần trăm hóa đơn (%)' }), value: DiscountType.PERCENTAGE },
+    { label: t('voucher.fixed_amount'), value: DiscountType.FIXED_AMOUNT },
+    { label: t('voucher.percentage'), value: DiscountType.PERCENTAGE },
   ];
 
   const statusOptions = [
-    { label: t('common.active', { defaultValue: 'Đang áp dụng' }), value: CommonStatus.ACTIVE },
-    { label: t('common.inactive', { defaultValue: 'Tạm dừng' }), value: CommonStatus.INACTIVE },
+    { label: t('common.active'), value: CommonStatus.ACTIVE },
+    { label: t('common.inactive'), value: CommonStatus.INACTIVE },
   ];
 
   const header = (
@@ -573,7 +568,7 @@ export const VoucherManagementPage: React.FC = () => {
       <div className="flex align-items-center gap-3">
         <h4 className="m-0 text-primary font-bold">
           <i className="pi pi-ticket mr-2 text-xl" />
-          {t('voucher.management_title', { defaultValue: 'Quản trị Kho Quà & Phiếu Ưu Đãi (Vouchers)' })}
+          {t('voucher.management_title')}
         </h4>
         <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
       </div>
@@ -584,19 +579,19 @@ export const VoucherManagementPage: React.FC = () => {
             type="search"
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={t('common.search', { defaultValue: 'Tìm kiếm voucher...' })}
+            placeholder={t('common.search')}
             className="p-inputtext-sm w-14rem"
           />
         </span>
         <Button
-          label={t('voucher.import_csv', { defaultValue: 'Nhập CSV' })}
+          label={t('voucher.import_csv')}
           icon="pi pi-upload"
           severity="help"
           size="small"
           onClick={openImportWizard}
         />
         <Button
-          label={t('voucher.add_new', { defaultValue: 'Tạo Voucher' })}
+          label={t('voucher.add_new')}
           icon="pi pi-plus"
           severity="success"
           size="small"
@@ -608,7 +603,7 @@ export const VoucherManagementPage: React.FC = () => {
           size="small"
           onClick={() => fetchVouchers(selectedTenant)}
           loading={loading}
-          tooltip={t('common.refresh', { defaultValue: 'Làm mới' })}
+          tooltip={t('common.refresh')}
         />
       </div>
     </div>
@@ -618,7 +613,7 @@ export const VoucherManagementPage: React.FC = () => {
     <div>
       <Toast ref={toastRef} position="top-center" />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.vouchers', { defaultValue: 'Kho Voucher' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.vouchers') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <DataTable<any>
@@ -633,32 +628,32 @@ export const VoucherManagementPage: React.FC = () => {
           header={header}
           globalFilter={globalFilter}
           responsiveLayout="scroll"
-          emptyMessage={t('common.no_data', { defaultValue: 'Chưa có voucher nào cho liên minh này' })}
+          emptyMessage={t('common.no_data')}
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
           <Column
-            header={t('common.stt', { defaultValue: 'STT' })}
+            header={t('common.stt')}
             body={(_: any, options: any) => (
               <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
             )}
             style={{ width: '4rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions', { defaultValue: 'Thao Tác' })}
+            header={t('common.actions')}
             body={actionTemplate}
             exportable={false}
             style={{ width: '7rem', textAlign: 'center' }}
           />
           <Column
             field="voucherCode"
-            header={t('voucher.code', { defaultValue: 'Mã Voucher' })}
+            header={t('voucher.code')}
             body={(row: VoucherItem) => <span className="font-bold text-primary font-mono">{row.voucherCode}</span>}
             sortable
             style={{ minWidth: '9.5rem' }}
           />
           <Column
             field="title"
-            header={t('voucher.title_label', { defaultValue: 'Tiêu Đề Voucher' })}
+            header={t('voucher.title_label')}
             body={(row: VoucherItem) => (
               <div>
                 <div className="font-semibold text-900">{row.title}</div>
@@ -670,28 +665,28 @@ export const VoucherManagementPage: React.FC = () => {
           />
           <Column
             field="partnerScope"
-            header={<span title={t('voucher.partner_scope_tooltip', { defaultValue: 'Đối tác áp dụng voucher hoặc Toàn hệ sinh thái' })}>{t('voucher.partner_scope', { defaultValue: 'Phạm Vi Áp Dụng' })}</span>}
+            header={<span title={t('voucher.partner_scope_tooltip')}>{t('voucher.partner_scope')}</span>}
             body={partnerScopeTemplate}
             sortable
             style={{ minWidth: '13rem' }}
           />
           <Column
             field="discountValue"
-            header={<span title={t('voucher.discount_tooltip', { defaultValue: 'Mức giảm giá trực tiếp hoặc theo phần trăm' })}>{t('voucher.discount_value', { defaultValue: 'Mức Giảm' })}</span>}
+            header={<span title={t('voucher.discount_tooltip')}>{t('voucher.discount_value')}</span>}
             body={discountBadgeTemplate}
             sortable
             style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column
             field="minOrderValue"
-            header={<span title={t('voucher.min_order_tooltip', { defaultValue: 'Giá trị đơn hàng tối thiểu để áp dụng voucher' })}>{t('voucher.min_order', { defaultValue: 'Đơn Tối Thiểu' })}</span>}
+            header={<span title={t('voucher.min_order_tooltip')}>{t('voucher.min_order')}</span>}
             body={(row: VoucherItem) => <span className="font-mono">{row.minOrderValue} HTG</span>}
             sortable
             style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
           <Column
             field="pointsRequired"
-            header={<span title={t('voucher.points_cost_tooltip', { defaultValue: 'Số điểm cần tiêu để đổi phiếu voucher này' })}>{t('voucher.points_cost', { defaultValue: 'Điểm Đổi' })}</span>}
+            header={<span title={t('voucher.points_cost_tooltip')}>{t('voucher.points_cost')}</span>}
             body={(row: VoucherItem) => (
               <span className="text-orange-500 font-medium font-mono">
                 <i className="pi pi-star-fill mr-1 text-xs" />
@@ -703,7 +698,7 @@ export const VoucherManagementPage: React.FC = () => {
           />
           <Column
             field="remainingQuantity"
-            header={<span title={t('voucher.inventory_tooltip', { defaultValue: 'Số lượng còn lại trong kho / Tổng phát hành' })}>{t('voucher.inventory', { defaultValue: 'Kho / Tổng' })}</span>}
+            header={<span title={t('voucher.inventory_tooltip')}>{t('voucher.inventory')}</span>}
             body={(row: VoucherItem) => (
               <span className="font-mono text-sm">
                 <strong className="text-primary">{row.remainingQuantity}</strong> / {row.totalQuantity}
@@ -714,7 +709,7 @@ export const VoucherManagementPage: React.FC = () => {
           />
           <Column
             field="validFrom"
-            header={<span title={t('voucher.date_range_tooltip', { defaultValue: 'Thời hạn hiệu lực của voucher' })}>{t('voucher.date_range', { defaultValue: 'Thời Hạn' })}</span>}
+            header={<span title={t('voucher.date_range_tooltip')}>{t('voucher.date_range')}</span>}
             body={(row: VoucherItem) => (
               <span className="text-xs text-600 font-mono">
                 {row.validFrom} &rarr; {row.validTo}
@@ -723,7 +718,7 @@ export const VoucherManagementPage: React.FC = () => {
             sortable
             style={{ minWidth: '10.5rem', textAlign: 'center' }}
           />
-          <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+          <Column field="status" header={t('common.status')} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
         </DataTable>
       </div>
 
@@ -731,7 +726,7 @@ export const VoucherManagementPage: React.FC = () => {
       <Dialog
         visible={showDialog}
         style={{ width: '540px' }}
-        header={isEdit ? t('voucher.edit_title', { defaultValue: 'Cập nhật Phiếu Ưu Đãi' }) : t('voucher.create_title', { defaultValue: 'Tạo mới Phiếu Ưu Đãi' })}
+        header={isEdit ? t('voucher.edit_title') : t('voucher.create_title')}
         modal
         className="p-fluid border-round-xl"
         onHide={() => setShowDialog(false)}
@@ -739,7 +734,7 @@ export const VoucherManagementPage: React.FC = () => {
         {/* Dropdown Chọn Đối Tác */}
         <div className="field mb-3">
           <label htmlFor="partnerSelector" className="font-bold text-900">
-            {t('voucher.select_partner', { defaultValue: 'Đối Tác Áp Dụng Voucher' })}
+            {t('voucher.select_partner')}
           </label>
           <Dropdown
             id="partnerSelector"
@@ -749,32 +744,32 @@ export const VoucherManagementPage: React.FC = () => {
             optionLabel="label"
             optionValue="value"
             itemTemplate={partnerOptionTemplate}
-            placeholder={t('voucher.select_partner_placeholder', { defaultValue: 'Chọn đối tác hoặc Toàn hệ sinh thái...' })}
+            placeholder={t('voucher.select_partner_placeholder')}
             className="w-full"
             appendTo="self"
           />
           <small className="text-500 block mt-1">
             {formData.partnerId == null
-              ? '🌟 Voucher này có thể áp dụng tại TẤT CẢ các điểm bán trong liên minh.'
-              : '🏢 Voucher độc quyền, chỉ áp dụng tại điểm bán của đối tác được chọn.'}
+              ? t('voucher.scope_all_alliance_desc')
+              : t('voucher.scope_exclusive_partner_desc')}
           </small>
         </div>
 
         <div className="formgrid grid mb-3">
           <div className="field col-6">
             <label htmlFor="voucherCode" className="font-bold text-900">
-              {t('voucher.code', { defaultValue: 'Mã Voucher' })} <span className="text-red-500">*</span>
+              {t('voucher.code')} <span className="text-red-500">*</span>
             </label>
             <InputText
               id="voucherCode"
               value={formData.voucherCode || ''}
               onChange={(e) => setFormData({ ...formData, voucherCode: e.target.value.toUpperCase() })}
-              placeholder="VD: DELIMART_GIAM_50K"
+              placeholder={t('voucher.code_placeholder')}
               disabled={isEdit}
             />
           </div>
           <div className="field col-6">
-            <label htmlFor="discountType" className="font-bold text-900">{t('voucher.discount_type', { defaultValue: 'Loại ưu đãi' })}</label>
+            <label htmlFor="discountType" className="font-bold text-900">{t('voucher.discount_type')}</label>
             <Dropdown
               id="discountType"
               value={formData.discountType}
@@ -787,30 +782,30 @@ export const VoucherManagementPage: React.FC = () => {
 
         <div className="field mb-3">
           <label htmlFor="title" className="font-bold text-900">
-            {t('voucher.title_label', { defaultValue: 'Tiêu Đề Voucher' })} <span className="text-red-500">*</span>
+            {t('voucher.title_label')} <span className="text-red-500">*</span>
           </label>
           <InputText
             id="title"
             value={formData.title || ''}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="VD: Giảm 50 HTG cho hóa đơn từ 200 HTG"
+            placeholder={t('voucher.title_placeholder')}
           />
         </div>
 
         <div className="field mb-3">
-          <label htmlFor="description" className="font-bold text-900">{t('common.description', { defaultValue: 'Mô tả & Điều kiện sử dụng' })}</label>
+          <label htmlFor="description" className="font-bold text-900">{t('common.description')}</label>
           <InputText
             id="description"
             value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="VD: Áp dụng tại quầy thu ngân Siêu thị Delimart..."
+            placeholder={t('voucher.description_placeholder')}
           />
         </div>
 
         <div className="formgrid grid mb-3">
           <div className="field col-6">
             <label htmlFor="discountValue" className="font-bold text-900">
-              {formData.discountType === DiscountType.PERCENTAGE ? 'Mức giảm (%)' : 'Mức giảm (HTG)'}
+              {formData.discountType === DiscountType.PERCENTAGE ? t('voucher.discount_value_percent') : t('voucher.discount_value_htg')}
             </label>
             <InputNumber
               id="discountValue"
@@ -821,7 +816,7 @@ export const VoucherManagementPage: React.FC = () => {
             />
           </div>
           <div className="field col-6">
-            <label htmlFor="minOrderValue" className="font-bold text-900">{t('voucher.min_order', { defaultValue: 'Đơn tối thiểu (HTG)' })}</label>
+            <label htmlFor="minOrderValue" className="font-bold text-900">{t('voucher.min_order')}</label>
             <InputNumber
               id="minOrderValue"
               value={formData.minOrderValue}
@@ -834,7 +829,7 @@ export const VoucherManagementPage: React.FC = () => {
 
         <div className="formgrid grid mb-3">
           <div className="field col-6">
-            <label htmlFor="pointsRequired" className="font-bold text-900">{t('voucher.points_cost', { defaultValue: 'Điểm đổi (0 = Quà tặng)' })}</label>
+            <label htmlFor="pointsRequired" className="font-bold text-900">{t('voucher.points_cost')}</label>
             <InputNumber
               id="pointsRequired"
               value={formData.pointsRequired}
@@ -844,7 +839,7 @@ export const VoucherManagementPage: React.FC = () => {
             />
           </div>
           <div className="field col-6">
-            <label htmlFor="totalQuantity" className="font-bold text-900">{t('voucher.total_quantity', { defaultValue: 'Tổng số lượng phát hành' })}</label>
+            <label htmlFor="totalQuantity" className="font-bold text-900">{t('voucher.total_quantity')}</label>
             <InputNumber
               id="totalQuantity"
               value={formData.totalQuantity}
@@ -857,7 +852,7 @@ export const VoucherManagementPage: React.FC = () => {
         {/* Thời gian hiệu lực */}
         <div className="formgrid grid mb-3">
           <div className="field col-6">
-            <label htmlFor="validFrom" className="font-bold text-900">{t('voucher.valid_from', { defaultValue: 'Hiệu lực từ ngày' })}</label>
+            <label htmlFor="validFrom" className="font-bold text-900">{t('voucher.valid_from')}</label>
             <Calendar
               id="validFrom"
               value={formData.validFrom ? new Date(formData.validFrom) : null}
@@ -868,7 +863,7 @@ export const VoucherManagementPage: React.FC = () => {
             />
           </div>
           <div className="field col-6">
-            <label htmlFor="validTo" className="font-bold text-900">{t('voucher.valid_to', { defaultValue: 'Hiệu lực đến ngày' })}</label>
+            <label htmlFor="validTo" className="font-bold text-900">{t('voucher.valid_to')}</label>
             <Calendar
               id="validTo"
               value={formData.validTo ? new Date(formData.validTo) : null}
@@ -881,7 +876,7 @@ export const VoucherManagementPage: React.FC = () => {
         </div>
 
         <div className="field mb-3">
-          <label htmlFor="status" className="font-bold text-900">{t('common.status', { defaultValue: 'Trạng thái' })}</label>
+          <label htmlFor="status" className="font-bold text-900">{t('common.status')}</label>
           <Dropdown
             id="status"
             value={formData.status}
@@ -892,8 +887,8 @@ export const VoucherManagementPage: React.FC = () => {
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
-          <Button label={t('common.save', { defaultValue: 'Lưu Voucher' })} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
+          <Button label={t('common.save')} icon="pi pi-check" onClick={saveItem} loading={isSubmitting} />
         </div>
       </Dialog>
 
@@ -902,7 +897,7 @@ export const VoucherManagementPage: React.FC = () => {
         visible={showImportDialog}
         style={{ width: '56rem' }}
         breakpoints={{ '960px': '85vw', '641px': '95vw' }}
-        header={t('voucher.import_csv_title', { defaultValue: 'Nhập lô Voucher từ tệp CSV (3 bước)' })}
+        header={t('voucher.import_csv_title')}
         modal
         className="border-round-xl"
         onHide={() => setShowImportDialog(false)}
@@ -910,9 +905,9 @@ export const VoucherManagementPage: React.FC = () => {
         <div className="flex flex-column gap-4">
           <Steps
             model={[
-              { label: t('voucher.wizard_step_check', { defaultValue: '1. Kiểm tra tệp' }) },
-              { label: t('voucher.wizard_step_confirm', { defaultValue: '2. Xác nhận nhập' }) },
-              { label: t('voucher.wizard_step_done', { defaultValue: '3. Hoàn tất' }) },
+              { label: t('voucher.wizard_step_check') },
+              { label: t('voucher.wizard_step_confirm') },
+              { label: t('voucher.wizard_step_done') },
             ]}
             activeIndex={importStep}
           />
@@ -920,19 +915,14 @@ export const VoucherManagementPage: React.FC = () => {
           {importStep === 0 && (
             <div className="p-fluid flex flex-column gap-3">
               <p className="text-secondary m-0 text-sm">
-                {t('voucher.import_instruction', {
-                  defaultValue:
-                    'Tải lên tệp CSV chứa danh sách mã voucher (Cột: CODE, TITLE, DISCOUNT_VAL, POINTS_COST, TOTAL_QTY, DISCOUNT_TYPE, PARTNER_CODE, MIN_ORDER)',
-                })}
+                {t('voucher.import_instruction')}
               </p>
 
               <div className="grid">
                 <div className="col-12 md:col-7">
                   <div className="surface-100 p-3 border-round h-full">
                     <label htmlFor="importPartner" className="font-medium text-sm text-900 block mb-2">
-                      {t('voucher.import_partner_label', {
-                        defaultValue: 'Đối Tác Mặc Định (nếu cột PARTNER_CODE trống):',
-                      })}
+                      {t('voucher.import_partner_label')}
                     </label>
                     <Dropdown
                       id="importPartner"
@@ -947,10 +937,10 @@ export const VoucherManagementPage: React.FC = () => {
                 <div className="col-12 md:col-5">
                   <div className="surface-100 p-3 border-round h-full flex flex-column justify-content-between gap-2">
                     <span className="text-xs text-600 font-medium">
-                      {t('voucher.sample_csv_label', { defaultValue: 'Tệp mẫu chuẩn (.csv):' })}
+                      {t('voucher.sample_csv_label')}
                     </span>
                     <Button
-                      label={t('voucher.download_sample_csv', { defaultValue: 'Tải file mẫu CSV' })}
+                      label={t('voucher.download_sample_csv')}
                       icon="pi pi-download"
                       size="small"
                       outlined
@@ -972,8 +962,8 @@ export const VoucherManagementPage: React.FC = () => {
                 auto
                 chooseLabel={
                   importFileName
-                    ? `${t('voucher.reselect_file', { defaultValue: 'Chọn lại' })}: ${importFileName}`
-                    : t('common.choose_file', { defaultValue: 'Chọn tệp CSV để kiểm tra' })
+                    ? `${t('voucher.reselect_file')}: ${importFileName}`
+                    : t('common.choose_file')
                 }
               />
 
@@ -983,17 +973,17 @@ export const VoucherManagementPage: React.FC = () => {
                     <div className="flex gap-2">
                       <Tag
                         severity="info"
-                        value={`${t('voucher.csv_total_rows', { defaultValue: 'Tổng dòng' })}: ${importPreviewRows.length}`}
+                        value={`${t('voucher.csv_total_rows')}: ${importPreviewRows.length}`}
                       />
                       <Tag
                         severity="success"
-                        value={`${t('voucher.csv_valid_rows', { defaultValue: 'Hợp lệ' })}: ${
+                        value={`${t('voucher.csv_valid_rows')}: ${
                           importPreviewRows.filter((r) => r.isValid).length
                         }`}
                       />
                       <Tag
                         severity="danger"
-                        value={`${t('voucher.csv_error_rows', { defaultValue: 'Lỗi' })}: ${
+                        value={`${t('voucher.csv_error_rows')}: ${
                           importPreviewRows.filter((r) => !r.isValid).length
                         }`}
                       />
@@ -1009,18 +999,18 @@ export const VoucherManagementPage: React.FC = () => {
                     <Column field="rowNumber" header="#" style={{ width: '3rem' }} />
                     <Column
                       field="voucherCode"
-                      header={t('voucher.code', { defaultValue: 'Mã Voucher' })}
+                      header={t('voucher.code')}
                       body={(r: any) => <span className="font-mono text-xs">{r.voucherCode}</span>}
                       style={{ minWidth: '8.5rem' }}
                     />
                     <Column
                       field="title"
-                      header={t('voucher.title_label', { defaultValue: 'Tiêu Đề' })}
+                      header={t('voucher.title_label')}
                       style={{ minWidth: '12rem' }}
                     />
                     <Column
                       field="discountValue"
-                      header={t('voucher.discount_value', { defaultValue: 'Mức Giảm' })}
+                      header={t('voucher.discount_value')}
                       body={(r: any) => (
                         <span className="font-mono text-xs">
                           {r.discountValue} {r.discountType === DiscountType.PERCENTAGE ? '%' : 'HTG'}
@@ -1030,14 +1020,14 @@ export const VoucherManagementPage: React.FC = () => {
                     />
                     <Column
                       field="totalQuantity"
-                      header={t('voucher.total_quantity', { defaultValue: 'SL' })}
+                      header={t('voucher.total_quantity')}
                       style={{ minWidth: '4.5rem' }}
                     />
                     <Column
-                      header={t('common.status', { defaultValue: 'Kiểm tra' })}
+                      header={t('common.status')}
                       body={(r: any) =>
                         r.isValid ? (
-                          <Tag severity="success" value={t('common.valid', { defaultValue: 'Hợp lệ' })} />
+                          <Tag severity="success" value={t('common.valid')} />
                         ) : (
                           <Tag severity="danger" value={r.errorMessage} />
                         )
@@ -1050,13 +1040,13 @@ export const VoucherManagementPage: React.FC = () => {
 
               <div className="flex justify-content-end gap-2 mt-2">
                 <Button
-                  label={t('common.cancel', { defaultValue: 'Hủy' })}
+                  label={t('common.cancel')}
                   icon="pi pi-times"
                   outlined
                   onClick={() => setShowImportDialog(false)}
                 />
                 <Button
-                  label={t('common.next', { defaultValue: 'Tiếp tục xác nhận' })}
+                  label={t('common.next')}
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   disabled={importPreviewRows.filter((r) => r.isValid).length === 0}
@@ -1070,25 +1060,22 @@ export const VoucherManagementPage: React.FC = () => {
             <div className="flex flex-column gap-3">
               <div className="surface-50 p-4 border-round border-1 surface-border">
                 <h5 className="m-0 mb-2 text-900 font-bold">
-                  {t('voucher.wizard_confirm_heading', {
-                    defaultValue: 'Xác nhận nhập lô Voucher vào kho',
-                  })}
+                  {t('voucher.wizard_confirm_heading')}
                 </h5>
                 <div className="text-sm text-700 mb-3">
                   {t('voucher.wizard_confirm_desc', {
                     valid: importPreviewRows.filter((r) => r.isValid).length,
-                    skipped: importPreviewRows.filter((r) => !r.isValid).length,
-                    defaultValue: `Hệ thống sẽ nhập ${importPreviewRows.filter((r) => r.isValid).length} voucher hợp lệ và bỏ qua ${importPreviewRows.filter((r) => !r.isValid).length} dòng lỗi.`,
+                    skipped: importPreviewRows.filter((r) => !r.isValid).length
                   })}
                 </div>
                 <div className="flex gap-3">
                   <Tag
                     severity="info"
-                    value={`${t('voucher.file_label', { defaultValue: 'Tệp' })}: ${importFileName}`}
+                    value={`${t('voucher.file_label')}: ${importFileName}`}
                   />
                   <Tag
                     severity="success"
-                    value={`${t('voucher.csv_valid_rows', { defaultValue: 'Sẽ nhập' })}: ${
+                    value={`${t('voucher.csv_valid_rows')}: ${
                       importPreviewRows.filter((r) => r.isValid).length
                     }`}
                   />
@@ -1097,14 +1084,14 @@ export const VoucherManagementPage: React.FC = () => {
 
               <div className="flex justify-content-between gap-2 mt-2">
                 <Button
-                  label={t('common.back', { defaultValue: 'Quay lại kiểm tra' })}
+                  label={t('common.back')}
                   icon="pi pi-arrow-left"
                   outlined
                   onClick={() => setImportStep(0)}
                   disabled={isSubmitting}
                 />
                 <Button
-                  label={t('voucher.wizard_commit_btn', { defaultValue: 'Xác nhận Nhập Kho' })}
+                  label={t('voucher.wizard_commit_btn')}
                   icon="pi pi-check"
                   severity="success"
                   loading={isSubmitting}
@@ -1118,24 +1105,23 @@ export const VoucherManagementPage: React.FC = () => {
             <div className="flex flex-column align-items-center text-center gap-3 py-4">
               <i className="pi pi-check-circle text-6xl text-green-500" />
               <h4 className="m-0 text-900 font-bold">
-                {t('voucher.wizard_done_title', { defaultValue: 'Nhập lô Voucher hoàn tất!' })}
+                {t('voucher.wizard_done_title')}
               </h4>
               <p className="m-0 text-sm text-600">
                 {t('voucher.wizard_done_desc', {
                   imported: importSummary?.importedCount ?? 0,
-                  skipped: importSummary?.skippedCount ?? 0,
-                  defaultValue: `Đã lưu thành công ${importSummary?.importedCount ?? 0} mã voucher vào kho (Bỏ qua ${importSummary?.skippedCount ?? 0} dòng lỗi).`,
+                  skipped: importSummary?.skippedCount ?? 0
                 })}
               </p>
               <div className="flex gap-2 mt-2">
                 <Button
-                  label={t('voucher.import_another', { defaultValue: 'Nhập tệp khác' })}
+                  label={t('voucher.import_another')}
                   icon="pi pi-upload"
                   outlined
                   onClick={openImportWizard}
                 />
                 <Button
-                  label={t('common.close', { defaultValue: 'Đóng' })}
+                  label={t('common.close')}
                   icon="pi pi-check"
                   onClick={() => setShowImportDialog(false)}
                 />

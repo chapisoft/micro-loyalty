@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import i18n from '../language';
 
 export interface SsoUserSession {
   tenantId: string;
@@ -61,7 +62,7 @@ export const useSSOAuth = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Đổi vé SSO thất bại: HTTP ${response.status}`);
+        throw new Error(i18n.t('sso.exchange_failed_http', { status: response.status }));
       }
 
       const data = await response.json();
@@ -83,8 +84,8 @@ export const useSSOAuth = () => {
       setSession(userSession);
       setError(null);
     } catch (err: any) {
-      console.error('[useSSOAuth] Lỗi xác thực SSO:', err);
-      setError(err.message || 'Xác thực vé SSO không thành công');
+      console.error('[useSSOAuth] SSO authentication error:', err);
+      setError(err.message || i18n.t('sso.auth_failed'));
     } finally {
       setLoading(false);
     }

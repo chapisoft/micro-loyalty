@@ -103,7 +103,10 @@ export default {
     "next_turn_in": "Hồi 1 lượt sau:",
     "this_week": "Tuần Này",
     "buy_turn_item_name": "Mua {{count}} lượt chơi GameHub",
-    "filter_learning": "Học tập"
+    "filter_learning": "Học tập",
+    "perk_wordle": "Từ Vựng Đa Ngôn Ngữ",
+    "perk_screw": "Tháo Chốt Kim Loại",
+    "perk_pullpin": "Giải Cứu Kho Vàng"
   },
   "daily_missions": {
     "modal_title": "Trạm Nhiệm Vụ Hàng Ngày",
@@ -220,7 +223,19 @@ export default {
     "btn_close": "Đóng",
     "default_prize_name": "Quà Tặng",
     "default_lucky_prize": "Phần Thưởng May Mắn",
-    "buy_turns_item_name": "Mua {{count}} Lượt Quay May Mắn"
+    "buy_turns_item_name": "Mua {{count}} Lượt Quay May Mắn",
+    "default_prize_1": "+100 Điểm Thưởng",
+    "default_prize_2": "Voucher Giảm 50%",
+    "default_prize_3": "Chúc May Mắn Lần Sau",
+    "default_prize_4": "+200 Điểm Thưởng",
+    "default_prize_5": "Hoàn Tiền 500 HTG",
+    "default_prize_6": "+1 Lượt Quay Miễn Phí",
+    "winner_prize_1": "Hoàn Tiền 500 HTG",
+    "winner_prize_2": "Voucher Giảm 50%",
+    "winner_prize_3": "+200 Điểm Thưởng",
+    "winner_prize_4": "+100 Điểm Thưởng",
+    "winner_prize_5": "+1 Lượt Quay Miễn Phí",
+    "sound_title": "Bật/Tắt Âm Thanh"
   },
   "vouchers": {
     "tab_my_vouchers": "Voucher Của Tôi",
@@ -361,7 +376,7 @@ export default {
         "scoring": "Vượt 1 cột tháp: +1 điểm (hoặc +2 khi có Boost 2X). Nhặt xu vàng: +1 điểm. Điểm càng cao, tốc độ và độ hẹp khe sóng càng tăng!",
         "tips": "Thu thập Khiên 🛡️ để chịu 1 lần va chạm, Nam Châm 🧲 để hút xu từ xa, và Sao 2X ⭐ để bứt phá kỷ lục."
       },
-      "high_score": "Kỷ lục: {{score}}"
+      "high_score": "Kỷ lục: {{best}}"
     },
     "game2048": {
       "title": "2048 Natcash Edition",
@@ -422,7 +437,324 @@ export default {
       "moves_unit": "lượt",
       "time_bonus_label": "thời gian dư",
       "next_stage_label": "Màn tiếp",
-      "stage_score_label": "Điểm màn"
+      "stage_score_label": "Điểm màn",
+      "decks": {
+        "partners": {
+          "name": "Đối Tác & Ví Natcash",
+          "c1": "Delimart",
+          "c2": "Total",
+          "c3": "Natcom 4G",
+          "c4": "Natcash",
+          "c5": "Ví Tiền",
+          "c6": "Thẻ Kredi",
+          "c7": "Solar 24/7",
+          "c8": "Siêu Thị",
+          "c9": "Quà VIP",
+          "c10": "Kim Cương",
+          "c11": "Xu Vàng",
+          "c12": "Mã QR"
+        },
+        "carnival": {
+          "name": "Lễ Hội Kanaval Caribe",
+          "c1": "Trống Rara",
+          "c2": "Mặt Nạ",
+          "c3": "Rương Vàng",
+          "c4": "Hải Đăng",
+          "c5": "Thuyền Buồm",
+          "c6": "Ngọc Trai",
+          "c7": "Cọ Caribe",
+          "c8": "Vẹt Sặc Sỡ",
+          "c9": "Cá Heo",
+          "c10": "Vương Miện",
+          "c11": "Kèn Kanaval",
+          "c12": "Pháo Hoa"
+        },
+        "gems": {
+          "name": "Đá Quý & Thần Tài",
+          "c1": "Kim Cương",
+          "c2": "Ruby Đỏ",
+          "c3": "Lục Bảo",
+          "c4": "Thạch Anh",
+          "c5": "Xu Vàng",
+          "c6": "Chuông Vàng",
+          "c7": "Sao Vàng",
+          "c8": "Lửa Thần",
+          "c9": "Cỏ 4 Lá",
+          "c10": "Trái Tim",
+          "c11": "Đinh Ba Thần",
+          "c12": "Mắt Thần"
+        },
+        "haiti_food": {
+          "name": "Ẩm Thực Đường Phố Haiti",
+          "c1": "Heo Griot",
+          "c2": "Bánh Paté",
+          "c3": "Chuối Chiên",
+          "c4": "Cơm Djon",
+          "c5": "Súp Joumou",
+          "c6": "Cà Phê Rebo",
+          "c7": "Nước Dừa",
+          "c8": "Tôm Lanbi",
+          "c9": "Xoài Francis",
+          "c10": "Bắp Mayi",
+          "c11": "Quả Bơ",
+          "c12": "Nước Ép Rum"
+        },
+        "wild_animals": {
+          "name": "Động Vật Hoang Dã",
+          "c1": "Sư Tử",
+          "c2": "Voi Rừng",
+          "c3": "Hổ Vằn",
+          "c4": "Hươu Cao Cổ",
+          "c5": "Gấu Trúc",
+          "c6": "Báo Đốm",
+          "c7": "Đại Bàng",
+          "c8": "Khỉ Vui Nhộn",
+          "c9": "Hà Mã",
+          "c10": "Ngựa Vằn",
+          "c11": "Chó Sói",
+          "c12": "Kangaroo"
+        },
+        "space": {
+          "name": "Vũ Trụ & Thiên Văn",
+          "c1": "Tên Lửa",
+          "c2": "Sao Thổ",
+          "c3": "Mặt Trời",
+          "c4": "Mặt Trăng",
+          "c5": "Thiên Thạch",
+          "c6": "Kính Thiên Văn",
+          "c7": "Phi Hành Gia",
+          "c8": "Vệ Tinh 4G",
+          "c9": "Ngân Hà",
+          "c10": "Đĩa Bay UFO",
+          "c11": "Sao Băng",
+          "c12": "Trái Đất"
+        },
+        "sports": {
+          "name": "Thể Thao & Parkour",
+          "c1": "Bóng Đá",
+          "c2": "Bóng Rổ",
+          "c3": "Giày Chạy",
+          "c4": "Huy Chương",
+          "c5": "Cúp Vàng",
+          "c6": "Ván Trượt",
+          "c7": "Quần Vợt",
+          "c8": "Găng Boxing",
+          "c9": "Võ Thuật",
+          "c10": "Còi Trọng Tài",
+          "c11": "Cầu Lông",
+          "c12": "Phi Tiêu"
+        },
+        "technology": {
+          "name": "Công Nghệ & Số Hóa",
+          "c1": "Điện Thoại",
+          "c2": "Laptop",
+          "c3": "Tai Nghe",
+          "c4": "Robot AI",
+          "c5": "Tay Game",
+          "c6": "Drone Bay",
+          "c7": "Vi Mạch",
+          "c8": "Smartwatch",
+          "c9": "Kính VR",
+          "c10": "Ổ Cứng SSD",
+          "c11": "Bàn Phím",
+          "c12": "Chuột Quang"
+        },
+        "wonders": {
+          "name": "Kỳ Quan Thiên Nhiên",
+          "c1": "Núi Lửa",
+          "c2": "Thác Nước",
+          "c3": "Hang Động",
+          "c4": "San Hô",
+          "c5": "Bãi Biển",
+          "c6": "Cầu Vồng",
+          "c7": "Rừng Rậm",
+          "c8": "Hoàng Hôn",
+          "c9": "Đảo Ngọc",
+          "c10": "Sa Mạc",
+          "c11": "Núi Tuyết",
+          "c12": "Tảng Băng"
+        },
+        "magic": {
+          "name": "Phù Thủy & Ma Pháp",
+          "c1": "Đũa Thần",
+          "c2": "Mũ Phù Thủy",
+          "c3": "Thần Dược",
+          "c4": "Sách Phép",
+          "c5": "Cầu Pha Lê",
+          "c6": "Rồng Lửa",
+          "c7": "Chổi Bay",
+          "c8": "Áo Tàng Hình",
+          "c9": "Khóa Cổ",
+          "c10": "Nến Thần",
+          "c11": "Vạc Thuốc",
+          "c12": "Bụi Tiên"
+        },
+        "fruits": {
+          "name": "Trái Cây Nhiệt Đới",
+          "c1": "Dưa Hấu",
+          "c2": "Trái Bơ",
+          "c3": "Dứa Mật",
+          "c4": "Chuối Vàng",
+          "c5": "Dâu Tây",
+          "c6": "Cam Ngọt",
+          "c7": "Táo Đỏ",
+          "c8": "Nho Tím",
+          "c9": "Đu Đủ",
+          "c10": "Chanh Vàng",
+          "c11": "Quả Đào",
+          "c12": "Trái Dừa"
+        },
+        "vehicles": {
+          "name": "Phương Tiện & Tốc Độ",
+          "c1": "Xe Tap-Tap",
+          "c2": "Siêu Xe",
+          "c3": "Trực Thăng",
+          "c4": "Tàu Tốc Hành",
+          "c5": "Ca Nô",
+          "c6": "Mô Tô Khủng",
+          "c7": "Tàu Vũ Trụ",
+          "c8": "Xe Cứu Hỏa",
+          "c9": "Máy Bay",
+          "c10": "Du Thuyền",
+          "c11": "Khinh Khí Cầu",
+          "c12": "Máy Kéo"
+        },
+        "music": {
+          "name": "Âm Nhạc & Nhạc Cụ",
+          "c1": "Guitar Điện",
+          "c2": "Saxophone",
+          "c3": "Đàn Piano",
+          "c4": "Trống Jazz",
+          "c5": "Đàn Violin",
+          "c6": "Micro Vàng",
+          "c7": "Đĩa Than",
+          "c8": "Tai Nghe DJ",
+          "c9": "Nốt Nhạc",
+          "c10": "Kèn Trumpet",
+          "c11": "Bản Nhạc",
+          "c12": "Chuông Gió"
+        },
+        "weather": {
+          "name": "Thời Tiết & Bốn Mùa",
+          "c1": "Sấm Sét",
+          "c2": "Lốc Xoáy",
+          "c3": "Bông Tuyết",
+          "c4": "Nắng Hè",
+          "c5": "Lá Phong Thu",
+          "c6": "Mưa Rào",
+          "c7": "Mây Trắng",
+          "c8": "Gió Cuốn",
+          "c9": "Cầu Vồng",
+          "c10": "Đêm Sao",
+          "c11": "Sương Mù",
+          "c12": "Bình Minh"
+        },
+        "ancient": {
+          "name": "Khảo Cổ & Cổ Đại",
+          "c1": "Kim Tự Tháp",
+          "c2": "Bình Cổ",
+          "c3": "Xu La Mã",
+          "c4": "Cuộn Giấy Cổ",
+          "c5": "Đồng Hồ Cát",
+          "c6": "La Bàn",
+          "c7": "Khóa Vàng",
+          "c8": "Trượng Hoàng Gia",
+          "c9": "Tượng Cổ",
+          "c10": "Đèn Dầu Thần",
+          "c11": "Bản Đồ Báu",
+          "c12": "Khiên Đồng"
+        },
+        "farm": {
+          "name": "Nông Trại Vui Vẻ",
+          "c1": "Cối Xay Gió",
+          "c2": "Máy Cày",
+          "c3": "Bò Sữa",
+          "c4": "Cừu Trắng",
+          "c5": "Gà Trống",
+          "c6": "Bắp Ngô",
+          "c7": "Cà Rốt",
+          "c8": "Trứng Gà",
+          "c9": "Bình Nước",
+          "c10": "Bù Nhìn Rơm",
+          "c11": "Heo Hồng",
+          "c12": "Chú Ngựa"
+        },
+        "detective": {
+          "name": "Điệp Viên & Đặc Vụ",
+          "c1": "Huy Hiệu",
+          "c2": "Kính Đen",
+          "c3": "Vali Mật Mã",
+          "c4": "Bộ Đàm",
+          "c5": "Còi Đèn",
+          "c6": "Còng Tay",
+          "c7": "Kính Đêm",
+          "c8": "Dấu Vân Tay",
+          "c9": "Định Vị GPS",
+          "c10": "Hộp Đen",
+          "c11": "Ống Nhòm",
+          "c12": "Máy Ảnh Nhỏ"
+        },
+        "ocean": {
+          "name": "Sinh Vật Biển Sâu",
+          "c1": "Bạch Tuộc",
+          "c2": "Cá Voi Xanh",
+          "c3": "Sao Biển",
+          "c4": "Rùa Biển",
+          "c5": "Cua Biển",
+          "c6": "Sứa Phát Sáng",
+          "c7": "Cá Nóc Gai",
+          "c8": "Ốc Biển",
+          "c9": "Cá Mập",
+          "c10": "Mực Ống",
+          "c11": "San Hô Đỏ",
+          "c12": "Tôm Hùm"
+        },
+        "sweets": {
+          "name": "Bánh Ngọt & Tráng Miệng",
+          "c1": "Bánh Kem",
+          "c2": "Bánh Donut",
+          "c3": "Kem Ốc Quế",
+          "c4": "Kẹo Mút",
+          "c5": "Cupcake",
+          "c6": "Socola Đen",
+          "c7": "Bánh Bơ",
+          "c8": "Trà Sữa",
+          "c9": "Kẹo Dẻo",
+          "c10": "Bánh Cookie",
+          "c11": "Bánh Tart",
+          "c12": "Kem Ly Trái Cây"
+        },
+        "knights": {
+          "name": "Hiệp Sĩ & Trung Cổ",
+          "c1": "Khiên Hiệp Sĩ",
+          "c2": "Kiếm Thánh",
+          "c3": "Áo Giáp Sắt",
+          "c4": "Lâu Đài",
+          "c5": "Ngựa Chiến",
+          "c6": "Cung Tên",
+          "c7": "Đuốc Đêm",
+          "c8": "Cờ Hiệu",
+          "c9": "Rìu Chiến",
+          "c10": "Tháp Pháo",
+          "c11": "Vương Miện Vua",
+          "c12": "Rồng Canh Giữ"
+        },
+        "flowers": {
+          "name": "Khu Vườn Hoàng Gia",
+          "c1": "Hoa Hồng Đỏ",
+          "c2": "Hoa Hướng Dương",
+          "c3": "Hoa Sen",
+          "c4": "Hoa Lan Quý",
+          "c5": "Xương Rồng",
+          "c6": "Nấm Rừng",
+          "c7": "Hoa Tulip",
+          "c8": "Hoa Cúc Vàng",
+          "c9": "Hoa Râm Bụt",
+          "c10": "Cỏ May Mắn",
+          "c11": "Chồi Non",
+          "c12": "Cây Cổ Thụ"
+        }
+      }
     },
     "bubble": {
       "title": "Bắn Bóng Màu Kanaval",
@@ -473,7 +805,27 @@ export default {
       },
       "record_stage": "Kỷ lục: Màn {{highestStage}}",
       "knives_label": "Dao",
-      "score_label": "Điểm"
+      "score_label": "Điểm",
+      "theme_1_name": "Thớt Gỗ Cổ Thụ Caribe",
+      "theme_1_badge": "Gỗ Sồi Cổ",
+      "theme_2_name": "Vòng Kim Tiền Hoàng Kim",
+      "theme_2_badge": "Thần Tài 24K",
+      "theme_3_name": "Khiên Dung Nham Hỏa Ngục",
+      "theme_3_badge": "Hỏa Thạch",
+      "theme_4_name": "Ma Trận Băng Tuyết Tinh Thể",
+      "theme_4_badge": "Băng Pha Lê",
+      "theme_5_name": "Lõi Không Gian Vũ Trụ VIP",
+      "theme_5_badge": "Tinh Vân",
+      "theme_6_name": "Khiên Kim Cương Bất Diệt",
+      "theme_6_badge": "Tối Thượng",
+      "item_red_envelope": "Bao Lì Xì",
+      "item_data_pack": "Gói Data 4G",
+      "item_gold_chest": "Rương Vàng",
+      "item_diamond": "Kim Cương",
+      "item_gold_coin": "Xu VIP",
+      "bonus_unused_knives_fx": "THƯỞNG DAO DƯ!",
+      "size_label": "Kích cỡ: {{size}}%",
+      "early_finish_bonus": "Thưởng hoàn thành sớm: +{{bonus}} điểm ({{knives}} dao dư)"
     },
     "block": {
       "title": "Xếp Gạch Kim Cương Natcash",
@@ -522,7 +874,7 @@ export default {
       "btn_new_word": "Từ Mới",
       "btn_hint": "Gợi Ý Chủ Đề",
       "hint_title": "Gợi Ý Nghĩa & Chủ Đề",
-      "topic_label": "Chủ đề: {{topic}}",
+      "topic_label": "Chủ đề: {{topic}} ({{lang}})",
       "legend_correct": "Đúng vị trí",
       "legend_present": "Sai vị trí",
       "legend_absent": "Không có",
@@ -536,7 +888,413 @@ export default {
         "tips": "Bấm nút \"Gợi Ý Chủ Đề\" để xem ý nghĩa của từ bí ẩn giúp bạn đoán nhanh và chính xác hơn."
       },
       "unlock_letter_btn": "💡 Mở khóa 1 chữ cái ngẫu nhiên",
-      "revealed_letter_info": "✓ Chữ cái ở vị trí thứ {{pos}} là: \"{{letter}}\""
+      "revealed_letter_info": "✓ Chữ cái ở vị trí thứ {{pos}} là: \"{{letter}}\"",
+      "lang_natcom": "Natcom",
+      "lang_ht": "Kreyòl",
+      "lang_en": "Tiếng Anh",
+      "lang_fr": "Tiếng Pháp",
+      "words": {
+        "w0": {
+          "topic": "Viễn Thông Natcom",
+          "meaning": "Nhà mạng viễn thông hàng đầu Haiti"
+        },
+        "w1": {
+          "topic": "Điểm Thưởng Loyalty",
+          "meaning": "Điểm thưởng của bạn trong Kreyòl (Pwen w)"
+        },
+        "w2": {
+          "topic": "Ví & Tài Chính",
+          "meaning": "Tín dụng & tiền nạp điện thoại (Kredi)"
+        },
+        "w3": {
+          "topic": "Quà Tặng & Ưu Đãi",
+          "meaning": "Phần thưởng khuyến mại tặng thêm"
+        },
+        "w4": {
+          "topic": "Hạ Tầng Viễn Thông",
+          "meaning": "Cáp quang Internet siêu tốc độ"
+        },
+        "w5": {
+          "topic": "Tốc Độ Mạng",
+          "meaning": "Tốc độ truy cập mạng 4G/5G"
+        },
+        "w6": {
+          "topic": "Dịch Vụ Thoại",
+          "meaning": "Cuộc gọi thoại chất lượng cao HD"
+        },
+        "w7": {
+          "topic": "Thiết Bị Di Động",
+          "meaning": "Điện thoại thông minh kết nối"
+        },
+        "w8": {
+          "topic": "Sóng Di Động",
+          "meaning": "Tín hiệu sóng viễn thông phủ rộng"
+        },
+        "w9": {
+          "topic": "Trạm Phát Sóng",
+          "meaning": "Tháp ăng-ten phát sóng BTS"
+        },
+        "w10": {
+          "topic": "Thiết Bị Mạng",
+          "meaning": "Bộ phát sóng Wi-Fi gia đình"
+        },
+        "w11": {
+          "topic": "Trực Tuyến",
+          "meaning": "Kết nối thế giới số không giới hạn"
+        },
+        "w12": {
+          "topic": "Truyền Phát Số",
+          "meaning": "Xem video và nghe nhạc trực tuyến"
+        },
+        "w13": {
+          "topic": "Cổng Thông Tin",
+          "meaning": "Cổng tra cứu & nạp cước trực tuyến"
+        },
+        "w14": {
+          "topic": "Gói Cước Tích Hợp",
+          "meaning": "Gói combo Data kèm phút gọi"
+        },
+        "w15": {
+          "topic": "Gói Dịch Vụ",
+          "meaning": "Gói cước data theo ngày/tuần/tháng"
+        },
+        "w16": {
+          "topic": "Nạp Tiền Nhanh",
+          "meaning": "Nạp cước tài khoản trả trước"
+        },
+        "w17": {
+          "topic": "Kế Hoạch Cước",
+          "meaning": "Bảng giá gói cước linh hoạt"
+        },
+        "w18": {
+          "topic": "Điểm Phát Sóng",
+          "meaning": "Điểm chia sẻ Internet Wi-Fi di động"
+        },
+        "w19": {
+          "topic": "Chuyển Vùng Quốc Tế",
+          "meaning": "Giữ kết nối liên lạc toàn cầu"
+        },
+        "w20": {
+          "topic": "Ví & Thanh Toán",
+          "meaning": "Tiền mặt & thanh toán mua sắm (Kash)"
+        },
+        "w21": {
+          "topic": "Tài Chính & Ví",
+          "meaning": "Tiền tệ và số dư tài khoản"
+        },
+        "w22": {
+          "topic": "Tiền Tệ Haiti",
+          "meaning": "Đồng Gourde (HTG) chính thức"
+        },
+        "w23": {
+          "topic": "Số Dư Tài Khoản",
+          "meaning": "Số dư ví khả dụng tức thì"
+        },
+        "w24": {
+          "topic": "Thẻ Thanh Toán",
+          "meaning": "Thẻ thành viên liên kết mua sắm"
+        },
+        "w25": {
+          "topic": "Thanh Toán Hóa Đơn",
+          "meaning": "Giao dịch chuyển tiền tức thì"
+        },
+        "w26": {
+          "topic": "Điểm Đại Lý",
+          "meaning": "Đại lý nạp rút tiền mặt Natcash"
+        },
+        "w27": {
+          "topic": "Cửa Hàng Đối Tác",
+          "meaning": "Điểm chấp nhận thanh toán quét mã"
+        },
+        "w28": {
+          "topic": "Két An Toàn",
+          "meaning": "Kho lưu trữ điểm thưởng tích lũy"
+        },
+        "w29": {
+          "topic": "Tích Lũy Điểm",
+          "meaning": "Nhận điểm thưởng sau mỗi giao dịch"
+        },
+        "w30": {
+          "topic": "Hạng Hội Viên",
+          "meaning": "Phân hạng từ Đồng đến Kim Cương"
+        },
+        "w31": {
+          "topic": "Hoàn Tiền Thưởng",
+          "meaning": "Hoàn trả phần trăm chi tiêu"
+        },
+        "w32": {
+          "topic": "Đặc Quyền Hội Viên",
+          "meaning": "Quyền lợi dành riêng cho VIP"
+        },
+        "w33": {
+          "topic": "Ưu Đãi Đặc Biệt",
+          "meaning": "Chương trình khuyến mại độc quyền"
+        },
+        "w34": {
+          "topic": "Quà Tặng Tri Ân",
+          "meaning": "Món quà may mắn từ chương trình"
+        },
+        "w35": {
+          "topic": "Mã Bảo Mật",
+          "meaning": "Mã xác thực thanh toán an toàn"
+        },
+        "w36": {
+          "topic": "Nhận Phần Thưởng",
+          "meaning": "Đổi quà tặng ngay trên ứng dụng"
+        },
+        "w37": {
+          "topic": "Giao Dịch Đổi Điểm",
+          "meaning": "Chuyển đổi điểm lấy voucher giảm giá"
+        },
+        "w38": {
+          "topic": "Tài Sản Số",
+          "meaning": "Giá trị điểm tích lũy trong ví"
+        },
+        "w39": {
+          "topic": "Công Nghệ Thông Minh",
+          "meaning": "Giải pháp số và ứng dụng thông minh"
+        },
+        "w40": {
+          "topic": "Đối Tác Năng Lượng",
+          "meaning": "Chuỗi trạm xăng dầu đối tác TotalEnergies"
+        },
+        "w41": {
+          "topic": "Đối Tác Bán Lẻ",
+          "meaning": "Hệ thống siêu thị đối tác Delimart"
+        },
+        "w42": {
+          "topic": "Địa Điểm & Mua Sắm",
+          "meaning": "Trung tâm thương mại hiện đại"
+        },
+        "w43": {
+          "topic": "Siêu Thị Tiện Lợi",
+          "meaning": "Mua sắm tích điểm mỗi ngày"
+        },
+        "w44": {
+          "topic": "Chợ & Trung Tâm",
+          "meaning": "Khu thương mại sầm uất"
+        },
+        "w45": {
+          "topic": "Khách Sạn Nghỉ Dưỡng",
+          "meaning": "Dịch vụ lưu trú cao cấp đối tác"
+        },
+        "w46": {
+          "topic": "Cà Phê & Ẩm Thực",
+          "meaning": "Thưởng thức cà phê đặc sản Haiti"
+        },
+        "w47": {
+          "topic": "Nhà Hàng Ẩm Thực",
+          "meaning": "Trải nghiệm ẩm thực phong phú"
+        },
+        "w48": {
+          "topic": "Ẩm Thực Nhanh",
+          "meaning": "Bữa ăn nhanh tiện lợi cùng bạn bè"
+        },
+        "w49": {
+          "topic": "Đồ Uống Giải Khát",
+          "meaning": "Nước giải khát nhiệt đới tươi ngon"
+        },
+        "w50": {
+          "topic": "Nhiên Liệu Xăng Dầu",
+          "meaning": "Đổ xăng tích điểm tại trạm đối tác"
+        },
+        "w51": {
+          "topic": "Năng Lượng Sạch",
+          "meaning": "Năng lượng mặt trời sinh thái"
+        },
+        "w52": {
+          "topic": "Dịch Vụ Tiêu Chuẩn",
+          "meaning": "Không gian mua sắm văn minh"
+        },
+        "w53": {
+          "topic": "Nông Sản Tươi Sống",
+          "meaning": "Thực phẩm sạch mỗi ngày"
+        },
+        "w54": {
+          "topic": "Đặc Sản Caribe",
+          "meaning": "Xoài ngọt ngon nổi tiếng Haiti"
+        },
+        "w55": {
+          "topic": "Hương Vị Ngọt Ngào",
+          "meaning": "Bánh ngọt và món tráng miệng"
+        },
+        "w56": {
+          "topic": "Bánh Mì Tươi Mới",
+          "meaning": "Bánh mì nướng nóng hổi mỗi sáng"
+        },
+        "w57": {
+          "topic": "Nước Ép Tự Nhiên",
+          "meaning": "Nước ép hoa quả nhiệt đới tươi mát"
+        },
+        "w58": {
+          "topic": "Món Ăn Vặt",
+          "meaning": "Bữa phụ tiện lợi trong ngày"
+        },
+        "w59": {
+          "topic": "Thời Trang May Mặc",
+          "meaning": "Trang phục phong cách sành điệu"
+        },
+        "w60": {
+          "topic": "Địa Lý & Biển Đảo",
+          "meaning": "Vùng biển nhiệt đới Caribe xinh đẹp"
+        },
+        "w61": {
+          "topic": "Lễ Hội & Âm Nhạc",
+          "meaning": "Lễ hội âm nhạc và văn hóa sôi động"
+        },
+        "w62": {
+          "topic": "Đại Dương Xanh",
+          "meaning": "Bờ biển trong xanh cát trắng"
+        },
+        "w63": {
+          "topic": "Bãi Biển Nghỉ Dưỡng",
+          "meaning": "Điểm đến du lịch lý tưởng"
+        },
+        "w64": {
+          "topic": "Ánh Nắng Nhiệt Đới",
+          "meaning": "Khí hậu ấm áp quanh năm"
+        },
+        "w65": {
+          "topic": "Hòn Đảo Thiên Đường",
+          "meaning": "Đảo ngọc giữa đại dương Caribe"
+        },
+        "w66": {
+          "topic": "Âm Nhạc Bản Sắc",
+          "meaning": "Giai điệu Kompa rộn ràng"
+        },
+        "w67": {
+          "topic": "Vũ Điệu Lễ Hội",
+          "meaning": "Những bước nhảy sôi động Kanaval"
+        },
+        "w68": {
+          "topic": "Nhịp Trống Truyền Thống",
+          "meaning": "Am vang nhạc cụ dân tộc Haiti"
+        },
+        "w69": {
+          "topic": "Nụ Cười Rạng Rỡ",
+          "meaning": "Sự thân thiện mến khách của người dân"
+        },
+        "w70": {
+          "topic": "Niềm Vui Cuộc Sống",
+          "meaning": "Hạnh phúc ngập tràn mỗi ngày"
+        },
+        "w71": {
+          "topic": "Đoàn Kết Gắn Bó",
+          "meaning": "Khẩu hiệu sức mạnh cộng đồng"
+        },
+        "w72": {
+          "topic": "Hòa Bình Yên Vui",
+          "meaning": "Cuộc sống an lành thịnh vượng"
+        },
+        "w73": {
+          "topic": "Hoàng Gia Sang Trọng",
+          "meaning": "Chất lượng dịch vụ chuẩn mực"
+        },
+        "w74": {
+          "topic": "Kỳ Diệu Thần Tiên",
+          "meaning": "Những trải nghiệm bất ngờ thú vị"
+        },
+        "w75": {
+          "topic": "Ước Mơ Tương Lai",
+          "meaning": "Khát vọng vươn tầm số hóa"
+        },
+        "w76": {
+          "topic": "Ngôi Sao Sáng Ngời",
+          "meaning": "Thành tích xuất sắc trên bảng xếp hạng"
+        },
+        "w77": {
+          "topic": "Nữ Hoàng Sắc Đẹp",
+          "meaning": "Biểu tượng duyên dáng lễ hội"
+        },
+        "w78": {
+          "topic": "Vua Lễ Hội",
+          "meaning": "Nhân vật dẫn dắt vũ hội Kanaval"
+        },
+        "w79": {
+          "topic": "Nhà Vô Địch",
+          "meaning": "Người dẫn đầu các giải đấu GameHub"
+        },
+        "w80": {
+          "topic": "Giao Tiếp & Lịch Sự",
+          "meaning": "Lời cảm ơn chân thành trong tiếng Pháp"
+        },
+        "w81": {
+          "topic": "Trò Chơi May Mắn",
+          "meaning": "Sự may mắn và trúng thưởng lớn"
+        },
+        "w82": {
+          "topic": "Tán Thưởng Khích Lệ",
+          "meaning": "Lời chúc mừng xuất sắc chiến thắng"
+        },
+        "w83": {
+          "topic": "Tuyệt Vời Xuất Chúng",
+          "meaning": "Thành tích ấn tượng vượt trội"
+        },
+        "w84": {
+          "topic": "Đỉnh Cao Phong Độ",
+          "meaning": "Kỹ năng suy luận nhạy bén"
+        },
+        "w85": {
+          "topic": "Nhanh Nhẹn Phản Xạ",
+          "meaning": "Tốc độ tìm ra đáp án chớp nhoáng"
+        },
+        "w86": {
+          "topic": "Tư Duy Sắc Bén",
+          "meaning": "Khả năng phân tích logic xuất sắc"
+        },
+        "w87": {
+          "topic": "Quy Luật Suy Luận",
+          "meaning": "Tư duy logic giải đố chuẩn xác"
+        },
+        "w88": {
+          "topic": "Tập Trung Cao Độ",
+          "meaning": "Khóa chặt mục tiêu chiến thắng"
+        },
+        "w89": {
+          "topic": "Màn Chơi Thử Thách",
+          "meaning": "Cấp độ thử thách ngày càng cao"
+        },
+        "w90": {
+          "topic": "Điểm Số Kỷ Lục",
+          "meaning": "Ghi danh bảng vàng thành tích"
+        },
+        "w91": {
+          "topic": "Nhiệm Vụ Khám Phá",
+          "meaning": "Chinh phục các thử thách mỗi ngày"
+        },
+        "w92": {
+          "topic": "Ghép Nối Chuẩn Xác",
+          "meaning": "Tìm kiếm những sự trùng khớp"
+        },
+        "w93": {
+          "topic": "Sắc Màu Rực Rỡ",
+          "meaning": "Giao diện sinh động cuốn hút"
+        },
+        "w94": {
+          "topic": "Ánh Sáng Dẫn Lối",
+          "meaning": "Gợi ý thông minh mở đường"
+        },
+        "w95": {
+          "topic": "Sức Mạnh Bứt Phá",
+          "meaning": "Trợ lực vươn lên vị trí dẫn đầu"
+        },
+        "w96": {
+          "topic": "Trí Não Nhạy Bén",
+          "meaning": "Rèn luyện trí nhớ và phản xạ"
+        },
+        "w97": {
+          "topic": "Giải Quyết Vấn Đề",
+          "meaning": "Vượt qua mọi câu đố hóc búa"
+        },
+        "w98": {
+          "topic": "Bảo Vệ Tài Khoản",
+          "meaning": "An toàn bảo mật đa lớp"
+        },
+        "w99": {
+          "topic": "Tốc Biến Chớp Mắt",
+          "meaning": "Phản ứng tức thì trước thử thách"
+        }
+      }
     },
     "wheel": {
       "tutorial": {
@@ -566,7 +1324,29 @@ export default {
       "add_hole_btn": "Thêm lỗ",
       "hammer_btn": "Búa phá",
       "hammer_tooltip": "Phá một chốt bị kẹt",
-      "screw_box_label": "Hộp ốc vít"
+      "screw_box_label": "Hộp ốc vít",
+      "level_1_name": "Khởi Động Tháo Vít",
+      "plate_l1_1": "Thanh Lam",
+      "plate_l1_2": "Thanh Hổ Phách",
+      "level_2_name": "Tam Giác Liên Hoàn",
+      "plate_l2_1": "Thanh Chéo Xanh",
+      "plate_l2_2": "Thanh Chéo Đỏ",
+      "plate_l2_3": "Thanh Ngang Vàng",
+      "level_3_name": "Cối Xay Gió 4 Cánh",
+      "plate_l3_1": "Cánh Thẳng Đứng",
+      "plate_l3_2": "Cánh Nằm Ngang",
+      "plate_l3_3": "Khung Vuông Phụ",
+      "level_4_name": "Khung Lưới Đan Chéo",
+      "plate_l4_1": "Thanh Ngang Trên",
+      "plate_l4_2": "Thanh Ngang Dưới",
+      "plate_l4_3": "Thanh Dọc Trái",
+      "plate_l4_4": "Thanh Dọc Phải",
+      "level_5_name": "Bậc Thầy Gỡ Vít Kim Loại",
+      "plate_l5_1": "Khung Tâm Chữ Thập",
+      "plate_l5_2": "Thanh Chéo 1",
+      "plate_l5_3": "Thanh Chéo 2",
+      "plate_l5_4": "Đế Đáy",
+      "plate_l5_5": "Đỉnh Vòm"
     },
     "untangle": {
       "title": "Gỡ Rối Dây Thừng",
@@ -597,7 +1377,37 @@ export default {
         "controls": "Chạm vào thanh chốt sắt để rút chốt ra khỏi vị trí ngăn cách.",
         "scoring": "Tiêu diệt tên trộm: +50 điểm. Thu gom rương vàng Natcash an toàn: nhận +100 điểm.",
         "tips": "Dùng nước dập lửa/nham thạch trước, sau đó thả tạ sắt đè tên trộm trước khi mở chốt cho kho báu rơi xuống."
-      }
+      },
+      "level_1_name": "Khởi Động Tạ Sắt",
+      "l1_ent_weight": "Tạ Sắt 500kg",
+      "l1_ent_thief": "Kẻ Trộm",
+      "l1_ent_treasure": "Rương Vàng",
+      "l1_ent_police": "Cảnh Sát Natcom",
+      "level_2_name": "Nước Dập Dung Nham",
+      "l2_ent_water": "Bể Nước Xanh",
+      "l2_ent_lava": "Dung Nham Lửa",
+      "l2_ent_thief": "Kẻ Trộm",
+      "l2_ent_police": "Cảnh Sát",
+      "level_3_name": "Giải Cứu Kho Báu 3 Ngăn",
+      "l3_ent_weight": "Khối Đá",
+      "l3_ent_gold": "Kho Báu Natcash",
+      "l3_ent_thief": "Kẻ Cướp",
+      "l3_ent_police": "Cảnh Sát",
+      "level_4_name": "Mê Cung Bẫy Lửa & Nước",
+      "l4_ent_water": "Nước",
+      "l4_ent_lava": "Nham Thạch",
+      "l4_ent_thief": "Kẻ Trộm",
+      "l4_ent_gold": "Rương Vàng",
+      "l4_ent_police": "Cảnh Sát",
+      "level_5_name": "Đại Chiến Trùm Trộm Cực Đại",
+      "l5_ent_water": "Bể Nước",
+      "l5_ent_lava": "Dung Nham",
+      "l5_ent_weight": "Tạ Sắt",
+      "l5_ent_thief": "Trùm Trộm",
+      "l5_ent_treasure": "Kho Vàng Siêu Cấp",
+      "ent_eliminated": "Đã Bị Hạ!",
+      "ent_stone_rock": "Đá Tảng Cứng",
+      "fail_hint": "Kẻ trộm hoặc bẫy đã làm hỏng nhiệm vụ! Hãy thử lại theo thứ tự khác."
     },
     "pin": {
       "retry_btn": "Chơi lại"
@@ -686,7 +1496,7 @@ export default {
     "rule_explanation": "Theo quy tắc FIFO, lô Coin có hạn sử dụng gần nhất sẽ tự động được tiêu trước khi bạn đổi ưu đãi hoặc quét QR.",
     "earned_at": "Ngày nhận: {{date}}",
     "expires_at": "Hết hạn: {{date}}",
-    "expiring_soon_badge": "Sắp hết hạn",
+    "expiring_soon_badge": "Sắp hết hạn ({{days}} ngày)",
     "default_source": "Lô tích lũy",
     "empty_title": "Chưa có lô điểm sắp hết hạn",
     "empty_desc": "Số dư Natcash Coin của bạn hiện chưa có lô nào sắp đến hạn.",
@@ -709,7 +1519,7 @@ export default {
     "status_ekyc_verified": "Đã eKYC",
     "status_pending_ekyc": "Chờ eKYC",
     "no_friends_title": "Chưa có lượt giới thiệu nào",
-    "no_friends_desc": "Hãy chia sẻ mã QR hoặc liên kết cho bạn bè để cùng nhận thưởng.",
+    "no_friends_desc": "Chia sẻ mã QR hoặc liên kết để nhận +{{reward}} điểm thưởng mỗi lượt giới thiệu!",
     "empty_title": "Chưa có dữ liệu giới thiệu",
     "empty_desc": "Không tìm thấy thông tin mã giới thiệu lúc này.",
     "load_error": "Không thể tải dữ liệu giới thiệu."
@@ -898,5 +1708,30 @@ export default {
     "empty_sub_agents": "Chưa có đại lý tuyến dưới",
     "empty_sub_agents_desc": "Danh sách đại lý trực thuộc sẽ hiển thị tại đây.",
     "load_error": "Không thể tải bảng điều khiển đại lý."
+  },
+  "sdk": {
+    "game_code_required": "Thiếu mã định danh trò chơi (gameCode).",
+    "submit_result_error": "Lỗi máy chủ khi gửi kết quả ({{status}}).",
+    "buy_turns_desc": "Mua {{count}} lượt chơi ({{gameCode}})",
+    "payment_request_sent": "Yêu cầu thanh toán đã được gửi tới ví điện tử.",
+    "buy_turns_error": "Không thể khởi tạo giao dịch mua lượt chơi ({{status}})."
+  },
+  "sso": {
+    "exchange_failed_http": "Không thể xác thực phiên đăng nhập (HTTP {{status}}).",
+    "auth_failed": "Xác thực SSO thất bại. Vui lòng thử lại."
+  },
+  "notification": {
+    "dice_title": "Đặt Cược Tài Xỉu!",
+    "dice_badge": "THÔNG BÁO GAME",
+    "farm_title": "Nông Trại Vui Vẻ",
+    "farm_badge": "THU HOẠCH",
+    "success_title": "Thành Công Rực Rỡ!",
+    "success_badge": "HOÀN TẤT",
+    "warning_title": "Thông Báo Lưu Ý",
+    "warning_badge": "CHÚ Ý",
+    "error_title": "Thao Tác Thất Bại",
+    "error_badge": "LỖI HỆ THỐNG",
+    "event_title": "Sự Kiện & Đặc Quyền",
+    "event_badge": "SỰ KIỆN VIP"
   }
 };

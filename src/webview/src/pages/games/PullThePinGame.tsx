@@ -45,74 +45,74 @@ interface LevelStage {
 const LEVELS: LevelStage[] = [
   {
     level: 1,
-    name: 'Khởi Động Tạ Sắt',
+    name: 'games.pullpin.level_1_name',
     pins: [
       { id: 'pin_top', label: '1', x: 50, y: 32, width: 60, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_mid', label: '2', x: 50, y: 62, width: 60, orientation: 'HORIZONTAL', isPulled: false },
     ],
     entities: [
-      { id: 'ent_weight', type: 'WEIGHT', name: 'Tạ Sắt 500kg', icon: '🏋️‍♂️', x: 50, y: 20 },
-      { id: 'ent_thief', type: 'THIEF', name: 'Kẻ Trộm', icon: '🦹', x: 50, y: 50 },
-      { id: 'ent_treasure', type: 'TREASURE', name: 'Rương Vàng', icon: '💰', x: 30, y: 80 },
-      { id: 'ent_police', type: 'POLICE', name: 'Cảnh Sát Natcom', icon: '👮‍♂️', x: 70, y: 80 },
+      { id: 'ent_weight', type: 'WEIGHT', name: 'games.pullpin.l1_ent_weight', icon: '🏋️‍♂️', x: 50, y: 20 },
+      { id: 'ent_thief', type: 'THIEF', name: 'games.pullpin.l1_ent_thief', icon: '🦹', x: 50, y: 50 },
+      { id: 'ent_treasure', type: 'TREASURE', name: 'games.pullpin.l1_ent_treasure', icon: '💰', x: 30, y: 80 },
+      { id: 'ent_police', type: 'POLICE', name: 'games.pullpin.l1_ent_police', icon: '👮‍♂️', x: 70, y: 80 },
     ],
     requiredEliminatedThief: true,
     requiredTreasureCollected: true,
   },
   {
     level: 2,
-    name: 'Nước Dập Dung Nham',
+    name: 'games.pullpin.level_2_name',
     pins: [
       { id: 'pin_water', label: '1', x: 50, y: 28, width: 55, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_lava', label: '2', x: 50, y: 56, width: 55, orientation: 'HORIZONTAL', isPulled: false },
     ],
     entities: [
-      { id: 'ent_water', type: 'WATER', name: 'Bể Nước Xanh', icon: '💧', x: 50, y: 16 },
-      { id: 'ent_lava', type: 'LAVA', name: 'Dung Nham Lửa', icon: '🔥', x: 50, y: 42 },
-      { id: 'ent_thief', type: 'THIEF', name: 'Kẻ Trộm', icon: '🦹', x: 50, y: 72 },
-      { id: 'ent_police', type: 'POLICE', name: 'Cảnh Sát', icon: '👮‍♂️', x: 50, y: 88 },
+      { id: 'ent_water', type: 'WATER', name: 'games.pullpin.l2_ent_water', icon: '💧', x: 50, y: 16 },
+      { id: 'ent_lava', type: 'LAVA', name: 'games.pullpin.l2_ent_lava', icon: '🔥', x: 50, y: 42 },
+      { id: 'ent_thief', type: 'THIEF', name: 'games.pullpin.l2_ent_thief', icon: '🦹', x: 50, y: 72 },
+      { id: 'ent_police', type: 'POLICE', name: 'games.pullpin.l2_ent_police', icon: '👮‍♂️', x: 50, y: 88 },
     ],
     requiredEliminatedThief: true,
     requiredTreasureCollected: false,
   },
   {
     level: 3,
-    name: 'Giải Cứu Kho Báu 3 Ngăn',
+    name: 'games.pullpin.level_3_name',
     pins: [
       { id: 'pin_1', label: '1', x: 30, y: 35, width: 40, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_2', label: '2', x: 70, y: 35, width: 40, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_3', label: '3', x: 50, y: 65, width: 60, orientation: 'HORIZONTAL', isPulled: false },
     ],
     entities: [
-      { id: 'ent_weight', type: 'WEIGHT', name: 'Khối Đá', icon: '🪨', x: 30, y: 20 },
-      { id: 'ent_gold', type: 'TREASURE', name: 'Kho Báu Natcash', icon: '💎', x: 70, y: 20 },
-      { id: 'ent_thief', type: 'THIEF', name: 'Kẻ Cướp', icon: '🦹', x: 30, y: 50 },
-      { id: 'ent_police', type: 'POLICE', name: 'Cảnh Sát', icon: '👮‍♂️', x: 50, y: 82 },
+      { id: 'ent_weight', type: 'WEIGHT', name: 'games.pullpin.l3_ent_weight', icon: '🪨', x: 30, y: 20 },
+      { id: 'ent_gold', type: 'TREASURE', name: 'games.pullpin.l3_ent_gold', icon: '💎', x: 70, y: 20 },
+      { id: 'ent_thief', type: 'THIEF', name: 'games.pullpin.l3_ent_thief', icon: '🦹', x: 30, y: 50 },
+      { id: 'ent_police', type: 'POLICE', name: 'games.pullpin.l3_ent_police', icon: '👮‍♂️', x: 50, y: 82 },
     ],
     requiredEliminatedThief: true,
     requiredTreasureCollected: true,
   },
   {
     level: 4,
-    name: 'Mê Cung Bẫy Lửa & Nước',
+    name: 'games.pullpin.level_4_name',
     pins: [
       { id: 'pin_w', label: '1', x: 30, y: 28, width: 35, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_l', label: '2', x: 70, y: 28, width: 35, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_mid', label: '3', x: 50, y: 55, width: 65, orientation: 'HORIZONTAL', isPulled: false },
     ],
     entities: [
-      { id: 'ent_water', type: 'WATER', name: 'Nước', icon: '💧', x: 30, y: 16 },
-      { id: 'ent_lava', type: 'LAVA', name: 'Nham Thạch', icon: '🔥', x: 70, y: 16 },
-      { id: 'ent_thief', type: 'THIEF', name: 'Kẻ Trộm', icon: '🦹', x: 70, y: 42 },
-      { id: 'ent_gold', type: 'TREASURE', name: 'Rương Vàng', icon: '💰', x: 30, y: 42 },
-      { id: 'ent_police', type: 'POLICE', name: 'Cảnh Sát', icon: '👮‍♂️', x: 50, y: 80 },
+      { id: 'ent_water', type: 'WATER', name: 'games.pullpin.l4_ent_water', icon: '💧', x: 30, y: 16 },
+      { id: 'ent_lava', type: 'LAVA', name: 'games.pullpin.l4_ent_lava', icon: '🔥', x: 70, y: 16 },
+      { id: 'ent_thief', type: 'THIEF', name: 'games.pullpin.l4_ent_thief', icon: '🦹', x: 70, y: 42 },
+      { id: 'ent_gold', type: 'TREASURE', name: 'games.pullpin.l4_ent_gold', icon: '💰', x: 30, y: 42 },
+      { id: 'ent_police', type: 'POLICE', name: 'games.pullpin.l4_ent_police', icon: '👮‍♂️', x: 50, y: 80 },
     ],
     requiredEliminatedThief: true,
     requiredTreasureCollected: true,
   },
   {
     level: 5,
-    name: 'Đại Chiến Trùm Trộm Cực Đại',
+    name: 'games.pullpin.level_5_name',
     pins: [
       { id: 'pin_1', label: '1', x: 50, y: 24, width: 60, orientation: 'HORIZONTAL', isPulled: false },
       { id: 'pin_2', label: '2', x: 30, y: 48, width: 35, orientation: 'HORIZONTAL', isPulled: false },
@@ -120,11 +120,11 @@ const LEVELS: LevelStage[] = [
       { id: 'pin_4', label: '4', x: 50, y: 72, width: 60, orientation: 'HORIZONTAL', isPulled: false },
     ],
     entities: [
-      { id: 'ent_water', type: 'WATER', name: 'Bể Nước', icon: '💧', x: 50, y: 12 },
-      { id: 'ent_lava', type: 'LAVA', name: 'Dung Nham', icon: '🔥', x: 30, y: 36 },
-      { id: 'ent_weight', type: 'WEIGHT', name: 'Tạ Sắt', icon: '🏋️‍♂️', x: 70, y: 36 },
-      { id: 'ent_thief', type: 'THIEF', name: 'Trùm Trộm', icon: '🦹', x: 50, y: 60 },
-      { id: 'ent_treasure', type: 'TREASURE', name: 'Kho Vàng Siêu Cấp', icon: '👑', x: 50, y: 85 },
+      { id: 'ent_water', type: 'WATER', name: 'games.pullpin.l5_ent_water', icon: '💧', x: 50, y: 12 },
+      { id: 'ent_lava', type: 'LAVA', name: 'games.pullpin.l5_ent_lava', icon: '🔥', x: 30, y: 36 },
+      { id: 'ent_weight', type: 'WEIGHT', name: 'games.pullpin.l5_ent_weight', icon: '🏋️‍♂️', x: 70, y: 36 },
+      { id: 'ent_thief', type: 'THIEF', name: 'games.pullpin.l5_ent_thief', icon: '🦹', x: 50, y: 60 },
+      { id: 'ent_treasure', type: 'TREASURE', name: 'games.pullpin.l5_ent_treasure', icon: '👑', x: 50, y: 85 },
     ],
     requiredEliminatedThief: true,
     requiredTreasureCollected: true,
@@ -198,7 +198,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
         if (pulledPinId === 'pin_top') {
           GameSounds.playCorrect();
           updated = updated.map((e) => {
-            if (e.id === 'ent_thief') return { ...e, isEliminated: true, name: 'Đã Bị Hạ!' };
+            if (e.id === 'ent_thief') return { ...e, isEliminated: true, name: 'games.pullpin.ent_eliminated' };
             if (e.id === 'ent_weight') return { ...e, y: 50 };
             return e;
           });
@@ -222,7 +222,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
           GameSounds.playCorrect();
           // Water solidifies Lava into rock!
           updated = updated.map((e) => {
-            if (e.id === 'ent_lava') return { ...e, icon: '🪨', name: 'Đá Tảng Cứng' };
+            if (e.id === 'ent_lava') return { ...e, icon: '🪨', name: 'games.pullpin.ent_stone_rock' };
             if (e.id === 'ent_water') return { ...e, isEliminated: true };
             return e;
           });
@@ -300,7 +300,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
             <span className="bg-amber-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded-xl shadow-xs">
               Lvl {currentLevelIdx + 1}
             </span>
-            <span className="text-xs font-extrabold text-slate-200">{levelData.name}</span>
+            <span className="text-xs font-extrabold text-slate-200">{t(levelData.name)}</span>
           </div>
 
           <span className="text-[11px] font-bold text-amber-400">
@@ -342,7 +342,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
                   {entity.icon}
                 </div>
                 <span className="text-[10px] font-black text-white/90 bg-black/60 px-2 py-0.5 rounded-md mt-1 backdrop-blur-xs whitespace-nowrap">
-                  {entity.name}
+                  {t(entity.name)}
                 </span>
               </div>
             );
@@ -398,7 +398,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
             <div>
               <h3 className="text-lg font-black text-white">{t('games.pullpin.win_title')}</h3>
               <p className="text-xs text-slate-400 mt-1">
-                {levelData.name} • {t('games.pullpin.level_label', { level: currentLevelIdx + 1 })}
+                {t(levelData.name)} • {t('games.pullpin.level_label', { level: currentLevelIdx + 1 })}
               </p>
               <div className="text-3xl font-black text-amber-400 font-mono mt-2 flex items-center justify-center gap-1.5">
                 <Sparkles className="w-6 h-6 text-yellow-300 animate-spin" />
@@ -426,7 +426,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
             <div>
               <h3 className="text-lg font-black text-white">{t('games.pullpin.fail_trap_title')}</h3>
               <p className="text-xs text-slate-400 mt-1">
-                Kẻ trộm hoặc bẫy đã làm hỏng nhiệm vụ! Hãy thử lại theo thứ tự khác.
+                {t('games.pullpin.fail_hint')}
               </p>
             </div>
             <button
@@ -434,7 +434,7 @@ export const PullThePinGame: React.FC<PullThePinGameProps> = ({ onBack, onClaimR
               className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-500 text-white font-black rounded-xl text-sm shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>{t('games.pin.retry_btn', { defaultValue: 'Chơi Lại Màn Này' })}</span>
+              <span>{t('games.pin.retry_btn')}</span>
             </button>
           </div>
         </div>

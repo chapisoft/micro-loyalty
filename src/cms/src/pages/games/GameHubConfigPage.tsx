@@ -58,20 +58,6 @@ interface GameHubGlobalSettings {
   autoLockSuspicious: boolean;
 }
 
-const CATEGORY_NAMES: Record<string, string> = {
-  LUCKY_DRAW: 'Vòng quay may mắn',
-  SMASH_EGG: 'Đập trứng vàng',
-  INSTANT_WIN: 'Vé cào trúng liền',
-  DICE_BOARD: 'Xúc xắc bàn cờ',
-  SPORTS_CHALLENGE: 'Sút phạt thể thao',
-  PHYSICS_LUCK: 'Thả bi may mắn',
-  DAILY_CHECKIN: 'Nhiệm vụ điểm danh',
-  ADVENTURE_RISK: 'Phiêu lưu kho báu',
-  LUCKY_CHEST: 'Rương báu may mắn',
-  QUIZ: 'Đố vui trí tuệ',
-  CASUAL: 'Nông trại thu hoạch',
-};
-
 export const GameHubConfigPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -85,25 +71,25 @@ export const GameHubConfigPage: React.FC = () => {
 
   // Global settings state
   const [globalSettings, setGlobalSettings] = useState<GameHubGlobalSettings>({
-    pointsPerTurnExchange: 50,
-    goldenHourEnabled: true,
-    goldenHourMultiplier: 2,
-    goldenHourSchedule: '11:00 - 13:00, 19:00 - 21:00',
+    pointsPerTurnExchange: 0,
+    goldenHourEnabled: false,
+    goldenHourMultiplier: 1,
+    goldenHourSchedule: '',
     maintenanceMode: false,
-    maintenanceNotice: 'Hệ thống Cổng Game đang được nâng cấp tính năng mới. Vui lòng quay lại sau!',
-    maxDailyTurnsPerUser: 10,
-    defaultDailyFreeTurns: 1,
-    globalDailyBudgetLimit: 50000,
-    welcomeBannerText: 'Tham gia minigame mỗi ngày nhận quà siêu khủng từ Natcash!',
-    welcomeBannerTextEn: 'Play minigames every day to win mega rewards from Natcash!',
-    welcomeBannerTextFr: 'Jouez à des mini-jeux chaque jour pour gagner des méga récompenses!',
-    welcomeBannerTextHt: 'Jwe minije chak jou pou genyen gwo rekonpans nan men Natcash!',
-    lobbyBannerUrl: 'https://cdn.natcash.ht/gamehub/banner-lobby-v2.png',
-    lobbyCtaText: 'Đổi điểm nhận lượt chơi • Thắng quà liền tay!',
-    soundEffectsEnabled: true,
-    cooldownSeconds: 3,
-    maxTurnsPerDeviceDaily: 50,
-    autoLockSuspicious: true,
+    maintenanceNotice: '',
+    maxDailyTurnsPerUser: 0,
+    defaultDailyFreeTurns: 0,
+    globalDailyBudgetLimit: 0,
+    welcomeBannerText: '',
+    welcomeBannerTextEn: '',
+    welcomeBannerTextFr: '',
+    welcomeBannerTextHt: '',
+    lobbyBannerUrl: '',
+    lobbyCtaText: '',
+    soundEffectsEnabled: false,
+    cooldownSeconds: 0,
+    maxTurnsPerDeviceDaily: 0,
+    autoLockSuspicious: false,
   });
 
   const loadData = useCallback(async () => {
@@ -117,10 +103,10 @@ export const GameHubConfigPage: React.FC = () => {
       if (configData) {
         setGlobalSettings((prev) => ({
           ...prev,
-          pointsPerTurnExchange: configData.pointsPerTurnExchange ?? 50,
-          goldenHourEnabled: configData.goldenHourEnabled ?? true,
-          maintenanceMode: configData.maintenanceMode ?? false,
-          maxDailyTurnsPerUser: configData.maxDailyTurnsPerUser ?? 10,
+          pointsPerTurnExchange: configData.pointsPerTurnExchange ?? 0,
+          goldenHourEnabled: Boolean(configData.goldenHourEnabled),
+          maintenanceMode: Boolean(configData.maintenanceMode),
+          maxDailyTurnsPerUser: configData.maxDailyTurnsPerUser ?? 0,
           welcomeBannerText: configData.welcomeBannerText || prev.welcomeBannerText,
         }));
       }
@@ -141,8 +127,8 @@ export const GameHubConfigPage: React.FC = () => {
       console.error('[GameHubConfigPage] Load data error:', e);
       toast.current?.show({
         severity: 'error',
-        summary: t('toast.error', { defaultValue: 'Lỗi' }),
-        detail: t('toast.generic_error', { defaultValue: 'Không thể tải dữ liệu cấu hình' }),
+        summary: t('toast.error'),
+        detail: t('toast.generic_error'),
       });
     } finally {
       setIsLoading(false);
@@ -169,16 +155,16 @@ export const GameHubConfigPage: React.FC = () => {
 
       toast.current?.show({
         severity: 'success',
-        summary: t('toast.success', { defaultValue: 'Thành công' }),
-        detail: t('game_hub.save_success', { defaultValue: 'Lưu cấu hình sảnh Cổng Game thành công' }),
+        summary: t('toast.success'),
+        detail: t('game_hub.save_success'),
       });
       await loadData();
     } catch (e) {
       console.error('[handleSaveGlobalSettings] Error:', e);
       toast.current?.show({
         severity: 'error',
-        summary: t('toast.error', { defaultValue: 'Lỗi' }),
-        detail: t('game_hub.save_failed', { defaultValue: 'Lưu cấu hình sảnh Cổng Game thất bại' }),
+        summary: t('toast.error'),
+        detail: t('game_hub.save_failed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -190,16 +176,17 @@ export const GameHubConfigPage: React.FC = () => {
   ).length;
 
   const multiplierOptions = useMemo(() => [
-    { label: t('game_hub.multiplier_2x', { defaultValue: 'x2 Lượt chơi (Gấp đôi)' }), value: 2 },
-    { label: t('game_hub.multiplier_3x', { defaultValue: 'x3 Lượt chơi (Gấp ba)' }), value: 3 },
-    { label: t('game_hub.multiplier_5x', { defaultValue: 'x5 Lượt chơi (Đặc biệt)' }), value: 5 },
+    { label: t('game_hub.multiplier_2x'), value: 2 },
+    { label: t('game_hub.multiplier_3x'), value: 3 },
+    { label: t('game_hub.multiplier_5x'), value: 5 },
   ], [t]);
 
   // Render text thuần cho thể loại không dùng style màu mè
   const categoryTextTemplate = (rowData: GameItem) => {
-    const key = `game.cat_${(rowData.category || '').toLowerCase()}`;
-    const fallback = CATEGORY_NAMES[rowData.category] || rowData.category || '-';
-    return <span className="text-700">{t(key, { defaultValue: fallback })}</span>;
+    const label = rowData.category
+      ? t(`game.cat_${rowData.category.toLowerCase()}`)
+      : '-';
+    return <span className="text-700">{label}</span>;
   };
 
   // Render text thuần cho thứ tự sảnh
@@ -216,17 +203,17 @@ export const GameHubConfigPage: React.FC = () => {
       return <span className="text-blue-600 font-bold text-xs">NEW</span>;
     }
     if (rowData.lobbyBadge === 'EVENT') {
-      return <span className="text-orange-600 font-bold text-xs">{t('game_hub.badge_event', { defaultValue: 'Sự kiện' })}</span>;
+      return <span className="text-orange-600 font-bold text-xs">{t('game_hub.badge_event')}</span>;
     }
-    return <span className="text-400 text-xs">{t('game_hub.badge_normal', { defaultValue: 'Bình thường' })}</span>;
+    return <span className="text-400 text-xs">{t('game_hub.badge_normal')}</span>;
   };
 
   // Render text thuần cho trạng thái hiển thị
   const lobbyVisibilityTemplate = (rowData: GameItem) => {
     return rowData.lobbyVisible ? (
-      <span className="text-green-600 font-medium text-xs">{t('game_hub.visibility_visible', { defaultValue: 'Đang hiển thị' })}</span>
+      <span className="text-green-600 font-medium text-xs">{t('game_hub.visibility_visible')}</span>
     ) : (
-      <span className="text-500 text-xs">{t('game_hub.visibility_hidden', { defaultValue: 'Tạm ẩn' })}</span>
+      <span className="text-500 text-xs">{t('game_hub.visibility_hidden')}</span>
     );
   };
 
@@ -261,7 +248,7 @@ export const GameHubConfigPage: React.FC = () => {
           onClick={() => navigate(paths.gameManagement)}
         >
           <i className="pi pi-cog text-xs" />
-          <span>{t('game_hub.action_prizes', { defaultValue: 'Cấu hình giải thưởng' })}</span>
+          <span>{t('game_hub.action_prizes')}</span>
         </button>
       </div>
     );
@@ -273,8 +260,8 @@ export const GameHubConfigPage: React.FC = () => {
 
       <AppBreadcrumb
         items={[
-          { label: t('nav.rewards_games', { defaultValue: 'Khuyến mãi & Game' }) },
-          { label: t('nav.game_hub_config', { defaultValue: 'Cấu hình Chung Cổng Game' }) },
+          { label: t('nav.rewards_games') },
+          { label: t('nav.game_hub_config') },
         ]}
       />
 
@@ -282,25 +269,22 @@ export const GameHubConfigPage: React.FC = () => {
       <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-3 mb-4">
         <div>
           <h3 className="m-0 text-900 font-bold tracking-tight">
-            {t('game_hub.title', { defaultValue: 'Cấu hình Chung Cổng Game & Sảnh Webview' })}
+            {t('game_hub.title')}
           </h3>
           <p className="text-500 text-xs mt-1 mb-0">
-            {t('game_hub.subtitle', {
-              defaultValue:
-                'Quản trị quy tắc quy đổi, sự kiện khung giờ vàng, chế độ bảo trì, hiển thị trò chơi trên sảnh và chính sách chống gian lận.',
-            })}
+            {t('game_hub.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
-            label={t('common.refresh', { defaultValue: 'Làm mới' })}
+            label={t('common.refresh')}
             icon="pi pi-refresh"
             outlined
             onClick={loadData}
             loading={isLoading}
           />
           <Button
-            label={t('game_hub.save_config', { defaultValue: 'Lưu Cấu Hình Sảnh' })}
+            label={t('game_hub.save_config')}
             icon="pi pi-save"
             onClick={handleSaveGlobalSettings}
             loading={isSubmitting}
@@ -316,7 +300,7 @@ export const GameHubConfigPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-medium text-xs mb-1">
-                  {t('game_hub.kpi_active_games_title', { defaultValue: 'Trò Chơi Sảnh Vận Hành' })}
+                  {t('game_hub.kpi_active_games_title')}
                 </span>
                 <div className="text-900 font-bold text-2xl tracking-tight">
                   {activeGamesCount} / {games.length} Game
@@ -330,7 +314,7 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
             </div>
             <span className="text-500 text-xs">
-              {t('game_hub.kpi_active_games_sub', { defaultValue: 'Sẵn sàng trên Webview GameHub' })}
+              {t('game_hub.kpi_active_games_sub')}
             </span>
           </div>
         </div>
@@ -341,10 +325,10 @@ export const GameHubConfigPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-medium text-xs mb-1">
-                  {t('game_hub.kpi_exchange_rate_title', { defaultValue: 'Tỷ Lệ Đổi Điểm Chuẩn' })}
+                  {t('game_hub.kpi_exchange_rate_title')}
                 </span>
                 <div className="text-900 font-bold text-2xl font-mono tracking-tight">
-                  {globalSettings.pointsPerTurnExchange} {t('game_hub.points_unit', { defaultValue: 'Điểm / Lượt' })}
+                  {globalSettings.pointsPerTurnExchange} {t('game_hub.points_unit')}
                 </div>
               </div>
               <div
@@ -355,7 +339,7 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
             </div>
             <span className="text-500 text-xs">
-              {t('game_hub.kpi_exchange_rate_sub', { defaultValue: 'Áp dụng toàn bộ minigame' })}
+              {t('game_hub.kpi_exchange_rate_sub')}
             </span>
           </div>
         </div>
@@ -366,10 +350,10 @@ export const GameHubConfigPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-medium text-xs mb-1">
-                  {t('game_hub.kpi_daily_limit_title', { defaultValue: 'Hạn Mức Lượt / Hội Viên' })}
+                  {t('game_hub.kpi_daily_limit_title')}
                 </span>
                 <div className="text-900 font-bold text-2xl font-mono tracking-tight">
-                  {globalSettings.maxDailyTurnsPerUser} {t('game_hub.turns_unit', { defaultValue: 'Lượt / Ngày' })}
+                  {globalSettings.maxDailyTurnsPerUser} {t('game_hub.turns_unit')}
                 </div>
               </div>
               <div
@@ -380,7 +364,7 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
             </div>
             <span className="text-500 text-xs">
-              {t('game_hub.kpi_daily_limit_sub', { defaultValue: 'Khống chế chống lạm dụng' })}
+              {t('game_hub.kpi_daily_limit_sub')}
             </span>
           </div>
         </div>
@@ -391,14 +375,14 @@ export const GameHubConfigPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-medium text-xs mb-1">
-                  {t('game_hub.kpi_lobby_status_title', { defaultValue: 'Trạng Thái Vận Hành Sảnh' })}
+                  {t('game_hub.kpi_lobby_status_title')}
                 </span>
                 <div className="text-900 font-bold text-2xl tracking-tight">
                   {globalSettings.maintenanceMode
-                    ? t('game_hub.kpi_lobby_status_maintenance', { defaultValue: 'Đang Bảo Trì' })
+                    ? t('game_hub.kpi_lobby_status_maintenance')
                     : globalSettings.goldenHourEnabled
-                    ? t('game_hub.kpi_lobby_status_golden', { defaultValue: 'Khung Giờ Vàng (x2)' })
-                    : t('game_hub.kpi_lobby_status_active', { defaultValue: 'Sảnh Đang Mở' })}
+                    ? t('game_hub.kpi_lobby_status_golden')
+                    : t('game_hub.kpi_lobby_status_active')}
                 </div>
               </div>
               <div
@@ -409,7 +393,7 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
             </div>
             <span className="text-500 text-xs">
-              {t('game_hub.jsbridge_status', { defaultValue: 'Cầu nối JSBridge & Webview Live' })}
+              {t('game_hub.jsbridge_status')}
             </span>
           </div>
         </div>
@@ -422,102 +406,89 @@ export const GameHubConfigPage: React.FC = () => {
           {/* Card 1: Economic Rules */}
           <div className="card shadow-1 border-round-lg surface-card p-4 border-1 border-200 h-full">
             <h5 className="m-0 font-bold text-900 mb-1">
-              {t('game_hub.section_economy_title', {
-                defaultValue: 'Quy Tắc Kinh Tế & Tham Số Quy Đổi Lượt Chơi',
-              })}
+              {t('game_hub.section_economy_title')}
             </h5>
             <p className="text-500 text-xs mb-4">
-              {t('game_hub.section_economy_desc', {
-                defaultValue:
-                  'Thiết lập tỷ giá đổi điểm sang lượt chơi và hạn mức mua lượt áp dụng đồng bộ toàn hệ thống GameHub.',
-              })}
+              {t('game_hub.section_economy_desc')}
             </p>
 
             <div className="grid">
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="pointsPerTurnExchange" className="font-bold text-xs block mb-1">
-                  {t('game_hub.points_per_turn', { defaultValue: 'Quy đổi Điểm sang Lượt chơi' })}
+                  {t('game_hub.points_per_turn')}
                 </label>
                 <InputNumber
                   id="pointsPerTurnExchange"
                   value={globalSettings.pointsPerTurnExchange}
                   onValueChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, pointsPerTurnExchange: e.value || 50 })
+                    setGlobalSettings({ ...globalSettings, pointsPerTurnExchange: e.value ?? 0 })
                   }
-                  suffix={` ${t('game_hub.points_unit', { defaultValue: 'Điểm / Lượt' })}`}
+                  suffix={` ${t('game_hub.points_unit')}`}
                   min={1}
                   max={10000}
                   className="w-full"
                 />
                 <small className="text-500 block mt-1">
-                  {t('game_hub.points_per_turn_help', {
-                    defaultValue: 'Số điểm Loyalty hội viên cần tiêu để đổi lấy 1 lượt chơi.',
-                  })}
+                  {t('game_hub.points_per_turn_help')}
                 </small>
               </div>
 
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="maxDailyTurnsPerUser" className="font-bold text-xs block mb-1">
-                  {t('game_hub.max_daily_turns', { defaultValue: 'Giới hạn mua lượt tối đa / ngày' })}
+                  {t('game_hub.max_daily_turns')}
                 </label>
                 <InputNumber
                   id="maxDailyTurnsPerUser"
                   value={globalSettings.maxDailyTurnsPerUser}
                   onValueChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, maxDailyTurnsPerUser: e.value || 10 })
+                    setGlobalSettings({ ...globalSettings, maxDailyTurnsPerUser: e.value ?? 0 })
                   }
-                  suffix={` ${t('game_hub.turns_unit', { defaultValue: 'Lượt / Ngày' })}`}
+                  suffix={` ${t('game_hub.turns_unit')}`}
                   min={1}
                   max={500}
                   className="w-full"
                 />
                 <small className="text-500 block mt-1">
-                  {t('game_hub.max_daily_turns_help', {
-                    defaultValue: 'Khống chế số lượt mua tối đa mỗi tài khoản trong 24 giờ.',
-                  })}
+                  {t('game_hub.max_daily_turns_help')}
                 </small>
               </div>
 
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="defaultDailyFreeTurns" className="font-bold text-xs block mb-1">
-                  {t('game_hub.daily_free_turns', { defaultValue: 'Lượt chơi miễn phí điểm danh' })}
+                  {t('game_hub.daily_free_turns')}
                 </label>
                 <InputNumber
                   id="defaultDailyFreeTurns"
                   value={globalSettings.defaultDailyFreeTurns}
                   onValueChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, defaultDailyFreeTurns: e.value || 1 })
+                    setGlobalSettings({ ...globalSettings, defaultDailyFreeTurns: e.value ?? 0 })
                   }
-                  suffix={` ${t('game_hub.turns_day_unit', { defaultValue: 'Lượt / Ngày' })}`}
+                  suffix={` ${t('game_hub.turns_day_unit')}`}
                   min={0}
                   max={10}
                   className="w-full"
                 />
                 <small className="text-500 block mt-1">
-                  {t('game_hub.daily_free_turns_help', {
-                    defaultValue: 'Số lượt chơi miễn phí tặng mỗi ngày khi hội viên truy cập Sảnh Game.',
-                  })}
+                  {t('game_hub.daily_free_turns_help')}
                 </small>
               </div>
 
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="globalDailyBudgetLimit" className="font-bold text-xs block mb-1">
-                  {t('game_hub.global_daily_budget', { defaultValue: 'Hạn mức ngân sách phát thưởng toàn sàn' })}
+                  {t('game_hub.global_daily_budget')}
                 </label>
                 <InputNumber
                   id="globalDailyBudgetLimit"
                   value={globalSettings.globalDailyBudgetLimit}
                   onValueChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, globalDailyBudgetLimit: e.value || 50000 })
+                    setGlobalSettings({ ...globalSettings, globalDailyBudgetLimit: e.value ?? 0 })
                   }
-                  suffix={` ${t('game_hub.htg_day_unit', { defaultValue: 'HTG / Ngày' })}`}
+                  suffix={` ${t('game_hub.htg_day_unit')}`}
                   min={0}
                   className="w-full"
                 />
                 <small className="text-500 block mt-1">
-                  {t('game_hub.global_daily_budget_help', {
-                    defaultValue: 'Ngưỡng ngân sách an toàn tối đa phát thưởng toàn bộ các game trong ngày.',
-                  })}
+                  {t('game_hub.global_daily_budget_help')}
                 </small>
               </div>
             </div>
@@ -526,15 +497,10 @@ export const GameHubConfigPage: React.FC = () => {
           {/* Card 2: Lobby Operations & Events */}
           <div className="card shadow-1 border-round-lg surface-card p-4 border-1 border-200 h-full">
             <h5 className="m-0 font-bold text-900 mb-1">
-              {t('game_hub.section_ops_title', {
-                defaultValue: 'Chế Độ Vận Hành Đặc Biệt & Sự Kiện Sảnh',
-              })}
+              {t('game_hub.section_ops_title')}
             </h5>
             <p className="text-500 text-xs mb-4">
-              {t('game_hub.section_ops_desc', {
-                defaultValue:
-                  'Kích hoạt khung giờ nhân đôi quà tặng hoặc bật chế độ bảo trì sảnh Webview khi nâng cấp hệ thống.',
-              })}
+              {t('game_hub.section_ops_desc')}
             </p>
 
             <div className="flex flex-column gap-3">
@@ -543,12 +509,10 @@ export const GameHubConfigPage: React.FC = () => {
                 <div className="flex align-items-center justify-content-between mb-2">
                   <div>
                     <span className="font-bold text-sm text-900 block">
-                      {t('game_hub.golden_hour_toggle', { defaultValue: 'Khung Giờ Vàng (Nhân Hệ Số Thưởng)' })}
+                      {t('game_hub.golden_hour_toggle')}
                     </span>
                     <small className="text-500">
-                      {t('game_hub.golden_hour_help', {
-                        defaultValue: 'Tự động nhân đôi lượt chơi hoặc điểm thưởng trong khung giờ cao điểm.',
-                      })}
+                      {t('game_hub.golden_hour_help')}
                     </small>
                   </div>
                   <InputSwitch
@@ -563,7 +527,7 @@ export const GameHubConfigPage: React.FC = () => {
                   <div className="grid mt-2 pt-2 border-top-1 border-200">
                     <div className="col-12 sm:col-5 field mb-0">
                       <label className="font-bold text-xs block mb-1">
-                        {t('game_hub.golden_hour_multiplier', { defaultValue: 'Hệ số nhân thưởng' })}
+                        {t('game_hub.golden_hour_multiplier')}
                       </label>
                       <Dropdown
                         value={globalSettings.goldenHourMultiplier}
@@ -576,7 +540,7 @@ export const GameHubConfigPage: React.FC = () => {
                     </div>
                     <div className="col-12 sm:col-7 field mb-0">
                       <label className="font-bold text-xs block mb-1">
-                        {t('game_hub.golden_hour_schedule', { defaultValue: 'Khung giờ áp dụng trong ngày' })}
+                        {t('game_hub.golden_hour_schedule')}
                       </label>
                       <InputText
                         value={globalSettings.goldenHourSchedule}
@@ -596,12 +560,10 @@ export const GameHubConfigPage: React.FC = () => {
                 <div className="flex align-items-center justify-content-between mb-2">
                   <div>
                     <span className="font-bold text-sm text-900 block">
-                      {t('game_hub.maintenance_toggle', { defaultValue: 'Bảo Trì Toàn Bộ Cổng Game' })}
+                      {t('game_hub.maintenance_toggle')}
                     </span>
                     <small className="text-500">
-                      {t('game_hub.maintenance_help', {
-                        defaultValue: 'Tạm đóng sảnh Webview GameHub và hiển thị thông điệp nâng cấp hệ thống.',
-                      })}
+                      {t('game_hub.maintenance_help')}
                     </small>
                   </div>
                   <InputSwitch
@@ -615,9 +577,7 @@ export const GameHubConfigPage: React.FC = () => {
                 {globalSettings.maintenanceMode && (
                   <div className="mt-2 pt-2 border-top-1 border-200">
                     <label className="font-bold text-xs block mb-1 text-red-600">
-                      {t('game_hub.maintenance_message', {
-                        defaultValue: 'Thông điệp thông báo bảo trì hiển thị trên Webview',
-                      })}
+                      {t('game_hub.maintenance_message')}
                     </label>
                     <InputTextarea
                       rows={2}
@@ -626,9 +586,7 @@ export const GameHubConfigPage: React.FC = () => {
                         setGlobalSettings({ ...globalSettings, maintenanceNotice: e.target.value })
                       }
                       className="w-full text-sm"
-                      placeholder={t('game_hub.maintenance_message_placeholder', {
-                        defaultValue: 'Hệ thống Cổng Game đang được nâng cấp tính năng mới. Vui lòng quay lại sau!',
-                      })}
+                      placeholder={t('game_hub.maintenance_message_placeholder')}
                     />
                   </div>
                 )}
@@ -638,12 +596,10 @@ export const GameHubConfigPage: React.FC = () => {
               <div className="p-3 border-round surface-50 border-1 border-200 flex align-items-center justify-content-between">
                 <div>
                   <span className="font-bold text-sm text-900 block">
-                    {t('game_hub.sound_effects_toggle', { defaultValue: 'Âm thanh nền & Hiệu ứng Sảnh' })}
+                    {t('game_hub.sound_effects_toggle')}
                   </span>
                   <small className="text-500">
-                    {t('game_hub.sound_effects_help', {
-                      defaultValue: 'Bật nhạc nền sảnh minigame và hiệu ứng đồ họa động.',
-                    })}
+                    {t('game_hub.sound_effects_help')}
                   </small>
                 </div>
                 <InputSwitch
@@ -662,21 +618,16 @@ export const GameHubConfigPage: React.FC = () => {
           {/* Card 3: Multilingual UI & Banner */}
           <div className="card shadow-1 border-round-lg surface-card p-4 border-1 border-200 h-full">
             <h5 className="m-0 font-bold text-900 mb-1">
-              {t('game_hub.section_ui_title', {
-                defaultValue: 'Giao Diện Sảnh Webview & Thông Điệp Đa Ngôn Ngữ',
-              })}
+              {t('game_hub.section_ui_title')}
             </h5>
             <p className="text-500 text-xs mb-4">
-              {t('game_hub.section_ui_desc', {
-                defaultValue:
-                  'Nội dung thông điệp biểu ngữ chào mừng và hình ảnh đại diện hiển thị tại sảnh chính Webview.',
-              })}
+              {t('game_hub.section_ui_desc')}
             </p>
 
             <div className="grid">
               <div className="col-12 field mb-3">
                 <label htmlFor="welcomeVi" className="font-bold text-xs block mb-1">
-                  {t('game_hub.welcome_message_vi', { defaultValue: 'Thông điệp chào mừng (Tiếng Việt)' })}
+                  {t('game_hub.welcome_message_vi')}
                 </label>
                 <InputText
                   id="welcomeVi"
@@ -685,15 +636,13 @@ export const GameHubConfigPage: React.FC = () => {
                     setGlobalSettings({ ...globalSettings, welcomeBannerText: e.target.value })
                   }
                   className="w-full"
-                  placeholder={t('game_hub.welcome_placeholder', {
-                    defaultValue: 'Tham gia minigame mỗi ngày nhận quà siêu khủng từ Natcash!',
-                  })}
+                  placeholder={t('game_hub.welcome_placeholder')}
                 />
               </div>
 
               <div className="col-12 field mb-3">
                 <label htmlFor="welcomeEn" className="font-bold text-xs block mb-1">
-                  {t('game_hub.welcome_message_en', { defaultValue: 'Thông điệp chào mừng (English)' })}
+                  {t('game_hub.welcome_message_en')}
                 </label>
                 <InputText
                   id="welcomeEn"
@@ -707,7 +656,7 @@ export const GameHubConfigPage: React.FC = () => {
 
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="welcomeFr" className="font-bold text-xs block mb-1">
-                  {t('game_hub.welcome_message_fr', { defaultValue: 'Thông điệp chào mừng (Français)' })}
+                  {t('game_hub.welcome_message_fr')}
                 </label>
                 <InputText
                   id="welcomeFr"
@@ -721,7 +670,7 @@ export const GameHubConfigPage: React.FC = () => {
 
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="welcomeHt" className="font-bold text-xs block mb-1">
-                  {t('game_hub.welcome_message_ht', { defaultValue: 'Thông điệp chào mừng (Kreyòl Ayisyen)' })}
+                  {t('game_hub.welcome_message_ht')}
                 </label>
                 <InputText
                   id="welcomeHt"
@@ -735,7 +684,7 @@ export const GameHubConfigPage: React.FC = () => {
 
               <div className="col-12 field mb-3">
                 <label htmlFor="bannerUrl" className="font-bold text-xs block mb-1">
-                  {t('game_hub.banner_url', { defaultValue: 'Đường dẫn ảnh biểu ngữ Sảnh Game (Banner URL)' })}
+                  {t('game_hub.banner_url')}
                 </label>
                 <InputText
                   id="bannerUrl"
@@ -750,9 +699,7 @@ export const GameHubConfigPage: React.FC = () => {
 
               <div className="col-12 field mb-0">
                 <label htmlFor="lobbyCta" className="font-bold text-xs block mb-1">
-                  {t('game_hub.lobby_cta_text', {
-                    defaultValue: 'Tiêu đề phụ / Lời kêu gọi hành động (Call to Action)',
-                  })}
+                  {t('game_hub.lobby_cta_text')}
                 </label>
                 <InputText
                   id="lobbyCta"
@@ -769,63 +716,50 @@ export const GameHubConfigPage: React.FC = () => {
           {/* Card 4: Anti-Fraud & Security */}
           <div className="card shadow-1 border-round-lg surface-card p-4 border-1 border-200 h-full">
             <h5 className="m-0 font-bold text-900 mb-1">
-              {t('game_hub.section_security_title', {
-                defaultValue: 'Kiểm Soát An Toàn & Chống Gian Lận (Anti-Fraud)',
-              })}
+              {t('game_hub.section_security_title')}
             </h5>
             <p className="text-500 text-xs mb-4">
-              {t('game_hub.section_security_desc', {
-                defaultValue:
-                  'Rào chắn an ninh tự động bảo vệ quỹ thưởng và ngăn chặn công cụ tự động (Bot / Clicker).',
-              })}
+              {t('game_hub.section_security_desc')}
             </p>
 
             <div className="grid">
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="cooldownSeconds" className="font-bold text-xs block mb-1">
-                  {t('game_hub.cooldown_seconds', {
-                    defaultValue: 'Thời gian giãn cách tối thiểu giữa 2 lượt chơi',
-                  })}
+                  {t('game_hub.cooldown_seconds')}
                 </label>
                 <InputNumber
                   id="cooldownSeconds"
                   value={globalSettings.cooldownSeconds}
                   onValueChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, cooldownSeconds: e.value || 3 })
+                    setGlobalSettings({ ...globalSettings, cooldownSeconds: e.value ?? 0 })
                   }
-                  suffix={` ${t('game_hub.cooldown_unit', { defaultValue: 'Giây' })}`}
+                  suffix={` ${t('game_hub.cooldown_unit')}`}
                   min={1}
                   max={30}
                   className="w-full"
                 />
                 <small className="text-500 block mt-1">
-                  {t('game_hub.cooldown_help', {
-                    defaultValue: 'Chống click dồn dập và tấn công chuỗi yêu cầu tự động.',
-                  })}
+                  {t('game_hub.cooldown_help')}
                 </small>
               </div>
 
               <div className="col-12 sm:col-6 field mb-3">
                 <label htmlFor="maxTurnsPerDeviceDaily" className="font-bold text-xs block mb-1">
-                  {t('game_hub.max_device_spins', {
-                    defaultValue: 'Giới hạn số lượt tối đa trên 1 IP / Thiết bị',
-                  })}
+                  {t('game_hub.max_device_spins')}
                 </label>
                 <InputNumber
                   id="maxTurnsPerDeviceDaily"
                   value={globalSettings.maxTurnsPerDeviceDaily}
                   onValueChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, maxTurnsPerDeviceDaily: e.value || 50 })
+                    setGlobalSettings({ ...globalSettings, maxTurnsPerDeviceDaily: e.value ?? 0 })
                   }
-                  suffix={` ${t('game_hub.max_spins_unit', { defaultValue: 'Lượt / Thiết bị' })}`}
+                  suffix={` ${t('game_hub.max_spins_unit')}`}
                   min={5}
                   max={1000}
                   className="w-full"
                 />
                 <small className="text-500 block mt-1">
-                  {t('game_hub.max_device_spins_help', {
-                    defaultValue: 'Ngăn chặn tạo nhiều tài khoản ảo trên cùng một thiết bị.',
-                  })}
+                  {t('game_hub.max_device_spins_help')}
                 </small>
               </div>
 
@@ -833,15 +767,10 @@ export const GameHubConfigPage: React.FC = () => {
                 <div className="p-3 border-round surface-50 border-1 border-200 flex align-items-center justify-content-between">
                   <div>
                     <span className="font-bold text-sm text-900 block">
-                      {t('game_hub.auto_lock_suspicious', {
-                        defaultValue: 'Tự động tạm khóa giao dịch khi phát hiện bất thường',
-                      })}
+                      {t('game_hub.auto_lock_suspicious')}
                     </span>
                     <small className="text-500">
-                      {t('game_hub.auto_lock_help', {
-                        defaultValue:
-                          'Kích hoạt khóa Redisson tức thì khi phát sinh xung đột số dư hoặc chữ ký không hợp lệ.',
-                      })}
+                      {t('game_hub.auto_lock_help')}
                     </small>
                   </div>
                   <InputSwitch
@@ -862,15 +791,10 @@ export const GameHubConfigPage: React.FC = () => {
             <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-3 mb-3">
               <div>
                 <h5 className="m-0 font-bold text-900">
-                  {t('game_hub.section_matrix_title', {
-                    defaultValue: 'Danh Sách & Thứ Tự Ưu Tiên Trò Chơi Trên Sảnh Webview',
-                  })}
+                  {t('game_hub.section_matrix_title')}
                 </h5>
                 <p className="text-500 text-xs mt-1 mb-0">
-                  {t('game_hub.section_matrix_desc', {
-                    defaultValue:
-                      'Quản trị vị trí xuất hiện, huy hiệu nổi bật và trạng thái mở từng trò chơi trên giao diện Sảnh Game.',
-                  })}
+                  {t('game_hub.section_matrix_desc')}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -880,12 +804,12 @@ export const GameHubConfigPage: React.FC = () => {
                     type="search"
                     value={globalFilter}
                     onChange={(e) => setGlobalFilter(e.target.value)}
-                    placeholder={t('common.search', { defaultValue: 'Tìm kiếm game...' })}
+                    placeholder={t('common.search')}
                     className="p-inputtext-sm"
                   />
                 </span>
                 <Button
-                  label={t('game.game_list', { defaultValue: 'Danh mục Trò chơi & Tham số' })}
+                  label={t('game.game_list')}
                   icon="pi pi-external-link"
                   outlined
                   onClick={() => navigate(paths.gameManagement)}
@@ -902,25 +826,25 @@ export const GameHubConfigPage: React.FC = () => {
               responsiveLayout="scroll"
               globalFilter={globalFilter}
               loading={isLoading}
-              emptyMessage={t('common.no_data', { defaultValue: 'Không có dữ liệu trò chơi' })}
+              emptyMessage={t('common.no_data')}
             >
               <Column
-                header={t('common.stt', { defaultValue: 'STT' })}
+                header={t('common.stt')}
                 body={(_, options) => options.rowIndex + 1}
                 style={{ width: '3.5rem', textAlign: 'center' }}
               />
               <Column
-                header={t('game_hub.game_name', { defaultValue: 'TÊN TRÒ CHƠI' })}
+                header={t('game_hub.game_name')}
                 body={gameInfoTemplate}
                 style={{ minWidth: '15rem' }}
               />
               <Column
-                header={t('game_hub.game_category', { defaultValue: 'THỂ LOẠI' })}
+                header={t('game_hub.game_category')}
                 body={categoryTextTemplate}
                 style={{ minWidth: '11rem' }}
               />
               <Column
-                header={t('game_hub.turn_price', { defaultValue: 'GIÁ LƯỢT' })}
+                header={t('game_hub.turn_price')}
                 body={(row: GameItem) => (
                   <span className="text-sm text-700">
                     {row.pricePerTurn || 10} Pts • {row.pricePerTurnHtg || 10} HTG
@@ -929,22 +853,22 @@ export const GameHubConfigPage: React.FC = () => {
                 style={{ minWidth: '9rem' }}
               />
               <Column
-                header={t('game_hub.lobby_order', { defaultValue: 'THỨ TỰ SẢNH' })}
+                header={t('game_hub.lobby_order')}
                 body={lobbyOrderTemplate}
                 style={{ width: '7rem', textAlign: 'center' }}
               />
               <Column
-                header={t('game_hub.lobby_badge', { defaultValue: 'HUY HIỆU SẢNH' })}
+                header={t('game_hub.lobby_badge')}
                 body={lobbyBadgeTemplate}
                 style={{ minWidth: '8rem', textAlign: 'center' }}
               />
               <Column
-                header={t('game_hub.lobby_visibility', { defaultValue: 'HIỂN THỊ SẢNH' })}
+                header={t('game_hub.lobby_visibility')}
                 body={lobbyVisibilityTemplate}
                 style={{ minWidth: '9rem', textAlign: 'center' }}
               />
               <Column
-                header={t('common.actions', { defaultValue: 'THAO TÁC' })}
+                header={t('common.actions')}
                 body={actionTemplate}
                 style={{ width: '12rem', textAlign: 'center' }}
               />

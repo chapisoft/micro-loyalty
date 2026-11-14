@@ -1,6 +1,21 @@
 import path from 'node:path'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+
+const createApiProxy = (target: string, bypassHtml = false): ProxyOptions => ({
+  target,
+  changeOrigin: true,
+  rewrite: (reqPath) => reqPath.replace(/^\/loyalty-service/, ''),
+  ...(bypassHtml
+    ? {
+        bypass(req) {
+          if (req.method === 'GET' && req.headers.accept?.includes('text/html')) {
+            return '/index.html'
+          }
+        },
+      }
+    : {}),
+})
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,6 +27,30 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 8990,
       host: '0.0.0.0',
+      proxy: {
+        // 1. Game-Service (8083)
+        '^/(loyalty-service/)?gamehub/v1(/|\\?|$)': createApiProxy('http://localhost:8083'),
+        '^/(loyalty-service/)?loyalty/v1/luckydraw(/|\\?|$)': createApiProxy('http://localhost:8083'),
+        '^/(loyalty-service/)?loyalty/v1/admin/learning(/|\\?|$)': createApiProxy('http://localhost:8083'),
+        '^/(loyalty-service/)?loyalty/v1/admin/games(/|\\?|$)': createApiProxy('http://localhost:8083'),
+
+        // 2. Partner-Service (8085)
+        '^/(loyalty-service/)?loyalty/v1/admin/dead-letter(/|\\?|$)': createApiProxy('http://localhost:8085'),
+        '^/(loyalty-service/)?loyalty/v1/partners/locations(/|\\?|$)': createApiProxy('http://localhost:8085'),
+        '^/(loyalty-service/)?loyalty/v1/payment-points(/|\\?|$)': createApiProxy('http://localhost:8085'),
+        '^/(loyalty-service/)?loyalty/v1/partner-portal(/|\\?|$)': createApiProxy('http://localhost:8085'),
+        '^/(loyalty-service/)?loyalty/v1/partner(/|\\?|$)': createApiProxy('http://localhost:8085'),
+        '^/(loyalty-service/)?loyalty/v1/clearinghouse(/|\\?|$)': createApiProxy('http://localhost:8085'),
+
+        // 3. Campaign-Service (8084)
+        '^/(loyalty-service/)?loyalty/v1/(segments|engagement|milestones|campaigns|referrals|budgets|ai-copilot|alerts|notification-preferences|inbox)(/|\\?|$)': createApiProxy('http://localhost:8084'),
+
+        // 4. Customer-Service (8082)
+        '^/(loyalty-service/)?loyalty/v1/(admin/agents|agents|earn|ledger|point-history|sso|ussd|wallet|vouchers|reward-wallet|devices|accounts|profile|tiers)(/|\\?|$)': createApiProxy('http://localhost:8082'),
+
+        // 5. CMS-Service (8081)
+        '^/(loyalty-service/)?(loyalty/v1|loyalty/auth|loyalty/users|auth|users|roles|policies|partners|system-parameters|api|v1|cms|actuator)(/|\\?|$)': createApiProxy('http://localhost:8081', true),
+      },
     },
     resolve: {
       alias: [

@@ -63,7 +63,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
             {item.isVideoView && (
               <video width="100%" height={height} controls>
                 <source src={item.path} type="video/mp4" />
-                {t('common.video_not_supported', { defaultValue: 'Trình duyệt của bạn không hỗ trợ thẻ video.' })}
+                {t('common.video_not_supported')}
               </video>
             )}
             {item.isVideoDownload && (

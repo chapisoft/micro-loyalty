@@ -22,7 +22,6 @@ export function Login() {
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -47,27 +46,22 @@ export function Login() {
               userId: response.userId,
               username: response.username || data.username,
               fullName: response.fullName || response.username || data.username,
-              roles: response.roles || ['SUPER_ADMIN'],
-              email: response.email || `${data.username}@mid.io.vn`,
+              roles: response.roles || [],
+              email: response.email || '',
               accessToken: response.accessToken,
             })
           );
           navigate(paths.dashboard);
         } else {
-          setErrorMessage(t('login.login_failed', { defaultValue: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.' }));
+          setErrorMessage(t('login.login_failed'));
         }
       },
       onError: (err: any) => {
         console.error('[Login] Exception:', err);
-        const msg = err?.response?.data?.message || err?.message || t('login.login_failed', { defaultValue: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
+        const msg = err?.response?.data?.message || err?.message || t('login.login_failed');
         setErrorMessage(msg);
       },
     });
-  };
-
-  const fillDemo = () => {
-    setValue('username', 'admin', { shouldValidate: true });
-    setValue('password', 'Admin@123456', { shouldValidate: true });
   };
 
   const languages = [
@@ -159,7 +153,7 @@ export function Login() {
               Micro <span style={{ color: '#FF6B00' }}>Loyalty</span>
             </span>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              {t('login.suite_subtitle', { defaultValue: 'Enterprise Loyalty & GameHub Suite' })}
+              {t('login.suite_subtitle')}
             </span>
           </div>
         </div>
@@ -177,7 +171,7 @@ export function Login() {
             }}
           >
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-            {t('login.online_system', { defaultValue: 'Hệ Thống Trực Tuyến • Sẵn Sàng 99.99%' })}
+            {t('login.online_system')}
           </div>
 
           <h1
@@ -190,11 +184,11 @@ export function Login() {
               letterSpacing: '-1px',
             }}
           >
-            {t('login.hero_title', { defaultValue: 'Nền Tảng Quản Trị Khách Hàng Thân Thiết & GameHub' })}
+            {t('login.hero_title')}
           </h1>
 
           <p style={{ fontSize: '1.05rem', color: '#334155', lineHeight: 1.7, marginBottom: '2.5rem', fontWeight: 500 }}>
-            {t('login.hero_subtitle', { defaultValue: 'Hạ tầng quản lý hội viên, chính sách tích/tiêu điểm liên minh, ví phần thưởng quầy thu ngân và cổng game tương tác đa thuê bao theo thời gian thực.' })}
+            {t('login.hero_subtitle')}
           </p>
 
           {/* Feature Grid */}
@@ -216,8 +210,8 @@ export function Login() {
                   <i className="pi pi-wallet font-bold" style={{ fontSize: '1.2rem', color: '#FF6B00' }} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_wallet_title', { defaultValue: 'Ví Phần Thưởng Đa Kênh' })}</div>
-                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_wallet_desc', { defaultValue: 'Tích & tiêu điểm tức thì tại POS, QR 60s' })}</div>
+                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_wallet_title')}</div>
+                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_wallet_desc')}</div>
                 </div>
               </div>
             </div>
@@ -239,8 +233,8 @@ export function Login() {
                   <i className="pi pi-gift font-bold" style={{ fontSize: '1.2rem', color: '#0284c7' }} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_game_title', { defaultValue: 'Động Cơ GameHub HTML5' })}</div>
-                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_game_desc', { defaultValue: 'Vòng quay may mắn, khống chế Redis' })}</div>
+                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_game_title')}</div>
+                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_game_desc')}</div>
                 </div>
               </div>
             </div>
@@ -262,8 +256,8 @@ export function Login() {
                   <i className="pi pi-star font-bold" style={{ fontSize: '1.2rem', color: '#16a34a' }} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_tier_title', { defaultValue: 'Phân Hạng Hội Viên 4 Cấp' })}</div>
-                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_tier_desc', { defaultValue: 'Tự động nâng/hạ hạng, nhân hệ số điểm' })}</div>
+                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_tier_title')}</div>
+                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_tier_desc')}</div>
                 </div>
               </div>
             </div>
@@ -285,8 +279,8 @@ export function Login() {
                   <i className="pi pi-chart-pie font-bold" style={{ fontSize: '1.2rem', color: '#7c3aed' }} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_clearing_title', { defaultValue: 'Quyết Toán Bù Trừ Đa Phương' })}</div>
-                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_clearing_desc', { defaultValue: 'Đối soát tài chính minh bạch đa đối tác' })}</div>
+                  <div className="font-bold text-sm" style={{ color: '#0f172a' }}>{t('login.feature_clearing_title')}</div>
+                  <div className="text-xs font-medium" style={{ color: '#475569' }}>{t('login.feature_clearing_desc')}</div>
                 </div>
               </div>
             </div>
@@ -296,7 +290,7 @@ export function Login() {
         {/* Footer */}
         <div className="flex justify-content-between align-items-center text-xs relative z-1 font-semibold" style={{ color: '#475569' }}>
           <span>© 2026 Chapisoft / Natcash • Loyalty Platform</span>
-          <span>{t('login.copyright_owner', { defaultValue: 'Bản quyền thuộc Chapisoft' })}</span>
+          <span>{t('login.copyright_owner')}</span>
         </div>
       </div>
 
@@ -344,10 +338,10 @@ export function Login() {
                 </svg>
               </div>
               <h2 className="text-2xl font-extrabold m-0 mb-2" style={{ color: '#0f172a' }}>
-                {t('login.title', { defaultValue: 'Đăng nhập Quản trị' })}
+                {t('login.title')}
               </h2>
               <p className="text-sm m-0 font-medium" style={{ color: '#475569' }}>
-                {t('login.form_subtitle', { defaultValue: 'Nhập thông tin quản trị viên để truy cập bảng điều khiển Loyalty' })}
+                {t('login.form_subtitle')}
               </p>
             </div>
 
@@ -367,19 +361,19 @@ export function Login() {
               {/* Username Input - Unified Icon on RIGHT */}
               <div className="field mb-4">
                 <label className="font-bold text-sm block mb-2" style={{ color: '#0f172a' }}>
-                  {t('login.username', { defaultValue: 'Tên đăng nhập' })}
+                  {t('login.username')}
                 </label>
                 <div className="relative w-full">
                   <Controller
                     name="username"
                     control={control}
-                    rules={{ required: t('login.please_enter_your_username', { defaultValue: 'Vui lòng nhập tên đăng nhập' }) }}
+                    rules={{ required: t('login.please_enter_your_username') }}
                     render={({ field, fieldState }: { field: ControllerRenderProps<any, 'username'>; fieldState: ControllerFieldState }) => (
                       <InputText
                         id="username"
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
-                        placeholder={t('login.enter_your_username', { defaultValue: 'Nhập tên đăng nhập (vd: admin)' })}
+                        placeholder={t('login.enter_your_username')}
                         className={`w-full py-3 px-3 border-round-lg ${fieldState.invalid ? 'p-invalid' : ''}`}
                         style={{
                           paddingRight: '2.85rem',
@@ -410,18 +404,18 @@ export function Login() {
               {/* Password Input - Icon / Toggle Mask on RIGHT */}
               <div className="field mb-4">
                 <label className="font-bold text-sm block mb-2" style={{ color: '#0f172a' }}>
-                  {t('login.password', { defaultValue: 'Mật khẩu' })}
+                  {t('login.password')}
                 </label>
                 <Controller
                   name="password"
                   control={control}
-                  rules={{ required: t('login.please_enter_your_password', { defaultValue: 'Vui lòng nhập mật khẩu' }) }}
+                  rules={{ required: t('login.please_enter_your_password') }}
                   render={({ field, fieldState }: { field: ControllerRenderProps<any, 'password'>; fieldState: ControllerFieldState }) => (
                     <Password
                       id="password"
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
-                      placeholder={t('login.enter_your_password', { defaultValue: 'Nhập mật khẩu quản trị' })}
+                      placeholder={t('login.enter_your_password')}
                       toggleMask
                       feedback={false}
                       className={`w-full ${fieldState.invalid ? 'p-invalid' : ''}`}
@@ -437,20 +431,6 @@ export function Login() {
                   )}
                 />
                 {errors.password && <small className="p-error block mt-1">{errors.password.message}</small>}
-              </div>
-
-              {/* Demo Fill Helper */}
-              <div className="flex justify-content-between align-items-center mb-4">
-                <span
-                  onClick={fillDemo}
-                  className="text-xs cursor-pointer hover:underline flex align-items-center gap-1 font-bold"
-                  style={{ color: '#EA580C' }}
-                >
-                  <i className="pi pi-key text-xs" /> {t('login.demo_account', { defaultValue: 'Điền nhanh tài khoản mẫu (admin)' })}
-                </span>
-                <span className="text-xs font-semibold" style={{ color: '#64748b' }}>
-                  {t('login.default_account', { defaultValue: 'Mặc định: Admin@123456' })}
-                </span>
               </div>
 
               {/* Submit Button with Perfect Centering */}
@@ -475,7 +455,7 @@ export function Login() {
                     <i className="pi pi-sign-in" style={{ fontSize: '1.15rem' }} />
                   )}
                   <span style={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '0.2px' }}>
-                    {t('login.login', { defaultValue: 'Đăng nhập' })}
+                    {t('login.login')}
                   </span>
                 </div>
               </Button>
@@ -485,7 +465,7 @@ export function Login() {
 
         {/* Bottom Note */}
         <div className="text-center text-xs mt-4 font-semibold" style={{ color: '#64748b' }}>
-          {t('login.portal_secured', { defaultValue: 'Loyalty Admin Portal v2.0 • Secured by TLS 1.3 & HMAC-SHA256' })}
+          {t('login.portal_secured')}
         </div>
       </div>
     </div>

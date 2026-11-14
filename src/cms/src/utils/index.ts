@@ -1,3 +1,5 @@
+import i18n from '@/language';
+
 export const getStyle = (statusId: number, theme: string = 'dark') => {
   if (theme === 'dark') {
     switch (statusId) {
@@ -67,17 +69,17 @@ export const getStatusName = (statusId: number | null) => {
     case 0:
     case null:
     case 1:
-      return 'Chờ tiếp nhận';
+      return i18n.t('status.pending_receive');
     case 2:
-      return 'Đã tiếp nhận';
+      return i18n.t('status.received');
     case 3:
-      return 'Chờ phê duyệt kết quả';
+      return i18n.t('status.pending_approval');
     case 4:
-      return 'Hoàn thành';
+      return i18n.t('status.completed');
     case 5:
-      return 'Từ chối phê duyệt kết quả';
+      return i18n.t('status.rejected_approval');
     default:
-      return 'Chưa tiếp nhận';
+      return i18n.t('status.unreceived');
   }
 };
 

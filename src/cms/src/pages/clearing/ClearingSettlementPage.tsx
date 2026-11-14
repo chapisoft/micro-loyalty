@@ -14,7 +14,7 @@ import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
-import { ClearingStatus, PaymentBatchStatus } from '@/models';
+import { ClearingStatus, DisputeStatus, PaymentBatchStatus } from '@/models';
 import {
   LoyaltyService,
   ClearingSummaryModel,
@@ -82,7 +82,7 @@ export const ClearingSettlementPage: React.FC = () => {
   const [showConfirmSettle, setShowConfirmSettle] = useState(false);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [selectedDispute, setSelectedDispute] = useState<DisputeItemModel | null>(null);
-  const [resolveStatus, setResolveStatus] = useState<string>('RESOLVED');
+  const [resolveStatus, setResolveStatus] = useState<string>(DisputeStatus.RESOLVED);
   const [resolvedAmount, setResolvedAmount] = useState<number | null>(null);
   const [resolutionNote, setResolutionNote] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,7 +141,7 @@ export const ClearingSettlementPage: React.FC = () => {
 
   const handleCreateBatch = async () => {
     if (!batchPartnerId) {
-      toast.current?.show({ severity: 'warn', summary: t('common.warn', { defaultValue: 'Thiếu thông tin' }), detail: t('clearing.select_partner_batch', { defaultValue: 'Vui lòng chọn Đối tác để khởi tạo lô thanh toán PAY-...' }) });
+      toast.current?.show({ severity: 'warn', summary: t('common.warn'), detail: t('clearing.select_partner_batch') });
       return;
     }
     setIsSubmitting(true);
@@ -150,11 +150,11 @@ export const ClearingSettlementPage: React.FC = () => {
         { partnerId: batchPartnerId, periodFrom: fromDate, periodTo: toDate },
         selectedTenant
       );
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: t('clearing.batch_created', { defaultValue: 'Đã khởi tạo lô thanh toán PAY-... thành công.' }) });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('clearing.batch_created') });
       setShowCreateBatchDialog(false);
       fetchClearingData();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -164,11 +164,11 @@ export const ClearingSettlementPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       await LoyaltyService.confirmClearingBatch(batch.batchCode, selectedTenant);
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Thành công' }), detail: `${batch.batchCode} ${t('clearing.batch_confirmed', { defaultValue: 'đã được xác nhận giải ngân.' })}` });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: `${batch.batchCode} ${t('clearing.batch_confirmed')}` });
       setTrackBatch(null);
       fetchClearingData();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -198,8 +198,8 @@ export const ClearingSettlementPage: React.FC = () => {
       console.error('[handleViewDetails] Error:', err);
       toast.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: err?.message || 'Không thể tải chi tiết giao dịch của đối tác!',
+        summary: t('common.error'),
+        detail: err?.message || t('clearing.fetch_detail_error'),
         life: 4000,
       });
     } finally {
@@ -217,12 +217,11 @@ export const ClearingSettlementPage: React.FC = () => {
       if (res && res.settlementBatchCode) {
         setSettleSuccessMsg(
           t('clearing.batch_success', {
-            code: res.settlementBatchCode,
-            defaultValue: `Quyết toán thành công! Mã lô kết chuyển: ${res.settlementBatchCode}`,
+            code: res.settlementBatchCode
           })
         );
       } else {
-        setSettleSuccessMsg(res?.message || t('clearing.settle_success', { defaultValue: 'Quyết toán kết chuyển kỳ bù trừ thành công!' }));
+        setSettleSuccessMsg(res?.message || t('clearing.settle_success'));
       }
       setShowConfirmSettle(false);
       await fetchClearingData();
@@ -230,8 +229,8 @@ export const ClearingSettlementPage: React.FC = () => {
       console.error('[handleSettlePeriod] Error:', e);
       toast.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.response?.data?.message || e?.message || 'Không thể thực hiện quyết toán bù trừ!',
+        summary: t('common.error'),
+        detail: e?.response?.data?.message || e?.message || t('clearing.settle_error'),
         life: 4000,
       });
     } finally {
@@ -241,7 +240,7 @@ export const ClearingSettlementPage: React.FC = () => {
 
   const handleOpenResolve = (dispute: DisputeItemModel) => {
     setSelectedDispute(dispute);
-    setResolveStatus('RESOLVED');
+    setResolveStatus(DisputeStatus.RESOLVED);
     setResolvedAmount(dispute.loyaltyAmount || dispute.partnerAmount);
     setResolutionNote('');
     setShowResolveDialog(true);
@@ -260,8 +259,8 @@ export const ClearingSettlementPage: React.FC = () => {
       );
       toast.current?.show({
         severity: 'success',
-        summary: t('common.success', { defaultValue: 'Thành Công' }),
-        detail: t('clearing.resolve_dispute_success', { defaultValue: 'Đã giải quyết khiếu nại đối soát thành công!' }),
+        summary: t('common.success'),
+        detail: t('clearing.resolve_dispute_success'),
         life: 3000,
       });
       setShowResolveDialog(false);
@@ -270,8 +269,8 @@ export const ClearingSettlementPage: React.FC = () => {
       console.error('[handleSaveResolve] Error:', e);
       toast.current?.show({
         severity: 'error',
-        summary: t('common.error', { defaultValue: 'Lỗi' }),
-        detail: e?.response?.data?.message || e?.message || 'Không thể xử lý khiếu nại!',
+        summary: t('common.error'),
+        detail: e?.response?.data?.message || e?.message || t('clearing.resolve_dispute_error'),
         life: 4000,
       });
     } finally {
@@ -281,9 +280,9 @@ export const ClearingSettlementPage: React.FC = () => {
 
   const statusTemplate = (status: string) => {
     return status === ClearingStatus.SETTLED ? (
-      <Tag severity="success" value={t('common.settled', { defaultValue: 'Đã quyết toán' })} />
+      <Tag severity="success" value={t('common.settled')} />
     ) : (
-      <Tag severity="warning" value={t('common.pending', { defaultValue: 'Chờ quyết toán' })} />
+      <Tag severity="warning" value={t('common.pending')} />
     );
   };
 
@@ -308,15 +307,15 @@ export const ClearingSettlementPage: React.FC = () => {
 
   const disputeStatusTemplate = (status: string) => {
     switch (status) {
-      case 'RESOLVED':
-        return <Tag severity="success" value="Đã giải quyết" />;
-      case 'REJECTED':
-        return <Tag severity="danger" value="Đã từ chối" />;
-      case 'INVESTIGATING':
-        return <Tag severity="warning" value="Đang tra soát" />;
-      case 'OPEN':
+      case DisputeStatus.RESOLVED:
+        return <Tag severity="success" value={t('enum.dispute_status.RESOLVED')} />;
+      case DisputeStatus.REJECTED:
+        return <Tag severity="danger" value={t('enum.dispute_status.REJECTED')} />;
+      case DisputeStatus.INVESTIGATING:
+        return <Tag severity="warning" value={t('enum.dispute_status.INVESTIGATING')} />;
+      case DisputeStatus.OPEN:
       default:
-        return <Tag severity="info" value="Mới mở" />;
+        return <Tag severity="info" value={t('enum.dispute_status.OPEN')} />;
     }
   };
 
@@ -330,7 +329,7 @@ export const ClearingSettlementPage: React.FC = () => {
         severity="info"
         size="small"
         onClick={() => handleViewDetails(rowData)}
-        tooltip={t('clearing.view_detail_tooltip', { defaultValue: 'Xem chi tiết các hóa đơn' })}
+        tooltip={t('clearing.view_detail_tooltip')}
       />
     </div>
   );
@@ -341,19 +340,19 @@ export const ClearingSettlementPage: React.FC = () => {
     const fileName = `Bao_Cao_Doi_Soat_Bu_Tru_${selectedTenant}_${fromStr}_${toStr}.xlsx`;
 
     const dataToExport = (selectedItems.length > 0 ? selectedItems : clearingList).map((item, index) => ({
-      [t('common.no_order', { defaultValue: 'STT' })]: index + 1,
-      [t('clearing.partner_code', { defaultValue: 'Mã Đối Tác' })]: item.partnerCode || '',
-      [t('clearing.partner_name', { defaultValue: 'Tên Đối Tác' })]: item.partnerName || '',
-      [t('clearing.partner_type', { defaultValue: 'Loại Đối Tác' })]: item.partnerType || '',
-      [t('clearing.total_txs', { defaultValue: 'Số GD Đối Soát' })]: Number(item.totalTransactions || 0),
-      [t('clearing.total_points_issued', { defaultValue: 'Điểm Phát Hành' })]: Number(item.totalPointsIssued || 0),
-      [t('clearing.total_points_redeemed', { defaultValue: 'Điểm Thu Hồi' })]: Number(item.totalPointsRedeemed || 0),
-      [t('clearing.total_fiat_payable', { defaultValue: 'Phải Trả Quỹ (HTG)' })]: Number(item.totalFiatPayable || 0),
-      [t('clearing.total_fiat_receivable', { defaultValue: 'Phải Thu Quỹ (HTG)' })]: Number(item.totalFiatReceivable || 0),
-      [t('clearing.total_commission_fee', { defaultValue: 'Phí Sàn MDR (HTG)' })]: Number(item.totalCommissionFee || 0),
-      [t('clearing.net_amount', { defaultValue: 'Dư Nợ Ròng (HTG)' })]: Number(item.netSettlementAmount || 0),
-      [t('common.status', { defaultValue: 'Trạng Thái' })]:
-        item.status === 'SETTLED' ? t('clearing.settled', { defaultValue: 'Đã Quyết Toán' }) : t('clearing.pending', { defaultValue: 'Chờ Quyết Toán' }),
+      [t('common.no_order')]: index + 1,
+      [t('clearing.partner_code')]: item.partnerCode || '',
+      [t('clearing.partner_name')]: item.partnerName || '',
+      [t('clearing.partner_type')]: item.partnerType || '',
+      [t('clearing.total_txs')]: Number(item.totalTransactions || 0),
+      [t('clearing.total_points_issued')]: Number(item.totalPointsIssued || 0),
+      [t('clearing.total_points_redeemed')]: Number(item.totalPointsRedeemed || 0),
+      [t('clearing.total_fiat_payable')]: Number(item.totalFiatPayable || 0),
+      [t('clearing.total_fiat_receivable')]: Number(item.totalFiatReceivable || 0),
+      [t('clearing.total_commission_fee')]: Number(item.totalCommissionFee || 0),
+      [t('clearing.net_amount')]: Number(item.netSettlementAmount || 0),
+      [t('common.status')]:
+        item.status === 'SETTLED' ? t('clearing.settled') : t('clearing.pending'),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -379,10 +378,9 @@ export const ClearingSettlementPage: React.FC = () => {
 
     toast.current?.show({
       severity: 'success',
-      summary: t('common.success', { defaultValue: 'Thành Công' }),
+      summary: t('common.success'),
       detail: t('clearing.export_success', {
-        name: fileName,
-        defaultValue: `Đã xuất báo cáo thành công: ${fileName}`,
+        name: fileName
       }),
       life: 3000,
     });
@@ -391,9 +389,9 @@ export const ClearingSettlementPage: React.FC = () => {
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-3">
       <div className="flex flex-wrap gap-2 align-items-center">
-        <span className="font-bold text-lg text-primary">{t('clearing.management_title', { defaultValue: 'Bảng Đối Soát Bù Trừ Đa Phương' })}</span>
+        <span className="font-bold text-lg text-primary">{t('clearing.management_title')}</span>
         {selectedItems.length > 0 && (
-          <Tag severity="info" value={`${selectedItems.length} đối tác được chọn`} />
+          <Tag severity="info" value={t('clearing.selected_partners_count', { count: selectedItems.length })} />
         )}
       </div>
       <div className="flex flex-wrap gap-2">
@@ -404,22 +402,22 @@ export const ClearingSettlementPage: React.FC = () => {
           rounded
           onClick={fetchClearingData}
           loading={loading}
-          tooltip={t('common.refresh', { defaultValue: 'Làm mới dữ liệu' })}
+          tooltip={t('common.refresh')}
         />
         <Button
-          label={t('clearing.export_excel', { defaultValue: 'Xuất Excel' })}
+          label={t('clearing.export_excel')}
           icon="pi pi-file-excel"
           severity="success"
           outlined
           onClick={exportToExcel}
-          tooltip={t('clearing.export_excel_tooltip', { defaultValue: 'Xuất dữ liệu bảng đối soát ra file Excel (.xlsx)' })}
+          tooltip={t('clearing.export_excel_tooltip')}
         />
         <Button
-          label={t('clearing.settle_period', { defaultValue: 'Kết Chuyển Kỳ Quyết Toán' })}
+          label={t('clearing.settle_period')}
           icon="pi pi-check-circle"
           onClick={() => setShowConfirmSettle(true)}
           disabled={clearingList.length === 0}
-          tooltip={t('clearing.settle_tooltip', { defaultValue: 'Chốt sổ cái và kết chuyển trạng thái công nợ kỳ hiện tại' })}
+          tooltip={t('clearing.settle_tooltip')}
         />
       </div>
     </div>
@@ -428,14 +426,14 @@ export const ClearingSettlementPage: React.FC = () => {
   return (
     <div>
       <Toast ref={toast} position="top-center" />
-      <AppBreadcrumb items={[{ label: t('nav.clearing', { defaultValue: 'Bù Trừ & Quyết Toán' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.clearing') }]} />
 
       {/* Header Bar với TenantSelector và Bộ lọc khoảng ngày */}
       <div className="card shadow-1 border-round surface-card p-4 mb-4">
         <div className="flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
           <div>
-            <h3 className="m-0 text-900 font-bold">{t('clearing.management_title', { defaultValue: 'Quyết Toán Bù Trừ Tài Chính Đa Phương' })}</h3>
-            <p className="text-500 m-0 mt-1 text-sm">{t('clearing.subtitle', { defaultValue: 'Báo cáo tổng hợp số điểm phát hành và số điểm chấp nhận tiêu dùng giữa các bên liên minh' })}</p>
+            <h3 className="m-0 text-900 font-bold">{t('clearing.management_title')}</h3>
+            <p className="text-500 m-0 mt-1 text-sm">{t('clearing.subtitle')}</p>
           </div>
           <div className="flex align-items-center gap-2">
             <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
@@ -446,7 +444,7 @@ export const ClearingSettlementPage: React.FC = () => {
         <div className="flex flex-wrap align-items-center justify-content-between gap-3 surface-50 p-3 border-round">
           <div className="flex flex-wrap align-items-center gap-3">
             <div className="flex align-items-center gap-2">
-              <label htmlFor="fromDate" className="font-semibold text-sm text-700">{t('clearing.filter_date_from', { defaultValue: 'Từ ngày' })}:</label>
+              <label htmlFor="fromDate" className="font-semibold text-sm text-700">{t('clearing.filter_date_from')}:</label>
               <Calendar
                 id="fromDate"
                 value={parseLocalDate(fromDate)}
@@ -457,7 +455,7 @@ export const ClearingSettlementPage: React.FC = () => {
               />
             </div>
             <div className="flex align-items-center gap-2">
-              <label htmlFor="toDate" className="font-semibold text-sm text-700">{t('clearing.filter_date_to', { defaultValue: 'Đến ngày' })}:</label>
+              <label htmlFor="toDate" className="font-semibold text-sm text-700">{t('clearing.filter_date_to')}:</label>
               <Calendar
                 id="toDate"
                 value={parseLocalDate(toDate)}
@@ -469,7 +467,7 @@ export const ClearingSettlementPage: React.FC = () => {
             </div>
             <Button
               icon="pi pi-search"
-              label={t('common.search', { defaultValue: 'Tra cứu' })}
+              label={t('common.search')}
               onClick={fetchClearingData}
               loading={loading}
             />
@@ -477,23 +475,23 @@ export const ClearingSettlementPage: React.FC = () => {
 
           {/* Nút chọn nhanh kỳ kế toán */}
           <div className="flex flex-wrap align-items-center gap-2">
-            <span className="text-500 text-xs font-semibold">{t('common.quick_select', { defaultValue: 'Kỳ nhanh:' })}</span>
+            <span className="text-500 text-xs font-semibold">{t('common.quick_select')}</span>
             <Button
-              label={t('common.this_month', { defaultValue: 'Tháng này' })}
+              label={t('common.this_month')}
               size="small"
               text
               severity="secondary"
               onClick={() => handleQuickPeriod('THIS_MONTH')}
             />
             <Button
-              label={t('common.last_month', { defaultValue: 'Tháng trước' })}
+              label={t('common.last_month')}
               size="small"
               text
               severity="secondary"
               onClick={() => handleQuickPeriod('LAST_MONTH')}
             />
             <Button
-              label={t('common.last_7_days', { defaultValue: '7 ngày qua' })}
+              label={t('common.last_7_days')}
               size="small"
               text
               severity="secondary"
@@ -514,25 +512,25 @@ export const ClearingSettlementPage: React.FC = () => {
       <div className="grid mb-4">
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
-            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_txs', { defaultValue: 'Tổng số GD đối soát' })}</span>
+            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_txs')}</span>
             <div className="text-900 font-bold text-2xl">{totalTransactions.toLocaleString()}</div>
           </div>
         </div>
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
-            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_points_issued', { defaultValue: 'Tổng điểm phát hành' })}</span>
-            <div className="text-orange-500 font-bold text-2xl">{totalPointsIssued.toLocaleString()} {t('common.points', { defaultValue: 'Điểm' })}</div>
+            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_points_issued')}</span>
+            <div className="text-orange-500 font-bold text-2xl">{totalPointsIssued.toLocaleString()} {t('common.points')}</div>
           </div>
         </div>
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
-            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_points_redeemed', { defaultValue: 'Tổng điểm thu hồi' })}</span>
-            <div className="text-primary font-bold text-2xl">{totalPointsRedeemed.toLocaleString()} {t('common.points', { defaultValue: 'Điểm' })}</div>
+            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_points_redeemed')}</span>
+            <div className="text-primary font-bold text-2xl">{totalPointsRedeemed.toLocaleString()} {t('common.points')}</div>
           </div>
         </div>
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
-            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.net_amount', { defaultValue: 'Tổng dư nợ ròng liên minh' })}</span>
+            <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.net_amount')}</span>
             <div className={`font-bold text-2xl ${totalNetSettlement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {totalNetSettlement >= 0 ? '+' : ''}{totalNetSettlement.toLocaleString()} HTG
             </div>
@@ -543,7 +541,7 @@ export const ClearingSettlementPage: React.FC = () => {
       {/* TabView Phân Tách Bảng Bù Trừ và Bảng Xử Lý Sai Lệch */}
       <div className="card shadow-1 border-round surface-card p-4">
         <TabView>
-          <TabPanel header={t('clearing.tab_summary', { defaultValue: 'Bảng Tổng Hợp Đối Soát Bù Trừ' })} leftIcon="pi pi-table mr-2">
+          <TabPanel header={t('clearing.tab_summary')} leftIcon="pi pi-table mr-2">
             <DataTable<any>
               ref={dt}
               value={clearingList}
@@ -555,64 +553,64 @@ export const ClearingSettlementPage: React.FC = () => {
               paginator
               rows={10}
               loading={loading}
-              emptyMessage={t('common.no_data', { defaultValue: 'Không có dữ liệu đối soát trong khoảng thời gian này' })}
+              emptyMessage={t('common.no_data')}
               stripedRows
               responsiveLayout="scroll"
             >
               <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
               <Column
-                header={t('common.no_order', { defaultValue: '#' })}
+                header={t('common.no_order')}
                 body={(_, options) => options.rowIndex + 1}
                 style={{ width: '3.5rem', textAlign: 'center' }}
               />
               <Column
-                header={t('common.action', { defaultValue: 'Thao tác' })}
+                header={t('common.action')}
                 body={actionTemplate}
                 exportable={false}
                 style={{ width: '6rem', textAlign: 'center' }}
               />
-              <Column field="partnerCode" header={t('clearing.partner_code', { defaultValue: 'Mã Đối Tác' })} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
-              <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Tên Đối Tác' })} sortable style={{ minWidth: '13rem' }} />
-              <Column field="partnerType" header={t('clearing.partner_type', { defaultValue: 'Loại' })} body={partnerTypeTemplate} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-              <Column field="totalTransactions" header={<span title={t('clearing.total_txs_tooltip', { defaultValue: 'Tổng số giao dịch bù trừ trong kỳ đối soát' })}>{t('clearing.total_txs', { defaultValue: 'Số GD' })}</span>} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
-              <Column field="totalPointsIssued" header={<span title={t('clearing.total_points_issued_tooltip', { defaultValue: 'Tổng số điểm đối tác phát hành cho hội viên (Nợ quỹ liên minh)' })}>{t('clearing.total_points_issued', { defaultValue: 'Điểm Phát Hành' })}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsIssued || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalPointsRedeemed" header={<span title={t('clearing.total_points_redeemed_tooltip', { defaultValue: 'Tổng số điểm đối tác chấp nhận trừ trên hóa đơn (Quyền thu tiền)' })}>{t('clearing.total_points_redeemed', { defaultValue: 'Điểm Thu Hồi' })}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsRedeemed || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalFiatPayable" header={<span title={t('clearing.payable_tooltip', { defaultValue: 'Số tiền mặt phải trả vào Quỹ liên minh (HTG)' })}>{t('clearing.total_fiat_payable', { defaultValue: 'Phải Trả' })}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatPayable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalFiatReceivable" header={<span title={t('clearing.receivable_tooltip', { defaultValue: 'Số tiền mặt được nhận hoàn từ Quỹ liên minh (HTG)' })}>{t('clearing.total_fiat_receivable', { defaultValue: 'Phải Thu' })}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatReceivable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalCommissionFee" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(row: ClearingSummaryModel) => <span className="font-mono white-space-nowrap">{Number(row.totalCommissionFee || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
-              <Column field="netSettlementAmount" body={netAmountTemplate} header={<span title={t('clearing.net_amount_tooltip', { defaultValue: 'Số tiền chênh lệch bù trừ ròng = Phải Thu - Phải Trả - Phí Sàn (HTG)' })}>{t('clearing.net_amount', { defaultValue: 'Dư Nợ Ròng' })}</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
-              <Column field="status" body={(row: ClearingSummaryModel) => statusTemplate(row.status)} header={t('common.status', { defaultValue: 'Trạng Thái' })} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="partnerCode" header={t('clearing.partner_code')} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
+              <Column field="partnerName" header={t('clearing.partner_name')} sortable style={{ minWidth: '13rem' }} />
+              <Column field="partnerType" header={t('clearing.partner_type')} body={partnerTypeTemplate} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
+              <Column field="totalTransactions" header={<span title={t('clearing.total_txs_tooltip')}>{t('clearing.total_txs')}</span>} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
+              <Column field="totalPointsIssued" header={<span title={t('clearing.total_points_issued_tooltip')}>{t('clearing.total_points_issued')}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsIssued || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalPointsRedeemed" header={<span title={t('clearing.total_points_redeemed_tooltip')}>{t('clearing.total_points_redeemed')}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsRedeemed || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalFiatPayable" header={<span title={t('clearing.payable_tooltip')}>{t('clearing.total_fiat_payable')}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatPayable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalFiatReceivable" header={<span title={t('clearing.receivable_tooltip')}>{t('clearing.total_fiat_receivable')}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatReceivable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalCommissionFee" header={<span title={t('clearing.mdr_fee_tooltip')}>{t('clearing.mdr_fee')} <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(row: ClearingSummaryModel) => <span className="font-mono white-space-nowrap">{Number(row.totalCommissionFee || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
+              <Column field="netSettlementAmount" body={netAmountTemplate} header={<span title={t('clearing.net_amount_tooltip')}>{t('clearing.net_amount')}</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
+              <Column field="status" body={(row: ClearingSummaryModel) => statusTemplate(row.status)} header={t('common.status')} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
 
-          <TabPanel header={`Xử Lý Sai Lệch & Khiếu Nại (${disputeList.length})`} leftIcon="pi pi-exclamation-circle mr-2">
+          <TabPanel header={t('clearing.disputes_tab', { count: disputeList.length })} leftIcon="pi pi-exclamation-circle mr-2">
             <DataTable<any>
               value={disputeList}
               paginator
               rows={10}
-              emptyMessage="Chưa có khiếu nại sai lệch nào phát sinh"
+              emptyMessage={t('clearing.no_disputes')}
               stripedRows
               responsiveLayout="scroll"
             >
               <Column header="#" body={(_, opt) => opt.rowIndex + 1} style={{ width: '3.5rem', textAlign: 'center' }} />
-              <Column field="disputeCode" header="Mã Khiếu Nại" body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="batchCode" header="Mã Lô Đối Soát" body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="partnerName" header="Đối Tác" sortable style={{ minWidth: '12rem' }} />
-              <Column field="disputeType" header="Loại Sai Lệch" sortable style={{ minWidth: '10rem' }} />
-              <Column field="partnerAmount" header="Tiền Đối Tác" body={(r: DisputeItemModel) => `${Number(r.partnerAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="loyaltyAmount" header="Tiền Loyalty" body={(r: DisputeItemModel) => `${Number(r.loyaltyAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="resolvedAmount" header="Tiền Kết Luận" body={(r: DisputeItemModel) => (r.resolvedAmount != null ? `${Number(r.resolvedAmount).toLocaleString()} HTG` : '--')} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="status" header="Trạng Thái" body={(r: DisputeItemModel) => disputeStatusTemplate(r.status)} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
-              <Column field="createdAt" header="Thời Gian" body={(r: DisputeItemModel) => (r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--')} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
+              <Column field="disputeCode" header={t('clearing.dispute_code')} body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="batchCode" header={t('clearing.batch_code')} body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="partnerName" header={t('common.partner')} sortable style={{ minWidth: '12rem' }} />
+              <Column field="disputeType" header={t('clearing.dispute_type')} sortable style={{ minWidth: '10rem' }} />
+              <Column field="partnerAmount" header={t('clearing.partner_amount')} body={(r: DisputeItemModel) => `${Number(r.partnerAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="loyaltyAmount" header={t('clearing.loyalty_amount')} body={(r: DisputeItemModel) => `${Number(r.loyaltyAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="resolvedAmount" header={t('clearing.resolved_amount')} body={(r: DisputeItemModel) => (r.resolvedAmount != null ? `${Number(r.resolvedAmount).toLocaleString()} HTG` : '--')} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="status" header={t('common.status')} body={(r: DisputeItemModel) => disputeStatusTemplate(r.status)} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+              <Column field="createdAt" header={t('common.time')} body={(r: DisputeItemModel) => (r.createdAt ? new Date(r.createdAt).toLocaleString() : '--')} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
               <Column
-                header="Thao Tác"
+                header={t('common.action')}
                 body={(r: DisputeItemModel) => (
                   <Button
-                    label="Xử lý"
+                    label={t('clearing.resolve_action')}
                     icon="pi pi-check-square"
                     size="small"
                     outlined
-                    disabled={r.status === 'RESOLVED' || r.status === 'REJECTED'}
+                    disabled={r.status === DisputeStatus.RESOLVED || r.status === DisputeStatus.REJECTED}
                     onClick={() => handleOpenResolve(r)}
                   />
                 )}
@@ -621,25 +619,25 @@ export const ClearingSettlementPage: React.FC = () => {
             </DataTable>
           </TabPanel>
 
-          <TabPanel header={t('clearing.tab_batches', { defaultValue: `Quản lý Lô Thanh Toán (${batches.length})` })} leftIcon="pi pi-money-bill mr-2">
+          <TabPanel header={t('clearing.tab_batches', { count: batches.length })} leftIcon="pi pi-money-bill mr-2">
             <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-              <span className="text-sm text-600">{t('clearing.batches_desc', { defaultValue: 'Tạo lô thanh toán bù trừ PAY-..., theo dõi trạng thái giải ngân và phí MDR.' })}</span>
+              <span className="text-sm text-600">{t('clearing.batches_desc')}</span>
               <div className="flex gap-2">
-                <Button icon="pi pi-plus" label={t('clearing.create_batch', { defaultValue: 'Tạo Lô Thanh Toán' })} severity="success" size="small" onClick={() => setShowCreateBatchDialog(true)} />
+                <Button icon="pi pi-plus" label={t('clearing.create_batch')} severity="success" size="small" onClick={() => setShowCreateBatchDialog(true)} />
                 <Button icon="pi pi-refresh" outlined size="small" onClick={fetchClearingData} loading={batchesLoading} />
               </div>
             </div>
-            <DataTable<ClearingPaymentBatchModel[]> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches', { defaultValue: 'Chưa có lô thanh toán PAY-... nào được tạo trong kỳ.' })}>
-              <Column field="batchCode" header={t('clearing.batch_code', { defaultValue: 'Mã Lô PAY' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
-              <Column field="partnerName" header={t('clearing.partner_name', { defaultValue: 'Đối Tác' })} body={(b: ClearingPaymentBatchModel) => `${b.partnerCode} - ${b.partnerName || ''}`} style={{ minWidth: '13rem' }} />
-              <Column header={t('clearing.period', { defaultValue: 'Kỳ Đối Soát' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
-              <Column field="grossAmount" header={t('clearing.gross_amount', { defaultValue: 'Tổng Giá Trị' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng trên giá trị giao dịch bù trừ.' })}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(b: ClearingPaymentBatchModel) => <span className="font-mono text-orange-600">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="netPayableAmount" header={t('clearing.net_payable', { defaultValue: 'Thực Nhận Ròng' })} body={(b: ClearingPaymentBatchModel) => <span className="font-mono font-medium text-green-700">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-              <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(b: ClearingPaymentBatchModel) => <Tag value={b.status} severity={b.status === PaymentBatchStatus.PAID ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column header={t('common.action', { defaultValue: 'Thao Tác' })} body={(b: ClearingPaymentBatchModel) => (
+            <DataTable<ClearingPaymentBatchModel[]> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches')}>
+              <Column field="batchCode" header={t('clearing.batch_code')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="partnerName" header={t('clearing.partner_name')} body={(b: ClearingPaymentBatchModel) => `${b.partnerCode} - ${b.partnerName || ''}`} style={{ minWidth: '13rem' }} />
+              <Column header={t('clearing.period')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="grossAmount" header={t('clearing.gross_amount')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip')}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(b: ClearingPaymentBatchModel) => <span className="font-mono text-orange-600">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono font-medium text-green-700">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+              <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <Tag value={b.status ? t(`enum.payment_batch_status.${b.status}`) : ''} severity={b.status === PaymentBatchStatus.PAID ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column header={t('common.action')} body={(b: ClearingPaymentBatchModel) => (
                 <div className="flex gap-1">
-                  <Button icon="pi pi-eye" label={t('clearing.track_batch', { defaultValue: 'Theo dõi' })} size="small" outlined onClick={() => setTrackBatch(b)} />
+                  <Button icon="pi pi-eye" label={t('clearing.track_batch')} size="small" outlined onClick={() => setTrackBatch(b)} />
                 </div>
               )} style={{ minWidth: '9rem', textAlign: 'center' }} />
             </DataTable>
@@ -654,10 +652,9 @@ export const ClearingSettlementPage: React.FC = () => {
         header={
           detailData
             ? t('clearing.detail_title', {
-                partner: `[${detailData.partnerCode}] ${detailData.partnerName}`,
-                defaultValue: `Chi Tiết Giao Dịch Bù Trừ - [${detailData.partnerCode}] ${detailData.partnerName}`,
-              })
-            : t('common.loading', { defaultValue: 'Đang tải dữ liệu...' })
+              partner: `[${detailData.partnerCode}] ${detailData.partnerName}`
+            })
+            : t('common.loading')
         }
         modal
         onHide={() => setShowDetailDialog(false)}
@@ -665,22 +662,22 @@ export const ClearingSettlementPage: React.FC = () => {
         {detailLoading ? (
           <div className="p-5 text-center text-500">
             <i className="pi pi-spin pi-spinner text-3xl mb-2" />
-            <div>{t('common.loading', { defaultValue: 'Đang tải danh sách giao dịch...' })}</div>
+            <div>{t('common.loading')}</div>
           </div>
         ) : detailData ? (
           <div>
             {/* Thống kê nhanh của đối tác */}
             <div className="flex gap-3 mb-3 surface-100 p-3 border-round">
               <div className="flex-1">
-                <span className="text-500 text-xs block">{t('clearing.total_txs', { defaultValue: 'Tổng số GD' })}:</span>
+                <span className="text-500 text-xs block">{t('clearing.total_txs')}:</span>
                 <span className="font-bold text-lg text-900">{detailData.totalTransactions}</span>
               </div>
               <div className="flex-1">
-                <span className="text-500 text-xs block">{t('clearing.detail_points', { defaultValue: 'Tổng điểm quy đổi' })}:</span>
+                <span className="text-500 text-xs block">{t('clearing.detail_points')}:</span>
                 <span className="font-bold text-lg text-primary">{Number(detailData.totalPoints || 0).toLocaleString()}</span>
               </div>
               <div className="flex-1">
-                <span className="text-500 text-xs block">{t('clearing.detail_amount', { defaultValue: 'Tổng tiền chiết khấu' })}:</span>
+                <span className="text-500 text-xs block">{t('clearing.detail_amount')}:</span>
                 <span className="font-bold text-lg text-green-600">{Number(detailData.totalFiat || 0).toLocaleString()} HTG</span>
               </div>
             </div>
@@ -689,7 +686,7 @@ export const ClearingSettlementPage: React.FC = () => {
               value={detailData.transactions || []}
               paginator
               rows={8}
-              emptyMessage={t('common.no_data', { defaultValue: 'Không có giao dịch thành phần nào' })}
+              emptyMessage={t('common.no_data')}
               stripedRows
               responsiveLayout="scroll"
             >
@@ -698,11 +695,11 @@ export const ClearingSettlementPage: React.FC = () => {
                 body={(_, opt) => opt.rowIndex + 1}
                 style={{ width: '3rem', textAlign: 'center' }}
               />
-              <Column field="transactionCode" header={t('clearing.detail_tx_code', { defaultValue: 'Mã Giao Dịch' })} style={{ minWidth: '12rem', fontWeight: 600 }} />
-              <Column field="externalUserId" header={t('clearing.detail_user', { defaultValue: 'Khách Hàng' })} style={{ minWidth: '8rem' }} />
+              <Column field="transactionCode" header={t('clearing.detail_tx_code')} style={{ minWidth: '12rem', fontWeight: 600 }} />
+              <Column field="externalUserId" header={t('clearing.detail_user')} style={{ minWidth: '8rem' }} />
               <Column
                 field="createdAt"
-                header={t('clearing.detail_time', { defaultValue: 'Thời Gian' })}
+                header={t('clearing.detail_time')}
                 body={(row: PartnerTransactionItemModel) => (
                   <span className="text-sm text-600">
                     {row.createdAt ? new Date(row.createdAt).toLocaleString('vi-VN') : '--'}
@@ -712,18 +709,18 @@ export const ClearingSettlementPage: React.FC = () => {
               />
               <Column
                 field="role"
-                header={t('clearing.detail_role', { defaultValue: 'Vai Trò' })}
+                header={t('clearing.detail_role')}
                 body={(row: PartnerTransactionItemModel) => (
                   <Tag
                     severity={row.role === 'REDEEMER' ? 'success' : 'warning'}
-                    value={row.role === 'REDEEMER' ? t('clearing.role_redeemer', { defaultValue: 'Thu hồi tại quầy' }) : t('clearing.role_issuer', { defaultValue: 'Phát hành điểm' })}
+                    value={row.role === 'REDEEMER' ? t('clearing.role_redeemer') : t('clearing.role_issuer')}
                   />
                 )}
                 style={{ minWidth: '9rem', textAlign: 'center' }}
               />
               <Column
                 field="pointsRedeemed"
-                header={t('clearing.detail_points', { defaultValue: 'Điểm' })}
+                header={t('clearing.detail_points')}
                 body={(row: PartnerTransactionItemModel) => (
                   <span className="font-semibold text-primary">
                     {Number(row.pointsRedeemed || 0).toLocaleString()}
@@ -733,13 +730,13 @@ export const ClearingSettlementPage: React.FC = () => {
               />
               <Column
                 field="fiatAmount"
-                header={t('clearing.detail_amount', { defaultValue: 'Số Tiền' })}
+                header={t('clearing.detail_amount')}
                 body={(row: PartnerTransactionItemModel) => `${Number(row.fiatAmount || 0).toLocaleString()} HTG`}
                 style={{ minWidth: '7.5rem', textAlign: 'right' }}
               />
               <Column
                 field="status"
-                header={t('common.status', { defaultValue: 'Trạng Thái' })}
+                header={t('common.status')}
                 body={(row: PartnerTransactionItemModel) => statusTemplate(row.status)}
                 style={{ minWidth: '7rem', textAlign: 'center' }}
               />
@@ -748,7 +745,7 @@ export const ClearingSettlementPage: React.FC = () => {
         ) : null}
 
         <div className="flex justify-content-end mt-4">
-          <Button label={t('common.close', { defaultValue: 'Đóng' })} icon="pi pi-times" outlined onClick={() => setShowDetailDialog(false)} />
+          <Button label={t('common.close')} icon="pi pi-times" outlined onClick={() => setShowDetailDialog(false)} />
         </div>
       </Dialog>
 
@@ -756,17 +753,17 @@ export const ClearingSettlementPage: React.FC = () => {
       <Dialog
         visible={showConfirmSettle}
         style={{ width: '32rem' }}
-        header={t('clearing.settle_confirm_title', { defaultValue: 'Xác nhận Quyết toán Kỳ Bù trừ' })}
+        header={t('clearing.settle_confirm_title')}
         modal
         onHide={() => setShowConfirmSettle(false)}
       >
         <div className="flex align-items-center gap-3 mb-4">
           <i className="pi pi-exclamation-triangle text-3xl text-warning" />
-          <span>{t('clearing.settle_confirm_msg', { defaultValue: 'Bạn có chắc chắn muốn chốt quyết toán và kết chuyển công nợ kỳ này? Các giao dịch sau khi kết chuyển sẽ chuyển sang trạng thái ĐÃ QUYẾT TOÁN, lưu vào sổ cái chốt kỳ bất biến và phát Webhook cho đối tác.' })}</span>
+          <span>{t('clearing.settle_confirm_msg')}</span>
         </div>
         <div className="flex justify-content-end gap-2">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowConfirmSettle(false)} disabled={isSubmitting} />
-          <Button label={t('clearing.settle_action', { defaultValue: 'Xác nhận Quyết toán' })} icon="pi pi-check" onClick={handleSettlePeriod} loading={isSubmitting} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowConfirmSettle(false)} disabled={isSubmitting} />
+          <Button label={t('clearing.settle_action')} icon="pi pi-check" onClick={handleSettlePeriod} loading={isSubmitting} />
         </div>
       </Dialog>
 
@@ -774,40 +771,40 @@ export const ClearingSettlementPage: React.FC = () => {
       <Dialog
         visible={showResolveDialog}
         style={{ width: '34rem' }}
-        header="Giải Quyết Khiếu Nại Đối Soát"
+        header={t('clearing.resolve_dialog_title')}
         modal
         onHide={() => setShowResolveDialog(false)}
       >
         {selectedDispute && (
           <div className="flex flex-column gap-3">
             <div className="flex justify-content-between surface-100 p-2 border-round text-sm">
-              <span><strong>Đối tác:</strong> {selectedDispute.partnerName}</span>
-              <span><strong>Mã khiếu nại:</strong> {selectedDispute.disputeCode}</span>
+              <span><strong>{t('common.partner')}:</strong> {selectedDispute.partnerName}</span>
+              <span><strong>{t('clearing.dispute_code')}:</strong> {selectedDispute.disputeCode}</span>
             </div>
             <div className="grid">
               <div className="col-6">
-                <label className="text-500 text-xs block">Tiền đối tác yêu cầu:</label>
+                <label className="text-500 text-xs block">{t('clearing.partner_requested_amount')}:</label>
                 <div className="font-bold text-lg text-orange-600">{Number(selectedDispute.partnerAmount || 0).toLocaleString()} HTG</div>
               </div>
               <div className="col-6">
-                <label className="text-500 text-xs block">Tiền hệ thống Loyalty ghi nhận:</label>
+                <label className="text-500 text-xs block">{t('clearing.loyalty_recorded_amount')}:</label>
                 <div className="font-bold text-lg text-primary">{Number(selectedDispute.loyaltyAmount || 0).toLocaleString()} HTG</div>
               </div>
             </div>
             <div className="flex flex-column gap-1">
-              <label className="font-semibold text-sm">Kết luận xử lý:</label>
+              <label className="font-semibold text-sm">{t('clearing.resolution_decision')}:</label>
               <Dropdown
                 value={resolveStatus}
                 onChange={(e) => setResolveStatus(e.value)}
                 options={[
-                  { label: 'Chấp thuận (RESOLVED)', value: 'RESOLVED' },
-                  { label: 'Từ chối (REJECTED)', value: 'REJECTED' },
-                  { label: 'Đang tra soát (INVESTIGATING)', value: 'INVESTIGATING' },
+                  { label: t('enum.dispute_status.RESOLVED'), value: DisputeStatus.RESOLVED },
+                  { label: t('enum.dispute_status.REJECTED'), value: DisputeStatus.REJECTED },
+                  { label: t('enum.dispute_status.INVESTIGATING'), value: DisputeStatus.INVESTIGATING },
                 ]}
               />
             </div>
             <div className="flex flex-column gap-1">
-              <label className="font-semibold text-sm">Số tiền quyết toán chốt cuối cùng (HTG):</label>
+              <label className="font-semibold text-sm">{t('clearing.final_resolved_amount_htg')}:</label>
               <InputNumber
                 value={resolvedAmount}
                 onValueChange={(e) => setResolvedAmount(e.value ?? null)}
@@ -817,76 +814,76 @@ export const ClearingSettlementPage: React.FC = () => {
               />
             </div>
             <div className="flex flex-column gap-1">
-              <label className="font-semibold text-sm">Ghi chú kết luận:</label>
+              <label className="font-semibold text-sm">{t('clearing.resolution_note')}:</label>
               <InputText
                 value={resolutionNote}
                 onChange={(e) => setResolutionNote(e.target.value)}
-                placeholder="Nhập lý do kết luận hoặc biên bản đối soát..."
+                placeholder={t('clearing.resolution_note_placeholder')}
               />
             </div>
           </div>
         )}
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label="Hủy" icon="pi pi-times" outlined onClick={() => setShowResolveDialog(false)} disabled={isSubmitting} />
-          <Button label="Lưu Kết Luận" icon="pi pi-check" severity="success" onClick={handleSaveResolve} loading={isSubmitting} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowResolveDialog(false)} disabled={isSubmitting} />
+          <Button label={t('clearing.save_resolution')} icon="pi pi-check" severity="success" onClick={handleSaveResolve} loading={isSubmitting} />
         </div>
       </Dialog>
 
       {/* Dialog Create Batch PAY-... (LM-07) */}
-      <Dialog visible={showCreateBatchDialog} onHide={() => setShowCreateBatchDialog(false)} header={t('clearing.create_batch_title', { defaultValue: 'Khởi tạo Lô Thanh Toán Bù Trừ (PAY-...)' })} style={{ width: '34rem' }} modal className="p-fluid">
+      <Dialog visible={showCreateBatchDialog} onHide={() => setShowCreateBatchDialog(false)} header={t('clearing.create_batch_title')} style={{ width: '34rem' }} modal className="p-fluid">
         <div className="flex flex-column gap-3">
           <div className="field m-0">
-            <label className="text-sm font-medium">{t('clearing.partner_name', { defaultValue: 'Đối Tác' })} *</label>
+            <label className="text-sm font-medium">{t('clearing.partner_name')} *</label>
             <Dropdown
               value={batchPartnerId}
               options={clearingList.map((c) => ({ label: `[${c.partnerCode}] ${c.partnerName}`, value: c.partnerId }))}
               onChange={(e) => setBatchPartnerId(e.value)}
-              placeholder={t('clearing.select_partner_batch', { defaultValue: 'Chọn đối tác...' })}
+              placeholder={t('clearing.select_partner_batch')}
               appendTo="self"
             />
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('clearing.from_date', { defaultValue: 'Từ ngày' })}</label>
+              <label className="text-sm font-medium">{t('clearing.from_date')}</label>
               <InputText value={fromDate} readOnly className="font-mono bg-50" />
             </div>
             <div className="col-6 field m-0">
-              <label className="text-sm font-medium">{t('clearing.to_date', { defaultValue: 'Đến ngày' })}</label>
+              <label className="text-sm font-medium">{t('clearing.to_date')}</label>
               <InputText value={toDate} readOnly className="font-mono bg-50" />
             </div>
           </div>
           <div className="field m-0">
-            <label className="text-sm font-medium" title={t('clearing.mdr_fee_tooltip', { defaultValue: 'Phí dịch vụ thương mại (Merchant Discount Rate - MDR Fee) khấu trừ theo tỷ lệ hợp đồng.' })}>
-              {t('clearing.mdr_rate', { defaultValue: 'Tỷ lệ Phí Sàn MDR (%)' })}
+            <label className="text-sm font-medium" title={t('clearing.mdr_fee_tooltip')}>
+              {t('clearing.mdr_rate')}
             </label>
             <InputNumber value={batchMdrRate} onValueChange={(e) => setBatchMdrRate(e.value || 0)} min={0} max={20} minFractionDigits={1} maxFractionDigits={2} suffix="%" />
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} icon="pi pi-times" outlined onClick={() => setShowCreateBatchDialog(false)} />
-          <Button label={t('clearing.create_batch', { defaultValue: 'Khởi tạo Lô PAY' })} icon="pi pi-check" severity="success" onClick={handleCreateBatch} loading={isSubmitting} />
+          <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowCreateBatchDialog(false)} />
+          <Button label={t('clearing.create_batch')} icon="pi pi-check" severity="success" onClick={handleCreateBatch} loading={isSubmitting} />
         </div>
       </Dialog>
 
       {/* Dialog Track Batch (LM-07) */}
-      <Dialog visible={!!trackBatch} onHide={() => setTrackBatch(null)} header={trackBatch ? `${t('clearing.track_batch_title', { defaultValue: 'Tiến độ Lô Thanh Toán' })} · ${trackBatch.batchCode}` : ''} style={{ width: '40rem' }} modal>
+      <Dialog visible={!!trackBatch} onHide={() => setTrackBatch(null)} header={trackBatch ? `${t('clearing.track_batch_title')} · ${trackBatch.batchCode}` : ''} style={{ width: '40rem' }} modal>
         {trackBatch && (
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
-              <div className="col-6"><span className="text-500 block text-xs">Đối tác</span><span className="font-medium">{trackBatch.partnerCode} - {trackBatch.partnerName}</span></div>
-              <div className="col-6"><span className="text-500 block text-xs">Trạng thái</span><Tag value={trackBatch.status} severity={trackBatch.status === PaymentBatchStatus.PAID ? 'success' : 'warning'} /></div>
-              <div className="col-4 mt-2"><span className="text-500 block text-xs">Tổng giá trị</span><span className="font-mono">{Number(trackBatch.grossAmount || 0).toLocaleString()} HTG</span></div>
-              <div className="col-4 mt-2"><span className="text-500 block text-xs" title="Merchant Discount Rate Fee">MDR Fee</span><span className="font-mono text-orange-600">{Number(trackBatch.mdrFeeAmount || 0).toLocaleString()} HTG</span></div>
-              <div className="col-4 mt-2"><span className="text-500 block text-xs">Thực nhận ròng</span><span className="font-mono font-medium text-green-700">{Number(trackBatch.netPayableAmount || 0).toLocaleString()} HTG</span></div>
+              <div className="col-6"><span className="text-500 block text-xs">{t('common.partner')}</span><span className="font-medium">{trackBatch.partnerCode} - {trackBatch.partnerName}</span></div>
+              <div className="col-6"><span className="text-500 block text-xs">{t('common.status')}</span><Tag value={trackBatch.status ? t(`enum.payment_batch_status.${trackBatch.status}`) : ''} severity={trackBatch.status === PaymentBatchStatus.PAID ? 'success' : 'warning'} /></div>
+              <div className="col-4 mt-2"><span className="text-500 block text-xs">{t('clearing.gross_amount')}</span><span className="font-mono">{Number(trackBatch.grossAmount || 0).toLocaleString()} HTG</span></div>
+              <div className="col-4 mt-2"><span className="text-500 block text-xs" title={t('clearing.mdr_fee_tooltip')}>{t('clearing.mdr_fee')}</span><span className="font-mono text-orange-600">{Number(trackBatch.mdrFeeAmount || 0).toLocaleString()} HTG</span></div>
+              <div className="col-4 mt-2"><span className="text-500 block text-xs">{t('clearing.net_payable_amount')}</span><span className="font-mono font-medium text-green-700">{Number(trackBatch.netPayableAmount || 0).toLocaleString()} HTG</span></div>
             </div>
             <div>
-              <div className="text-xs text-500 mb-1">{t('clearing.settlement_progress', { defaultValue: 'Tiến trình đối soát & giải ngân' })}</div>
+              <div className="text-xs text-500 mb-1">{t('clearing.settlement_progress')}</div>
               <ProgressBar value={trackBatch.status === PaymentBatchStatus.PAID ? 100 : trackBatch.status === PaymentBatchStatus.PARTNER_CONFIRMED ? 75 : trackBatch.status === PaymentBatchStatus.PENDING_CONFIRM ? 40 : 20} />
             </div>
             <div className="flex justify-content-end gap-2 mt-2">
-              <Button label={t('common.close', { defaultValue: 'Đóng' })} outlined onClick={() => setTrackBatch(null)} />
+              <Button label={t('common.close')} outlined onClick={() => setTrackBatch(null)} />
               {trackBatch.status !== PaymentBatchStatus.PAID && (
-                <Button label={t('clearing.confirm_settle_batch', { defaultValue: 'Xác nhận Hoàn tất Chi trả' })} icon="pi pi-check-circle" severity="success" onClick={() => handleConfirmBatch(trackBatch)} loading={isSubmitting} />
+                <Button label={t('clearing.confirm_settle_batch')} icon="pi pi-check-circle" severity="success" onClick={() => handleConfirmBatch(trackBatch)} loading={isSubmitting} />
               )}
             </div>
           </div>

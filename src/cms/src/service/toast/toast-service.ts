@@ -14,7 +14,7 @@ interface ToastOptions {
 
 const useToastService = () => {
   const toast = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const showToast = ({ code, detail, life = 3000, severity, summary, onSuccess, onError, error }: ToastOptions) => {
     let finalDetail = detail || '';
@@ -22,8 +22,8 @@ const useToastService = () => {
       const errCode = error.response.data.code;
       const errMessage = error.response.data.message;
       if (errCode) {
-        const translation = t('error.' + errCode, { defaultValue: errCode });
-        finalDetail = translation !== errCode ? translation : (errMessage || finalDetail);
+        const errorKey = `error.${errCode}`;
+        finalDetail = i18n.exists(errorKey) ? t(errorKey) : (errMessage || finalDetail);
       } else {
         finalDetail = errMessage || finalDetail;
       }

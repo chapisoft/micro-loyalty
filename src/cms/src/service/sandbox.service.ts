@@ -49,26 +49,7 @@ class SandboxAdminService {
       return Array.isArray(res) ? res : res?.data || [];
     } catch (e) {
       console.warn('[SandboxAdminService.getUsers] Fallback or error:', e);
-      return [
-        {
-          id: 1,
-          username: 'developer',
-          fullName: 'Developer Đối Tác Demo',
-          email: 'developer@partner.vn',
-          phone: '0988123456',
-          status: 'APPROVED',
-          groupNames: ['Smart OTP Standard Partners'],
-        },
-        {
-          id: 2,
-          username: 'bank_vietcombank',
-          fullName: 'Vietcombank Fintech Team',
-          email: 'integration@vcb.com.vn',
-          phone: '0912345678',
-          status: 'PENDING',
-          groupNames: ['Smart OTP Standard Partners'],
-        },
-      ];
+      return [];
     }
   }
 
@@ -92,20 +73,7 @@ class SandboxAdminService {
       return Array.isArray(res) ? res : res?.data || [];
     } catch (e) {
       console.warn('[SandboxAdminService.getGroups] Fallback or error:', e);
-      return [
-        {
-          id: 1,
-          name: 'Smart OTP Standard Partners',
-          description: 'Nhóm đối tác tiêu chuẩn tích hợp Smart OTP',
-          menuIds: [1, 2, 3, 4, 5, 6],
-        },
-        {
-          id: 2,
-          name: 'Banking & Core Fintech',
-          description: 'Nhóm đối tác ngân hàng bảo mật cao cấp',
-          menuIds: [1, 2, 3, 4],
-        },
-      ];
+      return [];
     }
   }
 
@@ -125,14 +93,7 @@ class SandboxAdminService {
       return Array.isArray(res) ? res : res?.data || [];
     } catch (e) {
       console.warn('[SandboxAdminService.getMenus] Fallback or error:', e);
-      return [
-        { id: 1, name: 'Tổng quan & Cấu hình Test', path: '/dashboard', menuOrder: 1, icon: 'LuCompass' },
-        { id: 2, name: '1. Kích hoạt Thiết bị (Provisioning)', path: '/docs/1', menuOrder: 2, icon: 'LuSmartphone' },
-        { id: 3, name: '2. Khởi tạo Thử thách (Challenge Init)', path: '/docs/2', menuOrder: 3, icon: 'LuShieldAlert' },
-        { id: 4, name: '3. Kiểm thực Smart OTP (Verify)', path: '/docs/3', menuOrder: 4, icon: 'LuCheckCircle2' },
-        { id: 5, name: '4. Tích hợp Mobile SDK (iOS/Android)', path: '/docs/4', menuOrder: 5, icon: 'LuCode2' },
-        { id: 6, name: '5. Trình Giả Lập Trực Quan (Simulator)', path: '/simulator', menuOrder: 6, icon: 'LuPlaySquare' },
-      ];
+      return [];
     }
   }
 
@@ -153,10 +114,6 @@ class SandboxAdminService {
     } catch {
       return {
         menuId,
-        title: 'Hướng Dẫn Tích Hợp Smart OTP',
-        bodyMarkdown: '# Hướng Dẫn Tích Hợp Smart OTP\n\nNội dung chi tiết cho menu này...',
-        codeDemo: 'curl -X POST "https://api.miotp.io.vn/api/v1/otp/verify"',
-        testAccountInfo: 'Base URL: https://api.miotp.io.vn/api/v1\nPartner Code: PARTNER_DEMO_01',
       };
     }
   }

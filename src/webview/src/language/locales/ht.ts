@@ -103,7 +103,10 @@ export default {
     "next_turn_in": "Pwochen tou nan:",
     "this_week": "Semèn Sa a",
     "buy_turn_item_name": "Achte {{count}} tou GameHub",
-    "filter_learning": "Aprantisaj"
+    "filter_learning": "Aprantisaj",
+    "perk_wordle": "Devine Mo Plizyè Lang",
+    "perk_screw": "Devise Panno Metal",
+    "perk_pullpin": "Sove Trezò Lò"
   },
   "daily_missions": {
     "modal_title": "Estasyon Misyon Chak Jou",
@@ -220,7 +223,19 @@ export default {
     "btn_close": "Fèmen",
     "default_prize_name": "Kado Rekonpans",
     "default_lucky_prize": "Rekonpans Chans",
-    "buy_turns_item_name": "Achte {{count}} Tou Wou Chans"
+    "buy_turns_item_name": "Achte {{count}} Tou Wou Chans",
+    "default_prize_1": "+100 Pwen Bonis",
+    "default_prize_2": "Koupòn Rabè 50%",
+    "default_prize_3": "Bòn chans pwochen fwa",
+    "default_prize_4": "+200 Pwen Bonis",
+    "default_prize_5": "Ranbousman 500 HTG",
+    "default_prize_6": "+1 Tou Gratis",
+    "winner_prize_1": "Ranbousman 500 HTG",
+    "winner_prize_2": "Koupòn Rabè 50%",
+    "winner_prize_3": "+200 Pwen Bonis",
+    "winner_prize_4": "+100 Pwen Bonis",
+    "winner_prize_5": "+1 Tou Gratis",
+    "sound_title": "Limen/Etenn Son"
   },
   "vouchers": {
     "tab_my_vouchers": "Koupon Mwen",
@@ -361,7 +376,7 @@ export default {
         "scoring": "Travèse 1 poto: +1 pwen (oswa +2 lè w gen Boost x2). Ranmase pyès: +1 pwen. Vitès la ap ogmante pandan w ap fè plis pwen!",
         "tips": "Pran Boukliye 🛡️ pou evite mouri lè w frape, Liman 🧲 pou rale pyès lò, ak Zetwal 2X ⭐ pou fè gwo pwen."
       },
-      "high_score": "Meyè Skò: {{score}}"
+      "high_score": "Meyè Skò: {{best}}"
     },
     "game2048": {
       "title": "2048 Natcash Edition",
@@ -422,7 +437,324 @@ export default {
       "moves_unit": "mouvman",
       "time_bonus_label": "bonis tan",
       "next_stage_label": "Pwochen nivo",
-      "stage_score_label": "Nòt nivo"
+      "stage_score_label": "Nòt nivo",
+      "decks": {
+        "partners": {
+          "name": "Patnè & Pòtfèy Natcash",
+          "c1": "Delimart",
+          "c2": "Total",
+          "c3": "Natcom 4G",
+          "c4": "Natcash",
+          "c5": "Pòtfèy",
+          "c6": "Kat Kredi",
+          "c7": "Solar 24/7",
+          "c8": "Makèt",
+          "c9": "Kado VIP",
+          "c10": "Dyaman",
+          "c11": "Pyès Lò",
+          "c12": "Kòd QR"
+        },
+        "carnival": {
+          "name": "Kanaval Karayib",
+          "c1": "Tanbou Rara",
+          "c2": "Mas",
+          "c3": "Kòf Lò",
+          "c4": "Fa",
+          "c5": "Vwalye",
+          "c6": "Pèl",
+          "c7": "Pyebwa Palmis",
+          "c8": "Jako",
+          "c9": "Dofen",
+          "c10": "Kouwòn",
+          "c11": "Twonpèt",
+          "c12": "Fedatifis"
+        },
+        "gems": {
+          "name": "Bijou & Chans",
+          "c1": "Dyaman",
+          "c2": "Ribi Wouj",
+          "c3": "Emwòd",
+          "c4": "Ametis",
+          "c5": "Pyès Lò",
+          "c6": "Klòch Lò",
+          "c7": "Etwal Lò",
+          "c8": "Flanm Sakre",
+          "c9": "Trèf 4 Fèy",
+          "c10": "Kè",
+          "c11": "Tridan",
+          "c12": "Je Mistik"
+        },
+        "haiti_food": {
+          "name": "Manje Lari Ayisyen",
+          "c1": "Griyo",
+          "c2": "Pate Ayisyen",
+          "c3": "Bannann Peze",
+          "c4": "Diri ak Djon-Djon",
+          "c5": "Soup Joumou",
+          "c6": "Kafe Rebo",
+          "c7": "Dlo Kokoye",
+          "c8": "Lanbi",
+          "c9": "Mango Fransik",
+          "c10": "Mayi Moulen",
+          "c11": "Zaboka",
+          "c12": "Ponch Wonm"
+        },
+        "wild_animals": {
+          "name": "Zannimo Sovaj",
+          "c1": "Lyon",
+          "c2": "Elefan",
+          "c3": "Tig",
+          "c4": "Jiraf",
+          "c5": "Panda",
+          "c6": "Leyopa",
+          "c7": "Èg",
+          "c8": "Makak",
+          "c9": "Ipopotam",
+          "c10": "Zèb",
+          "c11": "Lou",
+          "c12": "Kangouwou"
+        },
+        "space": {
+          "name": "Lespas ak Astwonomi",
+          "c1": "Fize",
+          "c2": "Satin",
+          "c3": "Solèy",
+          "c4": "Lalin",
+          "c5": "Meteyò",
+          "c6": "Teleskòp",
+          "c7": "Astwonòt",
+          "c8": "Satelit 4G",
+          "c9": "Galaksi",
+          "c10": "OVNI",
+          "c11": "Etwal Filant",
+          "c12": "Latè"
+        },
+        "sports": {
+          "name": "Espò ak Pakou",
+          "c1": "Foutbòl",
+          "c2": "Baskètbòl",
+          "c3": "Soulye Kous",
+          "c4": "Meday",
+          "c5": "Twofe",
+          "c6": "Skeytbòd",
+          "c7": "Tenis",
+          "c8": "Gan Bòks",
+          "c9": "A Masyo",
+          "c10": "Siflèt",
+          "c11": "Badmintòn",
+          "c12": "Flechèt"
+        },
+        "technology": {
+          "name": "Teknoloji ak Dijital",
+          "c1": "Telefòn Entèlijan",
+          "c2": "Òdinatè Pòtab",
+          "c3": "Kas Odio",
+          "c4": "Wobo IA",
+          "c5": "Manèt Jwèt",
+          "c6": "Dwòn",
+          "c7": "Pous Elektwonik",
+          "c8": "Mont Entèlijan",
+          "c9": "Kas VR",
+          "c10": "Disk SSD",
+          "c11": "Klavye",
+          "c12": "Souri"
+        },
+        "wonders": {
+          "name": "Bèlte Lanati",
+          "c1": "Vòlkan",
+          "c2": "Kaskad",
+          "c3": "Gwòt",
+          "c4": "Koray",
+          "c5": "Plaj",
+          "c6": "Lakansyèl",
+          "c7": "Forè",
+          "c8": "Solèy Kouche",
+          "c9": "Zil Twopikal",
+          "c10": "Dezè",
+          "c11": "Mòn Lanej",
+          "c12": "Blòk Glas"
+        },
+        "magic": {
+          "name": "Maji ak Sòsye",
+          "c1": "Baton Majik",
+          "c2": "Chapo Majik",
+          "c3": "Eliksi",
+          "c4": "Liv Maji",
+          "c5": "Boul Kristal",
+          "c6": "Dragon Dife",
+          "c7": "Bale Vole",
+          "c8": "Manto Envizib",
+          "c9": "Kadna Ansyen",
+          "c10": "Bouji Majik",
+          "c11": "Chodyè",
+          "c12": "Pousyè Fe"
+        },
+        "fruits": {
+          "name": "Fwi Twopikal",
+          "c1": "Melon Dlo",
+          "c2": "Zaboka",
+          "c3": "Zannanna",
+          "c4": "Fig",
+          "c5": "Frèz",
+          "c6": "Zoranj Dous",
+          "c7": "Pòm Wouj",
+          "c8": "Rezen",
+          "c9": "Papay",
+          "c10": "Sitwon",
+          "c11": "Pèch",
+          "c12": "Kokoye"
+        },
+        "vehicles": {
+          "name": "Machin ak Vitès",
+          "c1": "Taptap",
+          "c2": "Machin Espò",
+          "c3": "Elikoptè",
+          "c4": "Tren Rapid",
+          "c5": "Bato Rapid",
+          "c6": "Moto Espò",
+          "c7": "Veso Espas",
+          "c8": "Kamyon Ponpye",
+          "c9": "Avyon",
+          "c10": "Yòt",
+          "c11": "Balon",
+          "c12": "Traktè"
+        },
+        "music": {
+          "name": "Mizik ak Enstriman",
+          "c1": "Gita Elektwik",
+          "c2": "Saksofòn",
+          "c3": "Pyano",
+          "c4": "Batri",
+          "c5": "Vyolon",
+          "c6": "Mikwo Lò",
+          "c7": "Disk Vinil",
+          "c8": "Kas DJ",
+          "c9": "Nòt Mizik",
+          "c10": "Twonpèt",
+          "c11": "Patisyon",
+          "c12": "Karilon"
+        },
+        "weather": {
+          "name": "Tan ak Sezon",
+          "c1": "Zèklè",
+          "c2": "Tònad",
+          "c3": "Flokon Lanej",
+          "c4": "Solèy Ete",
+          "c5": "Fèy Otòn",
+          "c6": "Lapli",
+          "c7": "Nyaj Blan",
+          "c8": "Gwo Van",
+          "c9": "Lakansyèl",
+          "c10": "Lannwit Etwal",
+          "c11": "Bwouya",
+          "c12": "Solèy Leve"
+        },
+        "ancient": {
+          "name": "Akeyoloji Ansyen",
+          "c1": "Piramid",
+          "c2": "Vaz Ansyen",
+          "c3": "Pyès Women",
+          "c4": "Pachmen",
+          "c5": "Sabliye",
+          "c6": "Bousòl",
+          "c7": "Kadna Lò",
+          "c8": "Sèp Wayal",
+          "c9": "Estati Ansyen",
+          "c10": "Lanp Majik",
+          "c11": "Kat Trezò",
+          "c12": "Boukliye Bwonz"
+        },
+        "farm": {
+          "name": "Fèm Kontan",
+          "c1": "Moulen Van",
+          "c2": "Traktè",
+          "c3": "Bèf Lèt",
+          "c4": "Mouton",
+          "c5": "Kòk",
+          "c6": "Mayi",
+          "c7": "Kawòt",
+          "c8": "Ze",
+          "c9": "Awozwa",
+          "c10": "Epouvantay",
+          "c11": "Kochon",
+          "c12": "Chwal"
+        },
+        "detective": {
+          "name": "Espyon ak Detektif",
+          "c1": "Badj",
+          "c2": "Linèt Nwa",
+          "c3": "Malèt Sekrè",
+          "c4": "Woki-Toki",
+          "c5": "Sirèn",
+          "c6": "Menòt",
+          "c7": "Linèt Lannwit",
+          "c8": "Anprent",
+          "c9": "GPS",
+          "c10": "Bwat Nwa",
+          "c11": "Jimèl",
+          "c12": "Mini Kamera"
+        },
+        "ocean": {
+          "name": "Bèt Fon Lanmè",
+          "c1": "Chatwouy",
+          "c2": "Balèn Ble",
+          "c3": "Etwal Lanmè",
+          "c4": "Tòti Lanmè",
+          "c5": "Krab",
+          "c6": "Mediz",
+          "c7": "Pwason Boule",
+          "c8": "Kokiyaj",
+          "c9": "Reken",
+          "c10": "Kalma",
+          "c11": "Koray Wouj",
+          "c12": "Oma"
+        },
+        "sweets": {
+          "name": "Gato ak Desè",
+          "c1": "Gato",
+          "c2": "Bonbon Donat",
+          "c3": "Krèm Kòn",
+          "c4": "Bònbon Sisé",
+          "c5": "Kòpkek",
+          "c6": "Chokola Nwa",
+          "c7": "Kwasan",
+          "c8": "Te ak Lèt",
+          "c9": "Bònbon Jele",
+          "c10": "Biskwit",
+          "c11": "Tat Fwi",
+          "c12": "Krèm Fwi"
+        },
+        "knights": {
+          "name": "Chevalye & Mwayenaj",
+          "c1": "Boukliye",
+          "c2": "Epe Sakre",
+          "c3": "Ami Fè",
+          "c4": "Chato",
+          "c5": "Chwal Batay",
+          "c6": "Ak ak Flèch",
+          "c7": "Tòch",
+          "c8": "Drampo",
+          "c9": "Rach Batay",
+          "c10": "Tourèl",
+          "c11": "Kouwòn Wa",
+          "c12": "Dragon Gadyen"
+        },
+        "flowers": {
+          "name": "Jaden Wayal",
+          "c1": "Woz Wouj",
+          "c2": "Flè Solèy",
+          "c3": "Lotis",
+          "c4": "Òkide",
+          "c5": "Kaktis",
+          "c6": "Chanpiyon",
+          "c7": "Tilip",
+          "c8": "Magrit",
+          "c9": "Choublak",
+          "c10": "Trèf Chans",
+          "c11": "Boujon",
+          "c12": "Gwo Pyebwa"
+        }
+      }
     },
     "bubble": {
       "title": "Tire Boul Kanaval",
@@ -473,7 +805,27 @@ export default {
       },
       "record_stage": "Rekò: Etap {{highestStage}}",
       "knives_label": "Kouto",
-      "score_label": "Nòt"
+      "score_label": "Nòt",
+      "theme_1_name": "Bwa Chèn Ansyen Karayib",
+      "theme_1_badge": "Bwa Chèn",
+      "theme_2_name": "Sèk Lò Fòtin",
+      "theme_2_badge": "Lò 24K",
+      "theme_3_name": "Boukliye Lav Dife",
+      "theme_3_badge": "Wòch Dife",
+      "theme_4_name": "Matris Glas Kristal",
+      "theme_4_badge": "Glas Kristal",
+      "theme_5_name": "Nwayo Kosmik VIP",
+      "theme_5_badge": "Nebilèz",
+      "theme_6_name": "Boukliye Dyaman Etènèl",
+      "theme_6_badge": "Siprèm",
+      "item_red_envelope": "Anvlòp Chans",
+      "item_data_pack": "Pakè Done 4G",
+      "item_gold_chest": "Kòf Lò",
+      "item_diamond": "Dyaman",
+      "item_gold_coin": "Pyès VIP",
+      "bonus_unused_knives_fx": "BONIS KOUTO!",
+      "size_label": "Tay: {{size}}%",
+      "early_finish_bonus": "Bonis fini vit: +{{bonus}} pwen ({{knives}} kouto rete)"
     },
     "block": {
       "title": "Blòk Diaman Natcash",
@@ -522,7 +874,7 @@ export default {
       "btn_new_word": "Nouvo Mo",
       "btn_hint": "Endis Tèm",
       "hint_title": "Endis & Eksplikasyon Mo",
-      "topic_label": "Sijè: {{topic}}",
+      "topic_label": "Sijè: {{topic}} ({{lang}})",
       "legend_correct": "Bon plas",
       "legend_present": "Move plas",
       "legend_absent": "Pa nan mo a",
@@ -536,7 +888,413 @@ export default {
         "tips": "Klike sou \"Endis Tèm\" pou w konnen sans mo a pou w ka jwenn li pi vit."
       },
       "unlock_letter_btn": "💡 Debloke 1 lèt o aza",
-      "revealed_letter_info": "✓ Lèt nan pozisyon {{pos}} se: \"{{letter}}\""
+      "revealed_letter_info": "✓ Lèt nan pozisyon {{pos}} se: \"{{letter}}\"",
+      "lang_natcom": "Natcom",
+      "lang_ht": "Kreyòl",
+      "lang_en": "Anglè",
+      "lang_fr": "Fransè",
+      "words": {
+        "w0": {
+          "topic": "Telekòm Natcom",
+          "meaning": "Pi gwo rezo telekominikasyon an Ayiti"
+        },
+        "w1": {
+          "topic": "Pwen Fidelite",
+          "meaning": "Pwen fidelite w yo an Kreyòl (Pwen w)"
+        },
+        "w2": {
+          "topic": "Pòtfèy & Finans",
+          "meaning": "Kredi telefòn ak rechaj (Kredi)"
+        },
+        "w3": {
+          "topic": "Kado & Pwomosyon",
+          "meaning": "Bonis pwomosyonèl anplis"
+        },
+        "w4": {
+          "topic": "Enfrastrikti Telekòm",
+          "meaning": "Entènèt fib optik ultra rapid"
+        },
+        "w5": {
+          "topic": "Vitès Rezo",
+          "meaning": "Vitès koneksyon 4G/5G"
+        },
+        "w6": {
+          "topic": "Sèvis Vwa",
+          "meaning": "Apèl vwa kalite HD"
+        },
+        "w7": {
+          "topic": "Aparèy Mobil",
+          "meaning": "Telefòn entèlijan konekte"
+        },
+        "w8": {
+          "topic": "Siyal Mobil",
+          "meaning": "Siyal rezo ki kouvri toupatou"
+        },
+        "w9": {
+          "topic": "Estasyon Rezo",
+          "meaning": "Antèn transmisyon BTS"
+        },
+        "w10": {
+          "topic": "Ekipman Rezo",
+          "meaning": "Woutè Wi-Fi lakay"
+        },
+        "w11": {
+          "topic": "An Liy",
+          "meaning": "Koneksyon dijital san limit"
+        },
+        "w12": {
+          "topic": "Difize an Dirèk",
+          "meaning": "Gade videyo ak tande mizik an liy"
+        },
+        "w13": {
+          "topic": "Pòtay Enfòmasyon",
+          "meaning": "Pòtay verifikasyon ak rechaj an liy"
+        },
+        "w14": {
+          "topic": "Pakè Konbo",
+          "meaning": "Pakè Done ak minit apèl ansanm"
+        },
+        "w15": {
+          "topic": "Plan Sèvis",
+          "meaning": "Pakè done pa jou/semèn/mwa"
+        },
+        "w16": {
+          "topic": "Rechaj Rapid",
+          "meaning": "Mete kredi sou kont prepeye"
+        },
+        "w17": {
+          "topic": "Plan Tarif",
+          "meaning": "Tablo pri plan fleksib"
+        },
+        "w18": {
+          "topic": "Pwen Wi-Fi",
+          "meaning": "Pwen pataj Entènèt Wi-Fi mobil"
+        },
+        "w19": {
+          "topic": "Itinerans",
+          "meaning": "Rete konekte toupatou sou latè"
+        },
+        "w20": {
+          "topic": "Pòtfèy & Peman",
+          "meaning": "Lajan kach ak peman acha (Kash)"
+        },
+        "w21": {
+          "topic": "Finans & Pòtfèy",
+          "meaning": "Lajan ak balans kont ou"
+        },
+        "w22": {
+          "topic": "Lajan Ayisyen",
+          "meaning": "Goud Ayisyen ofisyèl (HTG)"
+        },
+        "w23": {
+          "topic": "Balans Kont",
+          "meaning": "Balans pòtfèy disponib touswit"
+        },
+        "w24": {
+          "topic": "Kat Peman",
+          "meaning": "Kat manm lye pou fè acha"
+        },
+        "w25": {
+          "topic": "Peman Fakti",
+          "meaning": "Tranzaksyon transfè lajan touswit"
+        },
+        "w26": {
+          "topic": "Ajan Natcash",
+          "meaning": "Ajan depo ak retrè Natcash"
+        },
+        "w27": {
+          "topic": "Magazen Patnè",
+          "meaning": "Kote ki aksepte peman kòd QR"
+        },
+        "w28": {
+          "topic": "Kòf Sekirize",
+          "meaning": "Kòf pou konsève pwen fidelite"
+        },
+        "w29": {
+          "topic": "Ranmase Pwen",
+          "meaning": "Resevwa pwen apre chak tranzaksyon"
+        },
+        "w30": {
+          "topic": "Nivo Manm",
+          "meaning": "Nivo soti nan Bwonz rive Dyaman"
+        },
+        "w31": {
+          "topic": "Ranbousman",
+          "meaning": "Pousantaj lajan ki tounen sou acha"
+        },
+        "w32": {
+          "topic": "Avantaj Manm",
+          "meaning": "Avantaj espesyal pou manm VIP"
+        },
+        "w33": {
+          "topic": "Of Espesyal",
+          "meaning": "Pwogram pwomosyon eksklizif"
+        },
+        "w34": {
+          "topic": "Kado Remèsiman",
+          "meaning": "Bèl kado chans nan pwogram nan"
+        },
+        "w35": {
+          "topic": "Kòd Sekirite",
+          "meaning": "Kòd verifikasyon peman sekirize"
+        },
+        "w36": {
+          "topic": "Reklame Rekonpans",
+          "meaning": "Echanje kado dirèk nan aplikasyon an"
+        },
+        "w37": {
+          "topic": "Echanj Pwen",
+          "meaning": "Konvèti pwen an koupon rabè"
+        },
+        "w38": {
+          "topic": "Byen Dijital",
+          "meaning": "Valè pwen ou genyen nan pòtfèy la"
+        },
+        "w39": {
+          "topic": "Teknoloji Entèlijan",
+          "meaning": "Solisyon dijital ak aplikasyon entèlijan"
+        },
+        "w40": {
+          "topic": "Patnè Enèji",
+          "meaning": "Estasyon gazolin patnè TotalEnergies"
+        },
+        "w41": {
+          "topic": "Patnè Komès",
+          "meaning": "Chèn makèt patnè Delimart"
+        },
+        "w42": {
+          "topic": "Kote ak Acha",
+          "meaning": "Sant komèsyal modèn"
+        },
+        "w43": {
+          "topic": "Makèt",
+          "meaning": "Achte epi ranmase pwen chak jou"
+        },
+        "w44": {
+          "topic": "Mache & Sant",
+          "meaning": "Gwo mache komèsyal aktif"
+        },
+        "w45": {
+          "topic": "Otèl & Detant",
+          "meaning": "Sèvis otèl patnè kalite siperyè"
+        },
+        "w46": {
+          "topic": "Kafe & Manje",
+          "meaning": "Goute bon kafe espesyal Ayisyen"
+        },
+        "w47": {
+          "topic": "Restoran",
+          "meaning": "Bèl eksperyans gastronomi"
+        },
+        "w48": {
+          "topic": "Manje Rapid",
+          "meaning": "Bon ti manje rapid ak zanmi"
+        },
+        "w49": {
+          "topic": "Bwason Fre",
+          "meaning": "Bon bwason twopikal fre"
+        },
+        "w50": {
+          "topic": "Gazolin",
+          "meaning": "Mete gazolin epi ranmase pwen"
+        },
+        "w51": {
+          "topic": "Enèji Pwòp",
+          "meaning": "Enèji solè ekolojik"
+        },
+        "w52": {
+          "topic": "Sèvis Kalite",
+          "meaning": "Espas acha pwòp ak modèn"
+        },
+        "w53": {
+          "topic": "Pwodui Fre",
+          "meaning": "Bon manje fre chak jou"
+        },
+        "w54": {
+          "topic": "Espesyalite Karayib",
+          "meaning": "Bon mango dous popilè Ayiti"
+        },
+        "w55": {
+          "topic": "Dousè",
+          "meaning": "Gato ak bèl desè dous"
+        },
+        "w56": {
+          "topic": "Pen Fre",
+          "meaning": "Pen cho ki fèk soti nan fou"
+        },
+        "w57": {
+          "topic": "Ji Natirèl",
+          "meaning": "Bon ji fwi twopikal natirèl"
+        },
+        "w58": {
+          "topic": "Ti Manje",
+          "meaning": "Ti goute pratik nan jounen an"
+        },
+        "w59": {
+          "topic": "Mòd ak Rad",
+          "meaning": "Bèl rad ak stil modèn"
+        },
+        "w60": {
+          "topic": "Lanmè ak Zile",
+          "meaning": "Bèl lanmè twopikal Karayib la"
+        },
+        "w61": {
+          "topic": "Fèt ak Mizik",
+          "meaning": "Bèl fèt mizik ak kilti cho"
+        },
+        "w62": {
+          "topic": "Oseyan Ble",
+          "meaning": "Lanmè klè ak sab blan"
+        },
+        "w63": {
+          "topic": "Plaj Detant",
+          "meaning": "Bèl kote pou vakans bò lanmè"
+        },
+        "w64": {
+          "topic": "Solèy Twopikal",
+          "meaning": "Bon ti solèy cho tout ane a"
+        },
+        "w65": {
+          "topic": "Zile Paradi",
+          "meaning": "Bèl zile nan mitan lanmè Karayib"
+        },
+        "w66": {
+          "topic": "Mizik Kiltirèl",
+          "meaning": "Bèl ritm Konpa ki fè w danse"
+        },
+        "w67": {
+          "topic": "Dans Fèt",
+          "meaning": "Dans cho pandan Kanaval"
+        },
+        "w68": {
+          "topic": "Tanbou Tradisyonèl",
+          "meaning": "Son tanbou kiltirèl Ayisyen"
+        },
+        "w69": {
+          "topic": "Bèl Souri",
+          "meaning": "Bon jan akèy ak jantiyès pèp la"
+        },
+        "w70": {
+          "topic": "Kè Kontan",
+          "meaning": "Kè kontan chak jou nan lavi a"
+        },
+        "w71": {
+          "topic": "Inite",
+          "meaning": "Fòs kominote a nan tèt ansanm"
+        },
+        "w72": {
+          "topic": "Lapè ak Larmoni",
+          "meaning": "Yon lavi trankil ak pwosperite"
+        },
+        "w73": {
+          "topic": "Liks Wayal",
+          "meaning": "Kalite sèvis siperyè"
+        },
+        "w74": {
+          "topic": "Moman Majik",
+          "meaning": "Bèl sipriz ak eksperyans enteresan"
+        },
+        "w75": {
+          "topic": "Rèv Lavni",
+          "meaning": "Anbisyon pou yon avni dijital"
+        },
+        "w76": {
+          "topic": "Etwal Klere",
+          "meaning": "Gwo siksè nan tèt klasman an"
+        },
+        "w77": {
+          "topic": "Rèn Fèt",
+          "meaning": "Senbòl bèlte ak gras nan fèt la"
+        },
+        "w78": {
+          "topic": "Wa Kanaval",
+          "meaning": "Mèt seremoni gran Kanaval la"
+        },
+        "w79": {
+          "topic": "Chanpyon",
+          "meaning": "Pi fò nan tounwa GameHub yo"
+        },
+        "w80": {
+          "topic": "Koutwazi",
+          "meaning": "Yon mèsi sensè an Fransè"
+        },
+        "w81": {
+          "topic": "Jwèt Chans",
+          "meaning": "Bon chans ak gwo kado"
+        },
+        "w82": {
+          "topic": "Felisitasyon",
+          "meaning": "Konpliman pou yon bèl viktwa"
+        },
+        "w83": {
+          "topic": "Ekselan Pèfòmans",
+          "meaning": "Rezilta estrawòdinè"
+        },
+        "w84": {
+          "topic": "Mèt Jwèt la",
+          "meaning": "Bon konprann ak refleksyon rapid"
+        },
+        "w85": {
+          "topic": "Reflèks Rapid",
+          "meaning": "Vitès rapid pou jwenn repons la"
+        },
+        "w86": {
+          "topic": "Lespri File",
+          "meaning": "Ekselan analiz lojik"
+        },
+        "w87": {
+          "topic": "Règ Lojik",
+          "meaning": "Bon dediksyon lojik"
+        },
+        "w88": {
+          "topic": "Konsantrasyon",
+          "meaning": "Rete konsantre sou viktwa a"
+        },
+        "w89": {
+          "topic": "Nivo Defi",
+          "meaning": "Defi ki vin pi enteresan chak nivo"
+        },
+        "w90": {
+          "topic": "Skò Rekò",
+          "meaning": "Antre nan lis gwo ganyan yo"
+        },
+        "w91": {
+          "topic": "Misyon Dekouvèt",
+          "meaning": "Ranpòte defi chak jou yo"
+        },
+        "w92": {
+          "topic": "Asosyasyon Egzak",
+          "meaning": "Jwenn bon pè yo"
+        },
+        "w93": {
+          "topic": "Bèl Koulè",
+          "meaning": "Imaj klè ak koulè vivan"
+        },
+        "w94": {
+          "topic": "Limyè Gid",
+          "meaning": "Endis entèlijan pou montre wout la"
+        },
+        "w95": {
+          "topic": "Fòs Pou Genyen",
+          "meaning": "Pouse ou pou pran premye plas"
+        },
+        "w96": {
+          "topic": "Sèvo Rapid",
+          "meaning": "Antrene memwa ak reflèks ou"
+        },
+        "w97": {
+          "topic": "Rezoud Pwoblèm",
+          "meaning": "Simonte tout devinèt difisil"
+        },
+        "w98": {
+          "topic": "Pwoteksyon Kont",
+          "meaning": "Sekirite milti-kouch pou kont ou"
+        },
+        "w99": {
+          "topic": "Reyaksyon Zèklè",
+          "meaning": "Reyaji touswit devan defi yo"
+        }
+      }
     },
     "wheel": {
       "tutorial": {
@@ -566,7 +1324,29 @@ export default {
       "add_hole_btn": "Ajoute twou",
       "hammer_btn": "Mato",
       "hammer_tooltip": "Kase yon pikèt ki bloke",
-      "screw_box_label": "Bwat vis"
+      "screw_box_label": "Bwat vis",
+      "level_1_name": "Chofman Devise",
+      "plate_l1_1": "Plak Ble",
+      "plate_l1_2": "Plak Jòn",
+      "level_2_name": "Triyang Mare",
+      "plate_l2_1": "Ba Ble",
+      "plate_l2_2": "Ba Wouj",
+      "plate_l2_3": "Ba Lò",
+      "level_3_name": "Moulen 4 Zèl",
+      "plate_l3_1": "Zèl Vètikal",
+      "plate_l3_2": "Zèl Orizontal",
+      "plate_l3_3": "Kad Kare",
+      "level_4_name": "Griy Kwaze",
+      "plate_l4_1": "Ba Anwo",
+      "plate_l4_2": "Ba Anba",
+      "plate_l4_3": "Ba Gòch",
+      "plate_l4_4": "Ba Dwat",
+      "level_5_name": "Mèt Devise Metal",
+      "plate_l5_1": "Kad Sant Kwakwa",
+      "plate_l5_2": "Ba Dyagonal 1",
+      "plate_l5_3": "Ba Dyagonal 2",
+      "plate_l5_4": "Plak Baz",
+      "plate_l5_5": "Vout Anwo"
     },
     "untangle": {
       "title": "Mèt Demele Kòd 3D",
@@ -597,7 +1377,37 @@ export default {
         "controls": "Touche yon zepeng pou glise retire l nan plas li.",
         "scoring": "Bat vòlè a: +50 pwen. Rekipere trezò an sekirite: +100 pwen.",
         "tips": "Mete dlo sou lav/dife an premye pou fè l vin wòch, apre sa lage pwa lou sou vòlè a."
-      }
+      },
+      "level_1_name": "Chofman Pwa Fè",
+      "l1_ent_weight": "Pwa Fè 500kg",
+      "l1_ent_thief": "Vòlè",
+      "l1_ent_treasure": "Kòf Lò",
+      "l1_ent_police": "Lapolis Natcom",
+      "level_2_name": "Dlo Etenn Lav",
+      "l2_ent_water": "Basen Dlo Ble",
+      "l2_ent_lava": "Lav Dife",
+      "l2_ent_thief": "Vòlè",
+      "l2_ent_police": "Lapolis",
+      "level_3_name": "Sove Trezò 3 Chanm",
+      "l3_ent_weight": "Gwo Wòch",
+      "l3_ent_gold": "Trezò Natcash",
+      "l3_ent_thief": "Bandit",
+      "l3_ent_police": "Lapolis",
+      "level_4_name": "Labirent Pyèj Dife ak Dlo",
+      "l4_ent_water": "Dlo",
+      "l4_ent_lava": "Lav",
+      "l4_ent_thief": "Vòlè",
+      "l4_ent_gold": "Kòf Lò",
+      "l4_ent_police": "Lapolis",
+      "level_5_name": "Gwo Batay Chèf Vòlè",
+      "l5_ent_water": "Rezèvwa Dlo",
+      "l5_ent_lava": "Lav",
+      "l5_ent_weight": "Pwa Fè",
+      "l5_ent_thief": "Chèf Vòlè",
+      "l5_ent_treasure": "Gran Trezò Lò",
+      "ent_eliminated": "Eliminen!",
+      "ent_stone_rock": "Wòch Di",
+      "fail_hint": "Yon vòlè oswa pyèj gate misyon an! Eseye rale zepeng yo nan yon lòt lòd."
     },
     "pin": {
       "retry_btn": "Jwe ankò"
@@ -686,7 +1496,7 @@ export default {
     "rule_explanation": "Dapre règ FIFO, pakèt ki gen dat ekspirasyon pi pre ap depanse an premye.",
     "earned_at": "Resevwa: {{date}}",
     "expires_at": "Ekspire: {{date}}",
-    "expiring_soon_badge": "Ap ekspire byento",
+    "expiring_soon_badge": "Ap ekspire ({{days}}j)",
     "default_source": "Pakèt pwen",
     "empty_title": "Pa gen pakèt k ap ekspire",
     "empty_desc": "Ou pa gen okenn Natcash Coin k ap ekspire talè.",
@@ -709,7 +1519,7 @@ export default {
     "status_ekyc_verified": "eKYC Verifye",
     "status_pending_ekyc": "Ap tann eKYC",
     "no_friends_title": "Poko gen envitasyon",
-    "no_friends_desc": "Pataje kòd QR oswa lyen ou ak zanmi pou kòmanse.",
+    "no_friends_desc": "Pataje kòd QR oswa lyen referans ou pou resevwa +{{reward}} pwen bonis pou chak zanmi!",
     "empty_title": "Pa gen done envitasyon",
     "empty_desc": "Pa ka jwenn enfòmasyon envitasyon kounye a.",
     "load_error": "Pa ka chaje done envitasyon yo."
@@ -898,5 +1708,30 @@ export default {
     "empty_sub_agents": "Pa gen ajan anba ou",
     "empty_sub_agents_desc": "Ajan ki nan rezo w la ap parèt isit la.",
     "load_error": "Pa ka chaje tablo ajan an."
+  },
+  "sdk": {
+    "game_code_required": "Kòd jwèt la (gameCode) obligatwa.",
+    "submit_result_error": "Erè sèvè pandan y ap voye rezilta a ({{status}}).",
+    "buy_turns_desc": "Achte {{count}} tou jwèt ({{gameCode}})",
+    "payment_request_sent": "Demann peman an voye nan pòtfèy elektwonik la.",
+    "buy_turns_error": "Pa kapab achte tou jwèt la ({{status}})."
+  },
+  "sso": {
+    "exchange_failed_http": "Otantifikasyon SSO echwe (HTTP {{status}}).",
+    "auth_failed": "Otantifikasyon SSO echwe. Tanpri eseye ankò."
+  },
+  "notification": {
+    "dice_title": "Parye sou De !",
+    "dice_badge": "ALÈT JWÈT",
+    "farm_title": "Fèm Kontan",
+    "farm_badge": "REKÒT",
+    "success_title": "Siksè !",
+    "success_badge": "FINI",
+    "warning_title": "Avi Enpòtan",
+    "warning_badge": "ATANSYON",
+    "error_title": "Operasyon Echwe",
+    "error_badge": "ERÈ",
+    "event_title": "Evènman & Avantaj",
+    "event_badge": "EVÈNMAN VIP"
   }
 };

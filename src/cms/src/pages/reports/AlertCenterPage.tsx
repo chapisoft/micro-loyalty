@@ -53,10 +53,10 @@ export const AlertCenterPage: React.FC = () => {
     if (!alert.id) return;
     try {
       await LoyaltyService.acknowledgeAlert(alert.id, selectedTenant);
-      toast.current?.show({ severity: 'info', summary: t('common.success', { defaultValue: 'Đã tiếp nhận' }), detail: alert.alertCode });
+      toast.current?.show({ severity: 'info', summary: t('common.success'), detail: alert.alertCode });
       fetchAlerts();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     }
   };
 
@@ -65,12 +65,12 @@ export const AlertCenterPage: React.FC = () => {
     setSubmitting(true);
     try {
       await LoyaltyService.resolveAlert(resolveTarget.id, resolveNote.trim() || undefined, selectedTenant);
-      toast.current?.show({ severity: 'success', summary: t('common.success', { defaultValue: 'Đã xử lý' }), detail: resolveTarget.alertCode });
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: resolveTarget.alertCode });
       setResolveTarget(null);
       setResolveNote('');
       fetchAlerts();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error', { defaultValue: 'Lỗi' }), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setSubmitting(false);
     }
@@ -101,16 +101,16 @@ export const AlertCenterPage: React.FC = () => {
   return (
     <div>
       <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.alerts', { defaultValue: 'Trung tâm Cảnh báo (CN-05)' }) }]} />
+      <AppBreadcrumb items={[{ label: t('nav.alerts') }]} />
 
       <div className="card shadow-1 border-round surface-card p-4">
         <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
           <div>
             <h4 className="m-0 text-primary font-semibold">
-              {t('alert.title', { defaultValue: 'Trung tâm Cảnh báo & Ngưỡng Vận hành (CN-05)' })}
+              {t('alert.title')}
             </h4>
             <p className="m-0 text-xs text-500 mt-1">
-              {t('alert.subtitle', { defaultValue: 'Theo dõi cảnh báo vượt ngưỡng ngân sách 80%, kho voucher sắp cạn, bất thường phát hành điểm và lỗi webhook.' })}
+              {t('alert.subtitle')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 align-items-center">
@@ -118,7 +118,7 @@ export const AlertCenterPage: React.FC = () => {
             <Dropdown
               value={severityFilter}
               options={[
-                { label: t('common.all', { defaultValue: 'Tất cả mức độ' }), value: 'ALL' },
+                { label: t('common.all'), value: 'ALL' },
                 ...Object.values(AlertSeverity).map((v) => ({ label: v, value: v })),
               ]}
               onChange={(e) => setSeverityFilter(e.value)}
@@ -127,7 +127,7 @@ export const AlertCenterPage: React.FC = () => {
             <Dropdown
               value={statusFilter}
               options={[
-                { label: t('common.all', { defaultValue: 'Tất cả trạng thái' }), value: 'ALL' },
+                { label: t('common.all'), value: 'ALL' },
                 ...Object.values(AlertStatus).map((v) => ({ label: v, value: v })),
               ]}
               onChange={(e) => setStatusFilter(e.value)}
@@ -140,22 +140,22 @@ export const AlertCenterPage: React.FC = () => {
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
-          <DataTable<SystemAlertModel[]> value={alerts} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('alert.empty', { defaultValue: 'Không có cảnh báo nào khớp bộ lọc hiện tại.' })}>
-            <Column field="alertCode" header={t('alert.code', { defaultValue: 'Mã Cảnh Báo' })} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.alertCode}</span>} style={{ minWidth: '12rem' }} />
-            <Column field="severity" header={t('alert.severity', { defaultValue: 'Mức Độ' })} body={(r) => <Tag value={r.severity} severity={severityTag(r.severity)} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-            <Column field="category" header={t('alert.category', { defaultValue: 'Phân Nhóm' })} body={(r) => <span className="font-mono text-xs">{r.category}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="title" header={t('alert.subject', { defaultValue: 'Nội Dung Cảnh Báo' })} body={(r) => <div><div>{r.title}</div><div className="text-xs text-500">{r.message}</div></div>} style={{ minWidth: '18rem' }} />
-            <Column field="status" header={t('common.status', { defaultValue: 'Trạng Thái' })} body={(r) => <Tag value={r.status} severity={statusTag(r.status)} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="createdAt" header={t('common.created_at', { defaultValue: 'Thời Gian' })} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<SystemAlertModel[]> value={alerts} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('alert.empty')}>
+            <Column field="alertCode" header={t('alert.code')} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.alertCode}</span>} style={{ minWidth: '12rem' }} />
+            <Column field="severity" header={t('alert.severity')} body={(r) => <Tag value={r.severity} severity={severityTag(r.severity)} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+            <Column field="category" header={t('alert.category')} body={(r) => <span className="font-mono text-xs">{r.category}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="title" header={t('alert.subject')} body={(r) => <div><div>{r.title}</div><div className="text-xs text-500">{r.message}</div></div>} style={{ minWidth: '18rem' }} />
+            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusTag(r.status)} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+            <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             <Column
-              header={t('common.action', { defaultValue: 'Xử Lý' })}
+              header={t('common.action')}
               body={(r) => (
                 <div className="flex gap-1">
                   {r.status === AlertStatus.OPEN && (
-                    <Button label={t('alert.ack_btn', { defaultValue: 'Tiếp nhận' })} size="small" outlined severity="info" onClick={() => handleAcknowledge(r)} />
+                    <Button label={t('alert.ack_btn')} size="small" outlined severity="info" onClick={() => handleAcknowledge(r)} />
                   )}
                   {r.status !== AlertStatus.RESOLVED && (
-                    <Button label={t('alert.resolve_btn', { defaultValue: 'Đóng' })} size="small" outlined severity="success" onClick={() => { setResolveTarget(r); setResolveNote(''); }} />
+                    <Button label={t('alert.resolve_btn')} size="small" outlined severity="success" onClick={() => { setResolveTarget(r); setResolveNote(''); }} />
                   )}
                 </div>
               )}
@@ -165,14 +165,14 @@ export const AlertCenterPage: React.FC = () => {
         )}
       </div>
 
-      <Dialog visible={!!resolveTarget} onHide={() => setResolveTarget(null)} header={resolveTarget ? `${t('alert.resolve_title', { defaultValue: 'Đóng Cảnh Báo' })} · ${resolveTarget.alertCode}` : ''} style={{ width: '32rem' }} modal>
+      <Dialog visible={!!resolveTarget} onHide={() => setResolveTarget(null)} header={resolveTarget ? `${t('alert.resolve_title')} · ${resolveTarget.alertCode}` : ''} style={{ width: '32rem' }} modal>
         <div className="flex flex-column gap-3">
           <div className="text-sm text-700">{resolveTarget?.title}</div>
-          <InputTextarea rows={3} value={resolveNote} onChange={(e) => setResolveNote(e.target.value)} placeholder={t('alert.resolve_note', { defaultValue: 'Nhập biên bản xử lý hoặc nguyên nhân gốc...' })} className="w-full" />
+          <InputTextarea rows={3} value={resolveNote} onChange={(e) => setResolveNote(e.target.value)} placeholder={t('alert.resolve_note')} className="w-full" />
         </div>
         <div className="flex justify-content-end gap-2 mt-3">
-          <Button label={t('common.cancel', { defaultValue: 'Hủy' })} outlined onClick={() => setResolveTarget(null)} />
-          <Button label={t('alert.resolve_confirm', { defaultValue: 'Xác nhận Đã Xử Lý' })} severity="success" icon="pi pi-check" onClick={handleResolve} loading={submitting} />
+          <Button label={t('common.cancel')} outlined onClick={() => setResolveTarget(null)} />
+          <Button label={t('alert.resolve_confirm')} severity="success" icon="pi pi-check" onClick={handleResolve} loading={submitting} />
         </div>
       </Dialog>
     </div>

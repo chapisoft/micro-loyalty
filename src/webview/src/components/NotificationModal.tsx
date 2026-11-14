@@ -33,8 +33,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           icon: <Dices className="w-8 h-8 text-pink-500 animate-bounce" />,
           bgGradient: 'from-purple-500 via-pink-500 to-indigo-600',
           badgeBg: 'bg-purple-100 text-purple-900 border-purple-200',
-          defaultTitle: 'Sự Kiện Lắc Xí Ngầu',
-          defaultBadge: 'SỰ KIỆN LỄ HỘI',
+          defaultTitle: t('notification.dice_title'),
+          defaultBadge: t('notification.dice_badge'),
           btnGradient: 'from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white',
         };
       case 'farm':
@@ -42,8 +42,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           icon: <Sprout className="w-8 h-8 text-emerald-500 animate-pulse" />,
           bgGradient: 'from-emerald-500 via-teal-500 to-green-600',
           badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-200',
-          defaultTitle: 'Nông Trại Delimart',
-          defaultBadge: 'MÙA VỤ NÔNG SẢN',
+          defaultTitle: t('notification.farm_title'),
+          defaultBadge: t('notification.farm_badge'),
           btnGradient: 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white',
         };
       case 'success':
@@ -51,8 +51,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           icon: <CheckCircle2 className="w-8 h-8 text-emerald-500" />,
           bgGradient: 'from-emerald-500 to-teal-600',
           badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-200',
-          defaultTitle: 'Thành Công',
-          defaultBadge: 'THÀNH CÔNG',
+          defaultTitle: t('notification.success_title'),
+          defaultBadge: t('notification.success_badge'),
           btnGradient: 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white',
         };
       case 'warning':
@@ -60,8 +60,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           icon: <AlertTriangle className="w-8 h-8 text-amber-500" />,
           bgGradient: 'from-amber-500 to-yellow-500',
           badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
-          defaultTitle: 'Thông Báo',
-          defaultBadge: 'LƯU Ý',
+          defaultTitle: t('notification.warning_title'),
+          defaultBadge: t('notification.warning_badge'),
           btnGradient: 'from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950',
         };
       case 'error':
@@ -69,8 +69,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           icon: <AlertCircle className="w-8 h-8 text-rose-500" />,
           bgGradient: 'from-rose-500 to-red-600',
           badgeBg: 'bg-rose-100 text-rose-900 border-rose-200',
-          defaultTitle: 'Thông Báo',
-          defaultBadge: 'CHÚ Ý',
+          defaultTitle: t('notification.error_title'),
+          defaultBadge: t('notification.error_badge'),
           btnGradient: 'from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white',
         };
       case 'event':
@@ -79,8 +79,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           icon: <Sparkles className="w-8 h-8 text-amber-500 animate-spin-slow" />,
           bgGradient: 'from-amber-500 via-orange-500 to-yellow-500',
           badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
-          defaultTitle: 'Thông Báo Hệ Thống',
-          defaultBadge: 'THÔNG BÁO',
+          defaultTitle: t('notification.event_title'),
+          defaultBadge: t('notification.event_badge'),
           btnGradient: 'from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950',
         };
     }
@@ -127,7 +127,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
             onClick={onClose}
             className={`w-full py-3.5 rounded-2xl font-black text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5 bg-gradient-to-r ${config.btnGradient}`}
           >
-            <span>{actionText || t('tiers.btn_got_it') || 'Đã Hiểu'}</span>
+            <span>{actionText || t('tiers.btn_got_it')}</span>
           </button>
         </div>
       </div>

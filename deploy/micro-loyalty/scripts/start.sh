@@ -18,7 +18,12 @@ if [ ! -f .env ]; then
   cp .env.example .env || true
 fi
 
-docker compose up -d
+if [ "$#" -gt 0 ]; then
+  echo ">>> Triển khai chọn lọc (Rolling Update --build --no-deps): $*"
+  docker compose up -d --build --no-deps "$@"
+else
+  docker compose up -d
+fi
 
 echo ""
 echo "[START-SAAS] Khởi động thành công!"

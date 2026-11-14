@@ -103,7 +103,10 @@ export default {
     "next_turn_in": "Prochain tour dans :",
     "this_week": "Cette semaine",
     "buy_turn_item_name": "Acheter {{count}} tours GameHub",
-    "filter_learning": "Apprentissage"
+    "filter_learning": "Apprentissage",
+    "perk_wordle": "Mot Mystère Multilingue",
+    "perk_screw": "Dévissage Tactique",
+    "perk_pullpin": "Sauvetage du Trésor"
   },
   "daily_missions": {
     "modal_title": "Station des Missions Quotidiennes",
@@ -220,7 +223,19 @@ export default {
     "btn_close": "Fermer",
     "default_prize_name": "Cadeau de récompense",
     "default_lucky_prize": "Récompense chanceuse",
-    "buy_turns_item_name": "Acheter {{count}} tours de roue de la fortune"
+    "buy_turns_item_name": "Acheter {{count}} tours de roue de la fortune",
+    "default_prize_1": "+100 Points Bonus",
+    "default_prize_2": "Bon de réduction 50 %",
+    "default_prize_3": "Bonne chance la prochaine fois",
+    "default_prize_4": "+200 Points Bonus",
+    "default_prize_5": "Remboursement 500 HTG",
+    "default_prize_6": "+1 Tour Gratuit",
+    "winner_prize_1": "Remboursement 500 HTG",
+    "winner_prize_2": "Bon de réduction 50 %",
+    "winner_prize_3": "+200 Points Bonus",
+    "winner_prize_4": "+100 Points Bonus",
+    "winner_prize_5": "+1 Tour Gratuit",
+    "sound_title": "Activer/Couper le son"
   },
   "vouchers": {
     "tab_my_vouchers": "Mes Coupons",
@@ -361,7 +376,7 @@ export default {
         "scoring": "Passer 1 tour: +1 pt (ou +2 avec Boost x2). Pièces: +1 pt. La vitesse et la difficulté augmentent au fil du jeu !",
         "tips": "Collectez les Boucliers 🛡️ pour absorber 1 choc, les Aimants 🧲 pour attirer les pièces et les Étoiles 2X ⭐ pour pulvériser votre record."
       },
-      "high_score": "Record : {{score}}"
+      "high_score": "Record : {{best}}"
     },
     "game2048": {
       "title": "2048 Natcash Edition",
@@ -422,7 +437,324 @@ export default {
       "moves_unit": "coups",
       "time_bonus_label": "bonus de temps",
       "next_stage_label": "Niveau suiv.",
-      "stage_score_label": "Score niveau"
+      "stage_score_label": "Score niveau",
+      "decks": {
+        "partners": {
+          "name": "Partenaires & Portefeuille Natcash",
+          "c1": "Delimart",
+          "c2": "Total",
+          "c3": "Natcom 4G",
+          "c4": "Natcash",
+          "c5": "Portefeuille",
+          "c6": "Carte Kredi",
+          "c7": "Solar 24/7",
+          "c8": "Supermarché",
+          "c9": "Cadeau VIP",
+          "c10": "Diamant",
+          "c11": "Pièce d’Or",
+          "c12": "Code QR"
+        },
+        "carnival": {
+          "name": "Carnaval des Caraïbes",
+          "c1": "Tambour Rara",
+          "c2": "Masque",
+          "c3": "Coffre d’Or",
+          "c4": "Phare",
+          "c5": "Voilier",
+          "c6": "Perle",
+          "c7": "Palmier",
+          "c8": "Perroquet",
+          "c9": "Dauphin",
+          "c10": "Couronne",
+          "c11": "Trompette",
+          "c12": "Feux d’Artifice"
+        },
+        "gems": {
+          "name": "Gemmes & Fortune",
+          "c1": "Diamant",
+          "c2": "Rubis Rouge",
+          "c3": "Émeraude",
+          "c4": "Améthyste",
+          "c5": "Pièce d’Or",
+          "c6": "Cloche d’Or",
+          "c7": "Étoile d’Or",
+          "c8": "Flamme Sacrée",
+          "c9": "Trèfle 4 Feuilles",
+          "c10": "Cœur",
+          "c11": "Trident",
+          "c12": "Œil Mystique"
+        },
+        "haiti_food": {
+          "name": "Cuisine de Rue Haïtienne",
+          "c1": "Griot de Porc",
+          "c2": "Pâté Haïtien",
+          "c3": "Banane Pesée",
+          "c4": "Riz Djon-Djon",
+          "c5": "Soupe Joumou",
+          "c6": "Café Rebo",
+          "c7": "Eau de Coco",
+          "c8": "Lambi Grillé",
+          "c9": "Mangue Francique",
+          "c10": "Maïs Moulu",
+          "c11": "Avocat",
+          "c12": "Punch au Rhum"
+        },
+        "wild_animals": {
+          "name": "Animaux Sauvages",
+          "c1": "Lion",
+          "c2": "Éléphant",
+          "c3": "Tigre",
+          "c4": "Girafe",
+          "c5": "Panda",
+          "c6": "Léopard",
+          "c7": "Aigle",
+          "c8": "Singe",
+          "c9": "Hippopotame",
+          "c10": "Zèbre",
+          "c11": "Loup",
+          "c12": "Kangourou"
+        },
+        "space": {
+          "name": "Espace & Astronomie",
+          "c1": "Fusée",
+          "c2": "Saturne",
+          "c3": "Soleil",
+          "c4": "Lune",
+          "c5": "Météorite",
+          "c6": "Télescope",
+          "c7": "Astronaute",
+          "c8": "Satellite 4G",
+          "c9": "Voie Lactée",
+          "c10": "OVNI",
+          "c11": "Étoile Filante",
+          "c12": "Terre"
+        },
+        "sports": {
+          "name": "Sports & Parkour",
+          "c1": "Football",
+          "c2": "Basket-ball",
+          "c3": "Chaussure",
+          "c4": "Médaille",
+          "c5": "Trophée",
+          "c6": "Skateboard",
+          "c7": "Tennis",
+          "c8": "Gant de Boxe",
+          "c9": "Arts Martiaux",
+          "c10": "Sifflet",
+          "c11": "Badminton",
+          "c12": "Fléchettes"
+        },
+        "technology": {
+          "name": "Technologie & Numérique",
+          "c1": "Smartphone",
+          "c2": "Ordinateur",
+          "c3": "Casque Audio",
+          "c4": "Robot IA",
+          "c5": "Manette",
+          "c6": "Drone",
+          "c7": "Puce Électronique",
+          "c8": "Montre Connectée",
+          "c9": "Casque VR",
+          "c10": "Disque SSD",
+          "c11": "Clavier",
+          "c12": "Souris"
+        },
+        "wonders": {
+          "name": "Merveilles de la Nature",
+          "c1": "Volcan",
+          "c2": "Cascade",
+          "c3": "Grotte",
+          "c4": "Corail",
+          "c5": "Plage",
+          "c6": "Arc-en-Ciel",
+          "c7": "Forêt",
+          "c8": "Coucher de Soleil",
+          "c9": "Île Tropicale",
+          "c10": "Désert",
+          "c11": "Sommet Enneigé",
+          "c12": "Iceberg"
+        },
+        "magic": {
+          "name": "Magie & Sorcellerie",
+          "c1": "Baguette Magique",
+          "c2": "Chapeau Magique",
+          "c3": "Élixir",
+          "c4": "Grimoire",
+          "c5": "Boule de Cristal",
+          "c6": "Dragon de Feu",
+          "c7": "Balai Volant",
+          "c8": "Cape Invisible",
+          "c9": "Serrure Ancienne",
+          "c10": "Bougie Magique",
+          "c11": "Chaudron",
+          "c12": "Poussière de Fée"
+        },
+        "fruits": {
+          "name": "Fruits Tropicaux",
+          "c1": "Pastèque",
+          "c2": "Avocat",
+          "c3": "Ananas",
+          "c4": "Banane",
+          "c5": "Fraise",
+          "c6": "Orange Douce",
+          "c7": "Pomme Rouge",
+          "c8": "Raisin",
+          "c9": "Papaye",
+          "c10": "Citron",
+          "c11": "Pêche",
+          "c12": "Noix de Coco"
+        },
+        "vehicles": {
+          "name": "Véhicules & Vitesse",
+          "c1": "Bus Tap-Tap",
+          "c2": "Voiture de Sport",
+          "c3": "Hélicoptère",
+          "c4": "Train Express",
+          "c5": "Hors-Bord",
+          "c6": "Moto Sport",
+          "c7": "Vaisseau Spatial",
+          "c8": "Camion Pompier",
+          "c9": "Avion",
+          "c10": "Yacht",
+          "c11": "Montgolfière",
+          "c12": "Tracteur"
+        },
+        "music": {
+          "name": "Musique & Instruments",
+          "c1": "Guitare Électrique",
+          "c2": "Saxophone",
+          "c3": "Piano",
+          "c4": "Batterie Jazz",
+          "c5": "Violon",
+          "c6": "Micro d’Or",
+          "c7": "Disque Vinyle",
+          "c8": "Casque DJ",
+          "c9": "Note de Musique",
+          "c10": "Trompette",
+          "c11": "Partition",
+          "c12": "Carillon"
+        },
+        "weather": {
+          "name": "Météo & Saisons",
+          "c1": "Éclair",
+          "c2": "Tornade",
+          "c3": "Flocon de Neige",
+          "c4": "Soleil d’Été",
+          "c5": "Feuille d’Automne",
+          "c6": "Averse",
+          "c7": "Nuage Blanc",
+          "c8": "Rafale de Vent",
+          "c9": "Arc-en-Ciel",
+          "c10": "Nuit Étoilée",
+          "c11": "Brouillard",
+          "c12": "Aube"
+        },
+        "ancient": {
+          "name": "Archéologie Antique",
+          "c1": "Pyramide",
+          "c2": "Vase Antique",
+          "c3": "Pièce Romaine",
+          "c4": "Parchemin",
+          "c5": "Sablier",
+          "c6": "Boussole",
+          "c7": "Cadenas d’Or",
+          "c8": "Sceptre Royal",
+          "c9": "Statue Antique",
+          "c10": "Lampe Magique",
+          "c11": "Carte au Trésor",
+          "c12": "Bouclier Bronze"
+        },
+        "farm": {
+          "name": "Ferme Joyeuse",
+          "c1": "Moulin à Vent",
+          "c2": "Tracteur",
+          "c3": "Vache",
+          "c4": "Mouton",
+          "c5": "Coq",
+          "c6": "Maïs",
+          "c7": "Carotte",
+          "c8": "Œuf",
+          "c9": "Arrosoir",
+          "c10": "Épouvantail",
+          "c11": "Cochon",
+          "c12": "Cheval"
+        },
+        "detective": {
+          "name": "Espion & Détective",
+          "c1": "Insigne",
+          "c2": "Lunettes Noires",
+          "c3": "Mallette Codée",
+          "c4": "Talkie-Walkie",
+          "c5": "Gyrophare",
+          "c6": "Menottes",
+          "c7": "Vision Nocturne",
+          "c8": "Empreinte",
+          "c9": "Traceur GPS",
+          "c10": "Boîte Noire",
+          "c11": "Jumelles",
+          "c12": "Mini Caméra"
+        },
+        "ocean": {
+          "name": "Créatures Marines",
+          "c1": "Poulpe",
+          "c2": "Baleine Bleue",
+          "c3": "Étoile de Mer",
+          "c4": "Tortue Marine",
+          "c5": "Crabe",
+          "c6": "Méduse",
+          "c7": "Poisson-Globe",
+          "c8": "Coquillage",
+          "c9": "Requin",
+          "c10": "Calmar",
+          "c11": "Corail Rouge",
+          "c12": "Homard"
+        },
+        "sweets": {
+          "name": "Pâtisserie & Desserts",
+          "c1": "Gâteau",
+          "c2": "Beignet Donut",
+          "c3": "Cornet de Glace",
+          "c4": "Sucette",
+          "c5": "Cupcake",
+          "c6": "Chocolat Noir",
+          "c7": "Croissant",
+          "c8": "Thé au Lait",
+          "c9": "Bonbon Gélifié",
+          "c10": "Biscuit Cookie",
+          "c11": "Tartelette",
+          "c12": "Coupe Glacée"
+        },
+        "knights": {
+          "name": "Chevaliers & Moyen Âge",
+          "c1": "Bouclier",
+          "c2": "Épée Sacrée",
+          "c3": "Armure de Fer",
+          "c4": "Château",
+          "c5": "Destrier",
+          "c6": "Arc et Flèches",
+          "c7": "Torche",
+          "c8": "Bannière",
+          "c9": "Hache de Guerre",
+          "c10": "Tourelle",
+          "c11": "Couronne Royale",
+          "c12": "Dragon Gardien"
+        },
+        "flowers": {
+          "name": "Jardin Royal",
+          "c1": "Rose Rouge",
+          "c2": "Tournesol",
+          "c3": "Lotus",
+          "c4": "Orchidée",
+          "c5": "Cactus",
+          "c6": "Champignon",
+          "c7": "Tulipe",
+          "c8": "Marguerite",
+          "c9": "Hibiscus",
+          "c10": "Trèfle Chanceux",
+          "c11": "Jeune Pousse",
+          "c12": "Arbre Millénaire"
+        }
+      }
     },
     "bubble": {
       "title": "Tir aux Bulles Kanaval",
@@ -473,7 +805,27 @@ export default {
       },
       "record_stage": "Record : Niveau {{highestStage}}",
       "knives_label": "Couteaux",
-      "score_label": "Score"
+      "score_label": "Score",
+      "theme_1_name": "Tronc de Chêne des Caraïbes",
+      "theme_1_badge": "Chêne Ancien",
+      "theme_2_name": "Anneau d’Or Royal",
+      "theme_2_badge": "Or 24 Carats",
+      "theme_3_name": "Bouclier Magma Infernal",
+      "theme_3_badge": "Pierre Magma",
+      "theme_4_name": "Matrice de Glace Cristalline",
+      "theme_4_badge": "Glace Cristal",
+      "theme_5_name": "Cœur Nébuleuse Cosmique",
+      "theme_5_badge": "Nébuleuse",
+      "theme_6_name": "Bouclier Diamant Éternel",
+      "theme_6_badge": "Suprême",
+      "item_red_envelope": "Enveloppe Porte-Bonheur",
+      "item_data_pack": "Forfait Data 4G",
+      "item_gold_chest": "Coffre d’Or",
+      "item_diamond": "Diamant",
+      "item_gold_coin": "Pièce VIP",
+      "bonus_unused_knives_fx": "BONUS COUTEAU !",
+      "size_label": "Taille : {{size}} %",
+      "early_finish_bonus": "Bonus fin rapide : +{{bonus}} pts ({{knives}} couteaux restants)"
     },
     "block": {
       "title": "Puzzle de Blocs Diamants Natcash",
@@ -522,7 +874,7 @@ export default {
       "btn_new_word": "Nouveau Mot",
       "btn_hint": "Indice Thème",
       "hint_title": "Indice & Signification",
-      "topic_label": "Thème : {{topic}}",
+      "topic_label": "Thème : {{topic}} ({{lang}})",
       "legend_correct": "Bien placé",
       "legend_present": "Mal placé",
       "legend_absent": "Absent",
@@ -536,7 +888,413 @@ export default {
         "tips": "Appuyez sur \"Indice Thème\" pour découvrir le contexte et trouver le mot plus vite."
       },
       "unlock_letter_btn": "💡 Débloquer 1 lettre aléatoire",
-      "revealed_letter_info": "✓ La lettre à la position {{pos}} est : \"{{letter}}\""
+      "revealed_letter_info": "✓ La lettre à la position {{pos}} est : \"{{letter}}\"",
+      "lang_natcom": "Natcom",
+      "lang_ht": "Créole",
+      "lang_en": "Anglais",
+      "lang_fr": "Français",
+      "words": {
+        "w0": {
+          "topic": "Télécom Natcom",
+          "meaning": "Principal opérateur télécom en Haïti"
+        },
+        "w1": {
+          "topic": "Points de Fidélité",
+          "meaning": "Vos points de fidélité en créole (Pwen w)"
+        },
+        "w2": {
+          "topic": "Portefeuille & Finance",
+          "meaning": "Crédit et recharge téléphonique (Kredi)"
+        },
+        "w3": {
+          "topic": "Cadeaux & Offres",
+          "meaning": "Récompense promotionnelle offerte"
+        },
+        "w4": {
+          "topic": "Infrastructure Télécom",
+          "meaning": "Internet par fibre optique ultra-rapide"
+        },
+        "w5": {
+          "topic": "Vitesse Réseau",
+          "meaning": "Connexion haut débit 4G/5G"
+        },
+        "w6": {
+          "topic": "Services Vocaux",
+          "meaning": "Appels vocaux haute définition"
+        },
+        "w7": {
+          "topic": "Appareils Mobiles",
+          "meaning": "Smartphone connecté"
+        },
+        "w8": {
+          "topic": "Signal Mobile",
+          "meaning": "Couverture réseau étendue"
+        },
+        "w9": {
+          "topic": "Tour Relais",
+          "meaning": "Pylône antenne-relais BTS"
+        },
+        "w10": {
+          "topic": "Équipement Réseau",
+          "meaning": "Routeur Wi-Fi domestique"
+        },
+        "w11": {
+          "topic": "En Ligne",
+          "meaning": "Connectivité numérique sans limites"
+        },
+        "w12": {
+          "topic": "Diffusion en Continu",
+          "meaning": "Vidéos et musique en streaming"
+        },
+        "w13": {
+          "topic": "Portail Web",
+          "meaning": "Portail de consultation et recharge"
+        },
+        "w14": {
+          "topic": "Forfaits Combinés",
+          "meaning": "Forfait combiné Data et appels"
+        },
+        "w15": {
+          "topic": "Offres de Service",
+          "meaning": "Forfaits data jour/semaine/mois"
+        },
+        "w16": {
+          "topic": "Recharge Rapide",
+          "meaning": "Recharger un compte prépayé"
+        },
+        "w17": {
+          "topic": "Plans Tarifaires",
+          "meaning": "Grille tarifaire flexible"
+        },
+        "w18": {
+          "topic": "Point d’Accès Wi-Fi",
+          "meaning": "Point de partage Wi-Fi mobile"
+        },
+        "w19": {
+          "topic": "Itinérance Internationale",
+          "meaning": "Rester connecté partout dans le monde"
+        },
+        "w20": {
+          "topic": "Portefeuille & Paiement",
+          "meaning": "Espèces et paiement achats (Kash)"
+        },
+        "w21": {
+          "topic": "Finance & Portefeuille",
+          "meaning": "Devise et solde du compte"
+        },
+        "w22": {
+          "topic": "Monnaie Haïtienne",
+          "meaning": "Gourde haïtienne officielle (HTG)"
+        },
+        "w23": {
+          "topic": "Solde du Compte",
+          "meaning": "Solde disponible instantanément"
+        },
+        "w24": {
+          "topic": "Carte de Paiement",
+          "meaning": "Carte membre liée aux achats"
+        },
+        "w25": {
+          "topic": "Paiement de Factures",
+          "meaning": "Transaction de transfert instantané"
+        },
+        "w26": {
+          "topic": "Point Agent",
+          "meaning": "Agent dépôt/retrait Natcash"
+        },
+        "w27": {
+          "topic": "Boutique Partenaire",
+          "meaning": "Point d’acceptation QR Natcash"
+        },
+        "w28": {
+          "topic": "Coffre Sécurisé",
+          "meaning": "Coffre de stockage des points"
+        },
+        "w29": {
+          "topic": "Cumul de Points",
+          "meaning": "Gagner des points à chaque achat"
+        },
+        "w30": {
+          "topic": "Niveaux VIP",
+          "meaning": "Rangs du Bronze au Diamant"
+        },
+        "w31": {
+          "topic": "Remboursement",
+          "meaning": "Pourcentage remboursé sur achats"
+        },
+        "w32": {
+          "topic": "Privilèges Membres",
+          "meaning": "Avantages exclusifs VIP"
+        },
+        "w33": {
+          "topic": "Offres Spéciales",
+          "meaning": "Campagne promotionnelle exclusive"
+        },
+        "w34": {
+          "topic": "Cadeaux de Fidélité",
+          "meaning": "Cadeau chanceux du programme"
+        },
+        "w35": {
+          "topic": "Jeton de Sécurité",
+          "meaning": "Jeton de validation sécurisé"
+        },
+        "w36": {
+          "topic": "Réclamer un Gain",
+          "meaning": "Échanger vos cadeaux dans l’app"
+        },
+        "w37": {
+          "topic": "Échange de Points",
+          "meaning": "Convertir des points en bons"
+        },
+        "w38": {
+          "topic": "Actifs Numériques",
+          "meaning": "Valeur des points du portefeuille"
+        },
+        "w39": {
+          "topic": "Technologie Intelligente",
+          "meaning": "Solutions et apps intelligentes"
+        },
+        "w40": {
+          "topic": "Partenaire Énergie",
+          "meaning": "Stations-service TotalEnergies"
+        },
+        "w41": {
+          "topic": "Partenaire Retail",
+          "meaning": "Chaîne de supermarchés Delimart"
+        },
+        "w42": {
+          "topic": "Lieux & Shopping",
+          "meaning": "Centre commercial moderne"
+        },
+        "w43": {
+          "topic": "Supérette",
+          "meaning": "Achetez et gagnez chaque jour"
+        },
+        "w44": {
+          "topic": "Marché & Centre",
+          "meaning": "Zone commerciale animée"
+        },
+        "w45": {
+          "topic": "Hôtellerie",
+          "meaning": "Hôtellerie partenaire haut de gamme"
+        },
+        "w46": {
+          "topic": "Café & Gastronomie",
+          "meaning": "Déguster du café haïtien"
+        },
+        "w47": {
+          "topic": "Restauration",
+          "meaning": "Expérience culinaire variée"
+        },
+        "w48": {
+          "topic": "Restauration Rapide",
+          "meaning": "Repas rapide entre amis"
+        },
+        "w49": {
+          "topic": "Boissons Fraîches",
+          "meaning": "Boissons tropicales rafraîchissantes"
+        },
+        "w50": {
+          "topic": "Carburant",
+          "meaning": "Plein d’essence avec points"
+        },
+        "w51": {
+          "topic": "Énergie Propre",
+          "meaning": "Énergie solaire écologique"
+        },
+        "w52": {
+          "topic": "Service de Qualité",
+          "meaning": "Espace d’achat moderne et soigné"
+        },
+        "w53": {
+          "topic": "Produits Frais",
+          "meaning": "Aliments frais chaque jour"
+        },
+        "w54": {
+          "topic": "Spécialité Caraïbe",
+          "meaning": "Célèbre mangue sucrée d’Haïti"
+        },
+        "w55": {
+          "topic": "Douceurs Sucrées",
+          "meaning": "Pâtisseries et desserts sucrés"
+        },
+        "w56": {
+          "topic": "Boulangerie Fraîche",
+          "meaning": "Pain chaud sorti du four"
+        },
+        "w57": {
+          "topic": "Jus Naturels",
+          "meaning": "Jus de fruits tropicaux frais"
+        },
+        "w58": {
+          "topic": "Collations",
+          "meaning": "En-cas pratique dans la journée"
+        },
+        "w59": {
+          "topic": "Mode & Style",
+          "meaning": "Tenues stylées et tendance"
+        },
+        "w60": {
+          "topic": "Mer & Îles",
+          "meaning": "Superbe mer des Caraïbes"
+        },
+        "w61": {
+          "topic": "Fêtes & Musique",
+          "meaning": "Festival musical et culturel animé"
+        },
+        "w62": {
+          "topic": "Océan Bleu",
+          "meaning": "Eau turquoise et sable blanc"
+        },
+        "w63": {
+          "topic": "Plage Détente",
+          "meaning": "Destination balnéaire idéale"
+        },
+        "w64": {
+          "topic": "Soleil Tropical",
+          "meaning": "Climat chaud toute l’année"
+        },
+        "w65": {
+          "topic": "Île Paradisiaque",
+          "meaning": "Perle de la mer des Caraïbes"
+        },
+        "w66": {
+          "topic": "Musique Culturelle",
+          "meaning": "Rythmes Kompa entraînants"
+        },
+        "w67": {
+          "topic": "Danse Festive",
+          "meaning": "Pas de danse dynamiques du Kanaval"
+        },
+        "w68": {
+          "topic": "Tambours Traditionnels",
+          "meaning": "Percussions traditionnelles haïtiennes"
+        },
+        "w69": {
+          "topic": "Sourire Radieux",
+          "meaning": "Accueil chaleureux des habitants"
+        },
+        "w70": {
+          "topic": "Joie de Vivre",
+          "meaning": "Bonheur partagé au quotidien"
+        },
+        "w71": {
+          "topic": "Unité",
+          "meaning": "Devise de force collective"
+        },
+        "w72": {
+          "topic": "Paix & Harmonie",
+          "meaning": "Vie paisible et prospère"
+        },
+        "w73": {
+          "topic": "Luxe Royal",
+          "meaning": "Excellence de service"
+        },
+        "w74": {
+          "topic": "Moments Magiques",
+          "meaning": "Expériences surprenantes"
+        },
+        "w75": {
+          "topic": "Rêves d’Avenir",
+          "meaning": "Ambition vers l’avenir numérique"
+        },
+        "w76": {
+          "topic": "Étoiles Brillantes",
+          "meaning": "Exploit au sommet du classement"
+        },
+        "w77": {
+          "topic": "Reine du Festival",
+          "meaning": "Symbole gracieux de la fête"
+        },
+        "w78": {
+          "topic": "Roi du Carnaval",
+          "meaning": "Maître de cérémonie du Kanaval"
+        },
+        "w79": {
+          "topic": "Champion",
+          "meaning": "Leader des tournois GameHub"
+        },
+        "w80": {
+          "topic": "Courtoisie",
+          "meaning": "Remerciement sincère en français"
+        },
+        "w81": {
+          "topic": "Jeux de Chance",
+          "meaning": "Chance et gros lots gagnés"
+        },
+        "w82": {
+          "topic": "Félicitations",
+          "meaning": "Bravo pour une belle victoire"
+        },
+        "w83": {
+          "topic": "Performance Remarquable",
+          "meaning": "Résultat impressionnant"
+        },
+        "w84": {
+          "topic": "Forme Optimale",
+          "meaning": "Esprit vif et déductif"
+        },
+        "w85": {
+          "topic": "Réflexes Rapides",
+          "meaning": "Vitesse de résolution éclair"
+        },
+        "w86": {
+          "topic": "Esprit Vif",
+          "meaning": "Excellente analyse logique"
+        },
+        "w87": {
+          "topic": "Règles Logiques",
+          "meaning": "Déduction logique précise"
+        },
+        "w88": {
+          "topic": "Concentration",
+          "meaning": "Garder le cap sur la victoire"
+        },
+        "w89": {
+          "topic": "Niveau Défi",
+          "meaning": "Défis de plus en plus relevés"
+        },
+        "w90": {
+          "topic": "Score Record",
+          "meaning": "Entrer au tableau d’honneur"
+        },
+        "w91": {
+          "topic": "Quête Découverte",
+          "meaning": "Relever les défis quotidiens"
+        },
+        "w92": {
+          "topic": "Association Exacte",
+          "meaning": "Trouver les correspondances exactes"
+        },
+        "w93": {
+          "topic": "Couleurs Vives",
+          "meaning": "Visuels vifs et attrayants"
+        },
+        "w94": {
+          "topic": "Lumière Guide",
+          "meaning": "Indice malin éclairant la voie"
+        },
+        "w95": {
+          "topic": "Puissance Décisive",
+          "meaning": "Propulsez-vous en tête"
+        },
+        "w96": {
+          "topic": "Cerveau Agile",
+          "meaning": "Entraîner mémoire et réflexes"
+        },
+        "w97": {
+          "topic": "Résolution d’Énigmes",
+          "meaning": "Surmonter chaque énigme"
+        },
+        "w98": {
+          "topic": "Protection Compte",
+          "meaning": "Sécurité multicouche"
+        },
+        "w99": {
+          "topic": "Réaction Éclair",
+          "meaning": "Réaction instantanée au défi"
+        }
+      }
     },
     "wheel": {
       "tutorial": {
@@ -566,7 +1324,29 @@ export default {
       "add_hole_btn": "Ajouter trou",
       "hammer_btn": "Marteau",
       "hammer_tooltip": "Retirer une goupille bloquée",
-      "screw_box_label": "Boîte à vis"
+      "screw_box_label": "Boîte à vis",
+      "level_1_name": "Échauffement Dévissage",
+      "plate_l1_1": "Plaque Bleue",
+      "plate_l1_2": "Plaque Ambre",
+      "level_2_name": "Triangle Entrelacé",
+      "plate_l2_1": "Barre Bleue",
+      "plate_l2_2": "Barre Rouge",
+      "plate_l2_3": "Barre Dorée",
+      "level_3_name": "Moulin à 4 Pales",
+      "plate_l3_1": "Pale Verticale",
+      "plate_l3_2": "Pale Horizontale",
+      "plate_l3_3": "Cadre Carré",
+      "level_4_name": "Grille Croisée",
+      "plate_l4_1": "Barre Supérieure",
+      "plate_l4_2": "Barre Inférieure",
+      "plate_l4_3": "Barre Gauche",
+      "plate_l4_4": "Barre Droite",
+      "level_5_name": "Maître du Dévissage",
+      "plate_l5_1": "Cadre Central en Croix",
+      "plate_l5_2": "Barre Diagonale 1",
+      "plate_l5_3": "Barre Diagonale 2",
+      "plate_l5_4": "Plaque de Base",
+      "plate_l5_5": "Arche Supérieure"
     },
     "untangle": {
       "title": "Maître Démêlage 3D",
@@ -597,7 +1377,37 @@ export default {
         "controls": "Touchez une goupille pour la faire glisser hors de sa fente.",
         "scoring": "Vaincre le voleur : +50 points. Récupération sûre du trésor : +100 points.",
         "tips": "Versez de l’eau sur la lave/le feu d’abord, puis laissez tomber les poids sur le voleur avant de libérer le trésor."
-      }
+      },
+      "level_1_name": "Échauffement Poids de Fer",
+      "l1_ent_weight": "Poids 500 kg",
+      "l1_ent_thief": "Voleur",
+      "l1_ent_treasure": "Coffre d’Or",
+      "l1_ent_police": "Police Natcom",
+      "level_2_name": "L’Eau Éteint la Lave",
+      "l2_ent_water": "Bassin d’Eau Bleue",
+      "l2_ent_lava": "Lave Ardente",
+      "l2_ent_thief": "Voleur",
+      "l2_ent_police": "Police",
+      "level_3_name": "Sauvetage Coffre 3 Salles",
+      "l3_ent_weight": "Rocher",
+      "l3_ent_gold": "Trésor Natcash",
+      "l3_ent_thief": "Bandit",
+      "l3_ent_police": "Police",
+      "level_4_name": "Labyrinthe Feu & Eau",
+      "l4_ent_water": "Eau",
+      "l4_ent_lava": "Magma",
+      "l4_ent_thief": "Voleur",
+      "l4_ent_gold": "Coffre d’Or",
+      "l4_ent_police": "Police",
+      "level_5_name": "Duel contre le Chef Voleur",
+      "l5_ent_water": "Réservoir d’Eau",
+      "l5_ent_lava": "Lave",
+      "l5_ent_weight": "Poids de Fer",
+      "l5_ent_thief": "Chef des Voleurs",
+      "l5_ent_treasure": "Méga Trésor d’Or",
+      "ent_eliminated": "Éliminé !",
+      "ent_stone_rock": "Pierre Solide",
+      "fail_hint": "Un voleur ou un piège a gâché la mission ! Essayez dans un autre ordre."
     },
     "pin": {
       "retry_btn": "Rejouer"
@@ -686,7 +1496,7 @@ export default {
     "rule_explanation": "Selon la règle FIFO, les lots à date limite la plus proche sont utilisés en premier.",
     "earned_at": "Reçu le : {{date}}",
     "expires_at": "Expire le : {{date}}",
-    "expiring_soon_badge": "Expire bientôt",
+    "expiring_soon_badge": "Expire bientôt ({{days}}j)",
     "default_source": "Lot de points",
     "empty_title": "Aucun lot proche de l’expiration",
     "empty_desc": "Aucun de vos lots Natcash Coin n’expire prochainement.",
@@ -709,7 +1519,7 @@ export default {
     "status_ekyc_verified": "eKYC validé",
     "status_pending_ekyc": "eKYC en attente",
     "no_friends_title": "Aucun filleul pour le moment",
-    "no_friends_desc": "Partagez votre code QR ou lien avec vos proches.",
+    "no_friends_desc": "Partagez votre code QR ou lien de parrainage pour gagner +{{reward}} points bonus par ami !",
     "empty_title": "Aucune donnée de parrainage",
     "empty_desc": "Impossible de récupérer vos parrainages actuellement.",
     "load_error": "Erreur de chargement du parrainage."
@@ -898,5 +1708,30 @@ export default {
     "empty_sub_agents": "Aucun agent rattaché",
     "empty_sub_agents_desc": "Vos sous-agents apparaîtront ici.",
     "load_error": "Impossible de charger le tableau agent."
+  },
+  "sdk": {
+    "game_code_required": "L’identifiant du jeu (gameCode) est requis.",
+    "submit_result_error": "Erreur serveur lors de l’envoi du résultat ({{status}}).",
+    "buy_turns_desc": "Acheter {{count}} tours ({{gameCode}})",
+    "payment_request_sent": "Demande de paiement envoyée au portefeuille.",
+    "buy_turns_error": "Échec de l’achat de tours ({{status}})."
+  },
+  "sso": {
+    "exchange_failed_http": "Échec de l’authentification SSO (HTTP {{status}}).",
+    "auth_failed": "Échec de l’authentification SSO. Veuillez réessayer."
+  },
+  "notification": {
+    "dice_title": "Pari aux Dés !",
+    "dice_badge": "ALERTE JEU",
+    "farm_title": "Ferme Joyeuse",
+    "farm_badge": "RÉCOLTE",
+    "success_title": "Succès !",
+    "success_badge": "TERMINÉ",
+    "warning_title": "Avertissement",
+    "warning_badge": "ATTENTION",
+    "error_title": "Échec de l’opération",
+    "error_badge": "ERREUR",
+    "event_title": "Événements & Avantages",
+    "event_badge": "ÉVÉNEMENT VIP"
   }
 };

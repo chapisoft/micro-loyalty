@@ -151,7 +151,7 @@ const LoginOtpController: React.FC<LoginOtpControllerProps> = ({ visible, onHide
           setLoading(false);
           showToast({
             code: 200,
-            detail: res.message || t('login.login_successful', { defaultValue: 'Đăng nhập thành công' }),
+            detail: res.message || t('login.login_successful'),
           });
           navigate(paths.dashboard, { replace: true });
         } else {

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/language';
 
 export interface TenantOption {
   id: string;
@@ -19,78 +20,66 @@ export const RAW_TENANTS = [
     id: 'TENANT_NATCASH',
     code: 'NATCASH',
     translationKey: 'natcash',
-    defaultName: 'Ví Điện Tử Natcash',
     type: 'WALLET' as const,
     icon: 'pi pi-wallet',
     badgeColor: '#EA580C',
     countryKey: 'haiti',
-    defaultCountry: 'Haïti',
   },
   {
     id: 'TENANT_MICRO_CRM',
     code: 'MICRO_CRM',
     translationKey: 'micro_crm',
-    defaultName: 'Liên Minh Bán Lẻ Micro-CRM',
     type: 'RETAIL' as const,
     icon: 'pi pi-shopping-bag',
     badgeColor: '#2563EB',
     countryKey: 'alliance',
-    defaultCountry: 'Liên Minh',
   },
   {
     id: 'TENANT_DELIMART',
     code: 'DELIMART',
     translationKey: 'delimart',
-    defaultName: 'Chuỗi Siêu Thị Delimart',
     type: 'RETAIL' as const,
     icon: 'pi pi-shopping-cart',
     badgeColor: '#059669',
     countryKey: 'haiti',
-    defaultCountry: 'Haïti',
   },
   {
     id: 'TENANT_NATCOM',
     code: 'NATCOM',
     translationKey: 'natcom',
-    defaultName: 'Viễn Thông Natcom Telecom',
     type: 'TELECOM' as const,
     icon: 'pi pi-phone',
     badgeColor: '#0284C7',
     countryKey: 'haiti',
-    defaultCountry: 'Haïti',
   },
   {
     id: 'TENANT_RINGME',
     code: 'RINGME',
     translationKey: 'ringme',
-    defaultName: 'Giải Trí Số Ringme OTT',
     type: 'ENTERTAINMENT' as const,
     icon: 'pi pi-play',
     badgeColor: '#7C3AED',
     countryKey: 'global',
-    defaultCountry: 'Toàn Cầu',
   },
   {
     id: 'TENANT_FINANCE_COOP',
     code: 'FIN_COOP',
     translationKey: 'fin_coop',
-    defaultName: 'Tài Chính & Hợp Tác Xã',
     type: 'FINANCE' as const,
     icon: 'pi pi-building',
     badgeColor: '#D97706',
     countryKey: 'haiti',
-    defaultCountry: 'Haïti',
   },
 ];
 
-export const TENANT_LIST: TenantOption[] = RAW_TENANTS.map((t) => ({
-  id: t.id,
-  name: t.defaultName,
-  code: t.code,
-  type: t.type,
-  icon: t.icon,
-  badgeColor: t.badgeColor,
-  country: t.defaultCountry,
+export const TENANT_LIST: TenantOption[] = RAW_TENANTS.map((item) => ({
+  id: item.id,
+  name: i18n.t(`tenant.${item.translationKey}`),
+  code: item.code,
+  type: item.type,
+  icon: item.icon,
+  badgeColor: item.badgeColor,
+  country: i18n.t(`tenant.country_${item.countryKey}`),
 }));
 
 interface TenantSelectorProps {
@@ -128,19 +117,19 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
   const localizedTenants = useMemo<TenantOption[]>(() => {
     return RAW_TENANTS.map((item) => ({
       id: item.id,
-      name: t(`tenant.${item.translationKey}`, { defaultValue: item.defaultName }),
+      name: t(`tenant.${item.translationKey}`),
       code: item.code,
       type: item.type,
       icon: item.icon,
       badgeColor: item.badgeColor,
-      country: t(`tenant.country_${item.countryKey}`, { defaultValue: item.defaultCountry }),
+      country: t(`tenant.country_${item.countryKey}`),
     }));
   }, [t]);
 
   const selectedOption = localizedTenants.find((tOpt) => tOpt.id === effectiveTenantId) || localizedTenants[0];
 
   const valueTemplate = (option: TenantOption) => {
-    if (!option) return <span>{t('tenant.choose_partner', { defaultValue: 'Chọn đối tác...' })}</span>;
+    if (!option) return <span>{t('tenant.choose_partner')}</span>;
     return (
       <div className="flex align-items-center" style={{ gap: '8px', minWidth: 0, width: '100%' }}>
         <div
@@ -212,7 +201,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
     <div className={`flex align-items-center gap-2 ${className}`} style={style}>
       <span className="text-500 font-semibold text-xs white-space-nowrap hidden sm:inline">
         <i className="pi pi-building mr-1 text-primary" />
-        {t('tenant.select_label', { defaultValue: 'Đối tác:' })}
+        {t('tenant.select_label')}
       </span>
       <Dropdown
         value={selectedOption}
@@ -228,7 +217,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
         itemTemplate={itemTemplate}
         filter
         filterBy="name,code,country"
-        placeholder={t('tenant.placeholder', { defaultValue: 'Chọn đối tác thuê bao...' })}
+        placeholder={t('tenant.placeholder')}
         className="w-full shadow-1 border-round-xl"
         panelClassName="border-round-xl shadow-4"
         style={{ minWidth: '19rem', maxWidth: '25rem' }}
