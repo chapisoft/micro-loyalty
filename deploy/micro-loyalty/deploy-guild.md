@@ -3,7 +3,7 @@
 **Mô hình triển khai:** Cụm Docker Compose độc lập kết hợp Nginx Master và Cloudflare Tunnel  
 **Địa chỉ máy chủ:** `35.247.156.176` (IP LAN: `192.168.1.200`, Cổng SSH: `65000`, Tài khoản quản trị: `root`)  
 **Hệ điều hành:** Ubuntu Linux 22.04 LTS x86_64 (Kernel 5.15.0)  
-**Tên miền hệ thống chính thức:** `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn` (Gốc: `mid.io.vn`)  
+**Tên miền hệ thống chính thức:** `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `jenskin.mid.io.vn` (tên miền phụ tương thích: `jenkins.mid.io.vn`) (Gốc: `mid.io.vn`)  
 **Thư mục cài đặt dịch vụ:** `/data/uc1-software/apps/micro-loyalty/deploy/`  
 **Nguyên tắc an toàn vận hành:** Tuyệt đối không tự ý thực thi triển khai (deploy), đồng bộ tệp hay can thiệp máy chủ từ xa khi chưa có yêu cầu tường minh từ người dùng.
 
@@ -25,7 +25,7 @@ Khảo sát trực tiếp toàn diện hệ thống máy chủ `35.247.156.176` 
 | **Máy chủ Web Nginx Host** | Nginx Gateway cổng `80/443` (Chứng chỉ SSL Let's Encrypt) | Đạt chuẩn, cấu hình Virtual Hosts cho `*.mid.io.vn`. |
 | **Hệ thống giám sát APM** | Prometheus cổng `9090`, Grafana cổng `3000`, Alertmanager cổng `9093` | Có sẵn, tích hợp thu thập chỉ số hiệu năng trực tiếp. |
 | **Hệ thống lưu vết ELK** | Elasticsearch cổng `9200`, Logstash cổng `5044`, Kibana cổng `5601` | Có sẵn, tập trung toàn bộ nhật ký dịch vụ qua Filebeat. |
-| **Định tuyến Công khai** | Cloudflare Tunnel (`cloudflared`) + Nginx Master (`/data/uc3-infra/nginx-master/conf.d/loyalty.conf`) | Đã cấu hình sẵn, định tuyến trực tiếp về cổng `18095`. |
+| **Định tuyến Công khai** | Cloudflare Tunnel (`cloudflared`) + Nginx Master (`/data/uc3-infra/nginx-master/conf.d/loyalty.conf` và `jenkins.conf`) | Đã cấu hình sẵn, định tuyến 5 tên miền dịch vụ về cổng `18095` và tên miền Jenkins CI/CD (`jenskin.mid.io.vn`, `jenkins.mid.io.vn`) về cổng `18099`. |
 
 ---
 
@@ -63,7 +63,7 @@ Máy chủ hiện đang vận hành đồng thời ba nhóm hệ thống chính:
 | **Cụm 5 Microservices Loyalty** | `8081`–`8085` (chỉ mở nội bộ Docker qua `expose`) | TCP HTTP | Hệ sinh thái Loyalty | Cách ly hoàn toàn trong `loyalty-saas-network`, tránh xung đột cổng Host `8081`/`8085` |
 
 #### Chiến Lược Tận Dụng Hạ Tầng Sẵn Có Để Tiết Kiệm Tài Nguyên
-1. **Tận dụng Nginx Host (`80/443`):** Cấu hình Virtual Hosts điều hướng 5 tên miền `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn` vào cổng nội bộ `18095`.
+1. **Tận dụng Nginx Host (`80/443`):** Cấu hình Virtual Hosts điều hướng 5 tên miền `api.mid.io.vn`, `docs.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn` vào cổng nội bộ `18095`, đồng thời điều hướng `jenskin.mid.io.vn` (song song `jenkins.mid.io.vn`) vào cổng Jenkins `18099`.
 2. **Tận dụng Prometheus và Grafana:** Nạp điểm kiểm tra `/actuator/prometheus` của dịch vụ Loyalty vào máy chủ Prometheus có sẵn (cổng `9090`) và hiển thị bảng biểu giám sát trên Grafana (cổng `3000`).
 3. **Tận dụng ELK Stack:** Đẩy nhật ký dịch vụ dạng cấu trúc JSON về cụm Elasticsearch (cổng `9200`) để tra cứu tập trung trên Kibana (cổng `5601`).
 4. **Triển khai trực tiếp qua SSH + Docker Compose:** Đóng gói bản dựng bất biến tại máy trạm, đồng bộ lên `/data/uc1-software/apps/micro-loyalty/deploy` và khởi chạy lại các container mục tiêu qua SSH.
@@ -95,7 +95,8 @@ Hệ thống được thiết kế theo mô hình mạng phân tầng đa lớp,
   * **Cổng Quản Trị Trung Tâm CMS:** `https://cms.mid.io.vn/`
   * **Cổng Trải Nghiệm Khách Hàng Webview & GameHub:** `https://portal.mid.io.vn/`
   * **Cổng Thông Tin Đối Tác Partner Portal:** `https://partner.mid.io.vn/`
-* Nginx Master tiếp nhận yêu cầu và chuyển tiếp nội bộ tới vùng chứa `loyalty-saas-gateway` trên cổng `18095`.
+  * **Cổng Quản Trị Và Theo Dõi CI/CD Jenkins:** `https://jenskin.mid.io.vn/` (tên miền phụ tương thích: `https://jenkins.mid.io.vn/`)
+* Nginx Master tiếp nhận yêu cầu và chuyển tiếp nội bộ tới vùng chứa `loyalty-saas-gateway` trên cổng `18095` (riêng lưu lượng `jenskin.mid.io.vn` và `jenkins.mid.io.vn` chuyển tiếp tới vùng chứa `loyalty-jenkins` trên cổng `18099`).
 
 #### Tầng 2: Mạng Riêng Nội Bộ Docker Bridge
 * Mạng riêng `loyalty-saas-network` cô lập 100% các luồng giao tiếp giữa 11 vùng chứa:
@@ -117,6 +118,7 @@ Hệ thống được thiết kế theo mô hình mạng phân tầng đa lớp,
 | **Cửa Ngõ Nginx Nội Bộ** | • Nginx Host Master chuyển tiếp | Mạng riêng máy chủ | `http://127.0.0.1:18095/` | `18095` (HTTP Nội bộ) | API Gateway điều phối luồng dữ liệu tới 5 Microservices và 3 Frontend. |
 | **Cơ Sở Dữ Liệu PostgreSQL** | • Cụm 5 Microservices | Mạng riêng máy chủ | `127.0.0.1:15435` | `15435` (TCP) | Lưu trữ sổ cái điểm thưởng, tài khoản hội viên và giao dịch bù trừ. |
 | **Bộ Nhớ Đệm Redis** | • Cụm 5 Microservices | Mạng riêng máy chủ | `127.0.0.1:16385` | `16385` (TCP) | Lưu vết vé định danh, khóa phân tán Redisson và kiểm soát trùng lặp. |
+| **Cổng Quản Trị CI/CD Jenkins** | • Ban phát triển kỹ thuật<br/>• Quản trị viên hệ thống<br/>• GitHub Webhook | Công khai Internet có xác thực | `https://jenskin.mid.io.vn/`<br/>(phụ: `https://jenkins.mid.io.vn/`) | `80/443` (HTTPS) → `127.0.0.1:18099` | Truy cập giao diện web theo dõi tiến trình build, nhật ký console theo thời gian thực và tiếp nhận sự kiện `/github-webhook/`. |
 
 ---
 
@@ -216,7 +218,7 @@ Tệp cấu hình [nginx-saas.conf](config/nginx/nginx-saas.conf) đóng vai tr�
 
 ### 4.3. Cấu Hình Nginx Host Reverse Proxy Trên Máy Chủ (`config/nginx/host-loyalty-vhost.conf`)
 
-Trên máy chủ `35.247.156.176`, tệp Virtual Host [host-loyalty-vhost.conf](config/nginx/host-loyalty-vhost.conf) (triển khai tại `/data/uc3-infra/nginx-master/conf.d/loyalty.conf` kết hợp Cloudflare Tunnel `cloudflared`) chuyển tiếp toàn bộ lưu lượng HTTPS của 5 tên miền công khai (`api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `docs.mid.io.vn`) về cổng nội bộ `127.0.0.1:18095`.
+Trên máy chủ `35.247.156.176`, tệp Virtual Host [host-loyalty-vhost.conf](config/nginx/host-loyalty-vhost.conf) (triển khai tại `/data/uc3-infra/nginx-master/conf.d/loyalty.conf` cho hệ sinh thái Loyalty và `/data/uc3-infra/nginx-master/conf.d/jenkins.conf` cho Jenkins CI/CD, kết hợp Cloudflare Tunnel `cloudflared`) chuyển tiếp toàn bộ lưu lượng HTTPS của 5 tên miền dịch vụ công khai (`api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `docs.mid.io.vn`) về cổng nội bộ `127.0.0.1:18095` và chuyển tiếp `jenskin.mid.io.vn`, `jenkins.mid.io.vn` về cổng `127.0.0.1:18099`.
 
 ---
 
@@ -263,7 +265,7 @@ Cấu hình lịch tiến trình tự động Crontab cho người dùng `root` 
 | **Bước 3** | Khởi tạo hoặc cập nhật cuốn chiếu Docker | Chạy `docker compose up -d --build --remove-orphans` (hoặc `--no-deps <service>` khi cập nhật 1 phân hệ) | Toàn bộ 11 vùng chứa trạng thái `Up`, `7/7` healthcheck chuyển `healthy`, Flyway đồng bộ schema |
 | **Bước 4** | Kiểm tra Nginx Master & Cloudflare | Kiểm tra và nạp lại Nginx Host (`nginx -t && nginx -s reload`) | Định tuyến 5 tên miền công khai về `127.0.0.1:18095` thông suốt |
 | **Bước 5** | Nghiệm thu sức khỏe & điểm cuối | Chạy `bash scripts/healthcheck.sh` và kiểm tra HTTP 200 trên 5 tên miền | `healthcheck.sh` trả về mã `0`; `api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`, `docs.mid.io.vn` đạt `HTTP 200` |
-| **Bước 6** | Tự động hóa CI/CD chọn lọc (Jenkins) | Kích hoạt `githubPush()` trên nhánh `main` qua `Jenkinsfile` | Chỉ build và deploy lại Microservice hoặc Frontend bị thay đổi, bỏ qua nhánh tài liệu và On-Premise |
+| **Bước 6** | Tự động hóa CI/CD chọn lọc (Jenkins) | Kích hoạt tự động qua `githubPush()` kết hợp `pollSCM('* * * * *')` trên nhánh `main` qua `Jenkinsfile` | Chỉ build và deploy lại Microservice hoặc Frontend bị thay đổi, gửi cảnh báo Telegram và theo dõi trực tiếp tại `https://jenskin.mid.io.vn/` |
 
 ### Bước 1: Kiểm thử toàn diện và đóng gói bản dựng tại máy trạm
 ```bash
@@ -315,8 +317,18 @@ cd /data/uc1-software/apps/micro-loyalty/deploy && bash scripts/healthcheck.sh
 
 ### Bước 6: Tự động hóa CI/CD chọn lọc với Jenkins nội bộ trên máy chủ `35.247.156.176` (`192.168.1.200`)
 Pipeline tại [Jenkinsfile](../../Jenkinsfile) (đồng bộ cùng [deploy/micro-loyalty/ci-cd/jenkins/Jenkinsfile](ci-cd/jenkins/Jenkinsfile)) chạy độc lập ngay trên máy chủ `35.247.156.176` / `192.168.1.200` (không tích hợp qua hạ tầng ngoài), mặc định chạy chế độ `TARGET_SERVICE=auto` trên nhánh `main` (hỗ trợ chọn tay từng phân hệ: `cms-service`, `customer-service`, `game-service`, `campaign-service`, `partner-service`, `loyalty-cms`, `loyalty-webview`, `loyalty-partner-portal`, `gateway`, `all-backend`, `all`):
-- Tự động kích hoạt qua `triggers { githubPush() }` khi nhánh `main` nhận commit mới; tách bạch từng Microservice (`src/service/<tên-service>/`) và Frontend (`src/cms/`, `src/webview/`, `src/partner-portal/`), chỉ biên dịch `-pl` và đồng bộ tệp `.jar` của service thay đổi (giữ nguyên các `.jar` còn lại trong `backend/module/`), bỏ qua các thay đổi tài liệu (`docs/`, `*.md`), kỹ năng (`.agents/`), hoặc cấu hình `deploy/natcash/`.
+- Tự động kích hoạt khi nhánh `main` nhận commit mới nhờ cơ chế kép `githubPush()` kết hợp `pollSCM('* * * * *')` (kiểm tra tự động mỗi phút kể cả khi GitHub Webhook gián đoạn); tách bạch từng Microservice (`src/service/<tên-service>/`) và Frontend (`src/cms/`, `src/webview/`, `src/partner-portal/`), chỉ biên dịch `-pl` và đồng bộ tệp `.jar` của service thay đổi (giữ nguyên các `.jar` còn lại trong `backend/module/`), bỏ qua các thay đổi tài liệu (`docs/`, `*.md`), kỹ năng (`.agents/`), hoặc cấu hình `deploy/natcash/`.
 - Triển khai trực tiếp vào `/data/uc1-software/apps/micro-loyalty/deploy` qua volume mount + `/var/run/docker.sock` (hoặc fallback qua SSH LAN `192.168.1.200:65000`): build lại image và thay thế cuốn chiếu bằng `docker compose up -d --build --no-deps <phân_hệ_thay_đổi>` cho các phân hệ đổi mã nguồn, hoặc chỉ `docker compose restart <phân_hệ>` khi chỉ thay đổi cấu hình ngoại vi `config/backend/` / `locales/`.
 - Kiểm tra `/actuator/health/liveness` ngay bên trong từng container vừa cập nhật và xác nhận `HTTP 200` trên 4 tên miền công khai (`api.mid.io.vn`, `cms.mid.io.vn`, `portal.mid.io.vn`, `partner.mid.io.vn`).
 - Bộ dựng Jenkins chuyên dụng được khai báo tại [deploy/micro-loyalty/ci-cd/jenkins/Dockerfile](ci-cd/jenkins/Dockerfile) và [deploy/micro-loyalty/ci-cd/jenkins/docker-compose.yml](ci-cd/jenkins/docker-compose.yml) (tích hợp sẵn JDK 17, Node.js 20, Docker CLI, Docker Compose v2, `rsync`, lắng nghe nội bộ tại cổng `127.0.0.1:18099`).
-- Điểm truy cập Jenkins nội bộ trên `35.247.156.176`: `https://jenkins.mid.io.vn/` (Job: `micro-loyalty`, GitHub Webhook: `https://jenkins.mid.io.vn/github-webhook/`).
+
+#### Thông Tin Truy Cập Trực Tiếp Và Theo Dõi Jenkins CI/CD
+
+| Hạng Mục | Giá Trị Cấu Hình Chính Thức | Ghi Chú Vận Hành |
+| :--- | :--- | :--- |
+| **URL truy cập trực tiếp** | `https://jenskin.mid.io.vn/` | Tên miền phụ tương thích: `https://jenkins.mid.io.vn/` (đều trỏ về `127.0.0.1:18099`) |
+| **URL theo dõi Pipeline** | `https://jenskin.mid.io.vn/job/micro-loyalty/` | Xem trạng thái các giai đoạn, lịch sử build và nhật ký console trực tiếp |
+| **Tài khoản quản trị** | `admin` | Tài khoản quản trị mặc định của máy chủ Jenkins |
+| **Mật khẩu quản trị** | `QxYe6PSDPTn4PMNTActe` | Quản lý qua biến môi trường `JENKINS_ADMIN_PASSWORD` tại `/data/uc3-infra/jenkins/.env` |
+| **Cơ chế kích hoạt tự động** | GitHub Webhook (`https://jenskin.mid.io.vn/github-webhook/`) + `pollSCM('* * * * *')` | Tự động phát hiện commit mới trên nhánh `main` qua Webhook hoặc polling mỗi phút |
+| **Cảnh báo Telegram tự động** | `scripts/notify_telegram.sh` → Nhóm giám sát (`Chat ID: -5397937309`) | Tự động gửi thông báo khi bắt đầu triển khai (`INFO`), khi hoàn tất (`SUCCESS`) hoặc gặp lỗi (`FAILED`) |

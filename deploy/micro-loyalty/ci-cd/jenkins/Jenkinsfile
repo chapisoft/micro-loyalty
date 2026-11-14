@@ -11,6 +11,7 @@ pipeline {
 
     triggers {
         githubPush()
+        pollSCM('* * * * *')
     }
 
     options {
@@ -319,6 +320,7 @@ pipeline {
                         currentBuild.description = "DRY-RUN: ${summaryTarget}"
                     } else {
                         currentBuild.description = "Deploy: ${summaryTarget}"
+                        sendDeployNotification('INFO', "Bắt đầu chạy CI/CD | Phân hệ: ${summaryTarget}")
                     }
                 }
             }
@@ -815,7 +817,7 @@ pipeline {
 def sendDeployNotification(String status, String detail) {
     def buildNum  = env.BUILD_NUMBER ?: '0'
     def commitTag = env.IMAGE_TAG ?: 'latest'
-    def buildUrl  = env.BUILD_URL ?: 'https://jenkins.mid.io.vn/job/micro-loyalty/'
+    def buildUrl  = env.BUILD_URL ?: 'https://jenskin.mid.io.vn/job/micro-loyalty/'
     def duration  = currentBuild.durationString ?: ''
     def msg = "Build #${buildNum} | Nhánh: ${env.DETECTED_BRANCH} (${commitTag})\n${detail}\nThời gian: ${duration}\nURLs: ${env.PUBLIC_CMS_URL} | ${env.PUBLIC_PORTAL_URL} | ${env.PUBLIC_PARTNER_URL} | ${env.PUBLIC_API_URL}\nJenkins: ${buildUrl}console"
 

@@ -10,6 +10,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { KeyStorage, PARTNER_PORTAL_CONSTANTS, SUPPORTED_LANGUAGES } from '@/constants';
 import { paths } from '@/paths';
 import { LoginPayload, loginPartnerAccount } from '@/service/auth';
+import { getDefaultLoginPassword, getDefaultLoginUsername } from '@/service/config';
 import { LocalStorage } from '@/utils/localStorage';
 
 export const LoginPage: React.FC = () => {
@@ -22,13 +23,19 @@ export const LoginPage: React.FC = () => {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginPayload>({
     defaultValues: {
-      username: '',
-      password: '',
+      username: getDefaultLoginUsername(),
+      password: getDefaultLoginPassword(),
     },
   });
+
+  const fillDelimartCredentials = () => {
+    setValue('username', getDefaultLoginUsername(), { shouldValidate: true });
+    setValue('password', getDefaultLoginPassword(), { shouldValidate: true });
+  };
 
   const existingToken = LocalStorage.get<string>(KeyStorage.ACCESS_TOKEN);
   if (existingToken) {
@@ -424,6 +431,22 @@ export const LoginPage: React.FC = () => {
                   )}
                 />
                 {errors.password && <small className="p-error block mt-1">{errors.password.message}</small>}
+              </div>
+
+              {/* Quick-fill Delimart Demo Credentials */}
+              <div className="flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={fillDelimartCredentials}
+                  className="p-0 border-none bg-transparent text-xs cursor-pointer hover:underline flex align-items-center gap-1 font-semibold"
+                  style={{ color: '#EA580C' }}
+                >
+                  <i className="pi pi-key text-xs" />
+                  <span>{t('login.demo_account')} {t('login.quick_fill_delimart')}</span>
+                </button>
+                <span className="text-xs font-medium" style={{ color: '#64748b' }}>
+                  {t('login.default_account')}
+                </span>
               </div>
 
               <Button

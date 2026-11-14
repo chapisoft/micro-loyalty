@@ -279,9 +279,14 @@ fi
 # ------------------------------------------------------------------------------
 log_stage "[STAGE 1] Kiểm tra cấu trúc 5 Microservices & Zero Legacy Monolith"
 
-if [ -d "src/service/src" ]; then
-  echo "[LỖI] Phát hiện thư mục monolith dư thừa src/service/src chưa được dọn dẹp!" >&2
+if [ -d "src/service/src" ] || [ -f "src/service/pom.xml" ]; then
+  echo "[LỖI] Phát hiện tệp/thư mục monolith dư thừa (src/service/src hoặc src/service/pom.xml) chưa được dọn dẹp!" >&2
   exit 1
+fi
+
+if [ -d "src/service/target" ]; then
+  echo "• Dọn dẹp thư mục build tàn dư: src/service/target"
+  rm -rf "src/service/target"
 fi
 
 for svc in "${ALL_SERVICES[@]}"; do
