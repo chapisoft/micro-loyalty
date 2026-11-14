@@ -567,6 +567,11 @@ pipeline {
                                 docker compose restart ${RESTART_SERVICES_LIST}
                             fi
 
+                            if docker ps --format '{{.Names}}' | grep -qx 'loyalty-saas-gateway'; then
+                                echo "Làm mới DNS upstream trên loyalty-saas-gateway (nginx -s reload)..."
+                                docker exec loyalty-saas-gateway nginx -s reload || docker restart loyalty-saas-gateway
+                            fi
+
                             docker ps --filter 'name=loyalty-saas-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                         '''
                     } else {
@@ -668,6 +673,8 @@ pipeline {
                                 if [ -n "${RESTART_SERVICES_LIST}" ]; then
                                     ssh $SSH_OPTS "$REMOTE" "cd '${DEPLOY_PATH}' && docker compose restart ${RESTART_SERVICES_LIST}"
                                 fi
+
+                                ssh $SSH_OPTS "$REMOTE" "if docker ps --format '{{.Names}}' | grep -qx 'loyalty-saas-gateway'; then docker exec loyalty-saas-gateway nginx -s reload || docker restart loyalty-saas-gateway; fi"
 
                                 ssh $SSH_OPTS "$REMOTE" "docker ps --filter 'name=loyalty-saas-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
                             '''

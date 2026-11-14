@@ -21,6 +21,10 @@ fi
 if [ "$#" -gt 0 ]; then
   echo ">>> Triển khai chọn lọc (Rolling Update --build --no-deps): $*"
   docker compose up -d --build --no-deps "$@"
+  if docker ps --format '{{.Names}}' | grep -qx 'loyalty-saas-gateway'; then
+    echo ">>> Làm mới DNS upstream trên loyalty-saas-gateway (nginx -s reload)..."
+    docker exec loyalty-saas-gateway nginx -s reload || docker restart loyalty-saas-gateway
+  fi
 else
   docker compose up -d
 fi

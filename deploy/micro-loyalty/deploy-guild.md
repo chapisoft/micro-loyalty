@@ -332,3 +332,40 @@ Pipeline tại [Jenkinsfile](../../Jenkinsfile) (đồng bộ cùng [deploy/micr
 | **Mật khẩu quản trị** | `QxYe6PSDPTn4PMNTActe` | Quản lý qua biến môi trường `JENKINS_ADMIN_PASSWORD` tại `/data/uc3-infra/jenkins/.env` |
 | **Cơ chế kích hoạt tự động** | GitHub Webhook (`https://jenskin.mid.io.vn/github-webhook/`) + `pollSCM('* * * * *')` | Tự động phát hiện commit mới trên nhánh `main` qua Webhook hoặc polling mỗi phút |
 | **Cảnh báo Telegram tự động** | `scripts/notify_telegram.sh` → Nhóm giám sát (`Chat ID: -5397937309`) | Tự động gửi thông báo khi bắt đầu triển khai (`INFO`), khi hoàn tất (`SUCCESS`) hoặc gặp lỗi (`FAILED`) |
+
+---
+
+## 7. DANH MỤC TÀI KHOẢN ĐĂNG NHẬP CÁC CỔNG QUẢN TRỊ VÀ DỊCH VỤ
+
+Toàn bộ tài khoản đăng nhập ban đầu cho cổng quản trị trung tâm CMS và cổng đối tác được khởi tạo tự động qua kịch bản di trú cơ sở dữ liệu [V26__add_system_auth_and_parameters_schema.sql](../../src/lib/loyalty-common/src/main/resources/db/migration/V26__add_system_auth_and_parameters_schema.sql).
+
+### 7.1. Tài Khoản Cổng Quản Trị Trung Tâm CMS
+
+* **Địa chỉ truy cập công khai:** `https://cms.mid.io.vn/` (hoặc `http://localhost:8990` ở môi trường cục bộ)
+
+| Tên đăng nhập | Mật khẩu | Vai trò hệ thống | Họ tên | Email liên hệ |
+| :--- | :--- | :--- | :--- | :--- |
+| `admin` | `Admin@123456` | `SUPER_ADMIN` | Quản Trị Viên Hệ Thống | `admin@mid.io.vn` |
+| `loyalty_admin` | `Admin@123456` | `LOYALTY_ADMIN`, `OPERATOR` | Nguyễn Văn Vận Hành | `operator@mid.io.vn` |
+| `campaign_mgr` | `Admin@123456` | `CAMPAIGN_MANAGER` | Lê Minh Chiến Dịch | `campaign@mid.io.vn` |
+| `finance_auditor` | `Admin@123456` | `FINANCE_AUDITOR` | Trần Thị Đối Soát | `finance@mid.io.vn` |
+| `support_user` | `Admin@123456` | `CUSTOMER_SUPPORT` | Phạm Hỗ Trợ Hội Viên | `support@mid.io.vn` |
+
+### 7.2. Tài Khoản Cổng Đối Tác Thương Mại Partner Portal
+
+* **Địa chỉ truy cập công khai:** `https://partner.mid.io.vn/` (hoặc `http://localhost:8991` ở môi trường cục bộ)
+
+| Tên đăng nhập | Mật khẩu | Vai trò hệ thống | Họ tên / Đơn vị | Email liên hệ |
+| :--- | :--- | :--- | :--- | :--- |
+| `delimart` | `Admin@123456` | `PARTNER_ADMIN` | Quản Trị Viên Delimart | `partner@delimart.ht` |
+| `partner` | `Admin@123456` | `PARTNER_ADMIN` | Cổng Đối Tác Delimart | `portal@delimart.ht` |
+| `partner_admin` | `Admin@123456` | `PARTNER_ADMIN` | Điều Hành Delimart | `partner-admin@delimart.ht` |
+
+### 7.3. Tài Khoản Cổng Quản Trị CI/CD Jenkins
+
+* **Địa chỉ truy cập công khai:** `https://jenskin.mid.io.vn/` (tên miền phụ tương thích: `https://jenkins.mid.io.vn/`)
+
+| Tên đăng nhập | Mật khẩu | Vai trò hệ thống | Nguồn cấu hình trên máy chủ |
+| :--- | :--- | :--- | :--- |
+| `admin` | `QxYe6PSDPTn4PMNTActe` | Quản trị tối cao Jenkins | Biến `JENKINS_ADMIN_PASSWORD` tại `/data/uc3-infra/jenkins/.env` |
+

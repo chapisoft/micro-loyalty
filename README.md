@@ -341,16 +341,30 @@ curl -i http://127.0.0.1:18095/loyalty/v1/partners/locations
 
 ## 7. DANH MỤC TÀI KHOẢN VÀ THÔNG SỐ XÁC THỰC KIỂM THỬ
 
-### 7.1. Tài Khoản Đăng Nhập Cổng Quản Trị Trung Tâm
-* **Địa chỉ truy cập:** `https://cms.mid.io.vn` (hoặc `http://localhost:8990` ở cục bộ)
+### 7.1. Tài Khoản Đăng Nhập Cổng Quản Trị, Đối Tác Và CI/CD
+* **Địa chỉ truy cập CMS:** `https://cms.mid.io.vn/` (hoặc `http://localhost:8990` ở cục bộ)
 
-| Vai trò / Nhóm quyền | Tên đăng nhập (`username`) | Mật khẩu (`password`) | Quyền hạn và Phạm vi sử dụng |
+| Tên đăng nhập | Mật khẩu | Vai trò hệ thống | Họ tên | Email liên hệ | Quyền hạn và Phạm vi sử dụng |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `admin` | `Admin@123456` | `SUPER_ADMIN` | Quản Trị Viên Hệ Thống | `admin@mid.io.vn` | Toàn quyền cấu hình chính sách điểm, phân hạng, hạn mức, đối soát tài chính, quản trị người dùng và phân quyền hệ thống. |
+| `loyalty_admin` | `Admin@123456` | `LOYALTY_ADMIN`, `OPERATOR` | Nguyễn Văn Vận Hành | `operator@mid.io.vn` | Quản lý danh mục game, cấu hình sự kiện, tạo chiến dịch khuyến mại, quản lý kho quà và xem báo cáo thống kê. |
+| `campaign_mgr` | `Admin@123456` | `CAMPAIGN_MANAGER` | Lê Minh Chiến Dịch | `campaign@mid.io.vn` | Thiết lập cột mốc nhiệm vụ, phân khúc khách hàng và kịch bản gợi nhắc hội viên. |
+| `finance_auditor` | `Admin@123456` | `FINANCE_AUDITOR` | Trần Thị Đối Soát | `finance@mid.io.vn` | Quyết toán kết chuyển kỳ bù trừ, đối soát liên minh và tra cứu nhật ký kiểm toán. |
+| `support_user` | `Admin@123456` | `CUSTOMER_SUPPORT` | Phạm Hỗ Trợ Hội Viên | `support@mid.io.vn` | Tra cứu lịch sử tích/tiêu điểm, tra cứu tài khoản hội viên, hỗ trợ đối soát giao dịch và giải quyết khiếu nại. |
+
+* **Địa chỉ truy cập Partner Portal:** `https://partner.mid.io.vn/` (hoặc `http://localhost:8991` ở cục bộ)
+
+| Tên đăng nhập | Mật khẩu | Vai trò hệ thống | Họ tên / Đơn vị | Email liên hệ |
+| :--- | :--- | :--- | :--- | :--- |
+| `delimart` | `Admin@123456` | `PARTNER_ADMIN` | Quản Trị Viên Delimart | `partner@delimart.ht` |
+| `partner` | `Admin@123456` | `PARTNER_ADMIN` | Cổng Đối Tác Delimart | `portal@delimart.ht` |
+| `partner_admin` | `Admin@123456` | `PARTNER_ADMIN` | Điều Hành Delimart | `partner-admin@delimart.ht` |
+
+* **Địa chỉ truy cập Jenkins CI/CD:** `https://jenskin.mid.io.vn/` (tên miền phụ tương thích: `https://jenkins.mid.io.vn/`)
+
+| Tên đăng nhập | Mật khẩu | Vai trò hệ thống | Ghi chú |
 | :--- | :--- | :--- | :--- |
-| **Quản Trị Viên Cấp Cao (Super Admin)** | `admin` | `Admin@123456` | Toàn quyền cấu hình chính sách điểm, phân hạng, hạn mức, đối soát tài chính, quản trị người dùng và phân quyền hệ thống. |
-| **Quản Trị Viên Vận Hành (Loyalty Operator)** | `loyalty_admin` | `Admin@123456` | Quản lý danh mục game, cấu hình sự kiện, tạo chiến dịch khuyến mại, quản lý kho quà và xem báo cáo thống kê. |
-| **Chuyên Viên Chăm Sóc Khách Hàng (Support)** | `support_user` | `Admin@123456` | Tra cứu lịch sử tích/tiêu điểm, tra cứu tài khoản hội viên, hỗ trợ đối soát giao dịch và giải quyết khiếu nại. |
-
-> **Tiện ích thao tác nhanh:** Tại màn hình đăng nhập CMS, người dùng có thể nhấp vào liên kết *"Điền nhanh tài khoản mẫu (admin)"* để hệ thống tự động điền thông tin đăng nhập mẫu chuẩn.
+| `admin` | `QxYe6PSDPTn4PMNTActe` | Quản trị tối cao Jenkins | Quản lý qua biến `JENKINS_ADMIN_PASSWORD` tại `/data/uc3-infra/jenkins/.env` |
 
 ---
 
