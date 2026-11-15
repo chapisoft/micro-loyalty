@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import {
@@ -23,7 +24,7 @@ import {
   PointExpirationBucketModel,
 } from '@/service/loyalty.service';
 import { apiClient } from '@/service/config';
-import { CommonStatus, MemberAccountStatus, TierLevel } from '@/models';
+import { CommonStatus, MemberAccountStatus } from '@/models';
 
 export interface LoyaltyMemberAccount {
   id: number;
@@ -188,65 +189,12 @@ export const Customers: React.FC = () => {
   };
 
   const tierBadgeTemplate = (rowData: LoyaltyMemberAccount) => {
-    const tierCode = rowData.tier?.code || TierLevel.SILVER;
-    switch (tierCode) {
-      case TierLevel.DIAMOND:
-        return (
-          <Tag
-            severity="info"
-            value={rowData.tier?.name || t('tier.tier_diamond')}
-            icon="pi pi-crown"
-          />
-        );
-      case TierLevel.PLATINUM:
-        return (
-          <Tag
-            severity="info"
-            value={rowData.tier?.name || t('tier.tier_platinum')}
-            icon="pi pi-crown"
-          />
-        );
-      case TierLevel.GOLD:
-        return (
-          <Tag
-            severity="warning"
-            value={rowData.tier?.name || t('tier.tier_gold')}
-            icon="pi pi-star-fill"
-          />
-        );
-      case TierLevel.SILVER:
-        return (
-          <Tag
-            severity="secondary"
-            value={rowData.tier?.name || t('tier.tier_silver')}
-            icon="pi pi-star"
-          />
-        );
-      default:
-        return (
-          <Tag
-            severity="secondary"
-            value={rowData.tier?.name || t('tier.tier_bronze')}
-          />
-        );
-    }
+    const tierName = rowData.tier?.name || rowData.tier?.code || t('tier.tier_silver');
+    return <span className="font-medium text-900">{tierName}</span>;
   };
 
   const statusBodyTemplate = (rowData: LoyaltyMemberAccount) => {
-    if (rowData.status === MemberAccountStatus.ACTIVE) {
-      return (
-        <Tag
-          severity="success"
-          value={t('customer.status_active')}
-        />
-      );
-    }
-    return (
-      <Tag
-        severity="danger"
-        value={t('customer.status_inactive')}
-      />
-    );
+    return <StatusBadge status={rowData.status} />;
   };
 
   const dateTemplate = (rowData: LoyaltyMemberAccount) => {
@@ -609,13 +557,9 @@ export const Customers: React.FC = () => {
                     field="status"
                     header={t('common.status')}
                     body={(r: PointExpirationBucketModel) => (
-                      <Tag
-                        value={r.status}
-                        severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
-                        className="text-xs"
-                      />
+                      <StatusBadge status={r.status} />
                     )}
-                    style={{ minWidth: '6.5rem' }}
+                    style={{ minWidth: '6.5rem', textAlign: 'center' }}
                   />
                 </DataTable>
               </TabPanel>

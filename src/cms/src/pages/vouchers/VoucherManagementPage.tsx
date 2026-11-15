@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus, DiscountType } from '@/models';
@@ -527,11 +528,7 @@ export const VoucherManagementPage: React.FC = () => {
   };
 
   const statusTemplate = (rowData: VoucherItem) => {
-    return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active', 'Hoạt động')} rounded={false} />
-    ) : (
-      <Tag severity="warning" value={t('common.inactive', 'Ngừng hoạt động')} rounded={false} />
-    );
+    return <StatusBadge status={rowData.status} />;
   };
 
   const discountBadgeTemplate = (rowData: VoucherItem) => {
@@ -670,7 +667,7 @@ export const VoucherManagementPage: React.FC = () => {
             field="voucherCode"
             header={t('voucher.code', 'Mã voucher')}
             body={(row: VoucherItem) => (
-              <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
+              <span className="font-mono font-bold text-900">
                 {row.voucherCode}
               </span>
             )}

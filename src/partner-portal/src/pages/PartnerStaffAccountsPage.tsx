@@ -284,28 +284,26 @@ export const PartnerStaffAccountsPage: React.FC = () => {
           keyword={keyword}
           onKeywordChange={setKeyword}
           searchPlaceholder={t('common.search', 'Tìm tài khoản, họ tên, SĐT...')}
-          primaryFilters={
-            <>
-              <Dropdown
-                value={roleFilter}
-                options={roleFilterOptions}
-                onChange={(e) => setRoleFilter(e.value || 'ALL')}
-                className="p-inputtext-sm w-12rem"
-              />
-              <Dropdown
-                value={branchFilter}
-                options={branchFilterOptions}
-                onChange={(e) => setBranchFilter(e.value || 'ALL')}
-                className="p-inputtext-sm w-13rem"
-              />
-              <Dropdown
-                value={statusFilter}
-                options={statusFilterOptions}
-                onChange={(e) => setStatusFilter(e.value || 'ALL')}
-                className="p-inputtext-sm w-11rem"
-              />
-            </>
-          }
+          basicFilters={[
+            {
+              value: roleFilter,
+              options: roleFilterOptions,
+              onChange: (val) => setRoleFilter(val || 'ALL'),
+              className: 'w-11rem',
+            },
+            {
+              value: branchFilter,
+              options: branchFilterOptions,
+              onChange: (val) => setBranchFilter(val || 'ALL'),
+              className: 'w-13rem',
+            },
+            {
+              value: statusFilter,
+              options: statusFilterOptions,
+              onChange: (val) => setStatusFilter(val || 'ALL'),
+              className: 'w-11rem',
+            },
+          ]}
           onReset={() => {
             setKeyword('');
             setRoleFilter('ALL');

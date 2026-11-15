@@ -83,13 +83,30 @@ body,
   color: #FF6B00 !important;
 }
 
-// PrimeReact 10 Full-Width Password & InputWrapper Fixes
+// PrimeReact 10 Full-Width Password Fixes
 .p-password,
 .p-password .p-icon-field,
-.p-password-input,
-.p-inputwrapper,
-.p-icon-field {
+.p-password-input {
   width: 100% !important;
+}
+
+// Fluid Forms
+.p-fluid {
+  .p-inputwrapper,
+  .p-dropdown,
+  .p-calendar,
+  .p-inputnumber {
+    width: 100% !important;
+  }
+}
+
+// Universal Filter Bar — prevent full width stretch on filters
+.universal-filter-bar {
+  .p-dropdown,
+  .p-dropdown.p-inputwrapper,
+  .p-inputwrapper {
+    width: auto !important;
+  }
 }
 
 .p-password {

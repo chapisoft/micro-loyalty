@@ -4,13 +4,13 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge, TypeBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { ApprovalStatus, ApprovalTargetType } from '@/models';
 import { LoyaltyService, ApprovalRequestModel } from '@/service/loyalty.service';
@@ -96,17 +96,6 @@ export const ApprovalQueuePage: React.FC = () => {
       toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const statusSeverity = (status: string) => {
-    switch (status) {
-      case ApprovalStatus.APPROVED:
-        return 'success';
-      case ApprovalStatus.REJECTED:
-        return 'danger';
-      default:
-        return 'warning';
     }
   };
 
@@ -236,13 +225,13 @@ export const ApprovalQueuePage: React.FC = () => {
               style={{ width: '6rem', textAlign: 'center' }}
             />
             <Column field="requestCode" header={t('approval.request_id')} body={(r) => <span className="font-bold font-mono text-900">{r.requestCode || r.id}</span>} sortable style={{ minWidth: '13rem' }} />
-            <Column field="targetType" header={t('approval.target_type')} body={(r) => <span className="text-900">{r.targetType}</span>} sortable style={{ minWidth: '11rem' }} />
-            <Column field="actionType" header={t('approval.action_type')} body={(r) => <span className="text-900 font-mono text-xs">{r.actionType}</span>} sortable style={{ minWidth: '10rem' }} />
+            <Column field="targetType" header={t('approval.target_type')} body={(r) => <TypeBadge type={r.targetType} />} sortable style={{ minWidth: '11rem', textAlign: 'center' }} />
+            <Column field="actionType" header={t('approval.action_type')} body={(r) => <TypeBadge type={r.actionType} />} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
             <Column field="targetId" header={t('approval.target_id')} body={(r) => <span className="text-900 font-mono">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
             <Column field="makerUsername" header={t('approval.maker')} body={(r) => <span className="text-900">{r.makerUsername || r.makerId || '--'}</span>} style={{ minWidth: '10rem' }} />
             <Column field="reason" header={t('common.reason')} body={(r) => <span className="text-900">{r.reason}</span>} style={{ minWidth: '14rem' }} />
             <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="text-900 font-mono text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} sortable style={{ minWidth: '11rem' }} />
-            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+            <Column field="status" header={t('common.status')} body={(r) => <StatusBadge status={r.status} />} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
           </DataTable>
         )}
       </div>
@@ -259,7 +248,7 @@ export const ApprovalQueuePage: React.FC = () => {
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
               <div className="col-6"><span className="text-500 text-xs block">Maker</span><span className="text-900">{reviewItem.makerUsername || reviewItem.makerId || '--'}</span></div>
-              <div className="col-6"><span className="text-500 text-xs block">{t('common.status')}</span><Tag value={reviewItem.status} severity={statusSeverity(reviewItem.status)} /></div>
+              <div className="col-6"><span className="text-500 text-xs block">{t('common.status')}</span><StatusBadge status={reviewItem.status} /></div>
               <div className="col-12 mt-2"><span className="text-500 text-xs block">{t('approval.reason')}</span><span className="text-900">{reviewItem.reason || '--'}</span></div>
             </div>
 

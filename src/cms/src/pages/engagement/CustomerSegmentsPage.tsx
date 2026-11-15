@@ -3,7 +3,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +25,7 @@ export const CustomerSegmentsPage: React.FC = () => {
   const [selectedSegment, setSelectedSegment] = useState<CustomerSegmentModel | null>(null);
   const [members, setMembers] = useState<SegmentMemberModel[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+  const [recalcId, setRecalcId] = useState<number | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
 
   const fetchSegments = useCallback(async () => {
@@ -197,7 +197,7 @@ export const CustomerSegmentsPage: React.FC = () => {
             />
             <Column field="externalUserId" header={t('customer.phone')} body={(m: SegmentMemberModel) => <span className="font-mono text-900">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
             <Column field="fullName" header={t('customer.name')} body={(m: SegmentMemberModel) => <span className="text-900">{m.fullName}</span>} style={{ minWidth: '12rem' }} />
-            <Column field="tierCode" header={t('tier.code')} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem', textAlign: 'center' }} />
+            <Column field="tierCode" header={t('tier.code')} body={(m: SegmentMemberModel) => <span className="font-bold font-mono text-900">{m.tierCode}</span>} style={{ minWidth: '7rem', textAlign: 'center' }} />
             <Column field="currentPoints" header={t('customer.available_points')} body={(m: SegmentMemberModel) => <span className="font-mono text-900">{Number(m.currentPoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
           </DataTable>
         )}

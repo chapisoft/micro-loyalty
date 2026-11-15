@@ -7,7 +7,6 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputSwitch } from 'primereact/inputswitch';
 import { TabView, TabPanel } from 'primereact/tabview';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +22,7 @@ import {
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge, TypeBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const AdvancedReportsPage: React.FC = () => {
@@ -463,15 +463,15 @@ export const AdvancedReportsPage: React.FC = () => {
                 field="reportType"
                 header={t('report.schedule_type')}
                 body={(r: ScheduledReportModel) => (
-                  <Tag value={r.reportType} severity="info" />
+                  <TypeBadge type={r.reportType} />
                 )}
-                style={{ minWidth: '11rem' }}
+                style={{ minWidth: '11rem', textAlign: 'center' }}
               />
               <Column
                 field="frequency"
                 header={t('report.frequency')}
                 body={(r: ScheduledReportModel) => (
-                  <Tag value={r.frequency} severity="secondary" />
+                  <TypeBadge type={r.frequency} />
                 )}
                 style={{ minWidth: '8rem', textAlign: 'center' }}
               />
@@ -495,10 +495,7 @@ export const AdvancedReportsPage: React.FC = () => {
                 field="status"
                 header={t('common.status')}
                 body={(r: ScheduledReportModel) => (
-                  <Tag
-                    value={r.status}
-                    severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
-                  />
+                  <StatusBadge status={r.status} />
                 )}
                 style={{ minWidth: '7.5rem', textAlign: 'center' }}
               />

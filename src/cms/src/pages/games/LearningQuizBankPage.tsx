@@ -7,7 +7,6 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { FileUpload, FileUploadSelectEvent } from 'primereact/fileupload';
@@ -19,6 +18,7 @@ import { LoyaltyService, LearningQuestionModel } from '@/service/loyalty.service
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const LearningQuizBankPage: React.FC = () => {
@@ -345,10 +345,7 @@ export const LearningQuizBankPage: React.FC = () => {
               field="status"
               header={t('common.status')}
               body={(r: LearningQuestionModel) => (
-                <Tag
-                  value={r.status}
-                  severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
-                />
+                <StatusBadge status={r.status} />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
             />

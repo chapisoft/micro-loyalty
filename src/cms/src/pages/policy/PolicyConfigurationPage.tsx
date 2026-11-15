@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus } from '@/models';
@@ -342,11 +343,7 @@ export const PolicyConfigurationPage: React.FC = () => {
   };
 
   const statusTemplate = (rowData: PolicyRule) => {
-    return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active', 'Hoạt động')} rounded={false} />
-    ) : (
-      <Tag severity="warning" value={t('common.inactive', 'Ngừng hoạt động')} rounded={false} />
-    );
+    return <StatusBadge status={rowData.status} />;
   };
 
   const handleExportExcel = () => {
@@ -460,7 +457,7 @@ export const PolicyConfigurationPage: React.FC = () => {
             field="partnerCode"
             header={t('policy.partner_code', 'Mã đối tác')}
             body={(row: PolicyRule) => (
-              <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
+              <span className="font-mono font-bold text-900">
                 {row.partnerCode}
               </span>
             )}

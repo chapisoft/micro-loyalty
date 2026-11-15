@@ -295,47 +295,44 @@ export const TierManagementPage: React.FC = () => {
   };
 
   const codeTemplate = (rowData: TierConfig) => (
-    <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
+    <span className="font-mono font-bold text-900">
       {rowData.code}
     </span>
   );
 
   const nameTemplate = (rowData: TierConfig) => (
-    <span className="font-medium text-900" style={{ fontSize: '13px' }}>
+    <span className="font-medium text-900">
       {rowData.name}
     </span>
   );
 
   const levelTemplate = (rowData: TierConfig) => (
-    <span className="text-700 font-mono" style={{ fontSize: '13px' }}>
+    <span className="text-700 font-mono">
       {rowData.tierLevel}
     </span>
   );
 
   const pointsTemplate = (rowData: TierConfig) => (
-    <span className="text-800 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
-      {(rowData.minPoints ?? 0).toLocaleString()}{' '}
-      <span className="text-500 text-xs">{t('tier.points_unit')}</span>
+    <span className="text-800 font-mono white-space-nowrap">
+      {(rowData.minPoints ?? 0).toLocaleString()} {t('tier.points_unit', 'điểm')}
     </span>
   );
 
   const keepPointsTemplate = (rowData: TierConfig) => (
-    <span className="text-900 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
-      {(rowData.keepTierPoints ?? 0).toLocaleString()}{' '}
-      <span className="text-500 text-xs">{t('tier.points_unit')}</span>
+    <span className="text-900 font-mono white-space-nowrap">
+      {(rowData.keepTierPoints ?? 0).toLocaleString()} {t('tier.points_unit', 'điểm')}
     </span>
   );
 
   const multiplierTemplate = (rowData: TierConfig) => (
-    <span className="text-900 font-mono" style={{ fontSize: '13px' }}>
+    <span className="text-900 font-mono">
       ×{Number(rowData.pointMultiplier ?? 1.0).toFixed(2)}
     </span>
   );
 
   const turnsTemplate = (rowData: TierConfig) => (
-    <span className="text-700 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
-      {rowData.freeDailyTurns}{' '}
-      <span className="text-500 text-xs">{t('tier.turns_unit')}</span>
+    <span className="text-700 font-mono white-space-nowrap">
+      {rowData.freeDailyTurns} {t('tier.turns_unit', 'lượt')}
     </span>
   );
 

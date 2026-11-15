@@ -8,7 +8,6 @@ import { Toast } from 'primereact/toast';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
-import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { Sidebar } from 'primereact/sidebar';
@@ -20,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { CommonStatus, CampaignMissionCategory, CustomerSegmentCode } from '@/models';
 import {
@@ -537,11 +537,7 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   // Cột Trạng thái
   const statusTemplate = (rowData: CampaignMilestoneItem) => {
-    return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active')} />
-    ) : (
-      <Tag severity="danger" value={t('common.inactive')} />
-    );
+    return <StatusBadge status={rowData.status} />;
   };
 
   // Cột Chỉ tiêu đo lường
@@ -817,7 +813,7 @@ export const CampaignMilestonesPage: React.FC = () => {
                 <Column field="missionCategory" header={t('campaign.mission_category')} body={(r: CampaignRuleModel) => <span className="text-900">{r.missionCategory}</span>} style={{ minWidth: '11rem' }} />
                 <Column header={t('campaign.when_if_col')} body={(r: CampaignRuleModel) => <div className="text-xs"><div>{t('campaign.when_prefix')}: {r.whenEvent}</div><div className="text-500">{t('campaign.min_bill_prefix')}: {Number(r.ifMinBillAmount || 0).toLocaleString()}</div></div>} style={{ minWidth: '13rem' }} />
                 <Column header={t('campaign.then_limits_col')} body={(r: CampaignRuleModel) => <div className="text-xs"><div>{t('campaign.rule_reward_summary', { points: r.thenRewardPoints, turns: r.thenRewardTurns })}</div><div className="text-500">{t('campaign.rule_limit_summary', { perUser: r.limitMaxPerUser ?? '∞', total: r.limitMaxTotal ?? '∞' })}</div></div>} style={{ minWidth: '12rem' }} />
-                <Column field="status" header={t('common.status')} body={(r: CampaignRuleModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+                <Column field="status" header={t('common.status')} body={(r: CampaignRuleModel) => <StatusBadge status={r.status} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
                 <Column header={t('common.action')} body={(r: CampaignRuleModel) => (
                   <StandardRowActions
                     onEdit={() => { setRuleForm(r); setShowRuleDialog(true); }}
@@ -1163,7 +1159,7 @@ export const CampaignMilestonesPage: React.FC = () => {
                   <div className="font-medium text-orange-800 mb-2"><i className="pi pi-exclamation-triangle mr-2" />{t('campaign.conflicts_detected')}</div>
                   {copilotResult.conflicts.map((c: AiCopilotConflictItem, idx: number) => (
                     <div key={idx} className="text-xs text-orange-900 mb-1">
-                      <Tag value={c.severity} severity={c.severity === 'CRITICAL' ? 'danger' : 'warning'} className="mr-2" />
+                      <StatusBadge status={c.severity} className="mr-2" />
                       <span className="font-mono mr-1">{c.conflictCampaignCode}</span>: {c.reason}
                     </div>
                   ))}

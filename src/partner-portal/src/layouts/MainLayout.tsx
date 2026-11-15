@@ -15,6 +15,22 @@ export const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLangOpen, setIsLangOpen] = React.useState(false);
+  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  const langRef = React.useRef<HTMLDivElement>(null);
+  const profileRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const token = LocalStorage.get<string>(KeyStorage.ACCESS_TOKEN);
   const currentUser = getStoredPartnerUser();
@@ -130,11 +146,14 @@ export const MainLayout: React.FC = () => {
 
   const end = (
     <div className="flex align-items-center gap-2">
-      <div className="relative">
+      <div className="relative" ref={langRef}>
         <button
           type="button"
           className="language-pill-btn"
-          onClick={() => setIsLangOpen((prev) => !prev)}
+          onClick={() => {
+            setIsLangOpen((prev) => !prev);
+            setIsProfileOpen(false);
+          }}
         >
           <i className="pi pi-globe" />
           <span className="lang-code uppercase">{normalizedLang}</span>
@@ -162,22 +181,43 @@ export const MainLayout: React.FC = () => {
         )}
       </div>
 
-      <div className="hidden sm:flex align-items-center gap-2 user-profile-pill">
-        <div className="user-avatar-circle flex align-items-center justify-content-center">{avatarInitial}</div>
-        <span className="user-name" title={displayName}>
-          {displayName}
-        </span>
-      </div>
+      <div className="relative" ref={profileRef}>
+        <button
+          type="button"
+          className="hidden sm:flex align-items-center gap-2 user-profile-pill cursor-pointer"
+          onClick={() => {
+            setIsProfileOpen((prev) => !prev);
+            setIsLangOpen(false);
+          }}
+        >
+          <div className="user-avatar-circle flex align-items-center justify-content-center">{avatarInitial}</div>
+          <span className="user-name" title={displayName}>
+            {displayName}
+          </span>
+          <i className={`pi ${isProfileOpen ? 'pi-chevron-up' : 'pi-chevron-down'} text-xs ml-1`} style={{ color: '#64748b' }} />
+        </button>
 
-      <button
-        type="button"
-        className="p-button p-component p-button-outlined p-button-secondary p-button-sm border-round-3xl cursor-pointer"
-        onClick={handleConfirmLogout}
-        title={t('common.logout')}
-      >
-        <i className="pi pi-sign-out" />
-        <span className="hidden md:inline p-button-label">{t('common.logout')}</span>
-      </button>
+        {isProfileOpen && (
+          <div className="custom-dropdown-overlay profile-dropdown">
+            <div className="px-3 py-2 border-bottom-1 surface-border">
+              <div className="text-900 text-sm font-semibold">{displayName}</div>
+              <div className="text-500 text-xs">
+                {(currentUser?.roles && currentUser.roles[0]) || currentUser?.partnerName || t('common.partner_admin', 'Quản trị viên Đối tác')}
+              </div>
+            </div>
+            <div
+              className="custom-dropdown-item text-red-600 font-semibold cursor-pointer mt-1"
+              onClick={() => {
+                setIsProfileOpen(false);
+                handleConfirmLogout();
+              }}
+            >
+              <i className="pi pi-sign-out text-red-500 mr-2" />
+              <span>{t('common.logout', 'Đăng xuất')}</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 

@@ -5,7 +5,6 @@ import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Skeleton } from 'primereact/skeleton';
@@ -16,6 +15,7 @@ import { LoyaltyService, NatcashPaymentPointModel } from '@/service/loyalty.serv
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const NatcashBranchesPaymentPointsPage: React.FC = () => {
@@ -302,10 +302,7 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
               field="status"
               header={t('common.status')}
               body={(r: NatcashPaymentPointModel) => (
-                <Tag
-                  value={t(r.status === CommonStatus.ACTIVE ? 'common.active' : 'common.inactive')}
-                  severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
-                />
+                <StatusBadge status={r.status} />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
             />

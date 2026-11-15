@@ -67,7 +67,7 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
         {/* Left side: Search + Primary filters + Basic filters + Advanced toggle + Reset + Refresh */}
         <div className="flex flex-wrap align-items-center gap-2 flex-1">
           {handleSearchChange !== undefined && (
-            <span className="p-input-icon-left" style={{ minWidth: '14rem', maxWidth: '20rem' }}>
+            <span className="p-input-icon-left" style={{ width: '15rem', minWidth: '13rem', maxWidth: '18rem', flexShrink: 0 }}>
               <i className="pi pi-search text-400" />
               <InputText
                 value={currentSearch || ''}
@@ -89,7 +89,8 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
               placeholder={bf.placeholder || bf.label}
               optionLabel={bf.optionLabel}
               optionValue={bf.optionValue}
-              className={`p-inputtext-sm ${bf.className || 'w-12rem'}`}
+              className={`p-inputtext-sm ${bf.className || 'w-11rem'}`}
+              style={{ width: 'auto', minWidth: '10.5rem', flexShrink: 0 }}
             />
           ))}
 

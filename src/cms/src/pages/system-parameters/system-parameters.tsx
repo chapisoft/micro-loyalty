@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import {
   ParamValueType,
@@ -715,12 +716,9 @@ export const SystemParameters: React.FC = () => {
     </span>
   );
 
-  const statusBody = (rowData: { status?: number }) =>
-    rowData.status === 1 ? (
-      <Tag severity="success" value={t('common.active')} />
-    ) : (
-      <Tag severity="secondary" value={t('common.inactive')} />
-    );
+  const statusBody = (rowData: { status?: number }) => (
+    <StatusBadge status={rowData.status === 1 ? 'ACTIVE' : 'INACTIVE'} />
+  );
 
   return (
     <div className="w-full">
@@ -977,11 +975,9 @@ export const SystemParameters: React.FC = () => {
                   'system_parameter.code_types.preview_tooltip'
                 )}
                 body={(row: SysCodeTypeConfig) => (
-                  <Tag
-                    severity="success"
-                    className="font-mono font-normal"
-                    value={row.samplePreview || '-'}
-                  />
+                  <span className="font-mono font-bold text-900">
+                    {row.samplePreview || '-'}
+                  </span>
                 )}
                 style={{ minWidth: '12rem' }}
               />

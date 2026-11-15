@@ -14,6 +14,7 @@ import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { ClearingStatus, DisputeStatus, PaymentBatchStatus } from '@/models';
 import {
   LoyaltyService,
@@ -279,25 +280,11 @@ export const ClearingSettlementPage: React.FC = () => {
   };
 
   const statusTemplate = (status: string) => {
-    return status === ClearingStatus.SETTLED ? (
-      <Tag severity="success" value={t('common.settled')} />
-    ) : (
-      <Tag severity="warning" value={t('common.pending')} />
-    );
+    return <StatusBadge status={status} />;
   };
 
   const disputeStatusTemplate = (status: string) => {
-    switch (status) {
-      case DisputeStatus.RESOLVED:
-        return <Tag severity="success" value={t('enum.dispute_status.RESOLVED')} />;
-      case DisputeStatus.REJECTED:
-        return <Tag severity="danger" value={t('enum.dispute_status.REJECTED')} />;
-      case DisputeStatus.INVESTIGATING:
-        return <Tag severity="warning" value={t('enum.dispute_status.INVESTIGATING')} />;
-      case DisputeStatus.OPEN:
-      default:
-        return <Tag severity="info" value={t('enum.dispute_status.OPEN')} />;
-    }
+    return <StatusBadge status={status} />;
   };
 
   // Cột Thao tác trên từng dòng đối tác
@@ -590,7 +577,7 @@ export const ClearingSettlementPage: React.FC = () => {
               <Column field="grossAmount" header={t('clearing.gross_amount')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
               <Column field="mdrFeeAmount" header="MDR Fee" body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
               <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-semibold">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-              <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <Tag value={b.status ? t(`enum.payment_batch_status.${b.status}`) : ''} severity={b.status === PaymentBatchStatus.PAID ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <StatusBadge status={b.status} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -822,7 +809,7 @@ export const ClearingSettlementPage: React.FC = () => {
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
               <div className="col-6"><span className="text-500 block text-xs">{t('common.partner')}</span><span className="font-medium">{trackBatch.partnerCode} - {trackBatch.partnerName}</span></div>
-              <div className="col-6"><span className="text-500 block text-xs">{t('common.status')}</span><Tag value={trackBatch.status ? t(`enum.payment_batch_status.${trackBatch.status}`) : ''} severity={trackBatch.status === PaymentBatchStatus.PAID ? 'success' : 'warning'} /></div>
+              <div className="col-6"><span className="text-500 block text-xs">{t('common.status')}</span><StatusBadge status={trackBatch.status} /></div>
               <div className="col-4 mt-2"><span className="text-500 block text-xs">{t('clearing.gross_amount')}</span><span className="font-mono">{Number(trackBatch.grossAmount || 0).toLocaleString()} HTG</span></div>
               <div className="col-4 mt-2"><span className="text-500 block text-xs" title={t('clearing.mdr_fee_tooltip')}>{t('clearing.mdr_fee')}</span><span className="font-mono text-orange-600">{Number(trackBatch.mdrFeeAmount || 0).toLocaleString()} HTG</span></div>
               <div className="col-4 mt-2"><span className="text-500 block text-xs">{t('clearing.net_payable_amount')}</span><span className="font-mono font-medium text-green-700">{Number(trackBatch.netPayableAmount || 0).toLocaleString()} HTG</span></div>

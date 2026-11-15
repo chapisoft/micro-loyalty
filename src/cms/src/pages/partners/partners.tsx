@@ -4,7 +4,6 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
-import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
@@ -16,6 +15,7 @@ import { LoyaltyService, SystemIntegrationItemModel, PartnerApiKeyItemModel } fr
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { ApiKeyStatus, CommonStatus } from '@/models';
 
@@ -454,11 +454,7 @@ export const Partners: React.FC = () => {
 
   const statusBodyTemplate = (rowData: Partner) => {
     const isActive = Number(rowData.status) === 1 || String(rowData.status) === CommonStatus.ACTIVE;
-    return isActive ? (
-      <Tag severity="success" value={t('common.active')} />
-    ) : (
-      <Tag severity="danger" value={t('common.inactive')} />
-    );
+    return <StatusBadge status={isActive ? 'ACTIVE' : 'INACTIVE'} />;
   };
 
   const dateTemplate = (rowData: Partner) => {
@@ -672,7 +668,7 @@ export const Partners: React.FC = () => {
                           <div className="font-medium text-900">{sys.systemName}</div>
                           <div className="text-xs font-mono text-500">{sys.systemCode} · {sys.protocol || 'REST/HTTPS'}</div>
                         </div>
-                        <Tag value={sys.status} severity={sys.status === 'UP' ? 'success' : sys.status === 'DEGRADED' ? 'warning' : 'danger'} />
+                        <StatusBadge status={sys.status} />
                       </div>
                       <div className="text-xs text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap" title={sys.endpointUrl}>{sys.endpointUrl || '--'}</div>
                       <div className="flex justify-content-between text-xs pt-2 border-top-1 surface-border">
@@ -1052,7 +1048,7 @@ Content-Type: application/json`}
               <Column header={t('common.action')} body={(k: PartnerApiKeyItemModel) => k.id && k.status === ApiKeyStatus.GRACE_PERIOD ? <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ width: '8rem', textAlign: 'center' }} />
               <Column field="keyPrefix" header={t('system_parameter.code_types.prefix')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono font-bold text-900 white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
               <Column field="graceExpiresAt" header={t('partner.grace_period')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs text-900 white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
-              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === ApiKeyStatus.ACTIVE ? 'success' : k.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <StatusBadge status={k.status} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
             </DataTable>
           </div>
         </div>

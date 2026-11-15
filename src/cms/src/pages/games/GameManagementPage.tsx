@@ -8,7 +8,6 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
-import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Toast } from 'primereact/toast';
@@ -16,6 +15,7 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge, TypeBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { CommonStatus } from '@/models';
 import { LoyaltyService, GameDashboardStats } from '@/service/loyalty.service';
@@ -434,11 +434,7 @@ export const GameManagementPage: React.FC = () => {
   };
 
   const statusTemplate = (status: CommonStatus | string) => {
-    return status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active')} />
-    ) : (
-      <Tag severity="danger" value={t('common.inactive')} />
-    );
+    return <StatusBadge status={status} />;
   };
 
   const categoryOptions = useMemo(() => [
@@ -823,7 +819,7 @@ export const GameManagementPage: React.FC = () => {
           <Column
             field="prizeType"
             header={t('game.prize_type')}
-            body={(row: GamePrizeItem) => <Tag severity="info" value={row.prizeType} />}
+            body={(row: GamePrizeItem) => <TypeBadge type={row.prizeType} />}
             style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column

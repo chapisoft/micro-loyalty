@@ -7,7 +7,6 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
 import { ProgressBar } from 'primereact/progressbar';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +17,7 @@ import { LoyaltyService, MonthlyBudgetModel } from '@/service/loyalty.service';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const BudgetManagementPage: React.FC = () => {
@@ -236,8 +236,9 @@ export const BudgetManagementPage: React.FC = () => {
               field="autoPausedAt100"
               header={t('budget.auto_pause')}
               body={(r: MonthlyBudgetModel) => (
-                <Tag
-                  value={r.autoPausedAt100 ? 'PAUSED' : 'ENABLED'}
+                <StatusBadge
+                  status={r.autoPausedAt100 ? 'PAUSED' : 'ENABLED'}
+                  label={r.autoPausedAt100 ? t('budget.auto_paused_label', 'Tự động tạm dừng') : t('budget.auto_pause_enabled', 'Đang bật')}
                   severity={r.autoPausedAt100 ? 'warning' : 'info'}
                 />
               )}
@@ -247,10 +248,7 @@ export const BudgetManagementPage: React.FC = () => {
               field="status"
               header={t('common.status')}
               body={(r: MonthlyBudgetModel) => (
-                <Tag
-                  value={r.status}
-                  severity={r.status === CommonStatus.ACTIVE ? 'success' : 'danger'}
-                />
+                <StatusBadge status={r.status} />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
             />

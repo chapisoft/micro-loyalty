@@ -5,7 +5,6 @@ import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +15,7 @@ import { LoyaltyService, SystemAlertModel } from '@/service/loyalty.service';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const AlertCenterPage: React.FC = () => {
@@ -113,28 +113,6 @@ export const AlertCenterPage: React.FC = () => {
     setKeyword('');
     setSeverityFilter('ALL');
     setStatusFilter('ALL');
-  };
-
-  const severityTag = (sev: string) => {
-    switch (sev) {
-      case AlertSeverity.CRITICAL:
-        return 'danger';
-      case AlertSeverity.WARNING:
-        return 'warning';
-      default:
-        return 'info';
-    }
-  };
-
-  const statusTag = (st: string) => {
-    switch (st) {
-      case AlertStatus.RESOLVED:
-        return 'success';
-      case AlertStatus.ACKNOWLEDGED:
-        return 'info';
-      default:
-        return 'warning';
-    }
   };
 
   return (
@@ -245,7 +223,7 @@ export const AlertCenterPage: React.FC = () => {
               field="severity"
               header={t('alert.severity')}
               body={(r: SystemAlertModel) => (
-                <Tag value={r.severity} severity={severityTag(r.severity)} />
+                <StatusBadge status={r.severity} />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
             />
@@ -282,7 +260,7 @@ export const AlertCenterPage: React.FC = () => {
               field="status"
               header={t('common.status')}
               body={(r: SystemAlertModel) => (
-                <Tag value={r.status} severity={statusTag(r.status)} />
+                <StatusBadge status={r.status} />
               )}
               style={{ minWidth: '9rem', textAlign: 'center' }}
             />

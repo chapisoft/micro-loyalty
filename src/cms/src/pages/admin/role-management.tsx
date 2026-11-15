@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
-import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -13,6 +12,7 @@ import { QueryKey } from '@/constants';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 import RoleFormDialog from './components/role-form-dialog';
@@ -379,13 +379,7 @@ export const RoleManagementPage: React.FC = () => {
             body={(row: IRole) => {
               const count = row.permissions ? row.permissions.length : 0;
               return (
-                <div className="flex align-items-center gap-1 font-normal text-900">
-                  <i
-                    className={`pi ${count > 0 ? 'pi-shield text-green-600' : 'pi-shield text-400'}`}
-                    style={{ fontSize: '12px' }}
-                  />
-                  <span>{count} quyền</span>
-                </div>
+                <span className="font-normal text-900">{count} quyền</span>
               );
             }}
             style={{ width: '11%' }}
@@ -395,10 +389,9 @@ export const RoleManagementPage: React.FC = () => {
           <Column
             header="Số tài khoản"
             body={(row: IRole) => (
-              <div className="flex align-items-center gap-1 font-normal text-900">
-                <i className="pi pi-users text-500" style={{ fontSize: '12px' }} />
-                <span>{(row.userCount ?? 0).toLocaleString('vi-VN')}</span>
-              </div>
+              <span className="font-normal text-900">
+                {(row.userCount ?? 0).toLocaleString('vi-VN')}
+              </span>
             )}
             style={{ width: '11%' }}
           />
@@ -409,11 +402,7 @@ export const RoleManagementPage: React.FC = () => {
             body={(row: IRole) => {
               const isActive = row.isActive !== 0 && row.status !== 'INACTIVE';
               return (
-                <Tag
-                  severity={isActive ? 'success' : 'warning'}
-                  value={isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
-                  rounded={false}
-                />
+                <StatusBadge status={isActive ? 'ACTIVE' : 'INACTIVE'} />
               );
             }}
             style={{ width: '12%' }}

@@ -20,6 +20,7 @@ import { TenantSelector } from '@/components/TenantSelector';
 import { AppBreadcrumb } from 'components';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { TypeBadge } from '@/components/StatusBadge';
 
 import './audit-management.scss';
 
@@ -210,22 +211,7 @@ export default function AuditLogPage() {
   };
 
   const operationBodyTemplate = (rowData: AuditLog) => {
-    const op = String(rowData.operation || '').toUpperCase();
-    let severity: 'success' | 'info' | 'warning' | 'danger' | 'secondary' = 'info';
-    if (op === 'INSERT') {
-      severity = 'success';
-    } else if (op === 'UPDATE') {
-      severity = 'warning';
-    } else if (op === 'DELETE') {
-      severity = 'danger';
-    } else if (op === 'SETTLEMENT') {
-      severity = 'info';
-    } else if (op === 'LOCK') {
-      severity = 'danger';
-    } else if (op === 'UNLOCK') {
-      severity = 'success';
-    }
-    return <Tag severity={severity} value={op} className="text-xs px-2 py-1 white-space-nowrap" />;
+    return <TypeBadge type={rowData.operation} />;
   };
 
   const tableBodyTemplate = (rowData: AuditLog) => {
@@ -632,15 +618,7 @@ export default function AuditLogPage() {
                     field="changeType"
                     header={t('audit.diff_type')}
                     body={(row: any) => {
-                      const sev =
-                        row.changeType === 'ADDED'
-                          ? 'success'
-                          : row.changeType === 'REMOVED'
-                          ? 'danger'
-                          : row.changeType === 'MODIFIED'
-                          ? 'warning'
-                          : 'secondary';
-                      return <Tag value={row.changeType} severity={sev} className="text-xs" />;
+                      return <TypeBadge type={row.changeType} />;
                     }}
                     style={{ minWidth: '110px', textAlign: 'center' }}
                   />

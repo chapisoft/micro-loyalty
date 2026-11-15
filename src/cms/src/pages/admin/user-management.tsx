@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
-import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -21,6 +20,7 @@ import { QueryKey } from '@/constants';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 import UserFormDialog from './components/user-form-dialog';
@@ -261,17 +261,11 @@ export const UserManagementPage: React.FC = () => {
 
     return (
       <div className="flex align-items-center gap-1 flex-wrap">
-        {isLocked ? (
-          <Tag severity="danger" value="Đã khóa" rounded={false} />
-        ) : isActive ? (
-          <Tag severity="success" value="Hoạt động" rounded={false} />
-        ) : (
-          <Tag severity="warning" value="Ngừng hoạt động" rounded={false} />
-        )}
+        <StatusBadge status={isLocked ? 'LOCKED' : isActive ? 'ACTIVE' : 'INACTIVE'} />
         {mustChange && (
           <span
             style={{
-              fontSize: '10px',
+              fontSize: '11px',
               padding: '2px 6px',
               borderRadius: '4px',
               background: '#FEF3C7',
@@ -413,7 +407,7 @@ export const UserManagementPage: React.FC = () => {
             field="username"
             header={t('user.username', 'Tên đăng nhập')}
             body={(row: IUser) => (
-              <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
+              <span className="font-mono font-bold text-900">
                 {row.username}
               </span>
             )}

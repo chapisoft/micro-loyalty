@@ -8,7 +8,6 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { TabView, TabPanel } from 'primereact/tabview';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { Skeleton } from 'primereact/skeleton';
@@ -25,6 +24,7 @@ import {
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const AgentLoyaltyManagementPage: React.FC = () => {
@@ -356,15 +356,7 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
                   field="rewardStatus"
                   header={t('common.status')}
                   body={(r: AgentLoyaltyItemModel) => (
-                    <Tag
-                      value={t(`enum.agent_kpi_reward_status.${r.rewardStatus}`)}
-                      severity={
-                        r.rewardStatus === AgentKpiRewardStatus.APPROVED ||
-                        r.rewardStatus === AgentKpiRewardStatus.PAID
-                          ? 'success'
-                          : 'warning'
-                      }
-                    />
+                    <StatusBadge status={r.rewardStatus} />
                   )}
                   style={{ minWidth: '8.5rem', textAlign: 'center' }}
                 />

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from 'components';
@@ -145,7 +144,7 @@ export const GameStatisticsPage: React.FC = () => {
             <Column
               field="category"
               header={t('game.category')}
-              body={(r) => <Tag value={r.category} severity="info" />}
+              body={(r) => <span className="text-900">{r.category}</span>}
               style={{ minWidth: '9rem' }}
             />
             <Column
