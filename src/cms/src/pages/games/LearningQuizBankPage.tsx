@@ -360,9 +360,8 @@ export const LearningQuizBankPage: React.FC = () => {
         header={t('learning.dialog_title')}
         style={{ width: '44rem' }}
         modal
-        className="p-fluid"
       >
-        <div className="grid">
+        <div className="p-fluid grid">
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('learning.code')} *</label>
             <InputText

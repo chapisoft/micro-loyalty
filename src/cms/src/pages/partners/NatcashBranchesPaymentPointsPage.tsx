@@ -317,9 +317,8 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
         header={t('payment_point.dialog_title')}
         style={{ width: '38rem' }}
         modal
-        className="p-fluid"
       >
-        <div className="grid">
+        <div className="p-fluid grid">
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('payment_point.branch_code')} *</label>
             <InputText

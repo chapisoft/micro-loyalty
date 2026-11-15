@@ -749,162 +749,164 @@ export const VoucherManagementPage: React.FC = () => {
         style={{ width: '540px' }}
         header={isEdit ? t('voucher.edit_title') : t('voucher.create_title')}
         modal
-        className="p-fluid border-round-xl"
+        className="border-round-xl"
         onHide={() => setShowDialog(false)}
       >
-        {/* Dropdown Chọn Đối Tác */}
-        <div className="field mb-3">
-          <label htmlFor="partnerSelector" className="font-bold text-900">
-            {t('voucher.select_partner')}
-          </label>
-          <Dropdown
-            id="partnerSelector"
-            value={formData.partnerId}
-            options={partnerDropdownOptions}
-            onChange={(e) => setFormData({ ...formData, partnerId: e.value })}
-            optionLabel="label"
-            optionValue="value"
-            itemTemplate={partnerOptionTemplate}
-            placeholder={t('voucher.select_partner_placeholder')}
-            className="w-full"
-            appendTo="self"
-          />
-          <small className="text-500 block mt-1">
-            {formData.partnerId == null
-              ? t('voucher.scope_all_alliance_desc')
-              : t('voucher.scope_exclusive_partner_desc')}
-          </small>
-        </div>
+        <div className="p-fluid">
+          {/* Dropdown Chọn Đối Tác */}
+          <div className="field mb-3">
+            <label htmlFor="partnerSelector" className="font-bold text-900">
+              {t('voucher.select_partner')}
+            </label>
+            <Dropdown
+              id="partnerSelector"
+              value={formData.partnerId}
+              options={partnerDropdownOptions}
+              onChange={(e) => setFormData({ ...formData, partnerId: e.value })}
+              optionLabel="label"
+              optionValue="value"
+              itemTemplate={partnerOptionTemplate}
+              placeholder={t('voucher.select_partner_placeholder')}
+              className="w-full"
+              appendTo="self"
+            />
+            <small className="text-500 block mt-1">
+              {formData.partnerId == null
+                ? t('voucher.scope_all_alliance_desc')
+                : t('voucher.scope_exclusive_partner_desc')}
+            </small>
+          </div>
 
-        <div className="formgrid grid mb-3">
-          <div className="field col-6">
-            <label htmlFor="voucherCode" className="font-bold text-900">
-              {t('voucher.code')} <span className="text-red-500">*</span>
+          <div className="formgrid grid mb-3">
+            <div className="field col-6">
+              <label htmlFor="voucherCode" className="font-bold text-900">
+                {t('voucher.code')} <span className="text-red-500">*</span>
+              </label>
+              <InputText
+                id="voucherCode"
+                value={formData.voucherCode || ''}
+                onChange={(e) => setFormData({ ...formData, voucherCode: e.target.value.toUpperCase() })}
+                placeholder={t('voucher.code_placeholder')}
+                disabled={isEdit}
+              />
+            </div>
+            <div className="field col-6">
+              <label htmlFor="discountType" className="font-bold text-900">{t('voucher.discount_type')}</label>
+              <Dropdown
+                id="discountType"
+                value={formData.discountType}
+                options={discountTypeOptions}
+                onChange={(e) => setFormData({ ...formData, discountType: e.value })}
+                appendTo="self"
+              />
+            </div>
+          </div>
+
+          <div className="field mb-3">
+            <label htmlFor="title" className="font-bold text-900">
+              {t('voucher.title_label')} <span className="text-red-500">*</span>
             </label>
             <InputText
-              id="voucherCode"
-              value={formData.voucherCode || ''}
-              onChange={(e) => setFormData({ ...formData, voucherCode: e.target.value.toUpperCase() })}
-              placeholder={t('voucher.code_placeholder')}
-              disabled={isEdit}
+              id="title"
+              value={formData.title || ''}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder={t('voucher.title_placeholder')}
             />
           </div>
-          <div className="field col-6">
-            <label htmlFor="discountType" className="font-bold text-900">{t('voucher.discount_type')}</label>
+
+          <div className="field mb-3">
+            <label htmlFor="description" className="font-bold text-900">{t('common.description')}</label>
+            <InputText
+              id="description"
+              value={formData.description || ''}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder={t('voucher.description_placeholder')}
+            />
+          </div>
+
+          <div className="formgrid grid mb-3">
+            <div className="field col-6">
+              <label htmlFor="discountValue" className="font-bold text-900">
+                {formData.discountType === DiscountType.PERCENTAGE ? t('voucher.discount_value_percent') : t('voucher.discount_value_htg')}
+              </label>
+              <InputNumber
+                id="discountValue"
+                value={formData.discountValue}
+                onValueChange={(e) => setFormData({ ...formData, discountValue: e.value || 0 })}
+                min={0}
+                suffix={formData.discountType === DiscountType.PERCENTAGE ? ' %' : ' HTG'}
+              />
+            </div>
+            <div className="field col-6">
+              <label htmlFor="minOrderValue" className="font-bold text-900">{t('voucher.min_order')}</label>
+              <InputNumber
+                id="minOrderValue"
+                value={formData.minOrderValue}
+                onValueChange={(e) => setFormData({ ...formData, minOrderValue: e.value || 0 })}
+                min={0}
+                suffix=" HTG"
+              />
+            </div>
+          </div>
+
+          <div className="formgrid grid mb-3">
+            <div className="field col-6">
+              <label htmlFor="pointsRequired" className="font-bold text-900">{t('voucher.points_cost')}</label>
+              <InputNumber
+                id="pointsRequired"
+                value={formData.pointsRequired}
+                onValueChange={(e) => setFormData({ ...formData, pointsRequired: e.value || 0 })}
+                min={0}
+                placeholder="0"
+              />
+            </div>
+            <div className="field col-6">
+              <label htmlFor="totalQuantity" className="font-bold text-900">{t('voucher.total_quantity')}</label>
+              <InputNumber
+                id="totalQuantity"
+                value={formData.totalQuantity}
+                onValueChange={(e) => setFormData({ ...formData, totalQuantity: e.value || 0 })}
+                min={1}
+              />
+            </div>
+          </div>
+
+          {/* Thời gian hiệu lực */}
+          <div className="formgrid grid mb-3">
+            <div className="field col-6">
+              <label htmlFor="validFrom" className="font-bold text-900">{t('voucher.valid_from')}</label>
+              <Calendar
+                id="validFrom"
+                value={formData.validFrom ? new Date(formData.validFrom) : null}
+                onChange={(e) => setFormData({ ...formData, validFrom: e.value ? (e.value as Date).toISOString().substring(0, 10) : '' })}
+                dateFormat="yy-mm-dd"
+                showIcon
+                appendTo="self"
+              />
+            </div>
+            <div className="field col-6">
+              <label htmlFor="validTo" className="font-bold text-900">{t('voucher.valid_to')}</label>
+              <Calendar
+                id="validTo"
+                value={formData.validTo ? new Date(formData.validTo) : null}
+                onChange={(e) => setFormData({ ...formData, validTo: e.value ? (e.value as Date).toISOString().substring(0, 10) : '' })}
+                dateFormat="yy-mm-dd"
+                showIcon
+                appendTo="self"
+              />
+            </div>
+          </div>
+
+          <div className="field mb-3">
+            <label htmlFor="status" className="font-bold text-900">{t('common.status')}</label>
             <Dropdown
-              id="discountType"
-              value={formData.discountType}
-              options={discountTypeOptions}
-              onChange={(e) => setFormData({ ...formData, discountType: e.value })}
+              id="status"
+              value={formData.status}
+              options={statusOptions}
+              onChange={(e) => setFormData({ ...formData, status: e.value })}
               appendTo="self"
             />
           </div>
-        </div>
-
-        <div className="field mb-3">
-          <label htmlFor="title" className="font-bold text-900">
-            {t('voucher.title_label')} <span className="text-red-500">*</span>
-          </label>
-          <InputText
-            id="title"
-            value={formData.title || ''}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder={t('voucher.title_placeholder')}
-          />
-        </div>
-
-        <div className="field mb-3">
-          <label htmlFor="description" className="font-bold text-900">{t('common.description')}</label>
-          <InputText
-            id="description"
-            value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder={t('voucher.description_placeholder')}
-          />
-        </div>
-
-        <div className="formgrid grid mb-3">
-          <div className="field col-6">
-            <label htmlFor="discountValue" className="font-bold text-900">
-              {formData.discountType === DiscountType.PERCENTAGE ? t('voucher.discount_value_percent') : t('voucher.discount_value_htg')}
-            </label>
-            <InputNumber
-              id="discountValue"
-              value={formData.discountValue}
-              onValueChange={(e) => setFormData({ ...formData, discountValue: e.value || 0 })}
-              min={0}
-              suffix={formData.discountType === DiscountType.PERCENTAGE ? ' %' : ' HTG'}
-            />
-          </div>
-          <div className="field col-6">
-            <label htmlFor="minOrderValue" className="font-bold text-900">{t('voucher.min_order')}</label>
-            <InputNumber
-              id="minOrderValue"
-              value={formData.minOrderValue}
-              onValueChange={(e) => setFormData({ ...formData, minOrderValue: e.value || 0 })}
-              min={0}
-              suffix=" HTG"
-            />
-          </div>
-        </div>
-
-        <div className="formgrid grid mb-3">
-          <div className="field col-6">
-            <label htmlFor="pointsRequired" className="font-bold text-900">{t('voucher.points_cost')}</label>
-            <InputNumber
-              id="pointsRequired"
-              value={formData.pointsRequired}
-              onValueChange={(e) => setFormData({ ...formData, pointsRequired: e.value || 0 })}
-              min={0}
-              placeholder="0"
-            />
-          </div>
-          <div className="field col-6">
-            <label htmlFor="totalQuantity" className="font-bold text-900">{t('voucher.total_quantity')}</label>
-            <InputNumber
-              id="totalQuantity"
-              value={formData.totalQuantity}
-              onValueChange={(e) => setFormData({ ...formData, totalQuantity: e.value || 0 })}
-              min={1}
-            />
-          </div>
-        </div>
-
-        {/* Thời gian hiệu lực */}
-        <div className="formgrid grid mb-3">
-          <div className="field col-6">
-            <label htmlFor="validFrom" className="font-bold text-900">{t('voucher.valid_from')}</label>
-            <Calendar
-              id="validFrom"
-              value={formData.validFrom ? new Date(formData.validFrom) : null}
-              onChange={(e) => setFormData({ ...formData, validFrom: e.value ? (e.value as Date).toISOString().substring(0, 10) : '' })}
-              dateFormat="yy-mm-dd"
-              showIcon
-              appendTo="self"
-            />
-          </div>
-          <div className="field col-6">
-            <label htmlFor="validTo" className="font-bold text-900">{t('voucher.valid_to')}</label>
-            <Calendar
-              id="validTo"
-              value={formData.validTo ? new Date(formData.validTo) : null}
-              onChange={(e) => setFormData({ ...formData, validTo: e.value ? (e.value as Date).toISOString().substring(0, 10) : '' })}
-              dateFormat="yy-mm-dd"
-              showIcon
-              appendTo="self"
-            />
-          </div>
-        </div>
-
-        <div className="field mb-3">
-          <label htmlFor="status" className="font-bold text-900">{t('common.status')}</label>
-          <Dropdown
-            id="status"
-            value={formData.status}
-            options={statusOptions}
-            onChange={(e) => setFormData({ ...formData, status: e.value })}
-            appendTo="self"
-          />
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
@@ -998,15 +1000,13 @@ export const VoucherManagementPage: React.FC = () => {
                       />
                       <Tag
                         severity="success"
-                        value={`${t('voucher.csv_valid_rows')}: ${
-                          importPreviewRows.filter((r) => r.isValid).length
-                        }`}
+                        value={`${t('voucher.csv_valid_rows')}: ${importPreviewRows.filter((r) => r.isValid).length
+                          }`}
                       />
                       <Tag
                         severity="danger"
-                        value={`${t('voucher.csv_error_rows')}: ${
-                          importPreviewRows.filter((r) => !r.isValid).length
-                        }`}
+                        value={`${t('voucher.csv_error_rows')}: ${importPreviewRows.filter((r) => !r.isValid).length
+                          }`}
                       />
                     </div>
                   </div>
@@ -1096,9 +1096,8 @@ export const VoucherManagementPage: React.FC = () => {
                   />
                   <Tag
                     severity="success"
-                    value={`${t('voucher.csv_valid_rows')}: ${
-                      importPreviewRows.filter((r) => r.isValid).length
-                    }`}
+                    value={`${t('voucher.csv_valid_rows')}: ${importPreviewRows.filter((r) => r.isValid).length
+                      }`}
                   />
                 </div>
               </div>

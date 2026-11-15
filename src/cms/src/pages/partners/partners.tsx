@@ -705,10 +705,9 @@ export const Partners: React.FC = () => {
         breakpoints={{ '960px': '75vw', '641px': '95vw' }}
         header={isEdit ? t('partner.edit_title') : t('partner.create_title')}
         modal
-        className="p-fluid"
         onHide={() => setShowDialog(false)}
       >
-        <div className="flex flex-column gap-4 py-2">
+        <div className="p-fluid flex flex-column gap-4 py-2">
           {/* Section 1: Thông tin cơ bản */}
           <div className="p-3 border-round surface-50 border-1 surface-border">
             <h5 className="m-0 mb-3 text-900 font-bold flex align-items-center gap-2">

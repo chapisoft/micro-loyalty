@@ -994,9 +994,9 @@ export const SystemParameters: React.FC = () => {
         breakpoints={{ '960px': '75vw', '641px': '94vw' }}
         header={isEditParam ? t('system_parameter.edit_title') : t('system_parameter.create_title')}
         modal
-        className="p-fluid"
         onHide={() => setShowParamDialog(false)}
       >
+        <div className="p-fluid">
         <div className="field mb-3">
           <label htmlFor="paramKey" className="font-medium block mb-1">
             {t('system_parameter.key')}
@@ -1110,19 +1110,18 @@ export const SystemParameters: React.FC = () => {
             placeholder={t('system_parameter.description_placeholder')}
           />
         </div>
+        </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
             label={t('common.cancel')}
             icon="pi pi-times"
             outlined
-            className="w-auto"
             onClick={() => setShowParamDialog(false)}
           />
           <Button
             label={t('common.save')}
             icon="pi pi-check"
-            className="w-auto"
             onClick={saveParam}
           />
         </div>
@@ -1135,9 +1134,9 @@ export const SystemParameters: React.FC = () => {
         breakpoints={{ '960px': '75vw', '641px': '94vw' }}
         header={t('system_parameter.code_types.edit_title')}
         modal
-        className="p-fluid"
         onHide={() => setShowCodeTypeDialog(false)}
       >
+        <div className="p-fluid">
         <div className="grid">
           <div className="col-12 md:col-6 field mb-3">
             <label htmlFor="codeTypeId" className="font-medium block mb-1">
@@ -1295,19 +1294,18 @@ export const SystemParameters: React.FC = () => {
             value={codeTypeForm.status === 1 ? t('common.active') : t('common.inactive')}
           />
         </div>
+        </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
             label={t('common.cancel')}
             icon="pi pi-times"
             outlined
-            className="w-auto"
             onClick={() => setShowCodeTypeDialog(false)}
           />
           <Button
             label={t('common.save')}
             icon="pi pi-check"
-            className="w-auto"
             onClick={saveCodeType}
           />
         </div>

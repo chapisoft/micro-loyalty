@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IUser } from '@/service/admin/admin';
 
 interface UserRoleCellProps {
@@ -7,6 +8,7 @@ interface UserRoleCellProps {
 }
 
 export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModal }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -28,9 +30,9 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
       <span
         onClick={() => onOpenRoleModal(user)}
         className="text-xs text-400 cursor-pointer hover:underline"
-        title="Nhấp để gán vai trò"
+        title={t('role.click_to_assign', 'Nhấp để gán vai trò')}
       >
-        Chưa phân quyền
+        {t('role.unassigned', 'Chưa phân quyền')}
       </span>
     );
   }
@@ -38,7 +40,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
   const getBadgeStyle = (code: string) => {
     const c = code.toUpperCase();
     if (c.includes('ADMIN')) {
-      return { bg: '#FEF2F2', text: '#B42318', border: '#FECDCA' };
+      return { bg: '#EFF6FF', text: '#1D4ED8', border: '#DBEAFE' };
     }
     if (c.includes('PARTNER')) {
       return { bg: '#FFF7ED', text: '#C2410C', border: '#FFEDD5' };
@@ -46,7 +48,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
     if (c.includes('FINANCE') || c.includes('CLEARING')) {
       return { bg: '#F0FDF4', text: '#15803D', border: '#DCFCE7' };
     }
-    return { bg: '#EEF2FF', text: '#4F46E5', border: '#E0E7FF' };
+    return { bg: '#F1F5F9', text: '#334155', border: '#E2E8F0' };
   };
 
   const visibleRoles = rolesList.slice(0, 2);
@@ -72,7 +74,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
               }}
               title={r.description || r.name}
             >
-              {r.name || r.code}
+              {t(`role.name_${r.code}`, r.name || r.code)}
             </span>
           );
         })}
@@ -84,7 +86,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
-            title="Xem tất cả vai trò"
+            title={t('role.view_all_roles', 'Xem tất cả vai trò')}
             style={{
               padding: '2px 7px',
               borderRadius: '6px',
@@ -123,7 +125,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
         >
           <div className="flex justify-content-between align-items-center mb-2 pb-2 border-bottom-1 surface-border">
             <span className="text-xs font-bold text-900">
-              Danh sách vai trò ({rolesList.length})
+              {t('role.role_list_count', { count: rolesList.length, defaultValue: `Danh sách vai trò (${rolesList.length})` })}
             </span>
             <button
               onClick={() => setIsOpen(false)}
@@ -156,7 +158,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
                     {r.code}
                   </span>
                   <span className="text-xs text-700 font-medium overflow-hidden text-overflow-ellipsis white-space-nowrap">
-                    {r.name}
+                    {t(`role.name_${r.code}`, r.name)}
                   </span>
                 </div>
               );
@@ -183,7 +185,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
                 textAlign: 'center',
               }}
             >
-              Chỉnh sửa phân quyền
+              {t('role.edit_permissions', 'Chỉnh sửa phân quyền')}
             </button>
           </div>
         </div>

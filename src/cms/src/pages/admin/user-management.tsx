@@ -225,21 +225,21 @@ export const UserManagementPage: React.FC = () => {
       },
       {
         id: 'roles',
-        label: 'Gán vai trò',
+        label: t('user.assign_roles', 'Gán vai trò'),
         icon: 'pi pi-shield',
         severity: 'secondary',
         onClick: () => handleOpenRoleAssignment(rowData),
       },
       {
         id: 'reset_pwd',
-        label: 'Đặt lại mật khẩu',
+        label: t('user.reset_password', 'Đặt lại mật khẩu'),
         icon: 'pi pi-key',
         severity: 'secondary',
         onClick: () => handleOpenResetPassword(rowData),
       },
       {
         id: 'toggle_lock',
-        label: isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản',
+        label: isLocked ? t('user.unlock_account', 'Mở khóa tài khoản') : t('user.lock_account', 'Khóa tài khoản'),
         icon: isLocked ? 'pi pi-lock-open' : 'pi pi-lock',
         severity: isLocked ? 'info' : 'warning',
         onClick: () => (isLocked ? handleUnlockUser(rowData.userId) : handleLockUser(rowData.userId)),
@@ -276,7 +276,7 @@ export const UserManagementPage: React.FC = () => {
               whiteSpace: 'nowrap',
             }}
           >
-            Đổi MK
+            {t('user.must_change_pwd', 'Đổi MK')}
           </span>
         )}
       </div>
@@ -285,17 +285,17 @@ export const UserManagementPage: React.FC = () => {
 
   const roleFilterOptions = useMemo(() => {
     return [
-      { label: 'Tất cả vai trò', value: null },
-      ...allRoles.map((r) => ({ label: `${r.name} (${r.code})`, value: r.roleId })),
+      { label: t('common.all_roles', 'Tất cả vai trò'), value: null },
+      ...allRoles.map((r) => ({ label: `${t('role.name_' + r.code, r.name)} (${r.code})`, value: r.roleId })),
     ];
-  }, [allRoles]);
+  }, [allRoles, t]);
 
-  const statusOptions = [
-    { label: 'Tất cả trạng thái', value: 'ALL' },
-    { label: 'Hoạt động', value: 'ACTIVE' },
-    { label: 'Đã khóa', value: 'LOCKED' },
-    { label: 'Ngừng hoạt động', value: 'INACTIVE' },
-  ];
+  const statusOptions = useMemo(() => [
+    { label: t('common.all_status', 'Tất cả trạng thái'), value: 'ALL' },
+    { label: t('status.ACTIVE', 'Hoạt động'), value: 'ACTIVE' },
+    { label: t('status.LOCKED', 'Đã khóa'), value: 'LOCKED' },
+    { label: t('status.INACTIVE', 'Ngừng hoạt động'), value: 'INACTIVE' },
+  ], [t]);
 
   return (
     <div className="w-full flex flex-column gap-2">
@@ -305,15 +305,27 @@ export const UserManagementPage: React.FC = () => {
           { label: t('nav.users', 'Quản lý Tài khoản') },
         ]}
         title={t('nav.users', 'Quản lý Tài khoản')}
-        subtitle="Quản lý danh sách tài khoản quản trị CMS, gán vai trò và trạng thái truy cập"
+        subtitle={t('user.subtitle', 'Quản lý danh sách tài khoản quản trị CMS, gán vai trò và trạng thái truy cập')}
         actions={
-          <Button
-            label={t('common.add_new', 'Thêm mới')}
-            icon="pi pi-plus"
-            size="small"
-            onClick={handleCreateUser}
-            className="p-button-sm font-semibold"
-          />
+          <div className="flex align-items-center gap-2">
+            <Button
+              type="button"
+              icon="pi pi-file-excel"
+              label={t('common.export_excel', 'Xuất Excel')}
+              outlined
+              severity="secondary"
+              size="small"
+              onClick={handleExportExcel}
+              className="p-button-sm font-medium"
+            />
+            <Button
+              label={t('common.add_new', 'Thêm mới')}
+              icon="pi pi-plus"
+              size="small"
+              onClick={handleCreateUser}
+              className="p-button-sm font-semibold"
+            />
+          </div>
         }
       />
 
@@ -323,7 +335,7 @@ export const UserManagementPage: React.FC = () => {
           setSearchKeyword(val);
           setPageNumber(0);
         }}
-        searchPlaceholder="Tìm theo tên đăng nhập, họ tên, email, SĐT..."
+        searchPlaceholder={t('user.search_placeholder', 'Tìm theo tên đăng nhập, họ tên, email, SĐT...')}
         primaryFilters={
           <>
             <Dropdown
@@ -333,7 +345,7 @@ export const UserManagementPage: React.FC = () => {
                 setSelectedRoleId(e.value);
                 setPageNumber(0);
               }}
-              placeholder="Lọc theo vai trò"
+              placeholder={t('user.filter_role', 'Lọc theo vai trò')}
               className="p-inputtext-sm"
               style={{ minWidth: '13rem', maxWidth: '16rem' }}
             />
@@ -352,18 +364,6 @@ export const UserManagementPage: React.FC = () => {
         onReset={handleResetFilters}
         onRefresh={() => refetch()}
         isLoading={isLoading}
-        extraActions={
-          <Button
-            type="button"
-            icon="pi pi-file-excel"
-            label={t('common.export_excel', 'Xuất Excel')}
-            outlined
-            severity="secondary"
-            size="small"
-            onClick={handleExportExcel}
-            className="p-button-sm font-medium"
-          />
-        }
       />
 
       <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">

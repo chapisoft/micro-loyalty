@@ -419,7 +419,7 @@ export const AdvancedReportsPage: React.FC = () => {
                 onExport={handleExportSchedules}
               />
               <Button
-                label={t('common.create', 'Thêm mới')}
+                label={t('common.add_new', 'Thêm mới')}
                 icon="pi pi-plus"
                 size="small"
                 onClick={openNewSchedule}
@@ -511,9 +511,8 @@ export const AdvancedReportsPage: React.FC = () => {
         header={t('report.schedule_dialog')}
         style={{ width: '36rem' }}
         modal
-        className="p-fluid"
       >
-        <div className="flex flex-column gap-3">
+        <div className="p-fluid flex flex-column gap-3">
           <div className="field m-0">
             <label className="text-sm font-medium">{t('report.schedule_name')} *</label>
             <InputText

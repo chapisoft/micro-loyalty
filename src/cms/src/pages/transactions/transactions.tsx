@@ -511,17 +511,16 @@ export const Transactions: React.FC = () => {
                 <div className="col-4">
                   <div className="text-xs text-500 mb-1">{t('transaction.amount')}</div>
                   <div
-                    className={`font-mono font-bold text-xl ${
-                      detailItem.actionType === PointActionType.EARN ||
+                    className={`font-mono font-bold text-xl ${detailItem.actionType === PointActionType.EARN ||
                       detailItem.actionType === PointActionType.REWARD ||
                       detailItem.actionType === PointActionType.SPIN
-                        ? 'text-green-600'
-                        : 'text-orange-600'
-                    }`}
+                      ? 'text-green-600'
+                      : 'text-orange-600'
+                      }`}
                   >
                     {detailItem.actionType === PointActionType.EARN ||
-                    detailItem.actionType === PointActionType.REWARD ||
-                    detailItem.actionType === PointActionType.SPIN
+                      detailItem.actionType === PointActionType.REWARD ||
+                      detailItem.actionType === PointActionType.SPIN
                       ? `+${detailItem.points.toLocaleString()}`
                       : `-${detailItem.points.toLocaleString()}`}
                   </div>
@@ -628,9 +627,8 @@ export const Transactions: React.FC = () => {
         style={{ width: '36rem' }}
         breakpoints={{ '641px': '95vw' }}
         modal
-        className="p-fluid"
       >
-        <div className="flex flex-column gap-3">
+        <div className="p-fluid flex flex-column gap-3">
           <div className="p-3 border-round bg-blue-50 border-1 border-blue-200 text-xs text-blue-900">
             <i className="pi pi-shield mr-2" />
             {t('transaction.dt02_approval_hint')}

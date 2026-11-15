@@ -263,9 +263,8 @@ export const BudgetManagementPage: React.FC = () => {
         header={t('budget.dialog_title')}
         style={{ width: '36rem' }}
         modal
-        className="p-fluid"
       >
-        <div className="flex flex-column gap-3">
+        <div className="p-fluid flex flex-column gap-3">
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.sponsor')} *</label>

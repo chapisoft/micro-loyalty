@@ -674,9 +674,9 @@ export const TierManagementPage: React.FC = () => {
                       breakpoints={{ '960px': '75vw', '641px': '90vw' }}
                       header={formData.id ? t('tier.edit_title', 'Chỉnh sửa hạng') : t('common.add_new', 'Thêm mới hạng')}
                       modal
-                      className="p-fluid"
                       onHide={() => setShowDialog(false)}
                     >
+                      <div className="p-fluid">
                       <div className="formgrid grid mb-3">
                         <div className="field col-6 mb-0">
                           <label htmlFor="tierCode" className="font-medium text-900">
@@ -785,6 +785,7 @@ export const TierManagementPage: React.FC = () => {
                           onChange={(e) => setFormData({ ...formData, status: e.value })}
                         />
                       </div>
+                      </div>
                       <div className="flex justify-content-end gap-2 mt-4">
                         <Button
                           label={t('common.cancel')}
@@ -809,9 +810,9 @@ export const TierManagementPage: React.FC = () => {
                       style={{ width: '30rem' }}
                       header={t('tier.period_settings_title')}
                       modal
-                      className="p-fluid"
                       onHide={() => setShowPeriodDialog(false)}
                     >
+                      <div className="p-fluid">
                       <div className="field mb-3">
                         <label className="font-medium text-sm">
                           {t('tier.cycle_months')}
@@ -844,6 +845,7 @@ export const TierManagementPage: React.FC = () => {
                           min={1}
                           max={3}
                         />
+                      </div>
                       </div>
                       <div className="flex justify-content-end gap-2 mt-3">
                         <Button

@@ -769,8 +769,8 @@ export const ClearingSettlementPage: React.FC = () => {
       </Dialog>
 
       {/* Dialog Create Batch PAY-... (LM-07) */}
-      <Dialog visible={showCreateBatchDialog} onHide={() => setShowCreateBatchDialog(false)} header={t('clearing.create_batch_title')} style={{ width: '34rem' }} modal className="p-fluid">
-        <div className="flex flex-column gap-3">
+      <Dialog visible={showCreateBatchDialog} onHide={() => setShowCreateBatchDialog(false)} header={t('clearing.create_batch_title')} style={{ width: '34rem' }} modal>
+        <div className="p-fluid flex flex-column gap-3">
           <div className="field m-0">
             <label className="text-sm font-medium">{t('clearing.partner_name')} *</label>
             <Dropdown

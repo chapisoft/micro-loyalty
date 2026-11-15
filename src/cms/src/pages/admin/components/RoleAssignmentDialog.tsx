@@ -85,25 +85,28 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
     <Dialog
       visible={visible}
       onHide={onHide}
-      header="Gán vai trò cho người dùng"
+      header={t('user.assign_roles_title', 'Gán vai trò cho người dùng')}
       style={{ width: '540px' }}
       modal
-      className="p-fluid"
     >
       <div className="flex flex-column gap-3 py-2">
         <div className="surface-50 p-3 border-round border-1 surface-border">
-          <div className="text-xs text-500 mb-1">Người dùng:</div>
+          <div className="text-xs text-500 mb-1">{t('user.user_label', 'Người dùng:')}</div>
           <div className="font-bold text-900 text-base">{user?.fullName} ({user?.username})</div>
           <div className="text-xs text-600">{user?.email}</div>
         </div>
 
         <div>
           <div className="text-xs font-semibold text-700 uppercase tracking-wider mb-2">
-            Danh sách vai trò khả dụng ({selectedRoleIds.length}/{allRoles.length} đã chọn)
+            {t('user.available_roles_count', {
+              selected: selectedRoleIds.length,
+              total: allRoles.length,
+              defaultValue: `Danh sách vai trò khả dụng (${selectedRoleIds.length}/${allRoles.length} đã chọn)`,
+            })}
           </div>
 
           {isLoadingRoles ? (
-            <div className="p-3 text-center text-500 text-xs">Đang tải danh sách vai trò...</div>
+            <div className="p-3 text-center text-500 text-xs">{t('common.loading', 'Đang tải...')}</div>
           ) : (
             <div className="flex flex-column gap-2 max-h-20rem overflow-y-auto pr-1">
               {allRoles.map((role) => {
@@ -129,10 +132,14 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
                       <div>
                         <div className="flex align-items-center gap-2">
                           <span className="font-mono text-xs font-bold text-900">{role.code}</span>
-                          <span className="text-sm font-medium text-800">{role.name}</span>
+                          <span className="text-sm font-medium text-800">
+                            {t(`role.name_${role.code}`, role.name)}
+                          </span>
                         </div>
                         {role.description && (
-                          <div className="text-xs text-500">{role.description}</div>
+                          <div className="text-xs text-500">
+                            {t(`role.desc_${role.code}`, role.description)}
+                          </div>
                         )}
                       </div>
                     </div>

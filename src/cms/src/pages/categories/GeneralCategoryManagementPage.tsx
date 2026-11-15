@@ -293,7 +293,8 @@ export const GeneralCategoryManagementPage: React.FC = () => {
                 </small>
               </div>
               <Button
-                label={t('category.add_group', 'Thêm nhóm')}
+                label={t('common.add_new', 'Thêm mới')}
+                tooltip={t('category.add_group_tooltip', 'Thêm nhóm danh mục mới')}
                 icon="pi pi-plus"
                 size="small"
                 className="p-button-primary p-button-sm"
@@ -429,7 +430,8 @@ export const GeneralCategoryManagementPage: React.FC = () => {
                       type="button"
                     />
                     <Button
-                      label={t('category.add_item', 'Thêm mới giá trị')}
+                      label={t('common.add_new', 'Thêm mới')}
+                      tooltip={t('category.add_item_tooltip', 'Thêm mới giá trị danh mục')}
                       icon="pi pi-plus"
                       className="p-button-primary p-button-sm"
                       onClick={handleAddItem}

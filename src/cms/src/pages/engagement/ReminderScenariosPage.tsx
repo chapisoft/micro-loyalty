@@ -219,8 +219,8 @@ export const ReminderScenariosPage: React.FC = () => {
         </TabView>
       </div>
 
-      <Dialog visible={showDialog} onHide={() => setShowDialog(false)} header={t('scenario.dialog_title')} style={{ width: '48rem' }} modal className="p-fluid">
-        <div className="grid">
+      <Dialog visible={showDialog} onHide={() => setShowDialog(false)} header={t('scenario.dialog_title')} style={{ width: '48rem' }} modal>
+        <div className="p-fluid grid">
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('scenario.code')} *</label>
             <InputText value={formData.scenarioCode || ''} onChange={(e) => setFormData({ ...formData, scenarioCode: e.target.value.toUpperCase() })} className="font-mono" />

@@ -86,15 +86,14 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
     <Dialog
       visible={visible}
       onHide={handleClose}
-      header="Đặt lại mật khẩu tài khoản"
+      header={t('user.reset_pwd_title', 'Đặt lại mật khẩu tài khoản')}
       style={{ width: '480px' }}
       modal
-      className="p-fluid"
     >
       {!generatedPassword ? (
-        <div className="flex flex-column gap-3 py-2">
+        <div className="p-fluid flex flex-column gap-3 py-2">
           <div className="surface-50 p-3 border-round border-1 surface-border">
-            <div className="text-xs text-500 mb-1">Tài khoản đặt lại:</div>
+            <div className="text-xs text-500 mb-1">{t('user.target_account', 'Tài khoản đặt lại:')}</div>
             <div className="font-bold text-900 text-base">{user?.fullName} ({user?.username})</div>
             <div className="text-xs text-600">{user?.email}</div>
           </div>
@@ -109,18 +108,18 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
               style={{ width: '16px', height: '16px' }}
             />
             <label htmlFor="autoGenerateCheck" className="text-sm cursor-pointer select-none font-medium">
-              Tự động tạo mật khẩu ngẫu nhiên an toàn
+              {t('user.auto_generate_pwd', 'Tự động tạo mật khẩu ngẫu nhiên an toàn')}
             </label>
           </div>
 
           {!autoGenerate && (
             <div className="flex flex-column gap-1">
-              <label className="text-xs font-semibold text-700">Mật khẩu mới</label>
+              <label className="text-xs font-semibold text-700">{t('user.new_password', 'Mật khẩu mới')}</label>
               <InputText
                 type="password"
                 value={customPassword}
                 onChange={(e) => setCustomPassword(e.target.value)}
-                placeholder="Nhập mật khẩu mới..."
+                placeholder={t('user.new_password_placeholder', 'Nhập mật khẩu mới...')}
                 className="p-inputtext-sm"
               />
             </div>
@@ -128,7 +127,7 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
 
           <div className="text-xs text-500 bg-blue-50 text-blue-700 p-2 border-round">
             <i className="pi pi-info-circle mr-1" />
-            Người dùng sẽ được yêu cầu đổi mật khẩu ở lần đăng nhập tiếp theo.
+            {t('user.reset_pwd_note', 'Người dùng sẽ được yêu cầu đổi mật khẩu ở lần đăng nhập tiếp theo.')}
           </div>
 
           <div className="flex justify-content-end gap-2 mt-3">
@@ -142,7 +141,7 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
             />
             <Button
               type="button"
-              label="Đặt lại mật khẩu"
+              label={t('common.confirm', 'Xác nhận')}
               icon="pi pi-check"
               size="small"
               loading={resetPasswordMutation.isPending}
@@ -154,8 +153,8 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         <div className="flex flex-column gap-3 py-2">
           <div className="text-center">
             <i className="pi pi-check-circle text-green-500 text-4xl mb-2" />
-            <div className="text-base font-bold text-900">Mật khẩu mới đã được khởi tạo</div>
-            <div className="text-xs text-500">Hãy gửi mật khẩu tạm thời này cho người dùng</div>
+            <div className="text-base font-bold text-900">{t('user.pwd_generated_title', 'Mật khẩu mới đã được khởi tạo')}</div>
+            <div className="text-xs text-500">{t('user.pwd_generated_desc', 'Hãy gửi mật khẩu tạm thời này cho người dùng')}</div>
           </div>
 
           <div className="surface-100 p-3 border-round border-1 surface-border flex align-items-center justify-content-between">
@@ -165,7 +164,7 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
             <Button
               type="button"
               icon={isCopied ? 'pi pi-check' : 'pi pi-copy'}
-              label={isCopied ? 'Đã sao chép' : 'Sao chép'}
+              label={isCopied ? t('common.copied', 'Đã sao chép') : t('common.copy', 'Sao chép')}
               size="small"
               severity={isCopied ? 'success' : 'secondary'}
               onClick={handleCopy}

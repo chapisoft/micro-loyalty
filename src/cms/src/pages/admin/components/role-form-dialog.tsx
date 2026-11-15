@@ -26,25 +26,7 @@ interface RoleFormDialogProps {
   onSuccess: () => void;
 }
 
-const PLATFORM_OPTIONS = [
-  { label: 'Hệ thống Quản trị CMS', value: 'WEB_CMS' },
-  { label: 'Cổng Đối tác Liên minh', value: 'PARTNER_PORTAL' },
-  { label: 'Tất cả nền tảng', value: 'ALL' },
-];
-
-const SCOPE_OPTIONS = [
-  { label: 'Toàn hệ thống', value: 'GLOBAL' },
-  { label: 'Theo đơn vị thuê bao', value: 'TENANT' },
-  { label: 'Theo đối tác cụ thể', value: 'PARTNER' },
-  { label: 'Tất cả phạm vi', value: 'ALL' },
-];
-
-const STATUS_OPTIONS = [
-  { label: 'Hoạt động', value: 'ACTIVE' },
-  { label: 'Ngừng hoạt động', value: 'INACTIVE' },
-];
-
-// Thứ tự phân hệ chức năng chuẩn mực
+// Standard module execution order
 const MODULE_ORDER = [
   'USER',
   'ROLE',
@@ -64,37 +46,27 @@ const MODULE_ORDER = [
   'AUDIT_LOG',
 ];
 
-// Thông tin chi tiết phân hệ chức năng
-const MODULE_METADATA: Record<string, { label: string; desc: string; icon: string }> = {
-  USER: { label: 'Người dùng Quản trị', desc: 'Quản lý tài khoản CMS, mật khẩu và trạng thái', icon: 'pi pi-users' },
-  ROLE: { label: 'Vai trò & Phân quyền', desc: 'Thiết lập vai trò quản trị và ma trận quyền', icon: 'pi pi-shield' },
-  CATEGORY: { label: 'Danh mục Dùng chung', desc: 'Nhóm danh mục và giá trị master data', icon: 'pi pi-list' },
-  CUSTOMER: { label: 'Quản lý Hội viên', desc: 'Hồ sơ 360 hội viên, điểm thưởng và thăng hạng', icon: 'pi pi-user' },
-  TIER: { label: 'Hạng Hội viên', desc: 'Tiêu chí xét hạng, hệ số tích điểm và đãi ngộ', icon: 'pi pi-star' },
-  POLICY: { label: 'Chính sách Điểm', desc: 'Quy tắc công thức tích/tiêu điểm và tỷ lệ hoàn', icon: 'pi pi-file-edit' },
-  PARTNER: { label: 'Đối tác Liên minh', desc: 'Hồ sơ doanh nghiệp liên minh và chi nhánh POS', icon: 'pi pi-building' },
-  VOUCHER: { label: 'Kho Voucher & Ưu đãi', desc: 'Đợt phát hành voucher, kho mã và đổi ưu đãi', icon: 'pi pi-ticket' },
-  CAMPAIGN: { label: 'Chiến dịch & Cột mốc', desc: 'Chiến dịch Marketing, cột mốc và ngân sách', icon: 'pi pi-megaphone' },
-  GAME: { label: 'GameHub & Vòng quay', desc: 'Minigame, vòng quay may mắn và ngân hàng câu hỏi', icon: 'pi pi-play' },
-  TRANSACTION: { label: 'Sổ cái & Giao dịch', desc: 'Bút toán FIFO tích/tiêu điểm và điều chỉnh', icon: 'pi pi-history' },
-  CLEARING: { label: 'Quyết toán & Bù trừ', desc: 'Đối soát 3 bên, tính công nợ và quyết toán tiền mặt', icon: 'pi pi-wallet' },
-  APPROVAL: { label: 'Hàng đợi Phê duyệt', desc: 'Kiểm soát kép Maker-Checker cho các đề xuất', icon: 'pi pi-check-circle' },
-  REPORT: { label: 'Báo cáo & Phân tích', desc: 'Dashboard KPI, doanh thu và báo cáo quản trị', icon: 'pi pi-chart-bar' },
-  SYSTEM_PARAM: { label: 'Tham số Hệ thống', desc: 'Cấu hình động bảo mật, hạn mức và vận hành', icon: 'pi pi-cog' },
-  AUDIT_LOG: { label: 'Nhật ký Kiểm toán', desc: 'Dấu vết thao tác bảo mật phục vụ thanh tra', icon: 'pi pi-eye' },
+// Fallback metadata for modules
+const MODULE_METADATA: Record<string, { label: string; desc: string }> = {
+  USER: { label: 'Người dùng Quản trị', desc: 'Quản lý tài khoản CMS, mật khẩu và trạng thái' },
+  ROLE: { label: 'Vai trò & Phân quyền', desc: 'Thiết lập vai trò quản trị và ma trận quyền' },
+  CATEGORY: { label: 'Danh mục Dùng chung', desc: 'Nhóm danh mục và giá trị master data' },
+  CUSTOMER: { label: 'Quản lý Hội viên', desc: 'Hồ sơ 360 hội viên, điểm thưởng và thăng hạng' },
+  TIER: { label: 'Hạng Hội viên', desc: 'Tiêu chí xét hạng, hệ số tích điểm và đãi ngộ' },
+  POLICY: { label: 'Chính sách Điểm', desc: 'Quy tắc công thức tích/tiêu điểm và tỷ lệ hoàn' },
+  PARTNER: { label: 'Đối tác Liên minh', desc: 'Hồ sơ doanh nghiệp liên minh và chi nhánh POS' },
+  VOUCHER: { label: 'Kho Voucher & Ưu đãi', desc: 'Đợt phát hành voucher, kho mã và đổi ưu đãi' },
+  CAMPAIGN: { label: 'Chiến dịch & Cột mốc', desc: 'Chiến dịch Marketing, cột mốc và ngân sách' },
+  GAME: { label: 'GameHub & Vòng quay', desc: 'Minigame, vòng quay may mắn và ngân hàng câu hỏi' },
+  TRANSACTION: { label: 'Sổ cái & Giao dịch', desc: 'Bút toán FIFO tích/tiêu điểm và điều chỉnh' },
+  CLEARING: { label: 'Quyết toán & Bù trừ', desc: 'Đối soát 3 bên, tính công nợ và quyết toán tiền mặt' },
+  APPROVAL: { label: 'Hàng đợi Phê duyệt', desc: 'Kiểm soát kép Maker-Checker cho các đề xuất' },
+  REPORT: { label: 'Báo cáo & Phân tích', desc: 'Dashboard KPI, doanh thu và báo cáo quản trị' },
+  SYSTEM_PARAM: { label: 'Tham số Hệ thống', desc: 'Cấu hình động bảo mật, hạn mức và vận hành' },
+  AUDIT_LOG: { label: 'Nhật ký Kiểm toán', desc: 'Dấu vết thao tác bảo mật phục vụ thanh tra' },
 };
 
-// 7 Hành động nghiệp vụ chuẩn mực + Khác (OTHER)
-const MATRIX_COLUMNS: { key: string; label: string; badge: string; color: string }[] = [
-  { key: 'VIEW', label: 'Xem', badge: 'VIEW', color: '#1D4ED8' },
-  { key: 'CREATE', label: 'Thêm', badge: 'CREATE', color: '#15803D' },
-  { key: 'EDIT', label: 'Sửa', badge: 'EDIT', color: '#B45309' },
-  { key: 'DELETE', label: 'Xóa', badge: 'DELETE', color: '#B91C1C' },
-  { key: 'LOCK', label: 'Khóa', badge: 'LOCK', color: '#475569' },
-  { key: 'APPROVE', label: 'Duyệt', badge: 'APPROVE', color: '#047857' },
-  { key: 'EXPORT', label: 'Xuất DL', badge: 'EXPORT', color: '#4338CA' },
-  { key: 'OTHER', label: 'Khác', badge: 'KHÁC', color: '#6D28D9' },
-];
+const MATRIX_ACTIONS = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'LOCK', 'APPROVE', 'EXPORT', 'OTHER'];
 
 export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
   visible,
@@ -119,6 +91,33 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
 
+  const platformOptions = useMemo(
+    () => [
+      { label: t('role.platform_web_cms', 'Hệ thống Quản trị CMS'), value: 'WEB_CMS' },
+      { label: t('role.platform_partner_portal', 'Cổng Đối tác Liên minh'), value: 'PARTNER_PORTAL' },
+      { label: t('role.platform_all', 'Tất cả nền tảng'), value: 'ALL' },
+    ],
+    [t]
+  );
+
+  const scopeOptions = useMemo(
+    () => [
+      { label: t('role.scope_global', 'Toàn hệ thống'), value: 'GLOBAL' },
+      { label: t('role.scope_tenant', 'Theo đơn vị thuê bao'), value: 'TENANT' },
+      { label: t('role.scope_partner', 'Theo đối tác cụ thể'), value: 'PARTNER' },
+      { label: t('role.scope_all', 'Tất cả phạm vi'), value: 'ALL' },
+    ],
+    [t]
+  );
+
+  const statusOptions = useMemo(
+    () => [
+      { label: t('status.ACTIVE', 'Hoạt động'), value: 'ACTIVE' },
+      { label: t('status.INACTIVE', 'Ngừng hoạt động'), value: 'INACTIVE' },
+    ],
+    [t]
+  );
+
   const allPermissions: IPermission[] = useMemo(() => {
     if (!permissionsData) return [];
     if (Array.isArray(permissionsData)) return permissionsData as any;
@@ -126,12 +125,10 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     return [];
   }, [permissionsData]);
 
-  // Phân bổ quyền theo ma trận: Map<Module, Map<ActionKey, IPermission[]>>
+  // Matrix allocation: Map<Module, Map<ActionKey, IPermission[]>>
   const moduleMatrix = useMemo(() => {
-    // Thu thập tất cả các module có trong allPermissions
     const foundModules = Array.from(new Set(allPermissions.map((p) => (p.module || 'SYSTEM').toUpperCase())));
 
-    // Sắp xếp theo thứ tự MODULE_ORDER trước, sau đó là các module phát sinh
     const sortedModules = [
       ...MODULE_ORDER.filter((m) => foundModules.includes(m)),
       ...foundModules.filter((m) => !MODULE_ORDER.includes(m)),
@@ -140,7 +137,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     return sortedModules.map((mod) => {
       const permsInMod = allPermissions.filter((p) => (p.module || 'SYSTEM').toUpperCase() === mod);
 
-      // Phân bổ theo 8 cột
       const actionMap: Record<string, IPermission[]> = {
         VIEW: [],
         CREATE: [],
@@ -164,21 +160,19 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
       const meta = MODULE_METADATA[mod] || {
         label: mod,
         desc: `Phân hệ chức năng ${mod}`,
-        icon: 'pi pi-folder',
       };
 
       return {
         module: mod,
         label: meta.label,
         desc: meta.desc,
-        icon: meta.icon,
         actionMap,
         allPermIdsInMod: permsInMod.map((p) => p.permissionId),
       };
     });
   }, [allPermissions]);
 
-  // Lọc theo từ khóa tìm kiếm
+  // Keyword filter
   const filteredMatrix = useMemo(() => {
     if (!searchKeyword.trim()) return moduleMatrix;
     const kw = searchKeyword.toLowerCase().trim();
@@ -217,7 +211,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   }, [visible, role, isEditing]);
 
-  // Bật/tắt 1 quyền cụ thể
   const handleTogglePerm = (permId: number) => {
     if (selectedPermissionIds.includes(permId)) {
       setSelectedPermissionIds(selectedPermissionIds.filter((id) => id !== permId));
@@ -226,7 +219,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   };
 
-  // Chọn/bỏ chọn toàn bộ quyền của 1 phân hệ (Row Toggle)
   const handleToggleRow = (permIds: number[], isChecked: boolean) => {
     if (isChecked) {
       const newIds = Array.from(new Set([...selectedPermissionIds, ...permIds]));
@@ -236,7 +228,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   };
 
-  // Chọn/bỏ chọn toàn bộ quyền của 1 hành động trên toàn hệ thống (Column Toggle)
   const handleToggleColumn = (actionKey: string) => {
     const colPermIds: number[] = [];
     allPermissions.forEach((p) => {
@@ -259,7 +250,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   };
 
-  // Chọn tất cả / Bỏ chọn tất cả ma trận
   const handleToggleAllMatrix = () => {
     if (selectedPermissionIds.length === allPermissions.length) {
       setSelectedPermissionIds([]);
@@ -268,7 +258,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   };
 
-  // Chọn nhanh quyền Chỉ Xem (Read-only)
   const handleSelectReadOnly = () => {
     const viewPermIds = allPermissions
       .filter((p) => (p.action || '').toUpperCase() === 'VIEW')
@@ -276,7 +265,6 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     setSelectedPermissionIds(viewPermIds);
   };
 
-  // Chọn nhanh Toàn quyền Quản trị (Full Access)
   const handleSelectFullAdmin = () => {
     setSelectedPermissionIds(allPermissions.map((p) => p.permissionId));
   };
@@ -288,7 +276,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
       showToast({
         severity: 'warn',
         summary: t('common.warning', 'Cảnh báo'),
-        detail: 'Vui lòng nhập đầy đủ mã và tên vai trò',
+        detail: t('validate.role_code_required', 'Vui lòng nhập đầy đủ mã và tên vai trò'),
       });
       setActiveTab(0);
       return;
@@ -312,7 +300,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             showToast({
               severity: 'success',
               summary: t('common.success', 'Thành công'),
-              detail: 'Cập nhật vai trò & ma trận phân quyền thành công',
+              detail: t('role.update_success', 'Cập nhật vai trò thành công'),
             });
             onSuccess();
             onHide();
@@ -321,7 +309,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             showToast({
               severity: 'error',
               summary: t('common.error', 'Lỗi'),
-              detail: err?.response?.data?.message || 'Không thể cập nhật vai trò',
+              detail: err?.response?.data?.message || t('role.update_failed', 'Không thể cập nhật vai trò'),
             });
           },
         }
@@ -332,7 +320,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
           showToast({
             severity: 'success',
             summary: t('common.success', 'Thành công'),
-            detail: 'Thêm mới vai trò quản trị thành công',
+            detail: t('role.create_success', 'Tạo vai trò thành công'),
           });
           onSuccess();
           onHide();
@@ -341,7 +329,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
           showToast({
             severity: 'error',
             summary: t('common.error', 'Lỗi'),
-            detail: err?.response?.data?.message || 'Không thể thêm mới vai trò',
+            detail: err?.response?.data?.message || t('role.create_failed', 'Không thể tạo vai trò'),
           });
         },
       });
@@ -355,40 +343,39 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
       header={
         <div className="flex align-items-center gap-2">
           <i className="pi pi-shield text-primary text-xl" />
-          <span className="font-bold text-lg">
-            {isEditing ? 'Cập nhật vai trò & Ma trận phân quyền' : 'Thêm mới vai trò & Cấu hình quyền'}
+          <span className="font-bold text-lg text-900">
+            {isEditing ? t('role.edit_title', 'Cập nhật vai trò & phân quyền') : t('role.create_title', 'Thêm mới vai trò')}
           </span>
         </div>
       }
-      style={{ width: '1050px', maxWidth: '98vw' }}
+      style={{ width: '1060px', maxWidth: '96vw' }}
       modal
-      className="p-fluid"
     >
       <Tooltip target=".perm-checkbox-item" position="top" />
 
       <form onSubmit={handleSubmit} className="flex flex-column gap-2">
         <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
           {/* TAB 1: THÔNG TIN VAI TRÒ */}
-          <TabPanel header="Thông tin vai trò" leftIcon="pi pi-id-card mr-2">
+          <TabPanel header={t('role.tab_info', 'Thông tin vai trò')} leftIcon="pi pi-id-card mr-2">
             <div className="flex flex-column gap-3 pt-2">
-              <div className="grid">
+              <div className="grid p-fluid">
                 <div className="col-12 md:col-6 flex flex-column gap-1">
                   <label className="text-xs font-semibold text-700">
-                    Mã vai trò <span className="text-red-500">*</span>
+                    {t('role.code', 'Mã vai trò')} <span className="text-red-500">*</span>
                   </label>
                   <InputText
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     placeholder="Ví dụ: ADMIN, CS_OFFICER, FINANCE_AUDITOR..."
                     disabled={isEditing}
-                    className="p-inputtext-sm font-mono font-bold"
+                    className="p-inputtext-sm font-mono font-semibold"
                   />
                   <small className="text-xs text-500">Mã viết hoa, không dấu, dùng nhận diện trong mã nguồn</small>
                 </div>
 
                 <div className="col-12 md:col-6 flex flex-column gap-1">
                   <label className="text-xs font-semibold text-700">
-                    Tên hiển thị <span className="text-red-500">*</span>
+                    {t('role.name', 'Tên vai trò')} <span className="text-red-500">*</span>
                   </label>
                   <InputText
                     value={name}
@@ -400,37 +387,37 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                 </div>
 
                 <div className="col-12 md:col-4 flex flex-column gap-1">
-                  <label className="text-xs font-semibold text-700">Nền tảng áp dụng</label>
+                  <label className="text-xs font-semibold text-700">{t('role.platform', 'Nền tảng')}</label>
                   <Dropdown
                     value={platform}
-                    options={PLATFORM_OPTIONS}
+                    options={platformOptions}
                     onChange={(e) => setPlatform(e.value)}
                     className="p-inputtext-sm"
                   />
                 </div>
 
                 <div className="col-12 md:col-4 flex flex-column gap-1">
-                  <label className="text-xs font-semibold text-700">Phạm vi tác động</label>
+                  <label className="text-xs font-semibold text-700">{t('role.scope', 'Phạm vi')}</label>
                   <Dropdown
                     value={scope}
-                    options={SCOPE_OPTIONS}
+                    options={scopeOptions}
                     onChange={(e) => setScope(e.value)}
                     className="p-inputtext-sm"
                   />
                 </div>
 
                 <div className="col-12 md:col-4 flex flex-column gap-1">
-                  <label className="text-xs font-semibold text-700">Trạng thái hoạt động</label>
+                  <label className="text-xs font-semibold text-700">{t('common.status', 'Trạng thái')}</label>
                   <Dropdown
                     value={status}
-                    options={STATUS_OPTIONS}
+                    options={statusOptions}
                     onChange={(e) => setStatus(e.value)}
                     className="p-inputtext-sm"
                   />
                 </div>
 
                 <div className="col-12 flex flex-column gap-1">
-                  <label className="text-xs font-semibold text-700">Mô tả chức trách vai trò</label>
+                  <label className="text-xs font-semibold text-700">{t('role.description', 'Mô tả chức năng')}</label>
                   <InputTextarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -444,26 +431,27 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
               {/* Thanh điều hướng nhanh sang Ma trận quyền */}
               <div className="surface-50 p-3 border-round border-1 surface-border flex align-items-center justify-content-between mt-2">
                 <div className="flex align-items-center gap-3">
-                  <div className="w-2rem h-2rem border-round bg-blue-100 flex align-items-center justify-content-center text-blue-700 font-bold">
+                  <div className="w-2rem h-2rem border-round bg-blue-50 flex align-items-center justify-content-center text-blue-700 font-bold border-1 border-blue-200">
                     <i className="pi pi-table" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-900">
-                      Ma trận phân quyền: Đã chọn {selectedPermissionIds.length} / {allPermissions.length} quyền
+                    <div className="text-sm font-semibold text-900">
+                      {t('role.matrix_info', 'Đã phân quyền:')} {selectedPermissionIds.length} / {allPermissions.length} {t('role.perms_suffix', 'quyền')}
                     </div>
                     <div className="text-xs text-500">
-                      Chuyển sang tab "Phân quyền chi tiết" để cấu hình chi tiết theo Phân hệ chức năng & Hành động
+                      Chuyển sang tab &quot;{t('role.tab_matrix', 'Phân quyền chi tiết')}&quot; để cấu hình chi tiết theo Phân hệ chức năng & Hành động
                     </div>
                   </div>
                 </div>
                 <Button
                   type="button"
-                  label="Mở Ma trận phân quyền"
+                  label={t('role.configure_permissions', 'Phân quyền chi tiết')}
                   icon="pi pi-arrow-right"
                   size="small"
                   outlined
                   onClick={() => setActiveTab(1)}
                   className="p-button-sm font-medium"
+                  style={{ width: 'auto' }}
                 />
               </div>
             </div>
@@ -474,7 +462,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             header={
               <div className="flex align-items-center gap-2">
                 <i className="pi pi-table" />
-                <span>Phân quyền chi tiết ({selectedPermissionIds.length})</span>
+                <span>{t('role.tab_matrix', 'Phân quyền chi tiết')} ({selectedPermissionIds.length})</span>
               </div>
             }
           >
@@ -482,15 +470,16 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
               {/* Toolbar điều khiển ma trận */}
               <div className="flex flex-wrap align-items-center justify-content-between gap-2 p-2 surface-50 border-round border-1 surface-border">
                 {/* Ô tìm kiếm */}
-                <div className="p-inputgroup flex-1" style={{ maxWidth: '22rem' }}>
-                  <span className="p-inputgroup-addon py-1">
+                <div className="p-inputgroup flex-1" style={{ maxWidth: '20rem' }}>
+                  <span className="p-inputgroup-addon py-1 px-2">
                     <i className="pi pi-search text-500 text-xs" />
                   </span>
                   <InputText
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    placeholder="Tìm theo phân hệ, mã quyền, tên..."
-                    className="p-inputtext-sm"
+                    placeholder={t('role.search_perms', 'Tìm theo phân hệ, mã quyền, tên...')}
+                    className="p-inputtext-sm text-xs"
+                    style={{ height: '34px' }}
                   />
                   {searchKeyword && (
                     <Button
@@ -499,44 +488,51 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                       text
                       size="small"
                       onClick={() => setSearchKeyword('')}
+                      style={{ width: '34px', height: '34px' }}
                     />
                   )}
                 </div>
 
                 {/* Các nút chọn nhanh */}
-                <div className="flex align-items-center gap-1 flex-wrap">
+                <div className="flex align-items-center gap-2 flex-wrap">
                   <Button
                     type="button"
-                    label={selectedPermissionIds.length === allPermissions.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    label={selectedPermissionIds.length === allPermissions.length ? t('common.unselect_all', 'Bỏ chọn tất cả') : t('common.select_all', 'Chọn tất cả')}
                     icon={selectedPermissionIds.length === allPermissions.length ? 'pi pi-times' : 'pi pi-check-square'}
                     size="small"
                     outlined
                     severity="secondary"
                     onClick={handleToggleAllMatrix}
-                    className="p-button-sm text-xs"
+                    className="p-button-sm text-xs py-1 px-3"
+                    style={{ width: 'auto', height: '34px' }}
                   />
                   <Button
                     type="button"
-                    label="Chỉ xem"
+                    label={t('role.view_only', 'Chỉ xem')}
                     icon="pi pi-eye"
                     size="small"
                     outlined
-                    severity="info"
+                    severity="secondary"
                     onClick={handleSelectReadOnly}
-                    className="p-button-sm text-xs"
+                    className="p-button-sm text-xs py-1 px-3"
+                    style={{ width: 'auto', height: '34px' }}
                   />
                   <Button
                     type="button"
-                    label="Toàn quyền"
+                    label={t('role.full_access', 'Toàn quyền')}
                     icon="pi pi-star"
                     size="small"
                     outlined
-                    severity="success"
+                    severity="secondary"
                     onClick={handleSelectFullAdmin}
-                    className="p-button-sm text-xs"
+                    className="p-button-sm text-xs py-1 px-3"
+                    style={{ width: 'auto', height: '34px' }}
                   />
-                  <span className="text-xs font-bold px-2 py-1 border-round bg-blue-100 text-blue-800 ml-1">
-                    {selectedPermissionIds.length} / {allPermissions.length} quyền
+                  <span
+                    className="text-xs font-semibold px-2 py-1 border-round bg-blue-50 text-blue-700 border-1 border-blue-200 ml-1 white-space-nowrap"
+                    style={{ height: '34px', display: 'inline-flex', alignItems: 'center' }}
+                  >
+                    {selectedPermissionIds.length} / {allPermissions.length} {t('role.perms_suffix', 'quyền')}
                   </span>
                 </div>
               </div>
@@ -550,11 +546,11 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
               ) : (
                 <div
                   className="border-round border-1 surface-border overflow-x-auto"
-                  style={{ maxHeight: '27rem' }}
+                  style={{ maxHeight: '28rem' }}
                 >
                   <table
                     className="w-full text-left"
-                    style={{ borderCollapse: 'collapse', minWidth: '920px' }}
+                    style={{ borderCollapse: 'collapse', minWidth: '930px' }}
                   >
                     {/* Header Columns */}
                     <thead className="surface-100 sticky top-0 z-2 border-bottom-1 surface-border">
@@ -562,24 +558,24 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                         {/* Cột 1: Chức năng / Phân hệ */}
                         <th
                           style={{
-                            width: '280px',
-                            minWidth: '260px',
-                            padding: '10px 12px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            color: '#0F172A',
+                            width: '300px',
+                            minWidth: '280px',
+                            padding: '8px 12px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#475569',
                           }}
                         >
-                          Phân hệ / Chức năng
+                          {t('role.col_module', 'Phân hệ / Chức năng')}
                         </th>
 
                         {/* Cột 2-9: Các hành động nghiệp vụ */}
-                        {MATRIX_COLUMNS.map((col) => {
+                        {MATRIX_ACTIONS.map((actionKey) => {
                           const colPerms = allPermissions.filter((p) => {
                             const act = (p.action || '').toUpperCase();
-                            return col.key === 'OTHER'
+                            return actionKey === 'OTHER'
                               ? !['VIEW', 'CREATE', 'EDIT', 'DELETE', 'LOCK', 'APPROVE', 'EXPORT'].includes(act)
-                              : act === col.key;
+                              : act === actionKey;
                           });
                           const isColAllChecked =
                             colPerms.length > 0 &&
@@ -587,27 +583,29 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                           const isColSomeChecked =
                             colPerms.length > 0 &&
                             colPerms.some((p) => selectedPermissionIds.includes(p.permissionId));
+                          const isOther = actionKey === 'OTHER';
+                          const colLabel = t(`action.${actionKey}`, actionKey);
 
                           return (
                             <th
-                              key={col.key}
+                              key={actionKey}
                               style={{
-                                width: '90px',
-                                minWidth: '85px',
-                                padding: '8px 6px',
+                                width: isOther ? '120px' : '70px',
+                                minWidth: isOther ? '110px' : '65px',
+                                padding: '6px 4px',
                                 textAlign: 'center',
                                 fontSize: '12px',
-                                fontWeight: 700,
-                                color: col.color,
+                                fontWeight: 600,
+                                color: '#475569',
                                 borderLeft: '1px solid #E2E8F0',
                               }}
                             >
                               <div
-                                onClick={() => handleToggleColumn(col.key)}
+                                onClick={() => handleToggleColumn(actionKey)}
                                 className="flex flex-column align-items-center gap-1 cursor-pointer hover:surface-200 p-1 border-round select-none transition-colors"
-                                title={`Nhấp để chọn/bỏ chọn toàn bộ quyền "${col.label}"`}
+                                title={`Nhấp để chọn/bỏ chọn toàn bộ quyền "${colLabel}"`}
                               >
-                                <span className="font-bold text-xs">{col.label}</span>
+                                <span className="font-semibold text-xs text-700 white-space-nowrap">{colLabel}</span>
                                 <input
                                   type="checkbox"
                                   checked={isColAllChecked}
@@ -619,7 +617,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                     width: '14px',
                                     height: '14px',
                                     cursor: 'pointer',
-                                    accentColor: col.color,
+                                    accentColor: '#2563EB',
                                   }}
                                 />
                               </div>
@@ -657,8 +655,11 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                               } hover:surface-100`}
                             >
                               {/* Cột 1: Thông tin phân hệ + Checkbox chọn cả dòng */}
-                              <td style={{ padding: '8px 12px', verticalAlign: 'middle' }}>
-                                <label className="flex align-items-center gap-2 cursor-pointer select-none">
+                              <td style={{ padding: '6px 12px', verticalAlign: 'middle' }}>
+                                <label
+                                  className="flex align-items-center gap-2 cursor-pointer select-none m-0"
+                                  title={rowItem.desc}
+                                >
                                   <input
                                     type="checkbox"
                                     checked={isRowAllChecked}
@@ -673,33 +674,25 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                       height: '15px',
                                       cursor: 'pointer',
                                       accentColor: '#2563EB',
+                                      flexShrink: 0,
                                     }}
                                   />
-                                  <div className="flex flex-column gap-0">
-                                    <div className="flex align-items-center gap-1">
-                                      <i className={`${rowItem.icon} text-primary text-xs`} />
-                                      <span className="font-bold text-xs text-900">
-                                        {rowItem.label}
-                                      </span>
-                                      <span
-                                        className="font-mono text-10 font-bold px-1 border-round"
-                                        style={{ background: '#F1F5F9', color: '#475569' }}
-                                      >
-                                        {rowItem.module}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className="text-11 text-500 overflow-hidden text-overflow-ellipsis white-space-nowrap"
-                                      style={{ maxWidth: '230px' }}
-                                    >
-                                      {rowItem.desc}
-                                    </div>
-                                  </div>
+                                  <span className="font-medium text-xs text-900 white-space-nowrap">
+                                    {t(`module.${rowItem.module}`, rowItem.label)}
+                                  </span>
                                   <span
-                                    className="ml-auto text-10 font-bold px-2 py-0 border-round"
+                                    className="font-mono text-10 text-500 font-medium px-1 border-round surface-200 white-space-nowrap"
+                                    style={{ lineHeight: '16px' }}
+                                  >
+                                    {rowItem.module}
+                                  </span>
+                                  <span
+                                    className="ml-auto text-10 font-medium px-2 py-0 border-round white-space-nowrap"
                                     style={{
-                                      background: selectedCountInRow > 0 ? '#DBEAFE' : '#F1F5F9',
-                                      color: selectedCountInRow > 0 ? '#1E40AF' : '#64748B',
+                                      background: selectedCountInRow > 0 ? '#EFF6FF' : '#F1F5F9',
+                                      color: selectedCountInRow > 0 ? '#1D4ED8' : '#64748B',
+                                      flexShrink: 0,
+                                      lineHeight: '18px',
                                     }}
                                   >
                                     {selectedCountInRow}/{rowItem.allPermIdsInMod.length}
@@ -708,18 +701,19 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                               </td>
 
                               {/* Cột 2-9: Các ô hành động */}
-                              {MATRIX_COLUMNS.map((col) => {
-                                const perms = rowItem.actionMap[col.key] || [];
+                              {MATRIX_ACTIONS.map((actionKey) => {
+                                const perms = rowItem.actionMap[actionKey] || [];
 
                                 if (perms.length === 0) {
                                   return (
                                     <td
-                                      key={col.key}
+                                      key={actionKey}
                                       style={{
                                         textAlign: 'center',
                                         verticalAlign: 'middle',
                                         color: '#CBD5E1',
                                         borderLeft: '1px solid #F1F5F9',
+                                        padding: '4px',
                                       }}
                                     >
                                       —
@@ -729,7 +723,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
 
                                 return (
                                   <td
-                                    key={col.key}
+                                    key={actionKey}
                                     style={{
                                       textAlign: 'center',
                                       verticalAlign: 'middle',
@@ -737,7 +731,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                       borderLeft: '1px solid #F1F5F9',
                                     }}
                                   >
-                                    <div className="flex flex-column align-items-center justify-content-center gap-1">
+                                    <div className="flex flex-wrap align-items-center justify-content-center gap-1">
                                       {perms.map((p) => {
                                         const isChecked = selectedPermissionIds.includes(p.permissionId);
                                         const tooltipText = `${p.code}: ${p.name}${p.description ? ` (${p.description})` : ''}`;
@@ -745,12 +739,12 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                         return (
                                           <label
                                             key={p.permissionId}
-                                            className={`perm-checkbox-item flex align-items-center justify-content-center border-round cursor-pointer transition-colors p-1 ${
+                                            className={`perm-checkbox-item flex align-items-center justify-content-center border-round cursor-pointer transition-colors px-1 py-0.5 m-0 ${
                                               isChecked
-                                                ? 'bg-blue-100 border-1 border-blue-300'
+                                                ? 'bg-blue-50 border-1 border-blue-200'
                                                 : 'hover:surface-200'
                                             }`}
-                                            style={{ minWidth: '24px', minHeight: '24px' }}
+                                            style={{ minWidth: '22px', minHeight: '22px' }}
                                             data-pr-tooltip={tooltipText}
                                             onClick={() => handleTogglePerm(p.permissionId)}
                                           >
@@ -759,16 +753,15 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                               checked={isChecked}
                                               onChange={() => {}}
                                               style={{
-                                                width: '15px',
-                                                height: '15px',
+                                                width: '14px',
+                                                height: '14px',
                                                 cursor: 'pointer',
                                                 accentColor: '#2563EB',
                                               }}
                                             />
-                                            {col.key === 'OTHER' && (
+                                            {actionKey === 'OTHER' && (
                                               <span
-                                                className="text-10 font-bold ml-1 px-1 border-round"
-                                                style={{ background: '#EDE9FE', color: '#6D28D9' }}
+                                                className="text-10 font-mono text-600 ml-1 px-1 border-round surface-200 white-space-nowrap"
                                               >
                                                 {p.action}
                                               </span>
@@ -801,14 +794,16 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             size="small"
             onClick={onHide}
             className="p-button-sm font-medium"
+            style={{ width: 'auto', minWidth: '85px' }}
           />
           <Button
             type="submit"
-            label={t('common.save', 'Lưu thay đổi')}
+            label={t('common.save', 'Lưu')}
             icon="pi pi-check"
             size="small"
             loading={createRoleMutation.isPending || updateRoleMutation.isPending}
             className="p-button-sm font-semibold"
+            style={{ width: 'auto', minWidth: '100px' }}
           />
         </div>
       </form>

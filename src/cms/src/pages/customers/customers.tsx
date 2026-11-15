@@ -1,5 +1,5 @@
 import { getStoredTenantId } from '@/utils/tenant';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -246,16 +246,16 @@ export const Customers: React.FC = () => {
     );
   };
 
-  const lockActionOptions = [
+  const lockActionOptions = useMemo(() => [
     {
-      label: t('customer.action_lock'),
+      label: t('customer.action_lock', 'Khóa tài khoản'),
       value: 'LOCK',
     },
     {
-      label: t('customer.action_unlock'),
+      label: t('customer.action_unlock', 'Mở khóa'),
       value: 'UNLOCK',
     },
-  ];
+  ], [t]);
 
   return (
     <div className="w-full flex flex-column gap-2">
@@ -264,7 +264,19 @@ export const Customers: React.FC = () => {
       <StandardPageHeader
         breadcrumbs={[{ label: t('nav.customers', 'Hội viên') }]}
         title={t('customer.management_title', 'Hồ Sơ & Danh Sách Hội Viên')}
-        subtitle="Quản lý thông tin tài khoản, số dư điểm tích lũy, phân hạng và lịch sử hoạt động 360"
+        subtitle={t('customer.management_subtitle', 'Quản lý thông tin tài khoản, số dư điểm tích lũy, phân hạng và lịch sử hoạt động 360')}
+        actions={
+          <Button
+            type="button"
+            icon="pi pi-file-excel"
+            label={t('common.export_excel', 'Xuất Excel')}
+            outlined
+            severity="secondary"
+            size="small"
+            onClick={handleExportExcel}
+            className="p-button-sm font-medium"
+          />
+        }
       />
 
       <UniversalFilterBar
@@ -286,18 +298,6 @@ export const Customers: React.FC = () => {
         }}
         onRefresh={fetchData}
         isLoading={loading}
-        extraActions={
-          <Button
-            type="button"
-            icon="pi pi-file-excel"
-            label={t('common.export_excel', 'Xuất Excel')}
-            outlined
-            severity="secondary"
-            size="small"
-            onClick={handleExportExcel}
-            className="p-button-sm font-medium"
-          />
-        }
       />
 
       <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
@@ -653,11 +653,10 @@ export const Customers: React.FC = () => {
         breakpoints={{ '960px': '75vw', '641px': '95vw' }}
         header={t('customer.lock_unlock_dialog_title')}
         modal
-        className="p-fluid"
         onHide={() => setLockDialogVisible(false)}
       >
         {selectedMember && (
-          <div className="flex flex-column gap-3">
+          <div className="p-fluid flex flex-column gap-3">
             <div className="surface-50 p-3 border-round border-1 surface-border flex justify-content-between align-items-center">
               <div>
                 <div className="font-medium text-900">{selectedMember.fullName}</div>

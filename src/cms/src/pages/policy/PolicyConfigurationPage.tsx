@@ -549,7 +549,6 @@ export const PolicyConfigurationPage: React.FC = () => {
         style={{ width: '650px' }}
         header={isEdit ? t('policy.edit_title') : t('policy.create_title')}
         modal
-        className="p-fluid"
         footer={
           <div className="flex justify-content-end gap-2">
             <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
@@ -558,6 +557,7 @@ export const PolicyConfigurationPage: React.FC = () => {
         }
         onHide={() => setShowDialog(false)}
       >
+        <div className="p-fluid">
         <div className="field mb-3">
           <label htmlFor="partnerSelect" className="font-bold text-900">
             {t('policy.select_partner_label')} <span className="text-red-500">*</span>
@@ -693,6 +693,7 @@ export const PolicyConfigurationPage: React.FC = () => {
             onChange={(e) => setFormData({ ...formData, status: e.value })}
             appendTo="self"
           />
+        </div>
         </div>
       </Dialog>
     </div>

@@ -124,7 +124,7 @@ export const GeneralCategoryFormModal: React.FC<GeneralCategoryFormModalProps> =
         type="button"
       />
       <Button
-        label={t('common.save', 'Lưu thông tin')}
+        label={t('common.save', 'Lưu')}
         icon="pi pi-check"
         className="p-button-primary"
         onClick={handleSubmit}
@@ -152,9 +152,8 @@ export const GeneralCategoryFormModal: React.FC<GeneralCategoryFormModalProps> =
       modal
       style={{ width: '480px', maxWidth: '95vw' }}
       footer={footerContent}
-      className="p-fluid"
     >
-      <form onSubmit={handleSubmit} className="flex flex-column gap-3 pt-2">
+      <form onSubmit={handleSubmit} className="p-fluid flex flex-column gap-3 pt-2">
         <div>
           <label htmlFor="categoryCode" className="font-semibold block mb-1">
             {t('category.code', 'Mã danh mục')} <span className="text-red-500">*</span>

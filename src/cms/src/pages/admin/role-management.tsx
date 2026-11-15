@@ -17,12 +17,6 @@ import { exportToExcel } from '@/components/exportHelper';
 
 import RoleFormDialog from './components/role-form-dialog';
 
-const PLATFORM_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
-  WEB_CMS: { bg: '#EFF6FF', text: '#1D4ED8' },
-  PARTNER_PORTAL: { bg: '#FFF7ED', text: '#C2410C' },
-  ALL: { bg: '#F8FAFC', text: '#475569' },
-};
-
 export const RoleManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const { showToast } = useToastService();
@@ -169,7 +163,7 @@ export const RoleManagementPage: React.FC = () => {
       },
       {
         id: 'clone',
-        label: 'Sao chép vai trò',
+        label: t('common.clone', 'Sao chép'),
         icon: 'pi pi-copy',
         severity: 'secondary',
         onClick: () => handleCloneRole(rowData),
@@ -187,17 +181,17 @@ export const RoleManagementPage: React.FC = () => {
     return <StandardRowActions actions={actions} maxInline={3} />;
   };
 
-  const platformFilterOptions = [
-    { label: 'Tất cả nền tảng', value: 'ALL' },
-    { label: 'Hệ thống Quản trị CMS', value: 'WEB_CMS' },
-    { label: 'Cổng Đối tác Liên minh', value: 'PARTNER_PORTAL' },
-  ];
+  const platformFilterOptions = useMemo(() => [
+    { label: t('role.platform_all', 'Tất cả nền tảng'), value: 'ALL' },
+    { label: t('role.platform_web_cms', 'Hệ thống Quản trị CMS'), value: 'WEB_CMS' },
+    { label: t('role.platform_partner_portal', 'Cổng Đối tác Liên minh'), value: 'PARTNER_PORTAL' },
+  ], [t]);
 
-  const statusOptions = [
-    { label: 'Tất cả trạng thái', value: 'ALL' },
-    { label: 'Hoạt động', value: 'ACTIVE' },
-    { label: 'Ngừng hoạt động', value: 'INACTIVE' },
-  ];
+  const statusOptions = useMemo(() => [
+    { label: t('common.all_status', 'Tất cả trạng thái'), value: 'ALL' },
+    { label: t('status.ACTIVE', 'Hoạt động'), value: 'ACTIVE' },
+    { label: t('status.INACTIVE', 'Ngừng hoạt động'), value: 'INACTIVE' },
+  ], [t]);
 
   return (
     <div className="w-full flex flex-column gap-2">
@@ -207,15 +201,27 @@ export const RoleManagementPage: React.FC = () => {
           { label: t('nav.roles', 'Quản lý Vai trò') },
         ]}
         title={t('nav.roles', 'Quản lý Vai trò')}
-        subtitle="Định nghĩa danh mục vai trò, phạm vi quyền hạn và ma trận chức năng hệ thống"
+        subtitle={t('role.subtitle', 'Định nghĩa danh mục vai trò, phạm vi quyền hạn và ma trận chức năng hệ thống')}
         actions={
-          <Button
-            label={t('common.add_new', 'Thêm mới')}
-            icon="pi pi-plus"
-            size="small"
-            onClick={handleCreateRole}
-            className="p-button-sm font-semibold"
-          />
+          <div className="flex align-items-center gap-2">
+            <Button
+              type="button"
+              icon="pi pi-file-excel"
+              label={t('common.export_excel', 'Xuất Excel')}
+              outlined
+              severity="secondary"
+              size="small"
+              onClick={handleExportExcel}
+              className="p-button-sm font-medium"
+            />
+            <Button
+              label={t('common.add_new', 'Thêm mới')}
+              icon="pi pi-plus"
+              size="small"
+              onClick={handleCreateRole}
+              className="p-button-sm font-semibold"
+            />
+          </div>
         }
       />
 
@@ -225,7 +231,7 @@ export const RoleManagementPage: React.FC = () => {
           setSearchKeyword(val);
           setPageNumber(0);
         }}
-        searchPlaceholder="Tìm theo mã vai trò, tên vai trò, mô tả..."
+        searchPlaceholder={t('role.search_placeholder', 'Tìm theo mã vai trò, tên vai trò, mô tả...')}
         primaryFilters={
           <>
             <Dropdown
@@ -253,18 +259,6 @@ export const RoleManagementPage: React.FC = () => {
         onReset={handleResetFilters}
         onRefresh={() => refetch()}
         isLoading={isLoading}
-        extraActions={
-          <Button
-            type="button"
-            icon="pi pi-file-excel"
-            label={t('common.export_excel', 'Xuất Excel')}
-            outlined
-            severity="secondary"
-            size="small"
-            onClick={handleExportExcel}
-            className="p-button-sm font-medium"
-          />
-        }
       />
 
       <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
@@ -292,14 +286,14 @@ export const RoleManagementPage: React.FC = () => {
             style={{ width: '4rem', textAlign: 'center' }}
           />
 
-          {/* Cột 2: Thao tác (Max 3 inline + overflow menu) */}
+          {/* Cột 2: Thao tác */}
           <Column
             header={t('common.actions', 'Thao tác')}
             body={renderRowActions}
-            style={{ width: '8.5rem', textAlign: 'left' }}
+            style={{ width: '7.5rem', textAlign: 'left' }}
           />
 
-          {/* Cột 3: Mã vai trò (DIP Monospace bold highlight) */}
+          {/* Cột 3: Mã vai trò */}
           <Column
             field="code"
             header={t('role.code', 'Mã vai trò')}
@@ -307,12 +301,13 @@ export const RoleManagementPage: React.FC = () => {
               <span
                 style={{
                   fontFamily: 'monospace',
-                  fontWeight: 700,
-                  color: '#B42318',
-                  background: '#FEF2F2',
-                  padding: '3px 8px',
+                  fontWeight: 600,
+                  color: '#334155',
+                  background: '#F1F5F9',
+                  padding: '2px 8px',
                   borderRadius: '4px',
                   fontSize: '12px',
+                  border: '1px solid #E2E8F0',
                 }}
               >
                 {row.code}
@@ -325,61 +320,83 @@ export const RoleManagementPage: React.FC = () => {
           <Column
             field="name"
             header={t('role.name', 'Tên vai trò')}
-            body={(row: IRole) => (
-              <div className="flex flex-column gap-0">
-                <span className="font-normal text-900">{row.name}</span>
-                {row.description && (
-                  <span className="text-xs text-500 font-normal">{row.description}</span>
-                )}
-              </div>
-            )}
-            style={{ width: '22%' }}
+            body={(row: IRole) => {
+              const roleKey = (row.code || '').toLowerCase();
+              const displayName = t(`role.default_${roleKey}_name`, row.name);
+              const displayDesc = row.description ? t(`role.default_${roleKey}_desc`, row.description) : '';
+              return (
+                <div className="flex flex-column gap-0">
+                  <span className="font-medium text-900">{displayName}</span>
+                  {displayDesc && (
+                    <span className="text-xs text-500 font-normal">{displayDesc}</span>
+                  )}
+                </div>
+              );
+            }}
+            style={{ width: '24%' }}
           />
 
-          {/* Cột 5: Nền tảng (Platform badge) */}
+          {/* Cột 5: Nền tảng */}
           <Column
             field="platform"
-            header="Nền tảng"
+            header={t('role.platform', 'Nền tảng')}
             body={(row: IRole) => {
               const plat = row.platform || 'WEB_CMS';
-              const cfg = PLATFORM_BADGE_STYLE[plat] || PLATFORM_BADGE_STYLE['ALL'];
+              const platLabel =
+                plat === 'PARTNER_PORTAL'
+                  ? t('role.platform_partner_portal', 'Partner Portal')
+                  : plat === 'WEB_CMS'
+                  ? t('role.platform_web_cms', 'Admin CMS')
+                  : t('role.platform_all', 'Tất cả');
               return (
                 <span
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    background: cfg.bg,
-                    color: cfg.text,
+                    background: '#F1F5F9',
+                    color: '#475569',
                     padding: '2px 8px',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     fontSize: '11px',
-                    fontWeight: 600,
+                    fontWeight: 500,
+                    border: '1px solid #E2E8F0',
                   }}
                 >
-                  {plat}
+                  {platLabel}
                 </span>
               );
             }}
-            style={{ width: '13%' }}
+            style={{ width: '12%' }}
           />
 
           {/* Cột 6: Phạm vi */}
           <Column
             field="scope"
-            header="Phạm vi"
-            body={(row: IRole) => (
-              <span className="font-normal text-900">{row.scope || 'ALL'}</span>
-            )}
+            header={t('role.scope', 'Phạm vi')}
+            body={(row: IRole) => {
+              const sc = row.scope || 'ALL';
+              const scopeLabel =
+                sc === 'GLOBAL'
+                  ? t('role.scope_global', 'Toàn hệ thống')
+                  : sc === 'TENANT'
+                  ? t('role.scope_tenant', 'Theo đơn vị')
+                  : sc === 'PARTNER'
+                  ? t('role.scope_partner', 'Theo đối tác')
+                  : t('role.scope_all', 'Tất cả');
+              return <span className="font-normal text-700">{scopeLabel}</span>;
+            }}
             style={{ width: '11%' }}
           />
 
           {/* Cột 7: Số quyền */}
           <Column
-            header="Số quyền"
+            header={t('role.permissions_count', 'Số quyền')}
             body={(row: IRole) => {
               const count = row.permissions ? row.permissions.length : 0;
               return (
-                <span className="font-normal text-900">{count} quyền</span>
+                <span className="font-normal text-900">
+                  {count} {t('role.perms_suffix', 'quyền')}
+                </span>
               );
             }}
             style={{ width: '11%' }}
@@ -387,17 +404,19 @@ export const RoleManagementPage: React.FC = () => {
 
           {/* Cột 8: Số tài khoản */}
           <Column
-            header="Số tài khoản"
+            field="userCount"
+            header={t('role.user_count', 'Số tài khoản')}
             body={(row: IRole) => (
               <span className="font-normal text-900">
                 {(row.userCount ?? 0).toLocaleString('vi-VN')}
               </span>
             )}
-            style={{ width: '11%' }}
+            style={{ width: '10%' }}
           />
 
           {/* Cột 9: Trạng thái (Semantic Tag) */}
           <Column
+            field="status"
             header={t('common.status', 'Trạng thái')}
             body={(row: IRole) => {
               const isActive = row.isActive !== 0 && row.status !== 'INACTIVE';
@@ -405,7 +424,7 @@ export const RoleManagementPage: React.FC = () => {
                 <StatusBadge status={isActive ? 'ACTIVE' : 'INACTIVE'} />
               );
             }}
-            style={{ width: '12%' }}
+            style={{ width: '11%', textAlign: 'center' }}
           />
         </DataTable>
       </div>

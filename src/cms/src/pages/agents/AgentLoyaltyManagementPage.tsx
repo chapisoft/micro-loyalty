@@ -375,7 +375,7 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
                 onExport={handleExportPlaybooks}
               />
               <Button
-                label={t('common.create', 'Thêm mới')}
+                label={t('common.add_new', 'Thêm mới')}
                 icon="pi pi-plus"
                 size="small"
                 onClick={() => {
@@ -459,9 +459,8 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
         header={t('agent.target_dialog')}
         style={{ width: '32rem' }}
         modal
-        className="p-fluid"
       >
-        <div className="flex flex-column gap-3">
+        <div className="p-fluid flex flex-column gap-3">
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('agent.role')}</label>
@@ -542,9 +541,8 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
         header={t('agent.playbook_dialog')}
         style={{ width: '38rem' }}
         modal
-        className="p-fluid"
       >
-        <div className="flex flex-column gap-3">
+        <div className="p-fluid flex flex-column gap-3">
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('agent.playbook_code')} *</label>

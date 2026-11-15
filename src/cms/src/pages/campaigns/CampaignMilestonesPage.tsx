@@ -781,7 +781,13 @@ export const CampaignMilestonesPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
               <span className="text-sm text-600">{t('campaign.rule_builder_desc')}</span>
               <div className="flex gap-2">
-                <Button icon="pi pi-plus" label={t('campaign.add_rule')} severity="success" size="small" onClick={() => {
+                <Button
+                  icon="pi pi-plus"
+                  label={t('common.add_new', 'Thêm mới')}
+                  tooltip={t('campaign.add_rule', 'Thêm mới quy tắc')}
+                  severity="success"
+                  size="small"
+                  onClick={() => {
                   setRuleForm({
                     ruleCode: '',
                     campaignCode: 'CAMP_' + Math.floor(1000 + Math.random() * 9000),
@@ -857,9 +863,9 @@ export const CampaignMilestonesPage: React.FC = () => {
         style={{ width: '620px' }}
         header={isEdit ? t('milestone.edit_title') : t('milestone.create_title')}
         modal
-        className="p-fluid"
         onHide={() => setShowDialog(false)}
       >
+        <div className="p-fluid">
         {/* Lựa chọn Tạo chiến dịch mới hoặc thêm chặng cho chiến dịch cũ */}
         {!isEdit && (
           <div className="surface-100 p-3 border-round mb-3">
@@ -1077,6 +1083,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             appendTo="self"
           />
         </div>
+        </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
           <Button label={t('common.cancel')} icon="pi pi-times" outlined onClick={() => setShowDialog(false)} />
@@ -1091,10 +1098,9 @@ export const CampaignMilestonesPage: React.FC = () => {
         breakpoints={{ '960px': '85vw', '641px': '95vw' }}
         header={t('campaign.rule_dialog_title')}
         modal
-        className="p-fluid"
         onHide={() => setShowRuleDialog(false)}
       >
-        <div className="grid">
+        <div className="p-fluid grid">
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('campaign.rule_code')} *</label>
             <InputText value={ruleForm.ruleCode || ''} onChange={(e) => setRuleForm({ ...ruleForm, ruleCode: e.target.value.toUpperCase() })} className="font-mono" placeholder="RULE_TOPUP_WEEKEND" />

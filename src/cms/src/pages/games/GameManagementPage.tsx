@@ -728,7 +728,6 @@ export const GameManagementPage: React.FC = () => {
           </div>
         }
         modal
-        className="p-fluid"
         onHide={() => setShowPrizeDialog(false)}
       >
         {/* Metric Summary Header */}
@@ -768,7 +767,8 @@ export const GameManagementPage: React.FC = () => {
               loading={isSubmitting}
             />
             <Button
-              label={t('game.add_prize_btn')}
+              label={t('common.add_new', 'Thêm mới')}
+              tooltip={t('game.add_prize_btn', 'Thêm phần thưởng')}
               icon="pi pi-plus"
               severity="warning"
               size="small"
@@ -862,9 +862,9 @@ export const GameManagementPage: React.FC = () => {
         style={{ width: '640px' }}
         header={prizeFormData.id ? t('game.edit_prize_title') : t('game.add_prize_title')}
         modal
-        className="p-fluid"
         onHide={() => setShowPrizeFormDialog(false)}
       >
+        <div className="p-fluid">
         <div className="surface-100 p-3 border-round-lg mb-3">
           <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_1')}</div>
           <div className="field mb-2">
@@ -1046,6 +1046,7 @@ export const GameManagementPage: React.FC = () => {
             onChange={(e) => setPrizeFormData({ ...prizeFormData, status: e.value })}
           />
         </div>
+        </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
@@ -1075,9 +1076,9 @@ export const GameManagementPage: React.FC = () => {
             : t('game.create_game')
         }
         modal
-        className="p-fluid"
         onHide={() => setShowGameDialog(false)}
       >
+        <div className="p-fluid">
         <div className="field mb-3">
           <label htmlFor="gameCode" className="font-bold">
             {t('game.game_code')}
@@ -1181,6 +1182,7 @@ export const GameManagementPage: React.FC = () => {
             onChange={(e) => setGameFormData({ ...gameFormData, status: e.value })}
           />
         </div>
+        </div>
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
             label={t('common.cancel')}
@@ -1207,9 +1209,9 @@ export const GameManagementPage: React.FC = () => {
           name: paramsFormData.gameName || ''
         })}
         modal
-        className="p-fluid"
         onHide={() => setShowParamsDialog(false)}
       >
+        <div className="p-fluid">
         <div className="p-3 bg-blue-50 border-1 border-blue-200 border-round-xl mb-4 text-blue-900">
           <div className="flex align-items-center gap-2 mb-1">
             <i className="pi pi-info-circle text-blue-600 font-bold" />
@@ -1265,6 +1267,7 @@ export const GameManagementPage: React.FC = () => {
               onChange={(e) => setParamsFormData({ ...paramsFormData, allowPointsSpin: e.value })}
             />
           </div>
+        </div>
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
