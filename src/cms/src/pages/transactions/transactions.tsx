@@ -139,13 +139,6 @@ export const Transactions: React.FC = () => {
     fetchData(newPage, newRows);
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      setLazyParams((prev) => ({ ...prev, first: 0, page: 0 }));
-      fetchData(0, lazyParams.rows);
-    }
-  };
-
   const handleRefresh = () => {
     fetchData(lazyParams.page, lazyParams.rows);
   };

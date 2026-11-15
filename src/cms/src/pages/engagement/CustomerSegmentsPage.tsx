@@ -23,7 +23,6 @@ export const CustomerSegmentsPage: React.FC = () => {
   );
   const [segments, setSegments] = useState<CustomerSegmentModel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [recalcId, setRecalcId] = useState<number | null>(null);
   const [selectedSegment, setSelectedSegment] = useState<CustomerSegmentModel | null>(null);
   const [members, setMembers] = useState<SegmentMemberModel[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);

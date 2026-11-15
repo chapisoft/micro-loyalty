@@ -10,7 +10,6 @@ import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus } from '@/models';
 import { LoyaltyService, NatcashPaymentPointModel } from '@/service/loyalty.service';
@@ -171,21 +170,25 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
 
   const statusFilterOptions = [
     { label: `${t('common.status')}: ${t('common.all')}`, value: 'ALL' },
-    { label: CommonStatus.ACTIVE, value: CommonStatus.ACTIVE },
-    { label: CommonStatus.INACTIVE, value: CommonStatus.INACTIVE },
+    { label: t('common.active', 'Hoạt động'), value: CommonStatus.ACTIVE },
+    { label: t('common.inactive', 'Ngừng hoạt động'), value: CommonStatus.INACTIVE },
   ];
 
   return (
     <div className="w-full">
       <Toast ref={toast} />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.payment_points') }]} />
 
       <StandardPageHeader
+        breadcrumbs={[
+          { label: t('nav.partners', 'Đối tác') },
+          { label: t('nav.payment_points', 'Điểm thanh toán') },
+        ]}
         title={t('payment_point.title')}
         subtitle={t('payment_point.subtitle')}
         primaryAction={{
           label: t('common.create', 'Thêm mới'),
+          icon: 'pi pi-plus',
           onClick: openNew,
         }}
         extraLeft={<TenantSelector value={selectedTenant} onChange={setSelectedTenant} />}
@@ -197,15 +200,15 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
         <UniversalFilterBar
           keyword={keyword}
           onKeywordChange={setKeyword}
-          searchPlaceholder={t('common.search')}
-          primaryFilters={
-            <Dropdown
-              value={statusFilter}
-              options={statusFilterOptions}
-              onChange={(e) => setStatusFilter(e.value)}
-              className="w-13rem"
-            />
-          }
+          searchPlaceholder={t('common.search', 'Tìm mã điểm, tên chi nhánh, địa chỉ, SĐT...')}
+          basicFilters={[
+            {
+              value: statusFilter,
+              options: statusFilterOptions,
+              onChange: (val) => setStatusFilter(val || 'ALL'),
+              className: 'w-13rem',
+            },
+          ]}
           onReset={() => {
             setKeyword('');
             setStatusFilter('ALL');
@@ -226,16 +229,16 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
             rows={15}
             stripedRows
             responsiveLayout="scroll"
-            emptyMessage={t('payment_point.empty')}
-            className="mt-3"
+            emptyMessage={t('payment_point.empty', 'Không có điểm thanh toán nào')}
+            className="mt-3 p-datatable-sm"
           >
             <Column
-              header={t('common.order_number', 'STT')}
+              header={t('common.stt', 'STT')}
               body={(_, opt) => opt.rowIndex + 1}
-              style={{ width: '4rem', textAlign: 'center' }}
+              style={{ width: '3.5rem', textAlign: 'center' }}
             />
             <Column
-              header={t('common.action', 'Thao tác')}
+              header={t('common.actions', 'Thao tác')}
               body={(r: NatcashPaymentPointModel) => (
                 <StandardRowActions
                   onEdit={() => {
@@ -245,7 +248,7 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
                   onDelete={() => handleDelete(r)}
                 />
               )}
-              style={{ width: '7rem', textAlign: 'center' }}
+              style={{ width: '6.5rem', textAlign: 'left' }}
             />
             <Column
               field="paymentPointCode"
@@ -300,7 +303,7 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
               header={t('common.status')}
               body={(r: NatcashPaymentPointModel) => (
                 <Tag
-                  value={r.status || CommonStatus.ACTIVE}
+                  value={t(r.status === CommonStatus.ACTIVE ? 'common.active' : 'common.inactive')}
                   severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
                 />
               )}

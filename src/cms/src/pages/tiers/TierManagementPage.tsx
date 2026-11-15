@@ -50,7 +50,8 @@ export const TierManagementPage: React.FC = () => {
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
   const [tiers, setTiers] = useState<TierConfig[]>([]);
   const [distribution, setDistribution] = useState<TierDistributionModel[]>([]);
-  const [selectedTiers, setSelectedTiers] = useState<TierConfig[]>([]);
+  const [keyword, setKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [showDialog, setShowDialog] = useState(false);
   const [showPeriodDialog, setShowPeriodDialog] = useState(false);
   const [cycleMonths, setCycleMonths] = useState<number>(12);
@@ -60,8 +61,6 @@ export const TierManagementPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [distLoading, setDistLoading] = useState(false);
-
-  const displayTiers = useMemo(() => tiers.map((item) => ({ ...item })), [tiers]);
 
   const fetchTiers = useCallback(async () => {
     setLoading(true);
@@ -79,12 +78,12 @@ export const TierManagementPage: React.FC = () => {
               id: item.id,
               code: item.code as TierLevel,
               name: item.name,
-              tierLevel: item.tierLevel,
-              minPoints: resolvedMin,
-              keepTierPoints: resolvedKeep,
-              pointMultiplier: item.pointMultiplier,
-              freeDailyTurns: item.freeDailyTurns,
-              description: item.description,
+              tierLevel: Number(item.tierLevel || 1),
+              minPoints: Number(resolvedMin || 0),
+              keepTierPoints: Number(resolvedKeep || 0),
+              pointMultiplier: Number(item.pointMultiplier || 1.0),
+              freeDailyTurns: Number(item.freeDailyTurns || 1),
+              description: item.description || '',
               status: (item.status as CommonStatus) || CommonStatus.ACTIVE,
             };
           })
@@ -97,8 +96,8 @@ export const TierManagementPage: React.FC = () => {
       setTiers([]);
       toastRef.current?.show({
         severity: 'error',
-        summary: t('toast.error'),
-        detail: t('tier.load_failed'),
+        summary: t('common.error', 'Lỗi'),
+        detail: t('tier.load_failed', 'Không thể tải dữ liệu hạng hội viên'),
         life: 3000,
       });
     } finally {
@@ -362,6 +361,21 @@ export const TierManagementPage: React.FC = () => {
     [t]
   );
 
+  const filteredTiers = useMemo(() => {
+    return tiers.filter((item) => {
+      if (keyword.trim()) {
+        const kw = keyword.toLowerCase();
+        const matchKw =
+          item.code?.toLowerCase().includes(kw) ||
+          item.name?.toLowerCase().includes(kw) ||
+          item.description?.toLowerCase().includes(kw);
+        if (!matchKw) return false;
+      }
+      if (statusFilter !== 'ALL' && item.status !== statusFilter) return false;
+      return true;
+    });
+  }, [tiers, keyword, statusFilter]);
+
   const totalMembersInDistribution = useMemo(
     () => distribution.reduce((sum, d) => sum + (d.memberCount || 0), 0),
     [distribution]
@@ -369,19 +383,19 @@ export const TierManagementPage: React.FC = () => {
 
   const handleExportExcel = () => {
     exportToExcel(
+      filteredTiers,
       [
-        { header: 'STT' },
-        { header: 'Mã hạng', field: 'code' },
-        { header: 'Tên hạng', field: 'name' },
-        { header: 'Cấp độ', field: 'tierLevel' },
-        { header: 'Điểm nâng hạng', getValue: (r: TierConfig) => (r.minPoints ?? 0).toLocaleString() },
-        { header: 'Điểm giữ hạng', getValue: (r: TierConfig) => (r.keepTierPoints ?? 0).toLocaleString() },
-        { header: 'Hệ số tích điểm', getValue: (r: TierConfig) => `×${Number(r.pointMultiplier ?? 1.0).toFixed(2)}` },
-        { header: 'Lượt quay miễn phí/ngày', field: 'freeDailyTurns' },
-        { header: 'Trạng thái', getValue: (r: TierConfig) => (r.status === CommonStatus.ACTIVE ? 'Hoạt động' : 'Ngừng hoạt động') },
-        { header: 'Mô tả', field: 'description' },
+        { header: t('common.stt', 'STT') },
+        { header: t('tier.code', 'Mã hạng'), field: 'code' },
+        { header: t('tier.name', 'Tên hạng'), field: 'name' },
+        { header: t('tier.level', 'Cấp độ'), field: 'tierLevel' },
+        { header: t('tier.upgrade_points', 'Điểm nâng hạng'), getValue: (r: TierConfig) => (r.minPoints ?? 0).toLocaleString() },
+        { header: t('tier.keep_tier', 'Điểm giữ hạng'), getValue: (r: TierConfig) => (r.keepTierPoints ?? 0).toLocaleString() },
+        { header: t('tier.multiplier', 'Hệ số tích điểm'), getValue: (r: TierConfig) => `×${Number(r.pointMultiplier ?? 1.0).toFixed(2)}` },
+        { header: t('tier.free_turns', 'Lượt quay miễn phí/ngày'), field: 'freeDailyTurns' },
+        { header: t('common.status', 'Trạng thái'), getValue: (r: TierConfig) => (r.status === CommonStatus.ACTIVE ? t('common.active') : t('common.inactive')) },
+        { header: t('tier.description', 'Mô tả'), field: 'description' },
       ],
-      displayTiers,
       'Cau_hinh_hang_hoi_vien'
     );
   };
@@ -398,30 +412,12 @@ export const TierManagementPage: React.FC = () => {
         ]}
         title={t('nav.tiers', 'Hạng Hội viên')}
         subtitle="Cấu hình 4 phân hạng hội viên, ngưỡng điểm tích lũy, hệ số nhân và đặc quyền quay thưởng"
-        actions={
-          <div className="flex align-items-center gap-2">
-            <Button
-              label={t('tier.period_settings', 'Chu kỳ xét hạng')}
-              icon="pi pi-calendar-times"
-              size="small"
-              outlined
-              severity="secondary"
-              onClick={() => setShowPeriodDialog(true)}
-              className="p-button-sm font-medium"
-            />
-            <Button
-              label={t('common.add_new', 'Thêm mới')}
-              icon="pi pi-plus"
-              size="small"
-              onClick={openNew}
-              className="p-button-sm font-semibold"
-            />
-          </div>
-        }
-      />
-
-      <UniversalFilterBar
-        primaryFilters={
+        primaryAction={{
+          label: t('common.add_new', 'Thêm mới'),
+          icon: 'pi pi-plus',
+          onClick: openNew,
+        }}
+        extraLeft={
           <TenantSelector
             value={selectedTenant}
             onChange={(newTenantId) => {
@@ -430,164 +426,144 @@ export const TierManagementPage: React.FC = () => {
             }}
           />
         }
+        actions={
+          <Button
+            label={t('tier.period_settings', 'Chu kỳ xét hạng')}
+            icon="pi pi-calendar-times"
+            size="small"
+            outlined
+            severity="secondary"
+            onClick={() => setShowPeriodDialog(true)}
+            className="p-button-sm font-medium"
+          />
+        }
         onRefresh={() => {
           fetchTiers();
           fetchDistribution();
         }}
-        isLoading={loading || distLoading}
-        extraActions={
-          <Button
-            type="button"
-            icon="pi pi-file-excel"
-            label={t('common.export_excel', 'Xuất Excel')}
-            outlined
-            severity="secondary"
-            size="small"
-            onClick={handleExportExcel}
-            className="p-button-sm font-medium"
-          />
-        }
+        refreshLoading={loading || distLoading}
       />
 
-      <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
-        <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)}>
-          <TabPanel
-            header={t('tier.tab_config', 'Cấu hình hạng hội viên')}
-            leftIcon="pi pi-sliders-h mr-2"
-          >
-            <DataTable<any>
-              key={`${i18n.language}_${selectedTenant}`}
-              value={displayTiers}
-              selection={selectedTiers}
-              onSelectionChange={(e: any) => setSelectedTiers(e.value || [])}
-              loading={loading}
-              dataKey="id"
-              paginator
-              rows={10}
-              emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
-              className="p-datatable-sm p-datatable-striped"
-              responsiveLayout="scroll"
+      <div className="card shadow-1 border-round surface-card p-4 w-full">
+        <UniversalFilterBar
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder={t('common.search', 'Tìm theo mã hạng, tên hạng...')}
+          basicFilters={[
+            {
+              value: statusFilter,
+              options: [
+                { label: `${t('common.status')}: ${t('common.all')}`, value: 'ALL' },
+                { label: t('common.active', 'Hoạt động'), value: CommonStatus.ACTIVE },
+                { label: t('common.inactive', 'Ngừng hoạt động'), value: CommonStatus.INACTIVE },
+              ],
+              onChange: (val) => setStatusFilter(val || 'ALL'),
+              className: 'w-13rem',
+            },
+          ]}
+          onReset={() => {
+            setKeyword('');
+            setStatusFilter('ALL');
+          }}
+          onRefresh={() => {
+            fetchTiers();
+            fetchDistribution();
+          }}
+          onExport={handleExportExcel}
+        />
+
+        <div className="surface-card border-round border-1 surface-border overflow-hidden w-full mt-2">
+          <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)}>
+            <TabPanel
+              header={t('tier.tab_config', 'Cấu hình hạng hội viên')}
+              leftIcon="pi pi-sliders-h mr-2"
             >
-              <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
-              <Column
-                header={t('common.stt', 'STT')}
-                body={(_, options) => options.rowIndex + 1}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-              <Column
-                body={renderRowActions}
-                exportable={false}
-                header={t('common.actions', 'Thao tác')}
-                style={{ width: '6.5rem', textAlign: 'left' }}
-              />
-              <Column
-                field="code"
-                body={codeTemplate}
-                header={t('tier.code', 'Mã hạng')}
-                sortable
-                style={{ minWidth: '7.5rem' }}
-              />
-              <Column
-                field="name"
-                body={nameTemplate}
-                header={
-                  <span title={t('tier.name_tooltip')}>
-                    {t('tier.name')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '12rem' }}
-              />
-              <Column
-                field="tierLevel"
-                body={levelTemplate}
-                header={
-                  <span title={t('tier.level_tooltip')}>
-                    {t('tier.level')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '5rem', textAlign: 'center' }}
-              />
-              <Column
-                field="minPoints"
-                body={pointsTemplate}
-                header={
-                  <span
-                    title={t('tier.min_points_tooltip')}
-                  >
-                    {t('tier.upgrade_points')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '9.5rem' }}
-              />
-              <Column
-                field="keepTierPoints"
-                body={keepPointsTemplate}
-                header={
-                  <span
-                    title={t('tier.keep_points_tooltip')}
-                  >
-                    {t('tier.keep_tier')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '10.5rem' }}
-              />
-              <Column
-                field="pointMultiplier"
-                body={multiplierTemplate}
-                header={
-                  <span
-                    title={t('tier.multiplier_tooltip')}
-                  >
-                    {t('tier.multiplier')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '6.5rem', textAlign: 'center' }}
-              />
-              <Column
-                field="freeDailyTurns"
-                body={turnsTemplate}
-                header={
-                  <span
-                    title={t('tier.free_turns_tooltip')}
-                  >
-                    {t('tier.free_turns')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '7.5rem', textAlign: 'center' }}
-              />
-              <Column
-                field="description"
-                body={descriptionTemplate}
-                header={
-                  <span
-                    title={t('tier.description_tooltip')}
-                  >
-                    {t('tier.description')}
-                  </span>
-                }
-                style={{ minWidth: '12rem' }}
-              />
-              <Column
-                field="status"
-                body={statusTemplate}
-                header={
-                  <span
-                    title={t('common.status_tooltip')}
-                  >
-                    {t('common.status')}
-                  </span>
-                }
-                sortable
-                style={{ minWidth: '8rem', textAlign: 'center' }}
-              />
-            </DataTable>
-          </TabPanel>
+              <DataTable<any>
+                key={`${i18n.language}_${selectedTenant}`}
+                value={filteredTiers}
+                loading={loading}
+                dataKey="id"
+                paginator
+                rows={10}
+                emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
+                className="p-datatable-sm p-datatable-striped"
+                responsiveLayout="scroll"
+              >
+                <Column
+                  header={t('common.stt', 'STT')}
+                  body={(_, options) => options.rowIndex + 1}
+                  style={{ width: '3.5rem', textAlign: 'center' }}
+                />
+                <Column
+                  body={renderRowActions}
+                  exportable={false}
+                  header={t('common.actions', 'Thao tác')}
+                  style={{ width: '6.5rem', textAlign: 'left' }}
+                />
+                <Column
+                  field="code"
+                  body={codeTemplate}
+                  header={t('tier.code', 'Mã hạng')}
+                  sortable
+                  style={{ minWidth: '7.5rem' }}
+                />
+                <Column
+                  field="name"
+                  body={nameTemplate}
+                  header={t('tier.name', 'Tên hạng')}
+                  sortable
+                  style={{ minWidth: '12rem' }}
+                />
+                <Column
+                  field="tierLevel"
+                  body={levelTemplate}
+                  header={t('tier.level', 'Cấp độ')}
+                  sortable
+                  style={{ minWidth: '5rem', textAlign: 'center' }}
+                />
+                <Column
+                  field="minPoints"
+                  body={pointsTemplate}
+                  header={t('tier.upgrade_points', 'Ngưỡng lên hạng')}
+                  sortable
+                  style={{ minWidth: '9.5rem' }}
+                />
+                <Column
+                  field="keepTierPoints"
+                  body={keepPointsTemplate}
+                  header={t('tier.keep_tier', 'Giữ hạng')}
+                  sortable
+                  style={{ minWidth: '10.5rem' }}
+                />
+                <Column
+                  field="pointMultiplier"
+                  body={multiplierTemplate}
+                  header={t('tier.multiplier', 'Hệ số tích điểm')}
+                  sortable
+                  style={{ minWidth: '6.5rem', textAlign: 'center' }}
+                />
+                <Column
+                  field="freeDailyTurns"
+                  body={turnsTemplate}
+                  header={t('tier.free_turns', 'Lượt quay miễn phí')}
+                  sortable
+                  style={{ minWidth: '7.5rem', textAlign: 'center' }}
+                />
+                <Column
+                  field="description"
+                  body={descriptionTemplate}
+                  header={t('tier.description', 'Mô tả quyền lợi')}
+                  style={{ minWidth: '12rem' }}
+                />
+                <Column
+                  field="status"
+                  body={statusTemplate}
+                  header={t('common.status', 'Trạng thái')}
+                  sortable
+                  style={{ minWidth: '8rem', textAlign: 'center' }}
+                />
+              </DataTable>
+            </TabPanel>
 
           <TabPanel
             header={t('tier.tab_distribution')}
@@ -694,6 +670,7 @@ export const TierManagementPage: React.FC = () => {
             )}
           </TabPanel>
         </TabView>
+        </div>
       </div>
 
       {/* Dialog Sửa Hạng */}

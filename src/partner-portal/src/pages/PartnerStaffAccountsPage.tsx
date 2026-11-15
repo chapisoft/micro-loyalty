@@ -183,13 +183,19 @@ export const PartnerStaffAccountsPage: React.FC = () => {
 
   const handleExport = () => {
     exportToExcel(
-      filteredStaff,
+      filteredStaff.map((s) => {
+        const branch = branches.find((b) => String(b.id) === String(s.branchId));
+        return {
+          ...s,
+          resolvedBranchName: branch?.branchName || s.branchName || (s.branchId ? `Chi nhánh #${s.branchId}` : t('common.all', 'Tất cả')),
+        };
+      }),
       [
         { header: t('common.stt', 'STT') },
         { header: t('partner_portal.username', 'Tài khoản'), field: 'username' },
-        { header: t('customer.name', 'Họ và tên'), field: 'fullName' },
+        { header: t('partner_portal.staff_name', 'Họ và tên'), field: 'fullName' },
         { header: t('partner_portal.role', 'Vai trò'), field: 'roleCode' },
-        { header: t('partner_portal.branch_code', 'Chi nhánh'), field: 'branchName' },
+        { header: t('partner_portal.branch', 'Chi nhánh'), field: 'resolvedBranchName' },
         { header: t('customer.phone', 'Số điện thoại'), field: 'phoneNumber' },
         { header: t('common.status', 'Trạng thái'), field: 'status' },
       ],
@@ -279,26 +285,26 @@ export const PartnerStaffAccountsPage: React.FC = () => {
           onKeywordChange={setKeyword}
           searchPlaceholder={t('common.search', 'Tìm tài khoản, họ tên, SĐT...')}
           primaryFilters={
-            <div className="flex flex-wrap gap-2">
+            <>
               <Dropdown
                 value={roleFilter}
                 options={roleFilterOptions}
                 onChange={(e) => setRoleFilter(e.value || 'ALL')}
-                className="w-13rem"
+                className="p-inputtext-sm w-12rem"
               />
               <Dropdown
                 value={branchFilter}
                 options={branchFilterOptions}
                 onChange={(e) => setBranchFilter(e.value || 'ALL')}
-                className="w-14rem"
+                className="p-inputtext-sm w-13rem"
               />
               <Dropdown
                 value={statusFilter}
                 options={statusFilterOptions}
                 onChange={(e) => setStatusFilter(e.value || 'ALL')}
-                className="w-11rem"
+                className="p-inputtext-sm w-11rem"
               />
-            </div>
+            </>
           }
           onReset={() => {
             setKeyword('');
@@ -347,7 +353,7 @@ export const PartnerStaffAccountsPage: React.FC = () => {
             />
             <Column
               field="fullName"
-              header={t('customer.name', 'Họ và tên')}
+              header={t('partner_portal.staff_name', 'Họ và tên')}
               body={(r: PartnerStaffAccountModel) => <span className="text-900">{r.fullName}</span>}
               sortable
               style={{ minWidth: '13rem' }}
@@ -365,12 +371,15 @@ export const PartnerStaffAccountsPage: React.FC = () => {
             />
             <Column
               field="branchName"
-              header={t('partner_portal.branch_code', 'Chi nhánh')}
-              body={(r: PartnerStaffAccountModel) => (
-                <span className="text-900 font-mono text-xs">
-                  {r.branchName || (r.branchId ? `BR#${r.branchId}` : t('common.all', 'Tất cả'))}
-                </span>
-              )}
+              header={t('partner_portal.branch', 'Chi nhánh')}
+              body={(r: PartnerStaffAccountModel) => {
+                const branch = branches.find((b) => String(b.id) === String(r.branchId));
+                return (
+                  <span className="text-900">
+                    {branch?.branchName || r.branchName || (r.branchId ? `Chi nhánh #${r.branchId}` : t('common.all', 'Tất cả'))}
+                  </span>
+                );
+              }}
               sortable
               style={{ minWidth: '12rem' }}
             />

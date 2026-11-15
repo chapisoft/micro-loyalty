@@ -193,6 +193,8 @@ export default {
     add_staff: 'Thêm nhân viên',
     staff_dialog: 'Thông tin Tài khoản Nhân viên',
     username: 'Tên đăng nhập',
+    staff_name: 'Họ và tên',
+    branch: 'Chi nhánh',
     role: 'Vai trò',
     staff_required: 'Vui lòng nhập tên đăng nhập và họ tên nhân viên',
     proposals_title: 'Đề xuất Chương trình Đồng tài trợ',

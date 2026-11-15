@@ -181,6 +181,8 @@ export default {
     add_staff: 'Ajoute Anplwaye',
     staff_dialog: 'Enfòmasyon Kont Anplwaye',
     username: 'Non itilizatè',
+    staff_name: 'Non konplè',
+    branch: 'Branch',
     role: 'Wòl',
     staff_required: 'Tanpri antre non itilizatè ak non konplè',
     proposals_title: 'Pwopozisyon Pwogram Kofinanse',

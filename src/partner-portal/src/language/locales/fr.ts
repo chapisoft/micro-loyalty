@@ -181,6 +181,8 @@ export default {
     add_staff: 'Ajouter un employé',
     staff_dialog: 'Détails du compte employé',
     username: "Nom d'utilisateur",
+    staff_name: 'Nom complet',
+    branch: 'Succursale',
     role: 'Rôle',
     staff_required: "Veuillez saisir l'identifiant et le nom complet",
     proposals_title: 'Propositions de programmes cofinancés',

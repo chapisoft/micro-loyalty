@@ -13,9 +13,7 @@ import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
-import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
-import { exportToExcel as runExportToExcel } from '@/components/exportHelper';
 import { ClearingStatus, DisputeStatus, PaymentBatchStatus } from '@/models';
 import {
   LoyaltyService,
@@ -288,25 +286,6 @@ export const ClearingSettlementPage: React.FC = () => {
     );
   };
 
-  const partnerTypeTemplate = (rowData: ClearingSummaryModel) => {
-    const type = rowData.partnerType || 'RETAIL';
-    return (
-      <Tag
-        severity={type === 'RETAIL' ? 'warning' : type === 'TELECOM' ? 'info' : 'success'}
-        value={type}
-      />
-    );
-  };
-
-  const netAmountTemplate = (rowData: ClearingSummaryModel) => {
-    const isPositive = (rowData.netSettlementAmount || 0) >= 0;
-    return (
-      <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-        {isPositive ? '+' : ''}{Number(rowData.netSettlementAmount || 0).toLocaleString()} HTG
-      </span>
-    );
-  };
-
   const disputeStatusTemplate = (status: string) => {
     switch (status) {
       case DisputeStatus.RESOLVED:
@@ -379,43 +358,6 @@ export const ClearingSettlementPage: React.FC = () => {
       life: 3000,
     });
   };
-
-  const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-3">
-      <div className="flex flex-wrap gap-2 align-items-center">
-        <span className="font-bold text-lg text-primary">{t('clearing.management_title')}</span>
-        {selectedItems.length > 0 && (
-          <Tag severity="info" value={t('clearing.selected_partners_count', { count: selectedItems.length })} />
-        )}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          icon="pi pi-refresh"
-          severity="secondary"
-          outlined
-          rounded
-          onClick={fetchClearingData}
-          loading={loading}
-          tooltip={t('common.refresh')}
-        />
-        <Button
-          label={t('clearing.export_excel')}
-          icon="pi pi-file-excel"
-          severity="success"
-          outlined
-          onClick={exportToExcel}
-          tooltip={t('clearing.export_excel_tooltip')}
-        />
-        <Button
-          label={t('clearing.settle_period')}
-          icon="pi pi-check-circle"
-          onClick={() => setShowConfirmSettle(true)}
-          disabled={clearingList.length === 0}
-          tooltip={t('clearing.settle_tooltip')}
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="w-full">

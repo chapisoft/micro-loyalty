@@ -4,7 +4,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
-import { Tag } from 'primereact/tag';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';

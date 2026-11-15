@@ -193,6 +193,8 @@ export default {
     add_staff: 'Add Staff',
     staff_dialog: 'Staff Account Details',
     username: 'Username',
+    staff_name: 'Full Name',
+    branch: 'Branch',
     role: 'Role',
     staff_required: 'Please enter username and full name',
     proposals_title: 'Co-funded Program Proposals',

@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { useTranslation } from 'react-i18next';
+
+export interface BasicFilterItem {
+  key?: string;
+  label?: string;
+  value: any;
+  options: any[];
+  onChange: (val: any) => void;
+  placeholder?: string;
+  className?: string;
+  optionLabel?: string;
+  optionValue?: string;
+}
 
 export interface UniversalFilterBarProps {
   searchValue?: string;
@@ -10,6 +23,7 @@ export interface UniversalFilterBarProps {
   onKeywordChange?: (value: string) => void;
   searchPlaceholder?: string;
   primaryFilters?: React.ReactNode;
+  basicFilters?: BasicFilterItem[];
   advancedFilters?: React.ReactNode;
   activeAdvancedCount?: number;
   onReset?: () => void;
@@ -28,6 +42,7 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
   onKeywordChange,
   searchPlaceholder,
   primaryFilters,
+  basicFilters,
   advancedFilters,
   activeAdvancedCount = 0,
   onReset,
@@ -49,7 +64,7 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
   return (
     <div className={`universal-filter-bar flex flex-column gap-2 mb-3 ${className}`}>
       <div className="flex flex-wrap align-items-center justify-content-between gap-2 w-full">
-        {/* Left side: Search + Primary filters + Advanced toggle + Reset + Refresh */}
+        {/* Left side: Search + Primary filters + Basic filters + Advanced toggle + Reset + Refresh */}
         <div className="flex flex-wrap align-items-center gap-2 flex-1">
           {handleSearchChange !== undefined && (
             <span className="p-input-icon-left" style={{ minWidth: '14rem', maxWidth: '20rem' }}>
@@ -64,6 +79,19 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
           )}
 
           {primaryFilters}
+
+          {basicFilters?.map((bf, idx) => (
+            <Dropdown
+              key={bf.key || idx}
+              value={bf.value}
+              options={bf.options}
+              onChange={(e) => bf.onChange(e.value)}
+              placeholder={bf.placeholder || bf.label}
+              optionLabel={bf.optionLabel}
+              optionValue={bf.optionValue}
+              className={`p-inputtext-sm ${bf.className || 'w-12rem'}`}
+            />
+          ))}
 
           {hasAdvanced && (
             <Button

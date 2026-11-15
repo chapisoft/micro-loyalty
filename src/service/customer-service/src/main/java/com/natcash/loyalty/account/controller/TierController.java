@@ -133,7 +133,14 @@ public class TierController {
                 operation = "UPDATE";
             }
         } else {
-            entity = new LoyaltyTierEntity();
+            java.util.Optional<LoyaltyTierEntity> existing = tierRepository.findByTenantIdAndCode(tenantId, request.getCode());
+            if (existing.isPresent()) {
+                entity = existing.get();
+                beforeJson = toTierJson(entity);
+                operation = "UPDATE";
+            } else {
+                entity = new LoyaltyTierEntity();
+            }
         }
 
         entity.setTenantId(tenantId);
