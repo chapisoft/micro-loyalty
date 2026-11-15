@@ -681,8 +681,14 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                     {t(`module.${rowItem.module}`, rowItem.label)}
                                   </span>
                                   <span
-                                    className="font-mono text-10 text-500 font-medium px-1 border-round surface-200 white-space-nowrap"
-                                    style={{ lineHeight: '16px' }}
+                                    className="font-mono font-medium px-1 border-round white-space-nowrap"
+                                    style={{
+                                      background: '#F1F5F9',
+                                      color: '#475569',
+                                      fontSize: '10px',
+                                      lineHeight: '16px',
+                                      border: '1px solid #E2E8F0',
+                                    }}
                                   >
                                     {rowItem.module}
                                   </span>
@@ -739,12 +745,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                         return (
                                           <label
                                             key={p.permissionId}
-                                            className={`perm-checkbox-item flex align-items-center justify-content-center border-round cursor-pointer transition-colors px-1 py-0.5 m-0 ${
-                                              isChecked
-                                                ? 'bg-blue-50 border-1 border-blue-200'
-                                                : 'hover:surface-200'
-                                            }`}
-                                            style={{ minWidth: '22px', minHeight: '22px' }}
+                                            className="perm-checkbox-item inline-flex align-items-center justify-content-center cursor-pointer m-0 p-1"
                                             data-pr-tooltip={tooltipText}
                                             onClick={() => handleTogglePerm(p.permissionId)}
                                           >
@@ -753,15 +754,22 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                               checked={isChecked}
                                               onChange={() => {}}
                                               style={{
-                                                width: '14px',
-                                                height: '14px',
+                                                width: '15px',
+                                                height: '15px',
                                                 cursor: 'pointer',
                                                 accentColor: '#2563EB',
                                               }}
                                             />
                                             {actionKey === 'OTHER' && (
                                               <span
-                                                className="text-10 font-mono text-600 ml-1 px-1 border-round surface-200 white-space-nowrap"
+                                                className="text-10 font-mono ml-1 px-1 border-round white-space-nowrap"
+                                                style={{
+                                                  background: '#F1F5F9',
+                                                  color: '#475569',
+                                                  fontSize: '10px',
+                                                  lineHeight: '14px',
+                                                  border: '1px solid #E2E8F0',
+                                                }}
                                               >
                                                 {p.action}
                                               </span>
