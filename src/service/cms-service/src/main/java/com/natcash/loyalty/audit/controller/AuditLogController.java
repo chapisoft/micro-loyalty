@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = {"/api/audit-logs", "/loyalty/v1/admin/audit-logs", "/admin/audit-logs"})
-@Tag(name = "Audit Logs API", description = "Quản lý Nhật Ký Hoạt Động & Kiểm Toán Hệ Thống")
+@Tag(name = "Audit Logs API", description = "System Audit and Activity Logs Management")
 public class AuditLogController {
 
     private final SystemAuditLogService auditLogService;
@@ -25,7 +25,7 @@ public class AuditLogController {
     }
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách nhật ký hoạt động từ PostgreSQL 15+", description = "Truy vấn lịch sử thao tác hệ thống có phân trang và bộ lọc theo thuê bao")
+    @Operation(summary = "Get activity logs from PostgreSQL 15+", description = "Query paginated audit trail history with tenant filters")
     public ResponseEntity<AuditLogPageResponse> getAuditLogs(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestParam(value = "tenantId", required = false) String paramTenantId,

@@ -52,7 +52,7 @@ public class MonthlyBudgetGuardService {
         String month = request.getBudgetMonth() != null && !request.getBudgetMonth().isBlank()
                 ? request.getBudgetMonth().trim()
                 : MONTH_FMT.format(Instant.now());
-        SponsorType sponsor = request.getSponsorType() != null ? request.getSponsorType() : SponsorType.NATCASH;
+        SponsorType sponsor = request.getSponsorType() != null ? request.getSponsorType() : SponsorType.PLATFORM;
 
         Optional<LoyaltyMonthlyBudgetEntity> existing = budgetRepository
                 .findByTenantIdAndBudgetMonthAndSponsorType(tenantId, month, sponsor);
@@ -78,7 +78,7 @@ public class MonthlyBudgetGuardService {
             return;
         }
         String month = MONTH_FMT.format(Instant.now());
-        SponsorType effectiveSponsor = sponsorType != null ? sponsorType : SponsorType.NATCASH;
+        SponsorType effectiveSponsor = sponsorType != null ? sponsorType : SponsorType.PLATFORM;
         Optional<LoyaltyMonthlyBudgetEntity> opt = budgetRepository
                 .findByTenantIdAndBudgetMonthAndSponsorType(tenantId, month, effectiveSponsor);
         if (opt.isEmpty()) {

@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
@@ -24,7 +25,7 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [loading, setLoading] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);

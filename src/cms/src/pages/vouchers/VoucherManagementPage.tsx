@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -47,7 +48,7 @@ export const VoucherManagementPage: React.FC = () => {
   const toastRef = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [partners, setPartners] = useState<PartnerItemModel[]>([]);

@@ -15,9 +15,10 @@ import { LoyaltyService, SystemIntegrationItemModel, PartnerApiKeyItemModel } fr
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusBadge, TypeBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { ApiKeyStatus, CommonStatus } from '@/models';
+import { useGeneralCategory } from '@/hooks/useGeneralCategory';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const PARTNER_TYPES = [
@@ -35,6 +36,7 @@ export const PARTNER_TYPES = [
 
 export const Partners: React.FC = () => {
   const { t } = useTranslation();
+  const { data: dbPartnerTypes } = useGeneralCategory('PARTNER_TYPE');
   const [selectedTenant, setSelectedTenant] = useState<string>('TENANT_NATCASH');
   const [items, setItems] = useState<Partner[]>([]);
   const [selectedItems, setSelectedItems] = useState<Partner[]>([]);
@@ -321,15 +323,23 @@ export const Partners: React.FC = () => {
     }
   };
 
-  // Danh sách lĩnh vực hiển thị
+  // Danh sách lĩnh vực hiển thị từ Danh mục động CSDL (hoặc danh mục mặc định)
   const partnerTypeOptions = useMemo(() => {
+    if (dbPartnerTypes.length > 0) {
+      return dbPartnerTypes.map((pt) => ({
+        value: pt.code,
+        label: pt.name,
+        icon: 'pi pi-tag',
+        color: '#3B82F6',
+      }));
+    }
     return PARTNER_TYPES.map((pt) => ({
       value: pt.value,
       label: t(`partner.${pt.translationKey}`),
       icon: pt.icon,
       color: pt.badgeColor,
     }));
-  }, [t]);
+  }, [dbPartnerTypes, t]);
 
   // Bộ lọc dữ liệu trên giao diện
   const filteredItems = useMemo(() => {
@@ -357,6 +367,10 @@ export const Partners: React.FC = () => {
   }, [items, searchQuery, filterType, filterStatus]);
 
   const partnerTypeTemplate = (rowData: Partner) => {
+    const dbType = dbPartnerTypes.find((p) => p.code === rowData.partnerType);
+    if (dbType) {
+      return <TypeBadge type={dbType.code} label={dbType.name} />;
+    }
     const pt = PARTNER_TYPES.find((p) => p.value === rowData.partnerType) || PARTNER_TYPES[PARTNER_TYPES.length - 1];
     return (
       <span className="text-900">

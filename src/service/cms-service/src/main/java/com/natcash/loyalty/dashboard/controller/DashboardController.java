@@ -35,7 +35,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/loyalty/v1/dashboard")
-@Tag(name = "Dashboard Statistics API", description = "Số Liệu Báo Cáo Thống Kê Tổng Quan & Giám Sát Hạ Tầng")
+@Tag(name = "Dashboard Statistics API", description = "Overview Metrics, Statistics and Infrastructure Monitoring")
 public class DashboardController {
 
     private final LoyaltyAccountRepository accountRepository;
@@ -63,7 +63,7 @@ public class DashboardController {
     }
 
     @GetMapping("/stats")
-    @Operation(summary = "Lấy số liệu thống kê thời gian thực từ cơ sở dữ liệu", description = "Tính toán trực tiếp từ các bảng loyalty_accounts, loyalty_point_ledger, loyalty_vouchers, clearing_transactions")
+    @Operation(summary = "Get real-time statistics", description = "Calculate real-time metrics directly from database tables loyalty_accounts, loyalty_point_ledger, loyalty_vouchers, clearing_transactions")
     public ResponseEntity<DashboardStatsResponse> getStats(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
@@ -80,7 +80,7 @@ public class DashboardController {
         }
         BigDecimal clearingSettledAmount = clearingRepository.sumClearingAmount(tenantId);
 
-        // Tính toán phân bổ hội viên theo từng hạng thẻ thực tế
+        // Calculate actual member tier distribution
         List<LoyaltyTierEntity> allTiers = tierRepository.findByTenantIdOrderByTierLevelAsc(tenantId);
         List<Object[]> memberCounts = accountRepository.countMembersByTier(tenantId);
         Map<Long, Long> tierCountMap = new HashMap<>();
@@ -128,12 +128,12 @@ public class DashboardController {
     }
 
     @GetMapping("/health")
-    @Operation(summary = "Kiểm tra trạng thái và độ trễ kết nối hạ tầng thời gian thực", description = "Đo lường độ trễ mạng thực tế của PostgreSQL Pool và Redis Cluster")
+    @Operation(summary = "Real-time infrastructure health and latency check", description = "Measure real-time latency of PostgreSQL pool and Redis cluster")
     public ResponseEntity<SystemHealthResponse> getHealth() {
         List<SystemComponentHealth> components = new ArrayList<>();
         boolean allUp = true;
 
-        // 1. Các Microservice nghiệp vụ cốt lõi (5 dịch vụ độc lập)
+        // 1. Core business microservices (5 standalone services)
         List<ServiceDescriptor> microservices = List.of(
                 new ServiceDescriptor("cms-service", "CMS & Admin Engine", 8081, "pi-shield", "#3b82f6"),
                 new ServiceDescriptor("customer-service", "Customer, Wallet & Tier Engine", 8082, "pi-users", "#6366f1"),

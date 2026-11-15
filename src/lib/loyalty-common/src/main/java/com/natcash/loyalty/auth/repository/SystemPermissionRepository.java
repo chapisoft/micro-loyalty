@@ -11,7 +11,11 @@ import java.util.Optional;
 @Repository
 public interface SystemPermissionRepository extends JpaRepository<SystemPermissionEntity, Long> {
 
+    List<SystemPermissionEntity> findAllByOrderByDisplayOrderAscIdAsc();
+
     List<SystemPermissionEntity> findAllByOrderByIdAsc();
 
     Optional<SystemPermissionEntity> findByCodeIgnoreCase(String code);
+
+    List<SystemPermissionEntity> findByModuleOrderByDisplayOrderAscIdAsc(String module);
 }

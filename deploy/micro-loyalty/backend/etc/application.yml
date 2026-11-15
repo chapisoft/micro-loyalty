@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8085}
+  port: ${SERVER_PORT:8081}
   servlet:
     context-path: /loyalty-service
 
@@ -7,7 +7,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   application:
-    name: partner-service
+    name: cms-service
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -30,7 +30,7 @@ spring:
         show_sql: false
     open-in-view: false
   flyway:
-    enabled: ${FLYWAY_ENABLED:false}
+    enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
   data:
@@ -47,7 +47,7 @@ loyalty:
     timestamp-tolerance-seconds: ${DRIFT_TOLERANCE_SECONDS:300}
     master-key: ${LOYALTY_MASTER_KEY:}
   tenant:
-    default-tenant: ${LOYALTY_DEFAULT_TENANT:NATCASH}
+    default-tenant: ${LOYALTY_DEFAULT_TENANT:DEFAULT}
     header-name: X-Tenant-Id
   qr:
     token-ttl-seconds: ${LOYALTY_QR_TOKEN_TTL_SECONDS:60}

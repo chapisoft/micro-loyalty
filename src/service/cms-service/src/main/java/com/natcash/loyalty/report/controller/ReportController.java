@@ -34,7 +34,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/loyalty/v1/reports")
 @RequiredArgsConstructor
-@Tag(name = "Campaign & Liability Reports API", description = "Báo cáo hiệu quả chiến dịch, bán chéo, công nợ điểm & lịch xuất báo cáo (NS-05..07)")
+@Tag(name = "Campaign & Liability Reports API", description = "Campaign Effectiveness, Cross-selling, Point Liability Reports and Schedules")
 public class ReportController {
 
     private final CampaignRuleConditionRepository ruleRepository;
@@ -44,7 +44,7 @@ public class ReportController {
     private final PointExpirationBucketRepository bucketRepository;
 
     @GetMapping("/effectiveness")
-    @Operation(summary = "Báo cáo hiệu quả chiến dịch và A/B Control Group Lift")
+    @Operation(summary = "Campaign effectiveness and A/B control group lift report")
     public ResponseEntity<Map<String, Object>> getEffectivenessReport(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = resolveTenantId(headerTenantId);
@@ -75,7 +75,7 @@ public class ReportController {
     }
 
     @GetMapping("/cross-sell")
-    @Operation(summary = "Báo cáo chuyển đổi dịch vụ bán chéo")
+    @Operation(summary = "Cross-selling conversion report")
     public ResponseEntity<Map<String, Object>> getCrossSellReport(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = resolveTenantId(headerTenantId);
@@ -88,7 +88,7 @@ public class ReportController {
     }
 
     @GetMapping("/points-liability")
-    @Operation(summary = "Báo cáo công nợ điểm toàn hệ thống và điểm sắp hết hạn 30 ngày")
+    @Operation(summary = "System-wide point liability and 30-day expiring points report")
     public ResponseEntity<Map<String, Object>> getPointsLiabilityReport(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = resolveTenantId(headerTenantId);
@@ -108,7 +108,7 @@ public class ReportController {
     }
 
     @GetMapping("/schedules")
-    @Operation(summary = "Danh sách lịch xuất báo cáo tự động")
+    @Operation(summary = "List automated report schedules")
     public ResponseEntity<List<Map<String, Object>>> getReportSchedules(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = resolveTenantId(headerTenantId);
@@ -120,7 +120,7 @@ public class ReportController {
     }
 
     @PostMapping("/schedules")
-    @Operation(summary = "Lưu cấu hình lịch xuất báo cáo tự động")
+    @Operation(summary = "Save automated report schedule")
     public ResponseEntity<Map<String, Object>> saveReportSchedule(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestBody Map<String, Object> payload) {
@@ -132,7 +132,7 @@ public class ReportController {
     }
 
     @DeleteMapping("/schedules/{id}")
-    @Operation(summary = "Xóa lịch xuất báo cáo tự động")
+    @Operation(summary = "Delete automated report schedule")
     public ResponseEntity<Void> deleteReportSchedule(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @PathVariable("id") Long id) {

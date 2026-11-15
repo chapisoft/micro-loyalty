@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -25,7 +26,7 @@ export const ReminderScenariosPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [scenarios, setScenarios] = useState<ReminderScenarioModel[]>([]);
   const [sendLogs, setSendLogs] = useState<ReminderSendLogModel[]>([]);

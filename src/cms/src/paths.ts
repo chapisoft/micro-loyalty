@@ -23,6 +23,7 @@ export const paths = {
   clearingSettlement: '/clearing',
 
   // Admin & Security
+  categoryManagement: '/categories',
   systemParameters: '/system-parameters',
   userManagement: '/admin/users',
   roleManagement: '/admin/roles',

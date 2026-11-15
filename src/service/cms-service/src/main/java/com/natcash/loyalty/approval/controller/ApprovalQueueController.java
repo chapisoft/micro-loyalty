@@ -26,13 +26,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/loyalty/v1/approvals")
 @RequiredArgsConstructor
-@Tag(name = "Approval Queue API", description = "Hàng đợi phê duyệt hai cấp Maker-Checker (QT-04)")
+@Tag(name = "Approval Queue API", description = "Two-tier Maker-Checker Approval Queue")
 public class ApprovalQueueController {
 
     private final ApprovalQueueService approvalQueueService;
 
     @GetMapping
-    @Operation(summary = "Danh sách yêu cầu phê duyệt Maker-Checker")
+    @Operation(summary = "Get Maker-Checker approval requests")
     public ResponseEntity<ApprovalPageResponse> listApprovals(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestParam(value = "status", required = false) ApprovalStatus status,
@@ -43,7 +43,7 @@ public class ApprovalQueueController {
     }
 
     @PostMapping
-    @Operation(summary = "Tạo yêu cầu chờ duyệt mới")
+    @Operation(summary = "Create approval request")
     public ResponseEntity<ApprovalItemResponse> createApproval(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody CreateApprovalRequest request) {
@@ -52,7 +52,7 @@ public class ApprovalQueueController {
     }
 
     @PostMapping("/{id}/approve")
-    @Operation(summary = "Phê duyệt yêu cầu (Checker khác Maker)")
+    @Operation(summary = "Approve request")
     public ResponseEntity<ApprovalItemResponse> approve(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @PathVariable("id") Long id,
@@ -64,7 +64,7 @@ public class ApprovalQueueController {
     }
 
     @PostMapping("/{id}/reject")
-    @Operation(summary = "Từ chối yêu cầu phê duyệt")
+    @Operation(summary = "Reject request")
     public ResponseEntity<ApprovalItemResponse> reject(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @PathVariable("id") Long id,

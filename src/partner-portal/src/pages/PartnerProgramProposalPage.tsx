@@ -25,7 +25,7 @@ export const PartnerProgramProposalPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id') || ''
   );
   const [proposals, setProposals] = useState<PartnerProgramProposalModel[]>([]);
   const [loading, setLoading] = useState(false);

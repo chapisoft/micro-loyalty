@@ -99,6 +99,7 @@ const Header: React.FC = () => {
   const isAdminActive = [
     paths.userManagement,
     paths.roleManagement,
+    paths.categoryManagement,
     paths.auditManagement,
     paths.deadLetterManagement,
     paths.approvalQueue,
@@ -267,6 +268,11 @@ const Header: React.FC = () => {
           },
           {
             separator: true,
+          },
+          {
+            label: t('nav.categories', 'Danh mục dữ liệu'),
+            icon: 'pi pi-folder',
+            command: () => handleNavigate(paths.categoryManagement),
           },
           {
             label: t('nav.system_parameters'),

@@ -83,8 +83,15 @@ export interface IResponse<T> {
 
 // ==================== USER MANAGEMENT ====================
 
-const getUsers = (params: IBaseRequestPagingParams): Promise<IResponse<IUser>> =>
-  cmsApiClient.get(`/users`, { params });
+const getUsers = (params: IBaseRequestPagingParams): Promise<IResponse<IUser>> => {
+  const queryParams = {
+    ...params,
+    page: params.pageNumber,
+    size: params.pageSize,
+    search: params.keyword || params.search || '',
+  };
+  return cmsApiClient.get(`/users`, { params: queryParams });
+};
 
 function useGetUsers(params: IBaseRequestPagingParams): UseQueryResult<IResponse<IUser>, AxiosError> {
   return useQuery({
@@ -185,13 +192,41 @@ function useAssignRoles(): UseMutationResult<IResponse<IUser>, AxiosError, { id:
 
 // ==================== ROLE MANAGEMENT ====================
 
-const getRoles = (params?: IBaseRequestPagingParams): Promise<IResponse<IRole>> =>
-  cmsApiClient.get(`/roles`, { params });
+const getRoles = (params?: IBaseRequestPagingParams): Promise<IResponse<IRole>> => {
+  const queryParams = params
+    ? {
+        ...params,
+        page: params.pageNumber,
+        size: params.pageSize,
+        search: params.keyword || params.search || '',
+      }
+    : undefined;
+  return cmsApiClient.get(`/roles`, { params: queryParams });
+};
 
 function useGetRoles(params?: IBaseRequestPagingParams): UseQueryResult<IResponse<IRole>, AxiosError> {
   return useQuery({
     queryKey: [QueryKey.GET_ALL_ROLES, params],
     queryFn: () => getRoles(params),
+  });
+}
+
+const updateRolePermissions = ({
+  id,
+  permissionIds,
+}: {
+  id: number;
+  permissionIds: number[];
+}): Promise<IResponse<IRole>> => cmsApiClient.put(`/roles/${id}/permissions`, { permissionIds });
+
+function useUpdateRolePermissions(): UseMutationResult<
+  IResponse<IRole>,
+  AxiosError,
+  { id: number; permissionIds: number[] }
+> {
+  return useMutation({
+    mutationKey: ['UPDATE_ROLE_PERMISSIONS'],
+    mutationFn: updateRolePermissions,
   });
 }
 
@@ -295,6 +330,7 @@ export {
   useGetRoleById,
   useCreateRole,
   useUpdateRole,
+  useUpdateRolePermissions,
   useDeleteRole,
   useApproveRole,
   useRejectRole,

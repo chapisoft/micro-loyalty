@@ -19,7 +19,11 @@ public interface SystemUserRepository extends JpaRepository<SystemUserEntity, Lo
 
     List<SystemUserEntity> findByTenantIdOrderByIdAsc(String tenantId);
 
+    List<SystemUserEntity> findByTenantIdInOrderByIdAsc(List<String> tenantIds);
+
     Optional<SystemUserEntity> findByIdAndTenantId(Long id, String tenantId);
+
+    Optional<SystemUserEntity> findByIdAndTenantIdIn(Long id, List<String> tenantIds);
 
     @Query("SELECT COUNT(u) FROM SystemUserEntity u JOIN u.roles r WHERE r.id = :roleId")
     long countByRoleId(@Param("roleId") Long roleId);

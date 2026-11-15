@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,7 +44,7 @@ import java.util.Set;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(value = {"/roles", "/api/roles", "/loyalty/v1/admin/roles"})
 @RequiredArgsConstructor
-@Tag(name = "Admin Role & Permission Management API", description = "Quản lý Vai Trò & Phân Quyền CMS")
+@Tag(name = "Admin Role & Permission Management API", description = "CMS Administrative Role and Permission Management")
 public class AdminRoleController {
 
     private final SystemRoleRepository systemRoleRepository;
@@ -52,26 +53,40 @@ public class AdminRoleController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    @Operation(summary = "Lấy danh sách vai trò", description = "Truy vấn danh sách vai trò có phân trang")
+    @Operation(summary = "Get admin roles list", description = "Query paginated list of administrative roles")
     public ResponseEntity<RolePageResponse> getRoles(
-            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") int size,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "pageNumber", required = false) Integer pageNumber,
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "pageSize", required = false) Integer pageSize,
             @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "platform", required = false) String platform,
             @RequestParam(value = "scope", required = false) String scope,
             @RequestParam(value = "status", required = false) String status) {
 
-        String tenantId = TenantContext.getTenantId();
-        List<RoleDetailDto> list = systemRoleRepository.findByTenantIdOrderByIdAsc(tenantId).stream()
-                .map(this::toRoleDto)
-                .toList();
+        int safePage = pageNumber != null ? pageNumber : (page != null ? page : 0);
+        int safeSize = pageSize != null ? pageSize : (size != null ? size : 20);
+        String effectiveSearch = (keyword != null && !keyword.isBlank()) ? keyword : search;
 
-        if (search != null && !search.isBlank()) {
-            String keyword = search.toLowerCase().trim();
+        String currentTenant = TenantContext.getTenantId();
+        List<SystemRoleEntity> roleEntities;
+        if (currentTenant != null && !currentTenant.isBlank()) {
+            roleEntities = systemRoleRepository.findByTenantIdOrderByIdAsc(currentTenant);
+            if (roleEntities.isEmpty()) {
+                roleEntities = systemRoleRepository.findAll();
+            }
+        } else {
+            roleEntities = systemRoleRepository.findAll();
+        }
+        List<RoleDetailDto> list = roleEntities.stream().map(this::toRoleDto).toList();
+
+        if (effectiveSearch != null && !effectiveSearch.isBlank()) {
+            String kw = effectiveSearch.toLowerCase().trim();
             list = list.stream()
-                    .filter(r -> (r.getCode() != null && r.getCode().toLowerCase().contains(keyword))
-                            || (r.getName() != null && r.getName().toLowerCase().contains(keyword))
-                            || (r.getDescription() != null && r.getDescription().toLowerCase().contains(keyword)))
+                    .filter(r -> (r.getCode() != null && r.getCode().toLowerCase().contains(kw))
+                            || (r.getName() != null && r.getName().toLowerCase().contains(kw))
+                            || (r.getDescription() != null && r.getDescription().toLowerCase().contains(kw)))
                     .toList();
         }
 
@@ -93,12 +108,10 @@ public class AdminRoleController {
                     .toList();
         }
 
-        int safeSize = Math.max(size, 1);
-        int safePage = Math.max(page, 0);
         int totalElements = list.size();
-        int totalPages = Math.max((int) Math.ceil((double) totalElements / safeSize), 1);
-        int fromIndex = Math.min(safePage * safeSize, totalElements);
-        int toIndex = Math.min(fromIndex + safeSize, totalElements);
+        int totalPages = Math.max((int) Math.ceil((double) totalElements / Math.max(safeSize, 1)), 1);
+        int fromIndex = Math.min(Math.max(safePage, 0) * Math.max(safeSize, 1), totalElements);
+        int toIndex = Math.min(fromIndex + Math.max(safeSize, 1), totalElements);
         List<RoleDetailDto> pageContent = list.subList(fromIndex, toIndex);
 
         return ResponseEntity.ok(RolePageResponse.builder()
@@ -115,14 +128,9 @@ public class AdminRoleController {
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
-    @Operation(summary = "Lấy chi tiết vai trò", description = "Truy vấn vai trò kèm danh sách quyền hạn")
+    @Operation(summary = "Get role details", description = "Query role information and assigned permissions by ID")
     public ResponseEntity<RoleDetailResponse> getRoleById(@PathVariable("id") Long id) {
-        String tenantId = TenantContext.getTenantId();
-        SystemRoleEntity entity = systemRoleRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new LoyaltyException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        MessageUtils.getMessage("admin.roles.not_found")));
-
+        SystemRoleEntity entity = findRoleOrThrow(id);
         return ResponseEntity.ok(RoleDetailResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message(MessageUtils.getMessage("admin.roles.detail_success"))
@@ -132,7 +140,7 @@ public class AdminRoleController {
 
     @PostMapping
     @Transactional
-    @Operation(summary = "Tạo mới vai trò", description = "Thêm vai trò quản trị mới")
+    @Operation(summary = "Create role", description = "Add a new administrative role")
     public ResponseEntity<RoleDetailResponse> createRole(@RequestBody RolePayload payload) {
         if (payload == null || payload.getCode() == null || payload.getCode().isBlank()
                 || payload.getName() == null || payload.getName().isBlank()) {
@@ -142,6 +150,12 @@ public class AdminRoleController {
         }
 
         String tenantId = TenantContext.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = com.natcash.loyalty.config.LoyaltyProperties.get().getTenant().getDefaultTenant();
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = "DEFAULT";
+        }
         String normalizedCode = payload.getCode().toUpperCase().trim();
         if (systemRoleRepository.findByTenantIdAndCodeIgnoreCase(tenantId, normalizedCode).isPresent()) {
             throw new LoyaltyException(
@@ -174,15 +188,11 @@ public class AdminRoleController {
 
     @PutMapping("/{id}")
     @Transactional
-    @Operation(summary = "Cập nhật vai trò", description = "Sửa đổi tên, mô tả và danh sách quyền hạn")
+    @Operation(summary = "Update role", description = "Update role code, name, description and assigned permissions")
     public ResponseEntity<RoleDetailResponse> updateRole(
             @PathVariable("id") Long id,
             @RequestBody RolePayload payload) {
-        String tenantId = TenantContext.getTenantId();
-        SystemRoleEntity existing = systemRoleRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new LoyaltyException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        MessageUtils.getMessage("admin.roles.not_found")));
+        SystemRoleEntity existing = findRoleOrThrow(id);
 
         if (payload != null) {
             if (payload.getName() != null && !payload.getName().isBlank()) {
@@ -221,14 +231,9 @@ public class AdminRoleController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    @Operation(summary = "Xóa vai trò", description = "Loại bỏ vai trò khỏi hệ thống")
+    @Operation(summary = "Delete role", description = "Remove role from system")
     public ResponseEntity<RoleDetailResponse> deleteRole(@PathVariable("id") Long id) {
-        String tenantId = TenantContext.getTenantId();
-        SystemRoleEntity existing = systemRoleRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new LoyaltyException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        MessageUtils.getMessage("admin.roles.not_found")));
-
+        SystemRoleEntity existing = findRoleOrThrow(id);
         systemRoleRepository.delete(existing);
         return ResponseEntity.ok(RoleDetailResponse.builder()
                 .status(HttpStatus.OK.value())
@@ -236,16 +241,32 @@ public class AdminRoleController {
                 .build());
     }
 
-    @PostMapping("/{id}/approve")
+    @RequestMapping(value = "/{id}/permissions", method = {RequestMethod.POST, RequestMethod.PUT})
     @Transactional
-    @Operation(summary = "Phê duyệt vai trò", description = "Kích hoạt trạng thái hoạt động của vai trò")
-    public ResponseEntity<RoleDetailResponse> approveRole(@PathVariable("id") Long id) {
-        String tenantId = TenantContext.getTenantId();
-        SystemRoleEntity existing = systemRoleRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new LoyaltyException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        MessageUtils.getMessage("admin.roles.not_found")));
+    @Operation(summary = "Update role permissions", description = "Assign or update permissions for the specified role")
+    public ResponseEntity<RoleDetailResponse> updateRolePermissions(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, List<Long>> payload) {
+        SystemRoleEntity existing = findRoleOrThrow(id);
 
+        List<Long> permissionIds = payload != null ? payload.get("permissionIds") : null;
+        if (permissionIds != null) {
+            existing.setPermissions(new LinkedHashSet<>(
+                    systemPermissionRepository.findAllById(permissionIds)));
+        }
+        SystemRoleEntity saved = systemRoleRepository.save(existing);
+        return ResponseEntity.ok(RoleDetailResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message(MessageUtils.getMessage("admin.roles.update_success"))
+                .data(toRoleDto(saved))
+                .build());
+    }
+
+    @RequestMapping(value = "/{id}/approve", method = {RequestMethod.POST, RequestMethod.PUT})
+    @Transactional
+    @Operation(summary = "Approve role", description = "Activate role to ACTIVE status")
+    public ResponseEntity<RoleDetailResponse> approveRole(@PathVariable("id") Long id) {
+        SystemRoleEntity existing = findRoleOrThrow(id);
         existing.setStatus(CommonStatus.ACTIVE);
         SystemRoleEntity saved = systemRoleRepository.save(existing);
         return ResponseEntity.ok(RoleDetailResponse.builder()
@@ -255,18 +276,13 @@ public class AdminRoleController {
                 .build());
     }
 
-    @PostMapping("/{id}/reject")
+    @RequestMapping(value = "/{id}/reject", method = {RequestMethod.POST, RequestMethod.PUT})
     @Transactional
-    @Operation(summary = "Từ chối vai trò", description = "Vô hiệu hóa vai trò")
+    @Operation(summary = "Reject role", description = "Deactivate role to INACTIVE status")
     public ResponseEntity<RoleDetailResponse> rejectRole(
             @PathVariable("id") Long id,
             @RequestBody(required = false) Map<String, String> body) {
-        String tenantId = TenantContext.getTenantId();
-        SystemRoleEntity existing = systemRoleRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new LoyaltyException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        MessageUtils.getMessage("admin.roles.not_found")));
-
+        SystemRoleEntity existing = findRoleOrThrow(id);
         existing.setStatus(CommonStatus.INACTIVE);
         SystemRoleEntity saved = systemRoleRepository.save(existing);
         return ResponseEntity.ok(RoleDetailResponse.builder()
@@ -278,16 +294,36 @@ public class AdminRoleController {
 
     @GetMapping("/permissions")
     @Transactional(readOnly = true)
-    @Operation(summary = "Lấy danh sách tất cả quyền hạn", description = "Danh sách quyền theo phân hệ chức năng")
+    @Operation(summary = "Get all permissions", description = "Query all available permissions ordered by module and action")
     public ResponseEntity<PermissionListResponse> getPermissions() {
-        List<PermissionDto> list = systemPermissionRepository.findAllByOrderByIdAsc().stream()
+        List<PermissionDto> list = systemPermissionRepository.findAllByOrderByDisplayOrderAscIdAsc().stream()
                 .map(this::toPermissionDto)
                 .toList();
+        if (list.isEmpty()) {
+            list = systemPermissionRepository.findAllByOrderByIdAsc().stream()
+                    .map(this::toPermissionDto)
+                    .toList();
+        }
         return ResponseEntity.ok(PermissionListResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message(MessageUtils.getMessage("admin.permissions.list_success"))
                 .data(list)
                 .build());
+    }
+
+    private SystemRoleEntity findRoleOrThrow(Long id) {
+        String tenantId = TenantContext.getTenantId();
+        if (tenantId != null && !tenantId.isBlank()) {
+            return systemRoleRepository.findByIdAndTenantId(id, tenantId)
+                    .or(() -> systemRoleRepository.findById(id))
+                    .orElseThrow(() -> new LoyaltyException(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            MessageUtils.getMessage("admin.roles.not_found")));
+        }
+        return systemRoleRepository.findById(id)
+                .orElseThrow(() -> new LoyaltyException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        MessageUtils.getMessage("admin.roles.not_found")));
     }
 
     private RoleDetailDto toRoleDto(SystemRoleEntity entity) {
@@ -319,6 +355,7 @@ public class AdminRoleController {
                 .description(entity.getDescription())
                 .module(entity.getModule())
                 .action(entity.getAction())
+                .displayOrder(entity.getDisplayOrder() != null ? entity.getDisplayOrder() : 0)
                 .isActive(Boolean.TRUE.equals(entity.getIsActive()) ? 1 : 0)
                 .build();
     }
@@ -370,6 +407,7 @@ public class AdminRoleController {
         private String description;
         private String module;
         private String action;
+        private Integer displayOrder;
         private Integer isActive;
     }
 

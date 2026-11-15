@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
@@ -49,7 +50,7 @@ export const ClearingSettlementPage: React.FC = () => {
   const dt = React.useRef<DataTable<any>>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
 
   // Mặc định từ ngày 1 đầu tháng đến ngày hiện tại

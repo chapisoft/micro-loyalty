@@ -76,7 +76,7 @@ public class CampaignRuleEngineService {
         entity.setIfConditions(request.getIfConditions() != null ? request.getIfConditions() : "{}");
         entity.setThenRewards(request.getThenRewards() != null ? request.getThenRewards() : "{}");
         entity.setLimitsConfig(request.getLimitsConfig() != null ? request.getLimitsConfig() : "{}");
-        entity.setSponsorType(request.getSponsorType() != null ? request.getSponsorType() : SponsorType.NATCASH);
+        entity.setSponsorType(request.getSponsorType() != null ? request.getSponsorType() : SponsorType.PLATFORM);
         entity.setPartnerId(request.getPartnerId());
         entity.setStartDate(start);
         entity.setEndDate(end);
@@ -107,7 +107,7 @@ public class CampaignRuleEngineService {
                     .milestoneId(milestoneId)
                     .build());
             BigDecimal rewardPts = response.getRewardPoints() != null ? response.getRewardPoints() : BigDecimal.ZERO;
-            budgetGuardService.checkAndConsume(tenantId, SponsorType.NATCASH, rewardPts);
+            budgetGuardService.checkAndConsume(tenantId, SponsorType.PLATFORM, rewardPts);
             return response;
         });
     }

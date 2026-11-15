@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -30,11 +31,11 @@ export default function AuditLogPage() {
 
   // Thuê bao hiện tại đang chọn
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
 
   const [query, setQuery] = useState<AuditLogQuery>({
-    tenantId: localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH',
+    tenantId: getStoredTenantId(),
     tableName: '',
     operation: '',
     username: '',

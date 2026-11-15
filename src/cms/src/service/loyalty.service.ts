@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import { apiClient } from './config';
 
 export interface TierConfigModel {
@@ -251,7 +252,7 @@ export interface DisputeItemModel {
 
 export const LoyaltyService = {
   // 1. Quản lý Hạng hội viên
-  async getTiers(tenantId: string = 'TENANT_NATCASH'): Promise<TierConfigModel[]> {
+  async getTiers(tenantId: string = getStoredTenantId()): Promise<TierConfigModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/tiers', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -264,7 +265,7 @@ export const LoyaltyService = {
     }
   },
 
-  async saveTier(tier: Partial<TierConfigModel>, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async saveTier(tier: Partial<TierConfigModel>, tenantId: string = getStoredTenantId()): Promise<any> {
     try {
       const response: any = await apiClient.post('/loyalty/v1/tiers', tier, {
         headers: { 'X-Tenant-Id': tenantId },
@@ -276,7 +277,7 @@ export const LoyaltyService = {
     }
   },
 
-  async deleteTier(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async deleteTier(id: number, tenantId: string = getStoredTenantId()): Promise<any> {
     try {
       const response: any = await apiClient.delete(`/loyalty/v1/tiers/${id}`, {
         headers: { 'X-Tenant-Id': tenantId },
@@ -289,7 +290,7 @@ export const LoyaltyService = {
   },
 
   // 2. Quản lý Chính sách Tích/Tiêu điểm (CRUD)
-  async getPolicies(tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel[]> {
+  async getPolicies(tenantId: string = getStoredTenantId()): Promise<PolicyRuleModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/policies', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -325,7 +326,7 @@ export const LoyaltyService = {
     }
   },
 
-  async getPartners(tenantId: string = 'TENANT_NATCASH'): Promise<any[]> {
+  async getPartners(tenantId: string = getStoredTenantId()): Promise<any[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partners', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -344,7 +345,7 @@ export const LoyaltyService = {
     }
   },
 
-  async createPolicy(data: Partial<PolicyRuleModel>, tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel> {
+  async createPolicy(data: Partial<PolicyRuleModel>, tenantId: string = getStoredTenantId()): Promise<PolicyRuleModel> {
     const payload = {
       partnerId: data.partnerId,
       partnerCode: data.partnerCode,
@@ -362,7 +363,7 @@ export const LoyaltyService = {
     return response?.data || response;
   },
 
-  async updatePolicy(id: number, data: Partial<PolicyRuleModel>, tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel> {
+  async updatePolicy(id: number, data: Partial<PolicyRuleModel>, tenantId: string = getStoredTenantId()): Promise<PolicyRuleModel> {
     const payload = {
       partnerId: data.partnerId,
       partnerCode: data.partnerCode,
@@ -380,14 +381,14 @@ export const LoyaltyService = {
     return response?.data || response;
   },
 
-  async deletePolicy(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deletePolicy(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/policies/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
   },
 
   // 3. Quản lý Kho Voucher Khuyến Mãi (CRUD)
-  async getVouchers(tenantId: string = 'TENANT_NATCASH'): Promise<VoucherItemModel[]> {
+  async getVouchers(tenantId: string = getStoredTenantId()): Promise<VoucherItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/vouchers', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -400,27 +401,27 @@ export const LoyaltyService = {
     }
   },
 
-  async createVoucher(data: Partial<VoucherItemModel>, tenantId: string = 'TENANT_NATCASH'): Promise<VoucherItemModel> {
+  async createVoucher(data: Partial<VoucherItemModel>, tenantId: string = getStoredTenantId()): Promise<VoucherItemModel> {
     const response: any = await apiClient.post('/loyalty/v1/vouchers', data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async updateVoucher(id: number, data: Partial<VoucherItemModel>, tenantId: string = 'TENANT_NATCASH'): Promise<VoucherItemModel> {
+  async updateVoucher(id: number, data: Partial<VoucherItemModel>, tenantId: string = getStoredTenantId()): Promise<VoucherItemModel> {
     const response: any = await apiClient.put(`/loyalty/v1/vouchers/${id}`, data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async deleteVoucher(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deleteVoucher(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/vouchers/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
   },
 
-  async batchImportVouchers(data: Partial<VoucherItemModel>[], tenantId: string = 'TENANT_NATCASH'): Promise<VoucherItemModel[]> {
+  async batchImportVouchers(data: Partial<VoucherItemModel>[], tenantId: string = getStoredTenantId()): Promise<VoucherItemModel[]> {
     const response: any = await apiClient.post('/loyalty/v1/vouchers/batch-import', data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
@@ -428,7 +429,7 @@ export const LoyaltyService = {
   },
 
   // 4. Quản lý Cột Mốc Chiến Dịch (Milestones CRUD)
-  async getMilestones(tenantId: string = 'TENANT_NATCASH'): Promise<MilestoneItemModel[]> {
+  async getMilestones(tenantId: string = getStoredTenantId()): Promise<MilestoneItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/milestones/admin-list', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -464,28 +465,28 @@ export const LoyaltyService = {
     }
   },
 
-  async createMilestone(data: Partial<MilestoneItemModel>, tenantId: string = 'TENANT_NATCASH'): Promise<MilestoneItemModel> {
+  async createMilestone(data: Partial<MilestoneItemModel>, tenantId: string = getStoredTenantId()): Promise<MilestoneItemModel> {
     const response: any = await apiClient.post('/loyalty/v1/milestones', data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async updateMilestone(id: number, data: Partial<MilestoneItemModel>, tenantId: string = 'TENANT_NATCASH'): Promise<MilestoneItemModel> {
+  async updateMilestone(id: number, data: Partial<MilestoneItemModel>, tenantId: string = getStoredTenantId()): Promise<MilestoneItemModel> {
     const response: any = await apiClient.put(`/loyalty/v1/milestones/${id}`, data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async deleteMilestone(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deleteMilestone(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/milestones/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
   },
 
   // 5. Bù Trừ & Quyết Toán Đối Soát Tài Chính
-  async getClearingReport(tenantId: string = 'TENANT_NATCASH', fromDate?: string, toDate?: string): Promise<ClearingReportModel> {
+  async getClearingReport(tenantId: string = getStoredTenantId(), fromDate?: string, toDate?: string): Promise<ClearingReportModel> {
     const from = fromDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const to = toDate || new Date().toISOString();
     try {
@@ -513,7 +514,7 @@ export const LoyaltyService = {
     }
   },
 
-  async settleClearingPeriod(tenantId: string = 'TENANT_NATCASH', fromDate?: string, toDate?: string, remarks?: string): Promise<any> {
+  async settleClearingPeriod(tenantId: string = getStoredTenantId(), fromDate?: string, toDate?: string, remarks?: string): Promise<any> {
     const from = fromDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const to = toDate || new Date().toISOString();
     const response: any = await apiClient.post(
@@ -524,7 +525,7 @@ export const LoyaltyService = {
     return response?.data || response;
   },
 
-  async getPartnerClearingTransactions(tenantId: string = 'TENANT_NATCASH', partnerId: number, fromDate: string, toDate: string): Promise<PartnerTransactionsResponseModel> {
+  async getPartnerClearingTransactions(tenantId: string = getStoredTenantId(), partnerId: number, fromDate: string, toDate: string): Promise<PartnerTransactionsResponseModel> {
     const response: any = await apiClient.get('/loyalty/v1/clearinghouse/partner-transactions', {
       params: { partnerId, fromDate, toDate },
       headers: { 'X-Tenant-Id': tenantId },
@@ -532,7 +533,7 @@ export const LoyaltyService = {
     return response?.data || response;
   },
 
-  async getDisputes(tenantId: string = 'TENANT_NATCASH'): Promise<DisputeItemModel[]> {
+  async getDisputes(tenantId: string = getStoredTenantId()): Promise<DisputeItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/clearinghouse/disputes', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -546,7 +547,7 @@ export const LoyaltyService = {
     }
   },
 
-  async resolveDispute(disputeCode: string, status: string, resolvedAmount?: number, note?: string, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async resolveDispute(disputeCode: string, status: string, resolvedAmount?: number, note?: string, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.post(
       `/loyalty/v1/clearinghouse/disputes/${disputeCode}/resolve`,
       { status, resolvedAmount, note },
@@ -556,7 +557,7 @@ export const LoyaltyService = {
   },
 
   // 6. Số liệu thống kê Dashboard
-  async getDashboardStats(tenantId: string = 'TENANT_NATCASH'): Promise<DashboardStatsModel> {
+  async getDashboardStats(tenantId: string = getStoredTenantId()): Promise<DashboardStatsModel> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/dashboard/stats', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -579,7 +580,7 @@ export const LoyaltyService = {
   },
 
   // 7. Giám sát sức khỏe hạ tầng hệ thống thời gian thực
-  async getSystemHealth(tenantId: string = 'TENANT_NATCASH'): Promise<SystemHealthResponseModel> {
+  async getSystemHealth(tenantId: string = getStoredTenantId()): Promise<SystemHealthResponseModel> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/dashboard/health', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -597,7 +598,7 @@ export const LoyaltyService = {
 
   // 8. Sổ cái biến động điểm
   async getPointLedger(
-    tenantId: string = 'TENANT_NATCASH',
+    tenantId: string = getStoredTenantId(),
     params?: PointLedgerQueryParams
   ): Promise<PointLedgerItem[] & PointLedgerResponse> {
     try {
@@ -675,7 +676,7 @@ export const LoyaltyService = {
   },
 
   // 9. Quản lý Danh mục Game (Minigames)
-  async getGames(tenantId: string = 'TENANT_NATCASH'): Promise<any[]> {
+  async getGames(tenantId: string = getStoredTenantId()): Promise<any[]> {
     try {
       const response: any = await apiClient.get('/gamehub/v1/admin/games', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -689,21 +690,21 @@ export const LoyaltyService = {
     }
   },
 
-  async saveGame(data: any, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async saveGame(data: any, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.post('/gamehub/v1/admin/games', data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async deleteGame(gameId: number | string, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async deleteGame(gameId: number | string, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.delete(`/gamehub/v1/admin/games/${gameId}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async getGlobalGameConfig(tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async getGlobalGameConfig(tenantId: string = getStoredTenantId()): Promise<any> {
     try {
       const response: any = await apiClient.get('/gamehub/v1/admin/config', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -715,14 +716,14 @@ export const LoyaltyService = {
     }
   },
 
-  async saveGlobalGameConfig(data: any, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async saveGlobalGameConfig(data: any, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.post('/gamehub/v1/admin/config', data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async getWheelPrizes(tenantId: string = 'TENANT_NATCASH', wheelCode: string = 'LUCKY_WHEEL'): Promise<any[]> {
+  async getWheelPrizes(tenantId: string = getStoredTenantId(), wheelCode: string = 'LUCKY_WHEEL'): Promise<any[]> {
     try {
       const response: any = await apiClient.get(`/loyalty/v1/luckydraw/admin/prizes?wheelCode=${wheelCode}`, {
         headers: { 'X-Tenant-Id': tenantId },
@@ -736,21 +737,21 @@ export const LoyaltyService = {
     }
   },
 
-  async saveWheelPrize(data: any, tenantId: string = 'TENANT_NATCASH', wheelCode: string = 'LUCKY_WHEEL'): Promise<any> {
+  async saveWheelPrize(data: any, tenantId: string = getStoredTenantId(), wheelCode: string = 'LUCKY_WHEEL'): Promise<any> {
     const response: any = await apiClient.post(`/loyalty/v1/luckydraw/admin/prizes?wheelCode=${wheelCode}`, data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async autoBalanceWheelPrizes(tenantId: string = 'TENANT_NATCASH', wheelCode: string = 'LUCKY_WHEEL'): Promise<any> {
+  async autoBalanceWheelPrizes(tenantId: string = getStoredTenantId(), wheelCode: string = 'LUCKY_WHEEL'): Promise<any> {
     const response: any = await apiClient.post(`/loyalty/v1/luckydraw/admin/prizes/auto-balance?wheelCode=${wheelCode}`, {}, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async getGamePrizes(gameCode: string, tenantId: string = 'TENANT_NATCASH'): Promise<any[]> {
+  async getGamePrizes(gameCode: string, tenantId: string = getStoredTenantId()): Promise<any[]> {
     try {
       const response: any = await apiClient.get(`/gamehub/v1/admin/games/${gameCode}/prizes`, {
         headers: { 'X-Tenant-Id': tenantId },
@@ -764,28 +765,28 @@ export const LoyaltyService = {
     }
   },
 
-  async saveGamePrize(gameCode: string, data: any, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async saveGamePrize(gameCode: string, data: any, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.post(`/gamehub/v1/admin/games/${gameCode}/prizes`, data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async deleteGamePrize(prizeId: number, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async deleteGamePrize(prizeId: number, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.delete(`/gamehub/v1/admin/prizes/${prizeId}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async autoBalanceGamePrizes(gameCode: string, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async autoBalanceGamePrizes(gameCode: string, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.post(`/gamehub/v1/admin/games/${gameCode}/prizes/auto-balance`, {}, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   },
 
-  async getGameDashboardStats(tenantId: string = 'TENANT_NATCASH'): Promise<GameDashboardStats> {
+  async getGameDashboardStats(tenantId: string = getStoredTenantId()): Promise<GameDashboardStats> {
     try {
       const response: any = await apiClient.get('/gamehub/v1/admin/dashboard-stats', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -811,7 +812,7 @@ export const LoyaltyService = {
   // 10. Hàng đợi Phê duyệt Hai cấp (Maker-Checker Approvals)
   async getApprovals(
     params?: { targetType?: string; status?: string; page?: number; size?: number },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ApprovalRequestModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/approvals', {
@@ -827,7 +828,7 @@ export const LoyaltyService = {
 
   async createApprovalRequest(
     data: Partial<ApprovalRequestModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ApprovalRequestModel> {
     const response: any = await apiClient.post('/loyalty/v1/approvals', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -838,7 +839,7 @@ export const LoyaltyService = {
   async approveRequest(
     requestId: number | string,
     reason?: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ApprovalRequestModel> {
     const response: any = await apiClient.post(
       `/loyalty/v1/approvals/${requestId}/approve`,
@@ -851,7 +852,7 @@ export const LoyaltyService = {
   async rejectRequest(
     requestId: number | string,
     reason: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ApprovalRequestModel> {
     const response: any = await apiClient.post(
       `/loyalty/v1/approvals/${requestId}/reject`,
@@ -864,7 +865,7 @@ export const LoyaltyService = {
   // 11. FIFO Buckets, Điều chỉnh điểm thủ công & Hồ sơ Hội viên 360
   async getExpiringBuckets(
     externalUserId: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PointExpirationBucketModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/ledger/expiring-buckets', {
@@ -880,7 +881,7 @@ export const LoyaltyService = {
 
   async getPointAdjustments(
     params?: { status?: string; page?: number; size?: number },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PointAdjustmentModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/ledger/adjustments', {
@@ -896,7 +897,7 @@ export const LoyaltyService = {
 
   async createPointAdjustment(
     data: PointAdjustmentPayload,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PointAdjustmentModel> {
     const response: any = await apiClient.post('/loyalty/v1/ledger/adjustments', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -906,7 +907,7 @@ export const LoyaltyService = {
 
   async getMemberProfile360(
     externalUserId: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<MemberProfile360Model | null> {
     try {
       const response: any = await apiClient.get(
@@ -923,7 +924,7 @@ export const LoyaltyService = {
   async submitMemberLockRequest(
     externalUserId: string,
     data: { action: 'LOCK' | 'UNLOCK'; reason: string; ticketRef?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ApprovalRequestModel> {
     const response: any = await apiClient.post(
       `/loyalty/v1/accounts/${encodeURIComponent(externalUserId)}/lock-request`,
@@ -933,7 +934,7 @@ export const LoyaltyService = {
     return unwrapObject<ApprovalRequestModel>(response);
   },
 
-  async getTierDistribution(tenantId: string = 'TENANT_NATCASH'): Promise<TierDistributionModel[]> {
+  async getTierDistribution(tenantId: string = getStoredTenantId()): Promise<TierDistributionModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/tiers/distribution', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -948,7 +949,7 @@ export const LoyaltyService = {
   // 12. Điểm chấp nhận thanh toán Natcash (LM-02) & Tổng quan 6 kết nối (QT-06)
   async getPaymentPoints(
     params?: { keyword?: string; province?: string; status?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<NatcashPaymentPointModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/payment-points', {
@@ -964,7 +965,7 @@ export const LoyaltyService = {
 
   async createPaymentPoint(
     data: Partial<NatcashPaymentPointModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<NatcashPaymentPointModel> {
     const response: any = await apiClient.post('/loyalty/v1/payment-points', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -975,7 +976,7 @@ export const LoyaltyService = {
   async updatePaymentPoint(
     id: number,
     data: Partial<NatcashPaymentPointModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<NatcashPaymentPointModel> {
     const response: any = await apiClient.put(`/loyalty/v1/payment-points/${id}`, data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -983,13 +984,13 @@ export const LoyaltyService = {
     return unwrapObject<NatcashPaymentPointModel>(response);
   },
 
-  async deletePaymentPoint(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deletePaymentPoint(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/payment-points/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
   },
 
-  async getIntegrationsOverview(tenantId: string = 'TENANT_NATCASH'): Promise<SystemIntegrationItemModel[]> {
+  async getIntegrationsOverview(tenantId: string = getStoredTenantId()): Promise<SystemIntegrationItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/integrations/overview', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1002,7 +1003,7 @@ export const LoyaltyService = {
   },
 
   // 13. Lô thanh toán bù trừ (Clearing Batches LM-07)
-  async getClearingBatches(tenantId: string = 'TENANT_NATCASH'): Promise<ClearingPaymentBatchModel[]> {
+  async getClearingBatches(tenantId: string = getStoredTenantId()): Promise<ClearingPaymentBatchModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/clearinghouse/batches', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1016,7 +1017,7 @@ export const LoyaltyService = {
 
   async createClearingBatch(
     data: Partial<ClearingPaymentBatchModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ClearingPaymentBatchModel> {
     const response: any = await apiClient.post('/loyalty/v1/clearinghouse/batches', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1026,7 +1027,7 @@ export const LoyaltyService = {
 
   async confirmClearingBatch(
     batchCode: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ClearingPaymentBatchModel> {
     const response: any = await apiClient.post(
       `/loyalty/v1/partner-portal/settlements/${encodeURIComponent(batchCode)}/confirm`,
@@ -1037,7 +1038,7 @@ export const LoyaltyService = {
   },
 
   // 14. Bộ dựng luật chiến dịch (NV-05), Theo dõi (NV-06), AI Copilot (AI-01) & Ngân sách (NS-01)
-  async getCampaignRules(tenantId: string = 'TENANT_NATCASH'): Promise<CampaignRuleModel[]> {
+  async getCampaignRules(tenantId: string = getStoredTenantId()): Promise<CampaignRuleModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/campaigns/rules', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1051,7 +1052,7 @@ export const LoyaltyService = {
 
   async saveCampaignRule(
     data: Partial<CampaignRuleModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<CampaignRuleModel> {
     const response: any = await apiClient.post('/loyalty/v1/campaigns/rules', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1059,13 +1060,13 @@ export const LoyaltyService = {
     return unwrapObject<CampaignRuleModel>(response);
   },
 
-  async deleteCampaignRule(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deleteCampaignRule(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/campaigns/rules/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
   },
 
-  async getCampaignTracking(tenantId: string = 'TENANT_NATCASH'): Promise<CampaignTrackingItemModel[]> {
+  async getCampaignTracking(tenantId: string = getStoredTenantId()): Promise<CampaignTrackingItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/campaigns/rules', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1079,7 +1080,7 @@ export const LoyaltyService = {
 
   async suggestCampaignCopilot(
     data: AiCopilotSuggestRequest,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<AiCopilotSuggestResponse> {
     const response: any = await apiClient.post('/loyalty/v1/ai-copilot/suggest', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1089,7 +1090,7 @@ export const LoyaltyService = {
 
   async getBudgets(
     params?: { budgetMonth?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<MonthlyBudgetModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/budgets', {
@@ -1105,7 +1106,7 @@ export const LoyaltyService = {
 
   async saveBudget(
     data: Partial<MonthlyBudgetModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<MonthlyBudgetModel> {
     const response: any = await apiClient.post('/loyalty/v1/budgets', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1114,7 +1115,7 @@ export const LoyaltyService = {
   },
 
   // 15. Phân khúc (CN-03), Kịch bản nhắc nhở (CN-04) & Trung tâm cảnh báo (CN-05)
-  async getSegments(tenantId: string = 'TENANT_NATCASH'): Promise<CustomerSegmentModel[]> {
+  async getSegments(tenantId: string = getStoredTenantId()): Promise<CustomerSegmentModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/segments', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1126,7 +1127,7 @@ export const LoyaltyService = {
     }
   },
 
-  async recalculateSegment(_segmentId: number, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+  async recalculateSegment(_segmentId: number, tenantId: string = getStoredTenantId()): Promise<any> {
     const response: any = await apiClient.post(
       '/loyalty/v1/segments/recalculate',
       {},
@@ -1137,7 +1138,7 @@ export const LoyaltyService = {
 
   async getSegmentMembers(
     segmentCode: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<SegmentMemberModel[]> {
     try {
       const response: any = await apiClient.get(
@@ -1153,7 +1154,7 @@ export const LoyaltyService = {
     }
   },
 
-  async getReminderScenarios(tenantId: string = 'TENANT_NATCASH'): Promise<ReminderScenarioModel[]> {
+  async getReminderScenarios(tenantId: string = getStoredTenantId()): Promise<ReminderScenarioModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/engagement/scenarios', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1167,7 +1168,7 @@ export const LoyaltyService = {
 
   async saveReminderScenario(
     data: Partial<ReminderScenarioModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ReminderScenarioModel> {
     const response: any = await apiClient.post('/loyalty/v1/engagement/scenarios', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1175,7 +1176,7 @@ export const LoyaltyService = {
     return unwrapObject<ReminderScenarioModel>(response);
   },
 
-  async getReminderSendLogs(tenantId: string = 'TENANT_NATCASH'): Promise<ReminderSendLogModel[]> {
+  async getReminderSendLogs(tenantId: string = getStoredTenantId()): Promise<ReminderSendLogModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/engagement/scenarios', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1189,7 +1190,7 @@ export const LoyaltyService = {
 
   async getAlerts(
     params?: { severity?: string; status?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<SystemAlertModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/alerts', {
@@ -1203,7 +1204,7 @@ export const LoyaltyService = {
     }
   },
 
-  async acknowledgeAlert(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<SystemAlertModel> {
+  async acknowledgeAlert(id: number, tenantId: string = getStoredTenantId()): Promise<SystemAlertModel> {
     const response: any = await apiClient.post(
       `/loyalty/v1/alerts/${id}/acknowledge`,
       {},
@@ -1212,7 +1213,7 @@ export const LoyaltyService = {
     return unwrapObject<SystemAlertModel>(response);
   },
 
-  async resolveAlert(id: number, _note?: string, tenantId: string = 'TENANT_NATCASH'): Promise<SystemAlertModel> {
+  async resolveAlert(id: number, _note?: string, tenantId: string = getStoredTenantId()): Promise<SystemAlertModel> {
     const response: any = await apiClient.post(
       `/loyalty/v1/alerts/${id}/acknowledge`,
       {},
@@ -1224,7 +1225,7 @@ export const LoyaltyService = {
   // 16. Báo cáo Hiệu quả, Bán chéo, Nghĩa vụ điểm & Lập lịch (NS-03, NS-05..07)
   async getProgramEffectiveness(
     params?: { campaignCode?: string; fromDate?: string; toDate?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ProgramEffectivenessModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/reports/effectiveness', {
@@ -1240,7 +1241,7 @@ export const LoyaltyService = {
 
   async getCrossSellReport(
     params?: { fromDate?: string; toDate?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<CrossSellReportModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/reports/cross-sell', {
@@ -1255,7 +1256,7 @@ export const LoyaltyService = {
   },
 
   async getPointsLiabilityReport(
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PointsLiabilityReportModel | null> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/reports/points-liability', {
@@ -1268,7 +1269,7 @@ export const LoyaltyService = {
     }
   },
 
-  async getReportSchedules(tenantId: string = 'TENANT_NATCASH'): Promise<ScheduledReportModel[]> {
+  async getReportSchedules(tenantId: string = getStoredTenantId()): Promise<ScheduledReportModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/reports/schedules', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1282,7 +1283,7 @@ export const LoyaltyService = {
 
   async saveReportSchedule(
     data: Partial<ScheduledReportModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<ScheduledReportModel> {
     const response: any = await apiClient.post('/loyalty/v1/reports/schedules', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1290,7 +1291,7 @@ export const LoyaltyService = {
     return unwrapObject<ScheduledReportModel>(response);
   },
 
-  async deleteReportSchedule(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deleteReportSchedule(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/reports/schedules/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
@@ -1299,7 +1300,7 @@ export const LoyaltyService = {
   // 17. Ngân hàng câu hỏi Học tập (GM-09) & Thống kê Game (GM-07)
   async getLearningQuestions(
     params?: { courseCode?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<LearningQuestionModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/admin/learning/questions', {
@@ -1315,7 +1316,7 @@ export const LoyaltyService = {
 
   async saveLearningQuestion(
     data: Partial<LearningQuestionModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<LearningQuestionModel> {
     const response: any = await apiClient.post('/loyalty/v1/admin/learning/questions', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1323,7 +1324,7 @@ export const LoyaltyService = {
     return unwrapObject<LearningQuestionModel>(response);
   },
 
-  async deleteLearningQuestion(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async deleteLearningQuestion(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.delete(`/loyalty/v1/admin/learning/questions/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
@@ -1331,7 +1332,7 @@ export const LoyaltyService = {
 
   async importLearningQuestions(
     questions: Partial<LearningQuestionModel>[],
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<any> {
     const response: any = await apiClient.post(
       '/loyalty/v1/admin/learning/questions/import',
@@ -1343,7 +1344,7 @@ export const LoyaltyService = {
 
   async getGameStatistics(
     params?: { gameCode?: string; fromDate?: string; toDate?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<GameStatisticsResponseModel | null> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/admin/games/statistics', {
@@ -1360,7 +1361,7 @@ export const LoyaltyService = {
   // 18. Quản trị Đại lý & Tổng Đại lý (AG-03)
   async getAdminAgents(
     params?: { roleType?: string; month?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<AgentLoyaltyItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/admin/agents', {
@@ -1376,7 +1377,7 @@ export const LoyaltyService = {
 
   async saveAgentTarget(
     data: Partial<AgentTargetConfigModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<AgentTargetConfigModel> {
     const response: any = await apiClient.post('/loyalty/v1/admin/agents/targets', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1387,7 +1388,7 @@ export const LoyaltyService = {
   async approveAgentReward(
     agentId: string | number,
     month: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<any> {
     const response: any = await apiClient.post(
       `/loyalty/v1/admin/agents/${encodeURIComponent(String(agentId))}/approve-reward`,
@@ -1397,7 +1398,7 @@ export const LoyaltyService = {
     return unwrapObject<any>(response);
   },
 
-  async getAgentPlaybooks(tenantId: string = 'TENANT_NATCASH'): Promise<SupportPlaybookModel[]> {
+  async getAgentPlaybooks(tenantId: string = getStoredTenantId()): Promise<SupportPlaybookModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/admin/agents/playbooks', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1411,7 +1412,7 @@ export const LoyaltyService = {
 
   async saveAgentPlaybook(
     data: Partial<SupportPlaybookModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<SupportPlaybookModel> {
     const response: any = await apiClient.post('/loyalty/v1/admin/agents/playbooks', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1422,7 +1423,7 @@ export const LoyaltyService = {
   // 19. Merchant Partner Portal (/loyalty/v1/partner-portal/*)
   async getPartnerPortalDashboard(
     partnerId?: number,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PartnerPortalDashboardModel | null> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/dashboard', {
@@ -1436,7 +1437,7 @@ export const LoyaltyService = {
     }
   },
 
-  async getPartnerBranches(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerBranchModel[]> {
+  async getPartnerBranches(tenantId: string = getStoredTenantId()): Promise<PartnerBranchModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/branches', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1450,7 +1451,7 @@ export const LoyaltyService = {
 
   async savePartnerBranch(
     data: Partial<PartnerBranchModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PartnerBranchModel> {
     const response: any = await apiClient.post('/loyalty/v1/partner-portal/branches', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1458,7 +1459,7 @@ export const LoyaltyService = {
     return unwrapObject<PartnerBranchModel>(response);
   },
 
-  async getPartnerProductGroups(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerProductGroupModel[]> {
+  async getPartnerProductGroups(tenantId: string = getStoredTenantId()): Promise<PartnerProductGroupModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/product-groups', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1472,7 +1473,7 @@ export const LoyaltyService = {
 
   async savePartnerProductGroup(
     data: Partial<PartnerProductGroupModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PartnerProductGroupModel> {
     const response: any = await apiClient.post('/loyalty/v1/partner-portal/product-groups', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1480,7 +1481,7 @@ export const LoyaltyService = {
     return unwrapObject<PartnerProductGroupModel>(response);
   },
 
-  async getPartnerStaff(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerStaffAccountModel[]> {
+  async getPartnerStaff(tenantId: string = getStoredTenantId()): Promise<PartnerStaffAccountModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/staff', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1494,7 +1495,7 @@ export const LoyaltyService = {
 
   async savePartnerStaff(
     data: Partial<PartnerStaffAccountModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PartnerStaffAccountModel> {
     const response: any = await apiClient.post('/loyalty/v1/partner-portal/staff', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1502,7 +1503,7 @@ export const LoyaltyService = {
     return unwrapObject<PartnerStaffAccountModel>(response);
   },
 
-  async getPartnerProposals(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerProgramProposalModel[]> {
+  async getPartnerProposals(tenantId: string = getStoredTenantId()): Promise<PartnerProgramProposalModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/approvals', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1516,7 +1517,7 @@ export const LoyaltyService = {
 
   async createPartnerProposal(
     data: Partial<PartnerProgramProposalModel>,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PartnerProgramProposalModel> {
     const response: any = await apiClient.post('/loyalty/v1/partner-portal/proposals', data, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1524,7 +1525,7 @@ export const LoyaltyService = {
     return unwrapObject<PartnerProgramProposalModel>(response);
   },
 
-  async getPartnerPortalVouchers(tenantId: string = 'TENANT_NATCASH'): Promise<VoucherItemModel[]> {
+  async getPartnerPortalVouchers(tenantId: string = getStoredTenantId()): Promise<VoucherItemModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/vouchers', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1538,7 +1539,7 @@ export const LoyaltyService = {
 
   async redeemPartnerVoucherAtCounter(
     data: { voucherCode: string; branchCode?: string; billAmount?: number; customerPhone?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<any> {
     const response: any = await apiClient.post(
       '/loyalty/v1/partner-portal/vouchers/redeem-counter',
@@ -1550,7 +1551,7 @@ export const LoyaltyService = {
 
   async getPartnerPortalTransactions(
     params?: { branchCode?: string; fromDate?: string; toDate?: string; actionType?: string; keyword?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<PointLedgerItem[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/transactions', {
@@ -1564,7 +1565,7 @@ export const LoyaltyService = {
     }
   },
 
-  async getPartnerPortalSettlements(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerSettlementBatchModel[]> {
+  async getPartnerPortalSettlements(tenantId: string = getStoredTenantId()): Promise<PartnerSettlementBatchModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/settlements', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1578,7 +1579,7 @@ export const LoyaltyService = {
 
   async confirmPartnerSettlement(
     batchCode: string,
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<any> {
     const response: any = await apiClient.post(
       `/loyalty/v1/partner-portal/settlements/${encodeURIComponent(batchCode)}/confirm`,
@@ -1590,7 +1591,7 @@ export const LoyaltyService = {
 
   async raisePartnerSettlementClaim(
     data: { batchCode: string; claimedAmount: number; reason: string; attachmentUrl?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<any> {
     const response: any = await apiClient.post(
       `/loyalty/v1/partner-portal/settlements/${encodeURIComponent(data.batchCode)}/claim`,
@@ -1604,7 +1605,7 @@ export const LoyaltyService = {
     return unwrapObject<any>(response);
   },
 
-  async getPartnerNotifications(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerNotificationModel[]> {
+  async getPartnerNotifications(tenantId: string = getStoredTenantId()): Promise<PartnerNotificationModel[]> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/notifications', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1616,7 +1617,7 @@ export const LoyaltyService = {
     }
   },
 
-  async markPartnerNotificationRead(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async markPartnerNotificationRead(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.post(
       `/loyalty/v1/partner-portal/notifications/${id}/read`,
       {},
@@ -1624,7 +1625,7 @@ export const LoyaltyService = {
     );
   },
 
-  async getPartnerApiKeys(tenantId: string = 'TENANT_NATCASH'): Promise<PartnerApiKeyConfigModel> {
+  async getPartnerApiKeys(tenantId: string = getStoredTenantId()): Promise<PartnerApiKeyConfigModel> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/partner-portal/api-keys', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -1638,7 +1639,7 @@ export const LoyaltyService = {
 
   async rotatePartnerApiKey(
     data?: { label?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<RotateApiKeyResultModel> {
     const response: any = await apiClient.post('/loyalty/v1/partner-portal/api-keys/rotate', data || {}, {
       headers: { 'X-Tenant-Id': tenantId },
@@ -1646,7 +1647,7 @@ export const LoyaltyService = {
     return unwrapObject<RotateApiKeyResultModel>(response);
   },
 
-  async revokePartnerApiKey(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async revokePartnerApiKey(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await apiClient.post(
       `/loyalty/v1/partner-portal/api-keys/${id}/revoke`,
       {},
@@ -1656,7 +1657,7 @@ export const LoyaltyService = {
 
   async updatePartnerWebhookConfig(
     data: { webhookUrl: string; ipWhitelist: string; webhookSecret?: string },
-    tenantId: string = 'TENANT_NATCASH'
+    tenantId: string = getStoredTenantId()
   ): Promise<any> {
     const response: any = await apiClient.put('/loyalty/v1/partner-portal/webhook-config', data, {
       headers: { 'X-Tenant-Id': tenantId },

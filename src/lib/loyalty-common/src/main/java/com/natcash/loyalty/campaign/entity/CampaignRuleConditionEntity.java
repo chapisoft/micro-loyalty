@@ -72,7 +72,7 @@ public class CampaignRuleConditionEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "sponsor_type", nullable = false, length = 50)
     @Builder.Default
-    private SponsorType sponsorType = SponsorType.NATCASH;
+    private SponsorType sponsorType = SponsorType.PLATFORM;
 
     @Column(name = "partner_id")
     private Long partnerId;

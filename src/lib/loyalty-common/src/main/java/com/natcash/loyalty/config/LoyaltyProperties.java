@@ -67,7 +67,7 @@ public class LoyaltyProperties {
     @Getter
     @Setter
     public static class Tenant {
-        private String defaultTenant = "NATCASH";
+        private String defaultTenant = "DEFAULT";
         private String headerName = "X-Tenant-Id";
     }
 

@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useMemo } from 'react';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
@@ -101,7 +102,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const effectiveTenantId = value || selectedTenant || localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH';
+  const effectiveTenantId = value || selectedTenant || getStoredTenantId();
 
   const handleSelect = (newId: string) => {
     localStorage.setItem('selected_tenant_id', newId);

@@ -47,7 +47,7 @@ loyalty:
     timestamp-tolerance-seconds: ${DRIFT_TOLERANCE_SECONDS:300}
     master-key: ${LOYALTY_MASTER_KEY:}
   tenant:
-    default-tenant: ${LOYALTY_DEFAULT_TENANT:NATCASH}
+    default-tenant: ${LOYALTY_DEFAULT_TENANT:DEFAULT}
     header-name: X-Tenant-Id
   qr:
     token-ttl-seconds: ${LOYALTY_QR_TOKEN_TTL_SECONDS:60}

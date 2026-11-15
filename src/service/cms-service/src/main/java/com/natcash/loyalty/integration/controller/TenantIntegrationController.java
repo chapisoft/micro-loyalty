@@ -23,7 +23,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/loyalty/v1/integrations")
-@Tag(name = "Tenant Integration API", description = "Quản lý Cấu hình Cổng Ngân hàng, Ví & SMS Đa Thuê bao")
+@Tag(name = "Tenant Integration API", description = "Multi-tenant Payment Gateway, Wallet and SMS Integration Management")
 public class TenantIntegrationController {
 
     private final TenantIntegrationService integrationService;
@@ -33,7 +33,7 @@ public class TenantIntegrationController {
     }
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách cấu hình tích hợp của bên thuê", description = "Trả về danh sách cấu hình Payment Gateway và SMS Brandname")
+    @Operation(summary = "Get tenant integrations list", description = "Return Payment Gateway and SMS Brandname configurations")
     public ResponseEntity<List<IntegrationConfigDto>> getTenantIntegrations(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
@@ -42,7 +42,7 @@ public class TenantIntegrationController {
     }
 
     @PostMapping
-    @Operation(summary = "Lưu hoặc cập nhật cấu hình tích hợp", description = "Lưu thông số kết nối Cổng Ngân hàng hoặc SMS riêng biệt theo bên thuê")
+    @Operation(summary = "Save or update integration configuration", description = "Save Payment Gateway or SMS connection settings per tenant")
     public ResponseEntity<IntegrationConfigDto> saveIntegration(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody SaveIntegrationRequest request) {
@@ -52,7 +52,7 @@ public class TenantIntegrationController {
     }
 
     @GetMapping("/overview")
-    @Operation(summary = "Tổng quan trạng thái 6 hệ thống tích hợp (QT-06)")
+    @Operation(summary = "Overview of integrated systems status")
     public ResponseEntity<List<Map<String, Object>>> getOverview(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
@@ -60,7 +60,7 @@ public class TenantIntegrationController {
     }
 
     @PostMapping("/test")
-    @Operation(summary = "Kiểm tra kết nối thử nghiệm", description = "Thử nghiệm kết nối tới Endpoint đối tác và đo độ trễ")
+    @Operation(summary = "Test integration connection", description = "Ping partner endpoint and measure round-trip latency")
     public ResponseEntity<TestConnectionResponse> testConnection(
             @Valid @RequestBody TestConnectionRequest request) {
         TestConnectionResponse res = integrationService.testConnection(request);

@@ -22,7 +22,7 @@ export const PartnerVouchersPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id') || ''
   );
   const [vouchers, setVouchers] = useState<VoucherItemModel[]>([]);
   const [loading, setLoading] = useState(false);

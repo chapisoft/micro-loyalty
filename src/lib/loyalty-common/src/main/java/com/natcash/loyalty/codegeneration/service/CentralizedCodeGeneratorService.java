@@ -342,7 +342,7 @@ public class CentralizedCodeGeneratorService implements GenerateCodeUseCase {
                 "period", "202611",
                 "scope", "SCOPE1",
                 "kind", "STD",
-                "tenant", "NATCASH"));
+                "tenant", "DEFAULT"));
         return SysCodeTypeDto.builder()
                 .id(entity.getId())
                 .codeType(entity.getCodeType())

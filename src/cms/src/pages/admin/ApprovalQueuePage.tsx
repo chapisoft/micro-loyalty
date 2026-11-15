@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -20,7 +21,7 @@ export const ApprovalQueuePage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [items, setItems] = useState<ApprovalRequestModel[]>([]);
   const [loading, setLoading] = useState(false);

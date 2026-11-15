@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -5,7 +6,6 @@ import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
-import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { TabView, TabPanel } from 'primereact/tabview';
@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import { TierLevel, CommonStatus } from '@/models';
@@ -45,7 +46,7 @@ export const TierManagementPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const toastRef = useRef<Toast>(null);
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
   const [tiers, setTiers] = useState<TierConfig[]>([]);
@@ -342,526 +343,522 @@ export const TierManagementPage: React.FC = () => {
     </span>
   );
 
-  const statusTemplate = (rowData: TierConfig) => {
-    return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active')} />
-    ) : (
-      <Tag severity="danger" value={t('common.inactive')} />
-    );
-  };
-
-  const statusOptions = useMemo(
-    () => [
-      { label: t('common.active'), value: CommonStatus.ACTIVE },
-      { label: t('common.inactive'), value: CommonStatus.INACTIVE },
-    ],
-    [t]
+  const statusTemplate = (rowData: TierConfig) => (
+    <StatusBadge status={rowData.status === CommonStatus.ACTIVE ? 'ACTIVE' : 'INACTIVE'} />
   );
+
+                  const statusOptions = useMemo(
+    () => [
+                  {label: t('common.active'), value: CommonStatus.ACTIVE },
+                  {label: t('common.inactive'), value: CommonStatus.INACTIVE },
+                  ],
+                  [t]
+                  );
 
   const filteredTiers = useMemo(() => {
     return tiers.filter((item) => {
       if (keyword.trim()) {
         const kw = keyword.toLowerCase();
-        const matchKw =
-          item.code?.toLowerCase().includes(kw) ||
-          item.name?.toLowerCase().includes(kw) ||
-          item.description?.toLowerCase().includes(kw);
-        if (!matchKw) return false;
+                  const matchKw =
+                  item.code?.toLowerCase().includes(kw) ||
+                  item.name?.toLowerCase().includes(kw) ||
+                  item.description?.toLowerCase().includes(kw);
+                  if (!matchKw) return false;
       }
-      if (statusFilter !== 'ALL' && item.status !== statusFilter) return false;
-      return true;
+                  if (statusFilter !== 'ALL' && item.status !== statusFilter) return false;
+                  return true;
     });
   }, [tiers, keyword, statusFilter]);
 
-  const totalMembersInDistribution = useMemo(
+                  const totalMembersInDistribution = useMemo(
     () => distribution.reduce((sum, d) => sum + (d.memberCount || 0), 0),
-    [distribution]
-  );
+                  [distribution]
+                  );
 
   const handleExportExcel = () => {
-    exportToExcel(
-      filteredTiers,
-      [
-        { header: t('common.stt', 'STT') },
-        { header: t('tier.code', 'Mã hạng'), field: 'code' },
-        { header: t('tier.name', 'Tên hạng'), field: 'name' },
-        { header: t('tier.level', 'Cấp độ'), field: 'tierLevel' },
-        { header: t('tier.upgrade_points', 'Điểm nâng hạng'), getValue: (r: TierConfig) => (r.minPoints ?? 0).toLocaleString() },
-        { header: t('tier.keep_tier', 'Điểm giữ hạng'), getValue: (r: TierConfig) => (r.keepTierPoints ?? 0).toLocaleString() },
-        { header: t('tier.multiplier', 'Hệ số tích điểm'), getValue: (r: TierConfig) => `×${Number(r.pointMultiplier ?? 1.0).toFixed(2)}` },
-        { header: t('tier.free_turns', 'Lượt quay miễn phí/ngày'), field: 'freeDailyTurns' },
-        { header: t('common.status', 'Trạng thái'), getValue: (r: TierConfig) => (r.status === CommonStatus.ACTIVE ? t('common.active') : t('common.inactive')) },
-        { header: t('tier.description', 'Mô tả'), field: 'description' },
-      ],
-      'Cau_hinh_hang_hoi_vien'
-    );
+                    exportToExcel(
+                      filteredTiers,
+                      [
+                        { header: t('common.stt', 'STT') },
+                        { header: t('tier.code', 'Mã hạng'), field: 'code' },
+                        { header: t('tier.name', 'Tên hạng'), field: 'name' },
+                        { header: t('tier.level', 'Cấp độ'), field: 'tierLevel' },
+                        { header: t('tier.upgrade_points', 'Điểm nâng hạng'), getValue: (r: TierConfig) => (r.minPoints ?? 0).toLocaleString() },
+                        { header: t('tier.keep_tier', 'Điểm giữ hạng'), getValue: (r: TierConfig) => (r.keepTierPoints ?? 0).toLocaleString() },
+                        { header: t('tier.multiplier', 'Hệ số tích điểm'), getValue: (r: TierConfig) => `×${Number(r.pointMultiplier ?? 1.0).toFixed(2)}` },
+                        { header: t('tier.free_turns', 'Lượt quay miễn phí/ngày'), field: 'freeDailyTurns' },
+                        { header: t('common.status', 'Trạng thái'), getValue: (r: TierConfig) => (r.status === CommonStatus.ACTIVE ? t('common.active') : t('common.inactive')) },
+                        { header: t('tier.description', 'Mô tả'), field: 'description' },
+                      ],
+                      'Cau_hinh_hang_hoi_vien'
+                    );
   };
 
-  return (
-    <div className="w-full flex flex-column gap-2">
-      <Toast ref={toastRef} />
-      <ConfirmDialog />
+                  return (
+                  <div className="w-full flex flex-column gap-2">
+                    <Toast ref={toastRef} />
+                    <ConfirmDialog />
 
-      <StandardPageHeader
-        breadcrumbs={[
-          { label: t('nav.loyalty_policies', 'Chính sách Loyalty') },
-          { label: t('nav.tiers', 'Hạng Hội viên') },
-        ]}
-        title={t('nav.tiers', 'Hạng Hội viên')}
-        subtitle="Cấu hình 4 phân hạng hội viên, ngưỡng điểm tích lũy, hệ số nhân và đặc quyền quay thưởng"
-        primaryAction={{
-          label: t('common.add_new', 'Thêm mới'),
-          icon: 'pi pi-plus',
-          onClick: openNew,
-        }}
-        extraLeft={
-          <TenantSelector
-            value={selectedTenant}
-            onChange={(newTenantId) => {
-              setSelectedTenant(newTenantId);
-              localStorage.setItem('selected_tenant_id', newTenantId);
-            }}
-          />
-        }
-        actions={
-          <Button
-            label={t('tier.period_settings', 'Chu kỳ xét hạng')}
-            icon="pi pi-calendar-times"
-            size="small"
-            outlined
-            severity="secondary"
-            onClick={() => setShowPeriodDialog(true)}
-            className="p-button-sm font-medium"
-          />
-        }
-        onRefresh={() => {
-          fetchTiers();
-          fetchDistribution();
-        }}
-        refreshLoading={loading || distLoading}
-      />
+                    <StandardPageHeader
+                      breadcrumbs={[
+                        { label: t('nav.loyalty_policies', 'Chính sách Loyalty') },
+                        { label: t('nav.tiers', 'Hạng Hội viên') },
+                      ]}
+                      title={t('nav.tiers', 'Hạng Hội viên')}
+                      subtitle="Cấu hình 4 phân hạng hội viên, ngưỡng điểm tích lũy, hệ số nhân và đặc quyền quay thưởng"
+                      primaryAction={{
+                        label: t('common.add_new', 'Thêm mới'),
+                        icon: 'pi pi-plus',
+                        onClick: openNew,
+                      }}
+                      extraLeft={
+                        <TenantSelector
+                          value={selectedTenant}
+                          onChange={(newTenantId) => {
+                            setSelectedTenant(newTenantId);
+                            localStorage.setItem('selected_tenant_id', newTenantId);
+                          }}
+                        />
+                      }
+                      actions={
+                        <Button
+                          label={t('tier.period_settings', 'Chu kỳ xét hạng')}
+                          icon="pi pi-calendar-times"
+                          size="small"
+                          outlined
+                          severity="secondary"
+                          onClick={() => setShowPeriodDialog(true)}
+                          className="p-button-sm font-medium"
+                        />
+                      }
+                      onRefresh={() => {
+                        fetchTiers();
+                        fetchDistribution();
+                      }}
+                      refreshLoading={loading || distLoading}
+                    />
 
-      <div className="card shadow-1 border-round surface-card p-4 w-full">
-        <UniversalFilterBar
-          keyword={keyword}
-          onKeywordChange={setKeyword}
-          searchPlaceholder={t('common.search', 'Tìm theo mã hạng, tên hạng...')}
-          basicFilters={[
-            {
-              value: statusFilter,
-              options: [
-                { label: `${t('common.status')}: ${t('common.all')}`, value: 'ALL' },
-                { label: t('common.active', 'Hoạt động'), value: CommonStatus.ACTIVE },
-                { label: t('common.inactive', 'Ngừng hoạt động'), value: CommonStatus.INACTIVE },
-              ],
-              onChange: (val) => setStatusFilter(val || 'ALL'),
-              className: 'w-13rem',
-            },
-          ]}
-          onReset={() => {
-            setKeyword('');
-            setStatusFilter('ALL');
-          }}
-          onRefresh={() => {
-            fetchTiers();
-            fetchDistribution();
-          }}
-          onExport={handleExportExcel}
-        />
-
-        <div className="surface-card border-round border-1 surface-border overflow-hidden w-full mt-2">
-          <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)}>
-            <TabPanel
-              header={t('tier.tab_config', 'Cấu hình hạng hội viên')}
-              leftIcon="pi pi-sliders-h mr-2"
-            >
-              <DataTable<any>
-                key={`${i18n.language}_${selectedTenant}`}
-                value={filteredTiers}
-                loading={loading}
-                dataKey="id"
-                paginator
-                rows={10}
-                emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
-                className="p-datatable-sm p-datatable-striped"
-                responsiveLayout="scroll"
-              >
-                <Column
-                  header={t('common.stt', 'STT')}
-                  body={(_, options) => options.rowIndex + 1}
-                  style={{ width: '3.5rem', textAlign: 'center' }}
-                />
-                <Column
-                  body={renderRowActions}
-                  exportable={false}
-                  header={t('common.actions', 'Thao tác')}
-                  style={{ width: '6.5rem', textAlign: 'left' }}
-                />
-                <Column
-                  field="code"
-                  body={codeTemplate}
-                  header={t('tier.code', 'Mã hạng')}
-                  sortable
-                  style={{ minWidth: '7.5rem' }}
-                />
-                <Column
-                  field="name"
-                  body={nameTemplate}
-                  header={t('tier.name', 'Tên hạng')}
-                  sortable
-                  style={{ minWidth: '12rem' }}
-                />
-                <Column
-                  field="tierLevel"
-                  body={levelTemplate}
-                  header={t('tier.level', 'Cấp độ')}
-                  sortable
-                  style={{ minWidth: '5rem', textAlign: 'center' }}
-                />
-                <Column
-                  field="minPoints"
-                  body={pointsTemplate}
-                  header={t('tier.upgrade_points', 'Ngưỡng lên hạng')}
-                  sortable
-                  style={{ minWidth: '9.5rem' }}
-                />
-                <Column
-                  field="keepTierPoints"
-                  body={keepPointsTemplate}
-                  header={t('tier.keep_tier', 'Giữ hạng')}
-                  sortable
-                  style={{ minWidth: '10.5rem' }}
-                />
-                <Column
-                  field="pointMultiplier"
-                  body={multiplierTemplate}
-                  header={t('tier.multiplier', 'Hệ số tích điểm')}
-                  sortable
-                  style={{ minWidth: '6.5rem', textAlign: 'center' }}
-                />
-                <Column
-                  field="freeDailyTurns"
-                  body={turnsTemplate}
-                  header={t('tier.free_turns', 'Lượt quay miễn phí')}
-                  sortable
-                  style={{ minWidth: '7.5rem', textAlign: 'center' }}
-                />
-                <Column
-                  field="description"
-                  body={descriptionTemplate}
-                  header={t('tier.description', 'Mô tả quyền lợi')}
-                  style={{ minWidth: '12rem' }}
-                />
-                <Column
-                  field="status"
-                  body={statusTemplate}
-                  header={t('common.status', 'Trạng thái')}
-                  sortable
-                  style={{ minWidth: '8rem', textAlign: 'center' }}
-                />
-              </DataTable>
-            </TabPanel>
-
-          <TabPanel
-            header={t('tier.tab_distribution')}
-            leftIcon="pi pi-chart-pie mr-2"
-          >
-            <div className="flex justify-content-between align-items-center mb-3">
-              <div>
-                <h5 className="m-0 text-900 font-bold">
-                  {t('tier.distribution_title')}
-                </h5>
-                <span className="text-xs text-500">
-                  {t('tier.distribution_total', {
-                    count: totalMembersInDistribution
-                  })}
-                </span>
-              </div>
-              <Button
-                label={t('common.refresh')}
-                icon="pi pi-refresh"
-                size="small"
-                outlined
-                onClick={fetchDistribution}
-                loading={distLoading}
-              />
-            </div>
-
-            {distLoading ? (
-              <div className="flex flex-column gap-3">
-                <Skeleton height="4rem" />
-                <Skeleton height="12rem" />
-              </div>
-            ) : (
-              <DataTable
-                value={distribution}
-                stripedRows
-                emptyMessage={t('tier.distribution_empty')}
-                responsiveLayout="scroll"
-              >
-                <Column
-                  header={t('common.stt', 'STT')}
-                  body={(_, options) => options.rowIndex + 1}
-                  style={{ width: '3.5rem', textAlign: 'center' }}
-                />
-                <Column
-                  field="code"
-                  header={t('tier.code')}
-                  body={(r: any) => (
-                    <span className="font-mono font-bold text-900 white-space-nowrap">{r.code || r.tierCode}</span>
-                  )}
-                  style={{ minWidth: '8rem' }}
-                />
-                <Column
-                  field="name"
-                  header={t('tier.name')}
-                  body={(r: any) => <span className="text-900">{r.name || r.tierName}</span>}
-                  style={{ minWidth: '12rem' }}
-                />
-                <Column
-                  header={t('tier.threshold_range')}
-                  body={(r: any) => {
-                    const std = STANDARD_THRESHOLD_MAP[r.tierLevel];
-                    return (
-                      <span className="font-mono text-xs text-900 white-space-nowrap">
-                        {std ? t('tier.points_keep_summary', { rangeLabel: std.rangeLabel, keep: std.keep.toLocaleString() }) : '—'}
-                      </span>
-                    );
-                  }}
-                  style={{ minWidth: '14rem' }}
-                />
-                <Column
-                  field="pointMultiplier"
-                  header={t('tier.multiplier')}
-                  body={(r: any) => (
-                    <span className="font-mono text-900">
-                      ×{Number(r.pointMultiplier || 1).toFixed(2)}
-                    </span>
-                  )}
-                  style={{ minWidth: '6.5rem', textAlign: 'center' }}
-                />
-                <Column
-                  field="memberCount"
-                  header={t('tier.member_count')}
-                  body={(r: TierDistributionModel) => (
-                    <span className="font-mono">{Number(r.memberCount || 0).toLocaleString()}</span>
-                  )}
-                  style={{ minWidth: '8.5rem', textAlign: 'right' }}
-                />
-                <Column
-                  field="percentage"
-                  header={t('tier.percentage')}
-                  body={(r: TierDistributionModel) => (
-                    <div className="flex align-items-center gap-2">
-                      <ProgressBar
-                        value={Number(r.percentage || 0)}
-                        showValue={false}
-                        style={{ height: '0.5rem', width: '8rem' }}
+                    <div className="card shadow-1 border-round surface-card p-4 w-full">
+                      <UniversalFilterBar
+                        keyword={keyword}
+                        onKeywordChange={setKeyword}
+                        searchPlaceholder={t('common.search', 'Tìm theo mã hạng, tên hạng...')}
+                        basicFilters={[
+                          {
+                            value: statusFilter,
+                            options: [
+                              { label: `${t('common.status')}: ${t('common.all')}`, value: 'ALL' },
+                              { label: t('common.active', 'Hoạt động'), value: CommonStatus.ACTIVE },
+                              { label: t('common.inactive', 'Ngừng hoạt động'), value: CommonStatus.INACTIVE },
+                            ],
+                            onChange: (val) => setStatusFilter(val || 'ALL'),
+                            className: 'w-13rem',
+                          },
+                        ]}
+                        onReset={() => {
+                          setKeyword('');
+                          setStatusFilter('ALL');
+                        }}
+                        onRefresh={() => {
+                          fetchTiers();
+                          fetchDistribution();
+                        }}
+                        onExport={handleExportExcel}
                       />
-                      <span className="font-mono text-xs">{Number(r.percentage || 0).toFixed(1)}%</span>
+
+                      <div className="surface-card border-round border-1 surface-border overflow-hidden w-full mt-2">
+                        <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)}>
+                          <TabPanel
+                            header={t('tier.tab_config', 'Cấu hình hạng hội viên')}
+                            leftIcon="pi pi-sliders-h mr-2"
+                          >
+                            <DataTable<any>
+                              key={`${i18n.language}_${selectedTenant}`}
+                              value={filteredTiers}
+                              loading={loading}
+                              dataKey="id"
+                              paginator
+                              rows={10}
+                              emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
+                              className="p-datatable-sm p-datatable-striped"
+                              responsiveLayout="scroll"
+                            >
+                              <Column
+                                header={t('common.stt', 'STT')}
+                                body={(_, options) => options.rowIndex + 1}
+                                style={{ width: '3.5rem', textAlign: 'center' }}
+                              />
+                              <Column
+                                body={renderRowActions}
+                                exportable={false}
+                                header={t('common.actions', 'Thao tác')}
+                                style={{ width: '6.5rem', textAlign: 'left' }}
+                              />
+                              <Column
+                                field="code"
+                                body={codeTemplate}
+                                header={t('tier.code', 'Mã hạng')}
+                                sortable
+                                style={{ minWidth: '7.5rem' }}
+                              />
+                              <Column
+                                field="name"
+                                body={nameTemplate}
+                                header={t('tier.name', 'Tên hạng')}
+                                sortable
+                                style={{ minWidth: '12rem' }}
+                              />
+                              <Column
+                                field="tierLevel"
+                                body={levelTemplate}
+                                header={t('tier.level', 'Cấp độ')}
+                                sortable
+                                style={{ minWidth: '5rem', textAlign: 'center' }}
+                              />
+                              <Column
+                                field="minPoints"
+                                body={pointsTemplate}
+                                header={t('tier.upgrade_points', 'Ngưỡng lên hạng')}
+                                sortable
+                                style={{ minWidth: '9.5rem' }}
+                              />
+                              <Column
+                                field="keepTierPoints"
+                                body={keepPointsTemplate}
+                                header={t('tier.keep_tier', 'Giữ hạng')}
+                                sortable
+                                style={{ minWidth: '10.5rem' }}
+                              />
+                              <Column
+                                field="pointMultiplier"
+                                body={multiplierTemplate}
+                                header={t('tier.multiplier', 'Hệ số tích điểm')}
+                                sortable
+                                style={{ minWidth: '6.5rem', textAlign: 'center' }}
+                              />
+                              <Column
+                                field="freeDailyTurns"
+                                body={turnsTemplate}
+                                header={t('tier.free_turns', 'Lượt quay miễn phí')}
+                                sortable
+                                style={{ minWidth: '7.5rem', textAlign: 'center' }}
+                              />
+                              <Column
+                                field="description"
+                                body={descriptionTemplate}
+                                header={t('tier.description', 'Mô tả quyền lợi')}
+                                style={{ minWidth: '12rem' }}
+                              />
+                              <Column
+                                field="status"
+                                body={statusTemplate}
+                                header={t('common.status', 'Trạng thái')}
+                                sortable
+                                style={{ minWidth: '8rem', textAlign: 'center' }}
+                              />
+                            </DataTable>
+                          </TabPanel>
+
+                          <TabPanel
+                            header={t('tier.tab_distribution')}
+                            leftIcon="pi pi-chart-pie mr-2"
+                          >
+                            <div className="flex justify-content-between align-items-center mb-3">
+                              <div>
+                                <h5 className="m-0 text-900 font-bold">
+                                  {t('tier.distribution_title')}
+                                </h5>
+                                <span className="text-xs text-500">
+                                  {t('tier.distribution_total', {
+                                    count: totalMembersInDistribution
+                                  })}
+                                </span>
+                              </div>
+                              <Button
+                                label={t('common.refresh')}
+                                icon="pi pi-refresh"
+                                size="small"
+                                outlined
+                                onClick={fetchDistribution}
+                                loading={distLoading}
+                              />
+                            </div>
+
+                            {distLoading ? (
+                              <div className="flex flex-column gap-3">
+                                <Skeleton height="4rem" />
+                                <Skeleton height="12rem" />
+                              </div>
+                            ) : (
+                              <DataTable
+                                value={distribution}
+                                stripedRows
+                                emptyMessage={t('tier.distribution_empty')}
+                                responsiveLayout="scroll"
+                              >
+                                <Column
+                                  header={t('common.stt', 'STT')}
+                                  body={(_, options) => options.rowIndex + 1}
+                                  style={{ width: '3.5rem', textAlign: 'center' }}
+                                />
+                                <Column
+                                  field="code"
+                                  header={t('tier.code')}
+                                  body={(r: any) => (
+                                    <span className="font-mono font-bold text-900 white-space-nowrap">{r.code || r.tierCode}</span>
+                                  )}
+                                  style={{ minWidth: '8rem' }}
+                                />
+                                <Column
+                                  field="name"
+                                  header={t('tier.name')}
+                                  body={(r: any) => <span className="text-900">{r.name || r.tierName}</span>}
+                                  style={{ minWidth: '12rem' }}
+                                />
+                                <Column
+                                  header={t('tier.threshold_range')}
+                                  body={(r: any) => {
+                                    const std = STANDARD_THRESHOLD_MAP[r.tierLevel];
+                                    return (
+                                      <span className="font-mono text-xs text-900 white-space-nowrap">
+                                        {std ? t('tier.points_keep_summary', { rangeLabel: std.rangeLabel, keep: std.keep.toLocaleString() }) : '—'}
+                                      </span>
+                                    );
+                                  }}
+                                  style={{ minWidth: '14rem' }}
+                                />
+                                <Column
+                                  field="pointMultiplier"
+                                  header={t('tier.multiplier')}
+                                  body={(r: any) => (
+                                    <span className="font-mono text-900">
+                                      ×{Number(r.pointMultiplier || 1).toFixed(2)}
+                                    </span>
+                                  )}
+                                  style={{ minWidth: '6.5rem', textAlign: 'center' }}
+                                />
+                                <Column
+                                  field="memberCount"
+                                  header={t('tier.member_count')}
+                                  body={(r: TierDistributionModel) => (
+                                    <span className="font-mono">{Number(r.memberCount || 0).toLocaleString()}</span>
+                                  )}
+                                  style={{ minWidth: '8.5rem', textAlign: 'right' }}
+                                />
+                                <Column
+                                  field="percentage"
+                                  header={t('tier.percentage')}
+                                  body={(r: TierDistributionModel) => (
+                                    <div className="flex align-items-center gap-2">
+                                      <ProgressBar
+                                        value={Number(r.percentage || 0)}
+                                        showValue={false}
+                                        style={{ height: '0.5rem', width: '8rem' }}
+                                      />
+                                      <span className="font-mono text-xs">{Number(r.percentage || 0).toFixed(1)}%</span>
+                                    </div>
+                                  )}
+                                  style={{ minWidth: '13rem' }}
+                                />
+                              </DataTable>
+                            )}
+                          </TabPanel>
+                        </TabView>
+                      </div>
                     </div>
-                  )}
-                  style={{ minWidth: '13rem' }}
-                />
-              </DataTable>
-            )}
-          </TabPanel>
-        </TabView>
-        </div>
-      </div>
 
-      {/* Dialog Sửa Hạng */}
-      <Dialog
-        visible={showDialog}
-        style={{ width: '36rem' }}
-        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header={formData.id ? t('tier.edit_title', 'Chỉnh sửa hạng') : t('common.add_new', 'Thêm mới hạng')}
-        modal
-        className="p-fluid"
-        onHide={() => setShowDialog(false)}
-      >
-        <div className="formgrid grid mb-3">
-          <div className="field col-6 mb-0">
-            <label htmlFor="tierCode" className="font-medium text-900">
-              {t('tier.code', 'Mã hạng')} <span className="text-red-500">*</span>
-            </label>
-            <Dropdown
-              id="tierCode"
-              value={formData.code}
-              options={tierCodeOptions}
-              onChange={(e) => setFormData({ ...formData, code: e.value })}
-              placeholder={t('tier.select_code', 'Chọn mã hạng')}
-              disabled={Boolean(formData.id)}
-            />
-          </div>
-          <div className="field col-6 mb-0">
-            <label htmlFor="tierLevel" className="font-medium text-900">
-              {t('tier.level', 'Cấp bậc (Level)')} <span className="text-red-500">*</span>
-            </label>
-            <InputNumber
-              id="tierLevel"
-              value={formData.tierLevel ?? 1}
-              onValueChange={(e) => setFormData({ ...formData, tierLevel: e.value ?? 1 })}
-              min={1}
-              max={10}
-            />
-          </div>
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="tierName" className="font-medium text-900">
-            {t('tier.name', 'Tên hạng')} <span className="text-red-500">*</span>
-          </label>
-          <InputText
-            id="tierName"
-            value={formData.name || ''}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-        </div>
-        <div className="formgrid grid mb-3">
-          <div className="field col-6 mb-0">
-            <label htmlFor="minPoints" className="font-medium">
-              {t('tier.upgrade_points')}
-            </label>
-            <InputNumber
-              id="minPoints"
-              value={formData.minPoints ?? 0}
-              onValueChange={(e) => setFormData({ ...formData, minPoints: e.value ?? 0 })}
-              min={0}
-            />
-          </div>
-          <div className="field col-6 mb-0">
-            <label htmlFor="keepTierPoints" className="font-medium">
-              {t('tier.keep_tier')}
-            </label>
-            <InputNumber
-              id="keepTierPoints"
-              value={formData.keepTierPoints ?? 0}
-              onValueChange={(e) => setFormData({ ...formData, keepTierPoints: e.value ?? 0 })}
-              min={0}
-            />
-          </div>
-        </div>
-        <div className="formgrid grid mb-3">
-          <div className="field col-6 mb-0">
-            <label htmlFor="pointMultiplier" className="font-medium">
-              {t('tier.multiplier')}
-            </label>
-            <InputNumber
-              id="pointMultiplier"
-              value={formData.pointMultiplier ?? 1.0}
-              onValueChange={(e) => setFormData({ ...formData, pointMultiplier: e.value ?? 1.0 })}
-              minFractionDigits={1}
-              maxFractionDigits={2}
-            />
-          </div>
-          <div className="field col-6 mb-0">
-            <label htmlFor="freeDailyTurns" className="font-medium">
-              {t('tier.free_turns')}
-            </label>
-            <InputNumber
-              id="freeDailyTurns"
-              value={formData.freeDailyTurns ?? 1}
-              onValueChange={(e) => setFormData({ ...formData, freeDailyTurns: e.value ?? 1 })}
-              min={0}
-            />
-          </div>
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="tierDescription" className="font-medium">
-            {t('tier.description')}
-          </label>
-          <InputText
-            id="tierDescription"
-            value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="status" className="font-medium">
-            {t('common.status')}
-          </label>
-          <Dropdown
-            id="status"
-            value={formData.status || CommonStatus.ACTIVE}
-            options={statusOptions}
-            onChange={(e) => setFormData({ ...formData, status: e.value })}
-          />
-        </div>
-        <div className="flex justify-content-end gap-2 mt-4">
-          <Button
-            label={t('common.cancel')}
-            icon="pi pi-times"
-            outlined
-            onClick={() => setShowDialog(false)}
-            disabled={isSubmitting}
-          />
-          <Button
-            label={t('common.save')}
-            icon="pi pi-check"
-            onClick={saveItem}
-            loading={isSubmitting}
-            disabled={isSubmitting}
-          />
-        </div>
-      </Dialog>
+                    {/* Dialog Sửa Hạng */}
+                    <Dialog
+                      visible={showDialog}
+                      style={{ width: '36rem' }}
+                      breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+                      header={formData.id ? t('tier.edit_title', 'Chỉnh sửa hạng') : t('common.add_new', 'Thêm mới hạng')}
+                      modal
+                      className="p-fluid"
+                      onHide={() => setShowDialog(false)}
+                    >
+                      <div className="formgrid grid mb-3">
+                        <div className="field col-6 mb-0">
+                          <label htmlFor="tierCode" className="font-medium text-900">
+                            {t('tier.code', 'Mã hạng')} <span className="text-red-500">*</span>
+                          </label>
+                          <Dropdown
+                            id="tierCode"
+                            value={formData.code}
+                            options={tierCodeOptions}
+                            onChange={(e) => setFormData({ ...formData, code: e.value })}
+                            placeholder={t('tier.select_code', 'Chọn mã hạng')}
+                            disabled={Boolean(formData.id)}
+                          />
+                        </div>
+                        <div className="field col-6 mb-0">
+                          <label htmlFor="tierLevel" className="font-medium text-900">
+                            {t('tier.level', 'Cấp bậc (Level)')} <span className="text-red-500">*</span>
+                          </label>
+                          <InputNumber
+                            id="tierLevel"
+                            value={formData.tierLevel ?? 1}
+                            onValueChange={(e) => setFormData({ ...formData, tierLevel: e.value ?? 1 })}
+                            min={1}
+                            max={10}
+                          />
+                        </div>
+                      </div>
+                      <div className="field mb-3">
+                        <label htmlFor="tierName" className="font-medium text-900">
+                          {t('tier.name', 'Tên hạng')} <span className="text-red-500">*</span>
+                        </label>
+                        <InputText
+                          id="tierName"
+                          value={formData.name || ''}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="formgrid grid mb-3">
+                        <div className="field col-6 mb-0">
+                          <label htmlFor="minPoints" className="font-medium">
+                            {t('tier.upgrade_points')}
+                          </label>
+                          <InputNumber
+                            id="minPoints"
+                            value={formData.minPoints ?? 0}
+                            onValueChange={(e) => setFormData({ ...formData, minPoints: e.value ?? 0 })}
+                            min={0}
+                          />
+                        </div>
+                        <div className="field col-6 mb-0">
+                          <label htmlFor="keepTierPoints" className="font-medium">
+                            {t('tier.keep_tier')}
+                          </label>
+                          <InputNumber
+                            id="keepTierPoints"
+                            value={formData.keepTierPoints ?? 0}
+                            onValueChange={(e) => setFormData({ ...formData, keepTierPoints: e.value ?? 0 })}
+                            min={0}
+                          />
+                        </div>
+                      </div>
+                      <div className="formgrid grid mb-3">
+                        <div className="field col-6 mb-0">
+                          <label htmlFor="pointMultiplier" className="font-medium">
+                            {t('tier.multiplier')}
+                          </label>
+                          <InputNumber
+                            id="pointMultiplier"
+                            value={formData.pointMultiplier ?? 1.0}
+                            onValueChange={(e) => setFormData({ ...formData, pointMultiplier: e.value ?? 1.0 })}
+                            minFractionDigits={1}
+                            maxFractionDigits={2}
+                          />
+                        </div>
+                        <div className="field col-6 mb-0">
+                          <label htmlFor="freeDailyTurns" className="font-medium">
+                            {t('tier.free_turns')}
+                          </label>
+                          <InputNumber
+                            id="freeDailyTurns"
+                            value={formData.freeDailyTurns ?? 1}
+                            onValueChange={(e) => setFormData({ ...formData, freeDailyTurns: e.value ?? 1 })}
+                            min={0}
+                          />
+                        </div>
+                      </div>
+                      <div className="field mb-3">
+                        <label htmlFor="tierDescription" className="font-medium">
+                          {t('tier.description')}
+                        </label>
+                        <InputText
+                          id="tierDescription"
+                          value={formData.description || ''}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        />
+                      </div>
+                      <div className="field mb-3">
+                        <label htmlFor="status" className="font-medium">
+                          {t('common.status')}
+                        </label>
+                        <Dropdown
+                          id="status"
+                          value={formData.status || CommonStatus.ACTIVE}
+                          options={statusOptions}
+                          onChange={(e) => setFormData({ ...formData, status: e.value })}
+                        />
+                      </div>
+                      <div className="flex justify-content-end gap-2 mt-4">
+                        <Button
+                          label={t('common.cancel')}
+                          icon="pi pi-times"
+                          outlined
+                          onClick={() => setShowDialog(false)}
+                          disabled={isSubmitting}
+                        />
+                        <Button
+                          label={t('common.save')}
+                          icon="pi pi-check"
+                          onClick={saveItem}
+                          loading={isSubmitting}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    </Dialog>
 
-      {/* Dialog Period Settings */}
-      <Dialog
-        visible={showPeriodDialog}
-        style={{ width: '30rem' }}
-        header={t('tier.period_settings_title')}
-        modal
-        className="p-fluid"
-        onHide={() => setShowPeriodDialog(false)}
-      >
-        <div className="field mb-3">
-          <label className="font-medium text-sm">
-            {t('tier.cycle_months')}
-          </label>
-          <InputNumber
-            value={cycleMonths}
-            onValueChange={(e) => setCycleMonths(e.value ?? 12)}
-            min={1}
-            max={24}
-          />
-        </div>
-        <div className="field mb-3">
-          <label className="font-medium text-sm">
-            {t('tier.warning_days')}
-          </label>
-          <InputNumber
-            value={warningDaysBeforeEnd}
-            onValueChange={(e) => setWarningDaysBeforeEnd(e.value ?? 30)}
-            min={7}
-            max={90}
-          />
-        </div>
-        <div className="field mb-3">
-          <label className="font-medium text-sm">
-            {t('tier.max_downgrade_steps')}
-          </label>
-          <InputNumber
-            value={maxDowngradeSteps}
-            onValueChange={(e) => setMaxDowngradeSteps(e.value ?? 1)}
-            min={1}
-            max={3}
-          />
-        </div>
-        <div className="flex justify-content-end gap-2 mt-3">
-          <Button
-            label={t('common.cancel')}
-            icon="pi pi-times"
-            outlined
-            onClick={() => setShowPeriodDialog(false)}
-          />
-          <Button
-            label={t('common.save')}
-            icon="pi pi-check"
-            onClick={handleSavePeriodSettings}
-            loading={isSubmitting}
-          />
-        </div>
+                    {/* Dialog Period Settings */}
+                    <Dialog
+                      visible={showPeriodDialog}
+                      style={{ width: '30rem' }}
+                      header={t('tier.period_settings_title')}
+                      modal
+                      className="p-fluid"
+                      onHide={() => setShowPeriodDialog(false)}
+                    >
+                      <div className="field mb-3">
+                        <label className="font-medium text-sm">
+                          {t('tier.cycle_months')}
+                        </label>
+                        <InputNumber
+                          value={cycleMonths}
+                          onValueChange={(e) => setCycleMonths(e.value ?? 12)}
+                          min={1}
+                          max={24}
+                        />
+                      </div>
+                      <div className="field mb-3">
+                        <label className="font-medium text-sm">
+                          {t('tier.warning_days')}
+                        </label>
+                        <InputNumber
+                          value={warningDaysBeforeEnd}
+                          onValueChange={(e) => setWarningDaysBeforeEnd(e.value ?? 30)}
+                          min={7}
+                          max={90}
+                        />
+                      </div>
+                      <div className="field mb-3">
+                        <label className="font-medium text-sm">
+                          {t('tier.max_downgrade_steps')}
+                        </label>
+                        <InputNumber
+                          value={maxDowngradeSteps}
+                          onValueChange={(e) => setMaxDowngradeSteps(e.value ?? 1)}
+                          min={1}
+                          max={3}
+                        />
+                      </div>
+                      <div className="flex justify-content-end gap-2 mt-3">
+                        <Button
+                          label={t('common.cancel')}
+                          icon="pi pi-times"
+                          outlined
+                          onClick={() => setShowPeriodDialog(false)}
+                        />
+                        <Button
+                          label={t('common.save')}
+                          icon="pi pi-check"
+                          onClick={handleSavePeriodSettings}
+                          loading={isSubmitting}
+                        />
+                      </div>
       </Dialog>
     </div>
   );

@@ -28,7 +28,7 @@ export function getApiBaseUrl(): string {
 }
 
 export function getDefaultTenantId(): string {
-  return window.__ENV__?.DEFAULT_TENANT_ID || window.__ENV__?.TENANT_ID || 'TENANT_NATCASH';
+  return window.__ENV__?.DEFAULT_TENANT_ID || window.__ENV__?.TENANT_ID || 'DEFAULT';
 }
 
 export function getDefaultLoginUsername(): string {

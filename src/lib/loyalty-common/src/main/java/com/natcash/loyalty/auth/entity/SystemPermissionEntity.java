@@ -42,6 +42,10 @@ public class SystemPermissionEntity {
     @Column(name = "action", nullable = false, length = 50)
     private String action;
 
+    @Column(name = "display_order", nullable = false)
+    @Builder.Default
+    private Integer displayOrder = 0;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = Boolean.TRUE;

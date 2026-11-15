@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import { cmsApiClient } from './config';
 
 export interface Partner {
@@ -16,7 +17,7 @@ export interface Partner {
 }
 
 class PartnerService {
-  async getAll(tenantId: string = 'TENANT_NATCASH'): Promise<Partner[]> {
+  async getAll(tenantId: string = getStoredTenantId()): Promise<Partner[]> {
     try {
       const response: any = await cmsApiClient.get('/api/v1/partners', {
         headers: { 'X-Tenant-Id': tenantId },
@@ -30,7 +31,7 @@ class PartnerService {
     }
   }
 
-  async getById(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<Partner | null> {
+  async getById(id: number, tenantId: string = getStoredTenantId()): Promise<Partner | null> {
     try {
       const response: any = await cmsApiClient.get(`/api/v1/partners/${id}`, {
         headers: { 'X-Tenant-Id': tenantId },
@@ -42,21 +43,21 @@ class PartnerService {
     }
   }
 
-  async create(data: Partial<Partner>, tenantId: string = 'TENANT_NATCASH'): Promise<Partner> {
+  async create(data: Partial<Partner>, tenantId: string = getStoredTenantId()): Promise<Partner> {
     const response: any = await cmsApiClient.post('/api/v1/partners', data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   }
 
-  async update(id: number, data: Partial<Partner>, tenantId: string = 'TENANT_NATCASH'): Promise<Partner> {
+  async update(id: number, data: Partial<Partner>, tenantId: string = getStoredTenantId()): Promise<Partner> {
     const response: any = await cmsApiClient.put(`/api/v1/partners/${id}`, data, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;
   }
 
-  async delete(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<void> {
+  async delete(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
     await cmsApiClient.delete(`/api/v1/partners/${id}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });

@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = { "/loyalty/v1/partners", "/api/v1/partners", "/partners" })
-@Tag(name = "Partner Management API", description = "Quản lý Đối Tác Liên Minh (CRUD)")
+@Tag(name = "Partner Management API", description = "Alliance Partners Management (CRUD)")
 public class PartnerController {
 
     private final LoyaltyPartnerRepository partnerRepository;
@@ -53,7 +53,7 @@ public class PartnerController {
     }
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách đối tác liên minh", description = "Trả về danh sách đối tác từ DB theo tenant")
+    @Operation(summary = "Get alliance partners list", description = "Return partners list from DB filtered by tenant")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PartnerResponse>> getPartners(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
@@ -64,7 +64,7 @@ public class PartnerController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Lấy chi tiết đối tác", description = "Tra cứu thông tin đối tác theo ID")
+    @Operation(summary = "Get partner details", description = "Look up partner information by ID")
     @Transactional(readOnly = true)
     public ResponseEntity<PartnerResponse> getPartnerById(
             @PathVariable("id") Long id,
@@ -76,7 +76,7 @@ public class PartnerController {
     }
 
     @PostMapping
-    @Operation(summary = "Thêm đối tác liên minh mới", description = "Dành cho Quản trị viên CMS tạo đối tác mới")
+    @Operation(summary = "Create alliance partner", description = "Create new partner profile in the loyalty ecosystem")
     @Transactional
     public ResponseEntity<PartnerResponse> createPartner(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
@@ -128,7 +128,7 @@ public class PartnerController {
 
         LoyaltyPartnerEntity saved = partnerRepository.save(entity);
 
-        // Tự động ghi vết kiểm toán hệ thống
+        // Automatically record system audit log
         auditLogService.recordActionAsync(AuditLogEvent.builder()
                 .tenantId(tenantId)
                 .module("PARTNER")
@@ -148,7 +148,7 @@ public class PartnerController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật thông tin đối tác liên minh", description = "Dành cho Quản trị viên CMS")
+    @Operation(summary = "Update alliance partner", description = "Update partner information and settings")
     @Transactional
     public ResponseEntity<PartnerResponse> updatePartner(
             @PathVariable("id") Long id,
@@ -182,7 +182,7 @@ public class PartnerController {
         entity.setUpdatedAt(Instant.now());
         LoyaltyPartnerEntity saved = partnerRepository.save(entity);
 
-        // Tự động ghi vết kiểm toán hệ thống
+        // Automatically record system audit log
         auditLogService.recordActionAsync(AuditLogEvent.builder()
                 .tenantId(tenantId)
                 .module("PARTNER")
@@ -201,7 +201,7 @@ public class PartnerController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa đối tác", description = "Xóa hoặc vô hiệu hóa đối tác")
+    @Operation(summary = "Delete partner", description = "Remove or deactivate partner from system")
     @Transactional
     public ResponseEntity<Void> deletePartner(
             @PathVariable("id") Long id,

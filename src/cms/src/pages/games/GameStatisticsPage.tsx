@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -14,7 +15,7 @@ export const GameStatisticsPage: React.FC = () => {
   const { t } = useTranslation();
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [stats, setStats] = useState<GameStatisticsResponseModel | null>(null);
   const [loading, setLoading] = useState(false);

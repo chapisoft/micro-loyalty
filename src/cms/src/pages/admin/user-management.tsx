@@ -53,7 +53,9 @@ export const UserManagementPage: React.FC = () => {
   });
 
   const { data: rolesData } = useGetRoles();
-  const allRoles = ((rolesData?.data || rolesData?.roles || []) as IRole[]) || [];
+  const allRoles = useMemo(() => {
+    return ((rolesData?.data || rolesData?.roles || []) as IRole[]) || [];
+  }, [rolesData]);
 
   const deleteUserMutation = useDeleteUser();
   const lockUserMutation = useLockUser();

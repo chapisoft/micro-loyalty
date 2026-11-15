@@ -33,14 +33,14 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = {"/api/v1/system-parameters", "/loyalty/v1/system-parameters", "/system-parameters"})
 @RequiredArgsConstructor
-@Tag(name = "System Parameters API", description = "Quản lý Tham số Cấu hình Hệ thống (Cache L1/Redis) & Bộ Sinh Mã Nghiệp Vụ")
+@Tag(name = "System Parameters API", description = "System Configuration Parameters (L1/Redis Cache) and Business Code Generation Management")
 public class SystemParameterController {
 
     private final SystemParameterService systemParameterService;
     private final CentralizedCodeGeneratorService codeGeneratorService;
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách tất cả tham số hệ thống", description = "Trả về danh sách tham số cấu hình đồng bộ với SystemParamSpec và Cache")
+    @Operation(summary = "Get all system parameters", description = "Query configuration parameters synchronized with SystemParamSpec and cache")
     public ResponseEntity<List<SystemParameterDto>> getAllParameters(
             @RequestParam(value = "groupCode", required = false) String groupCode,
             @RequestParam(value = "keyword", required = false) String keyword) {
@@ -53,13 +53,13 @@ public class SystemParameterController {
     }
 
     @GetMapping("/specs")
-    @Operation(summary = "Lấy danh mục khai báo chuẩn SystemParamSpec", description = "Cung cấp siêu dữ liệu tham số chuẩn từ Backend sang CMS")
+    @Operation(summary = "Get SystemParamSpec specifications", description = "Provide parameter metadata specifications to CMS")
     public ResponseEntity<List<Map<String, Object>>> getParamSpecs() {
         return ResponseEntity.ok(systemParameterService.getSpecCatalog());
     }
 
     @PostMapping("/refresh-cache")
-    @Operation(summary = "Làm mới bộ nhớ đệm cấu hình", description = "Nạp lại toàn bộ tham số hệ thống và cấu trúc sinh mã từ CSDL vào L1 Cache & Redis")
+    @Operation(summary = "Refresh configuration cache", description = "Reload all system parameters and code generator templates from DB into L1 and Redis cache")
     public ResponseEntity<Map<String, Object>> refreshCache() {
         String tenantId = TenantContext.getTenantId();
         int paramsCached = systemParameterService.preloadTenantCache(tenantId);
@@ -73,13 +73,13 @@ public class SystemParameterController {
     }
 
     @GetMapping("/code-types")
-    @Operation(summary = "Lấy danh sách cấu hình sinh mã nghiệp vụ", description = "Danh sách các loại mã tự động sys_code_types kèm mã xem trước")
+    @Operation(summary = "Get business code configurations", description = "List automated sys_code_types with preview codes")
     public ResponseEntity<List<SysCodeTypeDto>> listCodeTypes() {
         return ResponseEntity.ok(codeGeneratorService.listAllCodeTypes());
     }
 
     @PutMapping("/code-types/{codeType}")
-    @Operation(summary = "Cập nhật cấu trúc sinh mã nghiệp vụ", description = "Chỉnh sửa tiền tố, khuôn mẫu, định dạng ngày và làm mới cache tức thời")
+    @Operation(summary = "Update business code configuration", description = "Edit prefix, template pattern, date format and refresh cache")
     public ResponseEntity<SysCodeTypeDto> updateCodeType(
             @PathVariable("codeType") String codeType,
             @RequestBody SysCodeTypeDto request) {
@@ -87,7 +87,7 @@ public class SystemParameterController {
     }
 
     @PostMapping("/code-types/{codeType}/preview")
-    @Operation(summary = "Xem trước mã nghiệp vụ sinh tự động", description = "Kết xuất thử cấu trúc mã theo khuôn mẫu mà không tiêu hao PostgreSQL Sequence")
+    @Operation(summary = "Preview generated business code", description = "Render preview code without consuming PostgreSQL sequence")
     public ResponseEntity<Map<String, String>> previewCodeType(
             @PathVariable("codeType") String codeType,
             @RequestBody(required = false) CodePreviewRequest request) {
@@ -100,21 +100,21 @@ public class SystemParameterController {
     }
 
     @GetMapping("/{paramKey}")
-    @Operation(summary = "Lấy chi tiết một tham số", description = "Tra cứu giá trị tham số theo khóa paramKey")
+    @Operation(summary = "Get single parameter details", description = "Look up parameter value by paramKey")
     public ResponseEntity<SystemParameterDto> getParameter(@PathVariable("paramKey") String paramKey) {
         String tenantId = TenantContext.getTenantId();
         return ResponseEntity.ok(toDto(systemParameterService.getParameter(tenantId, paramKey)));
     }
 
     @PostMapping
-    @Operation(summary = "Thêm mới tham số hệ thống", description = "Tạo mới tham số cấu hình và nạp vào Cache L1/Redis")
+    @Operation(summary = "Create system parameter", description = "Create configuration parameter and write through to L1/Redis cache")
     public ResponseEntity<SystemParameterDto> createParameter(@RequestBody SystemParameterDto request) {
         String tenantId = TenantContext.getTenantId();
         return ResponseEntity.ok(toDto(systemParameterService.createParameter(tenantId, toItem(request))));
     }
 
     @PutMapping("/{paramKey}")
-    @Operation(summary = "Cập nhật tham số hệ thống", description = "Kiểm tra hợp lệ kiểu dữ liệu, lưu CSDL và Write-Through vào Cache")
+    @Operation(summary = "Update system parameter", description = "Validate data type, save to DB and write through to cache")
     public ResponseEntity<SystemParameterDto> updateParameter(
             @PathVariable("paramKey") String paramKey,
             @RequestBody SystemParameterDto request) {
@@ -123,7 +123,7 @@ public class SystemParameterController {
     }
 
     @DeleteMapping("/{paramKey}")
-    @Operation(summary = "Xóa tham số hệ thống", description = "Loại bỏ tham số cấu hình khỏi CSDL và xóa khóa trong Cache")
+    @Operation(summary = "Delete system parameter", description = "Remove parameter from DB and evict from cache")
     public ResponseEntity<Void> deleteParameter(@PathVariable("paramKey") String paramKey) {
         String tenantId = TenantContext.getTenantId();
         systemParameterService.deleteParameter(tenantId, paramKey);

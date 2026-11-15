@@ -94,7 +94,7 @@ public class PointExpirationJob {
                     freshAccount.getTenantId(), SystemParamSpec.POINT_EXPIRATION_BATCH_CHUNK_SIZE);
             Pageable batchPageable = PageRequest.of(0, chunkSize);
 
-            // Quét các đợt cộng điểm của tài khoản có expired_at <= now()
+            // Scan point credit batches where expired_at <= now()
             List<LoyaltyPointLedgerEntity> expiredEntries = ledgerRepository
                     .findByAccount_IdAndChangeTypeInAndExpiredAtBeforeAndExpiredAtIsNotNullOrderByIdAsc(
                             freshAccount.getId(),
@@ -106,14 +106,14 @@ public class PointExpirationJob {
             for (LoyaltyPointLedgerEntity entry : expiredEntries) {
                 if (entry.getPointChange() != null && entry.getPointChange().compareTo(BigDecimal.ZERO) > 0) {
                     totalExpiredForAccount = totalExpiredForAccount.add(entry.getPointChange());
-                    // Đánh dấu đã xử lý hết hạn bằng cách xóa mốc expired_at để không quét lại
+                    // Mark processed by clearing expired_at to avoid re-scanning
                     entry.setExpiredAt(null);
                     ledgerRepository.save(entry);
                 }
             }
 
             if (totalExpiredForAccount.compareTo(BigDecimal.ZERO) > 0) {
-                // Không trừ quá số dư hiện có
+                // Do not deduct more than available balance
                 BigDecimal actualDeduct = totalExpiredForAccount.min(freshAccount.getCurrentPoints());
                 BigDecimal newBalance = freshAccount.getCurrentPoints().subtract(actualDeduct);
                 freshAccount.setCurrentPoints(newBalance);

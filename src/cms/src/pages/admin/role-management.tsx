@@ -189,8 +189,8 @@ export const RoleManagementPage: React.FC = () => {
 
   const platformFilterOptions = [
     { label: 'Tất cả nền tảng', value: 'ALL' },
-    { label: 'CMS Quản trị (WEB_CMS)', value: 'WEB_CMS' },
-    { label: 'Cổng Đối tác (PARTNER_PORTAL)', value: 'PARTNER_PORTAL' },
+    { label: 'Hệ thống Quản trị CMS', value: 'WEB_CMS' },
+    { label: 'Cổng Đối tác Liên minh', value: 'PARTNER_PORTAL' },
   ];
 
   const statusOptions = [

@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useEffect, useRef, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -50,7 +51,7 @@ export const Customers: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchPhone, setSearchPhone] = useState('');
   const [selectedTenant, setSelectedTenant] = useState(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
 
   // HV-08 Member 360 Drawer state

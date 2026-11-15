@@ -12,7 +12,7 @@ import { StandardPageHeader } from '@/components/StandardPageHeader';
 export const PartnerDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id') || ''
   );
   const [data, setData] = useState<PartnerPortalDashboardModel | null>(null);
   const [loading, setLoading] = useState(false);

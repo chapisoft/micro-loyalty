@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -18,7 +19,7 @@ export const CustomerSegmentsPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [segments, setSegments] = useState<CustomerSegmentModel[]>([]);
   const [loading, setLoading] = useState(false);
@@ -157,7 +158,8 @@ export const CustomerSegmentsPage: React.FC = () => {
                   extraActions={[
                     {
                       label: t('segment.recalculate'),
-                      icon: 'pi pi-sync',
+                      icon: recalcId === r.id ? 'pi pi-spin pi-spinner' : 'pi pi-sync',
+                      disabled: recalcId !== null,
                       onClick: () => handleRecalculate(r),
                     },
                   ]}

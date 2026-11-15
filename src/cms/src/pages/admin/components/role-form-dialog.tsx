@@ -5,6 +5,7 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { TabView, TabPanel } from 'primereact/tabview';
+import { Tooltip } from 'primereact/tooltip';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -26,21 +27,73 @@ interface RoleFormDialogProps {
 }
 
 const PLATFORM_OPTIONS = [
-  { label: 'Hệ thống Quản trị CMS (WEB_CMS)', value: 'WEB_CMS' },
-  { label: 'Cổng Đối tác Liên minh (PARTNER_PORTAL)', value: 'PARTNER_PORTAL' },
-  { label: 'Tất cả nền tảng (ALL)', value: 'ALL' },
+  { label: 'Hệ thống Quản trị CMS', value: 'WEB_CMS' },
+  { label: 'Cổng Đối tác Liên minh', value: 'PARTNER_PORTAL' },
+  { label: 'Tất cả nền tảng', value: 'ALL' },
 ];
 
 const SCOPE_OPTIONS = [
-  { label: 'Toàn hệ thống (GLOBAL)', value: 'GLOBAL' },
-  { label: 'Theo đơn vị thuê bao (TENANT)', value: 'TENANT' },
-  { label: 'Theo đối tác cụ thể (PARTNER)', value: 'PARTNER' },
-  { label: 'Tất cả phạm vi (ALL)', value: 'ALL' },
+  { label: 'Toàn hệ thống', value: 'GLOBAL' },
+  { label: 'Theo đơn vị thuê bao', value: 'TENANT' },
+  { label: 'Theo đối tác cụ thể', value: 'PARTNER' },
+  { label: 'Tất cả phạm vi', value: 'ALL' },
 ];
 
 const STATUS_OPTIONS = [
-  { label: 'Hoạt động (ACTIVE)', value: 'ACTIVE' },
-  { label: 'Ngừng hoạt động (INACTIVE)', value: 'INACTIVE' },
+  { label: 'Hoạt động', value: 'ACTIVE' },
+  { label: 'Ngừng hoạt động', value: 'INACTIVE' },
+];
+
+// Thứ tự phân hệ chức năng chuẩn mực
+const MODULE_ORDER = [
+  'USER',
+  'ROLE',
+  'CATEGORY',
+  'CUSTOMER',
+  'TIER',
+  'POLICY',
+  'PARTNER',
+  'VOUCHER',
+  'CAMPAIGN',
+  'GAME',
+  'TRANSACTION',
+  'CLEARING',
+  'APPROVAL',
+  'REPORT',
+  'SYSTEM_PARAM',
+  'AUDIT_LOG',
+];
+
+// Thông tin chi tiết phân hệ chức năng
+const MODULE_METADATA: Record<string, { label: string; desc: string; icon: string }> = {
+  USER: { label: 'Người dùng Quản trị', desc: 'Quản lý tài khoản CMS, mật khẩu và trạng thái', icon: 'pi pi-users' },
+  ROLE: { label: 'Vai trò & Phân quyền', desc: 'Thiết lập vai trò quản trị và ma trận quyền', icon: 'pi pi-shield' },
+  CATEGORY: { label: 'Danh mục Dùng chung', desc: 'Nhóm danh mục và giá trị master data', icon: 'pi pi-list' },
+  CUSTOMER: { label: 'Quản lý Hội viên', desc: 'Hồ sơ 360 hội viên, điểm thưởng và thăng hạng', icon: 'pi pi-user' },
+  TIER: { label: 'Hạng Hội viên', desc: 'Tiêu chí xét hạng, hệ số tích điểm và đãi ngộ', icon: 'pi pi-star' },
+  POLICY: { label: 'Chính sách Điểm', desc: 'Quy tắc công thức tích/tiêu điểm và tỷ lệ hoàn', icon: 'pi pi-file-edit' },
+  PARTNER: { label: 'Đối tác Liên minh', desc: 'Hồ sơ doanh nghiệp liên minh và chi nhánh POS', icon: 'pi pi-building' },
+  VOUCHER: { label: 'Kho Voucher & Ưu đãi', desc: 'Đợt phát hành voucher, kho mã và đổi ưu đãi', icon: 'pi pi-ticket' },
+  CAMPAIGN: { label: 'Chiến dịch & Cột mốc', desc: 'Chiến dịch Marketing, cột mốc và ngân sách', icon: 'pi pi-megaphone' },
+  GAME: { label: 'GameHub & Vòng quay', desc: 'Minigame, vòng quay may mắn và ngân hàng câu hỏi', icon: 'pi pi-play' },
+  TRANSACTION: { label: 'Sổ cái & Giao dịch', desc: 'Bút toán FIFO tích/tiêu điểm và điều chỉnh', icon: 'pi pi-history' },
+  CLEARING: { label: 'Quyết toán & Bù trừ', desc: 'Đối soát 3 bên, tính công nợ và quyết toán tiền mặt', icon: 'pi pi-wallet' },
+  APPROVAL: { label: 'Hàng đợi Phê duyệt', desc: 'Kiểm soát kép Maker-Checker cho các đề xuất', icon: 'pi pi-check-circle' },
+  REPORT: { label: 'Báo cáo & Phân tích', desc: 'Dashboard KPI, doanh thu và báo cáo quản trị', icon: 'pi pi-chart-bar' },
+  SYSTEM_PARAM: { label: 'Tham số Hệ thống', desc: 'Cấu hình động bảo mật, hạn mức và vận hành', icon: 'pi pi-cog' },
+  AUDIT_LOG: { label: 'Nhật ký Kiểm toán', desc: 'Dấu vết thao tác bảo mật phục vụ thanh tra', icon: 'pi pi-eye' },
+};
+
+// 7 Hành động nghiệp vụ chuẩn mực + Khác (OTHER)
+const MATRIX_COLUMNS: { key: string; label: string; badge: string; color: string }[] = [
+  { key: 'VIEW', label: 'Xem', badge: 'VIEW', color: '#1D4ED8' },
+  { key: 'CREATE', label: 'Thêm', badge: 'CREATE', color: '#15803D' },
+  { key: 'EDIT', label: 'Sửa', badge: 'EDIT', color: '#B45309' },
+  { key: 'DELETE', label: 'Xóa', badge: 'DELETE', color: '#B91C1C' },
+  { key: 'LOCK', label: 'Khóa', badge: 'LOCK', color: '#475569' },
+  { key: 'APPROVE', label: 'Duyệt', badge: 'APPROVE', color: '#047857' },
+  { key: 'EXPORT', label: 'Xuất DL', badge: 'EXPORT', color: '#4338CA' },
+  { key: 'OTHER', label: 'Khác', badge: 'KHÁC', color: '#6D28D9' },
 ];
 
 export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
@@ -64,7 +117,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
   const [scope, setScope] = useState('ALL');
   const [status, setStatus] = useState('ACTIVE');
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
-  const [permSearch, setPermSearch] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const allPermissions: IPermission[] = useMemo(() => {
     if (!permissionsData) return [];
@@ -73,38 +126,77 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     return [];
   }, [permissionsData]);
 
-  // Group permissions by module
-  const permissionGroups = useMemo(() => {
-    const filtered = allPermissions.filter((p) => {
-      if (!permSearch.trim()) return true;
-      const kw = permSearch.toLowerCase().trim();
-      return (
-        p.code?.toLowerCase().includes(kw) ||
-        p.name?.toLowerCase().includes(kw) ||
-        p.module?.toLowerCase().includes(kw) ||
-        p.description?.toLowerCase().includes(kw)
-      );
-    });
+  // Phân bổ quyền theo ma trận: Map<Module, Map<ActionKey, IPermission[]>>
+  const moduleMatrix = useMemo(() => {
+    // Thu thập tất cả các module có trong allPermissions
+    const foundModules = Array.from(new Set(allPermissions.map((p) => (p.module || 'SYSTEM').toUpperCase())));
 
-    const groups: Record<string, IPermission[]> = {};
-    filtered.forEach((p) => {
-      const mod = p.module || 'SYSTEM';
-      if (!groups[mod]) {
-        groups[mod] = [];
-      }
-      groups[mod].push(p);
-    });
+    // Sắp xếp theo thứ tự MODULE_ORDER trước, sau đó là các module phát sinh
+    const sortedModules = [
+      ...MODULE_ORDER.filter((m) => foundModules.includes(m)),
+      ...foundModules.filter((m) => !MODULE_ORDER.includes(m)),
+    ];
 
-    return Object.entries(groups).map(([moduleName, perms]) => ({
-      module: moduleName,
-      permissions: perms,
-    }));
-  }, [allPermissions, permSearch]);
+    return sortedModules.map((mod) => {
+      const permsInMod = allPermissions.filter((p) => (p.module || 'SYSTEM').toUpperCase() === mod);
+
+      // Phân bổ theo 8 cột
+      const actionMap: Record<string, IPermission[]> = {
+        VIEW: [],
+        CREATE: [],
+        EDIT: [],
+        DELETE: [],
+        LOCK: [],
+        APPROVE: [],
+        EXPORT: [],
+        OTHER: [],
+      };
+
+      permsInMod.forEach((p) => {
+        const act = (p.action || '').toUpperCase();
+        if (actionMap[act]) {
+          actionMap[act].push(p);
+        } else {
+          actionMap.OTHER.push(p);
+        }
+      });
+
+      const meta = MODULE_METADATA[mod] || {
+        label: mod,
+        desc: `Phân hệ chức năng ${mod}`,
+        icon: 'pi pi-folder',
+      };
+
+      return {
+        module: mod,
+        label: meta.label,
+        desc: meta.desc,
+        icon: meta.icon,
+        actionMap,
+        allPermIdsInMod: permsInMod.map((p) => p.permissionId),
+      };
+    });
+  }, [allPermissions]);
+
+  // Lọc theo từ khóa tìm kiếm
+  const filteredMatrix = useMemo(() => {
+    if (!searchKeyword.trim()) return moduleMatrix;
+    const kw = searchKeyword.toLowerCase().trim();
+    return moduleMatrix.filter((item) => {
+      const matchMod = item.module.toLowerCase().includes(kw);
+      const matchLabel = item.label.toLowerCase().includes(kw);
+      const matchDesc = item.desc.toLowerCase().includes(kw);
+      const matchPerms = Object.values(item.actionMap)
+        .flat()
+        .some((p) => p.code?.toLowerCase().includes(kw) || p.name?.toLowerCase().includes(kw));
+      return matchMod || matchLabel || matchDesc || matchPerms;
+    });
+  }, [moduleMatrix, searchKeyword]);
 
   useEffect(() => {
     if (visible) {
       setActiveTab(0);
-      setPermSearch('');
+      setSearchKeyword('');
       if (isEditing && role) {
         setCode(role.code);
         setName(role.name);
@@ -125,6 +217,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   }, [visible, role, isEditing]);
 
+  // Bật/tắt 1 quyền cụ thể
   const handleTogglePerm = (permId: number) => {
     if (selectedPermissionIds.includes(permId)) {
       setSelectedPermissionIds(selectedPermissionIds.filter((id) => id !== permId));
@@ -133,23 +226,59 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     }
   };
 
-  const handleToggleModule = (modulePermIds: number[], isChecked: boolean) => {
+  // Chọn/bỏ chọn toàn bộ quyền của 1 phân hệ (Row Toggle)
+  const handleToggleRow = (permIds: number[], isChecked: boolean) => {
     if (isChecked) {
-      const newIds = Array.from(new Set([...selectedPermissionIds, ...modulePermIds]));
+      const newIds = Array.from(new Set([...selectedPermissionIds, ...permIds]));
       setSelectedPermissionIds(newIds);
     } else {
-      setSelectedPermissionIds(
-        selectedPermissionIds.filter((id) => !modulePermIds.includes(id))
-      );
+      setSelectedPermissionIds(selectedPermissionIds.filter((id) => !permIds.includes(id)));
     }
   };
 
-  const handleSelectAllAll = () => {
+  // Chọn/bỏ chọn toàn bộ quyền của 1 hành động trên toàn hệ thống (Column Toggle)
+  const handleToggleColumn = (actionKey: string) => {
+    const colPermIds: number[] = [];
+    allPermissions.forEach((p) => {
+      const act = (p.action || '').toUpperCase();
+      if (actionKey === 'OTHER') {
+        if (!['VIEW', 'CREATE', 'EDIT', 'DELETE', 'LOCK', 'APPROVE', 'EXPORT'].includes(act)) {
+          colPermIds.push(p.permissionId);
+        }
+      } else if (act === actionKey) {
+        colPermIds.push(p.permissionId);
+      }
+    });
+
+    const allChecked = colPermIds.length > 0 && colPermIds.every((id) => selectedPermissionIds.includes(id));
+    if (allChecked) {
+      setSelectedPermissionIds(selectedPermissionIds.filter((id) => !colPermIds.includes(id)));
+    } else {
+      const newIds = Array.from(new Set([...selectedPermissionIds, ...colPermIds]));
+      setSelectedPermissionIds(newIds);
+    }
+  };
+
+  // Chọn tất cả / Bỏ chọn tất cả ma trận
+  const handleToggleAllMatrix = () => {
     if (selectedPermissionIds.length === allPermissions.length) {
       setSelectedPermissionIds([]);
     } else {
       setSelectedPermissionIds(allPermissions.map((p) => p.permissionId));
     }
+  };
+
+  // Chọn nhanh quyền Chỉ Xem (Read-only)
+  const handleSelectReadOnly = () => {
+    const viewPermIds = allPermissions
+      .filter((p) => (p.action || '').toUpperCase() === 'VIEW')
+      .map((p) => p.permissionId);
+    setSelectedPermissionIds(viewPermIds);
+  };
+
+  // Chọn nhanh Toàn quyền Quản trị (Full Access)
+  const handleSelectFullAdmin = () => {
+    setSelectedPermissionIds(allPermissions.map((p) => p.permissionId));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -183,7 +312,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             showToast({
               severity: 'success',
               summary: t('common.success', 'Thành công'),
-              detail: 'Cập nhật vai trò thành công',
+              detail: 'Cập nhật vai trò & ma trận phân quyền thành công',
             });
             onSuccess();
             onHide();
@@ -203,7 +332,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
           showToast({
             severity: 'success',
             summary: t('common.success', 'Thành công'),
-            detail: 'Thêm mới vai trò thành công',
+            detail: 'Thêm mới vai trò quản trị thành công',
           });
           onSuccess();
           onHide();
@@ -223,12 +352,21 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
     <Dialog
       visible={visible}
       onHide={onHide}
-      header={isEditing ? 'Cập nhật vai trò quản trị' : 'Thêm mới vai trò quản trị'}
-      style={{ width: '800px', maxWidth: '95vw' }}
+      header={
+        <div className="flex align-items-center gap-2">
+          <i className="pi pi-shield text-primary text-xl" />
+          <span className="font-bold text-lg">
+            {isEditing ? 'Cập nhật vai trò & Ma trận phân quyền' : 'Thêm mới vai trò & Cấu hình quyền'}
+          </span>
+        </div>
+      }
+      style={{ width: '1050px', maxWidth: '98vw' }}
       modal
       className="p-fluid"
     >
-      <form onSubmit={handleSubmit} className="flex flex-column gap-3">
+      <Tooltip target=".perm-checkbox-item" position="top" />
+
+      <form onSubmit={handleSubmit} className="flex flex-column gap-2">
         <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
           {/* TAB 1: THÔNG TIN VAI TRÒ */}
           <TabPanel header="Thông tin vai trò" leftIcon="pi pi-id-card mr-2">
@@ -241,11 +379,11 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                   <InputText
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="Ví dụ: ADMIN, CS_OFFICER, FINANCE..."
+                    placeholder="Ví dụ: ADMIN, CS_OFFICER, FINANCE_AUDITOR..."
                     disabled={isEditing}
                     className="p-inputtext-sm font-mono font-bold"
                   />
-                  <small className="text-xs text-500">Mã viết hoa, không dấu, dùng phân quyền</small>
+                  <small className="text-xs text-500">Mã viết hoa, không dấu, dùng nhận diện trong mã nguồn</small>
                 </div>
 
                 <div className="col-12 md:col-6 flex flex-column gap-1">
@@ -258,9 +396,10 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                     placeholder="Ví dụ: Quản trị viên hệ thống"
                     className="p-inputtext-sm font-medium"
                   />
+                  <small className="text-xs text-500">Tên định danh hiển thị trên giao diện người dùng</small>
                 </div>
 
-                <div className="col-12 md:col-6 flex flex-column gap-1">
+                <div className="col-12 md:col-4 flex flex-column gap-1">
                   <label className="text-xs font-semibold text-700">Nền tảng áp dụng</label>
                   <Dropdown
                     value={platform}
@@ -270,7 +409,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                   />
                 </div>
 
-                <div className="col-12 md:col-6 flex flex-column gap-1">
+                <div className="col-12 md:col-4 flex flex-column gap-1">
                   <label className="text-xs font-semibold text-700">Phạm vi tác động</label>
                   <Dropdown
                     value={scope}
@@ -280,8 +419,8 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                   />
                 </div>
 
-                <div className="col-12 md:col-6 flex flex-column gap-1">
-                  <label className="text-xs font-semibold text-700">Trạng thái</label>
+                <div className="col-12 md:col-4 flex flex-column gap-1">
+                  <label className="text-xs font-semibold text-700">Trạng thái hoạt động</label>
                   <Dropdown
                     value={status}
                     options={STATUS_OPTIONS}
@@ -291,30 +430,35 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                 </div>
 
                 <div className="col-12 flex flex-column gap-1">
-                  <label className="text-xs font-semibold text-700">Mô tả vai trò</label>
+                  <label className="text-xs font-semibold text-700">Mô tả chức trách vai trò</label>
                   <InputTextarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Mô tả chức trách và nhiệm vụ của vai trò này..."
-                    rows={3}
+                    placeholder="Mô tả chức năng, thẩm quyền và trách nhiệm của vai trò trong quy trình vận hành..."
+                    rows={2}
                     className="p-inputtext-sm"
                   />
                 </div>
               </div>
 
+              {/* Thanh điều hướng nhanh sang Ma trận quyền */}
               <div className="surface-50 p-3 border-round border-1 surface-border flex align-items-center justify-content-between mt-2">
-                <div className="flex align-items-center gap-2">
-                  <i className="pi pi-shield text-primary text-xl" />
+                <div className="flex align-items-center gap-3">
+                  <div className="w-2rem h-2rem border-round bg-blue-100 flex align-items-center justify-content-center text-blue-700 font-bold">
+                    <i className="pi pi-table" />
+                  </div>
                   <div>
                     <div className="text-sm font-bold text-900">
-                      Đã chọn {selectedPermissionIds.length} / {allPermissions.length} quyền
+                      Ma trận phân quyền: Đã chọn {selectedPermissionIds.length} / {allPermissions.length} quyền
                     </div>
-                    <div className="text-xs text-500">Chuyển sang tab "Phân quyền chi tiết" để gán chức năng</div>
+                    <div className="text-xs text-500">
+                      Chuyển sang tab "Phân quyền chi tiết" để cấu hình chi tiết theo Phân hệ chức năng & Hành động
+                    </div>
                   </div>
                 </div>
                 <Button
                   type="button"
-                  label="Cấu hình quyền"
+                  label="Mở Ma trận phân quyền"
                   icon="pi pi-arrow-right"
                   size="small"
                   outlined
@@ -325,127 +469,323 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             </div>
           </TabPanel>
 
-          {/* TAB 2: PHÂN QUYỀN CHI TIẾT */}
+          {/* TAB 2: MA TRẬN PHÂN QUYỀN CHI TIẾT (MODULE × ACTION) */}
           <TabPanel
-            header={`Phân quyền chi tiết (${selectedPermissionIds.length})`}
-            leftIcon="pi pi-shield mr-2"
+            header={
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-table" />
+                <span>Phân quyền chi tiết ({selectedPermissionIds.length})</span>
+              </div>
+            }
           >
-            <div className="flex flex-column gap-3 pt-2">
-              <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                <span className="p-input-icon-left flex-1" style={{ maxWidth: '20rem' }}>
-                  <i className="pi pi-search text-400" />
+            <div className="flex flex-column gap-2 pt-1">
+              {/* Toolbar điều khiển ma trận */}
+              <div className="flex flex-wrap align-items-center justify-content-between gap-2 p-2 surface-50 border-round border-1 surface-border">
+                {/* Ô tìm kiếm */}
+                <div className="p-inputgroup flex-1" style={{ maxWidth: '22rem' }}>
+                  <span className="p-inputgroup-addon py-1">
+                    <i className="pi pi-search text-500 text-xs" />
+                  </span>
                   <InputText
-                    value={permSearch}
-                    onChange={(e) => setPermSearch(e.target.value)}
-                    placeholder="Tìm theo mã quyền, tên, phân hệ..."
-                    className="p-inputtext-sm w-full"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    placeholder="Tìm theo phân hệ, mã quyền, tên..."
+                    className="p-inputtext-sm"
                   />
-                </span>
+                  {searchKeyword && (
+                    <Button
+                      type="button"
+                      icon="pi pi-times"
+                      text
+                      size="small"
+                      onClick={() => setSearchKeyword('')}
+                    />
+                  )}
+                </div>
 
-                <div className="flex align-items-center gap-2">
+                {/* Các nút chọn nhanh */}
+                <div className="flex align-items-center gap-1 flex-wrap">
                   <Button
                     type="button"
-                    label={
-                      selectedPermissionIds.length === allPermissions.length
-                        ? 'Bỏ chọn tất cả'
-                        : 'Chọn tất cả'
-                    }
+                    label={selectedPermissionIds.length === allPermissions.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    icon={selectedPermissionIds.length === allPermissions.length ? 'pi pi-times' : 'pi pi-check-square'}
                     size="small"
                     outlined
                     severity="secondary"
-                    onClick={handleSelectAllAll}
-                    className="p-button-sm font-medium"
+                    onClick={handleToggleAllMatrix}
+                    className="p-button-sm text-xs"
                   />
-                  <span className="text-xs font-semibold px-2 py-1 border-round bg-blue-50 text-blue-700">
+                  <Button
+                    type="button"
+                    label="Chỉ xem"
+                    icon="pi pi-eye"
+                    size="small"
+                    outlined
+                    severity="info"
+                    onClick={handleSelectReadOnly}
+                    className="p-button-sm text-xs"
+                  />
+                  <Button
+                    type="button"
+                    label="Toàn quyền"
+                    icon="pi pi-star"
+                    size="small"
+                    outlined
+                    severity="success"
+                    onClick={handleSelectFullAdmin}
+                    className="p-button-sm text-xs"
+                  />
+                  <span className="text-xs font-bold px-2 py-1 border-round bg-blue-100 text-blue-800 ml-1">
                     {selectedPermissionIds.length} / {allPermissions.length} quyền
                   </span>
                 </div>
               </div>
 
+              {/* Bảng Ma trận Phân quyền Chức năng × Hành động */}
               {isLoadingPerms ? (
-                <div className="p-4 text-center text-500 text-sm">Đang tải danh sách quyền...</div>
+                <div className="p-5 text-center text-500 text-sm">
+                  <i className="pi pi-spin pi-spinner text-xl mr-2 text-primary" />
+                  Đang tải ma trận quyền hệ thống...
+                </div>
               ) : (
-                <div className="flex flex-column gap-3 max-h-24rem overflow-y-auto pr-1">
-                  {permissionGroups.map((group) => {
-                    const groupPermIds = group.permissions.map((p) => p.permissionId);
-                    const allInGroupChecked = groupPermIds.every((id) =>
-                      selectedPermissionIds.includes(id)
-                    );
-                    const someInGroupChecked = groupPermIds.some((id) =>
-                      selectedPermissionIds.includes(id)
-                    );
+                <div
+                  className="border-round border-1 surface-border overflow-x-auto"
+                  style={{ maxHeight: '27rem' }}
+                >
+                  <table
+                    className="w-full text-left"
+                    style={{ borderCollapse: 'collapse', minWidth: '920px' }}
+                  >
+                    {/* Header Columns */}
+                    <thead className="surface-100 sticky top-0 z-2 border-bottom-1 surface-border">
+                      <tr>
+                        {/* Cột 1: Chức năng / Phân hệ */}
+                        <th
+                          style={{
+                            width: '280px',
+                            minWidth: '260px',
+                            padding: '10px 12px',
+                            fontSize: '12.5px',
+                            fontWeight: 700,
+                            color: '#0F172A',
+                          }}
+                        >
+                          Phân hệ / Chức năng
+                        </th>
 
-                    return (
-                      <div
-                        key={group.module}
-                        className="border-round border-1 surface-border overflow-hidden"
-                      >
-                        {/* Module header */}
-                        <div className="surface-100 p-2 px-3 flex align-items-center justify-content-between border-bottom-1 surface-border">
-                          <label className="flex align-items-center gap-2 cursor-pointer font-bold text-sm text-900 select-none">
-                            <input
-                              type="checkbox"
-                              checked={allInGroupChecked}
-                              ref={(el) => {
-                                if (el) el.indeterminate = !allInGroupChecked && someInGroupChecked;
+                        {/* Cột 2-9: Các hành động nghiệp vụ */}
+                        {MATRIX_COLUMNS.map((col) => {
+                          const colPerms = allPermissions.filter((p) => {
+                            const act = (p.action || '').toUpperCase();
+                            return col.key === 'OTHER'
+                              ? !['VIEW', 'CREATE', 'EDIT', 'DELETE', 'LOCK', 'APPROVE', 'EXPORT'].includes(act)
+                              : act === col.key;
+                          });
+                          const isColAllChecked =
+                            colPerms.length > 0 &&
+                            colPerms.every((p) => selectedPermissionIds.includes(p.permissionId));
+                          const isColSomeChecked =
+                            colPerms.length > 0 &&
+                            colPerms.some((p) => selectedPermissionIds.includes(p.permissionId));
+
+                          return (
+                            <th
+                              key={col.key}
+                              style={{
+                                width: '90px',
+                                minWidth: '85px',
+                                padding: '8px 6px',
+                                textAlign: 'center',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                color: col.color,
+                                borderLeft: '1px solid #E2E8F0',
                               }}
-                              onChange={(e) => handleToggleModule(groupPermIds, e.target.checked)}
-                              className="cursor-pointer"
-                              style={{ width: '15px', height: '15px' }}
-                            />
-                            <span>{group.module}</span>
-                          </label>
-                          <span className="text-xs font-medium text-600 bg-white px-2 py-0 border-round border-1 surface-border">
-                            {groupPermIds.filter((id) => selectedPermissionIds.includes(id)).length} /{' '}
-                            {groupPermIds.length}
-                          </span>
-                        </div>
+                            >
+                              <div
+                                onClick={() => handleToggleColumn(col.key)}
+                                className="flex flex-column align-items-center gap-1 cursor-pointer hover:surface-200 p-1 border-round select-none transition-colors"
+                                title={`Nhấp để chọn/bỏ chọn toàn bộ quyền "${col.label}"`}
+                              >
+                                <span className="font-bold text-xs">{col.label}</span>
+                                <input
+                                  type="checkbox"
+                                  checked={isColAllChecked}
+                                  ref={(el) => {
+                                    if (el) el.indeterminate = !isColAllChecked && isColSomeChecked;
+                                  }}
+                                  onChange={() => {}}
+                                  style={{
+                                    width: '14px',
+                                    height: '14px',
+                                    cursor: 'pointer',
+                                    accentColor: col.color,
+                                  }}
+                                />
+                              </div>
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
 
-                        {/* Module 2-column permissions grid */}
-                        <div className="grid p-2 m-0 surface-card">
-                          {group.permissions.map((perm) => {
-                            const isChecked = selectedPermissionIds.includes(perm.permissionId);
-                            return (
-                              <div key={perm.permissionId} className="col-12 md:col-6 p-1">
-                                <label
-                                  onClick={() => handleTogglePerm(perm.permissionId)}
-                                  className={`flex align-items-start gap-2 p-2 border-round border-1 cursor-pointer transition-colors transition-duration-150 h-full select-none ${
-                                    isChecked
-                                      ? 'bg-blue-50 border-blue-200'
-                                      : 'surface-ground surface-border hover:surface-100'
-                                  }`}
-                                >
+                    {/* Table Body Rows */}
+                    <tbody>
+                      {filteredMatrix.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="p-4 text-center text-500 text-xs">
+                            Không tìm thấy phân hệ hoặc quyền nào phù hợp từ khóa
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredMatrix.map((rowItem, rIdx) => {
+                          const isRowAllChecked =
+                            rowItem.allPermIdsInMod.length > 0 &&
+                            rowItem.allPermIdsInMod.every((id) => selectedPermissionIds.includes(id));
+                          const isRowSomeChecked =
+                            rowItem.allPermIdsInMod.length > 0 &&
+                            rowItem.allPermIdsInMod.some((id) => selectedPermissionIds.includes(id));
+                          const selectedCountInRow = rowItem.allPermIdsInMod.filter((id) =>
+                            selectedPermissionIds.includes(id)
+                          ).length;
+
+                          return (
+                            <tr
+                              key={rowItem.module}
+                              className={`border-bottom-1 surface-border transition-colors ${
+                                rIdx % 2 === 0 ? 'bg-white' : 'surface-50'
+                              } hover:surface-100`}
+                            >
+                              {/* Cột 1: Thông tin phân hệ + Checkbox chọn cả dòng */}
+                              <td style={{ padding: '8px 12px', verticalAlign: 'middle' }}>
+                                <label className="flex align-items-center gap-2 cursor-pointer select-none">
                                   <input
                                     type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => {}}
-                                    className="cursor-pointer mt-1"
-                                    style={{ width: '15px', height: '15px' }}
+                                    checked={isRowAllChecked}
+                                    ref={(el) => {
+                                      if (el) el.indeterminate = !isRowAllChecked && isRowSomeChecked;
+                                    }}
+                                    onChange={(e) =>
+                                      handleToggleRow(rowItem.allPermIdsInMod, e.target.checked)
+                                    }
+                                    style={{
+                                      width: '15px',
+                                      height: '15px',
+                                      cursor: 'pointer',
+                                      accentColor: '#2563EB',
+                                    }}
                                   />
-                                  <div className="flex flex-column gap-0 flex-1">
-                                    <div className="flex align-items-center gap-1 justify-content-between">
-                                      <span className="font-mono text-xs font-bold text-900">
-                                        {perm.code}
+                                  <div className="flex flex-column gap-0">
+                                    <div className="flex align-items-center gap-1">
+                                      <i className={`${rowItem.icon} text-primary text-xs`} />
+                                      <span className="font-bold text-xs text-900">
+                                        {rowItem.label}
                                       </span>
-                                      {perm.action && (
-                                        <span className="text-10 font-bold px-1 border-round bg-gray-100 text-500 uppercase">
-                                          {perm.action}
-                                        </span>
-                                      )}
+                                      <span
+                                        className="font-mono text-10 font-bold px-1 border-round"
+                                        style={{ background: '#F1F5F9', color: '#475569' }}
+                                      >
+                                        {rowItem.module}
+                                      </span>
                                     </div>
-                                    <div className="text-xs text-700 font-medium">{perm.name}</div>
-                                    {perm.description && (
-                                      <div className="text-xs text-400">{perm.description}</div>
-                                    )}
+                                    <div
+                                      className="text-11 text-500 overflow-hidden text-overflow-ellipsis white-space-nowrap"
+                                      style={{ maxWidth: '230px' }}
+                                    >
+                                      {rowItem.desc}
+                                    </div>
                                   </div>
+                                  <span
+                                    className="ml-auto text-10 font-bold px-2 py-0 border-round"
+                                    style={{
+                                      background: selectedCountInRow > 0 ? '#DBEAFE' : '#F1F5F9',
+                                      color: selectedCountInRow > 0 ? '#1E40AF' : '#64748B',
+                                    }}
+                                  >
+                                    {selectedCountInRow}/{rowItem.allPermIdsInMod.length}
+                                  </span>
                                 </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                              </td>
+
+                              {/* Cột 2-9: Các ô hành động */}
+                              {MATRIX_COLUMNS.map((col) => {
+                                const perms = rowItem.actionMap[col.key] || [];
+
+                                if (perms.length === 0) {
+                                  return (
+                                    <td
+                                      key={col.key}
+                                      style={{
+                                        textAlign: 'center',
+                                        verticalAlign: 'middle',
+                                        color: '#CBD5E1',
+                                        borderLeft: '1px solid #F1F5F9',
+                                      }}
+                                    >
+                                      —
+                                    </td>
+                                  );
+                                }
+
+                                return (
+                                  <td
+                                    key={col.key}
+                                    style={{
+                                      textAlign: 'center',
+                                      verticalAlign: 'middle',
+                                      padding: '4px',
+                                      borderLeft: '1px solid #F1F5F9',
+                                    }}
+                                  >
+                                    <div className="flex flex-column align-items-center justify-content-center gap-1">
+                                      {perms.map((p) => {
+                                        const isChecked = selectedPermissionIds.includes(p.permissionId);
+                                        const tooltipText = `${p.code}: ${p.name}${p.description ? ` (${p.description})` : ''}`;
+
+                                        return (
+                                          <label
+                                            key={p.permissionId}
+                                            className={`perm-checkbox-item flex align-items-center justify-content-center border-round cursor-pointer transition-colors p-1 ${
+                                              isChecked
+                                                ? 'bg-blue-100 border-1 border-blue-300'
+                                                : 'hover:surface-200'
+                                            }`}
+                                            style={{ minWidth: '24px', minHeight: '24px' }}
+                                            data-pr-tooltip={tooltipText}
+                                            onClick={() => handleTogglePerm(p.permissionId)}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={() => {}}
+                                              style={{
+                                                width: '15px',
+                                                height: '15px',
+                                                cursor: 'pointer',
+                                                accentColor: '#2563EB',
+                                              }}
+                                            />
+                                            {col.key === 'OTHER' && (
+                                              <span
+                                                className="text-10 font-bold ml-1 px-1 border-round"
+                                                style={{ background: '#EDE9FE', color: '#6D28D9' }}
+                                              >
+                                                {p.action}
+                                              </span>
+                                            )}
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
@@ -464,7 +804,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
           />
           <Button
             type="submit"
-            label={t('common.save', 'Lưu')}
+            label={t('common.save', 'Lưu thay đổi')}
             icon="pi pi-check"
             size="small"
             loading={createRoleMutation.isPending || updateRoleMutation.isPending}

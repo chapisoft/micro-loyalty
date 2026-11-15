@@ -6,6 +6,7 @@ import lombok.Getter;
 
 @Getter
 public enum SponsorType {
+    PLATFORM("PLATFORM"),
     NATCASH("NATCASH"),
     PARTNER_CO_FUND("PARTNER_CO_FUND"),
     PARTNER_SELF("PARTNER_SELF"),

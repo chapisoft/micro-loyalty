@@ -23,7 +23,7 @@ export const PartnerPointsPolicyPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id') || ''
   );
   const [policies, setPolicies] = useState<PolicyRuleModel[]>([]);
   const [loading, setLoading] = useState(false);

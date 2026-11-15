@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping(value = {"/loyalty/v1/policies", "/policies", "/v1/policies", "/api/loyalty/v1/policies"})
-@Tag(name = "Policy Configuration API", description = "Quản lý Chính Sách Tích & Tiêu Điểm")
+@Tag(name = "Policy Configuration API", description = "Earn and Burn Policy Configuration Management")
 public class PolicyController {
 
     private final LoyaltyAcceptancePolicyRepository policyRepository;
@@ -66,7 +66,7 @@ public class PolicyController {
     }
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách chính sách tích tiêu điểm", description = "Trả về danh sách chính sách tích lũy và khấu trừ điểm tại các điểm bán")
+    @Operation(summary = "Get point policy rules list", description = "Return earn and burn policy rules for merchant POS")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PolicyResponse>> getPolicies(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
@@ -77,7 +77,7 @@ public class PolicyController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Lấy chi tiết chính sách", description = "Tra cứu thông tin chính sách theo ID")
+    @Operation(summary = "Get policy rule details", description = "Look up policy rule details by ID")
     @Transactional(readOnly = true)
     public ResponseEntity<PolicyResponse> getPolicyById(
             @PathVariable("id") Long id,
@@ -89,7 +89,7 @@ public class PolicyController {
     }
 
     @PostMapping
-    @Operation(summary = "Tạo mới hoặc cập nhật chính sách theo đối tác", description = "Áp dụng cấu hình tích tiêu cho đối tác cụ thể")
+    @Operation(summary = "Create or update policy rule", description = "Configure earn/burn rules for specific partner")
     @Transactional
     public ResponseEntity<PolicyResponse> savePolicy(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
@@ -178,7 +178,7 @@ public class PolicyController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật chính sách tích tiêu điểm", description = "Cập nhật thông tin chính sách trong cơ sở dữ liệu")
+    @Operation(summary = "Update policy rule", description = "Update policy rule details in database")
     @Transactional
     public ResponseEntity<PolicyResponse> updatePolicy(
             @PathVariable("id") Long id,
@@ -240,7 +240,7 @@ public class PolicyController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa chính sách", description = "Xóa chính sách khỏi cơ sở dữ liệu")
+    @Operation(summary = "Delete policy rule", description = "Delete policy rule from database")
     @Transactional
     public ResponseEntity<Void> deletePolicy(
             @PathVariable("id") Long id,

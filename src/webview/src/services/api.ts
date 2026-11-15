@@ -33,7 +33,9 @@ export const getTenantId = (): string => {
   if (paramTenant) return paramTenant;
   const runtimeTenant = (window as unknown as { __RUNTIME_CONFIG__?: { TENANT_ID?: string } }).__RUNTIME_CONFIG__?.TENANT_ID;
   if (runtimeTenant) return runtimeTenant;
-  return 'TENANT_NATCASH';
+  const stored = localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id');
+  if (stored) return stored;
+  return 'DEFAULT';
 };
 
 export const getDefaultUserId = (): string => {

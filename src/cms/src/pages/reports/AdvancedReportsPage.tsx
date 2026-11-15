@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -30,7 +31,7 @@ export const AdvancedReportsPage: React.FC = () => {
   const toast = useRef<Toast>(null);
 
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [crossSell, setCrossSell] = useState<CrossSellReportModel[]>([]);
   const [liability, setLiability] = useState<PointsLiabilityReportModel | null>(null);

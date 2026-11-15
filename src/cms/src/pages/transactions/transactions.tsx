@@ -17,9 +17,11 @@ import { exportToExcel } from '@/components/exportHelper';
 import { AdjustmentDirection, CurrencyAssetType, PointActionType } from '@/models';
 import { loyaltyService, LoyaltyService, PointLedgerItem } from '@/service/loyalty.service';
 import { partnerService, Partner } from '@/service/partner.service';
+import { useGeneralCategory } from '@/hooks/useGeneralCategory';
 
 export const Transactions: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { data: dbTxTypes } = useGeneralCategory('TRANSACTION_TYPE');
   const toastRef = React.useRef<Toast>(null);
 
   const [items, setItems] = useState<PointLedgerItem[]>([]);
@@ -170,17 +172,26 @@ export const Transactions: React.FC = () => {
     ];
   }, [tenantPartners, t]);
 
-  const actionTypeOptions = useMemo(() => [
-    { label: t('transaction.filter_action'), value: 'ALL' },
-    { label: t('action_type.earn'), value: 'EARN' },
-    { label: t('action_type.burn'), value: 'BURN' },
-    { label: t('action_type.reward'), value: 'REWARD' },
-    { label: t('action_type.spin'), value: 'SPIN' },
-    { label: t('action_type.voucher'), value: 'VOUCHER' },
-    { label: t('action_type.refund'), value: 'REFUND' },
-    { label: t('action_type.expire'), value: 'EXPIRE' },
-    { label: t('action_type.adjust'), value: 'ADJUST' },
-  ], [t]);
+  const actionTypeOptions = useMemo(() => {
+    const list = [{ label: t('transaction.filter_action', 'Tất cả loại giao dịch'), value: 'ALL' }];
+    if (dbTxTypes.length > 0) {
+      dbTxTypes.forEach((item) => {
+        list.push({ label: item.name, value: item.code });
+      });
+    } else {
+      list.push(
+        { label: t('action_type.earn'), value: 'EARN' },
+        { label: t('action_type.burn'), value: 'BURN' },
+        { label: t('action_type.reward'), value: 'REWARD' },
+        { label: t('action_type.spin'), value: 'SPIN' },
+        { label: t('action_type.voucher'), value: 'VOUCHER' },
+        { label: t('action_type.refund'), value: 'REFUND' },
+        { label: t('action_type.expire'), value: 'EXPIRE' },
+        { label: t('action_type.adjust'), value: 'ADJUST' },
+      );
+    }
+    return list;
+  }, [dbTxTypes, t]);
 
   const copyToClipboard = (text: string, msgKey: string) => {
     navigator.clipboard.writeText(text);

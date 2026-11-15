@@ -78,6 +78,13 @@ const mainAppRoutes: RouteObject = {
       }),
     },
     {
+      path: paths.categoryManagement,
+      lazy: safeLazy(async () => {
+        const { GeneralCategoryManagementPage } = await import('@/pages/categories/GeneralCategoryManagementPage');
+        return { Component: GeneralCategoryManagementPage };
+      }),
+    },
+    {
       path: paths.systemParameters,
       lazy: safeLazy(async () => {
         const { SystemParameters } = await import('@/pages/system-parameters/system-parameters');

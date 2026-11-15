@@ -13,7 +13,13 @@ public interface SystemRoleRepository extends JpaRepository<SystemRoleEntity, Lo
 
     List<SystemRoleEntity> findByTenantIdOrderByIdAsc(String tenantId);
 
+    List<SystemRoleEntity> findByTenantIdInOrderByIdAsc(List<String> tenantIds);
+
     Optional<SystemRoleEntity> findByIdAndTenantId(Long id, String tenantId);
 
+    Optional<SystemRoleEntity> findByIdAndTenantIdIn(Long id, List<String> tenantIds);
+
     Optional<SystemRoleEntity> findByTenantIdAndCodeIgnoreCase(String tenantId, String code);
+
+    Optional<SystemRoleEntity> findByTenantIdInAndCodeIgnoreCase(List<String> tenantIds, String code);
 }

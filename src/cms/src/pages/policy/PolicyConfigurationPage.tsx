@@ -1,3 +1,4 @@
+import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -48,7 +49,7 @@ export const PolicyConfigurationPage: React.FC = () => {
   const { t } = useTranslation();
   const toast = useRef<Toast>(null);
   const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => localStorage.getItem('selected_tenant_id') || 'TENANT_NATCASH'
+    () => getStoredTenantId()
   );
   const [policies, setPolicies] = useState<PolicyRule[]>([]);
   const [partners, setPartners] = useState<PartnerOptionItem[]>([]);
