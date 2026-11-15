@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -97,6 +98,18 @@ public class NatcashPaymentPointController {
             entity.setStatus(request.getStatus());
         }
         return ResponseEntity.ok(branchRepository.save(entity));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa điểm thanh toán Natcash")
+    public ResponseEntity<Void> deletePaymentPoint(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("id") Long id) {
+        String tenantId = resolveTenantId(headerTenantId);
+        PartnerBranchEntity entity = branchRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+        branchRepository.delete(entity);
+        return ResponseEntity.noContent().build();
     }
 
     private String resolveTenantId(String headerTenantId) {

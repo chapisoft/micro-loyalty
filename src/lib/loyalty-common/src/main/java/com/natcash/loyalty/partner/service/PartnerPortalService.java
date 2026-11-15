@@ -248,6 +248,17 @@ public class PartnerPortalService {
         return branchRepository.save(branch);
     }
 
+    @Transactional
+    public void deleteBranch(String tenantId, Long partnerId, Long branchId) {
+        ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
+        PartnerBranchEntity branch = branchRepository.findByIdAndTenantId(branchId, tenantId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+        if (!partnerId.equals(branch.getPartnerId())) {
+            throw new LoyaltyException(ErrorCode.IDOR_FORBIDDEN);
+        }
+        branchRepository.delete(branch);
+    }
+
     @Transactional(readOnly = true)
     public List<PartnerProductGroupEntity> listProductGroups(String tenantId, Long partnerId) {
         ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
@@ -310,6 +321,14 @@ public class PartnerPortalService {
         return saved;
     }
 
+    @Transactional
+    public void deleteProductGroup(String tenantId, Long partnerId, Long groupId) {
+        ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
+        PartnerProductGroupEntity group = productGroupRepository.findByIdAndTenantIdAndPartnerId(groupId, tenantId, partnerId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+        productGroupRepository.delete(group);
+    }
+
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listPolicies(String tenantId, Long partnerId) {
         ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
@@ -365,6 +384,27 @@ public class PartnerPortalService {
                 .status(payload.getStatus() != null ? payload.getStatus() : CommonStatus.ACTIVE)
                 .build();
         return staffRepository.save(staff);
+    }
+
+    @Transactional
+    public PartnerStaffAccountEntity toggleStaffLock(String tenantId, Long partnerId, Long staffId) {
+        ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
+        PartnerStaffAccountEntity staff = staffRepository.findByIdAndTenantIdAndPartnerId(staffId, tenantId, partnerId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+        if (staff.getStatus() == CommonStatus.LOCKED || staff.getStatus() == CommonStatus.INACTIVE) {
+            staff.setStatus(CommonStatus.ACTIVE);
+        } else {
+            staff.setStatus(CommonStatus.LOCKED);
+        }
+        return staffRepository.save(staff);
+    }
+
+    @Transactional
+    public void deleteStaff(String tenantId, Long partnerId, Long staffId) {
+        ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
+        PartnerStaffAccountEntity staff = staffRepository.findByIdAndTenantIdAndPartnerId(staffId, tenantId, partnerId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+        staffRepository.delete(staff);
     }
 
     @Transactional(readOnly = true)

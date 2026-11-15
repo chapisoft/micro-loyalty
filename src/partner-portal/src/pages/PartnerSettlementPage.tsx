@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -13,6 +13,10 @@ import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { TenantSelector } from '@/components/TenantSelector';
 import { PaymentBatchStatus } from '@/models';
 import { LoyaltyService, PartnerSettlementBatchModel } from '@/service/loyalty.service';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 
 export const PartnerSettlementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -23,6 +27,7 @@ export const PartnerSettlementPage: React.FC = () => {
   );
   const [batches, setBatches] = useState<PartnerSettlementBatchModel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [claimBatch, setClaimBatch] = useState<PartnerSettlementBatchModel | null>(null);
   const [claimAmount, setClaimAmount] = useState<number>(0);
   const [claimReason, setClaimReason] = useState('');
@@ -46,10 +51,18 @@ export const PartnerSettlementPage: React.FC = () => {
     setSubmitting(true);
     try {
       await LoyaltyService.confirmPartnerSettlement(batch.batchCode, selectedTenant);
-      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: `${batch.batchCode}` });
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success'),
+        detail: `${batch.batchCode}`,
+      });
       fetchSettlements();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: err?.response?.data?.message || err.message,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -57,83 +70,239 @@ export const PartnerSettlementPage: React.FC = () => {
 
   const handleRaiseClaim = async () => {
     if (!claimBatch || !claimReason.trim()) {
-      toast.current?.show({ severity: 'warn', summary: t('common.warn'), detail: t('partner_portal.claim_reason_required') });
+      toast.current?.show({
+        severity: 'warn',
+        summary: t('common.warn'),
+        detail: t('partner_portal.claim_reason_required'),
+      });
       return;
     }
     setSubmitting(true);
     try {
       await LoyaltyService.raisePartnerSettlementClaim(
-        { batchCode: claimBatch.batchCode, claimedAmount: claimAmount, reason: claimReason.trim() },
+        {
+          batchCode: claimBatch.batchCode,
+          claimedAmount: claimAmount,
+          reason: claimReason.trim(),
+        },
         selectedTenant
       );
-      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: claimBatch.batchCode });
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success'),
+        detail: claimBatch.batchCode,
+      });
       setClaimBatch(null);
       setClaimReason('');
       fetchSettlements();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: err?.response?.data?.message || err.message,
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const filteredBatches = useMemo(() => {
+    if (!keyword.trim()) return batches;
+    const kw = keyword.toLowerCase();
+    return batches.filter(
+      (b) =>
+        b.batchCode?.toLowerCase().includes(kw) ||
+        b.periodFrom?.toLowerCase().includes(kw) ||
+        b.periodTo?.toLowerCase().includes(kw) ||
+        b.status?.toLowerCase().includes(kw)
+    );
+  }, [batches, keyword]);
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredBatches,
+      [
+        { header: t('clearing.batch_code'), field: 'batchCode' },
+        { header: t('clearing.gross_amount'), field: 'grossAmount' },
+        { header: t('clearing.mdr_fee'), field: 'mdrFeeAmount' },
+        { header: t('clearing.net_payable'), field: 'netPayableAmount' },
+        { header: t('common.status'), field: 'status' },
+      ],
+      'doi_soat_bu_tru_doi_tac'
+    );
+  };
+
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
       <AppBreadcrumb items={[{ label: t('partner_portal.nav_settlement') }]} />
 
+      <StandardPageHeader
+        title={t('partner_portal.settlement_title')}
+        subtitle={t('partner_portal.settlement_subtitle')}
+        extraLeft={<TenantSelector value={selectedTenant} onChange={setSelectedTenant} />}
+        onRefresh={fetchSettlements}
+        refreshLoading={loading}
+      />
+
       <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">{t('partner_portal.settlement_title')}</h4>
-            <p className="m-0 text-xs text-500 mt-1">{t('partner_portal.settlement_subtitle')}</p>
-          </div>
-          <div className="flex gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchSettlements} loading={loading} />
-          </div>
-        </div>
+        <UniversalFilterBar
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder={t('common.search')}
+          onReset={() => setKeyword('')}
+          onExport={handleExport}
+        />
 
         {loading ? (
-          <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
+          <div className="flex flex-column gap-2 mt-3">
+            <Skeleton height="2.75rem" />
+            <Skeleton height="2.75rem" />
+          </div>
         ) : (
-          <DataTable<PartnerSettlementBatchModel[]> value={batches} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')}>
-            <Column field="batchCode" header={t('clearing.batch_code')} body={(r: PartnerSettlementBatchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.batchCode}</span>} style={{ minWidth: '13rem' }} />
-            <Column header={t('clearing.period')} body={(r: PartnerSettlementBatchModel) => <span className="font-mono white-space-nowrap text-xs">{r.periodFrom} → {r.periodTo}</span>} style={{ minWidth: '13rem' }} />
-            <Column field="grossAmount" header={t('clearing.gross_amount')} body={(r: PartnerSettlementBatchModel) => <span className="font-mono">{Number(r.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-            <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip')}>{t('clearing.mdr_fee')} <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(r: PartnerSettlementBatchModel) => <span className="font-mono text-orange-600">{Number(r.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-            <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(r: PartnerSettlementBatchModel) => <span className="font-mono font-medium text-green-700">{Number(r.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="status" header={t('common.status')} body={(r: PartnerSettlementBatchModel) => <Tag value={r.status} severity={r.status === PaymentBatchStatus.PAID ? 'success' : r.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+          <DataTable<PartnerSettlementBatchModel[]>
+            value={filteredBatches}
+            paginator
+            rows={10}
+            stripedRows
+            responsiveLayout="scroll"
+            emptyMessage={t('common.no_data')}
+            className="mt-3"
+          >
+            <Column
+              field="batchCode"
+              header={t('clearing.batch_code')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <span className="font-bold font-mono text-900">{r.batchCode}</span>
+              )}
+              style={{ minWidth: '13rem' }}
+            />
+            <Column
+              header={t('clearing.period')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <span className="text-900 font-mono text-xs">
+                  {r.periodFrom} → {r.periodTo}
+                </span>
+              )}
+              style={{ minWidth: '13rem' }}
+            />
+            <Column
+              field="grossAmount"
+              header={t('clearing.gross_amount')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <span className="text-900 font-mono">
+                  {Number(r.grossAmount || 0).toLocaleString()} HTG
+                </span>
+              )}
+              style={{ minWidth: '9.5rem', textAlign: 'right' }}
+            />
+            <Column
+              field="mdrFeeAmount"
+              header={t('clearing.mdr_fee')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <span className="text-900 font-mono">
+                  {Number(r.mdrFeeAmount || 0).toLocaleString()} HTG
+                </span>
+              )}
+              style={{ minWidth: '9.5rem', textAlign: 'right' }}
+            />
+            <Column
+              field="netPayableAmount"
+              header={t('clearing.net_payable')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <span className="text-900 font-mono font-medium">
+                  {Number(r.netPayableAmount || 0).toLocaleString()} HTG
+                </span>
+              )}
+              style={{ minWidth: '10rem', textAlign: 'right' }}
+            />
+            <Column
+              field="status"
+              header={t('common.status')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <Tag
+                  value={r.status}
+                  severity={
+                    r.status === PaymentBatchStatus.PAID
+                      ? 'success'
+                      : r.status === PaymentBatchStatus.DISPUTED
+                      ? 'danger'
+                      : 'warning'
+                  }
+                />
+              )}
+              style={{ minWidth: '9rem', textAlign: 'center' }}
+            />
             <Column
               header={t('common.action')}
               body={(r: PartnerSettlementBatchModel) => (
-                <div className="flex gap-1">
-                  {r.status === PaymentBatchStatus.PENDING_CONFIRM && (
-                    <Button label={t('partner_portal.confirm_batch')} icon="pi pi-check" size="small" severity="success" onClick={() => handleConfirm(r)} loading={submitting} />
-                  )}
-                  <Button label={t('partner_portal.raise_claim')} icon="pi pi-exclamation-triangle" size="small" severity="warning" outlined onClick={() => { setClaimBatch(r); setClaimAmount(r.netPayableAmount || 0); setClaimReason(''); }} />
-                </div>
+                <StandardRowActions
+                  actions={[
+                    ...(r.status === PaymentBatchStatus.PENDING_CONFIRM
+                      ? [
+                          {
+                            icon: 'pi pi-check',
+                            label: t('partner_portal.confirm_batch', 'Xác nhận'),
+                            severity: 'success' as const,
+                            onClick: () => handleConfirm(r),
+                          },
+                        ]
+                      : []),
+                    {
+                      icon: 'pi pi-exclamation-triangle',
+                      label: t('partner_portal.raise_claim', 'Khiếu nại'),
+                      severity: 'warning' as const,
+                      onClick: () => {
+                        setClaimBatch(r);
+                        setClaimAmount(r.netPayableAmount || 0);
+                        setClaimReason('');
+                      },
+                    },
+                  ]}
+                />
               )}
-              style={{ minWidth: '14rem' }}
+              style={{ minWidth: '8rem', textAlign: 'center' }}
             />
           </DataTable>
         )}
       </div>
 
-      <Dialog visible={!!claimBatch} onHide={() => setClaimBatch(null)} header={claimBatch ? `${t('partner_portal.raise_claim')} · ${claimBatch.batchCode}` : ''} style={{ width: '34rem' }} modal className="p-fluid">
+      <Dialog
+        visible={!!claimBatch}
+        onHide={() => setClaimBatch(null)}
+        header={claimBatch ? `${t('partner_portal.raise_claim')} · ${claimBatch.batchCode}` : ''}
+        style={{ width: '34rem' }}
+        modal
+        className="p-fluid"
+      >
         <div className="flex flex-column gap-3">
           <div className="field m-0">
             <label className="text-sm font-medium">{t('partner_portal.disputed_amount')}</label>
-            <InputNumber value={claimAmount} onValueChange={(e) => setClaimAmount(e.value || 0)} min={0} />
+            <InputNumber
+              value={claimAmount}
+              onValueChange={(e) => setClaimAmount(e.value || 0)}
+              min={0}
+            />
           </div>
           <div className="field m-0">
             <label className="text-sm font-medium">{t('common.reason')} *</label>
-            <InputTextarea rows={3} value={claimReason} onChange={(e) => setClaimReason(e.target.value)} />
+            <InputTextarea
+              rows={3}
+              value={claimReason}
+              onChange={(e) => setClaimReason(e.target.value)}
+              placeholder="Chi tiết khiếu nại đối soát"
+            />
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
           <Button label={t('common.cancel')} outlined onClick={() => setClaimBatch(null)} />
-          <Button label={t('partner_portal.submit_claim')} icon="pi pi-send" severity="warning" onClick={handleRaiseClaim} loading={submitting} />
+          <Button
+            label={t('common.confirm')}
+            icon="pi pi-check"
+            severity="warning"
+            onClick={handleRaiseClaim}
+            loading={submitting}
+          />
         </div>
       </Dialog>
     </div>

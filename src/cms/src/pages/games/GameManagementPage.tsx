@@ -13,7 +13,10 @@ import { ProgressBar } from 'primereact/progressbar';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { CommonStatus } from '@/models';
 import { LoyaltyService, GameDashboardStats } from '@/service/loyalty.service';
 
@@ -370,8 +373,68 @@ export const GameManagementPage: React.FC = () => {
     }
   };
 
+  const deleteGameItem = (game: GameItem) => {
+    confirmDialog({
+      message: t('game.delete_confirm_msg', { name: game.gameName }),
+      header: t('game.delete_confirm_title', 'Xác nhận xóa trò chơi'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.yes'),
+      rejectLabel: t('common.no'),
+      accept: async () => {
+        setIsLoading(true);
+        try {
+          await LoyaltyService.deleteGame(game.id, selectedTenant);
+          toast.current?.show({
+            severity: 'success',
+            summary: t('common.success'),
+            detail: t('game.delete_game_success', 'Đã xóa trò chơi thành công'),
+            life: 3000,
+          });
+          await loadGames();
+        } catch (e: any) {
+          console.error('[deleteGame] Error:', e);
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error'),
+            detail: e?.message || t('game.delete_game_failed', 'Xóa trò chơi thất bại'),
+            life: 4000,
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleExport = () => {
+    exportToExcel(
+      games.map((g, idx) => ({
+        stt: idx + 1,
+        gameCode: g.gameCode,
+        gameName: g.gameName,
+        category: g.category,
+        freeTurnsDaily: g.freeTurnsDaily,
+        pricePerTurnHtg: g.pricePerTurnHtg,
+        dailyBudgetLimit: g.dailyBudgetLimit,
+        status: g.status,
+      })),
+      [
+        { key: 'stt', header: t('common.stt') },
+        { key: 'gameCode', header: t('game.game_code') },
+        { key: 'gameName', header: t('game.game_name') },
+        { key: 'category', header: t('game.category') },
+        { key: 'freeTurnsDaily', header: t('game.free_turns_daily') },
+        { key: 'pricePerTurnHtg', header: t('game.price_per_turn_htg') },
+        { key: 'dailyBudgetLimit', header: t('game.daily_budget_total') },
+        { key: 'status', header: t('common.status') },
+      ],
+      `Danh_Sach_Tro_Choi_${selectedTenant}`
+    );
+  };
+
   const statusTemplate = (status: CommonStatus | string) => {
-    return status === CommonStatus.ACTIVE || status === 'ACTIVE' ? (
+    return status === CommonStatus.ACTIVE ? (
       <Tag severity="success" value={t('common.active')} />
     ) : (
       <Tag severity="danger" value={t('common.inactive')} />
@@ -395,73 +458,80 @@ export const GameManagementPage: React.FC = () => {
 
   // Tính toán tổng trọng số và % xác suất
   const totalPrizeWeight = prizesList
-    .filter((p) => p.status === 'ACTIVE')
+    .filter((p) => p.status === CommonStatus.ACTIVE)
     .reduce((sum, item) => sum + (item.probabilityWeight || 0), 0);
 
   return (
-    <div className="game-management-page">
+    <div className="w-full">
       <Toast ref={toast} position="top-right" />
       <ConfirmDialog />
-      <AppBreadcrumb
-        items={[
+      <StandardPageHeader
+        title={t('nav.game_catalog')}
+        subtitle={t('game.page_subtitle', 'Quản lý danh mục trò chơi, cấu hình tỷ lệ trúng thưởng và hạn mức ngân sách')}
+        breadcrumbs={[
           { label: t('nav.rewards_games') },
           { label: t('nav.game_catalog') },
         ]}
+        primaryAction={{
+          label: t('common.add_new'),
+          icon: 'pi pi-plus',
+          onClick: openNewGame,
+        }}
       />
 
       {/* ── KPI METRIC CARDS ── */}
-      <div className="grid mb-4">
+      <div className="grid mb-3">
         <div className="col-12 md:col-3">
-          <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-blue-500">
+          <div className="card mb-0 shadow-1 border-round surface-card p-3 border-left-3 border-blue-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.game_list')}
                 </span>
-                <div className="text-900 font-black text-2xl tracking-tight">
+                <div className="text-900 font-bold text-2xl tracking-tight">
                   {stats.totalGames > 0 ? stats.totalGames : games.length} {t('common.games')}
                 </div>
               </div>
               <div
-                className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
+                className="flex align-items-center justify-content-center border-round shadow-1 flex-shrink-0"
                 style={{
-                  width: '3.25rem',
-                  height: '3.25rem',
+                  width: '3rem',
+                  height: '3rem',
                   background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
                 }}
               >
-                <i className="pi pi-th-large text-white text-2xl font-bold" />
+                <i className="pi pi-th-large text-white text-xl" />
               </div>
             </div>
-            <span className="text-green-600 font-bold text-xs flex align-items-center gap-1">
+            <span className="text-green-600 font-medium text-xs flex align-items-center gap-1">
               <i className="pi pi-check text-xs font-bold" /> {stats.activeGames > 0 ? stats.activeGames : games.filter(g => g.status === CommonStatus.ACTIVE).length} {t('game.active_count')}
             </span>
           </div>
         </div>
 
         <div className="col-12 md:col-3">
-          <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-orange-500">
+          <div className="card mb-0 shadow-1 border-round surface-card p-3 border-left-3 border-orange-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.today_spins')}
                 </span>
-                <div className="text-900 font-black text-2xl font-mono tracking-tight text-orange-600">
+                <div className="text-900 font-bold text-2xl font-mono tracking-tight text-orange-600">
                   {stats.todaySpins.toLocaleString()} {t('common.spins')}
                 </div>
               </div>
               <div
-                className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
+                className="flex align-items-center justify-content-center border-round shadow-1 flex-shrink-0"
                 style={{
-                  width: '3.25rem',
-                  height: '3.25rem',
+                  width: '3rem',
+                  height: '3rem',
                   background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
                 }}
               >
-                <i className="pi pi-bolt text-white text-2xl font-bold" />
+                <i className="pi pi-bolt text-white text-xl" />
               </div>
             </div>
-            <span className={`font-bold text-xs flex align-items-center gap-1 ${stats.spinGrowthPercent >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+            <span className={`font-medium text-xs flex align-items-center gap-1 ${stats.spinGrowthPercent >= 0 ? 'text-green-600' : 'text-red-500'}`}>
               <i className={`pi ${stats.spinGrowthPercent >= 0 ? 'pi-arrow-up' : 'pi-arrow-down'} text-xs font-bold`} />{' '}
               {stats.spinGrowthPercent >= 0 ? `+${stats.spinGrowthPercent}%` : `${stats.spinGrowthPercent}%`} {t('game.vs_yesterday')}
             </span>
@@ -469,25 +539,25 @@ export const GameManagementPage: React.FC = () => {
         </div>
 
         <div className="col-12 md:col-3">
-          <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-green-500">
+          <div className="card mb-0 shadow-1 border-round surface-card p-3 border-left-3 border-green-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">
                   {t('game.today_cost')}
                 </span>
-                <div className="text-900 font-black text-2xl font-mono tracking-tight text-green-600">
+                <div className="text-900 font-bold text-2xl font-mono tracking-tight text-green-600">
                   {stats.todaySpentAmount.toLocaleString()} HTG
                 </div>
               </div>
               <div
-                className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
+                className="flex align-items-center justify-content-center border-round shadow-1 flex-shrink-0"
                 style={{
-                  width: '3.25rem',
-                  height: '3.25rem',
+                  width: '3rem',
+                  height: '3rem',
                   background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                 }}
               >
-                <i className="pi pi-wallet text-white text-2xl font-bold" />
+                <i className="pi pi-wallet text-white text-xl" />
               </div>
             </div>
             <span className="text-600 font-medium text-xs">
@@ -500,26 +570,26 @@ export const GameManagementPage: React.FC = () => {
         </div>
 
         <div className="col-12 md:col-3">
-          <div className="card mb-0 shadow-2 border-round-xl surface-card p-3 border-left-3 border-purple-500">
+          <div className="card mb-0 shadow-1 border-round surface-card p-3 border-left-3 border-purple-500">
             <div className="flex justify-content-between align-items-center mb-2">
               <div>
                 <span className="block text-600 font-bold text-xs mb-1 uppercase tracking-wide">{t('game.lock_ledger_mechanism')}</span>
-                <div className="text-900 font-black text-2xl tracking-tight text-purple-600">
+                <div className="text-900 font-bold text-2xl tracking-tight text-purple-600">
                   {stats.lockMechanism || 'Redisson RLock'}
                 </div>
               </div>
               <div
-                className="flex align-items-center justify-content-center border-round-xl shadow-2 flex-shrink-0"
+                className="flex align-items-center justify-content-center border-round shadow-1 flex-shrink-0"
                 style={{
-                  width: '3.25rem',
-                  height: '3.25rem',
+                  width: '3rem',
+                  height: '3rem',
                   background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
                 }}
               >
-                <i className="pi pi-shield text-white text-2xl font-bold" />
+                <i className="pi pi-shield text-white text-xl" />
               </div>
             </div>
-            <span className="text-purple-600 font-bold text-xs flex align-items-center gap-1">
+            <span className="text-purple-600 font-medium text-xs flex align-items-center gap-1">
               <i className="pi pi-check text-xs font-bold" /> {t('game.integrity_status')}
             </span>
           </div>
@@ -527,35 +597,18 @@ export const GameManagementPage: React.FC = () => {
       </div>
 
       {/* ── GAME CATALOG & DETAILED PARAMETERS ── */}
-      <div className="card shadow-1 border-round-xl surface-card p-4">
-        <div className="flex justify-content-between align-items-center mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-bold">
-              {t('game.management_title')}
-            </h4>
-            <p className="text-500 text-xs mt-1 mb-0">
-              {t('game.management_description')}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <span className="p-input-icon-left">
-              <i className="pi pi-search" />
-              <InputText
-                type="search"
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                placeholder={t('common.search')}
-                className="p-inputtext-sm"
-              />
-            </span>
-            <Button
-              label={t('game.add_game')}
-              icon="pi pi-plus"
-              severity="success"
-              onClick={openNewGame}
-            />
-          </div>
-        </div>
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
+        <UniversalFilterBar
+          searchValue={globalFilter}
+          onSearchChange={setGlobalFilter}
+          searchPlaceholder={t('common.search')}
+          onExport={handleExport}
+          onReset={() => setGlobalFilter('')}
+          onRefresh={() => {
+            loadGames();
+            loadStats();
+          }}
+        />
 
         <DataTable<any>
           value={games}
@@ -564,10 +617,12 @@ export const GameManagementPage: React.FC = () => {
           dataKey="id"
           paginator
           rows={10}
+          rowsPerPageOptions={[5, 10, 25, 50]}
           stripedRows
           responsiveLayout="scroll"
           globalFilter={globalFilter}
           loading={isLoading}
+          emptyMessage={t('common.no_data')}
         >
           <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
           <Column
@@ -576,72 +631,63 @@ export const GameManagementPage: React.FC = () => {
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
           <Column
-            body={(rowData: GameItem) => (
-              <div className="flex align-items-center justify-content-center" style={{ gap: '0.4rem' }}>
-                <Button
-                  icon="pi pi-gift"
-                  rounded
-                  severity="warning"
-                  size="small"
-                  onClick={() => openPrizesManager(rowData)}
-                  tooltip={t('game.dynamic_prizes_tooltip')}
-                />
-                <Button
-                  icon="pi pi-cog"
-                  rounded
-                  outlined
-                  severity="secondary"
-                  size="small"
-                  onClick={() => openParamsConfig(rowData)}
-                  tooltip={t('game.config_params')}
-                />
-                <Button
-                  icon="pi pi-pencil"
-                  rounded
-                  outlined
-                  severity="secondary"
-                  size="small"
-                  onClick={() => editGame(rowData)}
-                  tooltip={t('common.edit')}
-                />
-              </div>
-            )}
             header={t('common.actions')}
-            style={{ width: '10rem', minWidth: '10rem', textAlign: 'center' }}
+            body={(rowData: GameItem) => (
+              <StandardRowActions
+                onEdit={() => editGame(rowData)}
+                onDelete={() => deleteGameItem(rowData)}
+                extraActions={[
+                  {
+                    label: t('game.dynamic_prizes_tooltip'),
+                    icon: 'pi pi-gift',
+                    onClick: () => openPrizesManager(rowData),
+                  },
+                  {
+                    label: t('game.config_params'),
+                    icon: 'pi pi-cog',
+                    onClick: () => openParamsConfig(rowData),
+                  },
+                ]}
+              />
+            )}
+            style={{ width: '8.5rem', textAlign: 'center' }}
           />
           <Column
             field="gameCode"
             header={t('game.game_code')}
+            body={(row: GameItem) => <span className="font-bold font-mono text-900">{row.gameCode}</span>}
             sortable
-            style={{ minWidth: '9rem', fontWeight: 600 }}
+            style={{ minWidth: '9rem' }}
           />
           <Column
             field="gameName"
             header={t('game.game_name')}
+            body={(row: GameItem) => <span className="text-900">{row.gameName}</span>}
             sortable
             style={{ minWidth: '13rem' }}
           />
           <Column
             field="category"
             header={t('game.category')}
+            body={(row: GameItem) => <span className="text-900">{row.category}</span>}
             sortable
             style={{ minWidth: '8rem' }}
           />
           <Column
             field="freeTurnsDaily"
-            header={<span title={t('game.free_turns_tooltip')}>{t('game.free_turns_daily')}</span>}
-            body={(row: GameItem) => <span className="font-medium text-green-600">{row.freeTurnsDaily} {t('common.spins')}</span>}
+            header={t('game.free_turns_daily')}
+            body={(row: GameItem) => <span className="text-900">{row.freeTurnsDaily} {t('common.spins')}</span>}
             sortable
             style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column
             field="pricePerTurnHtg"
-            header={<span title={t('game.price_tooltip')}>{t('game.price_per_turn_htg')}</span>}
+            header={t('game.price_per_turn_htg')}
             body={(row: GameItem) =>
               row.pricePerTurnHtg > 0 ? (
-                <span className="font-medium font-mono text-orange-600">{row.pricePerTurnHtg} HTG</span>
+                <span className="text-900">{row.pricePerTurnHtg} HTG</span>
               ) : (
-                <Tag severity="info" value={t('common.free')} />
+                <span className="text-900">{t('common.free')}</span>
               )
             }
             sortable
@@ -649,10 +695,10 @@ export const GameManagementPage: React.FC = () => {
           />
           <Column
             field="dailyBudgetLimit"
-            header={<span title={t('game.budget_tooltip')}>{t('game.daily_budget_total')}</span>}
+            header={t('game.daily_budget_total')}
             body={(row: GameItem) =>
               row.dailyBudgetLimit > 0 ? (
-                <span className="font-mono text-700">{row.dailyBudgetLimit.toLocaleString()} HTG</span>
+                <span className="text-900">{row.dailyBudgetLimit.toLocaleString()} HTG</span>
               ) : (
                 <span className="text-500 text-xs">{t('common.unlimited')}</span>
               )
@@ -665,7 +711,7 @@ export const GameManagementPage: React.FC = () => {
             body={(row: GameItem) => statusTemplate(row.status)}
             header={t('common.status')}
             sortable
-            style={{ minWidth: '8rem' }}
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
         </DataTable>
       </div>

@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,6 +89,26 @@ public class NotificationOperationsController {
         return ResponseEntity.ok(scenarioRepository.save(entity));
     }
 
+    @DeleteMapping("/engagement/scenarios/{id}")
+    @Operation(summary = "Xóa kịch bản gợi nhắc")
+    public ResponseEntity<Void> deleteScenario(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("id") Long id) {
+        String tenantId = resolveTenantId(headerTenantId);
+        ReminderScenarioEntity scenario = scenarioRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND));
+        scenarioRepository.delete(scenario);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/engagement/send-logs")
+    @Operation(summary = "Nhật ký gửi thông báo / gợi nhắc")
+    public ResponseEntity<List<UserInboxMessageEntity>> getReminderSendLogs(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String tenantId = resolveTenantId(headerTenantId);
+        return ResponseEntity.ok(inboxRepository.findByTenantIdOrderByCreatedAtDesc(tenantId));
+    }
+
     @GetMapping("/alerts")
     @Operation(summary = "Danh sách cảnh báo hệ thống")
     public ResponseEntity<List<SystemAlertEntity>> listAlerts(
@@ -100,7 +121,7 @@ public class NotificationOperationsController {
         return ResponseEntity.ok(alertRepository.findByTenantIdOrderByCreatedAtDesc(tenantId));
     }
 
-    @PostMapping("/alerts/{id}/acknowledge")
+    @PostMapping({"/alerts/{id}/acknowledge", "/alerts/{id}/resolve"})
     @Operation(summary = "Xác nhận đã xử lý cảnh báo hệ thống")
     public ResponseEntity<SystemAlertEntity> acknowledgeAlert(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,

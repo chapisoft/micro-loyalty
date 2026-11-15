@@ -13,8 +13,10 @@ export interface IUser {
   fullName: string;
   phone?: string;
   avatarUrl?: string;
+  status?: string;
   isActive: number;
   isLocked: number;
+  mustChangePassword?: boolean;
   failedLoginAttempts: number;
   lastLoginAt?: string;
   createdAt: string;
@@ -36,7 +38,11 @@ export interface IRole {
   code: string;
   name: string;
   description: string;
+  platform?: string;
+  scope?: string;
+  status?: string;
   isActive: number;
+  userCount?: number;
   createdAt: string;
   updatedAt: string;
   permissions?: IPermission[];
@@ -46,6 +52,9 @@ export interface IRolePayload {
   code: string;
   name: string;
   description: string;
+  platform?: string;
+  scope?: string;
+  status?: string;
   permissionIds?: number[];
 }
 
@@ -154,6 +163,26 @@ function useUnlockUser(): UseMutationResult<IResponse<any>, AxiosError, number> 
   });
 }
 
+const resetPassword = ({ id, newPassword }: { id: number; newPassword?: string }): Promise<IResponse<any>> =>
+  cmsApiClient.post(`/users/${id}/reset-password`, { newPassword });
+
+function useResetPassword(): UseMutationResult<IResponse<any>, AxiosError, { id: number; newPassword?: string }> {
+  return useMutation({
+    mutationKey: ['RESET_PASSWORD'],
+    mutationFn: resetPassword,
+  });
+}
+
+const assignRoles = ({ id, roleIds }: { id: number; roleIds: number[] }): Promise<IResponse<IUser>> =>
+  cmsApiClient.post(`/users/${id}/roles`, { roleIds });
+
+function useAssignRoles(): UseMutationResult<IResponse<IUser>, AxiosError, { id: number; roleIds: number[] }> {
+  return useMutation({
+    mutationKey: ['ASSIGN_ROLES'],
+    mutationFn: assignRoles,
+  });
+}
+
 // ==================== ROLE MANAGEMENT ====================
 
 const getRoles = (params?: IBaseRequestPagingParams): Promise<IResponse<IRole>> =>
@@ -259,6 +288,8 @@ export {
   useDeleteUser,
   useLockUser,
   useUnlockUser,
+  useResetPassword,
+  useAssignRoles,
   // Role hooks
   useGetRoles,
   useGetRoleById,

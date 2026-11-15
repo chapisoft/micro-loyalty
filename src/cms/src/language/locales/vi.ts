@@ -22,19 +22,19 @@ export default {
     "audit_logs": "Nhật ký Hoạt động",
     "dead_letter": "Lỗi Webhook (Dead-Letter)",
     "milestones": "Cột mốc Chiến dịch",
-    "segments": "Phân khúc Khách hàng (CN-03)",
-    "scenarios": "Kịch bản Gợi nhắc (CN-04)",
+    "segments": "Phân khúc Khách hàng",
+    "scenarios": "Kịch bản Gợi nhắc",
     "learning_quiz": "Ngân hàng Câu hỏi Ngoại ngữ",
     "game_stats": "Thống kê & Phiên chơi Game",
     "payment_points": "Chi nhánh & Điểm Thanh toán",
-    "agent_loyalty": "Loyalty Đại lý (AG-03)",
+    "agent_loyalty": "Loyalty Đại lý",
     "reports_budget": "Báo cáo & Ngân sách",
-    "budgets": "Ngân sách Tháng (NS-01)",
-    "effectiveness": "Hiệu quả & Lift (NS-03)",
-    "alerts": "Trung tâm Cảnh báo (CN-05)",
-    "advanced_reports": "Báo cáo Chuyên sâu (NS-05..07)",
-    "partner_portal": "Partner Portal (Đối tác)",
-    "approvals": "Hàng đợi Phê duyệt 2 lớp (QT-04)"
+    "budgets": "Ngân sách Tháng",
+    "effectiveness": "Hiệu quả Chương trình",
+    "alerts": "Trung tâm Cảnh báo",
+    "advanced_reports": "Báo cáo Chuyên sâu",
+    "partner_portal": "Cổng Đối tác",
+    "approvals": "Hàng đợi Phê duyệt"
   },
   "policy": {
     "management_title": "Cấu hình Chính sách Tích & Tiêu Điểm",
@@ -424,7 +424,8 @@ export default {
     "rotate_btn": "Xoay vòng API Key",
     "show_once_warning": "Khóa mới chỉ hiển thị DUY NHẤT 1 LẦN. Vui lòng sao chép và lưu trữ an toàn ngay:",
     "no_keys": "Chưa có danh sách khóa từ hệ thống.",
-    "revoke_now": "Thu hồi khóa cũ ngay"
+    "revoke_now": "Thu hồi khóa cũ ngay",
+    "grace_period": "Thời gian Ân hạn (7 ngày)"
   },
   "transaction": {
     "management_title": "Nhật ký Biến động Sổ cái Điểm & Giao dịch Loyalty",
@@ -663,6 +664,7 @@ export default {
     "name": "Tên Game",
     "win_rate": "Tỷ Lệ Trúng",
     "recent_sessions": "Nhật ký Phiên Chơi Gần Đây",
+    "session_id": "Mã Phiên Chơi",
     "reward": "Phần Thưởng",
     "prize_code_placeholder": "Ví dụ: PRIZE_500_PTS",
     "name_vi_placeholder": "Ví dụ: 500 Điểm Thưởng",
@@ -1390,11 +1392,24 @@ export default {
     "create_user_success": "Đã tạo tài khoản Sandbox cho đối tác",
     "create_user_failed": "Không thể tạo tài khoản",
     "menu_name_placeholder": "Ví dụ: Khuyến mãi Mùa hè",
-    "menu_route_placeholder": "Ví dụ: /sandbox/summer-promo"
+    "menu_route_placeholder": "Ví dụ: /sandbox/summer-promo",
+    "username_placeholder": "Ví dụ: dev_partner_bank",
+    "fullname_placeholder": "Ví dụ: Đội ngũ Kỹ thuật Đối tác",
+    "email_placeholder": "developer@partner.com",
+    "phone_placeholder": "+509 3000 0000"
   },
   "common": {
     "search": "Tìm kiếm...",
     "refresh": "Làm mới",
+    "reset": "Đặt lại",
+    "advanced_filter": "Lọc nâng cao",
+    "advanced_filter_tooltip": "Ẩn/hiện bộ lọc nâng cao",
+    "advanced_filters_title": "Điều kiện lọc nâng cao",
+    "more_actions": "Hành động khác",
+    "import": "Nhập",
+    "export": "Xuất",
+    "export_excel": "Xuất Excel",
+    "export_csv": "Xuất CSV",
     "add_new": "Thêm mới",
     "edit": "Chỉnh sửa",
     "delete": "Xóa",
@@ -1494,7 +1509,6 @@ export default {
     "detail": "Chi tiết",
     "notice": "Thông báo",
     "reload": "Làm mới danh sách",
-    "export_csv": "Xuất CSV",
     "games": "Game",
     "basic_info": "Thông tin Định danh Đối tác",
     "no_description": "Không có ghi chú",
@@ -1721,7 +1735,14 @@ export default {
     "avg_lift": "Mức tăng trưởng trung bình (Lift)",
     "treatment_revenue": "Doanh thu Nhóm Tác động",
     "avg_roi": "ROI Trung Bình",
-    "no_effectiveness": "Chưa có dữ liệu so sánh Lift vs Control Group."
+    "no_effectiveness": "Chưa có dữ liệu so sánh Lift vs Control Group.",
+    "test_group_size": "Nhóm Thử nghiệm (N)",
+    "control_group_size": "Nhóm Đối chứng (N)",
+    "test_conv_rate": "Tỷ lệ CĐ (Test)",
+    "control_conv_rate": "Tỷ lệ CĐ (Control)",
+    "incremental_rev": "Doanh thu Tăng thêm",
+    "lift_percent": "Tăng trưởng (Lift)",
+    "roi_percent": "ROI (%)"
   },
   "alert": {
     "title": "Trung tâm Cảnh báo & Ngưỡng Vận hành (CN-05)",
@@ -1758,7 +1779,8 @@ export default {
     "options": "Các phương án (mỗi dòng 1 phương án)",
     "answer_idx": "Chỉ số Đáp án đúng (0, 1, 2...)",
     "import_title": "Nhập Câu hỏi từ CSV",
-    "confirm_import": "Xác nhận Nhập"
+    "confirm_import": "Xác nhận Nhập",
+    "audio": "Âm thanh"
   },
   "agent": {
     "title": "Quản trị Chỉ tiêu & Thưởng Loyalty Đại lý / Tổng đại lý (AG-03)",

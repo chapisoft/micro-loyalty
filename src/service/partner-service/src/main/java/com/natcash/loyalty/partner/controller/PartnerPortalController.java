@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -73,6 +74,16 @@ public class PartnerPortalController {
                 resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), request));
     }
 
+    @DeleteMapping("/branches/{id}")
+    public ResponseEntity<Void> deleteBranch(
+            @RequestHeader(value = LoyaltyConstants.TENANT_HEADER, required = false) String headerTenantId,
+            @RequestHeader(value = LoyaltyConstants.PARTNER_ID_HEADER, required = false) Long headerPartnerId,
+            @RequestParam(value = "partnerId", required = false) Long paramPartnerId,
+            @PathVariable("id") Long id) {
+        portalService.deleteBranch(resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/product-groups")
     public ResponseEntity<List<PartnerProductGroupEntity>> listProductGroups(
             @RequestHeader(value = LoyaltyConstants.TENANT_HEADER, required = false) String headerTenantId,
@@ -90,6 +101,16 @@ public class PartnerPortalController {
             @RequestBody PartnerProductGroupEntity request) {
         return ResponseEntity.ok(portalService.createProductGroup(
                 resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), request));
+    }
+
+    @DeleteMapping("/product-groups/{id}")
+    public ResponseEntity<Void> deleteProductGroup(
+            @RequestHeader(value = LoyaltyConstants.TENANT_HEADER, required = false) String headerTenantId,
+            @RequestHeader(value = LoyaltyConstants.PARTNER_ID_HEADER, required = false) Long headerPartnerId,
+            @RequestParam(value = "partnerId", required = false) Long paramPartnerId,
+            @PathVariable("id") Long id) {
+        portalService.deleteProductGroup(resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/policies")
@@ -118,6 +139,26 @@ public class PartnerPortalController {
             @RequestBody PartnerStaffAccountEntity request) {
         return ResponseEntity.ok(portalService.createStaff(
                 resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), request));
+    }
+
+    @PostMapping("/staff/{id}/toggle-lock")
+    public ResponseEntity<PartnerStaffAccountEntity> toggleStaffLock(
+            @RequestHeader(value = LoyaltyConstants.TENANT_HEADER, required = false) String headerTenantId,
+            @RequestHeader(value = LoyaltyConstants.PARTNER_ID_HEADER, required = false) Long headerPartnerId,
+            @RequestParam(value = "partnerId", required = false) Long paramPartnerId,
+            @PathVariable("id") Long id) {
+        return ResponseEntity.ok(portalService.toggleStaffLock(
+                resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), id));
+    }
+
+    @DeleteMapping("/staff/{id}")
+    public ResponseEntity<Void> deleteStaff(
+            @RequestHeader(value = LoyaltyConstants.TENANT_HEADER, required = false) String headerTenantId,
+            @RequestHeader(value = LoyaltyConstants.PARTNER_ID_HEADER, required = false) Long headerPartnerId,
+            @RequestParam(value = "partnerId", required = false) Long paramPartnerId,
+            @PathVariable("id") Long id) {
+        portalService.deleteStaff(resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId), id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/proposals")

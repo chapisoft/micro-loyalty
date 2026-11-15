@@ -20,7 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -174,6 +176,20 @@ public class TierController {
                 .build());
     }
 
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa hạng hội viên")
+    public ResponseEntity<Void> deleteTier(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("id") Long id) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        LoyaltyTierEntity tier = tierRepository.findByIdAndTenantId(id, tenantId)
+                .orElse(null);
+        if (tier != null) {
+            tierRepository.delete(tier);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     private String getActorUsername() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -193,7 +209,7 @@ public class TierController {
                 t.getTierLevel() != null ? String.valueOf(t.getTierLevel()) : "1",
                 t.getMinPoints() != null ? t.getMinPoints().toString() : "0",
                 t.getPointMultiplier() != null ? t.getPointMultiplier().toString() : "1.0",
-                t.getStatus() != null ? t.getStatus().name() : "ACTIVE"
+                t.getStatus() != null ? t.getStatus().name() : CommonStatus.ACTIVE.name()
         );
     }
 

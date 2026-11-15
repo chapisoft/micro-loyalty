@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Controller, useFieldArray } from 'react-hook-form';
@@ -10,6 +11,7 @@ interface EditableListProps {
 }
 
 const EditableList: React.FC<EditableListProps> = ({ control, name, disabled }) => {
+  const { t } = useTranslation();
   const { fields, append, remove, update } = useFieldArray({
     control,
     name,
@@ -47,7 +49,7 @@ const EditableList: React.FC<EditableListProps> = ({ control, name, disabled }) 
       )}
       <Button
         icon="pi pi-plus"
-        label="Add Item"
+        label={t('common.add_new')}
         className="p-button-sm p-button-outlined"
         onClick={() => append({ type: 'create', value: '' })}
         disabled={disabled}

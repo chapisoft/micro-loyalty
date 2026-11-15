@@ -1357,6 +1357,17 @@ public class GameHubService {
     }
 
     @Transactional
+    public void deleteGameAdmin(String tenantId, Long id) {
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId : TenantContext.getTenantId();
+        GameHubEntity entity = gameRepository.findByTenantIdAndId(effectiveTenantId, id)
+                .or(() -> gameRepository.findById(id))
+                .orElse(null);
+        if (entity != null) {
+            gameRepository.delete(entity);
+        }
+    }
+
+    @Transactional
     public List<GamePrizeDto> autoBalanceGamePrizes(String tenantId, String gameCode) {
         List<GamePrizeEntity> prizes = gamePrizeRepository.findByTenantIdAndGameCodeOrderByDisplayOrderAsc(tenantId, gameCode);
         if (!prizes.isEmpty()) {

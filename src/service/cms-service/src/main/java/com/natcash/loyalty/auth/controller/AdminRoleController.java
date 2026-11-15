@@ -4,6 +4,7 @@ import com.natcash.loyalty.auth.entity.SystemPermissionEntity;
 import com.natcash.loyalty.auth.entity.SystemRoleEntity;
 import com.natcash.loyalty.auth.repository.SystemPermissionRepository;
 import com.natcash.loyalty.auth.repository.SystemRoleRepository;
+import com.natcash.loyalty.auth.repository.SystemUserRepository;
 import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.exception.LoyaltyException;
@@ -47,18 +48,50 @@ public class AdminRoleController {
 
     private final SystemRoleRepository systemRoleRepository;
     private final SystemPermissionRepository systemPermissionRepository;
+    private final SystemUserRepository systemUserRepository;
 
     @GetMapping
     @Transactional(readOnly = true)
     @Operation(summary = "Lấy danh sách vai trò", description = "Truy vấn danh sách vai trò có phân trang")
     public ResponseEntity<RolePageResponse> getRoles(
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") int size) {
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "platform", required = false) String platform,
+            @RequestParam(value = "scope", required = false) String scope,
+            @RequestParam(value = "status", required = false) String status) {
 
         String tenantId = TenantContext.getTenantId();
         List<RoleDetailDto> list = systemRoleRepository.findByTenantIdOrderByIdAsc(tenantId).stream()
                 .map(this::toRoleDto)
                 .toList();
+
+        if (search != null && !search.isBlank()) {
+            String keyword = search.toLowerCase().trim();
+            list = list.stream()
+                    .filter(r -> (r.getCode() != null && r.getCode().toLowerCase().contains(keyword))
+                            || (r.getName() != null && r.getName().toLowerCase().contains(keyword))
+                            || (r.getDescription() != null && r.getDescription().toLowerCase().contains(keyword)))
+                    .toList();
+        }
+
+        if (platform != null && !platform.isBlank() && !"ALL".equalsIgnoreCase(platform)) {
+            list = list.stream()
+                    .filter(r -> platform.equalsIgnoreCase(r.getPlatform()))
+                    .toList();
+        }
+
+        if (scope != null && !scope.isBlank() && !"ALL".equalsIgnoreCase(scope)) {
+            list = list.stream()
+                    .filter(r -> scope.equalsIgnoreCase(r.getScope()))
+                    .toList();
+        }
+
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            list = list.stream()
+                    .filter(r -> status.equalsIgnoreCase(r.getStatus()))
+                    .toList();
+        }
 
         int safeSize = Math.max(size, 1);
         int safePage = Math.max(page, 0);
@@ -125,6 +158,8 @@ public class AdminRoleController {
                 .code(normalizedCode)
                 .name(payload.getName().trim())
                 .description(payload.getDescription())
+                .platform(payload.getPlatform() != null && !payload.getPlatform().isBlank() ? payload.getPlatform() : "WEB_CMS")
+                .scope(payload.getScope() != null && !payload.getScope().isBlank() ? payload.getScope() : "ALL")
                 .isSystem(Boolean.FALSE)
                 .status(CommonStatus.ACTIVE)
                 .permissions(permissions)
@@ -158,6 +193,17 @@ public class AdminRoleController {
             }
             if (payload.getCode() != null && !payload.getCode().isBlank()) {
                 existing.setCode(payload.getCode().toUpperCase().trim());
+            }
+            if (payload.getPlatform() != null && !payload.getPlatform().isBlank()) {
+                existing.setPlatform(payload.getPlatform());
+            }
+            if (payload.getScope() != null && !payload.getScope().isBlank()) {
+                existing.setScope(payload.getScope());
+            }
+            if (payload.getStatus() != null && !payload.getStatus().isBlank()) {
+                try {
+                    existing.setStatus(CommonStatus.valueOf(payload.getStatus().toUpperCase()));
+                } catch (Exception ignored) {}
             }
             if (payload.getPermissionIds() != null) {
                 existing.setPermissions(new LinkedHashSet<>(
@@ -248,12 +294,17 @@ public class AdminRoleController {
         List<PermissionDto> permDtos = entity.getPermissions() != null
                 ? entity.getPermissions().stream().map(this::toPermissionDto).toList()
                 : Collections.emptyList();
+        long userCount = systemUserRepository.countByRoleId(entity.getId());
         return RoleDetailDto.builder()
                 .roleId(entity.getId())
                 .code(entity.getCode())
                 .name(entity.getName())
                 .description(entity.getDescription())
+                .platform(entity.getPlatform())
+                .scope(entity.getScope())
+                .status(entity.getStatus() != null ? entity.getStatus().name() : CommonStatus.ACTIVE.name())
                 .isActive(entity.getStatus() == CommonStatus.ACTIVE ? 1 : 0)
+                .userCount((int) userCount)
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().toString() : null)
                 .permissions(permDtos)
@@ -281,6 +332,9 @@ public class AdminRoleController {
         private String code;
         private String name;
         private String description;
+        private String platform;
+        private String scope;
+        private String status;
         private List<Long> permissionIds;
     }
 
@@ -294,7 +348,11 @@ public class AdminRoleController {
         private String code;
         private String name;
         private String description;
+        private String platform;
+        private String scope;
+        private String status;
         private Integer isActive;
+        private Integer userCount;
         private String createdAt;
         private String updatedAt;
         private List<PermissionDto> permissions;

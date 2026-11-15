@@ -187,7 +187,7 @@ export const MainLayout: React.FC = () => {
       <header className="partner-header px-3 lg:px-5">
         <Menubar model={menuItems} start={start} end={end} />
       </header>
-      <main className="flex-1 p-3 lg:p-4 max-w-screen-2xl w-full mx-auto">
+      <main className="flex-1 px-3 py-2 md:px-4 md:py-3 w-full">
         <Outlet />
       </main>
     </div>

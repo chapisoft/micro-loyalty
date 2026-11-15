@@ -10,6 +10,7 @@ import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.SecurityConstants;
 import com.natcash.loyalty.domain.enums.CommonStatus;
+import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.SettlementCycle;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.tenant.TenantContext;
@@ -303,7 +304,7 @@ public class PolicyController {
                 .partnerId(partnerId)
                 .partnerCode(partnerCode)
                 .partnerName(partnerName)
-                .type("BURN")
+                .type(PointActionType.BURN.name())
                 .earnRatePercent(BigDecimal.ONE)
                 .exchangeRate(entity.getPointExchangeRate())
                 .minBillAmount(entity.getMinBurnPoints())

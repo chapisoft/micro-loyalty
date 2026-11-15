@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -15,6 +15,10 @@ import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus } from '@/models';
 import { LoyaltyService, MonthlyBudgetModel } from '@/service/loyalty.service';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 
 export const BudgetManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -25,6 +29,7 @@ export const BudgetManagementPage: React.FC = () => {
   );
   const [budgets, setBudgets] = useState<MonthlyBudgetModel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<MonthlyBudgetModel>>({});
@@ -76,87 +81,243 @@ export const BudgetManagementPage: React.FC = () => {
     }
   };
 
+  const filteredBudgets = useMemo(() => {
+    if (!keyword.trim()) return budgets;
+    const kw = keyword.toLowerCase();
+    return budgets.filter(
+      (b) =>
+        b.sponsorType?.toLowerCase().includes(kw) ||
+        b.partnerCode?.toLowerCase().includes(kw) ||
+        b.partnerName?.toLowerCase().includes(kw) ||
+        b.budgetMonth?.toLowerCase().includes(kw)
+    );
+  }, [budgets, keyword]);
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredBudgets,
+      [
+        { header: t('budget.sponsor'), field: 'sponsorType' },
+        { header: t('budget.partner'), field: 'partnerName' },
+        { header: t('budget.period'), field: 'budgetMonth' },
+        { header: t('budget.cap'), field: 'budgetCap' },
+        { header: t('budget.spent'), field: 'consumedAmount' },
+        { header: t('common.status'), field: 'status' },
+      ],
+      'ngan_sach_dong_tai_tro'
+    );
+  };
+
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
       <AppBreadcrumb items={[{ label: t('nav.budgets') }]} />
 
+      <StandardPageHeader
+        title={t('budget.title')}
+        subtitle={t('budget.subtitle')}
+        primaryAction={{
+          label: t('common.create', 'Thêm mới'),
+          onClick: openNew,
+        }}
+        extraLeft={<TenantSelector value={selectedTenant} onChange={setSelectedTenant} />}
+        onRefresh={fetchBudgets}
+        refreshLoading={loading}
+      />
+
       <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">
-              {t('budget.title')}
-            </h4>
-            <p className="m-0 text-xs text-500 mt-1">
-              {t('budget.subtitle')}
-            </p>
-          </div>
-          <div className="flex gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button label={t('budget.add_new')} icon="pi pi-plus" severity="success" size="small" onClick={openNew} />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchBudgets} loading={loading} />
-          </div>
-        </div>
+        <UniversalFilterBar
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder={t('common.search')}
+          onReset={() => setKeyword('')}
+          onExport={handleExport}
+        />
 
         {loading ? (
-          <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
+          <div className="flex flex-column gap-2 mt-3">
+            <Skeleton height="2.75rem" />
+            <Skeleton height="2.75rem" />
+            <Skeleton height="2.75rem" />
+          </div>
         ) : (
-          <DataTable<MonthlyBudgetModel[]> value={budgets} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('budget.empty')}>
-            <Column field="sponsorType" header={t('budget.sponsor')} body={(r: MonthlyBudgetModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.sponsorType}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="partnerName" header={t('budget.partner')} body={(r: MonthlyBudgetModel) => r.partnerName || r.partnerCode || '--'} style={{ minWidth: '14rem' }} />
-            <Column field="budgetMonth" header={t('budget.period')} body={(r: MonthlyBudgetModel) => <span className="font-mono">{r.budgetMonth}</span>} style={{ minWidth: '7.5rem' }} />
-            <Column field="budgetCap" header={t('budget.cap')} body={(r: MonthlyBudgetModel) => <span className="font-mono">{Number(r.budgetCap || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
-            <Column field="consumedAmount" header={t('budget.spent')} body={(r: MonthlyBudgetModel) => <span className="font-mono">{Number(r.consumedAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+          <DataTable<MonthlyBudgetModel[]>
+            value={filteredBudgets}
+            paginator
+            rows={10}
+            stripedRows
+            responsiveLayout="scroll"
+            emptyMessage={t('budget.empty')}
+            className="mt-3"
+          >
+            <Column
+              field="sponsorType"
+              header={t('budget.sponsor')}
+              body={(r: MonthlyBudgetModel) => (
+                <span className="font-bold font-mono text-900">{r.sponsorType}</span>
+              )}
+              style={{ minWidth: '11rem' }}
+            />
+            <Column
+              field="partnerName"
+              header={t('budget.partner')}
+              body={(r: MonthlyBudgetModel) => (
+                <span className="text-900">{r.partnerName || r.partnerCode || '--'}</span>
+              )}
+              style={{ minWidth: '14rem' }}
+            />
+            <Column
+              field="budgetMonth"
+              header={t('budget.period')}
+              body={(r: MonthlyBudgetModel) => (
+                <span className="text-900 font-mono">{r.budgetMonth}</span>
+              )}
+              style={{ minWidth: '7.5rem' }}
+            />
+            <Column
+              field="budgetCap"
+              header={t('budget.cap')}
+              body={(r: MonthlyBudgetModel) => (
+                <span className="text-900 font-mono">
+                  {Number(r.budgetCap || 0).toLocaleString()} HTG
+                </span>
+              )}
+              style={{ minWidth: '10rem', textAlign: 'right' }}
+            />
+            <Column
+              field="consumedAmount"
+              header={t('budget.spent')}
+              body={(r: MonthlyBudgetModel) => (
+                <span className="text-900 font-mono">
+                  {Number(r.consumedAmount || 0).toLocaleString()} HTG
+                </span>
+              )}
+              style={{ minWidth: '10rem', textAlign: 'right' }}
+            />
             <Column
               header={t('budget.utilization')}
               body={(r: MonthlyBudgetModel) => {
-                const pct = r.budgetCap > 0 ? Math.min(100, (Number(r.consumedAmount || 0) / r.budgetCap) * 100) : 0;
+                const pct =
+                  r.budgetCap > 0
+                    ? Math.min(100, (Number(r.consumedAmount || 0) / r.budgetCap) * 100)
+                    : 0;
                 return (
                   <div className="flex align-items-center gap-2">
-                    <ProgressBar value={Number(pct.toFixed(1))} showValue={false} style={{ height: '6px', width: '5rem' }} color={pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#10b981'} />
-                    <span className="text-xs font-mono">{pct.toFixed(1)}%</span>
+                    <ProgressBar
+                      value={Number(pct.toFixed(1))}
+                      showValue={false}
+                      style={{ height: '6px', width: '5rem' }}
+                      color={pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#10b981'}
+                    />
+                    <span className="text-xs font-mono text-900">{pct.toFixed(1)}%</span>
                   </div>
                 );
               }}
               style={{ minWidth: '11rem' }}
             />
-            <Column field="autoPausedAt100" header={t('budget.auto_pause')} body={(r: MonthlyBudgetModel) => <Tag value={r.autoPausedAt100 ? 'PAUSED' : 'ENABLED'} severity={r.autoPausedAt100 ? 'warning' : 'info'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="status" header={t('common.status')} body={(r: MonthlyBudgetModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'danger'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-            <Column header={t('common.action')} body={(r: MonthlyBudgetModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
+            <Column
+              field="autoPausedAt100"
+              header={t('budget.auto_pause')}
+              body={(r: MonthlyBudgetModel) => (
+                <Tag
+                  value={r.autoPausedAt100 ? 'PAUSED' : 'ENABLED'}
+                  severity={r.autoPausedAt100 ? 'warning' : 'info'}
+                />
+              )}
+              style={{ minWidth: '9rem', textAlign: 'center' }}
+            />
+            <Column
+              field="status"
+              header={t('common.status')}
+              body={(r: MonthlyBudgetModel) => (
+                <Tag
+                  value={r.status}
+                  severity={r.status === CommonStatus.ACTIVE ? 'success' : 'danger'}
+                />
+              )}
+              style={{ minWidth: '8rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action')}
+              body={(r: MonthlyBudgetModel) => (
+                <StandardRowActions
+                  onEdit={() => {
+                    setFormData(r);
+                    setShowDialog(true);
+                  }}
+                />
+              )}
+              style={{ minWidth: '6rem', textAlign: 'center' }}
+            />
           </DataTable>
         )}
       </div>
 
-      <Dialog visible={showDialog} onHide={() => setShowDialog(false)} header={t('budget.dialog_title')} style={{ width: '36rem' }} modal className="p-fluid">
+      <Dialog
+        visible={showDialog}
+        onHide={() => setShowDialog(false)}
+        header={t('budget.dialog_title')}
+        style={{ width: '36rem' }}
+        modal
+        className="p-fluid"
+      >
         <div className="flex flex-column gap-3">
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.sponsor')} *</label>
-              <InputText value={formData.sponsorType || ''} onChange={(e) => setFormData({ ...formData, sponsorType: e.target.value.toUpperCase() })} className="font-mono" />
+              <InputText
+                value={formData.sponsorType || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, sponsorType: e.target.value.toUpperCase() })
+                }
+                className="font-mono"
+              />
             </div>
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.partner_code')}</label>
-              <InputText value={formData.partnerCode || ''} onChange={(e) => setFormData({ ...formData, partnerCode: e.target.value.toUpperCase() })} className="font-mono" />
+              <InputText
+                value={formData.partnerCode || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, partnerCode: e.target.value.toUpperCase() })
+                }
+                className="font-mono"
+              />
             </div>
           </div>
           <div className="grid">
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.period')}</label>
-              <InputText value={formData.budgetMonth || ''} onChange={(e) => setFormData({ ...formData, budgetMonth: e.target.value })} className="font-mono" />
+              <InputText
+                value={formData.budgetMonth || ''}
+                onChange={(e) => setFormData({ ...formData, budgetMonth: e.target.value })}
+                className="font-mono"
+              />
             </div>
             <div className="col-6 field m-0">
               <label className="text-sm font-medium">{t('budget.cap')} *</label>
-              <InputNumber value={formData.budgetCap ?? 0} onValueChange={(e) => setFormData({ ...formData, budgetCap: e.value || 0 })} min={0} />
+              <InputNumber
+                value={formData.budgetCap ?? 0}
+                onValueChange={(e) => setFormData({ ...formData, budgetCap: e.value || 0 })}
+                min={0}
+              />
             </div>
           </div>
           <div className="flex align-items-center gap-2">
-            <InputSwitch checked={!!formData.autoPausedAt100} onChange={(e) => setFormData({ ...formData, autoPausedAt100: e.value })} />
-            <span className="text-sm">{t('budget.auto_pause_label')}</span>
+            <InputSwitch
+              checked={!!formData.autoPausedAt100}
+              onChange={(e) => setFormData({ ...formData, autoPausedAt100: e.value })}
+            />
+            <span className="text-sm text-900">{t('budget.auto_pause_label')}</span>
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
           <Button label={t('common.cancel')} outlined onClick={() => setShowDialog(false)} />
-          <Button label={t('common.save')} icon="pi pi-check" onClick={handleSave} loading={submitting} />
+          <Button
+            label={t('common.save')}
+            icon="pi pi-check"
+            onClick={handleSave}
+            loading={submitting}
+          />
         </div>
       </Dialog>
     </div>

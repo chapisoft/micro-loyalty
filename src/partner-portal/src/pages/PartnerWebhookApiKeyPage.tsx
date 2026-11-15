@@ -12,6 +12,8 @@ import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { TenantSelector } from '@/components/TenantSelector';
 import { ApiKeyStatus } from '@/models';
 import { LoyaltyService, PartnerApiKeyItemModel } from '@/service/loyalty.service';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { StandardRowActions } from '@/components/StandardRowActions';
 
 export const PartnerWebhookApiKeyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -59,7 +61,11 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
 
   const handleSaveWebhook = async () => {
     if (!webhookUrl.trim()) {
-      toast.current?.show({ severity: 'warn', summary: t('common.warn'), detail: t('partner_portal.webhook_required') });
+      toast.current?.show({
+        severity: 'warn',
+        summary: t('common.warn'),
+        detail: t('partner_portal.webhook_required'),
+      });
       return;
     }
     setSavingWebhook(true);
@@ -67,13 +73,25 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
       await LoyaltyService.updatePartnerWebhookConfig(
         {
           webhookUrl: webhookUrl.trim(),
-          ipWhitelist: ipWhitelist.split(',').map((s) => s.trim()).filter(Boolean).join(','),
+          ipWhitelist: ipWhitelist
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .join(','),
         },
         selectedTenant
       );
-      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('partner.webhook_updated') });
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success'),
+        detail: t('partner.webhook_updated'),
+      });
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: err?.response?.data?.message || err.message,
+      });
     } finally {
       setSavingWebhook(false);
     }
@@ -82,7 +100,10 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
   const handleRotate = async () => {
     setRotating(true);
     try {
-      const res = await LoyaltyService.rotatePartnerApiKey({ label: `Rotated Key (${new Date().toISOString().slice(0, 10)})` }, selectedTenant);
+      const res = await LoyaltyService.rotatePartnerApiKey(
+        { label: `Rotated Key (${new Date().toISOString().slice(0, 10)})` },
+        selectedTenant
+      );
       setNewKeyOnce(res?.plainTextKey || null);
       toast.current?.show({
         severity: 'success',
@@ -91,7 +112,11 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
       });
       fetchKeys();
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: err?.response?.data?.message || err.message,
+      });
     } finally {
       setRotating(false);
     }
@@ -107,81 +132,194 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
       accept: async () => {
         try {
           await LoyaltyService.revokePartnerApiKey(k.id!, selectedTenant);
-          toast.current?.show({ severity: 'info', summary: t('common.success'), detail: `${k.keyPrefix}***` });
+          toast.current?.show({
+            severity: 'info',
+            summary: t('common.success'),
+            detail: `${k.keyPrefix}***`,
+          });
           fetchKeys();
         } catch (err: any) {
-          toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+          toast.current?.show({
+            severity: 'error',
+            summary: t('common.error'),
+            detail: err?.response?.data?.message || err.message,
+          });
         }
       },
     });
   };
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
       <ConfirmDialog />
       <AppBreadcrumb items={[{ label: t('partner_portal.nav_api_keys') }]} />
 
-      <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">{t('partner_portal.api_keys_title')}</h4>
-            <p className="m-0 text-xs text-500 mt-1">{t('partner_portal.api_keys_subtitle')}</p>
-          </div>
-          <div className="flex gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button label={t('partner.rotate_btn')} icon="pi pi-sync" severity="warning" size="small" onClick={handleRotate} loading={rotating} />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchKeys} loading={loading} />
-          </div>
-        </div>
+      <StandardPageHeader
+        title={t('partner_portal.api_keys_title')}
+        subtitle={t('partner_portal.api_keys_subtitle')}
+        primaryAction={{
+          label: t('partner.rotate_btn', 'Đổi khóa API'),
+          icon: 'pi pi-sync',
+          onClick: handleRotate,
+          loading: rotating,
+        }}
+        extraLeft={<TenantSelector value={selectedTenant} onChange={setSelectedTenant} />}
+        onRefresh={fetchKeys}
+        refreshLoading={loading}
+      />
 
+      <div className="card shadow-1 border-round surface-card p-4">
         {newKeyOnce && (
           <div className="p-3 border-round bg-green-50 border-1 border-green-300 mb-4">
             <div className="text-xs font-medium text-green-900 mb-1">
-              <i className="pi pi-shield mr-1" />
               {t('partner.show_once_warning')}
             </div>
             <div className="flex align-items-center gap-2">
-              <code className="flex-1 p-2 border-round bg-white font-mono text-sm text-green-900">{newKeyOnce}</code>
-              <Button icon="pi pi-copy" size="small" onClick={() => { navigator.clipboard.writeText(newKeyOnce); toast.current?.show({ severity: 'info', summary: t('common.success'), detail: t('partner.api_key_copied') }); }} />
+              <code className="flex-1 p-2 border-round bg-white font-mono text-sm text-green-900">
+                {newKeyOnce}
+              </code>
+              <Button
+                icon="pi pi-copy"
+                size="small"
+                onClick={() => {
+                  navigator.clipboard.writeText(newKeyOnce);
+                  toast.current?.show({
+                    severity: 'info',
+                    summary: t('common.success'),
+                    detail: t('partner.api_key_copied'),
+                  });
+                }}
+              />
             </div>
           </div>
         )}
 
         <div className="p-3 border-round surface-50 border-1 surface-border mb-4">
-          <div className="font-medium text-sm mb-2">{t('partner.webhook_ip_section')}</div>
+          <div className="font-semibold text-sm text-900 mb-2">
+            {t('partner.webhook_ip_section')}
+          </div>
           <div className="grid">
             <div className="col-12 md:col-6">
-              <label className="text-xs text-600 block mb-1">{t('partner.webhook_url_label')}</label>
-              <InputText value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} className="w-full font-mono p-inputtext-sm" placeholder="https://api.partner.ht/loyalty/callback" />
+              <label className="text-xs text-600 block mb-1">
+                {t('partner.webhook_url_label')}
+              </label>
+              <InputText
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                className="w-full font-mono p-inputtext-sm"
+                placeholder="https://api.partner.ht/loyalty/callback"
+              />
             </div>
             <div className="col-12 md:col-6">
-              <label className="text-xs text-600 block mb-1">{t('partner.ip_whitelist_label')}</label>
-              <InputText value={ipWhitelist} onChange={(e) => setIpWhitelist(e.target.value)} className="w-full font-mono p-inputtext-sm" placeholder="203.0.113.10/32, 198.51.100.0/24" />
+              <label className="text-xs text-600 block mb-1">
+                {t('partner.ip_whitelist_label')}
+              </label>
+              <InputText
+                value={ipWhitelist}
+                onChange={(e) => setIpWhitelist(e.target.value)}
+                className="w-full font-mono p-inputtext-sm"
+                placeholder="203.0.113.10/32, 198.51.100.0/24"
+              />
             </div>
           </div>
           <div className="flex justify-content-end mt-2">
-            <Button label={t('common.save')} icon="pi pi-save" size="small" onClick={handleSaveWebhook} loading={savingWebhook} />
+            <Button
+              label={t('common.save')}
+              icon="pi pi-check"
+              size="small"
+              onClick={handleSaveWebhook}
+              loading={savingWebhook}
+            />
           </div>
         </div>
 
         {loading ? (
-          <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
+          <div className="flex flex-column gap-2">
+            <Skeleton height="2.75rem" />
+            <Skeleton height="2.75rem" />
+          </div>
         ) : (
-          <DataTable<PartnerApiKeyItemModel[]> value={keys} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('partner.no_keys')}>
-            <Column field="keyPrefix" header="Key Prefix" body={(r: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap font-medium">{r.keyPrefix}••••••••</span>} style={{ minWidth: '11rem' }} />
-            <Column field="label" header={t('common.name')} style={{ minWidth: '12rem' }} />
-            <Column field="status" header={t('common.status')} body={(r: PartnerApiKeyItemModel) => <Tag value={r.status} severity={r.status === ApiKeyStatus.ACTIVE ? 'success' : r.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="graceExpiresAt" header="Grace Period (7d)" body={(r: PartnerApiKeyItemModel) => r.status === ApiKeyStatus.GRACE_PERIOD ? <span className="font-mono text-orange-700 white-space-nowrap">{computeGraceRemaining(r.graceExpiresAt)}</span> : <span className="text-400">--</span>} style={{ minWidth: '10rem' }} />
-            <Column field="createdAt" header={t('common.created_at')} body={(r: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<PartnerApiKeyItemModel[]>
+            value={keys}
+            paginator
+            rows={10}
+            stripedRows
+            responsiveLayout="scroll"
+            emptyMessage={t('partner.no_keys')}
+          >
+            <Column
+              field="keyPrefix"
+              header={t('partner.key_prefix')}
+              body={(r: PartnerApiKeyItemModel) => (
+                <span className="font-bold font-mono text-900">{r.keyPrefix}••••••••</span>
+              )}
+              style={{ minWidth: '11rem' }}
+            />
+            <Column
+              field="label"
+              header={t('common.name')}
+              body={(r: PartnerApiKeyItemModel) => <span className="text-900">{r.label}</span>}
+              style={{ minWidth: '12rem' }}
+            />
+            <Column
+              field="status"
+              header={t('common.status')}
+              body={(r: PartnerApiKeyItemModel) => (
+                <Tag
+                  value={r.status}
+                  severity={
+                    r.status === ApiKeyStatus.ACTIVE
+                      ? 'success'
+                      : r.status === ApiKeyStatus.GRACE_PERIOD
+                      ? 'warning'
+                      : 'danger'
+                  }
+                />
+              )}
+              style={{ minWidth: '9rem', textAlign: 'center' }}
+            />
+            <Column
+              field="graceExpiresAt"
+              header={t('partner.grace_period')}
+              body={(r: PartnerApiKeyItemModel) =>
+                r.status === ApiKeyStatus.GRACE_PERIOD ? (
+                  <span className="font-mono text-900 text-xs white-space-nowrap">
+                    {computeGraceRemaining(r.graceExpiresAt)}
+                  </span>
+                ) : (
+                  <span className="text-400">--</span>
+                )
+              }
+              style={{ minWidth: '10rem' }}
+            />
+            <Column
+              field="createdAt"
+              header={t('common.created_at')}
+              body={(r: PartnerApiKeyItemModel) => (
+                <span className="text-900 font-mono text-xs">
+                  {r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}
+                </span>
+              )}
+              style={{ minWidth: '11rem' }}
+            />
             <Column
               header={t('common.action')}
               body={(r: PartnerApiKeyItemModel) =>
                 r.status === ApiKeyStatus.GRACE_PERIOD ? (
-                  <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(r)} />
+                  <StandardRowActions
+                    actions={[
+                      {
+                        icon: 'pi pi-ban',
+                        label: t('partner.revoke_now', 'Thu hồi ngay'),
+                        severity: 'danger',
+                        onClick: () => handleRevokeOldKey(r),
+                      },
+                    ]}
+                  />
                 ) : null
               }
-              style={{ minWidth: '12rem' }}
+              style={{ minWidth: '8rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

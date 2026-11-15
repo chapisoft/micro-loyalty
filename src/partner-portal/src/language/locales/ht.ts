@@ -218,6 +218,8 @@ export default {
     grace_expired: 'Delè gras ekspire',
     confirm_revoke_msg: 'Èske ou sèten ou vle revoke kle API sa a imedyatman?',
     webhook_required: 'Tanpri antre yon URL Webhook valab',
+    key_prefix: 'Prefiks Kle',
+    grace_period: 'Delè Gras (7 jou)',
   },
   enum: {
     partner_staff_role: {

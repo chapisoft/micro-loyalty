@@ -22,19 +22,19 @@ export default {
     "audit_logs": "Audit Logs",
     "dead_letter": "Dead-Letter Webhooks",
     "milestones": "Campaign Milestones",
-    "segments": "Customer Segments (CN-03)",
-    "scenarios": "Reminder Scenarios (CN-04)",
+    "segments": "Customer Segments",
+    "scenarios": "Reminder Scenarios",
     "learning_quiz": "Learning Quiz Bank",
     "game_stats": "Game Stats & History",
     "payment_points": "Branches & Payment Points",
-    "agent_loyalty": "Agent Loyalty (AG-03)",
+    "agent_loyalty": "Agent Loyalty",
     "reports_budget": "Reports & Budgets",
-    "budgets": "Monthly Budgets (NS-01)",
-    "effectiveness": "Program Effectiveness (NS-03)",
-    "alerts": "Alert Center (CN-05)",
-    "advanced_reports": "Advanced Reports (NS-05..07)",
+    "budgets": "Monthly Budgets",
+    "effectiveness": "Program Effectiveness",
+    "alerts": "Alert Center",
+    "advanced_reports": "Advanced Reports",
     "partner_portal": "Partner Portal",
-    "approvals": "2-Layer Approvals (QT-04)"
+    "approvals": "Approval Queue"
   },
   "policy": {
     "management_title": "Point Earning & Burning Policy Configuration",
@@ -519,6 +519,7 @@ export default {
     "name": "Game Name",
     "win_rate": "Win Rate",
     "recent_sessions": "Recent Play Sessions",
+    "session_id": "Session ID",
     "reward": "Reward",
     "prize_code_placeholder": "Example: PRIZE_500_PTS",
     "name_vi_placeholder": "Example: 500 Bonus Points (VI)",
@@ -920,7 +921,8 @@ export default {
     "rotate_btn": "Rotate API Key",
     "show_once_warning": "The new key is displayed ONCE ONLY. Copy and store it securely now:",
     "no_keys": "No key list returned by system yet.",
-    "revoke_now": "Revoke old key now"
+    "revoke_now": "Revoke old key now",
+    "grace_period": "Grace Period (7d)"
   },
   "transaction": {
     "management_title": "Point Ledger & Loyalty Transaction Logs",
@@ -1329,11 +1331,24 @@ export default {
     "create_user_success": "Successfully created Sandbox partner account",
     "create_user_failed": "Could not create account",
     "menu_name_placeholder": "Enter article title...",
-    "menu_route_placeholder": "Enter menu route..."
+    "menu_route_placeholder": "Enter menu route...",
+    "username_placeholder": "e.g. dev_partner_bank",
+    "fullname_placeholder": "e.g. Partner Tech Team",
+    "email_placeholder": "developer@partner.com",
+    "phone_placeholder": "+509 3000 0000"
   },
   "common": {
     "search": "Search...",
     "refresh": "Refresh",
+    "reset": "Reset",
+    "advanced_filter": "Advanced Filter",
+    "advanced_filter_tooltip": "Toggle advanced filters",
+    "advanced_filters_title": "Advanced Filter Criteria",
+    "more_actions": "More Actions",
+    "import": "Import",
+    "export": "Export",
+    "export_excel": "Export Excel",
+    "export_csv": "Export CSV",
     "add_new": "Add New",
     "edit": "Edit",
     "delete": "Delete",
@@ -1433,7 +1448,6 @@ export default {
     "detail": "Details",
     "notice": "Notice",
     "reload": "Refresh list",
-    "export_csv": "Export CSV",
     "games": "Games",
     "basic_info": "Partner Identification Info",
     "no_description": "No description",
@@ -1721,7 +1735,14 @@ export default {
     "avg_lift": "Average Lift",
     "treatment_revenue": "Treatment Revenue",
     "avg_roi": "Average ROI",
-    "no_effectiveness": "No Lift vs Control Group data yet."
+    "no_effectiveness": "No Lift vs Control Group data yet.",
+    "test_group_size": "Test Group (N)",
+    "control_group_size": "Control Group (N)",
+    "test_conv_rate": "Test Conv. Rate",
+    "control_conv_rate": "Control Conv. Rate",
+    "incremental_rev": "Incremental Revenue",
+    "lift_percent": "Incremental Lift",
+    "roi_percent": "ROI (%)"
   },
   "alert": {
     "title": "Operational Alert Center (CN-05)",
@@ -1758,7 +1779,8 @@ export default {
     "options": "Options (one per line)",
     "answer_idx": "Correct Option Index (0, 1, 2...)",
     "import_title": "Import Questions from CSV",
-    "confirm_import": "Confirm Import"
+    "confirm_import": "Confirm Import",
+    "audio": "Audio"
   },
   "agent": {
     "title": "Agent & Super Agent Loyalty Management (AG-03)",

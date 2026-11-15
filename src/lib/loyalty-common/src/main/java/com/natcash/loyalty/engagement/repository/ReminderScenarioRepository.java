@@ -14,4 +14,6 @@ public interface ReminderScenarioRepository extends JpaRepository<ReminderScenar
     List<ReminderScenarioEntity> findByTenantIdOrderByIdDesc(String tenantId);
 
     Optional<ReminderScenarioEntity> findByTenantIdAndScenarioCode(String tenantId, String scenarioCode);
+
+    Optional<ReminderScenarioEntity> findByIdAndTenantId(Long id, String tenantId);
 }

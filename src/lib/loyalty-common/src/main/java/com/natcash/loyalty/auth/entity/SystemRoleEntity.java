@@ -60,6 +60,14 @@ public class SystemRoleEntity {
     @Builder.Default
     private CommonStatus status = CommonStatus.ACTIVE;
 
+    @Column(name = "platform", nullable = false, length = 32)
+    @Builder.Default
+    private String platform = "WEB_CMS";
+
+    @Column(name = "scope", nullable = false, length = 32)
+    @Builder.Default
+    private String scope = "ALL";
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "system_role_permissions",

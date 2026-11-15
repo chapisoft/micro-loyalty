@@ -12,7 +12,10 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import {
   LoyaltyService,
@@ -254,78 +257,45 @@ export const Customers: React.FC = () => {
     );
   };
 
-  const actionBodyTemplate = (rowData: LoyaltyMemberAccount) => {
+  const renderRowActions = (rowData: LoyaltyMemberAccount) => {
     const isLocked =
       rowData.status === MemberAccountStatus.LOCKED ||
       rowData.status === MemberAccountStatus.INACTIVE;
-    return (
-      <div className="flex gap-1 justify-content-center">
-        <Button
-          icon="pi pi-id-card"
-          rounded
-          outlined
-          severity="info"
-          size="small"
-          onClick={() => openMember360(rowData)}
-          tooltip={t('customer.view_360')}
-        />
-        <Button
-          icon={isLocked ? 'pi pi-unlock' : 'pi pi-lock'}
-          rounded
-          outlined
-          severity={isLocked ? 'success' : 'danger'}
-          size="small"
-          onClick={() => openLockDialog(rowData)}
-          tooltip={t('customer.lock_unlock_tooltip')}
-        />
-      </div>
-    );
+    const actions: RowActionItem[] = [
+      {
+        id: 'view_360',
+        label: t('customer.view_360', 'Hồ sơ 360'),
+        icon: 'pi pi-id-card',
+        severity: 'secondary',
+        onClick: () => openMember360(rowData),
+      },
+      {
+        id: 'lock',
+        label: isLocked ? t('customer.action_unlock', 'Mở khóa') : t('customer.action_lock', 'Khóa tài khoản'),
+        icon: isLocked ? 'pi pi-lock-open' : 'pi pi-lock',
+        severity: isLocked ? 'info' : 'warning',
+        onClick: () => openLockDialog(rowData),
+      },
+    ];
+    return <StandardRowActions actions={actions} maxInline={3} />;
   };
 
-  const header = (
-    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
-      <div className="flex align-items-center gap-3">
-        <h4 className="m-0 text-primary font-bold">
-          {t('customer.management_title')}
-        </h4>
-        <TenantSelector
-          value={selectedTenant}
-          onChange={(val) => {
-            setSelectedTenant(val);
-            localStorage.setItem('selected_tenant_id', val);
-          }}
-        />
-      </div>
-      <div className="flex flex-wrap gap-2 align-items-center">
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            value={searchPhone}
-            onChange={(e) => setSearchPhone(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') fetchData();
-            }}
-            placeholder={t('customer.search_placeholder')}
-            className="p-inputtext-sm"
-          />
-        </span>
-        <Button
-          label={t('common.search')}
-          icon="pi pi-search"
-          onClick={fetchData}
-          loading={loading}
-        />
-        <Button
-          icon="pi pi-refresh"
-          outlined
-          onClick={() => {
-            setSearchPhone('');
-            fetchData();
-          }}
-        />
-      </div>
-    </div>
-  );
+  const handleExportExcel = () => {
+    exportToExcel(
+      [
+        { header: 'STT' },
+        { header: 'Số điện thoại', field: 'externalUserId' },
+        { header: 'Họ và tên', field: 'fullName' },
+        { header: 'Điểm khả dụng', getValue: (r: LoyaltyMemberAccount) => r.currentPoints?.toLocaleString() || '0' },
+        { header: 'Điểm xét hạng', getValue: (r: LoyaltyMemberAccount) => r.tierPoints?.toLocaleString() || '0' },
+        { header: 'Hạng hội viên', field: 'currentTier' },
+        { header: 'Trạng thái', field: 'status' },
+        { header: 'Ngày tham gia', getValue: (r: LoyaltyMemberAccount) => r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '-' },
+      ],
+      items,
+      'Danh_sach_hoi_vien'
+    );
+  };
 
   const lockActionOptions = [
     {
@@ -339,48 +309,78 @@ export const Customers: React.FC = () => {
   ];
 
   return (
-    <div>
+    <div className="w-full flex flex-column gap-2">
       <Toast ref={toastRef} position="top-center" />
-      <AppBreadcrumb items={[{ label: t('nav.customers') }]} />
 
-      <div className="card shadow-1 border-round surface-card p-4">
+      <StandardPageHeader
+        breadcrumbs={[{ label: t('nav.customers', 'Hội viên') }]}
+        title={t('customer.management_title', 'Hồ Sơ & Danh Sách Hội Viên')}
+        subtitle="Quản lý thông tin tài khoản, số dư điểm tích lũy, phân hạng và lịch sử hoạt động 360"
+      />
+
+      <UniversalFilterBar
+        searchValue={searchPhone}
+        onSearchChange={setSearchPhone}
+        searchPlaceholder={t('customer.search_placeholder', 'Nhập số điện thoại tìm kiếm...')}
+        primaryFilters={
+          <TenantSelector
+            value={selectedTenant}
+            onChange={(val) => {
+              setSelectedTenant(val);
+              localStorage.setItem('selected_tenant_id', val);
+            }}
+          />
+        }
+        onReset={() => {
+          setSearchPhone('');
+          fetchData();
+        }}
+        onRefresh={fetchData}
+        isLoading={loading}
+        extraActions={
+          <Button
+            type="button"
+            icon="pi pi-file-excel"
+            label={t('common.export_excel', 'Xuất Excel')}
+            outlined
+            severity="secondary"
+            size="small"
+            onClick={handleExportExcel}
+            className="p-button-sm font-medium"
+          />
+        }
+      />
+
+      <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
         <DataTable<any>
           value={items}
           loading={loading}
-          header={header}
           dataKey="id"
           paginator
           rows={10}
           rowsPerPageOptions={[10, 25, 50]}
-          emptyMessage={t('common.no_data')}
-          stripedRows
+          emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
+          className="p-datatable-sm p-datatable-striped"
           responsiveLayout="scroll"
         >
           <Column
-            header={t('common.stt')}
-            body={(_, { rowIndex }) => (
-              <span className="font-mono text-xs text-600">{rowIndex + 1}</span>
-            )}
+            header={t('common.stt', 'STT')}
+            body={(_, { rowIndex }) => rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions')}
-            body={actionBodyTemplate}
-            style={{ minWidth: '7rem', textAlign: 'center' }}
+            header={t('common.actions', 'Thao tác')}
+            body={renderRowActions}
+            style={{ width: '6.5rem', textAlign: 'left' }}
           />
           <Column
             field="externalUserId"
-            header={
-              <span
-                title={t('customer.phone_tooltip')}
-              >
-                {t('customer.phone_number')}
-              </span>
-            }
+            header={t('customer.phone_number', 'Số điện thoại')}
             body={(row: LoyaltyMemberAccount) => (
               <span
-                className="font-mono font-medium text-primary white-space-nowrap cursor-pointer underline"
+                className="font-mono font-bold text-900 cursor-pointer hover:underline"
                 onClick={() => openMember360(row)}
+                title="Nhấp để xem hồ sơ 360"
               >
                 {row.externalUserId}
               </span>
@@ -390,27 +390,23 @@ export const Customers: React.FC = () => {
           />
           <Column
             field="fullName"
-            header={t('customer.full_name')}
+            header={t('customer.full_name', 'Họ và tên')}
+            body={(row: LoyaltyMemberAccount) => (
+              <span className="font-normal text-900">{row.fullName || '--'}</span>
+            )}
             sortable
             style={{ minWidth: '12rem' }}
           />
           <Column
             field="currentPoints"
-            header={
-              <span
-                title={t('customer.current_points_tooltip')}
-              >
-                {t('customer.current_points')}
-              </span>
-            }
+            header={t('customer.current_points', 'Điểm khả dụng')}
             body={(row: LoyaltyMemberAccount) => (
-              <span className="font-mono text-orange-600 white-space-nowrap">
-                {row.currentPoints?.toLocaleString()}{' '}
-                {t('common.points')}
+              <span className="font-normal text-900">
+                {row.currentPoints?.toLocaleString()} {t('common.points', 'Điểm')}
               </span>
             )}
             sortable
-            style={{ minWidth: '9.5rem', textAlign: 'center' }}
+            style={{ minWidth: '9.5rem', textAlign: 'right' }}
           />
           <Column
             field="tierPoints"
@@ -744,7 +740,7 @@ export const Customers: React.FC = () => {
               <InputText
                 value={lockTicketRef}
                 onChange={(e) => setLockTicketRef(e.target.value)}
-                placeholder="VD: CSKH-2026-0812"
+                placeholder={t('customer.lock_ticket_ref')}
                 className="font-mono"
               />
             </div>

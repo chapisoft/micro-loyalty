@@ -18,5 +18,7 @@ public interface LoyaltyTierRepository extends JpaRepository<LoyaltyTierEntity, 
 
     List<LoyaltyTierEntity> findByTenantIdOrderByTierLevelAsc(String tenantId);
 
+    Optional<LoyaltyTierEntity> findByIdAndTenantId(Long id, String tenantId);
+
     Optional<LoyaltyTierEntity> findByTenantIdAndTierLevel(String tenantId, Integer tierLevel);
 }

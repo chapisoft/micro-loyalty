@@ -12,8 +12,10 @@ import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel as runExportToExcel } from '@/components/exportHelper';
 import { ClearingStatus, DisputeStatus, PaymentBatchStatus } from '@/models';
 import {
   LoyaltyService,
@@ -321,17 +323,9 @@ export const ClearingSettlementPage: React.FC = () => {
 
   // Cột Thao tác trên từng dòng đối tác
   const actionTemplate = (rowData: ClearingSummaryModel) => (
-    <div className="flex justify-content-center">
-      <Button
-        icon="pi pi-list"
-        rounded
-        outlined
-        severity="info"
-        size="small"
-        onClick={() => handleViewDetails(rowData)}
-        tooltip={t('clearing.view_detail_tooltip')}
-      />
-    </div>
+    <StandardRowActions
+      onView={() => handleViewDetails(rowData)}
+    />
   );
 
   const exportToExcel = () => {
@@ -352,7 +346,7 @@ export const ClearingSettlementPage: React.FC = () => {
       [t('clearing.total_commission_fee')]: Number(item.totalCommissionFee || 0),
       [t('clearing.net_amount')]: Number(item.netSettlementAmount || 0),
       [t('common.status')]:
-        item.status === 'SETTLED' ? t('clearing.settled') : t('clearing.pending'),
+        item.status === ClearingStatus.SETTLED ? t('clearing.settled') : t('clearing.pending'),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -424,24 +418,25 @@ export const ClearingSettlementPage: React.FC = () => {
   );
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} position="top-center" />
-      <AppBreadcrumb items={[{ label: t('nav.clearing') }]} />
+      <StandardPageHeader
+        title={t('nav.clearing')}
+        subtitle={t('clearing.subtitle', 'Đối soát bù trừ doanh thu, phát hành & thu hồi điểm liên minh')}
+        breadcrumbs={[{ label: t('nav.clearing') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={setSelectedTenant}
+        primaryAction={{
+          label: t('clearing.settle_period'),
+          icon: 'pi pi-check-circle',
+          onClick: () => setShowConfirmSettle(true),
+          disabled: clearingList.length === 0,
+        }}
+      />
 
-      {/* Header Bar với TenantSelector và Bộ lọc khoảng ngày */}
-      <div className="card shadow-1 border-round surface-card p-4 mb-4">
-        <div className="flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-          <div>
-            <h3 className="m-0 text-900 font-bold">{t('clearing.management_title')}</h3>
-            <p className="text-500 m-0 mt-1 text-sm">{t('clearing.subtitle')}</p>
-          </div>
-          <div className="flex align-items-center gap-2">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-          </div>
-        </div>
-
-        {/* Bộ lọc khoảng ngày đối soát & Chọn nhanh kỳ */}
-        <div className="flex flex-wrap align-items-center justify-content-between gap-3 surface-50 p-3 border-round">
+      {/* Bộ lọc khoảng ngày đối soát & Chọn nhanh kỳ */}
+      <div className="card shadow-1 border-round surface-card p-3 mb-3 w-full">
+        <div className="flex flex-wrap align-items-center justify-content-between gap-3">
           <div className="flex flex-wrap align-items-center gap-3">
             <div className="flex align-items-center gap-2">
               <label htmlFor="fromDate" className="font-semibold text-sm text-700">{t('clearing.filter_date_from')}:</label>
@@ -451,7 +446,7 @@ export const ClearingSettlementPage: React.FC = () => {
                 onChange={(e) => setFromDate(e.value ? formatLocalDate(e.value as Date) : '')}
                 dateFormat="yy-mm-dd"
                 showIcon
-                appendTo="self"
+                className="p-inputtext-sm"
               />
             </div>
             <div className="flex align-items-center gap-2">
@@ -462,7 +457,7 @@ export const ClearingSettlementPage: React.FC = () => {
                 onChange={(e) => setToDate(e.value ? formatLocalDate(e.value as Date) : '')}
                 dateFormat="yy-mm-dd"
                 showIcon
-                appendTo="self"
+                className="p-inputtext-sm"
               />
             </div>
             <Button
@@ -470,12 +465,21 @@ export const ClearingSettlementPage: React.FC = () => {
               label={t('common.search')}
               onClick={fetchClearingData}
               loading={loading}
+              size="small"
+            />
+            <Button
+              icon="pi pi-file-excel"
+              label={t('common.export')}
+              severity="secondary"
+              outlined
+              onClick={exportToExcel}
+              size="small"
             />
           </div>
 
           {/* Nút chọn nhanh kỳ kế toán */}
-          <div className="flex flex-wrap align-items-center gap-2">
-            <span className="text-500 text-xs font-semibold">{t('common.quick_select')}</span>
+          <div className="flex flex-wrap align-items-center gap-1">
+            <span className="text-500 text-xs font-semibold mr-1">{t('common.quick_select')}:</span>
             <Button
               label={t('common.this_month')}
               size="small"
@@ -502,14 +506,14 @@ export const ClearingSettlementPage: React.FC = () => {
       </div>
 
       {settleSuccessMsg && (
-        <div className="p-3 mb-4 border-round bg-green-50 text-green-800 border-1 border-green-200 flex align-items-center justify-content-between">
+        <div className="p-3 mb-3 border-round bg-green-50 text-green-800 border-1 border-green-200 flex align-items-center justify-content-between">
           <span><i className="pi pi-check-circle mr-2" />{settleSuccessMsg}</span>
           <Button icon="pi pi-times" text rounded severity="success" onClick={() => setSettleSuccessMsg(null)} />
         </div>
       )}
 
       {/* Thẻ Thống Kê Tổng Quan 4 Chỉ Số Cân Bằng */}
-      <div className="grid mb-4">
+      <div className="grid mb-3">
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
             <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_txs')}</span>
@@ -519,19 +523,19 @@ export const ClearingSettlementPage: React.FC = () => {
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
             <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_points_issued')}</span>
-            <div className="text-orange-500 font-bold text-2xl">{totalPointsIssued.toLocaleString()} {t('common.points')}</div>
+            <div className="text-900 font-bold text-2xl">{totalPointsIssued.toLocaleString()} {t('common.points')}</div>
           </div>
         </div>
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
             <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.total_points_redeemed')}</span>
-            <div className="text-primary font-bold text-2xl">{totalPointsRedeemed.toLocaleString()} {t('common.points')}</div>
+            <div className="text-900 font-bold text-2xl">{totalPointsRedeemed.toLocaleString()} {t('common.points')}</div>
           </div>
         </div>
         <div className="col-12 sm:col-6 lg:col-3">
           <div className="card shadow-1 border-round surface-card p-3">
             <span className="text-500 font-medium block mb-1 text-sm">{t('clearing.net_amount')}</span>
-            <div className={`font-bold text-2xl ${totalNetSettlement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="font-bold text-2xl text-900">
               {totalNetSettlement >= 0 ? '+' : ''}{totalNetSettlement.toLocaleString()} HTG
             </div>
           </div>
@@ -539,7 +543,7 @@ export const ClearingSettlementPage: React.FC = () => {
       </div>
 
       {/* TabView Phân Tách Bảng Bù Trừ và Bảng Xử Lý Sai Lệch */}
-      <div className="card shadow-1 border-round surface-card p-4">
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
         <TabView>
           <TabPanel header={t('clearing.tab_summary')} leftIcon="pi pi-table mr-2">
             <DataTable<any>
@@ -547,11 +551,11 @@ export const ClearingSettlementPage: React.FC = () => {
               value={clearingList}
               selection={selectedItems}
               onSelectionChange={(e: any) => setSelectedItems(e.value || [])}
-              header={header}
               dataKey="partnerId"
               exportFilename={`Bao_Cao_Doi_Soat_Bu_Tru_${selectedTenant}_${fromDate ? fromDate.trim() : 'ALL'}_${toDate ? toDate.trim() : 'ALL'}`}
               paginator
               rows={10}
+              rowsPerPageOptions={[5, 10, 25, 50]}
               loading={loading}
               emptyMessage={t('common.no_data')}
               stripedRows
@@ -569,16 +573,16 @@ export const ClearingSettlementPage: React.FC = () => {
                 exportable={false}
                 style={{ width: '6rem', textAlign: 'center' }}
               />
-              <Column field="partnerCode" header={t('clearing.partner_code')} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
-              <Column field="partnerName" header={t('clearing.partner_name')} sortable style={{ minWidth: '13rem' }} />
-              <Column field="partnerType" header={t('clearing.partner_type')} body={partnerTypeTemplate} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-              <Column field="totalTransactions" header={<span title={t('clearing.total_txs_tooltip')}>{t('clearing.total_txs')}</span>} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
-              <Column field="totalPointsIssued" header={<span title={t('clearing.total_points_issued_tooltip')}>{t('clearing.total_points_issued')}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsIssued || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalPointsRedeemed" header={<span title={t('clearing.total_points_redeemed_tooltip')}>{t('clearing.total_points_redeemed')}</span>} body={(row: ClearingSummaryModel) => Number(row.totalPointsRedeemed || 0).toLocaleString()} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalFiatPayable" header={<span title={t('clearing.payable_tooltip')}>{t('clearing.total_fiat_payable')}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatPayable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalFiatReceivable" header={<span title={t('clearing.receivable_tooltip')}>{t('clearing.total_fiat_receivable')}</span>} body={(row: ClearingSummaryModel) => `${Number(row.totalFiatReceivable || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column field="totalCommissionFee" header={<span title={t('clearing.mdr_fee_tooltip')}>{t('clearing.mdr_fee')} <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(row: ClearingSummaryModel) => <span className="font-mono white-space-nowrap">{Number(row.totalCommissionFee || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
-              <Column field="netSettlementAmount" body={netAmountTemplate} header={<span title={t('clearing.net_amount_tooltip')}>{t('clearing.net_amount')}</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
+              <Column field="partnerCode" header={t('clearing.partner_code')} body={(row: ClearingSummaryModel) => <span className="font-bold font-mono text-900">{row.partnerCode}</span>} sortable style={{ minWidth: '9rem' }} />
+              <Column field="partnerName" header={t('clearing.partner_name')} body={(row: ClearingSummaryModel) => <span className="text-900">{row.partnerName}</span>} sortable style={{ minWidth: '13rem' }} />
+              <Column field="partnerType" header={t('clearing.partner_type')} body={(row: ClearingSummaryModel) => <span className="text-900">{row.partnerType || 'RETAIL'}</span>} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
+              <Column field="totalTransactions" header={t('clearing.total_txs')} body={(row: ClearingSummaryModel) => <span className="text-900">{Number(row.totalTransactions || 0).toLocaleString()}</span>} sortable style={{ minWidth: '6rem', textAlign: 'center' }} />
+              <Column field="totalPointsIssued" header={t('clearing.total_points_issued')} body={(row: ClearingSummaryModel) => <span className="text-900">{Number(row.totalPointsIssued || 0).toLocaleString()}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalPointsRedeemed" header={t('clearing.total_points_redeemed')} body={(row: ClearingSummaryModel) => <span className="text-900">{Number(row.totalPointsRedeemed || 0).toLocaleString()}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalFiatPayable" header={t('clearing.total_fiat_payable')} body={(row: ClearingSummaryModel) => <span className="text-900">{Number(row.totalFiatPayable || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalFiatReceivable" header={t('clearing.total_fiat_receivable')} body={(row: ClearingSummaryModel) => <span className="text-900">{Number(row.totalFiatReceivable || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="totalCommissionFee" header={t('clearing.mdr_fee')} body={(row: ClearingSummaryModel) => <span className="text-900">{Number(row.totalCommissionFee || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
+              <Column field="netSettlementAmount" body={(row: ClearingSummaryModel) => <span className="text-900 font-semibold">{Number(row.netSettlementAmount || 0).toLocaleString()} HTG</span>} header={t('clearing.net_amount')} sortable style={{ minWidth: '9.5rem', textAlign: 'center' }} />
               <Column field="status" body={(row: ClearingSummaryModel) => statusTemplate(row.status)} header={t('common.status')} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
@@ -588,33 +592,29 @@ export const ClearingSettlementPage: React.FC = () => {
               value={disputeList}
               paginator
               rows={10}
+              rowsPerPageOptions={[5, 10, 25, 50]}
               emptyMessage={t('clearing.no_disputes')}
               stripedRows
               responsiveLayout="scroll"
             >
               <Column header="#" body={(_, opt) => opt.rowIndex + 1} style={{ width: '3.5rem', textAlign: 'center' }} />
-              <Column field="disputeCode" header={t('clearing.dispute_code')} body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="batchCode" header={t('clearing.batch_code')} body={(r: DisputeItemModel) => <span className="font-mono white-space-nowrap">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="partnerName" header={t('common.partner')} sortable style={{ minWidth: '12rem' }} />
-              <Column field="disputeType" header={t('clearing.dispute_type')} sortable style={{ minWidth: '10rem' }} />
-              <Column field="partnerAmount" header={t('clearing.partner_amount')} body={(r: DisputeItemModel) => `${Number(r.partnerAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="loyaltyAmount" header={t('clearing.loyalty_amount')} body={(r: DisputeItemModel) => `${Number(r.loyaltyAmount || 0).toLocaleString()} HTG`} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="resolvedAmount" header={t('clearing.resolved_amount')} body={(r: DisputeItemModel) => (r.resolvedAmount != null ? `${Number(r.resolvedAmount).toLocaleString()} HTG` : '--')} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="disputeCode" header={t('clearing.dispute_code')} body={(r: DisputeItemModel) => <span className="font-bold font-mono text-900">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="batchCode" header={t('clearing.batch_code')} body={(r: DisputeItemModel) => <span className="font-mono text-900">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="partnerName" header={t('common.partner')} body={(r: DisputeItemModel) => <span className="text-900">{r.partnerName}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="disputeType" header={t('clearing.dispute_type')} body={(r: DisputeItemModel) => <span className="text-900">{r.disputeType}</span>} sortable style={{ minWidth: '10rem' }} />
+              <Column field="partnerAmount" header={t('clearing.partner_amount')} body={(r: DisputeItemModel) => <span className="text-900">{Number(r.partnerAmount || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="loyaltyAmount" header={t('clearing.loyalty_amount')} body={(r: DisputeItemModel) => <span className="text-900">{Number(r.loyaltyAmount || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="resolvedAmount" header={t('clearing.resolved_amount')} body={(r: DisputeItemModel) => <span className="text-900">{r.resolvedAmount != null ? `${Number(r.resolvedAmount).toLocaleString()} HTG` : '--'}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
               <Column field="status" header={t('common.status')} body={(r: DisputeItemModel) => disputeStatusTemplate(r.status)} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
-              <Column field="createdAt" header={t('common.time')} body={(r: DisputeItemModel) => (r.createdAt ? new Date(r.createdAt).toLocaleString() : '--')} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
+              <Column field="createdAt" header={t('common.time')} body={(r: DisputeItemModel) => <span className="text-900">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '--'}</span>} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
               <Column
                 header={t('common.action')}
                 body={(r: DisputeItemModel) => (
-                  <Button
-                    label={t('clearing.resolve_action')}
-                    icon="pi pi-check-square"
-                    size="small"
-                    outlined
-                    disabled={r.status === DisputeStatus.RESOLVED || r.status === DisputeStatus.REJECTED}
-                    onClick={() => handleOpenResolve(r)}
+                  <StandardRowActions
+                    onEdit={r.status !== DisputeStatus.RESOLVED && r.status !== DisputeStatus.REJECTED ? () => handleOpenResolve(r) : undefined}
                   />
                 )}
-                style={{ width: '7rem', textAlign: 'center' }}
+                style={{ width: '6rem', textAlign: 'center' }}
               />
             </DataTable>
           </TabPanel>
@@ -628,18 +628,18 @@ export const ClearingSettlementPage: React.FC = () => {
               </div>
             </div>
             <DataTable<ClearingPaymentBatchModel[]> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches')}>
-              <Column field="batchCode" header={t('clearing.batch_code')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
-              <Column field="partnerName" header={t('clearing.partner_name')} body={(b: ClearingPaymentBatchModel) => `${b.partnerCode} - ${b.partnerName || ''}`} style={{ minWidth: '13rem' }} />
-              <Column header={t('clearing.period')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono white-space-nowrap text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
-              <Column field="grossAmount" header={t('clearing.gross_amount')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="mdrFeeAmount" header={<span title={t('clearing.mdr_fee_tooltip')}>MDR Fee <i className="pi pi-info-circle text-xs text-400 ml-1" /></span>} body={(b: ClearingPaymentBatchModel) => <span className="font-mono text-orange-600">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono font-medium text-green-700">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+              <Column field="batchCode" header={t('clearing.batch_code')} body={(b: ClearingPaymentBatchModel) => <span className="font-bold font-mono text-900">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="partnerName" header={t('clearing.partner_name')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{b.partnerCode} - {b.partnerName || ''}</span>} style={{ minWidth: '13rem' }} />
+              <Column header={t('clearing.period')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-mono text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
+              <Column field="grossAmount" header={t('clearing.gross_amount')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="mdrFeeAmount" header="MDR Fee" body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-semibold">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
               <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <Tag value={b.status ? t(`enum.payment_batch_status.${b.status}`) : ''} severity={b.status === PaymentBatchStatus.PAID ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
               <Column header={t('common.action')} body={(b: ClearingPaymentBatchModel) => (
-                <div className="flex gap-1">
-                  <Button icon="pi pi-eye" label={t('clearing.track_batch')} size="small" outlined onClick={() => setTrackBatch(b)} />
-                </div>
-              )} style={{ minWidth: '9rem', textAlign: 'center' }} />
+                <StandardRowActions
+                  onView={() => setTrackBatch(b)}
+                />
+              )} style={{ minWidth: '6rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
         </TabView>

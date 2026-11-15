@@ -13,7 +13,10 @@ import { ProgressBar } from 'primereact/progressbar';
 import { Skeleton } from 'primereact/skeleton';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import { TierLevel, CommonStatus } from '@/models';
 import { LoyaltyService, TierDistributionModel } from '@/service/loyalty.service';
@@ -205,22 +208,52 @@ export const TierManagementPage: React.FC = () => {
     }
   };
 
-  const actionTemplate = (rowData: TierConfig) => (
-    <div className="flex justify-content-center">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        outlined
-        severity="warning"
-        size="small"
-        onClick={() => editItem(rowData)}
-        tooltip={t('common.edit')}
-      />
-    </div>
-  );
+  const handleDeleteTier = (tier: TierConfig) => {
+    if (window.confirm(t('common.confirm_delete', 'Bạn có chắc chắn muốn xóa hạng hội viên này?'))) {
+      LoyaltyService.deleteTier(tier.id, selectedTenant)
+        .then(() => {
+          toastRef.current?.show({
+            severity: 'success',
+            summary: t('common.success', 'Thành công'),
+            detail: 'Xóa hạng hội viên thành công',
+            life: 3000,
+          });
+          fetchTiers();
+          fetchDistribution();
+        })
+        .catch((err) => {
+          toastRef.current?.show({
+            severity: 'error',
+            summary: t('common.error', 'Lỗi'),
+            detail: err?.message || 'Không thể xóa hạng hội viên',
+            life: 3000,
+          });
+        });
+    }
+  };
+
+  const renderRowActions = (rowData: TierConfig) => {
+    const actions: RowActionItem[] = [
+      {
+        id: 'edit',
+        label: t('common.edit', 'Sửa'),
+        icon: 'pi pi-pencil',
+        severity: 'secondary',
+        onClick: () => editItem(rowData),
+      },
+      {
+        id: 'delete',
+        label: t('common.delete', 'Xóa'),
+        icon: 'pi pi-trash',
+        danger: true,
+        onClick: () => handleDeleteTier(rowData),
+      },
+    ];
+    return <StandardRowActions actions={actions} maxInline={3} />;
+  };
 
   const codeTemplate = (rowData: TierConfig) => (
-    <span className="font-mono text-700 white-space-nowrap" style={{ fontSize: '13px' }}>
+    <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
       {rowData.code}
     </span>
   );
@@ -291,82 +324,93 @@ export const TierManagementPage: React.FC = () => {
     [distribution]
   );
 
-  const header = (
-    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
-      <div className="flex align-items-center gap-2">
-        <h4 className="m-0 text-primary font-bold">
-          {t('tier.management_title')}
-        </h4>
-      </div>
-      <div className="flex flex-wrap align-items-center gap-2">
-        <TenantSelector
-          value={selectedTenant}
-          onChange={(newTenantId) => {
-            setSelectedTenant(newTenantId);
-            localStorage.setItem('selected_tenant_id', newTenantId);
-          }}
-        />
-        <Button
-          icon="pi pi-refresh"
-          rounded
-          outlined
-          severity="secondary"
-          onClick={() => {
-            fetchTiers();
-            fetchDistribution();
-          }}
-          loading={loading || distLoading}
-          tooltip={t('common.refresh')}
-        />
-      </div>
-    </div>
-  );
+  const handleExportExcel = () => {
+    exportToExcel(
+      [
+        { header: 'STT' },
+        { header: 'Mã hạng', field: 'code' },
+        { header: 'Tên hạng', field: 'name' },
+        { header: 'Cấp độ', field: 'tierLevel' },
+        { header: 'Điểm nâng hạng', getValue: (r: TierConfig) => (r.minPoints ?? 0).toLocaleString() },
+        { header: 'Điểm giữ hạng', getValue: (r: TierConfig) => (r.keepTierPoints ?? 0).toLocaleString() },
+        { header: 'Hệ số tích điểm', getValue: (r: TierConfig) => `×${Number(r.pointMultiplier ?? 1.0).toFixed(2)}` },
+        { header: 'Lượt quay miễn phí/ngày', field: 'freeDailyTurns' },
+        { header: 'Trạng thái', getValue: (r: TierConfig) => (r.status === CommonStatus.ACTIVE ? 'Hoạt động' : 'Ngừng hoạt động') },
+        { header: 'Mô tả', field: 'description' },
+      ],
+      displayTiers,
+      'Cau_hinh_hang_hoi_vien'
+    );
+  };
 
   return (
-    <div>
+    <div className="w-full flex flex-column gap-2">
       <Toast ref={toastRef} />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.tiers') }]} />
 
-      {/* HV-04 Banner với ngưỡng chuẩn 0 / 1.000 / 5.000 / 15.000 và nút gọn trong banner */}
-      <div className="card shadow-1 border-round surface-card p-3 mb-3 border-left-3 border-primary">
-        <div className="flex flex-wrap align-items-center justify-content-between gap-3">
-          <div className="flex flex-column gap-1">
-            <div className="flex align-items-center gap-2">
-              <i className="pi pi-star-fill text-primary" />
-              <span className="font-semibold text-900">
-                {t('tier.cycle_banner_title')}
-              </span>
-            </div>
-            <span className="text-xs text-600">
-              {t('tier.cycle_banner_desc')}
-            </span>
-          </div>
-          <div className="flex flex-wrap align-items-center gap-2">
+      <StandardPageHeader
+        breadcrumbs={[
+          { label: t('nav.loyalty_policies', 'Chính sách Loyalty') },
+          { label: t('nav.tiers', 'Hạng Hội viên') },
+        ]}
+        title={t('nav.tiers', 'Hạng Hội viên')}
+        subtitle="Cấu hình 4 phân hạng hội viên, ngưỡng điểm tích lũy, hệ số nhân và đặc quyền quay thưởng"
+        actions={
+          <div className="flex align-items-center gap-2">
             <Button
-              label={t('tier.period_settings')}
+              label={t('tier.period_settings', 'Chu kỳ xét hạng')}
               icon="pi pi-calendar-times"
               size="small"
               outlined
               severity="secondary"
               onClick={() => setShowPeriodDialog(true)}
+              className="p-button-sm font-medium"
             />
             <Button
-              label={t('tier.view_distribution')}
-              icon="pi pi-chart-pie"
+              label={t('common.add_new', 'Thêm mới')}
+              icon="pi pi-plus"
               size="small"
-              outlined
-              severity="info"
-              onClick={() => setActiveTabIndex(1)}
+              severity="primary"
+              onClick={openNewDialog}
+              className="p-button-sm font-semibold"
             />
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="card shadow-1 border-round surface-card p-4">
+      <UniversalFilterBar
+        primaryFilters={
+          <TenantSelector
+            value={selectedTenant}
+            onChange={(newTenantId) => {
+              setSelectedTenant(newTenantId);
+              localStorage.setItem('selected_tenant_id', newTenantId);
+            }}
+          />
+        }
+        onRefresh={() => {
+          fetchTiers();
+          fetchDistribution();
+        }}
+        isLoading={loading || distLoading}
+        extraActions={
+          <Button
+            type="button"
+            icon="pi pi-file-excel"
+            label={t('common.export_excel', 'Xuất Excel')}
+            outlined
+            severity="secondary"
+            size="small"
+            onClick={handleExportExcel}
+            className="p-button-sm font-medium"
+          />
+        }
+      />
+
+      <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
         <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)}>
           <TabPanel
-            header={t('tier.tab_config')}
+            header={t('tier.tab_config', 'Cấu hình hạng hội viên')}
             leftIcon="pi pi-sliders-h mr-2"
           >
             <DataTable<any>
@@ -374,37 +418,30 @@ export const TierManagementPage: React.FC = () => {
               value={displayTiers}
               selection={selectedTiers}
               onSelectionChange={(e: any) => setSelectedTiers(e.value || [])}
-              header={header}
               loading={loading}
               dataKey="id"
               paginator
               rows={10}
-              emptyMessage={t('common.no_data')}
-              stripedRows
+              emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
+              className="p-datatable-sm p-datatable-striped"
               responsiveLayout="scroll"
             >
               <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
               <Column
-                header={t('common.stt')}
-                body={(_, options) => (
-                  <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
-                )}
+                header={t('common.stt', 'STT')}
+                body={(_, options) => options.rowIndex + 1}
                 style={{ width: '3.5rem', textAlign: 'center' }}
               />
               <Column
-                body={actionTemplate}
+                body={renderRowActions}
                 exportable={false}
-                header={t('common.actions')}
-                style={{ width: '5rem', textAlign: 'center' }}
+                header={t('common.actions', 'Thao tác')}
+                style={{ width: '6.5rem', textAlign: 'left' }}
               />
               <Column
                 field="code"
                 body={codeTemplate}
-                header={
-                  <span title={t('tier.code_tooltip')}>
-                    {t('tier.code')}
-                  </span>
-                }
+                header={t('tier.code', 'Mã hạng')}
                 sortable
                 style={{ minWidth: '7.5rem' }}
               />

@@ -11,6 +11,8 @@ import java.util.Optional;
 @Repository
 public interface UserInboxMessageRepository extends JpaRepository<UserInboxMessageEntity, Long> {
 
+    List<UserInboxMessageEntity> findByTenantIdOrderByCreatedAtDesc(String tenantId);
+
     List<UserInboxMessageEntity> findByTenantIdAndExternalUserIdOrderByCreatedAtDesc(
             String tenantId, String externalUserId);
 

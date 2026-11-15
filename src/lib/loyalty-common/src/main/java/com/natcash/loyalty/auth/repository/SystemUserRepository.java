@@ -3,6 +3,8 @@ package com.natcash.loyalty.auth.repository;
 import com.natcash.loyalty.auth.entity.SystemUserEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +20,7 @@ public interface SystemUserRepository extends JpaRepository<SystemUserEntity, Lo
     List<SystemUserEntity> findByTenantIdOrderByIdAsc(String tenantId);
 
     Optional<SystemUserEntity> findByIdAndTenantId(Long id, String tenantId);
+
+    @Query("SELECT COUNT(u) FROM SystemUserEntity u JOIN u.roles r WHERE r.id = :roleId")
+    long countByRoleId(@Param("roleId") Long roleId);
 }

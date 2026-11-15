@@ -15,8 +15,10 @@ import com.natcash.loyalty.constant.ErrorCode;
 import com.natcash.loyalty.constant.LoyaltyConstants;
 import com.natcash.loyalty.constant.RedisKeys;
 import com.natcash.loyalty.domain.enums.CampaignMetric;
+import com.natcash.loyalty.domain.enums.ClearingStatus;
 import com.natcash.loyalty.domain.enums.CurrencyAssetType;
 import com.natcash.loyalty.domain.enums.PointActionType;
+import com.natcash.loyalty.domain.enums.SessionStatus;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.dto.PointLedgerDto.EarnPointRequest;
@@ -239,11 +241,11 @@ public class PointLedgerService {
                             }
                         }
 
-                        String status = "COMPLETED";
+                        String status = SessionStatus.COMPLETED.name();
                         if (entity.getChangeType() == PointActionType.REFUND) {
-                            status = "REFUNDED";
+                            status = ClearingStatus.REFUNDED.name();
                         } else if (entity.getChangeType() == PointActionType.EXPIRE) {
-                            status = "EXPIRED";
+                            status = SessionStatus.EXPIRED.name();
                         }
 
                         return PointTransactionItem.builder()

@@ -13,7 +13,10 @@ import { Dropdown } from 'primereact/dropdown';
 import { FileUpload } from 'primereact/fileupload';
 import { Steps } from 'primereact/steps';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus, DiscountType } from '@/models';
 import { LoyaltyService, PartnerItemModel, VoucherItemModel } from '@/service/loyalty.service';
@@ -493,129 +496,141 @@ export const VoucherManagementPage: React.FC = () => {
   };
 
   // Templates cho bảng dữ liệu
-  const actionTemplate = (rowData: VoucherItem) => (
-    <div className="flex gap-2 justify-content-center">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        outlined
-        severity="warning"
-        size="small"
-        onClick={() => editItem(rowData)}
-        tooltip={t('common.edit')}
-      />
-      <Button
-        icon="pi pi-trash"
-        rounded
-        outlined
-        severity="danger"
-        size="small"
-        onClick={() => deleteItem(rowData)}
-        tooltip={t('common.delete')}
-      />
-    </div>
-  );
+  const renderRowActions = (rowData: VoucherItem) => {
+    const actions: RowActionItem[] = [
+      {
+        id: 'edit',
+        label: t('common.edit', 'Sửa'),
+        icon: 'pi pi-pencil',
+        severity: 'secondary',
+        onClick: () => editItem(rowData),
+      },
+      {
+        id: 'delete',
+        label: t('common.delete', 'Xóa'),
+        icon: 'pi pi-trash',
+        danger: true,
+        onClick: () => deleteItem(rowData),
+      },
+    ];
+    return <StandardRowActions actions={actions} maxInline={3} />;
+  };
 
   const statusTemplate = (rowData: VoucherItem) => {
     return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active')} />
+      <Tag severity="success" value={t('common.active', 'Hoạt động')} rounded={false} />
     ) : (
-      <Tag severity="danger" value={t('common.inactive')} />
+      <Tag severity="warning" value={t('common.inactive', 'Ngừng hoạt động')} rounded={false} />
     );
   };
 
   const discountBadgeTemplate = (rowData: VoucherItem) => {
-    return rowData.discountType === DiscountType.PERCENTAGE ? (
-      <span className="text-primary font-medium font-mono">{t('voucher.discount_percent_value', { value: rowData.discountValue })}</span>
-    ) : (
-      <span className="text-green-600 font-medium font-mono">-{rowData.discountValue} HTG</span>
+    return (
+      <span className="font-normal text-900">
+        {rowData.discountType === DiscountType.PERCENTAGE
+          ? `${rowData.discountValue}%`
+          : `-${rowData.discountValue} HTG`}
+      </span>
     );
   };
 
   const partnerScopeTemplate = (rowData: VoucherItem) => {
-    if (!rowData.partnerId) {
-      return (
-        <Tag
-          severity="info"
-          icon="pi pi-globe"
-          value={t('voucher.scope_all_short')}
-          className="text-xs"
-        />
-      );
-    }
     return (
-      <div className="flex flex-column gap-1">
-        <span className="font-medium text-900 text-sm">{rowData.partnerName}</span>
-        {rowData.partnerCode && rowData.partnerCode !== 'ALL' && (
-          <Tag value={rowData.partnerCode} severity="warning" className="text-xs font-mono w-fit" />
-        )}
-      </div>
+      <span className="font-normal text-900">
+        {rowData.partnerName || 'Toàn hệ thống'}
+      </span>
     );
   };
 
-  const discountTypeOptions = [
-    { label: t('voucher.fixed_amount'), value: DiscountType.FIXED_AMOUNT },
-    { label: t('voucher.percentage'), value: DiscountType.PERCENTAGE },
-  ];
-
-  const statusOptions = [
-    { label: t('common.active'), value: CommonStatus.ACTIVE },
-    { label: t('common.inactive'), value: CommonStatus.INACTIVE },
-  ];
-
-  const header = (
-    <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3">
-      <div className="flex align-items-center gap-3">
-        <h4 className="m-0 text-primary font-bold">
-          <i className="pi pi-ticket mr-2 text-xl" />
-          {t('voucher.management_title')}
-        </h4>
-        <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-      </div>
-      <div className="flex flex-wrap gap-2 align-items-center">
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            type="search"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={t('common.search')}
-            className="p-inputtext-sm w-14rem"
-          />
-        </span>
-        <Button
-          label={t('voucher.import_csv')}
-          icon="pi pi-upload"
-          severity="help"
-          size="small"
-          onClick={openImportWizard}
-        />
-        <Button
-          label={t('voucher.add_new')}
-          icon="pi pi-plus"
-          severity="success"
-          size="small"
-          onClick={openNew}
-        />
-        <Button
-          icon="pi pi-refresh"
-          outlined
-          size="small"
-          onClick={() => fetchVouchers(selectedTenant)}
-          loading={loading}
-          tooltip={t('common.refresh')}
-        />
-      </div>
-    </div>
-  );
+  const handleExportExcel = () => {
+    exportToExcel(
+      [
+        { header: 'STT' },
+        { header: 'Mã voucher', field: 'voucherCode' },
+        { header: 'Tên voucher', field: 'title' },
+        {
+          header: 'Mức giảm giá',
+          getValue: (r: VoucherItem) =>
+            r.discountType === DiscountType.PERCENTAGE
+              ? `${r.discountValue}%`
+              : `-${r.discountValue} HTG`,
+        },
+        { header: 'Điểm đổi', getValue: (r: VoucherItem) => (r.costPoints ?? 0).toLocaleString() },
+        { header: 'Đối tác áp dụng', getValue: (r: VoucherItem) => r.partnerName || 'Toàn hệ thống' },
+        { header: 'Đã cấp', getValue: (r: VoucherItem) => `${r.totalIssued ?? 0} / ${r.totalQuantity ?? '∞'}` },
+        { header: 'Hạn sử dụng', field: 'endDate' },
+        {
+          header: 'Trạng thái',
+          getValue: (r: VoucherItem) =>
+            r.status === CommonStatus.ACTIVE ? 'Hoạt động' : 'Ngừng hoạt động',
+        },
+      ],
+      vouchers,
+      'Danh_sach_voucher'
+    );
+  };
 
   return (
-    <div>
+    <div className="w-full flex flex-column gap-2">
       <Toast ref={toastRef} position="top-center" />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.vouchers') }]} />
 
-      <div className="card shadow-1 border-round surface-card p-4">
+      <StandardPageHeader
+        breadcrumbs={[
+          { label: t('nav.rewards_games', 'Khuyến mãi & Game') },
+          { label: t('nav.vouchers', 'Kho Voucher') },
+        ]}
+        title={t('voucher.management_title', 'Kho Voucher & Mã Khuyến Mãi')}
+        subtitle="Quản lý phát hành voucher, tỷ lệ giảm giá, kho mã số lượng lớn và đối tác liên minh áp dụng"
+        actions={
+          <Button
+            label={t('common.add_new', 'Thêm mới')}
+            icon="pi pi-plus"
+            size="small"
+            severity="primary"
+            onClick={openNew}
+            className="p-button-sm font-semibold"
+          />
+        }
+      />
+
+      <UniversalFilterBar
+        searchValue={globalFilter}
+        onSearchChange={setGlobalFilter}
+        searchPlaceholder={t('common.search', 'Tìm kiếm...')}
+        primaryFilters={
+          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
+        }
+        onReset={() => setGlobalFilter('')}
+        onRefresh={() => fetchVouchers(selectedTenant)}
+        isLoading={loading}
+        extraActions={
+          <>
+            <Button
+              type="button"
+              label={t('voucher.import_csv', 'Nhập CSV')}
+              icon="pi pi-upload"
+              size="small"
+              outlined
+              severity="secondary"
+              onClick={openImportWizard}
+              className="p-button-sm font-medium"
+            />
+            <Button
+              type="button"
+              icon="pi pi-file-excel"
+              label={t('common.export_excel', 'Xuất Excel')}
+              outlined
+              severity="secondary"
+              size="small"
+              onClick={handleExportExcel}
+              className="p-button-sm font-medium"
+            />
+          </>
+        }
+      />
+
+      <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
         <DataTable<any>
           value={vouchers}
           selection={selectedVouchers}
@@ -624,44 +639,43 @@ export const VoucherManagementPage: React.FC = () => {
           paginator
           rows={10}
           loading={loading}
-          rowsPerPageOptions={[5, 10, 25]}
-          header={header}
+          rowsPerPageOptions={[10, 20, 50]}
           globalFilter={globalFilter}
           responsiveLayout="scroll"
-          emptyMessage={t('common.no_data')}
+          emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
+          className="p-datatable-sm p-datatable-striped"
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
           <Column
-            header={t('common.stt')}
-            body={(_: any, options: any) => (
-              <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
-            )}
-            style={{ width: '4rem', textAlign: 'center' }}
+            header={t('common.stt', 'STT')}
+            body={(_: any, options: any) => options.rowIndex + 1}
+            style={{ width: '3.5rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions')}
-            body={actionTemplate}
+            header={t('common.actions', 'Thao tác')}
+            body={renderRowActions}
             exportable={false}
-            style={{ width: '7rem', textAlign: 'center' }}
+            style={{ width: '6.5rem', textAlign: 'left' }}
           />
           <Column
             field="voucherCode"
-            header={t('voucher.code')}
-            body={(row: VoucherItem) => <span className="font-bold text-primary font-mono">{row.voucherCode}</span>}
+            header={t('voucher.code', 'Mã voucher')}
+            body={(row: VoucherItem) => (
+              <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
+                {row.voucherCode}
+              </span>
+            )}
             sortable
             style={{ minWidth: '9.5rem' }}
           />
           <Column
             field="title"
-            header={t('voucher.title_label')}
+            header={t('voucher.title_label', 'Tên voucher')}
             body={(row: VoucherItem) => (
-              <div>
-                <div className="font-semibold text-900">{row.title}</div>
-                {row.description && <div className="text-xs text-500 line-clamp-1">{row.description}</div>}
-              </div>
+              <span className="font-normal text-900">{row.title}</span>
             )}
             sortable
-            style={{ minWidth: '13rem' }}
+            style={{ minWidth: '14rem' }}
           />
           <Column
             field="partnerScope"

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -7,8 +7,10 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { LoyaltyService, CustomerSegmentModel, SegmentMemberModel } from '@/service/loyalty.service';
 import * as XLSX from 'xlsx';
 
@@ -25,6 +27,7 @@ export const CustomerSegmentsPage: React.FC = () => {
   const [selectedSegment, setSelectedSegment] = useState<CustomerSegmentModel | null>(null);
   const [members, setMembers] = useState<SegmentMemberModel[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const fetchSegments = useCallback(async () => {
     setLoading(true);
@@ -66,6 +69,39 @@ export const CustomerSegmentsPage: React.FC = () => {
     }
   };
 
+  const filteredSegments = useMemo(() => {
+    const q = searchKeyword.toLowerCase().trim();
+    if (!q) return segments;
+    return segments.filter(
+      (s) =>
+        (s.segmentCode && s.segmentCode.toLowerCase().includes(q)) ||
+        (s.segmentName && s.segmentName.toLowerCase().includes(q)) ||
+        (s.ruleSummary && s.ruleSummary.toLowerCase().includes(q))
+    );
+  }, [segments, searchKeyword]);
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredSegments.map((s, idx) => ({
+        stt: idx + 1,
+        segmentCode: s.segmentCode,
+        segmentName: s.segmentName,
+        ruleSummary: s.ruleSummary || '',
+        memberCount: s.memberCount || 0,
+        lastCalculatedAt: s.lastCalculatedAt ? new Date(s.lastCalculatedAt).toLocaleString('vi-VN') : '',
+      })),
+      [
+        { key: 'stt', header: '#' },
+        { key: 'segmentCode', header: t('segment.code') },
+        { key: 'segmentName', header: t('segment.name') },
+        { key: 'ruleSummary', header: t('segment.rule_expr') },
+        { key: 'memberCount', header: t('segment.member_count') },
+        { key: 'lastCalculatedAt', header: t('segment.last_computed') },
+      ],
+      `Danh_Sach_Phan_Khuc_${selectedTenant}`
+    );
+  };
+
   const handleExportCsv = () => {
     if (!selectedSegment || members.length === 0) return;
     const ws = XLSX.utils.json_to_sheet(members);
@@ -75,52 +111,66 @@ export const CustomerSegmentsPage: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.segments') }]} />
+      <StandardPageHeader
+        title={t('nav.segments')}
+        subtitle={t('segment.subtitle', 'Định nghĩa tập khách hàng mục tiêu, điều kiện kích hoạt chiến dịch và đồng bộ thành viên')}
+        breadcrumbs={[{ label: t('nav.segments') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={setSelectedTenant}
+      />
 
-      <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">
-              {t('segment.title')}
-            </h4>
-            <p className="m-0 text-xs text-500 mt-1">
-              {t('segment.subtitle')}
-            </p>
-          </div>
-          <div className="flex gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchSegments} loading={loading} />
-          </div>
-        </div>
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
+        <UniversalFilterBar
+          searchValue={searchKeyword}
+          onSearchChange={setSearchKeyword}
+          searchPlaceholder={t('common.search')}
+          onExport={handleExport}
+          onReset={() => setSearchKeyword('')}
+          onRefresh={fetchSegments}
+        />
 
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
           <DataTable<CustomerSegmentModel[]>
-            value={segments}
+            value={filteredSegments}
             paginator
             rows={10}
+            rowsPerPageOptions={[10, 25, 50]}
             stripedRows
             responsiveLayout="scroll"
             emptyMessage={t('segment.empty')}
           >
-            <Column field="segmentCode" header={t('segment.code')} body={(r: CustomerSegmentModel) => <Tag value={r.segmentCode} severity="info" className="font-mono" />} style={{ minWidth: '11rem' }} />
-            <Column field="segmentName" header={t('segment.name')} style={{ minWidth: '14rem' }} />
-            <Column field="ruleSummary" header={t('segment.rule_expr')} body={(r: CustomerSegmentModel) => <span className="font-mono text-xs text-600">{r.ruleSummary || '--'}</span>} style={{ minWidth: '16rem' }} />
-            <Column field="memberCount" header={t('segment.member_count')} body={(r: CustomerSegmentModel) => <span className="font-mono font-medium">{Number(r.memberCount || 0).toLocaleString()}</span>} style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-            <Column field="lastCalculatedAt" header={t('segment.last_computed')} body={(r: CustomerSegmentModel) => <span className="font-mono white-space-nowrap text-xs">{r.lastCalculatedAt ? new Date(r.lastCalculatedAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column
+              header="#"
+              body={(_data, options) => (
+                <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+              )}
+              style={{ width: '3.5rem', textAlign: 'center' }}
+            />
             <Column
               header={t('common.action')}
               body={(r: CustomerSegmentModel) => (
-                <div className="flex gap-1">
-                  <Button icon="pi pi-users" label={t('segment.view_members')} size="small" outlined onClick={() => openMembers(r)} />
-                  <Button icon="pi pi-sync" label={t('segment.recalculate')} size="small" outlined severity="warning" loading={recalcId === r.id} onClick={() => handleRecalculate(r)} />
-                </div>
+                <StandardRowActions
+                  onView={() => openMembers(r)}
+                  extraActions={[
+                    {
+                      label: t('segment.recalculate'),
+                      icon: 'pi pi-sync',
+                      onClick: () => handleRecalculate(r),
+                    },
+                  ]}
+                />
               )}
-              style={{ minWidth: '13rem' }}
+              style={{ width: '6rem', textAlign: 'center' }}
             />
+            <Column field="segmentCode" header={t('segment.code')} body={(r: CustomerSegmentModel) => <span className="font-bold font-mono text-900">{r.segmentCode}</span>} sortable style={{ minWidth: '11rem' }} />
+            <Column field="segmentName" header={t('segment.name')} body={(r: CustomerSegmentModel) => <span className="text-900">{r.segmentName}</span>} sortable style={{ minWidth: '14rem' }} />
+            <Column field="ruleSummary" header={t('segment.rule_expr')} body={(r: CustomerSegmentModel) => <span className="font-mono text-xs text-900">{r.ruleSummary || '--'}</span>} style={{ minWidth: '16rem' }} />
+            <Column field="memberCount" header={t('segment.member_count')} body={(r: CustomerSegmentModel) => <span className="font-mono text-900">{Number(r.memberCount || 0).toLocaleString()}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+            <Column field="lastCalculatedAt" header={t('segment.last_computed')} body={(r: CustomerSegmentModel) => <span className="text-900 font-mono text-xs">{r.lastCalculatedAt ? new Date(r.lastCalculatedAt).toLocaleString('vi-VN') : '--'}</span>} sortable style={{ minWidth: '11rem' }} />
           </DataTable>
         )}
       </div>
@@ -141,10 +191,10 @@ export const CustomerSegmentsPage: React.FC = () => {
           <div className="flex flex-column gap-2"><Skeleton height="2.2rem" /><Skeleton height="2.2rem" /></div>
         ) : (
           <DataTable<SegmentMemberModel[]> value={members} paginator rows={10} size="small" emptyMessage={t('common.no_data')}>
-            <Column field="externalUserId" header={t('customer.phone')} body={(m: SegmentMemberModel) => <span className="font-mono white-space-nowrap">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="fullName" header={t('customer.name')} style={{ minWidth: '12rem' }} />
-            <Column field="tierCode" header={t('tier.code')} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem' }} />
-            <Column field="currentPoints" header={t('customer.available_points')} body={(m: SegmentMemberModel) => <span className="font-mono">{Number(m.currentPoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+            <Column field="externalUserId" header={t('customer.phone')} body={(m: SegmentMemberModel) => <span className="font-mono text-900">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="fullName" header={t('customer.name')} body={(m: SegmentMemberModel) => <span className="text-900">{m.fullName}</span>} style={{ minWidth: '12rem' }} />
+            <Column field="tierCode" header={t('tier.code')} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem', textAlign: 'center' }} />
+            <Column field="currentPoints" header={t('customer.available_points')} body={(m: SegmentMemberModel) => <span className="font-mono text-900">{Number(m.currentPoints || 0).toLocaleString()}</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
           </DataTable>
         )}
       </Dialog>

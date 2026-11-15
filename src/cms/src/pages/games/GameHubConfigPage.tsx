@@ -14,6 +14,7 @@ import { AppBreadcrumb } from 'components';
 import { CommonStatus } from '@/models';
 import { LoyaltyService } from '@/service/loyalty.service';
 import { paths } from '@/paths';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 
 interface GameItem {
   id: number;
@@ -117,7 +118,7 @@ export const GameHubConfigPage: React.FC = () => {
             ...g,
             displayOrder: g.displayOrder ?? index + 1,
             lobbyBadge: g.lobbyBadge ?? (index === 0 ? 'HOT' : index === 1 ? 'NEW' : 'NORMAL'),
-            lobbyVisible: g.status === CommonStatus.ACTIVE || g.status === 'ACTIVE',
+            lobbyVisible: g.status === CommonStatus.ACTIVE,
           }))
         );
       } else {
@@ -171,9 +172,7 @@ export const GameHubConfigPage: React.FC = () => {
     }
   };
 
-  const activeGamesCount = games.filter(
-    (g) => g.status === CommonStatus.ACTIVE || g.status === 'ACTIVE'
-  ).length;
+  const activeGamesCount = games.filter((g) => g.status === CommonStatus.ACTIVE).length;
 
   const multiplierOptions = useMemo(() => [
     { label: t('game_hub.multiplier_2x'), value: 2 },
@@ -220,19 +219,9 @@ export const GameHubConfigPage: React.FC = () => {
   const gameInfoTemplate = (rowData: GameItem) => {
     return (
       <div className="flex align-items-center gap-2">
-        <div
-          className="flex align-items-center justify-content-center border-round surface-100 flex-shrink-0"
-          style={{ width: '2.25rem', height: '2.25rem', fontSize: '1.1rem' }}
-        >
-          {rowData.iconUrl ? (
-            <img src={rowData.iconUrl} alt={rowData.gameName} style={{ width: '100%', height: '100%', borderRadius: '4px' }} />
-          ) : (
-            '🎮'
-          )}
-        </div>
         <div>
           <div className="font-bold text-sm text-900">{rowData.gameName}</div>
-          <div className="font-mono text-xs text-500">{rowData.gameCode}</div>
+          <div className="font-mono text-xs font-bold text-900">{rowData.gameCode}</div>
         </div>
       </div>
     );
@@ -265,32 +254,18 @@ export const GameHubConfigPage: React.FC = () => {
         ]}
       />
 
-      {/* ── TOP ACTION HEADER ── */}
-      <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-3 mb-4">
-        <div>
-          <h3 className="m-0 text-900 font-bold tracking-tight">
-            {t('game_hub.title')}
-          </h3>
-          <p className="text-500 text-xs mt-1 mb-0">
-            {t('game_hub.subtitle')}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            label={t('common.refresh')}
-            icon="pi pi-refresh"
-            outlined
-            onClick={loadData}
-            loading={isLoading}
-          />
-          <Button
-            label={t('game_hub.save_config')}
-            icon="pi pi-save"
-            onClick={handleSaveGlobalSettings}
-            loading={isSubmitting}
-          />
-        </div>
-      </div>
+      <StandardPageHeader
+        title={t('game_hub.title')}
+        subtitle={t('game_hub.subtitle')}
+        primaryAction={{
+          label: t('game_hub.save_config', 'Lưu cấu hình'),
+          icon: 'pi pi-save',
+          onClick: handleSaveGlobalSettings,
+          loading: isSubmitting,
+        }}
+        onRefresh={loadData}
+        refreshLoading={isLoading}
+      />
 
       {/* ── KPI STATS CARDS ── */}
       <div className="grid mb-4">

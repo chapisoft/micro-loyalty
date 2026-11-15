@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -13,8 +13,10 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { CommonStatus, CustomerSegmentCode } from '@/models';
 import { LoyaltyService, ReminderScenarioModel, ReminderSendLogModel } from '@/service/loyalty.service';
 
@@ -31,6 +33,7 @@ export const ReminderScenariosPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<ReminderScenarioModel>>({});
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -86,42 +89,105 @@ export const ReminderScenariosPage: React.FC = () => {
     }
   };
 
+  const filteredScenarios = useMemo(() => {
+    const q = searchKeyword.toLowerCase().trim();
+    if (!q) return scenarios;
+    return scenarios.filter(
+      (s) =>
+        (s.scenarioCode && s.scenarioCode.toLowerCase().includes(q)) ||
+        (s.scenarioName && s.scenarioName.toLowerCase().includes(q)) ||
+        (s.channel && s.channel.toLowerCase().includes(q))
+    );
+  }, [scenarios, searchKeyword]);
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredScenarios.map((s, idx) => ({
+        stt: idx + 1,
+        scenarioCode: s.scenarioCode,
+        scenarioName: s.scenarioName,
+        targetSegment: s.targetSegment,
+        channel: s.channel,
+        maxPerWeek: s.maxPerWeek,
+        status: s.status,
+      })),
+      [
+        { key: 'stt', header: '#' },
+        { key: 'scenarioCode', header: t('scenario.code') },
+        { key: 'scenarioName', header: t('scenario.name') },
+        { key: 'targetSegment', header: t('segment.code') },
+        { key: 'channel', header: t('scenario.channel') },
+        { key: 'maxPerWeek', header: t('scenario.max_per_week') },
+        { key: 'status', header: t('common.status') },
+      ],
+      `Danh_Sach_Kich_Ban_Goi_Nho_${selectedTenant}`
+    );
+  };
+
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.scenarios') }]} />
+      <StandardPageHeader
+        title={t('nav.scenarios')}
+        subtitle={t('scenario.subtitle', 'Cấu hình kịch bản gửi tin cảnh báo sắp hết hạn điểm, lời chúc sinh nhật và ưu đãi cá nhân hóa')}
+        breadcrumbs={[{ label: t('nav.scenarios') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={setSelectedTenant}
+        primaryAction={{
+          label: t('scenario.add_new'),
+          icon: 'pi pi-plus',
+          onClick: openNew,
+        }}
+      />
 
-      <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">
-              {t('scenario.title')}
-            </h4>
-            <p className="m-0 text-xs text-500 mt-1">
-              {t('scenario.subtitle')}
-            </p>
-          </div>
-          <div className="flex gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button label={t('scenario.add_new')} icon="pi pi-plus" severity="success" size="small" onClick={openNew} />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchData} loading={loading} />
-          </div>
-        </div>
-
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
         <TabView>
           <TabPanel header={t('scenario.tab_list')} leftIcon="pi pi-bell mr-2">
+            <UniversalFilterBar
+              searchValue={searchKeyword}
+              onSearchChange={setSearchKeyword}
+              searchPlaceholder={t('common.search')}
+              onExport={handleExport}
+              onReset={() => setSearchKeyword('')}
+              onRefresh={fetchData}
+            />
+
             {loading ? (
               <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
             ) : (
-              <DataTable<ReminderScenarioModel[]> value={scenarios} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('scenario.empty')}>
-                <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderScenarioModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
-                <Column field="scenarioName" header={t('scenario.name')} style={{ minWidth: '14rem' }} />
-                <Column field="targetSegment" header={t('segment.code')} body={(r: ReminderScenarioModel) => <Tag value={r.targetSegment} severity="info" />} style={{ minWidth: '10rem' }} />
-                <Column field="channel" header={t('scenario.channel')} body={(r: ReminderScenarioModel) => <Tag value={r.channel} />} style={{ minWidth: '9rem' }} />
+              <DataTable<ReminderScenarioModel[]>
+                value={filteredScenarios}
+                paginator
+                rows={10}
+                rowsPerPageOptions={[10, 25, 50]}
+                stripedRows
+                responsiveLayout="scroll"
+                emptyMessage={t('scenario.empty')}
+              >
+                <Column
+                  header="#"
+                  body={(_data, options) => (
+                    <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+                  )}
+                  style={{ width: '3.5rem', textAlign: 'center' }}
+                />
+                <Column
+                  header={t('common.action')}
+                  body={(r: ReminderScenarioModel) => (
+                    <StandardRowActions
+                      onEdit={() => { setFormData(r); setShowDialog(true); }}
+                    />
+                  )}
+                  style={{ width: '5.5rem', textAlign: 'center' }}
+                />
+                <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderScenarioModel) => <span className="font-bold font-mono text-900">{r.scenarioCode}</span>} sortable style={{ minWidth: '11rem' }} />
+                <Column field="scenarioName" header={t('scenario.name')} body={(r: ReminderScenarioModel) => <span className="text-900">{r.scenarioName}</span>} sortable style={{ minWidth: '14rem' }} />
+                <Column field="targetSegment" header={t('segment.code')} body={(r: ReminderScenarioModel) => <span className="text-900">{r.targetSegment}</span>} style={{ minWidth: '10rem' }} />
+                <Column field="channel" header={t('scenario.channel')} body={(r: ReminderScenarioModel) => <span className="text-900">{r.channel}</span>} style={{ minWidth: '9rem' }} />
                 <Column
                   header={t('scenario.anti_spam')}
                   body={(r: ReminderScenarioModel) => (
-                    <span className="text-xs font-mono">
+                    <span className="text-xs font-mono text-900">
                       {r.quietHoursRespect ? `${t('scenario.quiet_hours_short')} · ` : ''}
                       {t('scenario.max_per_week_short', { count: r.maxPerWeek })}
                     </span>
@@ -129,18 +195,17 @@ export const ReminderScenariosPage: React.FC = () => {
                   style={{ minWidth: '11rem' }}
                 />
                 <Column field="status" header={t('common.status')} body={(r: ReminderScenarioModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-                <Column header={t('common.action')} body={(r: ReminderScenarioModel) => <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setFormData(r); setShowDialog(true); }} />} style={{ minWidth: '5rem' }} />
               </DataTable>
             )}
           </TabPanel>
 
           <TabPanel header={t('scenario.tab_logs', { count: sendLogs.length })} leftIcon="pi pi-history mr-2">
-            <DataTable<ReminderSendLogModel[]> value={sendLogs} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')}>
-              <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
-              <Column field="externalUserId" header={t('customer.phone')} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
-              <Column field="channel" header={t('scenario.channel')} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status')} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem' }} />
-              <Column field="sentAt" header={t('common.created_at')} body={(r: ReminderSendLogModel) => <span className="font-mono white-space-nowrap text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <DataTable<ReminderSendLogModel[]> value={sendLogs} paginator rows={15} rowsPerPageOptions={[15, 30, 50]} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')}>
+              <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderSendLogModel) => <span className="font-bold font-mono text-900">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="externalUserId" header={t('customer.phone')} body={(r: ReminderSendLogModel) => <span className="font-mono text-900">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
+              <Column field="channel" header={t('scenario.channel')} body={(r: ReminderSendLogModel) => <span className="text-900">{r.channel}</span>} style={{ minWidth: '8rem' }} />
+              <Column field="status" header={t('common.status')} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+              <Column field="sentAt" header={t('common.created_at')} body={(r: ReminderSendLogModel) => <span className="text-900 font-mono text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -207,3 +272,4 @@ export const ReminderScenariosPage: React.FC = () => {
 };
 
 export default ReminderScenariosPage;
+

@@ -17,6 +17,9 @@ import * as XLSX from 'xlsx';
 import { useAuditLogs } from '@/service/admin/audit-hooks';
 import { AuditLog, AuditLogQuery } from '@/service/admin/audit';
 import { TenantSelector } from '@/components/TenantSelector';
+import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { StandardRowActions } from '@/components/StandardRowActions';
 
 import './audit-management.scss';
 
@@ -200,7 +203,7 @@ export default function AuditLogPage() {
 
   const idBodyTemplate = (rowData: AuditLog) => {
     return (
-      <span className="inline-flex align-items-center font-mono text-xs text-700 bg-gray-100 border-1 border-gray-200 border-round px-2 py-1 white-space-nowrap">
+      <span className="font-bold font-mono text-900 white-space-nowrap">
         #{rowData.id}
       </span>
     );
@@ -209,32 +212,25 @@ export default function AuditLogPage() {
   const operationBodyTemplate = (rowData: AuditLog) => {
     const op = String(rowData.operation || '').toUpperCase();
     let severity: 'success' | 'info' | 'warning' | 'danger' | 'secondary' = 'info';
-    let icon = 'pi pi-info-circle';
     if (op === 'INSERT') {
       severity = 'success';
-      icon = 'pi pi-plus';
     } else if (op === 'UPDATE') {
       severity = 'warning';
-      icon = 'pi pi-pencil';
     } else if (op === 'DELETE') {
       severity = 'danger';
-      icon = 'pi pi-trash';
     } else if (op === 'SETTLEMENT') {
       severity = 'info';
-      icon = 'pi pi-sync';
     } else if (op === 'LOCK') {
       severity = 'danger';
-      icon = 'pi pi-lock';
     } else if (op === 'UNLOCK') {
       severity = 'success';
-      icon = 'pi pi-unlock';
     }
-    return <Tag severity={severity} value={op} icon={icon} className="text-xs px-2 py-1 white-space-nowrap" />;
+    return <Tag severity={severity} value={op} className="text-xs px-2 py-1 white-space-nowrap" />;
   };
 
   const tableBodyTemplate = (rowData: AuditLog) => {
     return (
-      <span className="text-700 text-sm font-mono white-space-nowrap">{rowData.tableName}</span>
+      <span className="text-900 text-sm font-mono white-space-nowrap">{rowData.tableName}</span>
     );
   };
 
@@ -242,12 +238,12 @@ export default function AuditLogPage() {
     if (!rowData.timestamp) return '-';
     try {
       return (
-        <span className="text-sm text-700 font-mono white-space-nowrap">
+        <span className="text-sm text-900 font-mono white-space-nowrap">
           {new Date(rowData.timestamp).toLocaleString()}
         </span>
       );
     } catch {
-      return <span className="text-sm font-mono white-space-nowrap">{rowData.timestamp}</span>;
+      return <span className="text-sm text-900 font-mono white-space-nowrap">{rowData.timestamp}</span>;
     }
   };
 
@@ -264,7 +260,7 @@ export default function AuditLogPage() {
 
   const descriptionBodyTemplate = (rowData: AuditLog) => {
     return (
-      <span className="text-sm text-800 line-clamp-2" title={rowData.description || ''}>
+      <span className="text-sm text-900 line-clamp-2" title={rowData.description || ''}>
         {rowData.description || '-'}
       </span>
     );
@@ -272,14 +268,15 @@ export default function AuditLogPage() {
 
   const actionBodyTemplate = (rowData: AuditLog) => {
     return (
-      <Button
-        icon="pi pi-eye"
-        rounded
-        outlined
-        severity="info"
-        size="small"
-        onClick={() => handleOpenDetail(rowData)}
-        tooltip={t('audit.view_diff')}
+      <StandardRowActions
+        actions={[
+          {
+            icon: 'pi pi-eye',
+            label: t('audit.view_diff', 'Xem chi tiết'),
+            severity: 'info',
+            onClick: () => handleOpenDetail(rowData),
+          },
+        ]}
       />
     );
   };
@@ -346,40 +343,23 @@ export default function AuditLogPage() {
     : logList.length;
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen">
-      {/* 1. Header Toolbar */}
-      <Card className="mb-4 shadow-1 border-round-xl">
-        <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-800 m-0 flex align-items-center gap-2">
-              <i className="pi pi-history text-primary text-xl" />
-              {t('audit.management')}
-            </h2>
-            <p className="text-500 text-sm m-0 mt-1">
-              {t('audit.subtitle')}
-            </p>
-          </div>
-          <div className="flex align-items-center gap-2">
-            <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-            <Button
-              icon="pi pi-file-excel"
-              label={t('audit.export_excel')}
-              severity="success"
-              outlined
-              onClick={handleExportExcel}
-              tooltip={t('audit.export_excel_tooltip')}
-            />
-            <Button
-              icon="pi pi-refresh"
-              rounded
-              outlined
-              size="small"
-              onClick={() => refetch()}
-              tooltip={t('common.refresh')}
-            />
-          </div>
-        </div>
-      </Card>
+    <div className="w-full">
+      <AppBreadcrumb items={[{ label: t('audit.management') }]} />
+
+      <StandardPageHeader
+        title={t('audit.management')}
+        subtitle={t('audit.subtitle')}
+        secondaryActions={[
+          {
+            label: t('audit.export_excel', 'Xuất Excel'),
+            icon: 'pi pi-download',
+            onClick: handleExportExcel,
+          },
+        ]}
+        extraLeft={<TenantSelector value={selectedTenant} onChange={handleTenantChange} />}
+        onRefresh={() => refetch()}
+        refreshLoading={isLoading}
+      />
 
       {/* 2. Filter Bar */}
       <Card className="mb-4 shadow-1 border-round-xl">

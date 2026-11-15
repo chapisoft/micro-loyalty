@@ -424,7 +424,8 @@ export default {
     "rotate_btn": "Fè Wotasyon Kle API",
     "show_once_warning": "Nouvo kle a afiche YON SÈL FWA. Tanpri kopye epi konsève l an sekirite kounye a:",
     "no_keys": "Pa gen okenn lis kle ki retounen nan sistèm nan ankò.",
-    "revoke_now": "Anile ansyen kle a kounye a"
+    "revoke_now": "Anile ansyen kle a kounye a",
+    "grace_period": "Delè Gras (7 jou)"
   },
   "transaction": {
     "management_title": "Grandèt Pwen & Jounal Tranzaksyon Loyalty",
@@ -663,6 +664,7 @@ export default {
     "name": "Non Jwèt",
     "win_rate": "Pousantaj Genyen",
     "recent_sessions": "Sesyon Jwèt Resan",
+    "session_id": "ID Sesyon",
     "reward": "Rekonpans",
     "prize_code_placeholder": "Egzanp: PRIZE_500_PTS",
     "name_vi_placeholder": "Egzanp: 500 Pwen Bonis (VI)",
@@ -1390,7 +1392,11 @@ export default {
     "create_user_success": "Kont patnè Sandbox kreye avèk siksè",
     "create_user_failed": "Pa kapab kreye kont la",
     "menu_name_placeholder": "Egzanp: Pwomosyon Ete",
-    "menu_route_placeholder": "Egzanp: /sandbox/summer-promo"
+    "menu_route_placeholder": "Egzanp: /sandbox/summer-promo",
+    "username_placeholder": "Egzanp: dev_partner_bank",
+    "fullname_placeholder": "Egzanp: Ekip Teknik Patnè",
+    "email_placeholder": "developer@partner.com",
+    "phone_placeholder": "+509 3000 0000"
   },
   "common": {
     "search": "Chèche...",
@@ -1721,7 +1727,14 @@ export default {
     "avg_lift": "Ogmantasyon Mwayèn (Lift)",
     "treatment_revenue": "Revni Gwoup Tretman",
     "avg_roi": "ROI Mwayèn",
-    "no_effectiveness": "Pa gen done konparezon Lift vs Gwoup Kontwòl ankò."
+    "no_effectiveness": "Pa gen done konparezon Lift vs Gwoup Kontwòl ankò.",
+    "test_group_size": "Gwoup Tès (N)",
+    "control_group_size": "Gwoup Kontwòl (N)",
+    "test_conv_rate": "To Konv. (Tès)",
+    "control_conv_rate": "To Konv. (Kontwòl)",
+    "incremental_rev": "Revni Siplemantè",
+    "lift_percent": "Ogmantasyon (Lift)",
+    "roi_percent": "ROI (%)"
   },
   "alert": {
     "title": "Sant Alèt Operasyonèl (CN-05)",
@@ -1758,7 +1771,8 @@ export default {
     "options": "Opsyon yo (youn pa liy)",
     "answer_idx": "Endèks Bon Repons lan (0, 1, 2...)",
     "import_title": "Enpòte Kesyon soti nan CSV",
-    "confirm_import": "Konfime Enpòtasyon"
+    "confirm_import": "Konfime Enpòtasyon",
+    "audio": "Odyo"
   },
   "agent": {
     "title": "Jesyon Loyalty Ajan (AG-03)",

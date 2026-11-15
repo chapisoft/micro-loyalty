@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { paths } from '@/paths';
 import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
+import { CommonStatus, PointActionType, TransactionStatus } from '@/models';
 import {
   LoyaltyService,
   DashboardStatsModel,
@@ -152,22 +153,25 @@ export const Dashboard: React.FC = () => {
   const actionTypeBodyTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value={t('action_type.earn')} icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value={t('action_type.earn')} />;
       case 'BURN':
-        return <Tag severity="danger" value={t('action_type.burn')} icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value={t('action_type.burn')} />;
       case 'REWARD':
-        return <Tag severity="info" value={t('action_type.reward')} icon="pi pi-gift" />;
+        return <Tag severity="info" value={t('action_type.reward')} />;
       case 'SPIN':
-        return <Tag severity="warning" value={t('action_type.spin')} icon="pi pi-compass" />;
+        return <Tag severity="warning" value={t('action_type.spin')} />;
       case 'VOUCHER':
-        return <Tag severity="info" value={t('action_type.voucher')} icon="pi pi-ticket" />;
+        return <Tag severity="info" value={t('action_type.voucher')} />;
       default:
         return <Tag severity="secondary" value={rowData.actionType || t('common.actions')} />;
     }
   };
 
   const pointsBodyTemplate = (rowData: PointLedgerItem) => {
-    const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
+    const isPositive =
+      rowData.actionType === PointActionType.EARN ||
+      rowData.actionType === PointActionType.REWARD ||
+      rowData.actionType === PointActionType.SPIN;
     return (
       <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
         {isPositive ? `+${rowData.points}` : `-${rowData.points}`} {t('common.points')}
@@ -176,14 +180,14 @@ export const Dashboard: React.FC = () => {
   };
 
   const statusBodyTemplate = (row: PointLedgerItem) => {
-    const status = (row.status || 'SUCCESS').toUpperCase();
-    if (status === 'SUCCESS') {
+    const status = (row.status || TransactionStatus.SUCCESS).toUpperCase();
+    if (status === TransactionStatus.SUCCESS) {
       return <Tag severity="success" value={t('common.success')} />;
     }
-    if (status === 'PENDING') {
+    if (status === TransactionStatus.PENDING) {
       return <Tag severity="warning" value={t('common.pending')} />;
     }
-    if (status === 'FAILED') {
+    if (status === TransactionStatus.FAILED) {
       return <Tag severity="danger" value={t('common.failed')} />;
     }
     return <Tag severity="secondary" value={status} />;
@@ -471,8 +475,8 @@ export const Dashboard: React.FC = () => {
                       </span>
                     </div>
                     <Tag
-                      severity={camp.status === 'ACTIVE' ? 'success' : 'secondary'}
-                      value={camp.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+                      severity={camp.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
+                      value={camp.status === CommonStatus.ACTIVE ? t('common.active') : t('common.inactive')}
                     />
                   </div>
                   <div className="text-xs text-blue-700 font-medium flex align-items-center gap-1">
@@ -589,18 +593,22 @@ export const Dashboard: React.FC = () => {
               field="transactionId"
               header={t('dashboard.tx_code')}
               body={(row: PointLedgerItem) => (
-                <span className="font-mono text-xs font-semibold text-slate-700">{row.transactionId}</span>
+                <span className="font-bold font-mono text-900 text-xs">{row.transactionId}</span>
               )}
             />
             <Column
               field="partnerCode"
               header={t('dashboard.partner_pos')}
-              body={(row: PointLedgerItem) => <Tag value={row.partnerCode || selectedTenant} severity="info" />}
+              body={(row: PointLedgerItem) => (
+                <span className="text-900 text-sm">{row.partnerCode || selectedTenant}</span>
+              )}
             />
             <Column
               field="externalUserId"
               header={t('dashboard.customer_id')}
-              body={(row: PointLedgerItem) => <span className="font-mono text-xs">{row.externalUserId}</span>}
+              body={(row: PointLedgerItem) => (
+                <span className="text-900 font-mono text-xs">{row.externalUserId}</span>
+              )}
             />
             <Column header={t('dashboard.action')} body={actionTypeBodyTemplate} />
             <Column header={t('dashboard.points_delta')} body={pointsBodyTemplate} />

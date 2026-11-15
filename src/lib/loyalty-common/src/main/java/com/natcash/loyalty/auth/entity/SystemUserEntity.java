@@ -75,6 +75,10 @@ public class SystemUserEntity {
     @Builder.Default
     private Integer failedLoginAttempts = 0;
 
+    @Column(name = "must_change_password", nullable = false)
+    @Builder.Default
+    private Boolean mustChangePassword = Boolean.FALSE;
+
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 

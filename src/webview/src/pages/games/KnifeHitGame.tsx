@@ -14,12 +14,22 @@ interface PinnedKnife {
   angle: number; // Angle relative to rotating log (+Y down = 0)
 }
 
+const KNIFE_BONUS_TYPES = {
+  RED_ENVELOPE: 'RED_ENVELOPE',
+  DATA_PACK: 'DATA_PACK',
+  GOLD_CHEST: 'GOLD_CHEST',
+  DIAMOND: 'DIAMOND',
+  GOLD_COIN: 'GOLD_COIN',
+} as const;
+
+type KnifeBonusType = (typeof KNIFE_BONUS_TYPES)[keyof typeof KNIFE_BONUS_TYPES];
+
 interface TargetItem {
   id: string;
   angle: number;
   icon: string;
   label: string;
-  type: 'RED_ENVELOPE' | 'DATA_PACK' | 'GOLD_CHEST' | 'DIAMOND' | 'GOLD_COIN';
+  type: KnifeBonusType;
   points: number;
   collected: boolean;
 }
@@ -488,7 +498,7 @@ export const KnifeHitGame: React.FC<KnifeHitGameProps> = ({ onBack, onClaimRewar
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText('👑', 0, -2);
-            } else if (item.type === 'DIAMOND') {
+            } else if (item.type === KNIFE_BONUS_TYPES.DIAMOND) {
               // 3D Brilliant Diamond Gem
               ctx.fillStyle = '#38BDF8';
               ctx.strokeStyle = '#FFFFFF';

@@ -17,8 +17,10 @@ import { InputSwitch } from 'primereact/inputswitch';
 import { Skeleton } from 'primereact/skeleton';
 import { ProgressBar } from 'primereact/progressbar';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { CommonStatus, CampaignMissionCategory, CustomerSegmentCode } from '@/models';
 import {
   LoyaltyService,
@@ -527,26 +529,10 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   // Cột Thao tác
   const actionTemplate = (rowData: CampaignMilestoneItem) => (
-    <div className="flex gap-2 justify-content-center">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        outlined
-        severity="warning"
-        size="small"
-        onClick={() => editItem(rowData)}
-        tooltip={t('common.edit')}
-      />
-      <Button
-        icon="pi pi-trash"
-        rounded
-        outlined
-        severity="danger"
-        size="small"
-        onClick={() => deleteItem(rowData)}
-        tooltip={t('common.delete')}
-      />
-    </div>
+    <StandardRowActions
+      onEdit={() => editItem(rowData)}
+      onDelete={() => deleteItem(rowData)}
+    />
   );
 
   // Cột Trạng thái
@@ -560,42 +546,34 @@ export const CampaignMilestonesPage: React.FC = () => {
 
   // Cột Chỉ tiêu đo lường
   const metricLabelTemplate = (row: CampaignMilestoneItem) => {
-    let icon = 'pi pi-dollar';
     let label = t('milestone.metric_bill');
     let unit = 'HTG';
 
     switch (row.targetMetric) {
       case CampaignMetric.BILL_AMOUNT:
-        icon = 'pi pi-dollar';
         label = t('milestone.metric_bill');
         unit = 'HTG';
         break;
       case CampaignMetric.TRANSACTION_COUNT:
-        icon = 'pi pi-sync';
         label = t('milestone.metric_tx_count');
         unit = t('milestone.unit_times');
         break;
       case CampaignMetric.EARN_POINTS:
-        icon = 'pi pi-star';
         label = t('milestone.metric_points');
         unit = t('common.points');
         break;
       case CampaignMetric.GAME_SPINS:
-        icon = 'pi pi-bolt';
         label = t('milestone.metric_spins');
         unit = t('common.spins');
         break;
     }
 
     return (
-      <div className="flex flex-column gap-1">
-        <div className="flex align-items-center gap-1 text-sm text-600">
-          <i className={`${icon} text-xs text-primary`} />
-          <span>{label}</span>
-        </div>
-        <span className="font-semibold text-900">
+      <div>
+        <div className="text-sm text-600">{label}</div>
+        <div className="font-normal text-900">
           {Number(row.targetValue).toLocaleString()} {unit}
-        </span>
+        </div>
       </div>
     );
   };
@@ -603,90 +581,48 @@ export const CampaignMilestonesPage: React.FC = () => {
   // Cột Phần thưởng tổng hợp
   const rewardTemplate = (row: CampaignMilestoneItem) => {
     const voucher = vouchers.find((v) => v.id === row.rewardVoucherId);
-
-    return (
-      <div className="flex flex-wrap gap-2 align-items-center">
-        {row.rewardPoints > 0 && (
-          <Tag
-            severity="warning"
-            icon="pi pi-star-fill"
-            value={`+${row.rewardPoints} ${t('common.points')}`}
-            title={t('milestone.reward_points_tooltip')}
-          />
-        )}
-        {row.rewardGameTurns > 0 && (
-          <Tag
-            severity="info"
-            icon="pi pi-bolt"
-            value={`+${row.rewardGameTurns} ${t('common.spins')}`}
-            title={t('milestone.reward_turns_tooltip')}
-          />
-        )}
-        {voucher && (
-          <Tag
-            severity="success"
-            icon="pi pi-ticket"
-            value={voucher.voucherCode}
-            title={`${voucher.title} (${voucher.discountValue} ${voucher.discountType === 'PERCENTAGE' ? '%' : 'HTG'})`}
-          />
-        )}
-        {row.rewardPoints === 0 && row.rewardGameTurns === 0 && !voucher && (
-          <span className="text-400 text-xs italic">--</span>
-        )}
-      </div>
-    );
+    const parts: string[] = [];
+    if (row.rewardPoints > 0) parts.push(`+${row.rewardPoints} ${t('common.points')}`);
+    if (row.rewardGameTurns > 0) parts.push(`+${row.rewardGameTurns} ${t('common.spins')}`);
+    if (voucher) parts.push(voucher.voucherCode);
+    if (parts.length === 0) return <span className="text-400 italic">--</span>;
+    return <span className="text-900">{parts.join(' | ')}</span>;
   };
 
-  // Header của DataTable
-  const header = (
-    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
-      <div className="flex align-items-center gap-2">
-        <Button
-          type="button"
-          icon="pi pi-plus"
-          label={t('milestone.add_new')}
-          severity="success"
-          onClick={openNew}
-        />
-        <Button
-          type="button"
-          icon="pi pi-refresh"
-          severity="secondary"
-          outlined
-          onClick={() => {
-            fetchMilestones(selectedTenant);
-            fetchPartners(selectedTenant);
-            fetchVouchers(selectedTenant);
-          }}
-          loading={loading}
-          tooltip={t('common.reload')}
-        />
-      </div>
-
-      <div className="flex flex-wrap align-items-center gap-2">
-        <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-
-        <Dropdown
-          value={selectedPartnerFilter}
-          options={partnerFilterOptions}
-          onChange={(e) => setSelectedPartnerFilter(e.value)}
-          placeholder={t('milestone.filter_partner')}
-          className="p-inputtext-sm w-15rem"
-        />
-
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            type="search"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={t('common.search')}
-            className="w-16rem p-inputtext-sm"
-          />
-        </span>
-      </div>
-    </div>
-  );
+  // Xuất Excel
+  const handleExport = () => {
+    exportToExcel(
+      filteredCampaigns.map((c, idx) => ({
+        stt: idx + 1,
+        milestoneStep: c.milestoneStep,
+        campaignCode: c.campaignCode,
+        campaignName: c.campaignName,
+        partnerName: c.partnerName || (c.partnerId ? `ID #${c.partnerId}` : t('milestone.alliance_scope')),
+        targetMetric: c.targetMetric,
+        targetValue: c.targetValue,
+        rewardPoints: c.rewardPoints,
+        rewardGameTurns: c.rewardGameTurns,
+        startDate: c.startDate,
+        endDate: c.endDate,
+        status: c.status,
+      })),
+      [
+        { key: 'stt', header: t('common.no_order') },
+        { key: 'milestoneStep', header: t('milestone.step') },
+        { key: 'campaignCode', header: t('milestone.code') },
+        { key: 'campaignName', header: t('milestone.campaign_name') },
+        { key: 'partnerName', header: t('milestone.applicable_partner') },
+        { key: 'targetMetric', header: t('milestone.metric') },
+        { key: 'targetValue', header: t('milestone.target_value') },
+        { key: 'rewardPoints', header: t('common.points') },
+        { key: 'rewardGameTurns', header: t('common.spins') },
+        { key: 'startDate', header: t('common.start_date') },
+        { key: 'endDate', header: t('common.end_date') },
+        { key: 'status', header: t('common.status') },
+      ],
+      `Chien_Dich_Cot_Moc_${selectedTenant}`
+    );
+  };
 
   // Options cho Chỉ tiêu
   const metricOptions = [
@@ -703,132 +639,145 @@ export const CampaignMilestonesPage: React.FC = () => {
   ];
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} position="top-center" />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.milestones') }]} />
+      <StandardPageHeader
+        title={t('nav.milestones')}
+        subtitle={t('campaign.page_subtitle', 'Quản lý chiến dịch tích lũy, các cột mốc chặng và luật thưởng')}
+        breadcrumbs={[{ label: t('nav.milestones') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={handleTenantChange}
+        primaryAction={{
+          label: t('common.add_new'),
+          icon: 'pi pi-plus',
+          onClick: openNew,
+        }}
+        extraActions={[
+          {
+            label: t('campaign.open_copilot'),
+            icon: 'pi pi-sparkles',
+            severity: 'help',
+            outlined: true,
+            onClick: () => setCopilotVisible(true),
+          },
+        ]}
+      />
 
-      <div className="flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-        <div className="flex align-items-center gap-2">
-          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-        </div>
-        <Button
-          type="button"
-          icon="pi pi-sparkles"
-          label={t('campaign.open_copilot')}
-          severity="help"
-          outlined
-          onClick={() => setCopilotVisible(true)}
-        />
-      </div>
-
-      <div className="card shadow-1 border-round surface-card p-4">
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
         <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
           <TabPanel header={t('campaign.tab_milestones')} leftIcon="pi pi-flag mr-2">
-        <DataTable<any>
-          value={filteredCampaigns}
-          selection={selectedCampaigns}
-          onSelectionChange={(e) => setSelectedCampaigns(e.value as CampaignMilestoneItem[])}
-          dataKey="id"
-          paginator
-          rows={10}
-          loading={loading}
-          rowsPerPageOptions={[5, 10, 25]}
-          header={header}
-          globalFilter={globalFilter}
-          globalFilterFields={['campaignCode', 'campaignName', 'partnerCode', 'partnerName']}
-          responsiveLayout="scroll"
-          emptyMessage={t('common.no_data')}
-        >
-          <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
-          <Column
-            header={t('common.no_order')}
-            body={(_row: CampaignMilestoneItem, { rowIndex }: { rowIndex: number }) => (
-              <span className="text-600 font-medium">{rowIndex + 1}</span>
-            )}
-            style={{ width: '3.5rem', textAlign: 'center' }}
-          />
-          <Column
-            header={t('common.action')}
-            body={actionTemplate}
-            exportable={false}
-            style={{ width: '6.5rem', textAlign: 'center' }}
-          />
-          <Column
-            field="milestoneStep"
-            header={<span title={t('milestone.step_tooltip')}>{t('milestone.step')}</span>}
-            body={(row: CampaignMilestoneItem) => (
-              <Tag
-                value={t('milestone.step_label', { step: row.milestoneStep })}
-                severity={row.milestoneStep === 1 ? 'info' : row.milestoneStep === 2 ? 'warning' : 'danger'}
-                rounded
+            <UniversalFilterBar
+              searchValue={globalFilter}
+              onSearchChange={setGlobalFilter}
+              searchPlaceholder={t('common.search')}
+              basicFilters={[
+                {
+                  key: 'partnerId',
+                  label: t('milestone.filter_partner'),
+                  value: selectedPartnerFilter,
+                  options: partnerFilterOptions,
+                  onChange: (val) => setSelectedPartnerFilter(val),
+                  placeholder: t('milestone.filter_partner'),
+                },
+              ]}
+              onExport={handleExport}
+              onReset={() => {
+                setGlobalFilter('');
+                setSelectedPartnerFilter('ALL');
+              }}
+              onRefresh={() => {
+                fetchMilestones(selectedTenant);
+                fetchPartners(selectedTenant);
+                fetchVouchers(selectedTenant);
+              }}
+            />
+
+            <DataTable<any>
+              value={filteredCampaigns}
+              selection={selectedCampaigns}
+              onSelectionChange={(e) => setSelectedCampaigns(e.value as CampaignMilestoneItem[])}
+              dataKey="id"
+              paginator
+              rows={10}
+              loading={loading}
+              rowsPerPageOptions={[5, 10, 25, 50]}
+              responsiveLayout="scroll"
+              emptyMessage={t('common.no_data')}
+            >
+              <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
+              <Column
+                header={t('common.no_order')}
+                body={(_row: CampaignMilestoneItem, { rowIndex }: { rowIndex: number }) => (
+                  <span className="text-600 font-medium">{rowIndex + 1}</span>
+                )}
+                style={{ width: '3.5rem', textAlign: 'center' }}
               />
-            )}
-            sortable
-            style={{ textAlign: 'center', width: '6.5rem' }}
-          />
-          <Column
-            field="campaignCode"
-            header={t('milestone.code')}
-            body={(row: CampaignMilestoneItem) => (
-              <div>
-                <div className="font-semibold text-primary">{row.campaignCode}</div>
-                <div className="text-sm text-700">{row.campaignName}</div>
-              </div>
-            )}
-            sortable
-            style={{ minWidth: '13rem' }}
-          />
-          <Column
-            header={<span title={t('milestone.applicable_partner_tooltip')}>{t('milestone.applicable_partner')}</span>}
-            body={(row: CampaignMilestoneItem) => {
-              if (!row.partnerId) {
-                return (
-                  <Tag
-                    severity="info"
-                    icon="pi pi-globe"
-                    value={t('milestone.alliance_scope')}
-                  />
-                );
-              }
-              const partner = partners.find((p) => p.id === row.partnerId);
-              const name = row.partnerName || partner?.partnerName || row.partnerCode || `ID #${row.partnerId}`;
-              return (
-                <Tag
-                  severity="secondary"
-                  icon="pi pi-building"
-                  value={name}
-                />
-              );
-            }}
-            sortable
-            style={{ minWidth: '12rem' }}
-          />
-          <Column
-            field="targetMetric"
-            header={<span title={t('milestone.metric_tooltip')}>{t('milestone.metric')}</span>}
-            body={metricLabelTemplate}
-            sortable
-            style={{ minWidth: '12rem' }}
-          />
-          <Column
-            header={<span title={t('milestone.reward_points_tooltip')}>{t('common.reward')}</span>}
-            body={rewardTemplate}
-            style={{ minWidth: '13rem' }}
-          />
-          <Column
-            field="startDate"
-            header={<span title={t('milestone.date_range')}>{t('milestone.date_range')}</span>}
-            body={(row: CampaignMilestoneItem) => (
-              <span className="text-sm text-600">
-                {row.startDate} &rarr; {row.endDate}
-              </span>
-            )}
-            sortable
-            style={{ minWidth: '11rem', textAlign: 'center' }}
-          />
-          <Column field="status" header={t('common.status')} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-        </DataTable>
+              <Column
+                header={t('common.action')}
+                body={actionTemplate}
+                exportable={false}
+                style={{ width: '7rem', textAlign: 'center' }}
+              />
+              <Column
+                field="milestoneStep"
+                header={t('milestone.step')}
+                body={(row: CampaignMilestoneItem) => (
+                  <span className="text-900 font-medium">{t('milestone.step_label', { step: row.milestoneStep })}</span>
+                )}
+                sortable
+                style={{ textAlign: 'center', width: '6.5rem' }}
+              />
+              <Column
+                field="campaignCode"
+                header={t('milestone.code')}
+                body={(row: CampaignMilestoneItem) => (
+                  <div>
+                    <span className="font-bold font-mono text-900">{row.campaignCode}</span>
+                    <div className="text-sm text-700">{row.campaignName}</div>
+                  </div>
+                )}
+                sortable
+                style={{ minWidth: '13rem' }}
+              />
+              <Column
+                header={t('milestone.applicable_partner')}
+                body={(row: CampaignMilestoneItem) => {
+                  if (!row.partnerId) {
+                    return <span className="text-900">{t('milestone.alliance_scope')}</span>;
+                  }
+                  const partner = partners.find((p) => p.id === row.partnerId);
+                  const name = row.partnerName || partner?.partnerName || row.partnerCode || `ID #${row.partnerId}`;
+                  return <span className="text-900">{name}</span>;
+                }}
+                sortable
+                style={{ minWidth: '12rem' }}
+              />
+              <Column
+                field="targetMetric"
+                header={t('milestone.metric')}
+                body={metricLabelTemplate}
+                sortable
+                style={{ minWidth: '12rem' }}
+              />
+              <Column
+                header={t('common.reward')}
+                body={rewardTemplate}
+                style={{ minWidth: '13rem' }}
+              />
+              <Column
+                field="startDate"
+                header={t('milestone.date_range')}
+                body={(row: CampaignMilestoneItem) => (
+                  <span className="text-sm text-900">
+                    {row.startDate} → {row.endDate}
+                  </span>
+                )}
+                sortable
+                style={{ minWidth: '11rem', textAlign: 'center' }}
+              />
+              <Column field="status" header={t('common.status')} body={statusTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+            </DataTable>
           </TabPanel>
 
           <TabPanel header={t('campaign.tab_rule_builder')} leftIcon="pi pi-sliders-h mr-2">
@@ -863,18 +812,18 @@ export const CampaignMilestonesPage: React.FC = () => {
               <div className="flex flex-column gap-2"><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /><Skeleton height="2.5rem" /></div>
             ) : (
               <DataTable<CampaignRuleModel[]> value={rules} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('campaign.no_rules')}>
-                <Column field="ruleCode" header={t('campaign.rule_code')} body={(r: CampaignRuleModel) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.ruleCode}</span>} style={{ minWidth: '10rem' }} />
+                <Column field="ruleCode" header={t('campaign.rule_code')} body={(r: CampaignRuleModel) => <span className="font-bold font-mono text-900">{r.ruleCode}</span>} style={{ minWidth: '10rem' }} />
                 <Column field="campaignName" header={t('campaign.rule_name')} style={{ minWidth: '14rem' }} />
-                <Column field="missionCategory" header={t('campaign.mission_category')} body={(r: CampaignRuleModel) => <Tag value={r.missionCategory} severity="info" />} style={{ minWidth: '11rem' }} />
-                <Column header={t('campaign.when_if_col')} body={(r: CampaignRuleModel) => <div className="text-xs font-mono"><div>{t('campaign.when_prefix')}: {r.whenEvent}</div><div className="text-500">{t('campaign.min_bill_prefix')}: {Number(r.ifMinBillAmount || 0).toLocaleString()}</div></div>} style={{ minWidth: '13rem' }} />
+                <Column field="missionCategory" header={t('campaign.mission_category')} body={(r: CampaignRuleModel) => <span className="text-900">{r.missionCategory}</span>} style={{ minWidth: '11rem' }} />
+                <Column header={t('campaign.when_if_col')} body={(r: CampaignRuleModel) => <div className="text-xs"><div>{t('campaign.when_prefix')}: {r.whenEvent}</div><div className="text-500">{t('campaign.min_bill_prefix')}: {Number(r.ifMinBillAmount || 0).toLocaleString()}</div></div>} style={{ minWidth: '13rem' }} />
                 <Column header={t('campaign.then_limits_col')} body={(r: CampaignRuleModel) => <div className="text-xs"><div>{t('campaign.rule_reward_summary', { points: r.thenRewardPoints, turns: r.thenRewardTurns })}</div><div className="text-500">{t('campaign.rule_limit_summary', { perUser: r.limitMaxPerUser ?? '∞', total: r.limitMaxTotal ?? '∞' })}</div></div>} style={{ minWidth: '12rem' }} />
                 <Column field="status" header={t('common.status')} body={(r: CampaignRuleModel) => <Tag value={r.status} severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
                 <Column header={t('common.action')} body={(r: CampaignRuleModel) => (
-                  <div className="flex gap-1">
-                    <Button icon="pi pi-pencil" text rounded size="small" onClick={() => { setRuleForm(r); setShowRuleDialog(true); }} />
-                    <Button icon="pi pi-trash" text rounded severity="danger" size="small" onClick={() => handleDeleteRule(r)} />
-                  </div>
-                )} style={{ minWidth: '7rem' }} />
+                  <StandardRowActions
+                    onEdit={() => { setRuleForm(r); setShowRuleDialog(true); }}
+                    onDelete={() => handleDeleteRule(r)}
+                  />
+                )} style={{ minWidth: '7rem', textAlign: 'center' }} />
               </DataTable>
             )}
           </TabPanel>

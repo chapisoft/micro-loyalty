@@ -36,6 +36,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -55,7 +56,9 @@ public class AdminUserController {
     public ResponseEntity<AdminUserPageResponse> getUsers(
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
             @RequestParam(value = "size", required = false, defaultValue = "20") int size,
-            @RequestParam(value = "search", required = false) String search) {
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "roleId", required = false) Long roleId,
+            @RequestParam(value = "status", required = false) String status) {
 
         String tenantId = TenantContext.getTenantId();
         List<SystemUserEntity> entities = systemUserRepository.findByTenantIdOrderByIdAsc(tenantId);
@@ -67,6 +70,18 @@ public class AdminUserController {
                     .filter(u -> (u.getUsername() != null && u.getUsername().toLowerCase().contains(keyword))
                             || (u.getFullName() != null && u.getFullName().toLowerCase().contains(keyword))
                             || (u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword)))
+                    .toList();
+        }
+
+        if (roleId != null) {
+            list = list.stream()
+                    .filter(u -> u.getRoles() != null && u.getRoles().stream().anyMatch(r -> roleId.equals(r.getRoleId())))
+                    .toList();
+        }
+
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            list = list.stream()
+                    .filter(u -> status.equalsIgnoreCase(u.getStatus()))
                     .toList();
         }
 
@@ -255,6 +270,62 @@ public class AdminUserController {
                 .build());
     }
 
+    @PostMapping("/{id}/reset-password")
+    @Transactional
+    @Operation(summary = "Đặt lại mật khẩu người dùng", description = "Tạo mật khẩu ngẫu nhiên hoặc gán mật khẩu mới theo yêu cầu")
+    public ResponseEntity<Map<String, Object>> resetPassword(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, String> request) {
+        String tenantId = TenantContext.getTenantId();
+        SystemUserEntity user = systemUserRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new LoyaltyException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        MessageUtils.getMessage("admin.users.not_found")));
+
+        String newPassword = request != null && request.containsKey("newPassword") && !request.get("newPassword").isBlank()
+                ? request.get("newPassword").trim()
+                : "Natcash@" + (1000 + (int)(Math.random() * 9000));
+
+        user.setPasswordHash(PasswordHashUtils.hashPassword(newPassword));
+        user.setMustChangePassword(Boolean.TRUE);
+        user.setFailedLoginAttempts(0);
+        systemUserRepository.save(user);
+
+        return ResponseEntity.ok(Map.of(
+                "status", HttpStatus.OK.value(),
+                "message", "Đặt lại mật khẩu thành công",
+                "temporaryPassword", newPassword
+        ));
+    }
+
+    @PostMapping("/{id}/roles")
+    @Transactional
+    @Operation(summary = "Gán vai trò cho người dùng")
+    public ResponseEntity<AdminUserDetailResponse> assignRoles(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, List<Long>> body) {
+        String tenantId = TenantContext.getTenantId();
+        SystemUserEntity existing = systemUserRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new LoyaltyException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        MessageUtils.getMessage("admin.users.not_found")));
+
+        List<Long> roleIds = body != null ? body.get("roleIds") : null;
+        if (roleIds != null) {
+            Set<SystemRoleEntity> assignedRoles = new LinkedHashSet<>(
+                    systemRoleRepository.findAllById(roleIds).stream()
+                            .filter(role -> tenantId.equalsIgnoreCase(role.getTenantId()))
+                            .toList());
+            existing.setRoles(assignedRoles);
+        }
+        SystemUserEntity saved = systemUserRepository.save(existing);
+        return ResponseEntity.ok(AdminUserDetailResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message(MessageUtils.getMessage("admin.users.update_success"))
+                .data(toDto(saved))
+                .build());
+    }
+
     private AdminUserDto toDto(SystemUserEntity entity) {
         List<AdminRoleDto> roleDtos = entity.getRoles() != null
                 ? entity.getRoles().stream()
@@ -277,8 +348,10 @@ public class AdminUserController {
                 .fullName(entity.getFullName())
                 .phone(entity.getPhone())
                 .avatarUrl(entity.getAvatarUrl())
+                .status(entity.getStatus() != null ? entity.getStatus().name() : CommonStatus.ACTIVE.name())
                 .isActive(entity.getStatus() == CommonStatus.ACTIVE ? 1 : 0)
                 .isLocked(entity.getStatus() == CommonStatus.LOCKED ? 1 : 0)
+                .mustChangePassword(entity.getMustChangePassword())
                 .failedLoginAttempts(entity.getFailedLoginAttempts() != null ? entity.getFailedLoginAttempts() : 0)
                 .lastLoginAt(entity.getLastLoginAt() != null ? entity.getLastLoginAt().toString() : null)
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null)
@@ -313,8 +386,10 @@ public class AdminUserController {
         private String fullName;
         private String phone;
         private String avatarUrl;
+        private String status;
         private Integer isActive;
         private Integer isLocked;
+        private Boolean mustChangePassword;
         private Integer failedLoginAttempts;
         private String lastLoginAt;
         private String createdAt;

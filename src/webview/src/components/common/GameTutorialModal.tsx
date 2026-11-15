@@ -63,7 +63,7 @@ export const GameTutorialModal: React.FC<GameTutorialModalProps> = ({
           <button
             onClick={handleClose}
             className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 hover:text-white transition border border-slate-700 shrink-0 ml-2"
-            aria-label="Close"
+            aria-label={t('nav.close')}
           >
             <X className="w-4 h-4" />
           </button>

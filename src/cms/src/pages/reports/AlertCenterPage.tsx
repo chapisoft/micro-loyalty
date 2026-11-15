@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -13,6 +13,10 @@ import { AppBreadcrumb } from 'components';
 import { TenantSelector } from '@/components/TenantSelector';
 import { AlertSeverity, AlertStatus } from '@/models';
 import { LoyaltyService, SystemAlertModel } from '@/service/loyalty.service';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 
 export const AlertCenterPage: React.FC = () => {
   const { t } = useTranslation();
@@ -23,6 +27,7 @@ export const AlertCenterPage: React.FC = () => {
   );
   const [alerts, setAlerts] = useState<SystemAlertModel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>(AlertStatus.OPEN);
   const [resolveTarget, setResolveTarget] = useState<SystemAlertModel | null>(null);
@@ -76,6 +81,40 @@ export const AlertCenterPage: React.FC = () => {
     }
   };
 
+  const filteredAlerts = useMemo(() => {
+    if (!keyword.trim()) return alerts;
+    const kw = keyword.toLowerCase();
+    return alerts.filter(
+      (a) =>
+        a.alertCode?.toLowerCase().includes(kw) ||
+        a.title?.toLowerCase().includes(kw) ||
+        a.message?.toLowerCase().includes(kw) ||
+        a.category?.toLowerCase().includes(kw)
+    );
+  }, [alerts, keyword]);
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredAlerts,
+      [
+        { header: t('alert.code'), field: 'alertCode' },
+        { header: t('alert.severity'), field: 'severity' },
+        { header: t('alert.category'), field: 'category' },
+        { header: t('alert.subject'), field: 'title' },
+        { header: t('common.description'), field: 'message' },
+        { header: t('common.status'), field: 'status' },
+        { header: t('common.created_at'), field: 'createdAt' },
+      ],
+      'canh_bao_he_thong'
+    );
+  };
+
+  const handleResetFilters = () => {
+    setKeyword('');
+    setSeverityFilter('ALL');
+    setStatusFilter('ALL');
+  };
+
   const severityTag = (sev: string) => {
     switch (sev) {
       case AlertSeverity.CRITICAL:
@@ -99,80 +138,181 @@ export const AlertCenterPage: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
       <AppBreadcrumb items={[{ label: t('nav.alerts') }]} />
 
+      <StandardPageHeader
+        title={t('alert.title')}
+        subtitle={t('alert.subtitle')}
+        extraLeft={<TenantSelector value={selectedTenant} onChange={setSelectedTenant} />}
+        onRefresh={fetchAlerts}
+        refreshLoading={loading}
+      />
+
       <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">
-              {t('alert.title')}
-            </h4>
-            <p className="m-0 text-xs text-500 mt-1">
-              {t('alert.subtitle')}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Dropdown
-              value={severityFilter}
-              options={[
-                { label: t('common.all'), value: 'ALL' },
-                ...Object.values(AlertSeverity).map((v) => ({ label: v, value: v })),
-              ]}
-              onChange={(e) => setSeverityFilter(e.value)}
-              className="w-11rem"
-            />
-            <Dropdown
-              value={statusFilter}
-              options={[
-                { label: t('common.all'), value: 'ALL' },
-                ...Object.values(AlertStatus).map((v) => ({ label: v, value: v })),
-              ]}
-              onChange={(e) => setStatusFilter(e.value)}
-              className="w-12rem"
-            />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchAlerts} loading={loading} />
-          </div>
-        </div>
+        <UniversalFilterBar
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder={t('common.search')}
+          primaryFilters={
+            <>
+              <Dropdown
+                value={severityFilter}
+                options={[
+                  { label: `${t('alert.severity')}: ${t('common.all')}`, value: 'ALL' },
+                  ...Object.values(AlertSeverity).map((v) => ({ label: v, value: v })),
+                ]}
+                onChange={(e) => setSeverityFilter(e.value)}
+                className="w-13rem"
+              />
+              <Dropdown
+                value={statusFilter}
+                options={[
+                  { label: `${t('common.status')}: ${t('common.all')}`, value: 'ALL' },
+                  ...Object.values(AlertStatus).map((v) => ({ label: v, value: v })),
+                ]}
+                onChange={(e) => setStatusFilter(e.value)}
+                className="w-13rem"
+              />
+            </>
+          }
+          onReset={handleResetFilters}
+          onExport={handleExport}
+        />
 
         {loading ? (
-          <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
+          <div className="flex flex-column gap-2 mt-3">
+            <Skeleton height="2.75rem" />
+            <Skeleton height="2.75rem" />
+            <Skeleton height="2.75rem" />
+          </div>
         ) : (
-          <DataTable<SystemAlertModel[]> value={alerts} paginator rows={15} stripedRows responsiveLayout="scroll" emptyMessage={t('alert.empty')}>
-            <Column field="alertCode" header={t('alert.code')} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.alertCode}</span>} style={{ minWidth: '12rem' }} />
-            <Column field="severity" header={t('alert.severity')} body={(r) => <Tag value={r.severity} severity={severityTag(r.severity)} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
-            <Column field="category" header={t('alert.category')} body={(r) => <span className="font-mono text-xs">{r.category}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="title" header={t('alert.subject')} body={(r) => <div><div>{r.title}</div><div className="text-xs text-500">{r.message}</div></div>} style={{ minWidth: '18rem' }} />
-            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusTag(r.status)} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
-            <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+          <DataTable<SystemAlertModel[]>
+            value={filteredAlerts}
+            paginator
+            rows={15}
+            stripedRows
+            responsiveLayout="scroll"
+            emptyMessage={t('alert.empty')}
+            className="mt-3"
+          >
             <Column
-              header={t('common.action')}
-              body={(r) => (
-                <div className="flex gap-1">
-                  {r.status === AlertStatus.OPEN && (
-                    <Button label={t('alert.ack_btn')} size="small" outlined severity="info" onClick={() => handleAcknowledge(r)} />
-                  )}
-                  {r.status !== AlertStatus.RESOLVED && (
-                    <Button label={t('alert.resolve_btn')} size="small" outlined severity="success" onClick={() => { setResolveTarget(r); setResolveNote(''); }} />
-                  )}
+              field="alertCode"
+              header={t('alert.code')}
+              body={(r: SystemAlertModel) => (
+                <span className="font-bold font-mono text-900">{r.alertCode}</span>
+              )}
+              style={{ minWidth: '12rem' }}
+            />
+            <Column
+              field="severity"
+              header={t('alert.severity')}
+              body={(r: SystemAlertModel) => (
+                <Tag value={r.severity} severity={severityTag(r.severity)} />
+              )}
+              style={{ minWidth: '8rem', textAlign: 'center' }}
+            />
+            <Column
+              field="category"
+              header={t('alert.category')}
+              body={(r: SystemAlertModel) => (
+                <span className="text-900 text-sm">{r.category}</span>
+              )}
+              style={{ minWidth: '10rem' }}
+            />
+            <Column
+              field="title"
+              header={t('alert.subject')}
+              body={(r: SystemAlertModel) => (
+                <div>
+                  <div className="text-900 font-medium text-sm">{r.title}</div>
+                  <div className="text-xs text-500 mt-1">{r.message}</div>
                 </div>
               )}
+              style={{ minWidth: '18rem' }}
+            />
+            <Column
+              field="status"
+              header={t('common.status')}
+              body={(r: SystemAlertModel) => (
+                <Tag value={r.status} severity={statusTag(r.status)} />
+              )}
+              style={{ minWidth: '9rem', textAlign: 'center' }}
+            />
+            <Column
+              field="createdAt"
+              header={t('common.created_at')}
+              body={(r: SystemAlertModel) => (
+                <span className="text-900 font-mono text-sm">
+                  {r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}
+                </span>
+              )}
               style={{ minWidth: '11rem' }}
+            />
+            <Column
+              header={t('common.action')}
+              body={(r: SystemAlertModel) => (
+                <StandardRowActions
+                  actions={[
+                    ...(r.status === AlertStatus.OPEN
+                      ? [
+                          {
+                            icon: 'pi pi-check',
+                            label: t('alert.ack_btn', 'Tiếp nhận'),
+                            severity: 'info' as const,
+                            onClick: () => handleAcknowledge(r),
+                          },
+                        ]
+                      : []),
+                    ...(r.status !== AlertStatus.RESOLVED
+                      ? [
+                          {
+                            icon: 'pi pi-check-circle',
+                            label: t('alert.resolve_btn', 'Xử lý'),
+                            severity: 'success' as const,
+                            onClick: () => {
+                              setResolveTarget(r);
+                              setResolveNote('');
+                            },
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              )}
+              style={{ minWidth: '8rem', textAlign: 'center' }}
             />
           </DataTable>
         )}
       </div>
 
-      <Dialog visible={!!resolveTarget} onHide={() => setResolveTarget(null)} header={resolveTarget ? `${t('alert.resolve_title')} · ${resolveTarget.alertCode}` : ''} style={{ width: '32rem' }} modal>
+      <Dialog
+        visible={!!resolveTarget}
+        onHide={() => setResolveTarget(null)}
+        header={resolveTarget ? `${t('alert.resolve_title')} · ${resolveTarget.alertCode}` : ''}
+        style={{ width: '32rem' }}
+        modal
+      >
         <div className="flex flex-column gap-3">
-          <div className="text-sm text-700">{resolveTarget?.title}</div>
-          <InputTextarea rows={3} value={resolveNote} onChange={(e) => setResolveNote(e.target.value)} placeholder={t('alert.resolve_note')} className="w-full" />
+          <div className="text-sm text-900 font-medium">{resolveTarget?.title}</div>
+          <InputTextarea
+            rows={3}
+            value={resolveNote}
+            onChange={(e) => setResolveNote(e.target.value)}
+            placeholder={t('alert.resolve_note')}
+            className="w-full"
+          />
         </div>
         <div className="flex justify-content-end gap-2 mt-3">
           <Button label={t('common.cancel')} outlined onClick={() => setResolveTarget(null)} />
-          <Button label={t('alert.resolve_confirm')} severity="success" icon="pi pi-check" onClick={handleResolve} loading={submitting} />
+          <Button
+            label={t('alert.resolve_confirm')}
+            severity="success"
+            icon="pi pi-check"
+            onClick={handleResolve}
+            loading={submitting}
+          />
         </div>
       </Dialog>
     </div>

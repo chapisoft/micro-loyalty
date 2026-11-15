@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
@@ -8,6 +7,7 @@ import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { TenantSelector } from '@/components/TenantSelector';
 import { NotificationCategory } from '@/models';
 import { LoyaltyService, PartnerNotificationModel } from '@/service/loyalty.service';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 
 export const PartnerNotificationsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -39,27 +39,28 @@ export const PartnerNotificationsPage: React.FC = () => {
       await LoyaltyService.markPartnerNotificationRead(n.id, selectedTenant);
       setItems((prev) => prev.map((it) => (it.id === n.id ? { ...it, isRead: true } : it)));
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+      toast.current?.show({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: err?.response?.data?.message || err.message,
+      });
     }
   };
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} />
       <AppBreadcrumb items={[{ label: t('partner_portal.nav_notifications') }]} />
 
-      <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">{t('partner_portal.notifications_title')}</h4>
-            <p className="m-0 text-xs text-500 mt-1">{t('partner_portal.notifications_subtitle')}</p>
-          </div>
-          <div className="flex gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchNotifications} loading={loading} />
-          </div>
-        </div>
+      <StandardPageHeader
+        title={t('partner_portal.notifications_title')}
+        subtitle={t('partner_portal.notifications_subtitle')}
+        extraLeft={<TenantSelector value={selectedTenant} onChange={setSelectedTenant} />}
+        onRefresh={fetchNotifications}
+        refreshLoading={loading}
+      />
 
+      <div className="card shadow-1 border-round surface-card p-4">
         {loading ? (
           <div className="flex flex-column gap-3">
             {[1, 2, 3, 4].map((idx) => (
@@ -68,8 +69,9 @@ export const PartnerNotificationsPage: React.FC = () => {
           </div>
         ) : items.length === 0 ? (
           <div className="text-center p-6 border-1 surface-border border-round surface-50">
-            <i className="pi pi-inbox text-4xl text-400 mb-3 block" />
-            <div className="text-700 font-medium mb-1">{t('partner_portal.no_notifications_title')}</div>
+            <div className="text-900 font-medium mb-1">
+              {t('partner_portal.no_notifications_title')}
+            </div>
             <div className="text-xs text-500">{t('partner_portal.no_notifications_desc')}</div>
           </div>
         ) : (
@@ -84,11 +86,26 @@ export const PartnerNotificationsPage: React.FC = () => {
               >
                 <div className="flex flex-column gap-1">
                   <div className="flex align-items-center gap-2">
-                    <Tag value={n.category} severity={n.category === NotificationCategory.ALERT ? 'danger' : n.category === NotificationCategory.SETTLEMENT ? 'warning' : 'info'} />
-                    <span className={n.isRead ? 'text-800 font-medium' : 'text-900 font-semibold'}>{n.title}</span>
+                    <Tag
+                      value={n.category}
+                      severity={
+                        n.category === NotificationCategory.ALERT
+                          ? 'danger'
+                          : n.category === NotificationCategory.SETTLEMENT
+                          ? 'warning'
+                          : 'info'
+                      }
+                    />
+                    <span
+                      className={
+                        n.isRead ? 'text-800 font-medium text-sm' : 'text-900 font-semibold text-sm'
+                      }
+                    >
+                      {n.title}
+                    </span>
                     {!n.isRead && <Tag value={t('partner_portal.unread')} severity="info" />}
                   </div>
-                  <span className="text-sm text-600">{n.message}</span>
+                  <span className="text-sm text-700">{n.message}</span>
                 </div>
                 <span className="font-mono text-xs text-500 white-space-nowrap">
                   {n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : '--'}

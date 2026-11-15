@@ -227,7 +227,7 @@ export function SandboxGroupsPage() {
             <InputText
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="VD: Banking Partners High Security"
+              placeholder={t('sandbox.group_name')}
               className="w-full p-inputtext-sm"
             />
           </div>

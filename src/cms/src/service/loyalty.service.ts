@@ -272,6 +272,18 @@ export const LoyaltyService = {
     }
   },
 
+  async deleteTier(id: number, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    try {
+      const response: any = await apiClient.delete(`/loyalty/v1/tiers/${id}`, {
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return response?.data || response;
+    } catch (err) {
+      console.error('Error deleting tier:', err);
+      throw err;
+    }
+  },
+
   // 2. Quản lý Chính sách Tích/Tiêu điểm (CRUD)
   async getPolicies(tenantId: string = 'TENANT_NATCASH'): Promise<PolicyRuleModel[]> {
     try {
@@ -675,6 +687,13 @@ export const LoyaltyService = {
 
   async saveGame(data: any, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
     const response: any = await apiClient.post('/gamehub/v1/admin/games', data, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return response?.data || response;
+  },
+
+  async deleteGame(gameId: number | string, tenantId: string = 'TENANT_NATCASH'): Promise<any> {
+    const response: any = await apiClient.delete(`/gamehub/v1/admin/games/${gameId}`, {
       headers: { 'X-Tenant-Id': tenantId },
     });
     return response?.data || response;

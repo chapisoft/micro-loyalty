@@ -5,6 +5,7 @@ import com.natcash.loyalty.campaign.entity.LoyaltyMonthlyBudgetEntity;
 import com.natcash.loyalty.campaign.repository.CampaignControlGroupRepository;
 import com.natcash.loyalty.campaign.repository.CampaignRuleConditionRepository;
 import com.natcash.loyalty.campaign.repository.LoyaltyMonthlyBudgetRepository;
+import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.ControlBucketGroup;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.ledger.repository.PointExpirationBucketRepository;
@@ -126,7 +127,7 @@ public class ReportController {
         String tenantId = resolveTenantId(headerTenantId);
         Map<String, Object> result = new LinkedHashMap<>(payload);
         result.put("tenantId", tenantId);
-        result.putIfAbsent("status", "ACTIVE");
+        result.putIfAbsent("status", CommonStatus.ACTIVE.name());
         return ResponseEntity.ok(result);
     }
 

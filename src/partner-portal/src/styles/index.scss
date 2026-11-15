@@ -590,7 +590,23 @@ header.sticky {
       padding: 0.85rem 1rem !important;
       color: #1e293b !important;
       font-size: 0.9rem !important;
+      font-weight: 400 !important;
       border-bottom: 1px solid #f1f5f9 !important;
+
+      // Status tags inside datatable must be font-weight: 400 with soft styling
+      .p-tag {
+        font-weight: 400 !important;
+        font-size: 0.84rem !important;
+        border-radius: 9999px !important;
+        padding: 0.25rem 0.65rem !important;
+        letter-spacing: 0 !important;
+      }
+
+      // Code columns can be font-semibold/600
+      .col-code, [data-code="true"], .cell-code {
+        font-weight: 600 !important;
+        color: #0f172a !important;
+      }
     }
 
     &:hover {

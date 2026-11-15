@@ -424,7 +424,8 @@ export default {
     "rotate_btn": "Faire tourner la clé API",
     "show_once_warning": "La nouvelle clé ne s’affiche qu’UNE SEULE FOIS. Copiez-la en lieu sûr :",
     "no_keys": "Aucune liste de clés reçue du système.",
-    "revoke_now": "Révoquer l’ancienne clé maintenant"
+    "revoke_now": "Révoquer l’ancienne clé maintenant",
+    "grace_period": "Délai de grâce (7j)"
   },
   "transaction": {
     "management_title": "Grand Livre des Points & Journal des Transactions",
@@ -662,6 +663,7 @@ export default {
     "name": "Nom du jeu",
     "win_rate": "Taux de gain",
     "recent_sessions": "Sessions récentes",
+    "session_id": "ID de session",
     "reward": "Récompense",
     "prize_icon": "Icône",
     "prize_code_placeholder": "Ex. : PRIZE_500_PTS",
@@ -1390,7 +1392,11 @@ export default {
     "create_user_success": "Compte partenaire Sandbox créé avec succès",
     "create_user_failed": "Impossible de créer le compte",
     "menu_name_placeholder": "Ex. : Promotions d’été",
-    "menu_route_placeholder": "Ex. : /sandbox/summer-promo"
+    "menu_route_placeholder": "Ex. : /sandbox/summer-promo",
+    "username_placeholder": "Ex. : dev_partner_bank",
+    "fullname_placeholder": "Ex. : Équipe Tech Partenaire",
+    "email_placeholder": "developer@partner.com",
+    "phone_placeholder": "+509 3000 0000"
   },
   "common": {
     "search": "Rechercher...",
@@ -1721,7 +1727,14 @@ export default {
     "avg_lift": "Hausse moyenne (Lift)",
     "treatment_revenue": "Revenu du groupe traité",
     "avg_roi": "ROI moyen",
-    "no_effectiveness": "Aucune donnée Lift vs groupe témoin disponible."
+    "no_effectiveness": "Aucune donnée Lift vs groupe témoin disponible.",
+    "test_group_size": "Groupe Test (N)",
+    "control_group_size": "Groupe Témoin (N)",
+    "test_conv_rate": "Taux Conv. (Test)",
+    "control_conv_rate": "Taux Conv. (Témoin)",
+    "incremental_rev": "Revenu Incrémental",
+    "lift_percent": "Hausse (Lift)",
+    "roi_percent": "ROI (%)"
   },
   "alert": {
     "title": "Centre d'Alertes Opérationnelles (CN-05)",
@@ -1758,7 +1771,8 @@ export default {
     "options": "Choix de réponses (un par ligne)",
     "answer_idx": "Indice de la bonne réponse (0, 1, 2...)",
     "import_title": "Importer des questions depuis CSV",
-    "confirm_import": "Confirmer l'import"
+    "confirm_import": "Confirmer l'import",
+    "audio": "Audio"
   },
   "agent": {
     "title": "Gestion Fidélité Agents (AG-03)",

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -9,8 +9,10 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { ApprovalStatus, ApprovalTargetType } from '@/models';
 import { LoyaltyService, ApprovalRequestModel } from '@/service/loyalty.service';
 
@@ -28,6 +30,7 @@ export const ApprovalQueuePage: React.FC = () => {
   const [reviewItem, setReviewItem] = useState<ApprovalRequestModel | null>(null);
   const [decisionNote, setDecisionNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const fetchApprovals = useCallback(async () => {
     setLoading(true);
@@ -108,37 +111,81 @@ export const ApprovalQueuePage: React.FC = () => {
     }
   };
 
-  return (
-    <div>
-      <Toast ref={toast} />
-      <AppBreadcrumb items={[{ label: t('nav.approvals') }]} />
+  const filteredItems = useMemo(() => {
+    const q = searchKeyword.toLowerCase().trim();
+    if (!q) return items;
+    return items.filter(
+      (item) =>
+        (item.requestCode && item.requestCode.toLowerCase().includes(q)) ||
+        (item.targetId && item.targetId.toLowerCase().includes(q)) ||
+        (item.reason && item.reason.toLowerCase().includes(q)) ||
+        (item.makerUsername && item.makerUsername.toLowerCase().includes(q))
+    );
+  }, [items, searchKeyword]);
 
-      <div className="card shadow-1 border-round surface-card p-4">
-        <div className="flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-          <div>
-            <h4 className="m-0 text-primary font-semibold">
-              {t('approval.title')}
-            </h4>
-            <p className="m-0 text-xs text-500 mt-1">
-              {t('approval.subtitle')}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 align-items-center">
-            <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-            <Dropdown
-              value={statusFilter}
-              options={[
+  const handleExport = () => {
+    exportToExcel(
+      filteredItems.map((r, idx) => ({
+        stt: idx + 1,
+        requestCode: r.requestCode || r.id,
+        targetType: r.targetType,
+        actionType: r.actionType,
+        targetId: r.targetId,
+        maker: r.makerUsername || r.makerId || '--',
+        reason: r.reason || '',
+        status: r.status,
+        createdAt: r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '',
+      })),
+      [
+        { key: 'stt', header: '#' },
+        { key: 'requestCode', header: t('approval.request_id') },
+        { key: 'targetType', header: t('approval.target_type') },
+        { key: 'actionType', header: t('approval.action_type') },
+        { key: 'targetId', header: t('approval.target_id') },
+        { key: 'maker', header: t('approval.maker') },
+        { key: 'reason', header: t('common.reason') },
+        { key: 'status', header: t('common.status') },
+        { key: 'createdAt', header: t('common.created_at') },
+      ],
+      `Danh_Sach_Phe_Duyet_${selectedTenant}`
+    );
+  };
+
+  return (
+    <div className="w-full">
+      <Toast ref={toast} />
+      <StandardPageHeader
+        title={t('nav.approvals')}
+        subtitle={t('approval.subtitle', 'Danh sách yêu cầu điều chỉnh điểm, khóa tài khoản và chính sách chờ phê duyệt')}
+        breadcrumbs={[{ label: t('nav.approvals') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={setSelectedTenant}
+      />
+
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
+        <UniversalFilterBar
+          searchValue={searchKeyword}
+          onSearchChange={setSearchKeyword}
+          searchPlaceholder={t('common.search')}
+          basicFilters={[
+            {
+              key: 'status',
+              label: t('common.status'),
+              value: statusFilter,
+              options: [
                 { label: t('common.all'), value: 'ALL' },
                 { label: ApprovalStatus.PENDING, value: ApprovalStatus.PENDING },
                 { label: ApprovalStatus.APPROVED, value: ApprovalStatus.APPROVED },
                 { label: ApprovalStatus.REJECTED, value: ApprovalStatus.REJECTED },
-              ]}
-              onChange={(e) => setStatusFilter(e.value)}
-              className="w-12rem"
-            />
-            <Dropdown
-              value={targetFilter}
-              options={[
+              ],
+              onChange: (val) => setStatusFilter(val),
+              placeholder: t('common.status'),
+            },
+            {
+              key: 'targetType',
+              label: t('approval.target_type'),
+              value: targetFilter,
+              options: [
                 { label: t('common.all'), value: 'ALL' },
                 { label: ApprovalTargetType.POINT_ADJUSTMENT, value: ApprovalTargetType.POINT_ADJUSTMENT },
                 { label: ApprovalTargetType.MEMBER_LOCK, value: ApprovalTargetType.MEMBER_LOCK },
@@ -147,46 +194,56 @@ export const ApprovalQueuePage: React.FC = () => {
                 { label: ApprovalTargetType.PARTNER_PROPOSAL, value: ApprovalTargetType.PARTNER_PROPOSAL },
                 { label: ApprovalTargetType.PAYMENT_BATCH, value: ApprovalTargetType.PAYMENT_BATCH },
                 { label: ApprovalTargetType.SYSTEM_PARAM, value: ApprovalTargetType.SYSTEM_PARAM },
-              ]}
-              onChange={(e) => setTargetFilter(e.value)}
-              className="w-13rem"
-            />
-            <Button icon="pi pi-refresh" outlined rounded onClick={fetchApprovals} loading={loading} />
-          </div>
-        </div>
+              ],
+              onChange: (val) => setTargetFilter(val),
+              placeholder: t('approval.target_type'),
+            },
+          ]}
+          onExport={handleExport}
+          onReset={() => {
+            setSearchKeyword('');
+            setStatusFilter(ApprovalStatus.PENDING);
+            setTargetFilter('ALL');
+          }}
+          onRefresh={fetchApprovals}
+        />
 
         {loading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /><Skeleton height="2.75rem" /></div>
         ) : (
           <DataTable<ApprovalRequestModel[]>
-            value={items}
+            value={filteredItems}
             paginator
             rows={15}
+            rowsPerPageOptions={[15, 30, 50]}
             stripedRows
             responsiveLayout="scroll"
             emptyMessage={t('approval.empty')}
           >
-            <Column field="requestCode" header={t('approval.request_id')} body={(r) => <span className="font-mono white-space-nowrap font-medium text-primary">{r.requestCode || r.id}</span>} style={{ minWidth: '13rem' }} />
-            <Column field="targetType" header={t('approval.target_type')} body={(r) => <Tag value={r.targetType} severity="info" />} style={{ minWidth: '11rem' }} />
-            <Column field="actionType" header={t('approval.action_type')} body={(r) => <span className="font-mono text-xs">{r.actionType}</span>} style={{ minWidth: '10rem' }} />
-            <Column field="targetId" header={t('approval.target_id')} body={(r) => <span className="font-mono white-space-nowrap">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
-            <Column field="makerUsername" header={t('approval.maker')} body={(r) => r.makerUsername || r.makerId || '--'} style={{ minWidth: '10rem' }} />
-            <Column field="reason" header={t('common.reason')} style={{ minWidth: '14rem' }} />
-            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-            <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="font-mono white-space-nowrap text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+            <Column
+              header="#"
+              body={(_data, options) => (
+                <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+              )}
+              style={{ width: '3.5rem', textAlign: 'center' }}
+            />
             <Column
               header={t('common.action')}
               body={(r) => (
-                <Button
-                  label={r.status === ApprovalStatus.PENDING ? t('approval.review_btn') : t('common.detail')}
-                  icon="pi pi-search"
-                  size="small"
-                  outlined
-                  onClick={() => { setReviewItem(r); setDecisionNote(''); }}
+                <StandardRowActions
+                  onView={() => { setReviewItem(r); setDecisionNote(''); }}
                 />
               )}
-              style={{ minWidth: '9rem' }}
+              style={{ width: '5.5rem', textAlign: 'center' }}
             />
+            <Column field="requestCode" header={t('approval.request_id')} body={(r) => <span className="font-bold font-mono text-900">{r.requestCode || r.id}</span>} sortable style={{ minWidth: '13rem' }} />
+            <Column field="targetType" header={t('approval.target_type')} body={(r) => <span className="text-900">{r.targetType}</span>} sortable style={{ minWidth: '11rem' }} />
+            <Column field="actionType" header={t('approval.action_type')} body={(r) => <span className="text-900 font-mono text-xs">{r.actionType}</span>} sortable style={{ minWidth: '10rem' }} />
+            <Column field="targetId" header={t('approval.target_id')} body={(r) => <span className="text-900 font-mono">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
+            <Column field="makerUsername" header={t('approval.maker')} body={(r) => <span className="text-900">{r.makerUsername || r.makerId || '--'}</span>} style={{ minWidth: '10rem' }} />
+            <Column field="reason" header={t('common.reason')} body={(r) => <span className="text-900">{r.reason}</span>} style={{ minWidth: '14rem' }} />
+            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+            <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="text-900 font-mono text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} sortable style={{ minWidth: '11rem' }} />
           </DataTable>
         )}
       </div>
@@ -202,9 +259,9 @@ export const ApprovalQueuePage: React.FC = () => {
         {reviewItem && (
           <div className="flex flex-column gap-3">
             <div className="grid text-sm">
-              <div className="col-6"><span className="text-500 text-xs block">Maker</span><span>{reviewItem.makerUsername || reviewItem.makerId || '--'}</span></div>
+              <div className="col-6"><span className="text-500 text-xs block">Maker</span><span className="text-900">{reviewItem.makerUsername || reviewItem.makerId || '--'}</span></div>
               <div className="col-6"><span className="text-500 text-xs block">{t('common.status')}</span><Tag value={reviewItem.status} severity={statusSeverity(reviewItem.status)} /></div>
-              <div className="col-12 mt-2"><span className="text-500 text-xs block">{t('approval.reason')}</span><span>{reviewItem.reason || '--'}</span></div>
+              <div className="col-12 mt-2"><span className="text-500 text-xs block">{t('approval.reason')}</span><span className="text-900">{reviewItem.reason || '--'}</span></div>
             </div>
 
             <div className="grid">

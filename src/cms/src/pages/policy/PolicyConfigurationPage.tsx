@@ -10,7 +10,10 @@ import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions, RowActionItem } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
 import { CommonStatus } from '@/models';
 import { LoyaltyService } from '@/service/loyalty.service';
@@ -319,124 +322,229 @@ export const PolicyConfigurationPage: React.FC = () => {
     }
   };
 
-  const actionTemplate = (rowData: PolicyRule) => (
-    <div className="flex gap-2 justify-content-center">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        outlined
-        severity="warning"
-        size="small"
-        onClick={() => editItem(rowData)}
-        tooltip={t('common.edit')}
-      />
-      <Button
-        icon="pi pi-trash"
-        rounded
-        outlined
-        severity="danger"
-        size="small"
-        onClick={() => deleteItem(rowData)}
-        tooltip={t('common.delete')}
-      />
-    </div>
-  );
+  const renderRowActions = (rowData: PolicyRule) => {
+    const actions: RowActionItem[] = [
+      {
+        id: 'edit',
+        label: t('common.edit', 'Sửa'),
+        icon: 'pi pi-pencil',
+        severity: 'secondary',
+        onClick: () => editItem(rowData),
+      },
+      {
+        id: 'delete',
+        label: t('common.delete', 'Xóa'),
+        icon: 'pi pi-trash',
+        danger: true,
+        onClick: () => deleteItem(rowData),
+      },
+    ];
+    return <StandardRowActions actions={actions} maxInline={3} />;
+  };
 
   const statusTemplate = (rowData: PolicyRule) => {
     return rowData.status === CommonStatus.ACTIVE ? (
-      <Tag severity="success" value={t('common.active')} />
+      <Tag severity="success" value={t('common.active', 'Hoạt động')} rounded={false} />
     ) : (
-      <Tag severity="danger" value={t('common.inactive')} />
+      <Tag severity="warning" value={t('common.inactive', 'Ngừng hoạt động')} rounded={false} />
     );
   };
 
-  const burnPercentageTemplate = (rowData: PolicyRule) => (
-    <span className="text-primary font-medium font-mono">
-      {rowData.maxBurnPercentage}%
-    </span>
-  );
-
-  const cycleTemplate = (rowData: PolicyRule) => {
-    const cycle = rowData.settlementCycle || 'DAILY';
-    return <Tag severity="info" value={cycle === 'DAILY' ? 'T+1' : cycle === 'WEEKLY' ? 'W+1' : 'M+1'} />;
+  const handleExportExcel = () => {
+    exportToExcel(
+      [
+        { header: 'STT' },
+        { header: 'Mã đối tác', field: 'partnerCode' },
+        { header: 'Tên đối tác', field: 'partnerName' },
+        { header: 'Tỷ giá quy đổi', getValue: (r: PolicyRule) => `${r.exchangeRate} HTG` },
+        { header: 'Tiêu tối đa', getValue: (r: PolicyRule) => `${r.maxBurnPercentage}%` },
+        {
+          header: 'Phí MDR',
+          getValue: (r: PolicyRule) =>
+            r.commissionRatePercent != null ? `${r.commissionRatePercent}%` : '--',
+        },
+        {
+          header: 'Điểm tiêu tối đa/GD',
+          getValue: (r: PolicyRule) =>
+            r.maxBurnPointsPerTx != null ? r.maxBurnPointsPerTx.toLocaleString() : '--',
+        },
+        {
+          header: 'Chu kỳ quyết toán',
+          getValue: (r: PolicyRule) =>
+            r.settlementCycle === 'DAILY' ? 'T+1' : r.settlementCycle === 'WEEKLY' ? 'W+1' : 'M+1',
+        },
+        {
+          header: 'Trạng thái',
+          getValue: (r: PolicyRule) =>
+            r.status === CommonStatus.ACTIVE ? 'Hoạt động' : 'Ngừng hoạt động',
+        },
+        { header: 'Ngày cập nhật', field: 'updatedAt' },
+      ],
+      policies,
+      'Chinh_sach_tich_tieu_diem'
+    );
   };
 
-  const header = (
-    <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3">
-      <div>
-        <h4 className="m-0 text-primary font-bold text-xl">
-          {t('policy.management_title')}
-        </h4>
-      </div>
-
-      <div className="flex flex-wrap align-items-center gap-2">
-        <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-        
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            type="search"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={t('common.search')}
-            className="p-inputtext-sm"
-          />
-        </span>
-
-        <Button
-          icon="pi pi-refresh"
-          rounded
-          outlined
-          onClick={() => fetchPolicies(selectedTenant)}
-          tooltip={t('common.refresh')}
-        />
-
-        <Button
-          label={t('policy.create_new')}
-          icon="pi pi-plus"
-          severity="success"
-          onClick={openNew}
-        />
-      </div>
-    </div>
-  );
-
   return (
-    <div>
+    <div className="w-full flex flex-column gap-2">
       <Toast ref={toast} position="top-right" />
       <ConfirmDialog />
-      
-      <AppBreadcrumb items={[{ label: t('nav.policies') }]} />
-      
-      <div className="card shadow-1 border-round surface-card p-4">
+
+      <StandardPageHeader
+        breadcrumbs={[
+          { label: t('nav.loyalty_policies', 'Chính sách Loyalty') },
+          { label: t('nav.policies', 'Chính sách Điểm') },
+        ]}
+        title={t('policy.management_title', 'Chính sách Tích & Tiêu Điểm')}
+        subtitle="Quản lý tỷ lệ tích/tiêu điểm, tỷ giá quy đổi, hạn mức và chu kỳ quyết toán liên minh"
+        actions={
+          <Button
+            label={t('common.add_new', 'Thêm mới')}
+            icon="pi pi-plus"
+            size="small"
+            severity="primary"
+            onClick={openNew}
+            className="p-button-sm font-semibold"
+          />
+        }
+      />
+
+      <UniversalFilterBar
+        searchValue={globalFilter}
+        onSearchChange={setGlobalFilter}
+        searchPlaceholder={t('common.search', 'Tìm kiếm...')}
+        primaryFilters={
+          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
+        }
+        onReset={() => setGlobalFilter('')}
+        onRefresh={() => fetchPolicies(selectedTenant)}
+        isLoading={loading}
+        extraActions={
+          <Button
+            type="button"
+            icon="pi pi-file-excel"
+            label={t('common.export_excel', 'Xuất Excel')}
+            outlined
+            severity="secondary"
+            size="small"
+            onClick={handleExportExcel}
+            className="p-button-sm font-medium"
+          />
+        }
+      />
+
+      <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
         <DataTable
           value={policies}
           loading={loading}
-          header={header}
           globalFilter={globalFilter}
           dataKey="id"
           paginator
           rows={10}
-          rowsPerPageOptions={[5, 10, 25]}
-          emptyMessage={t('common.no_data')}
-          stripedRows
+          rowsPerPageOptions={[10, 20, 50]}
+          emptyMessage={t('common.no_data', 'Không có dữ liệu hiển thị')}
+          className="p-datatable-sm p-datatable-striped"
           responsiveLayout="scroll"
         >
           <Column selectionMode="multiple" exportable={false} style={{ width: '3rem' }} />
           <Column
-            header={t('common.stt')}
+            header={t('common.stt', 'STT')}
             body={(_, { rowIndex }) => rowIndex + 1}
             style={{ width: '3.5rem', textAlign: 'center' }}
           />
-          <Column header={t('common.actions')} body={actionTemplate} exportable={false} style={{ width: '7rem', textAlign: 'center' }} />
-          <Column field="partnerName" header={t('policy.partner_name')} body={(row: PolicyRule) => <div><div className="font-semibold">{row.partnerName}</div><div className="text-xs text-500 font-mono">{row.partnerCode}</div></div>} sortable style={{ minWidth: '11rem' }} />
-          <Column field="exchangeRate" header={<span title={t('policy.exchange_rate_tooltip')}>{t('policy.exchange_rate')}</span>} body={(row: PolicyRule) => <span className="font-medium font-mono">{row.exchangeRate} HTG</span>} sortable style={{ minWidth: '7rem', textAlign: 'center' }} />
-          <Column field="maxBurnPercentage" header={<span title={t('policy.max_burn_tooltip')}>{t('policy.max_burn')}</span>} body={burnPercentageTemplate} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-          <Column field="commissionRatePercent" header={<span title={t('policy.mdr_rate_tooltip')}>{t('policy.mdr_rate')}</span>} body={(row: PolicyRule) => <span className="font-medium font-mono text-orange-600">{row.commissionRatePercent != null ? `${row.commissionRatePercent}%` : '--'}</span>} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-          <Column field="maxBurnPointsPerTx" header={<span title={t('policy.max_burn_points_tooltip')}>{t('policy.max_burn_points')}</span>} body={(row: PolicyRule) => <span className="font-mono text-sm">{row.maxBurnPointsPerTx != null ? row.maxBurnPointsPerTx.toLocaleString() : '--'}</span>} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
-          <Column field="settlementCycle" header={<span title={t('policy.settlement_cycle_tooltip')}>{t('policy.settlement_cycle')}</span>} body={cycleTemplate} sortable style={{ minWidth: '6.5rem', textAlign: 'center' }} />
-          <Column field="status" header={t('common.status')} body={statusTemplate} sortable style={{ minWidth: '7.5rem', textAlign: 'center' }} />
-          <Column field="updatedAt" header={t('common.updated_at')} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
+          <Column
+            header={t('common.actions', 'Thao tác')}
+            body={renderRowActions}
+            exportable={false}
+            style={{ width: '7rem', textAlign: 'left' }}
+          />
+          <Column
+            field="partnerCode"
+            header={t('policy.partner_code', 'Mã đối tác')}
+            body={(row: PolicyRule) => (
+              <span className="font-mono font-bold text-900" style={{ fontSize: '13px' }}>
+                {row.partnerCode}
+              </span>
+            )}
+            sortable
+            style={{ minWidth: '10rem' }}
+          />
+          <Column
+            field="partnerName"
+            header={t('policy.partner_name', 'Tên đối tác')}
+            body={(row: PolicyRule) => (
+              <span className="font-normal text-900">{row.partnerName}</span>
+            )}
+            sortable
+            style={{ minWidth: '13rem' }}
+          />
+          <Column
+            field="exchangeRate"
+            header={t('policy.exchange_rate', 'Tỷ giá')}
+            body={(row: PolicyRule) => (
+              <span className="font-normal text-900">{row.exchangeRate} HTG</span>
+            )}
+            sortable
+            style={{ minWidth: '7.5rem', textAlign: 'right' }}
+          />
+          <Column
+            field="maxBurnPercentage"
+            header={t('policy.max_burn', 'Tiêu tối đa')}
+            body={(row: PolicyRule) => (
+              <span className="font-normal text-900">{row.maxBurnPercentage}%</span>
+            )}
+            sortable
+            style={{ minWidth: '8rem', textAlign: 'right' }}
+          />
+          <Column
+            field="commissionRatePercent"
+            header={t('policy.mdr_rate', 'Phí MDR')}
+            body={(row: PolicyRule) => (
+              <span className="font-normal text-900">
+                {row.commissionRatePercent != null ? `${row.commissionRatePercent}%` : '--'}
+              </span>
+            )}
+            sortable
+            style={{ minWidth: '7.5rem', textAlign: 'right' }}
+          />
+          <Column
+            field="maxBurnPointsPerTx"
+            header={t('policy.max_burn_points', 'Điểm tối đa/GD')}
+            body={(row: PolicyRule) => (
+              <span className="font-normal text-900">
+                {row.maxBurnPointsPerTx != null ? row.maxBurnPointsPerTx.toLocaleString() : '--'}
+              </span>
+            )}
+            sortable
+            style={{ minWidth: '9rem', textAlign: 'right' }}
+          />
+          <Column
+            field="settlementCycle"
+            header={t('policy.settlement_cycle', 'Chu kỳ')}
+            body={(row: PolicyRule) => {
+              const cycle = row.settlementCycle || 'DAILY';
+              return (
+                <span className="font-normal text-900">
+                  {cycle === 'DAILY' ? 'T+1' : cycle === 'WEEKLY' ? 'W+1' : 'M+1'}
+                </span>
+              );
+            }}
+            sortable
+            style={{ minWidth: '7rem', textAlign: 'center' }}
+          />
+          <Column
+            field="status"
+            header={t('common.status', 'Trạng thái')}
+            body={statusTemplate}
+            sortable
+            style={{ minWidth: '8rem', textAlign: 'center' }}
+          />
+          <Column
+            field="updatedAt"
+            header={t('common.updated_at', 'Cập nhật')}
+            sortable
+            style={{ minWidth: '9rem', textAlign: 'center' }}
+          />
         </DataTable>
       </div>
 

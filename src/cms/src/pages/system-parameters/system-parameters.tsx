@@ -13,13 +13,16 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import {
   ParamValueType,
   SysCodeTypeConfig,
   SystemParameter,
   systemParameterService
 } from '@/service/system-parameter.service';
-import { AppBreadcrumb } from 'components';
 
 const PARAM_GROUP_CODES = [
   'ALL',
@@ -622,32 +625,65 @@ export const SystemParameters: React.FC = () => {
   );
 
   const paramActionBody = (rowData: SystemParameter) => (
-    <div className="flex gap-2 justify-content-center">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        outlined
-        severity="warning"
-        size="small"
-        onClick={() => openEditParam(rowData)}
-        tooltip={t('common.edit')}
-      />
-      <Button
-        icon="pi pi-trash"
-        rounded
-        outlined
-        severity="danger"
-        size="small"
-        disabled={Boolean(rowData.fromDefault)}
-        onClick={() => deleteParam(rowData)}
-        tooltip={t('common.delete')}
-      />
-    </div>
+    <StandardRowActions
+      onEdit={() => openEditParam(rowData)}
+      onDelete={!rowData.fromDefault ? () => deleteParam(rowData) : undefined}
+    />
   );
+
+  const handleExportParams = () => {
+    exportToExcel(
+      params.map((p, idx) => ({
+        stt: idx + 1,
+        paramKey: p.paramKey,
+        paramName: p.paramName || '',
+        groupCode: p.groupCode || '',
+        valueType: p.valueType || '',
+        paramValue: p.paramValue || '',
+        source: p.fromDefault ? t('system_parameter.source_default') : t('system_parameter.source_db'),
+        description: p.description || '',
+        status: p.status === 1 ? t('common.active') : t('common.inactive'),
+      })),
+      [
+        { key: 'stt', header: t('common.stt') },
+        { key: 'paramKey', header: t('system_parameter.key') },
+        { key: 'paramName', header: t('system_parameter.name') },
+        { key: 'groupCode', header: t('system_parameter.group') },
+        { key: 'valueType', header: t('system_parameter.type') },
+        { key: 'paramValue', header: t('system_parameter.value') },
+        { key: 'source', header: t('system_parameter.source_db') },
+        { key: 'description', header: t('system_parameter.description') },
+        { key: 'status', header: t('common.status') },
+      ],
+      'Danh_Sach_Tham_So_He_Thong'
+    );
+  };
+
+  const handleExportCodeTypes = () => {
+    exportToExcel(
+      filteredCodeTypes.map((c, idx) => ({
+        stt: idx + 1,
+        codeType: c.codeType,
+        description: c.description || '',
+        formatTemplate: c.formatTemplate || '',
+        samplePreview: c.samplePreview || '',
+        status: c.status === 1 ? t('common.active') : t('common.inactive'),
+      })),
+      [
+        { key: 'stt', header: t('common.stt') },
+        { key: 'codeType', header: t('system_parameter.code_types.code_type') },
+        { key: 'description', header: t('system_parameter.description') },
+        { key: 'formatTemplate', header: t('system_parameter.code_types.format_template') },
+        { key: 'samplePreview', header: t('system_parameter.code_types.sample_preview') },
+        { key: 'status', header: t('common.status') },
+      ],
+      'Danh_Sach_Quy_Tac_Sinh_Ma'
+    );
+  };
 
   const paramKeyBody = (rowData: SystemParameter) => (
     <div>
-      <div className="font-semibold font-mono text-primary text-sm">{rowData.paramKey}</div>
+      <span className="font-bold font-mono text-900 text-sm">{rowData.paramKey}</span>
       {rowData.paramName && (
         <div className="text-xs text-600 font-normal mt-1">{rowData.paramName}</div>
       )}
@@ -673,12 +709,11 @@ export const SystemParameters: React.FC = () => {
     );
   };
 
-  const paramSourceBody = (rowData: SystemParameter) =>
-    rowData.fromDefault ? (
-      <Tag severity="info" value={t('system_parameter.source_default')} />
-    ) : (
-      <Tag severity="success" value={t('system_parameter.source_db')} />
-    );
+  const paramSourceBody = (rowData: SystemParameter) => (
+    <span className="text-900">
+      {rowData.fromDefault ? t('system_parameter.source_default') : t('system_parameter.source_db')}
+    </span>
+  );
 
   const statusBody = (rowData: { status?: number }) =>
     rowData.status === 1 ? (
@@ -764,18 +799,58 @@ export const SystemParameters: React.FC = () => {
   );
 
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} position="top-right" />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.system_parameters') }]} />
+      <StandardPageHeader
+        title={t('nav.system_parameters')}
+        subtitle={t('system_parameter.subtitle', 'Cấu hình tham số động hệ thống, danh mục tiền tệ và quy tắc sinh mã')}
+        breadcrumbs={[{ label: t('nav.system_parameters') }]}
+        primaryAction={activeTab === 0 ? {
+          label: t('system_parameter.add_new'),
+          icon: 'pi pi-plus',
+          onClick: openNewParam,
+        } : undefined}
+        extraActions={[
+          {
+            label: t('system_parameter.refresh_cache'),
+            icon: 'pi pi-sync',
+            severity: 'info',
+            outlined: true,
+            loading: refreshingCache,
+            onClick: handleRefreshCache,
+          },
+        ]}
+      />
 
-      <div className="card shadow-1 border-round surface-card p-3">
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
         <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
           <TabPanel header={t('system_parameter.tab_parameters')} leftIcon="pi pi-sliders-h mr-2">
+            <UniversalFilterBar
+              searchValue={paramSearch}
+              onSearchChange={setParamSearch}
+              searchPlaceholder={t('system_parameter.search_placeholder')}
+              basicFilters={[
+                {
+                  key: 'groupCode',
+                  label: t('system_parameter.filter_group'),
+                  value: selectedGroup,
+                  options: groupOptions,
+                  onChange: (val) => setSelectedGroup(val),
+                  placeholder: t('system_parameter.filter_group'),
+                },
+              ]}
+              onExport={handleExportParams}
+              onReset={() => {
+                setParamSearch('');
+                setSelectedGroup('ALL');
+              }}
+              onRefresh={fetchParams}
+            />
+
             <DataTable
               value={params}
               loading={loadingParams}
-              header={paramsToolbarHeader}
               dataKey="paramKey"
               paginator
               rows={15}
@@ -811,14 +886,11 @@ export const SystemParameters: React.FC = () => {
                 field="groupCode"
                 header={renderHeaderTitle('system_parameter.group', 'system_parameter.group_tooltip')}
                 body={(row: SystemParameter) => (
-                  <Tag
-                    severity="info"
-                    value={
-                      isKnownGroup(row.groupCode)
-                        ? t(`system_parameter.groups.${row.groupCode}`)
-                        : row.groupCode || t('system_parameter.groups.SYSTEM')
-                    }
-                  />
+                  <span className="text-900">
+                    {isKnownGroup(row.groupCode)
+                      ? t(`system_parameter.groups.${row.groupCode}`)
+                      : row.groupCode || t('system_parameter.groups.SYSTEM')}
+                  </span>
                 )}
                 sortable
                 style={{ width: '10rem' }}
@@ -827,7 +899,7 @@ export const SystemParameters: React.FC = () => {
                 field="valueType"
                 header={renderHeaderTitle('system_parameter.type', 'system_parameter.type_tooltip')}
                 body={(row: SystemParameter) => (
-                  <span className="font-mono text-xs text-700 font-normal">
+                  <span className="font-mono text-xs text-900 font-normal">
                     {row.valueType || 'STRING'}
                   </span>
                 )}
@@ -853,18 +925,26 @@ export const SystemParameters: React.FC = () => {
                   'system_parameter.description_tooltip'
                 )}
                 body={(row: SystemParameter) => (
-                  <span className="text-sm font-normal text-700">{row.description || '-'}</span>
+                  <span className="text-sm font-normal text-900">{row.description || '-'}</span>
                 )}
               />
-              <Column body={statusBody} header={t('common.status')} style={{ width: '7.5rem' }} />
+              <Column body={statusBody} header={t('common.status')} style={{ width: '7.5rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
 
           <TabPanel header={t('system_parameter.tab_code_types')} leftIcon="pi pi-hashtag mr-2">
+            <UniversalFilterBar
+              searchValue={codeTypeSearch}
+              onSearchChange={setCodeTypeSearch}
+              searchPlaceholder={t('system_parameter.code_types.search_placeholder')}
+              onExport={handleExportCodeTypes}
+              onReset={() => setCodeTypeSearch('')}
+              onRefresh={fetchCodeTypes}
+            />
+
             <DataTable
               value={filteredCodeTypes}
               loading={loadingCodeTypes}
-              header={codeTypesToolbarHeader}
               dataKey="codeType"
               paginator
               rows={15}
@@ -885,16 +965,10 @@ export const SystemParameters: React.FC = () => {
               />
               <Column
                 header={t('common.actions')}
-                style={{ width: '4.5rem', textAlign: 'center' }}
+                style={{ width: '5.5rem', textAlign: 'center' }}
                 body={(row: SysCodeTypeConfig) => (
-                  <Button
-                    icon="pi pi-pencil"
-                    rounded
-                    outlined
-                    severity="warning"
-                    size="small"
-                    onClick={() => openEditCodeType(row)}
-                    tooltip={t('common.edit')}
+                  <StandardRowActions
+                    onEdit={() => openEditCodeType(row)}
                   />
                 )}
               />
@@ -908,9 +982,9 @@ export const SystemParameters: React.FC = () => {
                 style={{ minWidth: '13rem' }}
                 body={(row: SysCodeTypeConfig) => (
                   <div>
-                    <div className="font-semibold font-mono text-primary text-sm">
+                    <span className="font-bold font-mono text-900 text-sm">
                       {row.codeType}
-                    </div>
+                    </span>
                     {row.description && (
                       <div className="text-xs text-600 font-normal mt-1">{row.description}</div>
                     )}
@@ -924,7 +998,7 @@ export const SystemParameters: React.FC = () => {
                   'system_parameter.code_types.template_tooltip'
                 )}
                 body={(row: SysCodeTypeConfig) => (
-                  <span className="font-mono text-sm font-normal">{row.formatTemplate}</span>
+                  <span className="font-mono text-sm font-normal text-900">{row.formatTemplate}</span>
                 )}
                 sortable
               />
@@ -935,7 +1009,7 @@ export const SystemParameters: React.FC = () => {
                   'system_parameter.code_types.prefix_tooltip'
                 )}
                 body={(row: SysCodeTypeConfig) => (
-                  <span className="font-mono text-sm font-normal">{row.staticPrefix}</span>
+                  <span className="font-mono text-sm font-normal text-900">{row.staticPrefix}</span>
                 )}
                 style={{ width: '8rem' }}
               />

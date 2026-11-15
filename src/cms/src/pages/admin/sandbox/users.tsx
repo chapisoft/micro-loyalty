@@ -73,7 +73,8 @@ export function SandboxUsersPage() {
   };
 
   const handleToggleStatus = async (id: number, currentStatus: string) => {
-    const nextStatus = currentStatus === 'LOCKED' ? 'APPROVED' : 'LOCKED';
+    const nextStatus =
+      currentStatus === SandboxUserStatus.LOCKED ? SandboxUserStatus.APPROVED : SandboxUserStatus.LOCKED;
     try {
       await sandboxAdminService.toggleUserStatus(id, nextStatus);
       toast.current?.show({
@@ -160,8 +161,8 @@ export function SandboxUsersPage() {
                 fullName: '',
                 email: '',
                 phone: '',
-                password: 'Dev@123456',
-                status: 'APPROVED',
+                password: '',
+                status: SandboxUserStatus.APPROVED,
               });
               setShowDialog(true);
             }}
@@ -196,7 +197,7 @@ export function SandboxUsersPage() {
         >
           <Column field="username" header={t('sandbox.username_col')} body={(r: SandboxUser) => <span className="font-semibold text-900">{r.username}</span>} />
           <Column field="fullName" header={t('sandbox.fullname_col')} />
-          <Column field="email" header="Email" body={(r: SandboxUser) => r.email || '-'} />
+          <Column field="email" header={t('user.email')} body={(r: SandboxUser) => r.email || '-'} />
           <Column field="phone" header={t('sandbox.phone_col')} body={(r: SandboxUser) => r.phone || '-'} />
           <Column
             header={t('sandbox.roles_group_col')}
@@ -276,7 +277,7 @@ export function SandboxUsersPage() {
             <InputText
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              placeholder="VD: dev_acb_bank"
+              placeholder={t('sandbox.username_placeholder')}
               className="w-full p-inputtext-sm"
             />
           </div>
@@ -294,16 +295,16 @@ export function SandboxUsersPage() {
             <InputText
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              placeholder="VD: ACB Fintech Team"
+              placeholder={t('sandbox.fullname_placeholder')}
               className="w-full p-inputtext-sm"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-700 block mb-1">Email</label>
+            <label className="text-xs font-semibold text-700 block mb-1">{t('user.email')}</label>
             <InputText
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="developer@acb.com.vn"
+              placeholder={t('sandbox.email_placeholder')}
               className="w-full p-inputtext-sm"
             />
           </div>
@@ -312,7 +313,7 @@ export function SandboxUsersPage() {
             <InputText
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="0988123456"
+              placeholder={t('sandbox.phone_placeholder')}
               className="w-full p-inputtext-sm"
             />
           </div>

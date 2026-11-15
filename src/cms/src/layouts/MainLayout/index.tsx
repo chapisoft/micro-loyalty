@@ -21,7 +21,7 @@ const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-column surface-ground">
       <Header />
-      <main className="flex-1 p-3 md:p-4 overflow-auto" style={{ maxWidth: 1440, margin: '0 auto', width: '100%' }}>
+      <main className="flex-1 px-3 py-2 md:px-4 md:py-3 overflow-auto w-full" style={{ width: '100%', maxWidth: '100%' }}>
         <Suspense fallback={<PageLoadingFallback />}>
           <AnimationOutlet />
         </Suspense>

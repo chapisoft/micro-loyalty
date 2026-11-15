@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
 import { apiClient } from '@/service/config';
 
 interface DeadLetterItem {
@@ -26,6 +29,7 @@ export const DeadLetterPage: React.FC = () => {
   const [showPayloadModal, setShowPayloadModal] = useState(false);
   const [showBatchConfirm, setShowBatchConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const loadDeadLetters = useCallback(async () => {
     try {
@@ -71,43 +75,78 @@ export const DeadLetterPage: React.FC = () => {
     }
   };
 
+  const filteredItems = useMemo(() => {
+    const q = searchKeyword.toLowerCase().trim();
+    if (!q) return deadLetters;
+    return deadLetters.filter(
+      (item) =>
+        item.eventType?.toLowerCase().includes(q) ||
+        item.targetUrl?.toLowerCase().includes(q) ||
+        item.errorMessage?.toLowerCase().includes(q)
+    );
+  }, [deadLetters, searchKeyword]);
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredItems.map((item, idx) => ({
+        stt: idx + 1,
+        eventType: item.eventType,
+        tenantId: item.tenantId,
+        targetUrl: item.targetUrl,
+        retryCount: `${item.retryCount} / 5`,
+        errorMessage: item.errorMessage,
+        failedAt: item.failedAt,
+      })),
+      [
+        { key: 'stt', header: t('common.stt') },
+        { key: 'eventType', header: t('dead_letter.event_type') },
+        { key: 'tenantId', header: t('dead_letter.tenant') },
+        { key: 'targetUrl', header: 'Target URL' },
+        { key: 'retryCount', header: t('dead_letter.retry_count') },
+        { key: 'errorMessage', header: t('dead_letter.error_message') },
+        { key: 'failedAt', header: t('dead_letter.failed_at') },
+      ],
+      'Danh_Sach_Dead_Letter_Queue'
+    );
+  };
+
   return (
-    <div className="p-4 space-y-4">
-      <AppBreadcrumb
-        items={[
+    <div className="w-full">
+      <StandardPageHeader
+        title={t('nav.dead_letter')}
+        subtitle={t('dead_letter.subtitle', 'Giám sát hàng đợi sự kiện lỗi, thử lại và phân tích nguyên nhân lỗi')}
+        breadcrumbs={[
           { label: t('nav.admin') },
           { label: t('nav.dead_letter') },
         ]}
+        primaryAction={{
+          label: t('dead_letter.batch_retrigger'),
+          icon: 'pi pi-replay',
+          severity: 'danger',
+          disabled: deadLetters.length === 0 || isSubmitting,
+          onClick: () => setShowBatchConfirm(true),
+        }}
       />
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">
-            {t('nav.dead_letter')}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {t('dead_letter.subtitle')}
-          </p>
-        </div>
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
+        <UniversalFilterBar
+          searchValue={searchKeyword}
+          onSearchChange={setSearchKeyword}
+          searchPlaceholder={t('common.search')}
+          onExport={handleExport}
+          onReset={() => setSearchKeyword('')}
+          onRefresh={loadDeadLetters}
+        />
 
-        <div className="flex items-center gap-3">
-          <Button
-            label={t('dead_letter.batch_retrigger')}
-            icon="pi pi-replay"
-            severity="danger"
-            disabled={deadLetters.length === 0 || isSubmitting}
-            onClick={() => setShowBatchConfirm(true)}
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <DataTable
-          value={deadLetters}
+          value={filteredItems}
           emptyMessage={t('common.no_data')}
           paginator
           rows={10}
+          rowsPerPageOptions={[10, 25, 50]}
           className="p-datatable-sm"
+          stripedRows
+          responsiveLayout="scroll"
         >
           <Column
             header={t('common.stt')}
@@ -119,43 +158,39 @@ export const DeadLetterPage: React.FC = () => {
           <Column
             header={t('common.actions')}
             body={(rowData: DeadLetterItem) => (
-              <div className="flex items-center gap-2">
-                <Button
-                  icon="pi pi-eye"
-                  rounded
-                  text
-                  severity="info"
-                  tooltip={t('dead_letter.view_payload')}
-                  onClick={() => {
-                    setSelectedItem(rowData);
-                    setShowPayloadModal(true);
-                  }}
-                />
-                <Button
-                  icon="pi pi-refresh"
-                  rounded
-                  text
-                  severity="warning"
-                  tooltip={t('dead_letter.retrigger_single')}
-                  loading={isSubmitting}
-                  onClick={() => handleRetrigger(rowData)}
-                />
-              </div>
+              <StandardRowActions
+                onView={() => {
+                  setSelectedItem(rowData);
+                  setShowPayloadModal(true);
+                }}
+                extraActions={[
+                  {
+                    label: t('dead_letter.retrigger_single'),
+                    icon: 'pi pi-refresh',
+                    onClick: () => handleRetrigger(rowData),
+                  },
+                ]}
+              />
             )}
-            style={{ width: '120px' }}
+            style={{ width: '6.5rem', textAlign: 'center' }}
           />
-          <Column field="eventType" header={t('dead_letter.event_type')} style={{ fontWeight: 600 }} />
-          <Column field="tenantId" header={t('dead_letter.tenant')} style={{ width: '150px' }} />
+          <Column
+            field="eventType"
+            header={t('dead_letter.event_type')}
+            body={(row: DeadLetterItem) => <span className="font-bold font-mono text-900">{row.eventType}</span>}
+            sortable
+          />
+          <Column field="tenantId" header={t('dead_letter.tenant')} body={(row: DeadLetterItem) => <span className="text-900">{row.tenantId}</span>} style={{ width: '150px' }} />
           <Column
             field="retryCount"
             header={t('dead_letter.retry_count')}
             body={(row: DeadLetterItem) => (
-              <Tag value={`${row.retryCount} / 5`} severity="danger" />
+              <span className="text-900">{row.retryCount} / 5</span>
             )}
             style={{ width: '110px', textAlign: 'center' }}
           />
-          <Column field="errorMessage" header={t('dead_letter.error_message')} style={{ color: '#ef4444' }} />
-          <Column field="failedAt" header={t('dead_letter.failed_at')} style={{ width: '170px' }} />
+          <Column field="errorMessage" header={t('dead_letter.error_message')} body={(row: DeadLetterItem) => <span className="text-900">{row.errorMessage}</span>} />
+          <Column field="failedAt" header={t('dead_letter.failed_at')} body={(row: DeadLetterItem) => <span className="text-900">{row.failedAt}</span>} style={{ width: '170px' }} />
         </DataTable>
       </div>
 

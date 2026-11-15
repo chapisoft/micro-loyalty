@@ -218,6 +218,8 @@ export default {
     grace_expired: 'Période de grâce expirée',
     confirm_revoke_msg: 'Voulez-vous vraiment révoquer immédiatement cette clé API ?',
     webhook_required: 'Veuillez saisir une URL Webhook valide',
+    key_prefix: 'Préfixe de clé',
+    grace_period: 'Délai de grâce (7j)',
   },
   enum: {
     partner_staff_role: {

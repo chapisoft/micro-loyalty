@@ -10,9 +10,11 @@ import { Toast } from 'primereact/toast';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { useTranslation } from 'react-i18next';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
-import { AdjustmentDirection, CurrencyAssetType } from '@/models';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
+import { AdjustmentDirection, CurrencyAssetType, PointActionType } from '@/models';
 import { loyaltyService, LoyaltyService, PointLedgerItem } from '@/service/loyalty.service';
 import { partnerService, Partner } from '@/service/partner.service';
 
@@ -202,48 +204,71 @@ export const Transactions: React.FC = () => {
     setDetailDialogVisible(true);
   };
 
+  const handleExport = () => {
+    exportToExcel(
+      items.map((row, idx) => ({
+        stt: idx + 1 + lazyParams.first,
+        transactionId: row.transactionId,
+        externalUserId: row.externalUserId,
+        actionType: row.actionType,
+        points: row.points,
+        balanceAfter: row.balanceAfter != null ? row.balanceAfter : '',
+        partnerCode: row.partnerCode,
+        createdAt: row.createdAt ? new Date(row.createdAt).toLocaleString('vi-VN') : '',
+        status: row.status || 'COMPLETED',
+      })),
+      [
+        { key: 'stt', header: '#' },
+        { key: 'transactionId', header: t('transaction.id') },
+        { key: 'externalUserId', header: t('transaction.phone') },
+        { key: 'actionType', header: t('transaction.action_type') },
+        { key: 'points', header: t('transaction.amount') },
+        { key: 'balanceAfter', header: t('transaction.balance_after') },
+        { key: 'partnerCode', header: t('transaction.partner') },
+        { key: 'createdAt', header: t('common.created_at') },
+        { key: 'status', header: t('transaction.status') },
+      ],
+      `Lich_Su_Giao_Dich_${selectedTenant}`
+    );
+  };
+
   // Templates
   const actionBodyTemplate = (rowData: PointLedgerItem) => {
     return (
-      <div className="flex align-items-center justify-content-center">
-        <Button
-          icon="pi pi-eye"
-          rounded
-          text
-          severity="info"
-          onClick={() => openDetailDialog(rowData)}
-          tooltip={t('transaction.view_detail')}
-          tooltipOptions={{ position: 'top' }}
-        />
-      </div>
+      <StandardRowActions
+        onView={() => openDetailDialog(rowData)}
+      />
     );
   };
 
   const actionTypeTemplate = (rowData: PointLedgerItem) => {
     switch (rowData.actionType) {
       case 'EARN':
-        return <Tag severity="success" value={t('action_type.earn')} icon="pi pi-arrow-up-right" />;
+        return <Tag severity="success" value={t('action_type.earn')} />;
       case 'BURN':
-        return <Tag severity="danger" value={t('action_type.burn')} icon="pi pi-arrow-down-left" />;
+        return <Tag severity="danger" value={t('action_type.burn')} />;
       case 'REWARD':
-        return <Tag severity="info" value={t('action_type.reward')} icon="pi pi-gift" />;
+        return <Tag severity="info" value={t('action_type.reward')} />;
       case 'SPIN':
-        return <Tag severity="warning" value={t('action_type.spin')} icon="pi pi-compass" />;
+        return <Tag severity="warning" value={t('action_type.spin')} />;
       case 'VOUCHER':
-        return <Tag severity="info" value={t('action_type.voucher')} icon="pi pi-ticket" />;
+        return <Tag severity="info" value={t('action_type.voucher')} />;
       case 'REFUND':
-        return <Tag severity="info" value={t('action_type.refund')} icon="pi pi-replay" />;
+        return <Tag severity="info" value={t('action_type.refund')} />;
       case 'EXPIRE':
-        return <Tag severity="secondary" value={t('action_type.expire')} icon="pi pi-clock" />;
+        return <Tag severity="secondary" value={t('action_type.expire')} />;
       default:
         return <Tag severity="secondary" value={rowData.actionType || t('common.actions')} />;
     }
   };
 
   const pointsTemplate = (rowData: PointLedgerItem) => {
-    const isPositive = rowData.actionType === 'EARN' || rowData.actionType === 'REWARD' || rowData.actionType === 'SPIN';
+    const isPositive =
+      rowData.actionType === PointActionType.EARN ||
+      rowData.actionType === PointActionType.REWARD ||
+      rowData.actionType === PointActionType.SPIN;
     return (
-      <span className={`font-semibold font-mono ${isPositive ? 'text-green-600' : 'text-orange-600'}`}>
+      <span className="font-mono text-900">
         {isPositive ? `+${rowData.points.toLocaleString()}` : `-${rowData.points.toLocaleString()}`} {t('common.points')}
       </span>
     );
@@ -251,7 +276,7 @@ export const Transactions: React.FC = () => {
 
   const balanceAfterTemplate = (rowData: PointLedgerItem) => {
     return (
-      <span className="font-normal font-mono text-700">
+      <span className="font-mono text-900">
         {rowData.balanceAfter != null ? rowData.balanceAfter.toLocaleString() : '-'} {t('common.points')}
       </span>
     );
@@ -261,7 +286,7 @@ export const Transactions: React.FC = () => {
     const name = rowData.partnerName || (i18n.exists(`alliance_partners.${rowData.partnerCode}`) ? t(`alliance_partners.${rowData.partnerCode}`) : rowData.partnerCode);
     return (
       <div className="flex flex-column">
-        <span className="font-medium text-800">{name}</span>
+        <span className="text-900">{name}</span>
         <span className="font-mono text-xs text-500">{rowData.partnerCode}</span>
       </div>
     );
@@ -271,10 +296,10 @@ export const Transactions: React.FC = () => {
     if (!rowData.createdAt) return '-';
     try {
       const d = new Date(rowData.createdAt);
-      if (isNaN(d.getTime())) return rowData.createdAt;
-      return d.toLocaleString('vi-VN');
+      if (isNaN(d.getTime())) return <span className="text-900">{rowData.createdAt}</span>;
+      return <span className="text-900">{d.toLocaleString('vi-VN')}</span>;
     } catch {
-      return rowData.createdAt;
+      return <span className="text-900">{rowData.createdAt}</span>;
     }
   };
 
@@ -291,70 +316,58 @@ export const Transactions: React.FC = () => {
     }
   };
 
-  const header = (
-    <div className="flex flex-wrap gap-3 align-items-center justify-content-between">
-      <div className="flex flex-wrap align-items-center gap-3">
-        <div>
-          <h4 className="m-0 text-primary font-bold">
-            {t('transaction.management_title')}
-          </h4>
-          <p className="text-xs text-500 m-0 mt-1">
-            {t('transaction.subtitle')}
-          </p>
-        </div>
-        <TenantSelector value={selectedTenant} onChange={setSelectedTenant} />
-      </div>
-      <div className="flex flex-wrap gap-2 align-items-center">
-        <Dropdown
-          value={selectedPartner}
-          options={partnerOptions}
-          onChange={(e) => setSelectedPartner(e.value)}
-          placeholder={t('transaction.filter_partner')}
-          className="w-13rem"
-        />
-        <Dropdown
-          value={selectedActionType}
-          options={actionTypeOptions}
-          onChange={(e) => setSelectedActionType(e.value)}
-          placeholder={t('transaction.filter_action')}
-          className="w-12rem"
-        />
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            type="search"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder={t('transaction.search_placeholder')}
-            className="w-14rem md:w-18rem"
-          />
-        </span>
-        <Button
-          label={t('transaction.manual_adjust_btn')}
-          icon="pi pi-sliders-h"
-          severity="warning"
-          outlined
-          size="small"
-          onClick={() => setAdjustVisible(true)}
-        />
-        <Button
-          icon="pi pi-refresh"
-          rounded
-          outlined
-          onClick={handleRefresh}
-          tooltip={t('common.refresh')}
-        />
-      </div>
-    </div>
-  );
-
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toastRef} />
-      <AppBreadcrumb items={[{ label: t('nav.transactions') }]} />
+      <StandardPageHeader
+        title={t('nav.transactions')}
+        subtitle={t('transaction.subtitle', 'Tra cứu sổ cái tích điểm, đổi thưởng và biến động số dư')}
+        breadcrumbs={[{ label: t('nav.transactions') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={setSelectedTenant}
+        extraActions={[
+          {
+            label: t('transaction.manual_adjust_btn'),
+            icon: 'pi pi-sliders-h',
+            severity: 'warning',
+            outlined: true,
+            onClick: () => setAdjustVisible(true),
+          },
+        ]}
+      />
 
-      <div className="card shadow-1 border-round surface-card p-4">
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
+        <UniversalFilterBar
+          searchValue={searchKeyword}
+          onSearchChange={setSearchKeyword}
+          searchPlaceholder={t('transaction.search_placeholder')}
+          basicFilters={[
+            {
+              key: 'partnerCode',
+              label: t('transaction.filter_partner'),
+              value: selectedPartner,
+              options: partnerOptions,
+              onChange: (val) => setSelectedPartner(val),
+              placeholder: t('transaction.filter_partner'),
+            },
+            {
+              key: 'actionType',
+              label: t('transaction.filter_action'),
+              value: selectedActionType,
+              options: actionTypeOptions,
+              onChange: (val) => setSelectedActionType(val),
+              placeholder: t('transaction.filter_action'),
+            },
+          ]}
+          onExport={handleExport}
+          onReset={() => {
+            setSearchKeyword('');
+            setSelectedPartner('ALL');
+            setSelectedActionType('ALL');
+          }}
+          onRefresh={handleRefresh}
+        />
+
         <DataTable
           value={items}
           lazy
@@ -364,7 +377,6 @@ export const Transactions: React.FC = () => {
           totalRecords={totalRecords}
           onPage={onPage}
           loading={loading}
-          header={header}
           dataKey="id"
           rowsPerPageOptions={[15, 30, 50]}
           emptyMessage={t('common.no_data')}
@@ -388,21 +400,9 @@ export const Transactions: React.FC = () => {
           {/* Cột 3: Mã GD */}
           <Column
             field="transactionId"
-            header={<span title={t('transaction.id_tooltip')}>{t('transaction.id')}</span>}
+            header={t('transaction.id')}
             body={(row: PointLedgerItem) => (
-              <div className="flex align-items-center gap-1">
-                <span className="font-mono white-space-nowrap font-medium text-primary text-sm">{row.transactionId}</span>
-                <Button
-                  icon="pi pi-copy"
-                  text
-                  rounded
-                  className="p-1 text-400 hover:text-primary"
-                  style={{ width: '1.5rem', height: '1.5rem' }}
-                  onClick={() => copyToClipboard(row.transactionId, 'transaction.copied_tx_code')}
-                  tooltip={t('transaction.copy_tx_code')}
-                  tooltipOptions={{ position: 'top' }}
-                />
-              </div>
+              <span className="font-bold font-mono text-900">{row.transactionId}</span>
             )}
             style={{ minWidth: '15rem' }}
           />
@@ -410,8 +410,8 @@ export const Transactions: React.FC = () => {
           {/* Cột 4: Số Điện Thoại / User ID */}
           <Column
             field="externalUserId"
-            header={<span title={t('transaction.phone_tooltip')}>{t('transaction.phone')}</span>}
-            body={(row: PointLedgerItem) => <span className="font-mono white-space-nowrap text-800">{row.externalUserId}</span>}
+            header={t('transaction.phone')}
+            body={(row: PointLedgerItem) => <span className="font-mono text-900">{row.externalUserId}</span>}
             style={{ minWidth: '12rem' }}
           />
 
@@ -419,7 +419,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="actionType"
             body={actionTypeTemplate}
-            header={<span title={t('transaction.action_tooltip')}>{t('transaction.action_type')}</span>}
+            header={t('transaction.action_type')}
             style={{ minWidth: '9rem', textAlign: 'center' }}
           />
 
@@ -427,7 +427,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="points"
             body={pointsTemplate}
-            header={<span title={t('transaction.amount_tooltip')}>{t('transaction.amount')}</span>}
+            header={t('transaction.amount')}
             style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
 
@@ -435,7 +435,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="balanceAfter"
             body={balanceAfterTemplate}
-            header={<span title={t('transaction.balance_after_tooltip')}>{t('transaction.balance_after')}</span>}
+            header={t('transaction.balance_after')}
             style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
 
@@ -443,7 +443,7 @@ export const Transactions: React.FC = () => {
           <Column
             field="partnerCode"
             body={partnerTemplate}
-            header={<span title={t('transaction.partner_tooltip')}>{t('transaction.partner')}</span>}
+            header={t('transaction.partner')}
             style={{ minWidth: '12rem' }}
           />
 
@@ -452,7 +452,6 @@ export const Transactions: React.FC = () => {
             field="createdAt"
             body={dateTemplate}
             header={t('common.created_at')}
-            className="font-mono white-space-nowrap"
             style={{ minWidth: '12rem' }}
           />
 
@@ -507,8 +506,20 @@ export const Transactions: React.FC = () => {
 
                 <div className="col-4">
                   <div className="text-xs text-500 mb-1">{t('transaction.amount')}</div>
-                  <div className={`font-mono font-bold text-xl ${(detailItem.actionType === 'EARN' || detailItem.actionType === 'REWARD' || detailItem.actionType === 'SPIN') ? 'text-green-600' : 'text-orange-600'}`}>
-                    {(detailItem.actionType === 'EARN' || detailItem.actionType === 'REWARD' || detailItem.actionType === 'SPIN') ? `+${detailItem.points.toLocaleString()}` : `-${detailItem.points.toLocaleString()}`}
+                  <div
+                    className={`font-mono font-bold text-xl ${
+                      detailItem.actionType === PointActionType.EARN ||
+                      detailItem.actionType === PointActionType.REWARD ||
+                      detailItem.actionType === PointActionType.SPIN
+                        ? 'text-green-600'
+                        : 'text-orange-600'
+                    }`}
+                  >
+                    {detailItem.actionType === PointActionType.EARN ||
+                    detailItem.actionType === PointActionType.REWARD ||
+                    detailItem.actionType === PointActionType.SPIN
+                      ? `+${detailItem.points.toLocaleString()}`
+                      : `-${detailItem.points.toLocaleString()}`}
                   </div>
                   <div>{actionTypeTemplate(detailItem)}</div>
                 </div>

@@ -2,6 +2,12 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { DailyCheckinModal } from './components/DailyCheckinModal';
 import { soundHaptics } from './utils/soundHaptics';
+
+enum MilestoneStatus {
+  CLAIMED = 'CLAIMED',
+  CLAIMABLE = 'CLAIMABLE',
+  COMPLETED = 'COMPLETED',
+}
 import {
   Volume2,
   VolumeX,
@@ -1453,10 +1459,11 @@ export const App: React.FC = () => {
                       )
                       .map((m) => {
                         const normalizedStatus = (m.status || '').toUpperCase();
-                        const isClaimed = normalizedStatus === 'CLAIMED';
+                        const isClaimed = normalizedStatus === MilestoneStatus.CLAIMED;
                         const isClaimable =
                           !isClaimed &&
-                          (normalizedStatus === 'CLAIMABLE' || normalizedStatus === 'COMPLETED');
+                          (normalizedStatus === MilestoneStatus.CLAIMABLE ||
+                            normalizedStatus === MilestoneStatus.COMPLETED);
                         return (
                           <div
                             key={m.id}

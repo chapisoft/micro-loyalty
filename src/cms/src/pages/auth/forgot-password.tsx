@@ -127,7 +127,7 @@ const ForgotPasswordController: React.FC<ForgotPasswordControllerProps> = ({ vis
               }}
             />
           </div>
-          <AppButton label="Send" className="mt-4" loading={loading} onClick={handleSubmit(onSubmit)} />
+          <AppButton label={t('common.confirm')} className="mt-4" loading={loading} onClick={handleSubmit(onSubmit)} />
         </div>
       </div>
     </AppDialog>

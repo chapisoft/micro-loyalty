@@ -160,6 +160,16 @@ public class GameHubController {
         return ResponseEntity.ok(saved);
     }
 
+    @DeleteMapping("/admin/games/{id}")
+    @Operation(summary = "Xóa thông tin game trên CMS")
+    public ResponseEntity<Void> deleteGameAdmin(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("id") Long id) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        gameHubService.deleteGameAdmin(tenantId, id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/admin/config")
     @Operation(summary = "Lấy cấu hình chung cổng game", description = "Trả về tỷ lệ đổi điểm, khung giờ vàng, chế độ bảo trì")
     public ResponseEntity<GameHubGlobalConfigDto> getGlobalConfig(

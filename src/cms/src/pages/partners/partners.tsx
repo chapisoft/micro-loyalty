@@ -13,8 +13,11 @@ import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { Partner, partnerService } from '@/service/partner.service';
 import { LoyaltyService, SystemIntegrationItemModel, PartnerApiKeyItemModel } from '@/service/loyalty.service';
-import { TenantSelector } from '@/components/TenantSelector';
-import { AppBreadcrumb } from 'components';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
+import { exportToExcel } from '@/components/exportHelper';
+import { ApiKeyStatus, CommonStatus } from '@/models';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const PARTNER_TYPES = [
@@ -201,7 +204,7 @@ export const Partners: React.FC = () => {
   };
 
   const editItem = (item: Partner) => {
-    const statusVal = Number(item.status) === 1 || String(item.status) === 'ACTIVE' ? 1 : 0;
+    const statusVal = Number(item.status) === 1 || String(item.status) === CommonStatus.ACTIVE ? 1 : 0;
     setFormData({
       ...item,
       partnerType: item.partnerType || 'RETAIL',
@@ -343,11 +346,11 @@ export const Partners: React.FC = () => {
       const matchType = filterType === 'ALL' || item.partnerType === filterType;
 
       // 3. Lọc theo trạng thái
-      const isActive = Number(item.status) === 1 || String(item.status) === 'ACTIVE';
+      const isActive = Number(item.status) === 1 || String(item.status) === CommonStatus.ACTIVE;
       const matchStatus =
         filterStatus === 'ALL' ||
-        (filterStatus === 'ACTIVE' && isActive) ||
-        (filterStatus === 'INACTIVE' && !isActive);
+        (filterStatus === CommonStatus.ACTIVE && isActive) ||
+        (filterStatus === CommonStatus.INACTIVE && !isActive);
 
       return matchSearch && matchType && matchStatus;
     });
@@ -356,12 +359,9 @@ export const Partners: React.FC = () => {
   const partnerTypeTemplate = (rowData: Partner) => {
     const pt = PARTNER_TYPES.find((p) => p.value === rowData.partnerType) || PARTNER_TYPES[PARTNER_TYPES.length - 1];
     return (
-      <div className="inline-flex align-items-center gap-1 px-2 py-1 border-round-md" style={{ backgroundColor: `${pt.badgeColor}15`, color: pt.badgeColor }}>
-        <i className={`${pt.icon} text-xs`} />
-        <span className="font-medium text-xs">
-          {t(`partner.${pt.translationKey}`)}
-        </span>
-      </div>
+      <span className="text-900">
+        {t(`partner.${pt.translationKey}`)}
+      </span>
     );
   };
 
@@ -369,9 +369,9 @@ export const Partners: React.FC = () => {
     if (!rowData.apiKey) return <span className="text-400 text-xs italic">{t('partner.not_issued')}</span>;
     return (
       <div className="flex align-items-center gap-1">
-        <code className="px-2 py-1 border-round bg-bluegray-50 text-bluegray-800 text-xs font-mono font-medium">
+        <span className="text-900 font-mono text-xs">
           {rowData.apiKey.length > 18 ? `${rowData.apiKey.substring(0, 15)}...` : rowData.apiKey}
-        </code>
+        </span>
         <Button
           icon="pi pi-copy"
           text
@@ -394,73 +394,66 @@ export const Partners: React.FC = () => {
       return <span className="text-400 text-xs italic">{t('partner.not_configured')}</span>;
     }
     return (
-      <div className="flex align-items-center gap-1" title={rowData.webhookUrl}>
-        <i className="pi pi-link text-xs text-green-600" />
-        <span className="text-xs text-700 text-overflow-ellipsis overflow-hidden white-space-nowrap" style={{ maxWidth: '12rem' }}>
-          {rowData.webhookUrl.replace(/^https?:\/\//, '')}
-        </span>
-      </div>
+      <span className="text-900 text-xs text-overflow-ellipsis overflow-hidden white-space-nowrap block" style={{ maxWidth: '12rem' }} title={rowData.webhookUrl}>
+        {rowData.webhookUrl.replace(/^https?:\/\//, '')}
+      </span>
     );
   };
 
   const ipWhitelistTemplate = (rowData: Partner) => {
     const ip = rowData.ipWhitelist || '0.0.0.0/0';
-    const isAll = ip === '0.0.0.0/0';
     return (
-      <Tag
-        value={ip}
-        severity={isAll ? 'warning' : 'info'}
-        className="text-xs font-mono"
-        style={{ padding: '2px 6px' }}
-      />
+      <span className="text-900 text-xs font-mono">
+        {ip}
+      </span>
     );
   };
 
   const actionBodyTemplate = (rowData: Partner) => {
     return (
-      <div className="flex gap-1 align-items-center">
-        <Button
-          icon="pi pi-eye"
-          rounded
-          outlined
-          severity="info"
-          size="small"
-          onClick={() => openDetail(rowData)}
-          tooltip={t('partner.detail_title')}
-        />
-        <Button
-          icon="pi pi-key"
-          rounded
-          outlined
-          severity="help"
-          size="small"
-          onClick={() => openKeyWebhookDialog(rowData)}
-          tooltip={t('partner.manage_key_webhook')}
-        />
-        <Button
-          icon="pi pi-pencil"
-          rounded
-          outlined
-          severity="warning"
-          size="small"
-          onClick={() => editItem(rowData)}
-          tooltip={t('common.edit')}
-        />
-        <Button
-          icon="pi pi-trash"
-          rounded
-          outlined
-          severity="danger"
-          size="small"
-          onClick={() => deleteItem(rowData)}
-          tooltip={t('common.delete')}
-        />
-      </div>
+      <StandardRowActions
+        onView={() => openDetail(rowData)}
+        onEdit={() => editItem(rowData)}
+        onDelete={() => deleteItem(rowData)}
+        extraActions={[
+          {
+            label: t('partner.manage_key_webhook'),
+            icon: 'pi pi-key',
+            onClick: () => openKeyWebhookDialog(rowData),
+          },
+        ]}
+      />
+    );
+  };
+
+  const handleExport = () => {
+    exportToExcel(
+      filteredItems.map((p, idx) => ({
+        stt: idx + 1,
+        partnerCode: p.partnerCode,
+        partnerName: p.partnerName,
+        partnerType: p.partnerType,
+        apiKey: p.apiKey || '',
+        webhookUrl: p.webhookUrl || '',
+        ipWhitelist: p.ipWhitelist || '',
+        status: Number(p.status) === 1 ? t('common.active') : t('common.inactive'),
+      })),
+      [
+        { key: 'stt', header: t('common.stt') },
+        { key: 'partnerCode', header: t('partner.code') },
+        { key: 'partnerName', header: t('partner.name') },
+        { key: 'partnerType', header: t('partner.type') },
+        { key: 'apiKey', header: t('partner.api_key') },
+        { key: 'webhookUrl', header: t('partner.webhook_url') },
+        { key: 'ipWhitelist', header: t('partner.ip_whitelist') },
+        { key: 'status', header: t('common.status') },
+      ],
+      `Danh_Sach_Doi_Tac_${selectedTenant}`
     );
   };
 
   const statusBodyTemplate = (rowData: Partner) => {
-    const isActive = Number(rowData.status) === 1 || String(rowData.status) === 'ACTIVE';
+    const isActive = Number(rowData.status) === 1 || String(rowData.status) === CommonStatus.ACTIVE;
     return isActive ? (
       <Tag severity="success" value={t('common.active')} />
     ) : (
@@ -491,171 +484,152 @@ export const Partners: React.FC = () => {
 
   const statusFilterOptions = [
     { label: t('common.all'), value: 'ALL' },
-    { label: t('common.active'), value: 'ACTIVE' },
-    { label: t('common.inactive'), value: 'INACTIVE' },
+    { label: t('common.active'), value: CommonStatus.ACTIVE },
+    { label: t('common.inactive'), value: CommonStatus.INACTIVE },
   ];
 
-  const header = (
-    <div className="flex flex-column gap-3">
-      {/* Top Bar: Title & Action Buttons */}
-      <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-        <div>
-          <h4 className="m-0 text-primary font-bold">{t('partner.management_title')}</h4>
-          <p className="m-0 text-500 text-xs mt-1">
-            {t('partner.subtitle')}
-          </p>
-        </div>
-        <div className="flex gap-2 align-items-center">
-          <Button
-            label={t('partner.add_new')}
-            icon="pi pi-plus"
-            severity="success"
-            onClick={openNew}
-            className="shadow-1"
-          />
-          <Button
-            icon="pi pi-refresh"
-            rounded
-            outlined
-            onClick={() => fetchData(selectedTenant)}
-            tooltip={t('common.refresh')}
-          />
-        </div>
-      </div>
-
-      {/* Filter Bar: Tenant Selector & Search & Dropdown Filters */}
-      <div className="flex flex-wrap gap-2 align-items-center justify-content-between pt-2 border-top-1 surface-border">
-        <div className="flex flex-wrap gap-2 align-items-center">
-          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-          <Dropdown
-            value={filterType}
-            options={typeFilterOptions}
-            onChange={(e) => setFilterType(e.value)}
-            className="w-14rem"
-            placeholder={t('partner.filter_partner_type')}
-          />
-          <Dropdown
-            value={filterStatus}
-            options={statusFilterOptions}
-            onChange={(e) => setFilterStatus(e.value)}
-            className="w-12rem"
-            placeholder={t('common.select_status')}
-          />
-        </div>
-        <div className="p-input-icon-left w-16rem">
-          <i className="pi pi-search" />
-          <InputText
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('common.search')}
-            className="w-full p-inputtext-sm"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div>
+    <div className="w-full">
       <Toast ref={toast} position="top-right" />
       <ConfirmDialog />
-      <AppBreadcrumb items={[{ label: t('nav.partners') }]} />
+      <StandardPageHeader
+        title={t('nav.partners')}
+        subtitle={t('partner.subtitle', 'Quản lý danh sách đối tác liên minh, cấp phát API Key B2B và Webhook')}
+        breadcrumbs={[{ label: t('nav.partners') }]}
+        tenantValue={selectedTenant}
+        onTenantChange={handleTenantChange}
+        primaryAction={{
+          label: t('common.add_new'),
+          icon: 'pi pi-plus',
+          onClick: openNew,
+        }}
+      />
 
-      <div className="card shadow-1 border-round surface-card p-4">
+      <div className="card shadow-1 border-round surface-card p-3 w-full">
         <TabView>
           <TabPanel header={t('partner.tab_directory')} leftIcon="pi pi-building mr-2">
-        <DataTable<any>
-          value={filteredItems}
-          selection={selectedItems}
-          onSelectionChange={(e: any) => setSelectedItems(e.value || [])}
-          loading={loading}
-          header={header}
-          dataKey="id"
-          paginator
-          rows={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          emptyMessage={t('common.no_data')}
-          stripedRows
-          responsiveLayout="scroll"
-          className="p-datatable-sm"
-        >
-          {/* Cột 1: Checkbox */}
-          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
+            <UniversalFilterBar
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder={t('common.search')}
+              basicFilters={[
+                {
+                  key: 'filterType',
+                  label: t('partner.filter_partner_type'),
+                  value: filterType,
+                  options: typeFilterOptions,
+                  onChange: (val) => setFilterType(val),
+                  placeholder: t('partner.filter_partner_type'),
+                },
+                {
+                  key: 'filterStatus',
+                  label: t('common.select_status'),
+                  value: filterStatus,
+                  options: statusFilterOptions,
+                  onChange: (val) => setFilterStatus(val),
+                  placeholder: t('common.select_status'),
+                },
+              ]}
+              onExport={handleExport}
+              onReset={() => {
+                setSearchQuery('');
+                setFilterType('ALL');
+                setFilterStatus('ALL');
+              }}
+              onRefresh={() => fetchData(selectedTenant)}
+            />
 
-          {/* Cột 2: STT */}
-          <Column
-            header={t('common.stt')}
-            body={(_, options) => options.rowIndex + 1}
-            style={{ width: '3.5rem', textAlign: 'center' }}
-          />
+            <DataTable<any>
+              value={filteredItems}
+              selection={selectedItems}
+              onSelectionChange={(e: any) => setSelectedItems(e.value || [])}
+              loading={loading}
+              dataKey="id"
+              paginator
+              rows={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              emptyMessage={t('common.no_data')}
+              stripedRows
+              responsiveLayout="scroll"
+              className="p-datatable-sm"
+            >
+              {/* Cột 1: Checkbox */}
+              <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
 
-          {/* Cột 3: Thao tác / Hành động */}
-          <Column
-            body={actionBodyTemplate}
-            exportable={false}
-            header={t('common.actions')}
-            style={{ width: '7.5rem', textAlign: 'center' }}
-          />
+              {/* Cột 2: STT */}
+              <Column
+                header={t('common.stt')}
+                body={(_, options) => options.rowIndex + 1}
+                style={{ width: '3.5rem', textAlign: 'center' }}
+              />
 
-          {/* Cột 4: Mã Đối tác */}
-          <Column
-            field="partnerCode"
-            header={t('partner.code')}
-            body={(rowData) => <span className="font-mono font-bold text-primary">{rowData.partnerCode}</span>}
-            sortable
-            style={{ minWidth: '11rem' }}
-          />
+              {/* Cột 3: Thao tác / Hành động */}
+              <Column
+                body={actionBodyTemplate}
+                exportable={false}
+                header={t('common.actions')}
+                style={{ width: '7.5rem', textAlign: 'center' }}
+              />
 
-          {/* Cột 5: Tên Đối tác */}
-          <Column
-            field="partnerName"
-            header={t('partner.name')}
-            body={(rowData) => <span className="font-semibold text-900">{rowData.partnerName}</span>}
-            sortable
-            style={{ minWidth: '14rem' }}
-          />
+              {/* Cột 4: Mã Đối tác */}
+              <Column
+                field="partnerCode"
+                header={t('partner.code')}
+                body={(rowData) => <span className="font-mono font-bold text-900">{rowData.partnerCode}</span>}
+                sortable
+                style={{ minWidth: '11rem' }}
+              />
 
-          {/* Cột 6: Lĩnh vực kinh doanh */}
-          <Column
-            field="partnerType"
-            header={t('partner.type')}
-            body={partnerTypeTemplate}
-            sortable
-            style={{ minWidth: '11rem' }}
-          />
+              {/* Cột 5: Tên Đối tác */}
+              <Column
+                field="partnerName"
+                header={t('partner.name')}
+                body={(rowData) => <span className="text-900">{rowData.partnerName}</span>}
+                sortable
+                style={{ minWidth: '14rem' }}
+              />
 
-          {/* Cột 7: API Key */}
-          <Column
-            field="apiKey"
-            header={t('partner.api_key')}
-            body={apiKeyTemplate}
-            style={{ minWidth: '13rem' }}
-          />
+              {/* Cột 6: Lĩnh vực kinh doanh */}
+              <Column
+                field="partnerType"
+                header={t('partner.type')}
+                body={partnerTypeTemplate}
+                sortable
+                style={{ minWidth: '11rem' }}
+              />
 
-          {/* Cột 8: Webhook Callback */}
-          <Column
-            field="webhookUrl"
-            header={t('partner.webhook_title')}
-            body={webhookTemplate}
-            style={{ minWidth: '11rem' }}
-          />
+              {/* Cột 7: API Key */}
+              <Column
+                field="apiKey"
+                header={t('partner.api_key')}
+                body={apiKeyTemplate}
+                style={{ minWidth: '13rem' }}
+              />
 
-          {/* Cột 9: IP Whitelist */}
-          <Column
-            field="ipWhitelist"
-            header={t('partner.ip_whitelist')}
-            body={ipWhitelistTemplate}
-            style={{ minWidth: '9rem' }}
-          />
+              {/* Cột 8: Webhook Callback */}
+              <Column
+                field="webhookUrl"
+                header={t('partner.webhook_title')}
+                body={webhookTemplate}
+                style={{ minWidth: '11rem' }}
+              />
 
-          {/* Cột 10: Trạng thái */}
-          <Column
-            field="status"
-            body={statusBodyTemplate}
-            header={t('common.status')}
-            sortable
-            style={{ minWidth: '8.5rem' }}
-          />
+              {/* Cột 9: IP Whitelist */}
+              <Column
+                field="ipWhitelist"
+                header={t('partner.ip_whitelist')}
+                body={ipWhitelistTemplate}
+                style={{ minWidth: '9rem' }}
+              />
+
+              {/* Cột 10: Trạng thái */}
+              <Column
+                field="status"
+                body={statusBodyTemplate}
+                header={t('common.status')}
+                sortable
+                style={{ minWidth: '8.5rem', textAlign: 'center' }}
+              />
 
           {/* Cột 11: Ngày tạo */}
           <Column
@@ -1040,8 +1014,8 @@ Content-Type: application/json`}
           <div className="p-3 border-round surface-50 border-1 surface-border">
             <div className="font-medium text-sm mb-2">{t('partner.webhook_ip_section')}</div>
             <div className="flex flex-column gap-2">
-              <label className="text-xs text-600">Webhook Callback URL</label>
-              <InputText value={editWebhookUrl} onChange={(e) => setEditWebhookUrl(e.target.value)} className="font-mono p-inputtext-sm" placeholder="https://partner.example.com/loyalty/webhook" />
+              <label className="text-xs text-600">{t('partner.webhook_url')}</label>
+              <InputText value={editWebhookUrl} onChange={(e) => setEditWebhookUrl(e.target.value)} className="font-mono p-inputtext-sm" placeholder={t('partner.webhook_url_placeholder')} />
               <label className="text-xs text-600 mt-1">{t('partner.ip_whitelist_comma_label')}</label>
               <InputText value={editIpWhitelist} onChange={(e) => setEditIpWhitelist(e.target.value)} className="font-mono p-inputtext-sm" placeholder="103.1.2.3/32, 103.1.2.4/32" />
               <div className="flex justify-content-end mt-2">
@@ -1070,10 +1044,10 @@ Content-Type: application/json`}
             )}
 
             <DataTable<PartnerApiKeyItemModel[]> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys')}>
-              <Column field="keyPrefix" header="Prefix" body={(k: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === 'ACTIVE' ? 'success' : k.status === 'GRACE_PERIOD' ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
-              <Column field="graceExpiresAt" header="Grace Period" body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
-              <Column header={t('common.action')} body={(k: PartnerApiKeyItemModel) => k.id && k.status === 'GRACE_PERIOD' ? <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
+              <Column field="keyPrefix" header={t('system_parameter.code_types.prefix')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
+              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === ApiKeyStatus.ACTIVE ? 'success' : k.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
+              <Column field="graceExpiresAt" header={t('partner.grace_period')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
+              <Column header={t('common.action')} body={(k: PartnerApiKeyItemModel) => k.id && k.status === ApiKeyStatus.GRACE_PERIOD ? <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
             </DataTable>
           </div>
         </div>

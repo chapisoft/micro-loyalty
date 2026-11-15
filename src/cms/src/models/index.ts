@@ -562,6 +562,24 @@ export enum ClearingStatus {
   REFUNDED = 'REFUNDED',
 }
 
+export enum PointActionType {
+  EARN = 'EARN',
+  BURN = 'BURN',
+  REFUND = 'REFUND',
+  EXPIRE = 'EXPIRE',
+  ADJUST = 'ADJUST',
+  CASHBACK = 'CASHBACK',
+  REWARD = 'REWARD',
+  SPIN = 'SPIN',
+  VOUCHER = 'VOUCHER',
+}
+
+export enum TransactionStatus {
+  SUCCESS = 'SUCCESS',
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+}
+
 export interface IAttribute {
   id: number;
   name: string;
