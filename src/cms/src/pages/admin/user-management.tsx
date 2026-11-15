@@ -315,7 +315,6 @@ export const UserManagementPage: React.FC = () => {
             label={t('common.add_new', 'Thêm mới')}
             icon="pi pi-plus"
             size="small"
-            severity="primary"
             onClick={handleCreateUser}
             className="p-button-sm font-semibold"
           />

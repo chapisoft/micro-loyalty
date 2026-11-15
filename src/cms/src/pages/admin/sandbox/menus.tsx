@@ -155,13 +155,19 @@ export function SandboxMenusPage() {
       {/* Table */}
       <div className="surface-card p-4 border-round-2xl border-1 surface-border shadow-1">
         <DataTable value={menus} loading={loading} paginator rows={10} emptyMessage={t('sandbox.no_menus')} className="p-datatable-sm">
-          <Column field="menuOrder" header={t('common.stt')} style={{ width: '80px' }} />
-          <Column field="name" header={t('sandbox.menu_name')} body={(r: SandboxMenu) => <span className="font-semibold text-900">{r.name}</span>} />
-          <Column field="path" header={t('sandbox.route_path')} body={(r: SandboxMenu) => <span className="font-mono text-xs text-600">{r.path}</span>} />
           <Column
-            header={t('common.actions')}
+            header={t('common.order_number', 'STT')}
+            body={(_, options) => (
+              <span className="font-mono text-xs text-600 font-normal">
+                {options.rowIndex + 1}
+              </span>
+            )}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+          <Column
+            header={t('common.action', 'Thao tác')}
             body={(r: SandboxMenu) => (
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-content-center">
                 <Button
                   label={t('sandbox.edit_content_btn')}
                   icon="pi pi-pencil"
@@ -171,7 +177,10 @@ export function SandboxMenusPage() {
                 />
               </div>
             )}
+            style={{ width: '8rem', textAlign: 'center' }}
           />
+          <Column field="name" header={t('sandbox.menu_name')} body={(r: SandboxMenu) => <span className="font-bold text-900">{r.name}</span>} />
+          <Column field="path" header={t('sandbox.route_path')} body={(r: SandboxMenu) => <span className="font-mono text-xs text-900">{r.path}</span>} />
         </DataTable>
       </div>
 

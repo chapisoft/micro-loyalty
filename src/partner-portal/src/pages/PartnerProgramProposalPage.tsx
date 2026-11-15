@@ -17,6 +17,7 @@ import { ProposalFundingType, ProposalStatus } from '@/models';
 import { LoyaltyService, PartnerProgramProposalModel } from '@/service/loyalty.service';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const PartnerProgramProposalPage: React.FC = () => {
@@ -162,6 +163,41 @@ export const PartnerProgramProposalPage: React.FC = () => {
             emptyMessage={t('common.no_data')}
             className="mt-3"
           >
+            <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: PartnerProgramProposalModel) => (
+                <StandardRowActions
+                  onEdit={
+                    r.status === ProposalStatus.PENDING_APPROVAL
+                      ? () => {
+                          setFormData(r);
+                          setShowDialog(true);
+                        }
+                      : undefined
+                  }
+                  actions={
+                    r.status !== ProposalStatus.PENDING_APPROVAL
+                      ? [
+                          {
+                            icon: 'pi pi-eye',
+                            label: t('common.view', 'Xem chi tiết'),
+                            onClick: () => {
+                              setFormData(r);
+                              setShowDialog(true);
+                            },
+                          },
+                        ]
+                      : undefined
+                  }
+                />
+              )}
+              style={{ width: '6rem', textAlign: 'center' }}
+            />
             <Column
               field="proposalCode"
               header={t('partner_portal.proposal_code')}

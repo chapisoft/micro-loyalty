@@ -198,6 +198,42 @@ export const AlertCenterPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: SystemAlertModel) => (
+                <StandardRowActions
+                  actions={[
+                    ...(r.status === AlertStatus.OPEN
+                      ? [
+                          {
+                            icon: 'pi pi-check',
+                            label: t('alert.ack_btn', 'Tiếp nhận'),
+                            onClick: () => handleAcknowledge(r),
+                          },
+                        ]
+                      : []),
+                    ...(r.status !== AlertStatus.RESOLVED
+                      ? [
+                          {
+                            icon: 'pi pi-check-circle',
+                            label: t('alert.resolve_btn', 'Xử lý'),
+                            onClick: () => {
+                              setResolveTarget(r);
+                              setResolveNote('');
+                            },
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              )}
+              style={{ width: '7rem', textAlign: 'center' }}
+            />
+            <Column
               field="alertCode"
               header={t('alert.code')}
               body={(r: SystemAlertModel) => (
@@ -233,14 +269,6 @@ export const AlertCenterPage: React.FC = () => {
               style={{ minWidth: '18rem' }}
             />
             <Column
-              field="status"
-              header={t('common.status')}
-              body={(r: SystemAlertModel) => (
-                <Tag value={r.status} severity={statusTag(r.status)} />
-              )}
-              style={{ minWidth: '9rem', textAlign: 'center' }}
-            />
-            <Column
               field="createdAt"
               header={t('common.created_at')}
               body={(r: SystemAlertModel) => (
@@ -251,37 +279,12 @@ export const AlertCenterPage: React.FC = () => {
               style={{ minWidth: '11rem' }}
             />
             <Column
-              header={t('common.action')}
+              field="status"
+              header={t('common.status')}
               body={(r: SystemAlertModel) => (
-                <StandardRowActions
-                  actions={[
-                    ...(r.status === AlertStatus.OPEN
-                      ? [
-                          {
-                            icon: 'pi pi-check',
-                            label: t('alert.ack_btn', 'Tiếp nhận'),
-                            severity: 'info' as const,
-                            onClick: () => handleAcknowledge(r),
-                          },
-                        ]
-                      : []),
-                    ...(r.status !== AlertStatus.RESOLVED
-                      ? [
-                          {
-                            icon: 'pi pi-check-circle',
-                            label: t('alert.resolve_btn', 'Xử lý'),
-                            severity: 'success' as const,
-                            onClick: () => {
-                              setResolveTarget(r);
-                              setResolveNote('');
-                            },
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
+                <Tag value={r.status} severity={statusTag(r.status)} />
               )}
-              style={{ minWidth: '8rem', textAlign: 'center' }}
+              style={{ minWidth: '9rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

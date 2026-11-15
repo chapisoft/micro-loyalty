@@ -150,6 +150,29 @@ export const PartnerPointsPolicyPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: PolicyRuleModel) => (
+                <StandardRowActions
+                  actions={[
+                    {
+                      icon: 'pi pi-send',
+                      label: t('partner_portal.propose_change', 'Đề xuất đổi tỷ lệ'),
+                      onClick: () => {
+                        setEditTarget(r);
+                        setProposedEarnRate(r.earnRatePercent ?? r.earnRate ?? 1);
+                      },
+                    },
+                  ]}
+                />
+              )}
+              style={{ width: '6rem', textAlign: 'center' }}
+            />
+            <Column
               field="policyCode"
               header={t('policy.code')}
               body={(r: PolicyRuleModel) => (
@@ -203,25 +226,6 @@ export const PartnerPointsPolicyPage: React.FC = () => {
                 />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
-            />
-            <Column
-              header={t('common.action')}
-              body={(r: PolicyRuleModel) => (
-                <StandardRowActions
-                  actions={[
-                    {
-                      icon: 'pi pi-send',
-                      label: t('partner_portal.propose_change', 'Đề xuất đổi tỷ lệ'),
-                      severity: 'info',
-                      onClick: () => {
-                        setEditTarget(r);
-                        setProposedEarnRate(r.earnRatePercent ?? r.earnRate ?? 1);
-                      },
-                    },
-                  ]}
-                />
-              )}
-              style={{ minWidth: '6rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

@@ -141,6 +141,11 @@ export const ProgramEffectivenessPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
               field="campaignCode"
               header={t('campaign.code')}
               body={(r: ProgramEffectivenessModel) => (

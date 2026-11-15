@@ -151,6 +151,23 @@ export const BudgetManagementPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: MonthlyBudgetModel) => (
+                <StandardRowActions
+                  onEdit={() => {
+                    setFormData(r);
+                    setShowDialog(true);
+                  }}
+                />
+              )}
+              style={{ width: '6rem', textAlign: 'center' }}
+            />
+            <Column
               field="sponsorType"
               header={t('budget.sponsor')}
               body={(r: MonthlyBudgetModel) => (
@@ -236,18 +253,6 @@ export const BudgetManagementPage: React.FC = () => {
                 />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
-            />
-            <Column
-              header={t('common.action')}
-              body={(r: MonthlyBudgetModel) => (
-                <StandardRowActions
-                  onEdit={() => {
-                    setFormData(r);
-                    setShowDialog(true);
-                  }}
-                />
-              )}
-              style={{ minWidth: '6rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

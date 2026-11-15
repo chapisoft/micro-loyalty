@@ -590,6 +590,11 @@ export const Dashboard: React.FC = () => {
             responsiveLayout="scroll"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
               field="transactionId"
               header={t('dashboard.tx_code')}
               body={(row: PointLedgerItem) => (
@@ -613,14 +618,14 @@ export const Dashboard: React.FC = () => {
             <Column header={t('dashboard.action')} body={actionTypeBodyTemplate} />
             <Column header={t('dashboard.points_delta')} body={pointsBodyTemplate} />
             <Column
-              field="status"
-              header={t('dashboard.status')}
-              body={statusBodyTemplate}
-            />
-            <Column
               field="createdAt"
               header={t('dashboard.time')}
               body={dateTemplate}
+            />
+            <Column
+              field="status"
+              header={t('dashboard.status')}
+              body={statusBodyTemplate}
             />
           </DataTable>
           <div className="mt-3 flex flex-wrap justify-content-between align-items-center gap-2">

@@ -230,10 +230,36 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: NatcashPaymentPointModel) => (
+                <StandardRowActions
+                  onEdit={() => {
+                    setFormData(r);
+                    setShowDialog(true);
+                  }}
+                  onDelete={() => handleDelete(r)}
+                />
+              )}
+              style={{ width: '7rem', textAlign: 'center' }}
+            />
+            <Column
+              field="paymentPointCode"
+              header={t('payment_point.code')}
+              body={(r: NatcashPaymentPointModel) => (
+                <span className="font-bold font-mono text-900">{r.paymentPointCode}</span>
+              )}
+              style={{ minWidth: '11rem' }}
+            />
+            <Column
               field="branchCode"
               header={t('payment_point.branch_code')}
               body={(r: NatcashPaymentPointModel) => (
-                <span className="font-bold font-mono text-900">{r.branchCode}</span>
+                <span className="font-mono text-900">{r.branchCode}</span>
               )}
               style={{ minWidth: '10rem' }}
             />
@@ -246,18 +272,10 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
               style={{ minWidth: '14rem' }}
             />
             <Column
-              field="paymentPointCode"
-              header={t('payment_point.code')}
-              body={(r: NatcashPaymentPointModel) => (
-                <span className="font-bold font-mono text-900">{r.paymentPointCode}</span>
-              )}
-              style={{ minWidth: '11rem' }}
-            />
-            <Column
               field="province"
               header={t('payment_point.city')}
               body={(r: NatcashPaymentPointModel) => (
-                <span className="text-900">{r.province}</span>
+                <span className="text-900">{r.province || '--'}</span>
               )}
               style={{ minWidth: '9rem' }}
             />
@@ -265,7 +283,7 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
               field="address"
               header={t('payment_point.address')}
               body={(r: NatcashPaymentPointModel) => (
-                <span className="text-900">{r.address}</span>
+                <span className="text-900">{r.address || '--'}</span>
               )}
               style={{ minWidth: '15rem' }}
             />
@@ -287,19 +305,6 @@ export const NatcashBranchesPaymentPointsPage: React.FC = () => {
                 />
               )}
               style={{ minWidth: '8rem', textAlign: 'center' }}
-            />
-            <Column
-              header={t('common.action')}
-              body={(r: NatcashPaymentPointModel) => (
-                <StandardRowActions
-                  onEdit={() => {
-                    setFormData(r);
-                    setShowDialog(true);
-                  }}
-                  onDelete={() => handleDelete(r)}
-                />
-              )}
-              style={{ minWidth: '6rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

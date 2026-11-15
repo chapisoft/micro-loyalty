@@ -230,6 +230,23 @@ export const PartnerBranchesProductsPage: React.FC = () => {
                 emptyMessage={t('common.no_data')}
               >
                 <Column
+                  header={t('common.order_number', 'STT')}
+                  body={(_, opt) => opt.rowIndex + 1}
+                  style={{ width: '4rem', textAlign: 'center' }}
+                />
+                <Column
+                  header={t('common.action', 'Thao tác')}
+                  body={(r: PartnerBranchModel) => (
+                    <StandardRowActions
+                      onEdit={() => {
+                        setBranchForm(r);
+                        setShowBranchDialog(true);
+                      }}
+                    />
+                  )}
+                  style={{ width: '6rem', textAlign: 'center' }}
+                />
+                <Column
                   field="branchCode"
                   header={t('partner_portal.branch_code')}
                   body={(r: PartnerBranchModel) => (
@@ -246,13 +263,13 @@ export const PartnerBranchesProductsPage: React.FC = () => {
                 <Column
                   field="province"
                   header={t('payment_point.province')}
-                  body={(r: PartnerBranchModel) => <span className="text-900">{r.province}</span>}
+                  body={(r: PartnerBranchModel) => <span className="text-900">{r.province || '--'}</span>}
                   style={{ minWidth: '9rem' }}
                 />
                 <Column
                   field="address"
                   header={t('payment_point.address')}
-                  body={(r: PartnerBranchModel) => <span className="text-900">{r.address}</span>}
+                  body={(r: PartnerBranchModel) => <span className="text-900">{r.address || '--'}</span>}
                   style={{ minWidth: '15rem' }}
                 />
                 <Column
@@ -275,18 +292,6 @@ export const PartnerBranchesProductsPage: React.FC = () => {
                     />
                   )}
                   style={{ minWidth: '8rem', textAlign: 'center' }}
-                />
-                <Column
-                  header={t('common.action')}
-                  body={(r: PartnerBranchModel) => (
-                    <StandardRowActions
-                      onEdit={() => {
-                        setBranchForm(r);
-                        setShowBranchDialog(true);
-                      }}
-                    />
-                  )}
-                  style={{ minWidth: '6rem', textAlign: 'center' }}
                 />
               </DataTable>
             )}
@@ -327,6 +332,23 @@ export const PartnerBranchesProductsPage: React.FC = () => {
               responsiveLayout="scroll"
               emptyMessage={t('common.no_data')}
             >
+              <Column
+                header={t('common.order_number', 'STT')}
+                body={(_, opt) => opt.rowIndex + 1}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
+              <Column
+                header={t('common.action', 'Thao tác')}
+                body={(r: PartnerProductGroupModel) => (
+                  <StandardRowActions
+                    onEdit={() => {
+                      setGroupForm(r);
+                      setShowGroupDialog(true);
+                    }}
+                  />
+                )}
+                style={{ width: '6rem', textAlign: 'center' }}
+              />
               <Column
                 field="groupCode"
                 header={t('partner_portal.group_code')}
@@ -371,18 +393,6 @@ export const PartnerBranchesProductsPage: React.FC = () => {
                   />
                 )}
                 style={{ minWidth: '8rem', textAlign: 'center' }}
-              />
-              <Column
-                header={t('common.action')}
-                body={(r: PartnerProductGroupModel) => (
-                  <StandardRowActions
-                    onEdit={() => {
-                      setGroupForm(r);
-                      setShowGroupDialog(true);
-                    }}
-                  />
-                )}
-                style={{ minWidth: '6rem', textAlign: 'center' }}
               />
             </DataTable>
           </TabPanel>

@@ -1634,13 +1634,13 @@ export default {
     "payload_after": "Dữ liệu Sau Thay Đổi"
   },
   "payment_point": {
-    "title": "Mạng lưới Chi nhánh Natcash & Điểm Thanh toán QR (LM-02)",
+    "title": "Điểm thanh toán",
     "add_new": "Thêm điểm thu",
     "code": "Mã Điểm Thu",
     "name": "Tên Chi nhánh / Quầy",
     "required_fields": "Vui lòng nhập Mã chi nhánh, Tên chi nhánh và Mã điểm thanh toán.",
     "saved": "Đã lưu thông tin chi nhánh / điểm thanh toán.",
-    "subtitle": "Quản lý cây phân cấp Thương hiệu → Chi nhánh → Quầy thu ngân / Payment Point.",
+    "subtitle": "Quản lý danh sách chi nhánh và điểm thanh toán trong liên minh.",
     "empty": "Chưa có chi nhánh hoặc điểm thanh toán nào trong liên minh này.",
     "branch_code": "Mã Chi Nhánh",
     "city": "Tỉnh / Thành",

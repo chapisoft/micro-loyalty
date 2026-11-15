@@ -221,11 +221,11 @@ export const ApprovalQueuePage: React.FC = () => {
             emptyMessage={t('approval.empty')}
           >
             <Column
-              header="#"
+              header={t('common.order_number', 'STT')}
               body={(_data, options) => (
                 <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
               )}
-              style={{ width: '3.5rem', textAlign: 'center' }}
+              style={{ width: '4rem', textAlign: 'center' }}
             />
             <Column
               header={t('common.action')}
@@ -234,7 +234,7 @@ export const ApprovalQueuePage: React.FC = () => {
                   onView={() => { setReviewItem(r); setDecisionNote(''); }}
                 />
               )}
-              style={{ width: '5.5rem', textAlign: 'center' }}
+              style={{ width: '6rem', textAlign: 'center' }}
             />
             <Column field="requestCode" header={t('approval.request_id')} body={(r) => <span className="font-bold font-mono text-900">{r.requestCode || r.id}</span>} sortable style={{ minWidth: '13rem' }} />
             <Column field="targetType" header={t('approval.target_type')} body={(r) => <span className="text-900">{r.targetType}</span>} sortable style={{ minWidth: '11rem' }} />
@@ -242,8 +242,8 @@ export const ApprovalQueuePage: React.FC = () => {
             <Column field="targetId" header={t('approval.target_id')} body={(r) => <span className="text-900 font-mono">{r.targetId}</span>} style={{ minWidth: '11rem' }} />
             <Column field="makerUsername" header={t('approval.maker')} body={(r) => <span className="text-900">{r.makerUsername || r.makerId || '--'}</span>} style={{ minWidth: '10rem' }} />
             <Column field="reason" header={t('common.reason')} body={(r) => <span className="text-900">{r.reason}</span>} style={{ minWidth: '14rem' }} />
-            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             <Column field="createdAt" header={t('common.created_at')} body={(r) => <span className="text-900 font-mono text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '--'}</span>} sortable style={{ minWidth: '11rem' }} />
+            <Column field="status" header={t('common.status')} body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} sortable style={{ minWidth: '8.5rem', textAlign: 'center' }} />
           </DataTable>
         )}
       </div>

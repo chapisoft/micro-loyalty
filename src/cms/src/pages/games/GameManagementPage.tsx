@@ -626,12 +626,12 @@ export const GameManagementPage: React.FC = () => {
         >
           <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
           <Column
-            header={t('common.stt')}
+            header={t('common.order_number', 'STT')}
             body={(_, options) => options.rowIndex + 1}
-            style={{ width: '3.5rem', textAlign: 'center' }}
+            style={{ width: '4rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions')}
+            header={t('common.action', 'Thao tác')}
             body={(rowData: GameItem) => (
               <StandardRowActions
                 onEdit={() => editGame(rowData)}
@@ -789,9 +789,9 @@ export const GameManagementPage: React.FC = () => {
           loading={isPrizesLoading}
           emptyMessage={t('game.no_prizes_configured')}
         >
-          <Column field="displayOrder" header={t('common.stt')} style={{ width: '4rem', textAlign: 'center' }} />
+          <Column field="displayOrder" header={t('common.order_number', 'STT')} style={{ width: '4rem', textAlign: 'center' }} />
           <Column
-            header={t('common.actions')}
+            header={t('common.action', 'Thao tác')}
             body={(row: GamePrizeItem) => (
               <div className="flex gap-1 justify-content-center">
                 <Button icon="pi pi-pencil" rounded text severity="secondary" size="small" onClick={() => editPrize(row)} tooltip={t('common.edit')} />
@@ -806,18 +806,30 @@ export const GameManagementPage: React.FC = () => {
             body={(row: GamePrizeItem) => <span className="text-xl">{row.iconSymbol || '🎁'}</span>}
             style={{ width: '4rem', textAlign: 'center' }}
           />
-          <Column field="prizeCode" header={t('game.prize_code')} sortable style={{ minWidth: '9rem', fontWeight: 600 }} />
-          <Column field="prizeName" header={t('game.prize_name')} sortable style={{ minWidth: '12rem' }} />
+          <Column
+            field="prizeCode"
+            header={t('game.prize_code')}
+            body={(row: GamePrizeItem) => <span className="font-bold font-mono text-900">{row.prizeCode}</span>}
+            sortable
+            style={{ minWidth: '9rem' }}
+          />
+          <Column
+            field="prizeName"
+            header={t('game.prize_name')}
+            body={(row: GamePrizeItem) => <span className="text-900">{row.prizeName}</span>}
+            sortable
+            style={{ minWidth: '12rem' }}
+          />
           <Column
             field="prizeType"
             header={t('game.prize_type')}
             body={(row: GamePrizeItem) => <Tag severity="info" value={row.prizeType} />}
-            style={{ minWidth: '8rem' }}
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
           <Column
             field="prizeValue"
             header={t('game.prize_value')}
-            body={(row: GamePrizeItem) => <span className="font-bold text-orange-600">+{row.prizeValue}</span>}
+            body={(row: GamePrizeItem) => <span className="font-bold font-mono text-900">+{row.prizeValue}</span>}
             style={{ minWidth: '6rem', textAlign: 'right' }}
           />
           <Column

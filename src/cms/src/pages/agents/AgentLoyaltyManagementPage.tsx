@@ -258,6 +258,30 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
                 className="mt-3"
               >
                 <Column
+                  header={t('common.order_number', 'STT')}
+                  body={(_, opt) => opt.rowIndex + 1}
+                  style={{ width: '4rem', textAlign: 'center' }}
+                />
+                <Column
+                  header={t('common.action', 'Thao tác')}
+                  body={(r: AgentLoyaltyItemModel) => (
+                    <StandardRowActions
+                      actions={
+                        r.rewardStatus === AgentKpiRewardStatus.ELIGIBLE
+                          ? [
+                              {
+                                icon: 'pi pi-check',
+                                label: t('approval.approve_btn', 'Duyệt thưởng'),
+                                onClick: () => handleApproveReward(r),
+                              },
+                            ]
+                          : []
+                      }
+                    />
+                  )}
+                  style={{ width: '7rem', textAlign: 'center' }}
+                />
+                <Column
                   field="agentCode"
                   header={t('agent.code')}
                   body={(r: AgentLoyaltyItemModel) => (
@@ -344,26 +368,6 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
                   )}
                   style={{ minWidth: '8.5rem', textAlign: 'center' }}
                 />
-                <Column
-                  header={t('common.action')}
-                  body={(r: AgentLoyaltyItemModel) => (
-                    <StandardRowActions
-                      actions={
-                        r.rewardStatus === AgentKpiRewardStatus.ELIGIBLE
-                          ? [
-                              {
-                                icon: 'pi pi-check',
-                                label: t('approval.approve_btn', 'Duyệt thưởng'),
-                                severity: 'success' as const,
-                                onClick: () => handleApproveReward(r),
-                              },
-                            ]
-                          : []
-                      }
-                    />
-                  )}
-                  style={{ minWidth: '6rem', textAlign: 'center' }}
-                />
               </DataTable>
             )}
           </TabPanel>
@@ -403,6 +407,23 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
               emptyMessage={t('agent.no_playbooks')}
             >
               <Column
+                header={t('common.order_number', 'STT')}
+                body={(_, opt) => opt.rowIndex + 1}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
+              <Column
+                header={t('common.action', 'Thao tác')}
+                body={(r: SupportPlaybookModel) => (
+                  <StandardRowActions
+                    onEdit={() => {
+                      setPlaybookForm(r);
+                      setShowPlaybookDialog(true);
+                    }}
+                  />
+                )}
+                style={{ width: '6rem', textAlign: 'center' }}
+              />
+              <Column
                 field="playbookCode"
                 header={t('agent.playbook_code')}
                 body={(r: SupportPlaybookModel) => (
@@ -433,18 +454,6 @@ export const AgentLoyaltyManagementPage: React.FC = () => {
                   <span className="text-900 text-sm">{r.summary}</span>
                 )}
                 style={{ minWidth: '18rem' }}
-              />
-              <Column
-                header={t('common.action')}
-                body={(r: SupportPlaybookModel) => (
-                  <StandardRowActions
-                    onEdit={() => {
-                      setPlaybookForm(r);
-                      setShowPlaybookDialog(true);
-                    }}
-                  />
-                )}
-                style={{ minWidth: '6rem', textAlign: 'center' }}
               />
             </DataTable>
           </TabPanel>

@@ -21,6 +21,7 @@ export interface StandardRowActionsProps {
   onDelete?: () => void;
   onView?: () => void;
   actions?: RowActionItem[];
+  extraActions?: RowActionItem[];
   maxInline?: number; // Defaults to 3
   className?: string;
 }
@@ -30,6 +31,7 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
   onDelete,
   onView,
   actions = [],
+  extraActions = [],
   maxInline = 3,
   className = '',
 }) => {
@@ -69,7 +71,7 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
     });
   }
 
-  const allActions = [...builtActions, ...actions];
+  const allActions = [...builtActions, ...actions, ...extraActions];
   const visibleActions = allActions.filter((a) => a.visible !== false);
 
   if (visibleActions.length === 0) {

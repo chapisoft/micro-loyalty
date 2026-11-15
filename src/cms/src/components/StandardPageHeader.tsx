@@ -1,17 +1,21 @@
 import React from 'react';
 import { Button } from 'primereact/button';
 import { AppBreadcrumb } from 'components';
+import { TenantSelector } from './TenantSelector';
 
 export interface StandardPageHeaderProps {
   title: string;
   subtitle?: string;
   breadcrumbs?: { label: string; url?: string; to?: string }[];
+  tenantValue?: string;
+  onTenantChange?: (tenantId: string) => void;
   primaryAction?: {
     label: string;
     icon?: string;
     onClick: () => void;
     loading?: boolean;
     disabled?: boolean;
+    severity?: any;
   };
   secondaryActions?: {
     label: string;
@@ -20,6 +24,16 @@ export interface StandardPageHeaderProps {
     outlined?: boolean;
     severity?: any;
     loading?: boolean;
+    disabled?: boolean;
+  }[];
+  extraActions?: {
+    label: string;
+    icon?: string;
+    onClick: () => void;
+    outlined?: boolean;
+    severity?: any;
+    loading?: boolean;
+    disabled?: boolean;
   }[];
   extraLeft?: React.ReactNode;
   onRefresh?: () => void;
@@ -33,8 +47,11 @@ export const StandardPageHeader: React.FC<StandardPageHeaderProps> = ({
   title,
   subtitle,
   breadcrumbs,
+  tenantValue,
+  onTenantChange,
   primaryAction,
   secondaryActions,
+  extraActions,
   extraLeft,
   onRefresh,
   refreshLoading = false,
@@ -42,8 +59,13 @@ export const StandardPageHeader: React.FC<StandardPageHeaderProps> = ({
   badge,
   className = '',
 }) => {
+  const allSecondaryActions = [
+    ...(secondaryActions || []),
+    ...(extraActions || []),
+  ];
+
   const hasActionProps = Boolean(
-    primaryAction || (secondaryActions && secondaryActions.length > 0) || onRefresh
+    primaryAction || allSecondaryActions.length > 0 || onRefresh
   );
 
   return (
@@ -65,23 +87,28 @@ export const StandardPageHeader: React.FC<StandardPageHeaderProps> = ({
         </div>
 
         <div className="flex align-items-center gap-2 ml-auto">
+          {tenantValue !== undefined && onTenantChange && (
+            <TenantSelector value={tenantValue} onChange={onTenantChange} />
+          )}
+
           {extraLeft}
 
           {actions}
 
           {hasActionProps && (
             <>
-              {secondaryActions?.map((sec, idx) => (
+              {allSecondaryActions.map((sec, idx) => (
                 <Button
                   key={idx}
                   type="button"
                   label={sec.label}
                   icon={sec.icon}
                   outlined={sec.outlined !== false}
-                  severity={sec.severity || 'secondary'}
+                  severity={sec.severity === 'primary' ? undefined : (sec.severity || 'secondary')}
                   size="small"
                   onClick={sec.onClick}
                   loading={sec.loading}
+                  disabled={sec.disabled}
                   className="p-button-sm font-medium"
                 />
               ))}
@@ -91,6 +118,7 @@ export const StandardPageHeader: React.FC<StandardPageHeaderProps> = ({
                   type="button"
                   label={primaryAction.label}
                   icon={primaryAction.icon || 'pi pi-plus'}
+                  severity={primaryAction.severity === 'primary' ? undefined : primaryAction.severity}
                   size="small"
                   onClick={primaryAction.onClick}
                   loading={primaryAction.loading}

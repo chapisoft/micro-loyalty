@@ -483,6 +483,16 @@ export default function AuditLogPage() {
           emptyMessage={t('audit.no_data')}
         >
           <Column
+            header={t('common.order_number', 'STT')}
+            body={(_, options) => ((query.page || 0) * (query.size || 20)) + options.rowIndex + 1}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+          <Column
+            header={t('audit.actions')}
+            body={actionBodyTemplate}
+            style={{ width: '6rem', textAlign: 'center' }}
+          />
+          <Column
             field="id"
             header={<span title={t('audit.id_tooltip')}>{t('audit.id')}</span>}
             body={idBodyTemplate}
@@ -499,7 +509,7 @@ export default function AuditLogPage() {
             field="tenantId"
             header={t('audit.tenant')}
             body={(rowData: AuditLog) => (
-              <span className="text-primary text-xs font-mono white-space-nowrap">{rowData.tenantId || selectedTenant}</span>
+              <span className="text-900 text-xs font-mono white-space-nowrap">{rowData.tenantId || selectedTenant}</span>
             )}
             style={{ minWidth: '145px' }}
           />
@@ -534,11 +544,6 @@ export default function AuditLogPage() {
             header={t('audit.description')}
             body={descriptionBodyTemplate}
             style={{ minWidth: '220px' }}
-          />
-          <Column
-            header={t('audit.actions')}
-            body={actionBodyTemplate}
-            style={{ minWidth: '80px', textAlign: 'center' }}
           />
         </DataTable>
       </div>

@@ -213,7 +213,6 @@ export const RoleManagementPage: React.FC = () => {
             label={t('common.add_new', 'Thêm mới')}
             icon="pi pi-plus"
             size="small"
-            severity="primary"
             onClick={handleCreateRole}
             className="p-button-sm font-semibold"
           />

@@ -234,6 +234,11 @@ export const AdvancedReportsPage: React.FC = () => {
                 className="mt-3"
               >
                 <Column
+                  header={t('common.order_number', 'STT')}
+                  body={(_, opt) => opt.rowIndex + 1}
+                  style={{ width: '4rem', textAlign: 'center' }}
+                />
+                <Column
                   field="sourcePartnerName"
                   header={t('report.source_partner')}
                   body={(r: CrossSellReportModel) => (
@@ -352,6 +357,11 @@ export const AdvancedReportsPage: React.FC = () => {
                   className="mt-2"
                 >
                   <Column
+                    header={t('common.order_number', 'STT')}
+                    body={(_, opt) => opt.rowIndex + 1}
+                    style={{ width: '4rem', textAlign: 'center' }}
+                  />
+                  <Column
                     field="tierCode"
                     header={t('tier.code')}
                     body={(r) => <span className="font-bold font-mono text-900">{r.tierCode}</span>}
@@ -424,6 +434,24 @@ export const AdvancedReportsPage: React.FC = () => {
               emptyMessage={t('report.no_schedules')}
             >
               <Column
+                header={t('common.order_number', 'STT')}
+                body={(_, opt) => opt.rowIndex + 1}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
+              <Column
+                header={t('common.action', 'Thao tác')}
+                body={(r: ScheduledReportModel) => (
+                  <StandardRowActions
+                    onEdit={() => {
+                      setScheduleForm(r);
+                      setShowScheduleDialog(true);
+                    }}
+                    onDelete={() => handleDeleteSchedule(r)}
+                  />
+                )}
+                style={{ width: '7rem', textAlign: 'center' }}
+              />
+              <Column
                 field="reportName"
                 header={t('report.schedule_name')}
                 body={(r: ScheduledReportModel) => (
@@ -473,19 +501,6 @@ export const AdvancedReportsPage: React.FC = () => {
                   />
                 )}
                 style={{ minWidth: '7.5rem', textAlign: 'center' }}
-              />
-              <Column
-                header={t('common.action')}
-                body={(r: ScheduledReportModel) => (
-                  <StandardRowActions
-                    onEdit={() => {
-                      setScheduleForm(r);
-                      setShowScheduleDialog(true);
-                    }}
-                    onDelete={() => handleDeleteSchedule(r)}
-                  />
-                )}
-                style={{ minWidth: '6rem', textAlign: 'center' }}
               />
             </DataTable>
           </TabPanel>

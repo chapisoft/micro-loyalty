@@ -108,6 +108,7 @@ public class TierController {
                     .tierLevel(t.getTierLevel())
                     .minPoints(t.getMinPoints())
                     .keepTierPoints(t.getKeepTierPoints())
+                    .pointMultiplier(t.getPointMultiplier())
                     .memberCount(count)
                     .percentage(pct)
                     .build();
@@ -241,6 +242,7 @@ public class TierController {
         private Integer tierLevel;
         private BigDecimal minPoints;
         private BigDecimal keepTierPoints;
+        private BigDecimal pointMultiplier;
         private long memberCount;
         private double percentage;
     }

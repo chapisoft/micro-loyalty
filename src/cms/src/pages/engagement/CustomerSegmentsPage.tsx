@@ -144,11 +144,11 @@ export const CustomerSegmentsPage: React.FC = () => {
             emptyMessage={t('segment.empty')}
           >
             <Column
-              header="#"
+              header={t('common.order_number', 'STT')}
               body={(_data, options) => (
                 <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
               )}
-              style={{ width: '3.5rem', textAlign: 'center' }}
+              style={{ width: '4rem', textAlign: 'center' }}
             />
             <Column
               header={t('common.action')}
@@ -191,6 +191,11 @@ export const CustomerSegmentsPage: React.FC = () => {
           <div className="flex flex-column gap-2"><Skeleton height="2.2rem" /><Skeleton height="2.2rem" /></div>
         ) : (
           <DataTable<SegmentMemberModel[]> value={members} paginator rows={10} size="small" emptyMessage={t('common.no_data')}>
+            <Column
+              header={t('common.order_number', 'STT')}
+              body={(_data, options) => options.rowIndex + 1}
+              style={{ width: '3.5rem', textAlign: 'center' }}
+            />
             <Column field="externalUserId" header={t('customer.phone')} body={(m: SegmentMemberModel) => <span className="font-mono text-900">{m.externalUserId}</span>} style={{ minWidth: '11rem' }} />
             <Column field="fullName" header={t('customer.name')} body={(m: SegmentMemberModel) => <span className="text-900">{m.fullName}</span>} style={{ minWidth: '12rem' }} />
             <Column field="tierCode" header={t('tier.code')} body={(m: SegmentMemberModel) => <Tag value={m.tierCode} />} style={{ minWidth: '7rem', textAlign: 'center' }} />

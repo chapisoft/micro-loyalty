@@ -249,6 +249,30 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
             emptyMessage={t('partner.no_keys')}
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: PartnerApiKeyItemModel) =>
+                r.status === ApiKeyStatus.GRACE_PERIOD ? (
+                  <StandardRowActions
+                    actions={[
+                      {
+                        icon: 'pi pi-ban',
+                        label: t('partner.revoke_now', 'Thu hồi ngay'),
+                        onClick: () => handleRevokeOldKey(r),
+                      },
+                    ]}
+                  />
+                ) : (
+                  <span className="text-400">--</span>
+                )
+              }
+              style={{ width: '6rem', textAlign: 'center' }}
+            />
+            <Column
               field="keyPrefix"
               header={t('partner.key_prefix')}
               body={(r: PartnerApiKeyItemModel) => (
@@ -261,23 +285,6 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
               header={t('common.name')}
               body={(r: PartnerApiKeyItemModel) => <span className="text-900">{r.label}</span>}
               style={{ minWidth: '12rem' }}
-            />
-            <Column
-              field="status"
-              header={t('common.status')}
-              body={(r: PartnerApiKeyItemModel) => (
-                <Tag
-                  value={r.status}
-                  severity={
-                    r.status === ApiKeyStatus.ACTIVE
-                      ? 'success'
-                      : r.status === ApiKeyStatus.GRACE_PERIOD
-                      ? 'warning'
-                      : 'danger'
-                  }
-                />
-              )}
-              style={{ minWidth: '9rem', textAlign: 'center' }}
             />
             <Column
               field="graceExpiresAt"
@@ -304,22 +311,21 @@ export const PartnerWebhookApiKeyPage: React.FC = () => {
               style={{ minWidth: '11rem' }}
             />
             <Column
-              header={t('common.action')}
-              body={(r: PartnerApiKeyItemModel) =>
-                r.status === ApiKeyStatus.GRACE_PERIOD ? (
-                  <StandardRowActions
-                    actions={[
-                      {
-                        icon: 'pi pi-ban',
-                        label: t('partner.revoke_now', 'Thu hồi ngay'),
-                        severity: 'danger',
-                        onClick: () => handleRevokeOldKey(r),
-                      },
-                    ]}
-                  />
-                ) : null
-              }
-              style={{ minWidth: '8rem', textAlign: 'center' }}
+              field="status"
+              header={t('common.status')}
+              body={(r: PartnerApiKeyItemModel) => (
+                <Tag
+                  value={r.status}
+                  severity={
+                    r.status === ApiKeyStatus.ACTIVE
+                      ? 'success'
+                      : r.status === ApiKeyStatus.GRACE_PERIOD
+                      ? 'warning'
+                      : 'danger'
+                  }
+                />
+              )}
+              style={{ minWidth: '9rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

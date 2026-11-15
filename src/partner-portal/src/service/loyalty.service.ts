@@ -189,6 +189,29 @@ export const LoyaltyService = {
     return unwrapObject<PartnerStaffAccountModel>(response);
   },
 
+  async togglePartnerStaffLock(
+    staffId: number,
+    tenantId: string = PARTNER_PORTAL_CONSTANTS.DEFAULT_TENANT_ID
+  ): Promise<any> {
+    const response: any = await apiClient.post(
+      `/loyalty/v1/partner-portal/staff/${staffId}/toggle-lock`,
+      {},
+      { headers: { 'X-Tenant-Id': tenantId } }
+    );
+    return response?.data || response;
+  },
+
+  async deletePartnerStaff(
+    staffId: number,
+    tenantId: string = PARTNER_PORTAL_CONSTANTS.DEFAULT_TENANT_ID
+  ): Promise<any> {
+    const response: any = await apiClient.delete(
+      `/loyalty/v1/partner-portal/staff/${staffId}`,
+      { headers: { 'X-Tenant-Id': tenantId } }
+    );
+    return response?.data || response;
+  },
+
   async getPartnerProposals(
     tenantId: string = PARTNER_PORTAL_CONSTANTS.DEFAULT_TENANT_ID
   ): Promise<PartnerProgramProposalModel[]> {

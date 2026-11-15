@@ -14,6 +14,7 @@ import { DiscountType, VoucherStatus } from '@/models';
 import { LoyaltyService, VoucherItemModel } from '@/service/loyalty.service';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
 import { exportToExcel } from '@/components/exportHelper';
 
 export const PartnerVouchersPage: React.FC = () => {
@@ -152,6 +153,29 @@ export const PartnerVouchersPage: React.FC = () => {
             emptyMessage={t('common.no_data')}
             className="mt-3"
           >
+            <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: VoucherItemModel) => (
+                <StandardRowActions
+                  actions={[
+                    {
+                      icon: 'pi pi-qrcode',
+                      label: t('partner_portal.redeem_counter', 'Đổi tại quầy'),
+                      onClick: () => {
+                        setSerialCode(r.voucherCode || '');
+                        setShowRedeemDialog(true);
+                      },
+                    },
+                  ]}
+                />
+              )}
+              style={{ width: '6rem', textAlign: 'center' }}
+            />
             <Column
               field="voucherCode"
               header={t('voucher.code')}

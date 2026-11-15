@@ -11,7 +11,7 @@ import { Toast } from 'primereact/toast';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { ProgressBar } from 'primereact/progressbar';
 import { Skeleton } from 'primereact/skeleton';
-import { ConfirmDialog } from 'primereact/confirmdialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
@@ -124,13 +124,47 @@ export const TierManagementPage: React.FC = () => {
     fetchDistribution();
   }, [fetchTiers, fetchDistribution]);
 
+  const tierCodeOptions = useMemo(
+    () => [
+      { label: 'BRONZE (Đồng)', value: TierLevel.BRONZE },
+      { label: 'SILVER (Bạc)', value: TierLevel.SILVER },
+      { label: 'GOLD (Vàng)', value: TierLevel.GOLD },
+      { label: 'PLATINUM (Bạch kim)', value: TierLevel.PLATINUM },
+      { label: 'DIAMOND (Kim cương)', value: TierLevel.DIAMOND },
+    ],
+    []
+  );
+
+  const openNew = () => {
+    setFormData({
+      code: TierLevel.BRONZE,
+      name: '',
+      tierLevel: 1,
+      minPoints: 0,
+      keepTierPoints: 0,
+      pointMultiplier: 1,
+      freeDailyTurns: 1,
+      description: '',
+      status: CommonStatus.ACTIVE,
+    });
+    setShowDialog(true);
+  };
+
   const editItem = (item: TierConfig) => {
     setFormData({ ...item });
     setShowDialog(true);
   };
 
   const saveItem = async () => {
-    if (!formData.code) return;
+    if (!formData.code) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: t('common.warn', 'Cảnh báo'),
+        detail: t('tier.code_required', 'Vui lòng chọn mã hạng hội viên'),
+        life: 3000,
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       await LoyaltyService.saveTier(
@@ -160,6 +194,7 @@ export const TierManagementPage: React.FC = () => {
 
       setShowDialog(false);
       await fetchTiers();
+      await fetchDistribution();
     } catch {
       toastRef.current?.show({
         severity: 'error',
@@ -209,27 +244,35 @@ export const TierManagementPage: React.FC = () => {
   };
 
   const handleDeleteTier = (tier: TierConfig) => {
-    if (window.confirm(t('common.confirm_delete', 'Bạn có chắc chắn muốn xóa hạng hội viên này?'))) {
-      LoyaltyService.deleteTier(tier.id, selectedTenant)
-        .then(() => {
-          toastRef.current?.show({
-            severity: 'success',
-            summary: t('common.success', 'Thành công'),
-            detail: 'Xóa hạng hội viên thành công',
-            life: 3000,
+    confirmDialog({
+      message: `${t('common.confirm_delete', 'Bạn có chắc chắn muốn xóa hạng hội viên')} ${tier.name || tier.code}?`,
+      header: t('common.confirm', 'Xác nhận xóa'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: t('common.delete', 'Xóa'),
+      rejectLabel: t('common.cancel', 'Hủy'),
+      accept: () => {
+        LoyaltyService.deleteTier(tier.id, selectedTenant)
+          .then(() => {
+            toastRef.current?.show({
+              severity: 'success',
+              summary: t('common.success', 'Thành công'),
+              detail: 'Xóa hạng hội viên thành công',
+              life: 3000,
+            });
+            fetchTiers();
+            fetchDistribution();
+          })
+          .catch((err) => {
+            toastRef.current?.show({
+              severity: 'error',
+              summary: t('common.error', 'Lỗi'),
+              detail: err?.message || 'Không thể xóa hạng hội viên',
+              life: 3000,
+            });
           });
-          fetchTiers();
-          fetchDistribution();
-        })
-        .catch((err) => {
-          toastRef.current?.show({
-            severity: 'error',
-            summary: t('common.error', 'Lỗi'),
-            detail: err?.message || 'Không thể xóa hạng hội viên',
-            life: 3000,
-          });
-        });
-    }
+      },
+    });
   };
 
   const renderRowActions = (rowData: TierConfig) => {
@@ -278,14 +321,14 @@ export const TierManagementPage: React.FC = () => {
   );
 
   const keepPointsTemplate = (rowData: TierConfig) => (
-    <span className="text-teal-700 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
+    <span className="text-900 font-mono white-space-nowrap" style={{ fontSize: '13px' }}>
       {(rowData.keepTierPoints ?? 0).toLocaleString()}{' '}
       <span className="text-500 text-xs">{t('tier.points_unit')}</span>
     </span>
   );
 
   const multiplierTemplate = (rowData: TierConfig) => (
-    <span className="text-primary font-mono" style={{ fontSize: '13px' }}>
+    <span className="text-900 font-mono" style={{ fontSize: '13px' }}>
       ×{Number(rowData.pointMultiplier ?? 1.0).toFixed(2)}
     </span>
   );
@@ -370,8 +413,7 @@ export const TierManagementPage: React.FC = () => {
               label={t('common.add_new', 'Thêm mới')}
               icon="pi pi-plus"
               size="small"
-              severity="primary"
-              onClick={openNewDialog}
+              onClick={openNew}
               className="p-button-sm font-semibold"
             />
           </div>
@@ -585,24 +627,30 @@ export const TierManagementPage: React.FC = () => {
                 responsiveLayout="scroll"
               >
                 <Column
-                  field="tierCode"
+                  header={t('common.stt', 'STT')}
+                  body={(_, options) => options.rowIndex + 1}
+                  style={{ width: '3.5rem', textAlign: 'center' }}
+                />
+                <Column
+                  field="code"
                   header={t('tier.code')}
-                  body={(r: TierDistributionModel) => (
-                    <span className="font-mono text-primary white-space-nowrap">{r.tierCode}</span>
+                  body={(r: any) => (
+                    <span className="font-mono font-bold text-900 white-space-nowrap">{r.code || r.tierCode}</span>
                   )}
                   style={{ minWidth: '8rem' }}
                 />
                 <Column
-                  field="tierName"
+                  field="name"
                   header={t('tier.name')}
+                  body={(r: any) => <span className="text-900">{r.name || r.tierName}</span>}
                   style={{ minWidth: '12rem' }}
                 />
                 <Column
                   header={t('tier.threshold_range')}
-                  body={(r: TierDistributionModel) => {
+                  body={(r: any) => {
                     const std = STANDARD_THRESHOLD_MAP[r.tierLevel];
                     return (
-                      <span className="font-mono text-xs text-700 white-space-nowrap">
+                      <span className="font-mono text-xs text-900 white-space-nowrap">
                         {std ? t('tier.points_keep_summary', { rangeLabel: std.rangeLabel, keep: std.keep.toLocaleString() }) : '—'}
                       </span>
                     );
@@ -612,8 +660,8 @@ export const TierManagementPage: React.FC = () => {
                 <Column
                   field="pointMultiplier"
                   header={t('tier.multiplier')}
-                  body={(r: TierDistributionModel) => (
-                    <span className="font-mono text-primary">
+                  body={(r: any) => (
+                    <span className="font-mono text-900">
                       ×{Number(r.pointMultiplier || 1).toFixed(2)}
                     </span>
                   )}
@@ -651,16 +699,43 @@ export const TierManagementPage: React.FC = () => {
       {/* Dialog Sửa Hạng */}
       <Dialog
         visible={showDialog}
-        style={{ width: '34rem' }}
+        style={{ width: '36rem' }}
         breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header={t('tier.edit_title')}
+        header={formData.id ? t('tier.edit_title', 'Chỉnh sửa hạng') : t('common.add_new', 'Thêm mới hạng')}
         modal
         className="p-fluid"
         onHide={() => setShowDialog(false)}
       >
+        <div className="formgrid grid mb-3">
+          <div className="field col-6 mb-0">
+            <label htmlFor="tierCode" className="font-medium text-900">
+              {t('tier.code', 'Mã hạng')} <span className="text-red-500">*</span>
+            </label>
+            <Dropdown
+              id="tierCode"
+              value={formData.code}
+              options={tierCodeOptions}
+              onChange={(e) => setFormData({ ...formData, code: e.value })}
+              placeholder={t('tier.select_code', 'Chọn mã hạng')}
+              disabled={Boolean(formData.id)}
+            />
+          </div>
+          <div className="field col-6 mb-0">
+            <label htmlFor="tierLevel" className="font-medium text-900">
+              {t('tier.level', 'Cấp bậc (Level)')} <span className="text-red-500">*</span>
+            </label>
+            <InputNumber
+              id="tierLevel"
+              value={formData.tierLevel ?? 1}
+              onValueChange={(e) => setFormData({ ...formData, tierLevel: e.value ?? 1 })}
+              min={1}
+              max={10}
+            />
+          </div>
+        </div>
         <div className="field mb-3">
-          <label htmlFor="tierName" className="font-medium">
-            {t('tier.name')}
+          <label htmlFor="tierName" className="font-medium text-900">
+            {t('tier.name', 'Tên hạng')} <span className="text-red-500">*</span>
           </label>
           <InputText
             id="tierName"

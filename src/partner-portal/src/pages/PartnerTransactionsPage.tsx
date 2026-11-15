@@ -10,7 +10,10 @@ import { PointActionType } from '@/models';
 import { LoyaltyService, PointLedgerItem } from '@/service/loyalty.service';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
+import { StandardRowActions } from '@/components/StandardRowActions';
 import { exportToExcel } from '@/components/exportHelper';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
 
 export const PartnerTransactionsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -21,6 +24,7 @@ export const PartnerTransactionsPage: React.FC = () => {
   const [items, setItems] = useState<PointLedgerItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [selectedTx, setSelectedTx] = useState<PointLedgerItem | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -103,6 +107,26 @@ export const PartnerTransactionsPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: PointLedgerItem) => (
+                <StandardRowActions
+                  actions={[
+                    {
+                      icon: 'pi pi-eye',
+                      label: t('common.view', 'Xem chi tiết'),
+                      onClick: () => setSelectedTx(r),
+                    },
+                  ]}
+                />
+              )}
+              style={{ width: '6rem', textAlign: 'center' }}
+            />
+            <Column
               field="transactionId"
               header={t('transaction.id')}
               body={(r: PointLedgerItem) => (
@@ -117,17 +141,6 @@ export const PartnerTransactionsPage: React.FC = () => {
                 <span className="text-900 font-mono">{r.externalUserId}</span>
               )}
               style={{ minWidth: '11rem' }}
-            />
-            <Column
-              field="actionType"
-              header={t('transaction.action_type')}
-              body={(r: PointLedgerItem) => (
-                <Tag
-                  value={r.actionType}
-                  severity={r.actionType === PointActionType.EARN ? 'success' : 'warning'}
-                />
-              )}
-              style={{ minWidth: '8.5rem', textAlign: 'center' }}
             />
             <Column
               field="points"
@@ -157,9 +170,67 @@ export const PartnerTransactionsPage: React.FC = () => {
               )}
               style={{ minWidth: '12rem' }}
             />
+            <Column
+              field="actionType"
+              header={t('transaction.action_type')}
+              body={(r: PointLedgerItem) => (
+                <Tag
+                  value={r.actionType}
+                  severity={r.actionType === PointActionType.EARN ? 'success' : 'warning'}
+                />
+              )}
+              style={{ minWidth: '8.5rem', textAlign: 'center' }}
+            />
           </DataTable>
         )}
       </div>
+
+      <Dialog
+        visible={!!selectedTx}
+        onHide={() => setSelectedTx(null)}
+        header={t('transaction.details', 'Chi tiết giao dịch')}
+        style={{ width: '32rem' }}
+        modal
+      >
+        {selectedTx && (
+          <div className="flex flex-column gap-3">
+            <div className="flex justify-content-between border-bottom-1 surface-border py-2">
+              <span className="text-600">{t('transaction.id')}:</span>
+              <span className="font-bold font-mono text-900">{selectedTx.transactionId}</span>
+            </div>
+            <div className="flex justify-content-between border-bottom-1 surface-border py-2">
+              <span className="text-600">{t('customer.phone')}:</span>
+              <span className="text-900 font-mono">{selectedTx.externalUserId}</span>
+            </div>
+            <div className="flex justify-content-between border-bottom-1 surface-border py-2">
+              <span className="text-600">{t('transaction.action_type')}:</span>
+              <Tag
+                value={selectedTx.actionType}
+                severity={selectedTx.actionType === PointActionType.EARN ? 'success' : 'warning'}
+              />
+            </div>
+            <div className="flex justify-content-between border-bottom-1 surface-border py-2">
+              <span className="text-600">{t('transaction.amount')}:</span>
+              <span className="text-900 font-mono font-bold">
+                {selectedTx.points > 0 ? `+${selectedTx.points}` : selectedTx.points}
+              </span>
+            </div>
+            <div className="flex justify-content-between border-bottom-1 surface-border py-2">
+              <span className="text-600">{t('partner_portal.order_ref')}:</span>
+              <span className="text-900 font-mono">{selectedTx.referenceId || '--'}</span>
+            </div>
+            <div className="flex justify-content-between py-2">
+              <span className="text-600">{t('common.created_at')}:</span>
+              <span className="text-900 font-mono text-xs">
+                {selectedTx.createdAt ? new Date(selectedTx.createdAt).toLocaleString('vi-VN') : '--'}
+              </span>
+            </div>
+            <div className="flex justify-content-end mt-3">
+              <Button label={t('common.close', 'Đóng')} outlined onClick={() => setSelectedTx(null)} />
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 };

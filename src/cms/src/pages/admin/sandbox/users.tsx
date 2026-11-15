@@ -195,10 +195,45 @@ export function SandboxUsersPage() {
           emptyMessage={t('sandbox.no_users')}
           className="p-datatable-sm"
         >
-          <Column field="username" header={t('sandbox.username_col')} body={(r: SandboxUser) => <span className="font-semibold text-900">{r.username}</span>} />
-          <Column field="fullName" header={t('sandbox.fullname_col')} />
-          <Column field="email" header={t('user.email')} body={(r: SandboxUser) => r.email || '-'} />
-          <Column field="phone" header={t('sandbox.phone_col')} body={(r: SandboxUser) => r.phone || '-'} />
+          <Column
+            header={t('common.order_number', 'STT')}
+            body={(_, options) => (
+              <span className="font-mono text-xs text-600 font-normal">
+                {options.rowIndex + 1}
+              </span>
+            )}
+            style={{ width: '4rem', textAlign: 'center' }}
+          />
+          <Column
+            header={t('common.action', 'Thao tác')}
+            body={(r: SandboxUser) => (
+              <div className="flex gap-2 justify-content-center">
+                {r.status === SandboxUserStatus.PENDING && (
+                  <Button
+                    label={t('sandbox.approve_btn')}
+                    icon="pi pi-check"
+                    severity="success"
+                    size="small"
+                    outlined
+                    onClick={() => r.id && handleApprove(r.id)}
+                  />
+                )}
+                <Button
+                  label={r.status === SandboxUserStatus.LOCKED ? t('sandbox.unlock_btn') : t('sandbox.lock_btn')}
+                  icon={r.status === SandboxUserStatus.LOCKED ? 'pi pi-lock-open' : 'pi pi-lock'}
+                  severity={r.status === SandboxUserStatus.LOCKED ? 'info' : 'danger'}
+                  size="small"
+                  outlined
+                  onClick={() => r.id && handleToggleStatus(r.id, r.status)}
+                />
+              </div>
+            )}
+            style={{ width: '10rem', textAlign: 'center' }}
+          />
+          <Column field="username" header={t('sandbox.username_col')} body={(r: SandboxUser) => <span className="font-bold font-mono text-900">{r.username}</span>} />
+          <Column field="fullName" header={t('sandbox.fullname_col')} body={(r: SandboxUser) => <span className="text-900">{r.fullName}</span>} />
+          <Column field="email" header={t('user.email')} body={(r: SandboxUser) => <span className="text-900">{r.email || '-'}</span>} />
+          <Column field="phone" header={t('sandbox.phone_col')} body={(r: SandboxUser) => <span className="text-900 font-mono text-xs">{r.phone || '-'}</span>} />
           <Column
             header={t('sandbox.roles_group_col')}
             body={(r: SandboxUser) => (
@@ -224,31 +259,7 @@ export function SandboxUsersPage() {
               const item = statusMap[r.status] || { label: r.status, severity: 'info' };
               return <Tag value={item.label} severity={item.severity} className="font-semibold text-xs" />;
             }}
-          />
-          <Column
-            header={t('common.actions')}
-            body={(r: SandboxUser) => (
-              <div className="flex gap-2">
-                {r.status === SandboxUserStatus.PENDING && (
-                  <Button
-                    label={t('sandbox.approve_btn')}
-                    icon="pi pi-check"
-                    severity="success"
-                    size="small"
-                    outlined
-                    onClick={() => r.id && handleApprove(r.id)}
-                  />
-                )}
-                <Button
-                  label={r.status === SandboxUserStatus.LOCKED ? t('sandbox.unlock_btn') : t('sandbox.lock_btn')}
-                  icon={r.status === SandboxUserStatus.LOCKED ? 'pi pi-lock-open' : 'pi pi-lock'}
-                  severity={r.status === SandboxUserStatus.LOCKED ? 'info' : 'danger'}
-                  size="small"
-                  outlined
-                  onClick={() => r.id && handleToggleStatus(r.id, r.status)}
-                />
-              </div>
-            )}
+            style={{ minWidth: '8rem', textAlign: 'center' }}
           />
         </DataTable>
       </div>

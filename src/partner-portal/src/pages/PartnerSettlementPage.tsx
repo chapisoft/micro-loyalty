@@ -170,6 +170,39 @@ export const PartnerSettlementPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: PartnerSettlementBatchModel) => (
+                <StandardRowActions
+                  actions={[
+                    ...(r.status === PaymentBatchStatus.PENDING_CONFIRM
+                      ? [
+                          {
+                            icon: 'pi pi-check',
+                            label: t('partner_portal.confirm_batch', 'Xác nhận'),
+                            onClick: () => handleConfirm(r),
+                          },
+                        ]
+                      : []),
+                    {
+                      icon: 'pi pi-exclamation-triangle',
+                      label: t('partner_portal.raise_claim', 'Khiếu nại'),
+                      onClick: () => {
+                        setClaimBatch(r);
+                        setClaimAmount(r.netPayableAmount || 0);
+                        setClaimReason('');
+                      },
+                    },
+                  ]}
+                />
+              )}
+              style={{ width: '7rem', textAlign: 'center' }}
+            />
+            <Column
               field="batchCode"
               header={t('clearing.batch_code')}
               body={(r: PartnerSettlementBatchModel) => (
@@ -232,36 +265,6 @@ export const PartnerSettlementPage: React.FC = () => {
                 />
               )}
               style={{ minWidth: '9rem', textAlign: 'center' }}
-            />
-            <Column
-              header={t('common.action')}
-              body={(r: PartnerSettlementBatchModel) => (
-                <StandardRowActions
-                  actions={[
-                    ...(r.status === PaymentBatchStatus.PENDING_CONFIRM
-                      ? [
-                          {
-                            icon: 'pi pi-check',
-                            label: t('partner_portal.confirm_batch', 'Xác nhận'),
-                            severity: 'success' as const,
-                            onClick: () => handleConfirm(r),
-                          },
-                        ]
-                      : []),
-                    {
-                      icon: 'pi pi-exclamation-triangle',
-                      label: t('partner_portal.raise_claim', 'Khiếu nại'),
-                      severity: 'warning' as const,
-                      onClick: () => {
-                        setClaimBatch(r);
-                        setClaimAmount(r.netPayableAmount || 0);
-                        setClaimReason('');
-                      },
-                    },
-                  ]}
-                />
-              )}
-              style={{ minWidth: '8rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

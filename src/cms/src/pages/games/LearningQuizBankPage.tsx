@@ -281,6 +281,21 @@ export const LearningQuizBankPage: React.FC = () => {
             className="mt-3"
           >
             <Column
+              header={t('common.order_number', 'STT')}
+              body={(_, opt) => opt.rowIndex + 1}
+              style={{ width: '4rem', textAlign: 'center' }}
+            />
+            <Column
+              header={t('common.action', 'Thao tác')}
+              body={(r: LearningQuestionModel) => (
+                <StandardRowActions
+                  onEdit={() => openEdit(r)}
+                  onDelete={() => handleDelete(r)}
+                />
+              )}
+              style={{ width: '7rem', textAlign: 'center' }}
+            />
+            <Column
               field="courseCode"
               header={t('learning.code')}
               body={(r: LearningQuestionModel) => (
@@ -317,17 +332,6 @@ export const LearningQuizBankPage: React.FC = () => {
               style={{ minWidth: '8rem', textAlign: 'right' }}
             />
             <Column
-              field="status"
-              header={t('common.status')}
-              body={(r: LearningQuestionModel) => (
-                <Tag
-                  value={r.status}
-                  severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
-                />
-              )}
-              style={{ minWidth: '8rem', textAlign: 'center' }}
-            />
-            <Column
               field="audioUrl"
               header={t('learning.audio')}
               body={(r: LearningQuestionModel) => (
@@ -338,14 +342,15 @@ export const LearningQuizBankPage: React.FC = () => {
               style={{ minWidth: '6rem', textAlign: 'center' }}
             />
             <Column
-              header={t('common.action')}
+              field="status"
+              header={t('common.status')}
               body={(r: LearningQuestionModel) => (
-                <StandardRowActions
-                  onEdit={() => openEdit(r)}
-                  onDelete={() => handleDelete(r)}
+                <Tag
+                  value={r.status}
+                  severity={r.status === CommonStatus.ACTIVE ? 'success' : 'secondary'}
                 />
               )}
-              style={{ minWidth: '6rem', textAlign: 'center' }}
+              style={{ minWidth: '8rem', textAlign: 'center' }}
             />
           </DataTable>
         )}

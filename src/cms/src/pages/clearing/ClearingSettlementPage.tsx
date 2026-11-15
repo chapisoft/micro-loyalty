@@ -563,12 +563,12 @@ export const ClearingSettlementPage: React.FC = () => {
             >
               <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
               <Column
-                header={t('common.no_order')}
+                header={t('common.order_number', 'STT')}
                 body={(_, options) => options.rowIndex + 1}
-                style={{ width: '3.5rem', textAlign: 'center' }}
+                style={{ width: '4rem', textAlign: 'center' }}
               />
               <Column
-                header={t('common.action')}
+                header={t('common.action', 'Thao tác')}
                 body={actionTemplate}
                 exportable={false}
                 style={{ width: '6rem', textAlign: 'center' }}
@@ -597,18 +597,9 @@ export const ClearingSettlementPage: React.FC = () => {
               stripedRows
               responsiveLayout="scroll"
             >
-              <Column header="#" body={(_, opt) => opt.rowIndex + 1} style={{ width: '3.5rem', textAlign: 'center' }} />
-              <Column field="disputeCode" header={t('clearing.dispute_code')} body={(r: DisputeItemModel) => <span className="font-bold font-mono text-900">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="batchCode" header={t('clearing.batch_code')} body={(r: DisputeItemModel) => <span className="font-mono text-900">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="partnerName" header={t('common.partner')} body={(r: DisputeItemModel) => <span className="text-900">{r.partnerName}</span>} sortable style={{ minWidth: '12rem' }} />
-              <Column field="disputeType" header={t('clearing.dispute_type')} body={(r: DisputeItemModel) => <span className="text-900">{r.disputeType}</span>} sortable style={{ minWidth: '10rem' }} />
-              <Column field="partnerAmount" header={t('clearing.partner_amount')} body={(r: DisputeItemModel) => <span className="text-900">{Number(r.partnerAmount || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="loyaltyAmount" header={t('clearing.loyalty_amount')} body={(r: DisputeItemModel) => <span className="text-900">{Number(r.loyaltyAmount || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="resolvedAmount" header={t('clearing.resolved_amount')} body={(r: DisputeItemModel) => <span className="text-900">{r.resolvedAmount != null ? `${Number(r.resolvedAmount).toLocaleString()} HTG` : '--'}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
-              <Column field="status" header={t('common.status')} body={(r: DisputeItemModel) => disputeStatusTemplate(r.status)} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
-              <Column field="createdAt" header={t('common.time')} body={(r: DisputeItemModel) => <span className="text-900">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '--'}</span>} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
+              <Column header={t('common.order_number', 'STT')} body={(_, opt) => opt.rowIndex + 1} style={{ width: '4rem', textAlign: 'center' }} />
               <Column
-                header={t('common.action')}
+                header={t('common.action', 'Thao tác')}
                 body={(r: DisputeItemModel) => (
                   <StandardRowActions
                     onEdit={r.status !== DisputeStatus.RESOLVED && r.status !== DisputeStatus.REJECTED ? () => handleOpenResolve(r) : undefined}
@@ -616,6 +607,15 @@ export const ClearingSettlementPage: React.FC = () => {
                 )}
                 style={{ width: '6rem', textAlign: 'center' }}
               />
+              <Column field="disputeCode" header={t('clearing.dispute_code')} body={(r: DisputeItemModel) => <span className="font-bold font-mono text-900">{r.disputeCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="batchCode" header={t('clearing.batch_code')} body={(r: DisputeItemModel) => <span className="font-mono text-900">{r.batchCode}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="partnerName" header={t('common.partner')} body={(r: DisputeItemModel) => <span className="text-900">{r.partnerName}</span>} sortable style={{ minWidth: '12rem' }} />
+              <Column field="disputeType" header={t('clearing.dispute_type')} body={(r: DisputeItemModel) => <span className="text-900">{r.disputeType}</span>} sortable style={{ minWidth: '10rem' }} />
+              <Column field="partnerAmount" header={t('clearing.partner_amount')} body={(r: DisputeItemModel) => <span className="text-900">{Number(r.partnerAmount || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="loyaltyAmount" header={t('clearing.loyalty_amount')} body={(r: DisputeItemModel) => <span className="text-900">{Number(r.loyaltyAmount || 0).toLocaleString()} HTG</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="resolvedAmount" header={t('clearing.resolved_amount')} body={(r: DisputeItemModel) => <span className="text-900">{r.resolvedAmount != null ? `${Number(r.resolvedAmount).toLocaleString()} HTG` : '--'}</span>} sortable style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="createdAt" header={t('common.time')} body={(r: DisputeItemModel) => <span className="text-900">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '--'}</span>} sortable style={{ minWidth: '10rem', textAlign: 'center' }} />
+              <Column field="status" header={t('common.status')} body={(r: DisputeItemModel) => disputeStatusTemplate(r.status)} sortable style={{ minWidth: '8rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
 
@@ -628,6 +628,20 @@ export const ClearingSettlementPage: React.FC = () => {
               </div>
             </div>
             <DataTable<ClearingPaymentBatchModel[]> value={batches} loading={batchesLoading} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('clearing.no_batches')}>
+              <Column
+                header={t('common.order_number', 'STT')}
+                body={(_, opt) => opt.rowIndex + 1}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
+              <Column
+                header={t('common.action', 'Thao tác')}
+                body={(b: ClearingPaymentBatchModel) => (
+                  <StandardRowActions
+                    onView={() => setTrackBatch(b)}
+                  />
+                )}
+                style={{ width: '6rem', textAlign: 'center' }}
+              />
               <Column field="batchCode" header={t('clearing.batch_code')} body={(b: ClearingPaymentBatchModel) => <span className="font-bold font-mono text-900">{b.batchCode}</span>} style={{ minWidth: '13rem' }} />
               <Column field="partnerName" header={t('clearing.partner_name')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{b.partnerCode} - {b.partnerName || ''}</span>} style={{ minWidth: '13rem' }} />
               <Column header={t('clearing.period')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-mono text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
@@ -635,11 +649,6 @@ export const ClearingSettlementPage: React.FC = () => {
               <Column field="mdrFeeAmount" header="MDR Fee" body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
               <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-semibold">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
               <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <Tag value={b.status ? t(`enum.payment_batch_status.${b.status}`) : ''} severity={b.status === PaymentBatchStatus.PAID ? 'success' : b.status === PaymentBatchStatus.DISPUTED ? 'danger' : 'warning'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
-              <Column header={t('common.action')} body={(b: ClearingPaymentBatchModel) => (
-                <StandardRowActions
-                  onView={() => setTrackBatch(b)}
-                />
-              )} style={{ minWidth: '6rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -691,12 +700,12 @@ export const ClearingSettlementPage: React.FC = () => {
               responsiveLayout="scroll"
             >
               <Column
-                header="#"
+                header={t('common.order_number', 'STT')}
                 body={(_, opt) => opt.rowIndex + 1}
-                style={{ width: '3rem', textAlign: 'center' }}
+                style={{ width: '4rem', textAlign: 'center' }}
               />
-              <Column field="transactionCode" header={t('clearing.detail_tx_code')} style={{ minWidth: '12rem', fontWeight: 600 }} />
-              <Column field="externalUserId" header={t('clearing.detail_user')} style={{ minWidth: '8rem' }} />
+              <Column field="transactionCode" header={t('clearing.detail_tx_code')} body={(row: PartnerTransactionItemModel) => <span className="font-bold font-mono text-900">{row.transactionCode}</span>} style={{ minWidth: '12rem' }} />
+              <Column field="externalUserId" header={t('clearing.detail_user')} body={(row: PartnerTransactionItemModel) => <span className="font-mono text-900">{row.externalUserId}</span>} style={{ minWidth: '8rem' }} />
               <Column
                 field="createdAt"
                 header={t('clearing.detail_time')}

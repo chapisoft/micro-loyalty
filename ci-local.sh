@@ -439,7 +439,7 @@ for nginx_conf in \
     exit 1
   fi
   for port in 8081 8082 8083 8084 8085; do
-    if ! grep -q ":${port};" "$nginx_conf"; then
+    if ! grep -qE ":${port}[\";]" "$nginx_conf"; then
       echo "[LỖI] ${nginx_conf} thiếu khai báo upstream cổng ${port}!" >&2
       exit 1
     fi

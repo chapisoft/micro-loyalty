@@ -143,14 +143,17 @@ export function SandboxGroupsPage() {
       {/* Table */}
       <div className="surface-card p-4 border-round-2xl border-1 surface-border shadow-1">
         <DataTable value={groups} loading={loading} paginator rows={10} emptyMessage={t('sandbox.no_groups')} className="p-datatable-sm">
-          <Column field="name" header={t('sandbox.group_name')} body={(r: SandboxGroup) => <span className="font-semibold text-900">{r.name}</span>} />
-          <Column field="description" header={t('common.description')} />
           <Column
-            header={t('sandbox.assigned_menus_count')}
-            body={(r: SandboxGroup) => <span className="font-mono font-semibold text-orange-600">{(r.menuIds || []).length} {t('sandbox.menus_unit')}</span>}
+            header={t('common.order_number', 'STT')}
+            body={(_, options) => (
+              <span className="font-mono text-xs text-600 font-normal">
+                {options.rowIndex + 1}
+              </span>
+            )}
+            style={{ width: '4rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions')}
+            header={t('common.action', 'Thao tác')}
             body={(r: SandboxGroup) => (
               <Button
                 label={t('sandbox.assign_menu_btn')}
@@ -160,6 +163,14 @@ export function SandboxGroupsPage() {
                 onClick={() => handleOpenPermissions(r)}
               />
             )}
+            style={{ width: '10rem', textAlign: 'center' }}
+          />
+          <Column field="name" header={t('sandbox.group_name')} body={(r: SandboxGroup) => <span className="font-bold text-900">{r.name}</span>} />
+          <Column field="description" header={t('common.description')} body={(r: SandboxGroup) => <span className="text-900">{r.description || '--'}</span>} />
+          <Column
+            header={t('sandbox.assigned_menus_count')}
+            body={(r: SandboxGroup) => <span className="font-mono text-900">{(r.menuIds || []).length} {t('sandbox.menus_unit')}</span>}
+            style={{ width: '9rem', textAlign: 'center' }}
           />
         </DataTable>
       </div>

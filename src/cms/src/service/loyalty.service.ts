@@ -103,11 +103,15 @@ export interface MilestoneItemModel {
 }
 
 export interface TierDistributionModel {
-  tierId: number;
-  tierCode: string;
-  tierName: string;
+  tierId?: number;
+  tierCode?: string;
+  code?: string;
+  tierName?: string;
+  name?: string;
   tierLevel: number;
-  pointMultiplier: number;
+  pointMultiplier?: number;
+  minPoints?: number;
+  keepTierPoints?: number;
   memberCount: number;
   percentage: number;
 }

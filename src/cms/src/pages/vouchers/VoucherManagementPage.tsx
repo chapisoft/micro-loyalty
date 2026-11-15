@@ -159,6 +159,16 @@ export const VoucherManagementPage: React.FC = () => {
     ];
   }, [partners, t]);
 
+  const discountTypeOptions = useMemo(() => [
+    { label: t('voucher.discount_type_percent', 'Phần trăm (%)'), value: DiscountType.PERCENTAGE },
+    { label: t('voucher.discount_type_fixed', 'Số tiền cố định (HTG)'), value: DiscountType.FIXED_AMOUNT },
+  ], [t]);
+
+  const statusOptions = useMemo(() => [
+    { label: t('common.active', 'Hoạt động'), value: CommonStatus.ACTIVE },
+    { label: t('common.inactive', 'Ngừng hoạt động'), value: CommonStatus.INACTIVE },
+  ], [t]);
+
   const partnerOptionTemplate = (option: any) => {
     if (!option) return null;
     if (option.value === null) {
@@ -555,10 +565,10 @@ export const VoucherManagementPage: React.FC = () => {
               ? `${r.discountValue}%`
               : `-${r.discountValue} HTG`,
         },
-        { header: 'Điểm đổi', getValue: (r: VoucherItem) => (r.costPoints ?? 0).toLocaleString() },
+        { header: 'Điểm đổi', getValue: (r: VoucherItem) => (r.pointsRequired ?? 0).toLocaleString() },
         { header: 'Đối tác áp dụng', getValue: (r: VoucherItem) => r.partnerName || 'Toàn hệ thống' },
-        { header: 'Đã cấp', getValue: (r: VoucherItem) => `${r.totalIssued ?? 0} / ${r.totalQuantity ?? '∞'}` },
-        { header: 'Hạn sử dụng', field: 'endDate' },
+        { header: 'Còn lại', getValue: (r: VoucherItem) => `${r.remainingQuantity ?? 0} / ${r.totalQuantity ?? '∞'}` },
+        { header: 'Hạn sử dụng', field: 'validTo' },
         {
           header: 'Trạng thái',
           getValue: (r: VoucherItem) =>
@@ -587,7 +597,6 @@ export const VoucherManagementPage: React.FC = () => {
             label={t('common.add_new', 'Thêm mới')}
             icon="pi pi-plus"
             size="small"
-            severity="primary"
             onClick={openNew}
             className="p-button-sm font-semibold"
           />

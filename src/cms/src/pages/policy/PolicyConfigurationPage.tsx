@@ -402,7 +402,6 @@ export const PolicyConfigurationPage: React.FC = () => {
             label={t('common.add_new', 'Thêm mới')}
             icon="pi pi-plus"
             size="small"
-            severity="primary"
             onClick={openNew}
             className="p-button-sm font-semibold"
           />

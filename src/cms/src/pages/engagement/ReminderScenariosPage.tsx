@@ -165,11 +165,11 @@ export const ReminderScenariosPage: React.FC = () => {
                 emptyMessage={t('scenario.empty')}
               >
                 <Column
-                  header="#"
+                  header={t('common.order_number', 'STT')}
                   body={(_data, options) => (
                     <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
                   )}
-                  style={{ width: '3.5rem', textAlign: 'center' }}
+                  style={{ width: '4rem', textAlign: 'center' }}
                 />
                 <Column
                   header={t('common.action')}
@@ -201,11 +201,18 @@ export const ReminderScenariosPage: React.FC = () => {
 
           <TabPanel header={t('scenario.tab_logs', { count: sendLogs.length })} leftIcon="pi pi-history mr-2">
             <DataTable<ReminderSendLogModel[]> value={sendLogs} paginator rows={15} rowsPerPageOptions={[15, 30, 50]} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')}>
+              <Column
+                header={t('common.order_number', 'STT')}
+                body={(_data, options) => (
+                  <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
+                )}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
               <Column field="scenarioCode" header={t('scenario.code')} body={(r: ReminderSendLogModel) => <span className="font-bold font-mono text-900">{r.scenarioCode}</span>} style={{ minWidth: '11rem' }} />
               <Column field="externalUserId" header={t('customer.phone')} body={(r: ReminderSendLogModel) => <span className="font-mono text-900">{r.externalUserId}</span>} style={{ minWidth: '10rem' }} />
               <Column field="channel" header={t('scenario.channel')} body={(r: ReminderSendLogModel) => <span className="text-900">{r.channel}</span>} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status')} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
               <Column field="sentAt" header={t('common.created_at')} body={(r: ReminderSendLogModel) => <span className="text-900 font-mono text-xs">{r.sentAt ? new Date(r.sentAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="status" header={t('common.status')} body={(r: ReminderSendLogModel) => <Tag value={r.status} severity={r.status === 'SENT' ? 'success' : r.status === 'SUPPRESSED' ? 'warning' : 'danger'} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
         </TabView>

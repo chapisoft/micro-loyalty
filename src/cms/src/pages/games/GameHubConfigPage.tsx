@@ -804,9 +804,14 @@ export const GameHubConfigPage: React.FC = () => {
               emptyMessage={t('common.no_data')}
             >
               <Column
-                header={t('common.stt')}
+                header={t('common.order_number', 'STT')}
                 body={(_, options) => options.rowIndex + 1}
-                style={{ width: '3.5rem', textAlign: 'center' }}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
+              <Column
+                header={t('common.action', 'Thao tác')}
+                body={actionTemplate}
+                style={{ width: '8rem', textAlign: 'center' }}
               />
               <Column
                 header={t('game_hub.game_name')}
@@ -841,11 +846,6 @@ export const GameHubConfigPage: React.FC = () => {
                 header={t('game_hub.lobby_visibility')}
                 body={lobbyVisibilityTemplate}
                 style={{ minWidth: '9rem', textAlign: 'center' }}
-              />
-              <Column
-                header={t('common.actions')}
-                body={actionTemplate}
-                style={{ width: '12rem', textAlign: 'center' }}
               />
             </DataTable>
           </div>

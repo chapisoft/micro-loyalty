@@ -558,16 +558,16 @@ export const Partners: React.FC = () => {
 
               {/* Cột 2: STT */}
               <Column
-                header={t('common.stt')}
+                header={t('common.order_number', 'STT')}
                 body={(_, options) => options.rowIndex + 1}
-                style={{ width: '3.5rem', textAlign: 'center' }}
+                style={{ width: '4rem', textAlign: 'center' }}
               />
 
               {/* Cột 3: Thao tác / Hành động */}
               <Column
                 body={actionBodyTemplate}
                 exportable={false}
-                header={t('common.actions')}
+                header={t('common.action', 'Thao tác')}
                 style={{ width: '7.5rem', textAlign: 'center' }}
               />
 
@@ -1044,10 +1044,15 @@ Content-Type: application/json`}
             )}
 
             <DataTable<PartnerApiKeyItemModel[]> value={partnerKeys} size="small" emptyMessage={t('partner.no_keys')}>
-              <Column field="keyPrefix" header={t('system_parameter.code_types.prefix')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
-              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === ApiKeyStatus.ACTIVE ? 'success' : k.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '8rem' }} />
-              <Column field="graceExpiresAt" header={t('partner.grace_period')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
-              <Column header={t('common.action')} body={(k: PartnerApiKeyItemModel) => k.id && k.status === ApiKeyStatus.GRACE_PERIOD ? <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ minWidth: '10rem' }} />
+              <Column
+                header={t('common.order_number', 'STT')}
+                body={(_, opt) => opt.rowIndex + 1}
+                style={{ width: '3.5rem', textAlign: 'center' }}
+              />
+              <Column header={t('common.action')} body={(k: PartnerApiKeyItemModel) => k.id && k.status === ApiKeyStatus.GRACE_PERIOD ? <Button label={t('partner.revoke_now')} icon="pi pi-ban" size="small" severity="danger" outlined onClick={() => handleRevokeOldKey(k.id!)} /> : null} style={{ width: '8rem', textAlign: 'center' }} />
+              <Column field="keyPrefix" header={t('system_parameter.code_types.prefix')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono font-bold text-900 white-space-nowrap">{k.keyPrefix}***</span>} style={{ minWidth: '8rem' }} />
+              <Column field="graceExpiresAt" header={t('partner.grace_period')} body={(k: PartnerApiKeyItemModel) => <span className="font-mono text-xs text-900 white-space-nowrap">{k.graceExpiresAt ? new Date(k.graceExpiresAt).toLocaleString('vi-VN') : '--'}</span>} style={{ minWidth: '10rem' }} />
+              <Column field="status" header={t('common.status')} body={(k: PartnerApiKeyItemModel) => <Tag value={k.status} severity={k.status === ApiKeyStatus.ACTIVE ? 'success' : k.status === ApiKeyStatus.GRACE_PERIOD ? 'warning' : 'danger'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
             </DataTable>
           </div>
         </div>

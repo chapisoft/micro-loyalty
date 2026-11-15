@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { useTranslation } from 'react-i18next';
+
+export interface BasicFilterItem {
+  key?: string;
+  label?: string;
+  value: any;
+  options: any[];
+  onChange: (val: any) => void;
+  placeholder?: string;
+  className?: string;
+  optionLabel?: string;
+  optionValue?: string;
+}
 
 export interface UniversalFilterBarProps {
   searchValue?: string;
@@ -10,6 +23,7 @@ export interface UniversalFilterBarProps {
   onKeywordChange?: (value: string) => void;
   searchPlaceholder?: string;
   primaryFilters?: React.ReactNode;
+  basicFilters?: BasicFilterItem[];
   advancedFilters?: React.ReactNode;
   activeAdvancedCount?: number;
   onReset?: () => void;
@@ -28,6 +42,7 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
   onKeywordChange,
   searchPlaceholder,
   primaryFilters,
+  basicFilters,
   advancedFilters,
   activeAdvancedCount = 0,
   onReset,
@@ -64,6 +79,20 @@ export const UniversalFilterBar: React.FC<UniversalFilterBarProps> = ({
           )}
 
           {primaryFilters}
+
+          {basicFilters?.map((bf, idx) => (
+            <Dropdown
+              key={bf.key || idx}
+              value={bf.value}
+              options={bf.options}
+              onChange={(e) => bf.onChange(e.value)}
+              placeholder={bf.placeholder || bf.label}
+              optionLabel={bf.optionLabel}
+              optionValue={bf.optionValue}
+              className={`p-inputtext-sm ${bf.className || 'w-12rem'}`}
+              showClear
+            />
+          ))}
 
           {hasAdvanced && (
             <Button

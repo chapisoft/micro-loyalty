@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Tag } from 'primereact/tag';
 import { Skeleton } from 'primereact/skeleton';
 import { useTranslation } from 'react-i18next';
 import { AppBreadcrumb } from '@/components/AppBreadcrumb';
@@ -112,6 +113,11 @@ export const PartnerDashboardPage: React.FC = () => {
               emptyMessage={t('common.no_data')}
             >
               <Column
+                header={t('common.order_number', 'STT')}
+                body={(_, opt) => opt.rowIndex + 1}
+                style={{ width: '4rem', textAlign: 'center' }}
+              />
+              <Column
                 field="transactionId"
                 header={t('transaction.id')}
                 body={(r: any) => (
@@ -128,12 +134,6 @@ export const PartnerDashboardPage: React.FC = () => {
                 style={{ minWidth: '10rem' }}
               />
               <Column
-                field="actionType"
-                header={t('transaction.action_type')}
-                body={(r: any) => <span className="text-900 text-sm">{r.actionType}</span>}
-                style={{ minWidth: '8rem' }}
-              />
-              <Column
                 field="points"
                 header={t('transaction.amount')}
                 body={(r: any) => (
@@ -142,6 +142,17 @@ export const PartnerDashboardPage: React.FC = () => {
                   </span>
                 )}
                 style={{ minWidth: '8rem', textAlign: 'right' }}
+              />
+              <Column
+                field="actionType"
+                header={t('transaction.action_type')}
+                body={(r: any) => (
+                  <Tag
+                    value={r.actionType}
+                    severity={r.actionType === 'EARN' ? 'success' : 'warning'}
+                  />
+                )}
+                style={{ minWidth: '8rem', textAlign: 'center' }}
               />
             </DataTable>
           </>

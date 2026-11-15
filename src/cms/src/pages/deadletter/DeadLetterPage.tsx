@@ -149,14 +149,14 @@ export const DeadLetterPage: React.FC = () => {
           responsiveLayout="scroll"
         >
           <Column
-            header={t('common.stt')}
+            header={t('common.order_number', 'STT')}
             body={(_data, options) => (
               <span className="font-mono text-xs text-600">{options.rowIndex + 1}</span>
             )}
-            style={{ width: '60px', textAlign: 'center' }}
+            style={{ width: '4rem', textAlign: 'center' }}
           />
           <Column
-            header={t('common.actions')}
+            header={t('common.action', 'Thao tác')}
             body={(rowData: DeadLetterItem) => (
               <StandardRowActions
                 onView={() => {

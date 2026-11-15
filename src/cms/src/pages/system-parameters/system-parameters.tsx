@@ -861,18 +861,18 @@ export const SystemParameters: React.FC = () => {
               size="small"
             >
               <Column
-                header={t('common.stt')}
+                header={t('common.order_number', 'STT')}
                 body={(_: any, options: any) => (
                   <span className="font-mono text-xs text-600 font-normal">
                     {options.rowIndex + 1}
                   </span>
                 )}
-                style={{ width: '3.5rem', textAlign: 'center' }}
+                style={{ width: '4rem', textAlign: 'center' }}
               />
               <Column
                 body={paramActionBody}
                 exportable={false}
-                header={t('common.actions')}
+                header={t('common.action', 'Thao tác')}
                 style={{ width: '6rem', textAlign: 'center' }}
               />
               <Column
@@ -955,17 +955,17 @@ export const SystemParameters: React.FC = () => {
               size="small"
             >
               <Column
-                header={t('common.stt')}
+                header={t('common.order_number', 'STT')}
                 body={(_: any, options: any) => (
                   <span className="font-mono text-xs text-600 font-normal">
                     {options.rowIndex + 1}
                   </span>
                 )}
-                style={{ width: '3.5rem', textAlign: 'center' }}
+                style={{ width: '4rem', textAlign: 'center' }}
               />
               <Column
-                header={t('common.actions')}
-                style={{ width: '5.5rem', textAlign: 'center' }}
+                header={t('common.action', 'Thao tác')}
+                style={{ width: '6rem', textAlign: 'center' }}
                 body={(row: SysCodeTypeConfig) => (
                   <StandardRowActions
                     onEdit={() => openEditCodeType(row)}
