@@ -15,7 +15,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
-import { LoyaltyApi, WheelPrizeItem } from '../services/api';
+import { LoyaltyApi, WheelPrizeItem, getTenantId, getDefaultUserId } from '../services/api';
 import { soundManager } from '../utils/audio';
 import { GameTutorialModal } from '../components/common/GameTutorialModal';
 
