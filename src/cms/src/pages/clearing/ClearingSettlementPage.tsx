@@ -576,7 +576,7 @@ export const ClearingSettlementPage: React.FC = () => {
               <Column field="partnerName" header={t('clearing.partner_name')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{b.partnerCode} - {b.partnerName || ''}</span>} style={{ minWidth: '13rem' }} />
               <Column header={t('clearing.period')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-mono text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
               <Column field="grossAmount" header={t('clearing.gross_amount')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="mdrFeeAmount" header="MDR Fee" body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="mdrFeeAmount" header={t('clearing.mdr_fee', 'Phí MDR')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
               <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-semibold">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
               <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <StatusBadge status={b.status} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
             </DataTable>

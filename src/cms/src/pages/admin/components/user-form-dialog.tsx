@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useCreateUser, useUpdateUser, IUser, IUserPayload, useGetRoles } from '@/service/admin/admin';
 import useToastService from '@/service/toast/toast-service';
 import { Dialog } from 'primereact/dialog';
@@ -41,7 +41,17 @@ const UserFormDialog: React.FC<UserFormDialogProps> = ({
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
   const { data: rolesData } = useGetRoles();
-  const roleOptions = (rolesData?.data || rolesData?.roles || []) as any[];
+  const roleOptions = useMemo(() => {
+    const raw = (rolesData?.data || rolesData?.roles || []) as any[];
+    return raw.map((r) => {
+      const roleKey = (r.code || '').toLowerCase();
+      const roleName = t(`role.default_${roleKey}_name`, r.name);
+      return {
+        ...r,
+        displayName: `${roleName} (${r.code})`,
+      };
+    });
+  }, [rolesData]);
 
   const {
     control,
@@ -219,7 +229,7 @@ const UserFormDialog: React.FC<UserFormDialogProps> = ({
                 value={field.value}
                 onChange={(e) => field.onChange(e.value)}
                 options={roleOptions}
-                optionLabel="name"
+                optionLabel="displayName"
                 optionValue="roleId"
                 placeholder={t('select')}
                 maxSelectedLabels={3}

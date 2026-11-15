@@ -50,7 +50,7 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
       showToast({
         severity: 'warn',
         summary: t('common.warning', 'Cảnh báo'),
-        detail: 'Vui lòng chọn ít nhất 1 vai trò',
+        detail: t('user.select_at_least_one_role', 'Vui lòng chọn ít nhất 1 vai trò'),
       });
       return;
     }
@@ -65,7 +65,7 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
           showToast({
             severity: 'success',
             summary: t('common.success', 'Thành công'),
-            detail: 'Cập nhật vai trò người dùng thành công',
+            detail: t('user.assign_roles_success', 'Cập nhật vai trò người dùng thành công'),
           });
           onSuccess();
           onHide();
@@ -74,7 +74,7 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
           showToast({
             severity: 'error',
             summary: t('common.error', 'Lỗi'),
-            detail: err?.response?.data?.message || 'Không thể cập nhật vai trò',
+            detail: err?.response?.data?.message || t('user.assign_roles_failed', 'Không thể cập nhật vai trò'),
           });
         },
       }
@@ -133,19 +133,23 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
                         <div className="flex align-items-center gap-2">
                           <span className="font-mono text-xs font-bold text-900">{role.code}</span>
                           <span className="text-sm font-medium text-800">
-                            {t(`role.name_${role.code}`, role.name)}
+                            {t(`role.default_${(role.code || '').toLowerCase()}_name`, role.name)}
                           </span>
                         </div>
                         {role.description && (
                           <div className="text-xs text-500">
-                            {t(`role.desc_${role.code}`, role.description)}
+                            {t(`role.default_${(role.code || '').toLowerCase()}_desc`, role.description)}
                           </div>
                         )}
                       </div>
                     </div>
                     {role.platform && (
                       <span className="text-xs px-2 py-1 border-round bg-gray-100 text-600">
-                        {role.platform}
+                        {role.platform === 'PARTNER_PORTAL'
+                          ? t('role.platform_partner_portal', 'Partner Portal')
+                          : role.platform === 'WEB_CMS'
+                          ? t('role.platform_web_cms', 'Admin CMS')
+                          : t('role.platform_all', 'Tất cả')}
                       </span>
                     )}
                   </div>

@@ -7,6 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import { StatusBadge } from '@/components/StatusBadge';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { categoryService, GeneralCategory } from '@/service/category.service';
 import { GeneralCategoryFormModal } from './GeneralCategoryFormModal';
 
@@ -248,34 +249,34 @@ export const GeneralCategoryManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="card p-3">
+    <div className="w-full flex flex-column gap-2">
       <Toast ref={toastRef} position="top-right" />
       <ConfirmDialog />
 
-      {/* Tiêu đề trang & Thanh tác vụ toàn cục */}
-      <div className="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-3 pb-3 border-bottom-1 surface-border gap-2">
-        <div>
-          <h2 className="text-xl font-bold m-0 text-900">
-            {t('category.page_title', 'Quản lý Danh mục Dữ liệu')}
-          </h2>
-          <span className="text-sm text-500">
-            {t(
-              'category.page_subtitle',
-              'Quản lý danh mục loại và danh mục giá trị động dùng chung cho toàn bộ hệ sinh thái Loyalty'
-            )}
-          </span>
-        </div>
-        <div className="flex gap-2">
+      <StandardPageHeader
+        breadcrumbs={[
+          { label: t('nav.admin', 'Quản trị hệ thống') },
+          { label: t('nav.categories', 'Danh mục Dữ liệu') },
+        ]}
+        title={t('category.page_title', 'Quản lý Danh mục Dữ liệu')}
+        subtitle={t(
+          'category.page_subtitle',
+          'Quản lý danh mục loại và danh mục giá trị động dùng chung cho toàn bộ hệ sinh thái Loyalty'
+        )}
+        actions={
           <Button
             label={t('category.refresh_cache', 'Làm mới Cache')}
             icon="pi pi-sync"
-            className="p-button-outlined p-button-secondary p-button-sm"
+            outlined
+            severity="secondary"
+            size="small"
+            className="p-button-sm font-medium"
             onClick={handleRefreshCache}
             tooltip={t('category.refresh_cache_tooltip', 'Xóa cache nạp lại dữ liệu mới nhất')}
             type="button"
           />
-        </div>
-      </div>
+        }
+      />
 
       {/* Bố cục Bảng Đôi (Double Table) chuẩn DIP */}
       <div className="grid">

@@ -59,6 +59,8 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
       <div className="flex align-items-center gap-1 flex-nowrap">
         {visibleRoles.map((r) => {
           const s = getBadgeStyle(r.code);
+          const roleKey = (r.code || '').toLowerCase();
+          const roleName = t(`role.default_${roleKey}_name`, r.name || r.code);
           return (
             <span
               key={r.roleId || r.code}
@@ -74,7 +76,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
               }}
               title={r.description || r.name}
             >
-              {t(`role.name_${r.code}`, r.name || r.code)}
+              {roleName}
             </span>
           );
         })}
@@ -138,6 +140,8 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
           <div className="flex flex-column gap-1 max-h-12rem overflow-y-auto">
             {rolesList.map((r) => {
               const s = getBadgeStyle(r.code);
+              const roleKey = (r.code || '').toLowerCase();
+              const roleName = t(`role.default_${roleKey}_name`, r.name || r.code);
               return (
                 <div
                   key={r.roleId || r.code}
@@ -158,7 +162,7 @@ export const UserRoleCell: React.FC<UserRoleCellProps> = ({ user, onOpenRoleModa
                     {r.code}
                   </span>
                   <span className="text-xs text-700 font-medium overflow-hidden text-overflow-ellipsis white-space-nowrap">
-                    {t(`role.name_${r.code}`, r.name)}
+                    {roleName}
                   </span>
                 </div>
               );

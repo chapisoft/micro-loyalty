@@ -120,7 +120,7 @@ export const VoucherManagementPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // 2. Tải danh sách Đối tác theo Liên minh để phục vụ chọn Partner
   const fetchPartners = useCallback(async (tenantId: string) => {
@@ -589,33 +589,12 @@ export const VoucherManagementPage: React.FC = () => {
           { label: t('nav.vouchers', 'Kho Voucher') },
         ]}
         title={t('voucher.management_title', 'Kho Voucher & Mã Khuyến Mãi')}
-        subtitle="Quản lý phát hành voucher, tỷ lệ giảm giá, kho mã số lượng lớn và đối tác liên minh áp dụng"
+        subtitle={t('voucher.subtitle', 'Quản lý phát hành voucher, tỷ lệ giảm giá, kho mã số lượng lớn và đối tác liên minh áp dụng')}
         actions={
-          <Button
-            label={t('common.add_new', 'Thêm mới')}
-            icon="pi pi-plus"
-            size="small"
-            onClick={openNew}
-            className="p-button-sm font-semibold"
-          />
-        }
-      />
-
-      <UniversalFilterBar
-        searchValue={globalFilter}
-        onSearchChange={setGlobalFilter}
-        searchPlaceholder={t('common.search', 'Tìm kiếm...')}
-        primaryFilters={
-          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-        }
-        onReset={() => setGlobalFilter('')}
-        onRefresh={() => fetchVouchers(selectedTenant)}
-        isLoading={loading}
-        extraActions={
-          <>
+          <div className="flex align-items-center gap-2">
             <Button
               type="button"
-              label={t('voucher.import_csv', 'Nhập CSV')}
+              label={t('common.import_csv', 'Nhập CSV')}
               icon="pi pi-upload"
               size="small"
               outlined
@@ -633,8 +612,27 @@ export const VoucherManagementPage: React.FC = () => {
               onClick={handleExportExcel}
               className="p-button-sm font-medium"
             />
-          </>
+            <Button
+              label={t('common.add_new', 'Thêm mới')}
+              icon="pi pi-plus"
+              size="small"
+              onClick={openNew}
+              className="p-button-sm font-semibold"
+            />
+          </div>
         }
+      />
+
+      <UniversalFilterBar
+        searchValue={globalFilter}
+        onSearchChange={setGlobalFilter}
+        searchPlaceholder={t('common.search', 'Tìm kiếm...')}
+        primaryFilters={
+          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
+        }
+        onReset={() => setGlobalFilter('')}
+        onRefresh={() => fetchVouchers(selectedTenant)}
+        isLoading={loading}
       />
 
       <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">

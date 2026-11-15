@@ -366,11 +366,11 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                   <InputText
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="Ví dụ: ADMIN, CS_OFFICER, FINANCE_AUDITOR..."
+                    placeholder={t('role.code_placeholder', 'Ví dụ: ADMIN, CS_OFFICER, FINANCE_AUDITOR...')}
                     disabled={isEditing}
                     className="p-inputtext-sm font-mono font-semibold"
                   />
-                  <small className="text-xs text-500">Mã viết hoa, không dấu, dùng nhận diện trong mã nguồn</small>
+                  <small className="text-xs text-500">{t('role.code_hint', 'Mã viết hoa, không dấu, dùng nhận diện trong mã nguồn')}</small>
                 </div>
 
                 <div className="col-12 md:col-6 flex flex-column gap-1">
@@ -380,10 +380,10 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                   <InputText
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ví dụ: Quản trị viên hệ thống"
+                    placeholder={t('role.name_placeholder', 'Ví dụ: Quản trị viên hệ thống')}
                     className="p-inputtext-sm font-medium"
                   />
-                  <small className="text-xs text-500">Tên định danh hiển thị trên giao diện người dùng</small>
+                  <small className="text-xs text-500">{t('role.name_hint', 'Tên định danh hiển thị trên giao diện người dùng')}</small>
                 </div>
 
                 <div className="col-12 md:col-4 flex flex-column gap-1">
@@ -421,7 +421,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                   <InputTextarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Mô tả chức năng, thẩm quyền và trách nhiệm của vai trò trong quy trình vận hành..."
+                    placeholder={t('role.desc_placeholder', 'Mô tả chức năng, thẩm quyền và trách nhiệm của vai trò trong quy trình vận hành...')}
                     rows={2}
                     className="p-inputtext-sm"
                   />
@@ -439,7 +439,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                       {t('role.matrix_info', 'Đã phân quyền:')} {selectedPermissionIds.length} / {allPermissions.length} {t('role.perms_suffix', 'quyền')}
                     </div>
                     <div className="text-xs text-500">
-                      Chuyển sang tab &quot;{t('role.tab_matrix', 'Phân quyền chi tiết')}&quot; để cấu hình chi tiết theo Phân hệ chức năng & Hành động
+                      {t('role.tab_matrix_hint', 'Chuyển sang tab "Phân quyền chi tiết" để cấu hình theo Phân hệ chức năng & Hành động')}
                     </div>
                   </div>
                 </div>
@@ -541,7 +541,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
               {isLoadingPerms ? (
                 <div className="p-5 text-center text-500 text-sm">
                   <i className="pi pi-spin pi-spinner text-xl mr-2 text-primary" />
-                  Đang tải ma trận quyền hệ thống...
+                  {t('role.loading_matrix', 'Đang tải ma trận quyền hệ thống...')}
                 </div>
               ) : (
                 <div
@@ -550,7 +550,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                 >
                   <table
                     className="w-full text-left"
-                    style={{ borderCollapse: 'collapse', minWidth: '930px' }}
+                    style={{ borderCollapse: 'collapse', minWidth: '950px' }}
                   >
                     {/* Header Columns */}
                     <thead className="surface-100 sticky top-0 z-2 border-bottom-1 surface-border">
@@ -558,8 +558,8 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                         {/* Cột 1: Chức năng / Phân hệ */}
                         <th
                           style={{
-                            width: '300px',
-                            minWidth: '280px',
+                            width: '280px',
+                            minWidth: '260px',
                             padding: '8px 12px',
                             fontSize: '12px',
                             fontWeight: 600,
@@ -590,8 +590,8 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                             <th
                               key={actionKey}
                               style={{
-                                width: isOther ? '120px' : '70px',
-                                minWidth: isOther ? '110px' : '65px',
+                                width: isOther ? '140px' : '72px',
+                                minWidth: isOther ? '130px' : '68px',
                                 padding: '6px 4px',
                                 textAlign: 'center',
                                 fontSize: '12px',
@@ -603,7 +603,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                               <div
                                 onClick={() => handleToggleColumn(actionKey)}
                                 className="flex flex-column align-items-center gap-1 cursor-pointer hover:surface-200 p-1 border-round select-none transition-colors"
-                                title={`Nhấp để chọn/bỏ chọn toàn bộ quyền "${colLabel}"`}
+                                title={t('role.toggle_col_tooltip', { col: colLabel, defaultValue: `Nhấp để chọn/bỏ chọn toàn bộ quyền "${colLabel}"` })}
                               >
                                 <span className="font-semibold text-xs text-700 white-space-nowrap">{colLabel}</span>
                                 <input
@@ -632,7 +632,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                       {filteredMatrix.length === 0 ? (
                         <tr>
                           <td colSpan={9} className="p-4 text-center text-500 text-xs">
-                            Không tìm thấy phân hệ hoặc quyền nào phù hợp từ khóa
+                            {t('role.no_perms_found', 'Không tìm thấy phân hệ hoặc quyền nào phù hợp từ khóa')}
                           </td>
                         </tr>
                       ) : (
@@ -658,7 +658,7 @@ export const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                               <td style={{ padding: '6px 12px', verticalAlign: 'middle' }}>
                                 <label
                                   className="flex align-items-center gap-2 cursor-pointer select-none m-0"
-                                  title={rowItem.desc}
+                                  title={t(`module.${rowItem.module}_desc`, rowItem.desc)}
                                 >
                                   <input
                                     type="checkbox"

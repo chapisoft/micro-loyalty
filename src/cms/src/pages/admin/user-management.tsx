@@ -286,7 +286,11 @@ export const UserManagementPage: React.FC = () => {
   const roleFilterOptions = useMemo(() => {
     return [
       { label: t('common.all_roles', 'Tất cả vai trò'), value: null },
-      ...allRoles.map((r) => ({ label: `${t('role.name_' + r.code, r.name)} (${r.code})`, value: r.roleId })),
+      ...allRoles.map((r) => {
+        const roleKey = (r.code || '').toLowerCase();
+        const roleName = t(`role.default_${roleKey}_name`, r.name);
+        return { label: `${roleName} (${r.code})`, value: r.roleId };
+      }),
     ];
   }, [allRoles, t]);
 

@@ -170,7 +170,7 @@ export const Transactions: React.FC = () => {
         };
       }),
     ];
-  }, [tenantPartners, t]);
+  }, [tenantPartners, t, i18n]);
 
   const actionTypeOptions = useMemo(() => {
     const list = [{ label: t('transaction.filter_action', 'Tất cả loại giao dịch'), value: 'ALL' }];

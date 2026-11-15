@@ -363,7 +363,18 @@ const Header: React.FC = () => {
   const rawName = currentUser?.fullName || currentUser?.userName || (currentUser as any)?.username;
   const displayName = React.useMemo(() => {
     if (!rawName) return t('common.administrator');
-    if (rawName.toLowerCase() === 'admin') return t('common.system_admin');
+    const lower = rawName.toLowerCase();
+    if (
+      lower === 'admin' ||
+      lower === 'administrator' ||
+      lower.includes('quản trị viên') ||
+      lower === 'system administrator' ||
+      rawName === 'Quản Trị Viên' ||
+      rawName === 'Quản Trị Viên Hệ Thống' ||
+      rawName === 'System Administrator'
+    ) {
+      return t('common.system_admin');
+    }
     return rawName;
   }, [rawName, t]);
 

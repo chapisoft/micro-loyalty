@@ -405,7 +405,7 @@ export const TierManagementPage: React.FC = () => {
                         { label: t('nav.tiers', 'Hạng Hội viên') },
                       ]}
                       title={t('nav.tiers', 'Hạng Hội viên')}
-                      subtitle="Cấu hình 4 phân hạng hội viên, ngưỡng điểm tích lũy, hệ số nhân và đặc quyền quay thưởng"
+                      subtitle={t('tier.subtitle', 'Cấu hình 4 phân hạng hội viên, ngưỡng điểm tích lũy, hệ số nhân và đặc quyền quay thưởng')}
                       primaryAction={{
                         label: t('common.add_new', 'Thêm mới'),
                         icon: 'pi pi-plus',

@@ -94,7 +94,7 @@ export const PolicyConfigurationPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   // 2. Tải danh sách Đối tác theo Tenant
   const fetchPartners = useCallback(async (tenantId: string) => {
@@ -393,15 +393,27 @@ export const PolicyConfigurationPage: React.FC = () => {
           { label: t('nav.policies', 'Chính sách Điểm') },
         ]}
         title={t('policy.management_title', 'Chính sách Tích & Tiêu Điểm')}
-        subtitle="Quản lý tỷ lệ tích/tiêu điểm, tỷ giá quy đổi, hạn mức và chu kỳ quyết toán liên minh"
+        subtitle={t('policy.subtitle', 'Quản lý tỷ lệ tích/tiêu điểm, tỷ giá quy đổi, hạn mức và chu kỳ quyết toán liên minh')}
         actions={
-          <Button
-            label={t('common.add_new', 'Thêm mới')}
-            icon="pi pi-plus"
-            size="small"
-            onClick={openNew}
-            className="p-button-sm font-semibold"
-          />
+          <div className="flex align-items-center gap-2">
+            <Button
+              type="button"
+              icon="pi pi-file-excel"
+              label={t('common.export_excel', 'Xuất Excel')}
+              outlined
+              severity="secondary"
+              size="small"
+              onClick={handleExportExcel}
+              className="p-button-sm font-medium"
+            />
+            <Button
+              label={t('common.add_new', 'Thêm mới')}
+              icon="pi pi-plus"
+              size="small"
+              onClick={openNew}
+              className="p-button-sm font-semibold"
+            />
+          </div>
         }
       />
 
@@ -415,18 +427,6 @@ export const PolicyConfigurationPage: React.FC = () => {
         onReset={() => setGlobalFilter('')}
         onRefresh={() => fetchPolicies(selectedTenant)}
         isLoading={loading}
-        extraActions={
-          <Button
-            type="button"
-            icon="pi pi-file-excel"
-            label={t('common.export_excel', 'Xuất Excel')}
-            outlined
-            severity="secondary"
-            size="small"
-            onClick={handleExportExcel}
-            className="p-button-sm font-medium"
-          />
-        }
       />
 
       <div className="surface-card border-round border-1 surface-border overflow-hidden w-full">
