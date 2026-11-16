@@ -5,11 +5,11 @@
  */
 
 export const getStoredTenantId = (): string => {
-  if (typeof window === 'undefined') return '';
+  if (typeof window === 'undefined') return 'ALL';
   return (
     localStorage.getItem('selected_tenant_id') ||
     localStorage.getItem('tenant_id') ||
-    ''
+    'ALL'
   );
 };
 

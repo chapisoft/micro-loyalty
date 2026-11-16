@@ -512,9 +512,9 @@ export default {
   },
   "tenant": {
     "select_label": "Đối tác:",
-    "placeholder": "Chọn đối tác thuê bao...",
+    "placeholder": "Chọn đối tác...",
     "choose_partner": "Chọn đối tác...",
-    "all_tenants": "Tất cả Đơn vị Thuê bao",
+    "all_tenants": "Tất cả đối tác",
     "natcash": "Ví Điện Tử Natcash",
     "micro_crm": "Liên Minh Bán Lẻ Micro-CRM",
     "delimart": "Chuỗi Siêu Thị Delimart",

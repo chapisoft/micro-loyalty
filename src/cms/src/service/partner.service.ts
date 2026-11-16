@@ -1,4 +1,5 @@
 import { getStoredTenantId } from '@/utils/tenant';
+import { RAW_TENANTS } from '@/components/TenantSelector';
 import { cmsApiClient } from './config';
 
 export interface Partner {
@@ -19,6 +20,27 @@ export interface Partner {
 class PartnerService {
   async getAll(tenantId: string = getStoredTenantId()): Promise<Partner[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await cmsApiClient.get('/api/v1/partners', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              if (Array.isArray(res)) return res;
+              if (res && Array.isArray(res.data)) return res.data;
+              return [];
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, Partner>();
+        results.flat().forEach((p) => {
+          if (p && p.id) map.set(p.id, p);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await cmsApiClient.get('/api/v1/partners', {
         headers: { 'X-Tenant-Id': tenantId },
       });

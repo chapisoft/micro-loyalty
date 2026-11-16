@@ -332,7 +332,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       { label: t('milestone.all_partners_filter'), value: 'ALL' },
       { label: t('milestone.alliance_scope'), value: 'ALLIANCE' },
       ...partners.map((p) => ({
-        label: `${p.partnerName} (${p.partnerCode})`,
+        label: p.partnerName,
         value: p.id,
       })),
     ];

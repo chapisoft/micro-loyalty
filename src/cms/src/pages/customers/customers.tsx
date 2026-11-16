@@ -294,6 +294,8 @@ export const Customers: React.FC = () => {
         }
         onReset={() => {
           setSearchPhone('');
+          setSelectedTenant('ALL');
+          localStorage.setItem('selected_tenant_id', 'ALL');
           fetchData();
         }}
         onRefresh={fetchData}

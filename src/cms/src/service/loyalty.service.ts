@@ -1,4 +1,5 @@
 import { getStoredTenantId } from '@/utils/tenant';
+import { RAW_TENANTS } from '@/components/TenantSelector';
 import { apiClient } from './config';
 
 export interface TierConfigModel {
@@ -292,6 +293,43 @@ export const LoyaltyService = {
   // 2. Quản lý Chính sách Tích/Tiêu điểm (CRUD)
   async getPolicies(tenantId: string = getStoredTenantId()): Promise<PolicyRuleModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/policies', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              const d = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+              return d;
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, any>();
+        results.flat().forEach((p) => {
+          if (p && p.id) map.set(p.id, p);
+        });
+        const data = Array.from(map.values());
+        return data.map((p: any) => ({
+          id: p.id,
+          policyCode: p.code || `POL_${p.id}`,
+          partnerId: p.partnerId,
+          partnerCode: p.partnerCode || '',
+          partnerName: p.partnerName || '',
+          type: p.type || '',
+          earnRate: p.earnRatePercent,
+          earnRatePercent: p.earnRatePercent,
+          exchangeRate: p.exchangeRate,
+          maxBurnPercent: p.maxBurnPercentage,
+          maxBurnPercentage: p.maxBurnPercentage,
+          minBillAmount: p.minBillAmount,
+          status: p.status || '',
+          effectiveDate: p.updatedAt ? new Date(p.updatedAt).toLocaleString() : '',
+          description: p.description || '',
+        }));
+      }
       const response: any = await apiClient.get('/loyalty/v1/policies', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -328,6 +366,33 @@ export const LoyaltyService = {
 
   async getPartners(tenantId: string = getStoredTenantId()): Promise<any[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/partners', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              const d = Array.isArray(res) ? res : (res?.data || []);
+              return d;
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, any>();
+        results.flat().forEach((p) => {
+          if (p && p.id) map.set(p.id, p);
+        });
+        const data = Array.from(map.values());
+        return data.map((p: any) => ({
+          id: p.id,
+          partnerCode: p.partnerCode,
+          partnerName: p.partnerName,
+          partnerType: p.partnerType || 'RETAIL',
+          status: p.status || 'ACTIVE',
+        }));
+      }
       const response: any = await apiClient.get('/loyalty/v1/partners', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -390,6 +455,27 @@ export const LoyaltyService = {
   // 3. Quản lý Kho Voucher Khuyến Mãi (CRUD)
   async getVouchers(tenantId: string = getStoredTenantId()): Promise<VoucherItemModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/vouchers', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              if (Array.isArray(res)) return res;
+              if (res && Array.isArray(res.data)) return res.data;
+              return [];
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, VoucherItemModel>();
+        results.flat().forEach((v) => {
+          if (v && v.id) map.set(v.id, v);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/vouchers', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -431,6 +517,51 @@ export const LoyaltyService = {
   // 4. Quản lý Cột Mốc Chiến Dịch (Milestones CRUD)
   async getMilestones(tenantId: string = getStoredTenantId()): Promise<MilestoneItemModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/milestones/admin-list', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              const d = Array.isArray(res)
+                ? res
+                : Array.isArray(res?.data)
+                ? res.data
+                : Array.isArray(res?.data?.data)
+                ? res.data.data
+                : Array.isArray(res?.content)
+                ? res.content
+                : [];
+              return d;
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, any>();
+        results.flat().forEach((m) => {
+          if (m && m.id) map.set(m.id, m);
+        });
+        const data = Array.from(map.values());
+        return data.map((m: any) => ({
+          id: m.id,
+          partnerId: m.partnerId ?? null,
+          partnerCode: m.partnerCode,
+          partnerName: m.partnerName,
+          campaignCode: m.campaignCode,
+          campaignName: m.campaignName,
+          milestoneStep: m.milestoneStep || 1,
+          targetMetric: m.targetMetric || 'BILL_AMOUNT',
+          targetValue: m.targetValue || 0,
+          rewardPoints: m.rewardPoints || 0,
+          rewardVoucherId: m.rewardVoucherId,
+          rewardGameTurns: m.rewardGameTurns || 0,
+          startDate: m.startDate,
+          endDate: m.endDate,
+          status: m.status || 'ACTIVE',
+        }));
+      }
       const response: any = await apiClient.get('/loyalty/v1/milestones/admin-list', {
         headers: { 'X-Tenant-Id': tenantId },
       });

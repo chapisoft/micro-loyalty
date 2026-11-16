@@ -346,9 +346,9 @@ export default {
   },
   "tenant": {
     "select_label": "Partner:",
-    "placeholder": "Select tenant partner...",
+    "placeholder": "Select partner...",
     "choose_partner": "Select partner...",
-    "all_tenants": "All Tenant Partners",
+    "all_tenants": "All Partners",
     "natcash": "Natcash E-Wallet",
     "micro_crm": "Micro-CRM Retail Alliance",
     "delimart": "Delimart Supermarket Chain",

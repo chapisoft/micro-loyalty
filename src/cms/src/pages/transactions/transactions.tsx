@@ -27,7 +27,7 @@ export const Transactions: React.FC = () => {
   const [items, setItems] = useState<PointLedgerItem[]>([]);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedTenant, setSelectedTenant] = useState<string>('TENANT_NATCASH');
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [selectedPartner, setSelectedPartner] = useState<string>('ALL');
   const [selectedActionType, setSelectedActionType] = useState<string>('ALL');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
@@ -165,7 +165,7 @@ export const Transactions: React.FC = () => {
         const found = tenantPartners.find((p) => p.partnerCode === code);
         const name = found ? found.partnerName : (i18n.exists(`alliance_partners.${code}`) ? t(`alliance_partners.${code}`) : code);
         return {
-          label: `${code} — ${name}`,
+          label: name,
           value: code,
         };
       }),
@@ -289,10 +289,7 @@ export const Transactions: React.FC = () => {
   const partnerTemplate = (rowData: PointLedgerItem) => {
     const name = rowData.partnerName || (i18n.exists(`alliance_partners.${rowData.partnerCode}`) ? t(`alliance_partners.${rowData.partnerCode}`) : rowData.partnerCode);
     return (
-      <div className="flex flex-column">
-        <span className="text-900">{name}</span>
-        <span className="font-mono text-xs text-500">{rowData.partnerCode}</span>
-      </div>
+      <span className="text-900 font-medium">{name}</span>
     );
   };
 

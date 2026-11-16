@@ -499,7 +499,7 @@ export default {
     "select_label": "Partenaire :",
     "placeholder": "Sélectionnez un partenaire...",
     "choose_partner": "Sélectionnez un partenaire...",
-    "all_tenants": "Tous les Partenaires",
+    "all_tenants": "Tous les partenaires",
     "natcash": "Portefeuille Électronique Natcash",
     "micro_crm": "Alliance de Vente au Détail Micro-CRM",
     "delimart": "Chaîne de Supermarchés Delimart",

@@ -510,7 +510,7 @@ export default {
     "select_label": "Patnè:",
     "placeholder": "Chwazi patnè sistèm...",
     "choose_partner": "Chwazi patnè...",
-    "all_tenants": "Tout Patnè Sistèm",
+    "all_tenants": "Tout patnè yo",
     "natcash": "Pòtmonnen Elektwonik Natcash",
     "micro_crm": "Alyans Boutik Micro-CRM",
     "delimart": "Rezo Sipèmache Delimart",

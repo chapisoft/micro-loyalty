@@ -630,7 +630,10 @@ export const VoucherManagementPage: React.FC = () => {
         primaryFilters={
           <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
         }
-        onReset={() => setGlobalFilter('')}
+        onReset={() => {
+          setGlobalFilter('');
+          handleTenantChange('ALL');
+        }}
         onRefresh={() => fetchVouchers(selectedTenant)}
         isLoading={loading}
       />
