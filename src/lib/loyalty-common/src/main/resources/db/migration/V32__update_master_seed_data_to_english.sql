@@ -464,9 +464,9 @@ UPDATE loyalty_lucky_wheels SET wheel_name = 'Customer Appreciation Lucky Wheel'
 UPDATE loyalty_lucky_wheels SET wheel_name = 'Natcash Customer Appreciation Wheel' WHERE wheel_code = 'LUCKY_WHEEL_NATCASH';
 UPDATE loyalty_lucky_wheels SET wheel_name = 'Alliance Customer Lucky Wheel' WHERE wheel_code = 'LUCKY_WHEEL_CRM';
 
-UPDATE loyalty_wheel_themes SET theme_name = 'Natcash Signature Orange Theme', description = 'Default brand theme with Natcash orange and blue accents' WHERE theme_code = 'THEME_NATCASH_DEFAULT';
-UPDATE loyalty_wheel_themes SET theme_name = 'Kanaval Tropical Festival Theme', description = 'Vibrant carnival theme celebrating Haitian culture and Kanaval spirit' WHERE theme_code = 'THEME_KANAVAL_FESTIVAL';
-UPDATE loyalty_wheel_themes SET theme_name = 'Neon Cyberpunk Futuristic Theme', description = 'Modern dark mode with glowing cyan and magenta neon accents' WHERE theme_code = 'THEME_NEON_CYBER';
+UPDATE loyalty_wheel_themes SET theme_name = 'Natcash Signature Orange Theme' WHERE theme_code = 'THEME_NATCASH_DEFAULT';
+UPDATE loyalty_wheel_themes SET theme_name = 'Kanaval Tropical Festival Theme' WHERE theme_code = 'THEME_KANAVAL_FESTIVAL';
+UPDATE loyalty_wheel_themes SET theme_name = 'Neon Cyberpunk Futuristic Theme' WHERE theme_code = 'THEME_NEON_CYBER';
 
 UPDATE loyalty_game_prizes SET prize_name = '3 Gold Chests Mega Win' WHERE prize_code = 'SCRATCH_GOLD';
 UPDATE loyalty_game_prizes SET prize_name = '3 Silver Coins Prosperity' WHERE prize_code = 'SCRATCH_SILVER';
@@ -519,11 +519,11 @@ UPDATE loyalty_campaign_milestones SET campaign_name = 'Natcash Digital Transact
 UPDATE loyalty_campaign_milestones SET campaign_name = 'Retail Alliance Shopping Festival' WHERE campaign_code = 'RETAIL_FEST_2026';
 UPDATE loyalty_campaign_milestones SET campaign_name = 'Delimart Harvest Quest' WHERE campaign_code = 'CAMP_DELI_HARVEST';
 
-UPDATE campaign_rule_conditions SET rule_name = 'First Natcash QR Payment Bonus' WHERE rule_code = 'RULE_FIRST_QR_PAY';
-UPDATE campaign_rule_conditions SET rule_name = 'Natcom 3-Week Topup Streak' WHERE rule_code = 'RULE_WEEKLY_TOPUP_STREAK';
-UPDATE campaign_rule_conditions SET rule_name = 'First EDH Electricity Bill Payment' WHERE rule_code = 'RULE_CROSS_SELL_EDH';
-UPDATE campaign_rule_conditions SET rule_name = '2X Points on Fresh Produce Weekends' WHERE rule_code = 'RULE_DELI_WEEKEND_X2';
-UPDATE campaign_rule_conditions SET rule_name = 'First-Time QR Burn Bonus at Delimart' WHERE rule_code = 'RULE_DELI_FIRST_QR_POS';
+UPDATE campaign_rule_conditions SET campaign_name = 'First Natcash QR Payment Bonus' WHERE campaign_code = 'RULE_FIRST_QR_PAY';
+UPDATE campaign_rule_conditions SET campaign_name = 'Natcom 3-Week Topup Streak' WHERE campaign_code = 'RULE_WEEKLY_TOPUP_STREAK';
+UPDATE campaign_rule_conditions SET campaign_name = 'First EDH Electricity Bill Payment' WHERE campaign_code = 'RULE_CROSS_SELL_EDH';
+UPDATE campaign_rule_conditions SET campaign_name = '2X Points on Fresh Produce Weekends' WHERE campaign_code = 'RULE_DELI_WEEKEND_X2';
+UPDATE campaign_rule_conditions SET campaign_name = 'First-Time QR Burn Bonus at Delimart' WHERE campaign_code = 'RULE_DELI_FIRST_QR_POS';
 
 UPDATE loyalty_monthly_budgets SET budget_name = 'Natcash Loyalty Budget November 2026' WHERE budget_name = 'Ngân sách Loyalty Natcash Tháng 11/2026';
 UPDATE loyalty_monthly_budgets SET budget_name = 'Alliance Partner Co-Funding Budget 11/2026' WHERE budget_name = 'Quỹ Đồng Tài Trợ Đối Tác Liên Minh 11/2026';
@@ -568,10 +568,10 @@ UPDATE approval_requests SET
         WHEN reason LIKE '%Chiến dịch kích cầu quy mô lớn%' THEN 'Large-scale promotion campaign across entire chain'
         ELSE reason
     END,
-    comments = CASE
-        WHEN comments LIKE '%Khách hàng bị treo%' THEN 'Customer POS transaction hung on POS-DELMAS-01 - manual adjustment required'
-        WHEN comments LIKE '%Ngân sách đề xuất vượt trần%' THEN 'Proposed budget exceeds co-funding limit - capped at 150,000 HTG'
-        ELSE comments
+    reject_reason = CASE
+        WHEN reject_reason LIKE '%Khách hàng bị treo%' THEN 'Customer POS transaction hung on POS-DELMAS-01 - manual adjustment required'
+        WHEN reject_reason LIKE '%Ngân sách đề xuất vượt trần%' THEN 'Proposed budget exceeds co-funding limit - capped at 150,000 HTG'
+        ELSE reject_reason
     END;
 
 UPDATE loyalty_clearing_disputes SET 

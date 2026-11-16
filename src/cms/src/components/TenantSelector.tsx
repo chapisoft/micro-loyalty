@@ -113,11 +113,9 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const effectiveTenantId = value || selectedTenant || getStoredTenantId() || 'ALL';
+  const effectiveTenantId = value || selectedTenant || 'ALL';
 
   const handleSelect = (newId: string) => {
-    localStorage.setItem('selected_tenant_id', newId);
-    localStorage.setItem('tenant_id', newId);
     if (typeof onChange === 'function') {
       onChange(newId);
     }

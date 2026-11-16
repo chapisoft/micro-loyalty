@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,14 @@ public class TierController {
     public ResponseEntity<List<TierResponse>> getTiers(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<LoyaltyTierEntity> entities = tierRepository.findByTenantIdOrderByTierLevelAsc(tenantId);
+        List<LoyaltyTierEntity> entities;
+        if (tenantId == null || "ALL".equalsIgnoreCase(tenantId) || "*".equals(tenantId)) {
+            entities = tierRepository.findAll().stream()
+                    .sorted(Comparator.comparing(LoyaltyTierEntity::getTierLevel))
+                    .collect(Collectors.toList());
+        } else {
+            entities = tierRepository.findByTenantIdOrderByTierLevelAsc(tenantId);
+        }
         List<TierResponse> responses = entities.stream().map(e -> TierResponse.builder()
                 .id(e.getId())
                 .code(e.getCode())
@@ -78,7 +86,14 @@ public class TierController {
     public ResponseEntity<List<TierDistributionResponse>> getTierDistribution(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<LoyaltyTierEntity> tiers = tierRepository.findByTenantIdOrderByTierLevelAsc(tenantId);
+        List<LoyaltyTierEntity> tiers;
+        if (tenantId == null || "ALL".equalsIgnoreCase(tenantId) || "*".equals(tenantId)) {
+            tiers = tierRepository.findAll().stream()
+                    .sorted(Comparator.comparing(LoyaltyTierEntity::getTierLevel))
+                    .collect(Collectors.toList());
+        } else {
+            tiers = tierRepository.findByTenantIdOrderByTierLevelAsc(tenantId);
+        }
 
         Map<String, Long> countsByCode = new LinkedHashMap<>();
         long totalMembers = 0L;

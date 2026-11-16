@@ -47,9 +47,7 @@ export const VoucherManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const toastRef = useRef<Toast>(null);
 
-  const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => getStoredTenantId()
-  );
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [partners, setPartners] = useState<PartnerItemModel[]>([]);
   const [selectedVouchers, setSelectedVouchers] = useState<VoucherItem[]>([]);
@@ -136,7 +134,6 @@ export const VoucherManagementPage: React.FC = () => {
   // Xử lý khi thay đổi Liên minh
   const handleTenantChange = (newTenantId: string) => {
     setSelectedTenant(newTenantId);
-    localStorage.setItem('selected_tenant_id', newTenantId);
     fetchVouchers(newTenantId);
     fetchPartners(newTenantId);
   };

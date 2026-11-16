@@ -48,9 +48,7 @@ export interface PartnerOptionItem {
 export const PolicyConfigurationPage: React.FC = () => {
   const { t } = useTranslation();
   const toast = useRef<Toast>(null);
-  const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => getStoredTenantId()
-  );
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [policies, setPolicies] = useState<PolicyRule[]>([]);
   const [partners, setPartners] = useState<PartnerOptionItem[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -119,7 +117,6 @@ export const PolicyConfigurationPage: React.FC = () => {
 
   const handleTenantChange = (newTenant: string) => {
     setSelectedTenant(newTenant);
-    localStorage.setItem('selected_tenant_id', newTenant);
   };
 
   // 4. Danh sách ID các Đối Tác đã được cấu hình chính sách

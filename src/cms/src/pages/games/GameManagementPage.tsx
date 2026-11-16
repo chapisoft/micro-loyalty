@@ -76,7 +76,7 @@ interface GamePrizeItem {
 
 export const GameManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const [selectedTenant] = useState('TENANT_NATCASH');
+  const [selectedTenant] = useState('ALL');
   const [games, setGames] = useState<GameItem[]>([]);
   const [stats, setStats] = useState<GameDashboardStats>({
     totalGames: 0,

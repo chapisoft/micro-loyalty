@@ -45,9 +45,7 @@ const STANDARD_THRESHOLD_MAP: Record<number, { upgrade: number; keep: number; ra
 export const TierManagementPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const toastRef = useRef<Toast>(null);
-  const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => getStoredTenantId()
-  );
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
   const [tiers, setTiers] = useState<TierConfig[]>([]);
   const [distribution, setDistribution] = useState<TierDistributionModel[]>([]);
@@ -416,7 +414,6 @@ export const TierManagementPage: React.FC = () => {
                           value={selectedTenant}
                           onChange={(newTenantId) => {
                             setSelectedTenant(newTenantId);
-                            localStorage.setItem('selected_tenant_id', newTenantId);
                           }}
                         />
                       }

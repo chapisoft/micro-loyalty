@@ -37,7 +37,7 @@ export const PARTNER_TYPES = [
 export const Partners: React.FC = () => {
   const { t } = useTranslation();
   const { data: dbPartnerTypes } = useGeneralCategory('PARTNER_TYPE');
-  const [selectedTenant, setSelectedTenant] = useState<string>('TENANT_NATCASH');
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [items, setItems] = useState<Partner[]>([]);
   const [selectedItems, setSelectedItems] = useState<Partner[]>([]);
   const [loading, setLoading] = useState<boolean>(false);

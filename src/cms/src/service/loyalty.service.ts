@@ -253,8 +253,32 @@ export interface DisputeItemModel {
 
 export const LoyaltyService = {
   // 1. Quản lý Hạng hội viên
-  async getTiers(tenantId: string = getStoredTenantId()): Promise<TierConfigModel[]> {
+  async getTiers(tenantId: string = 'ALL'): Promise<TierConfigModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/tiers', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              if (Array.isArray(res)) return res;
+              if (res && Array.isArray(res.data)) return res.data;
+              return [];
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, TierConfigModel>();
+        results.flat().forEach((tier) => {
+          if (tier && tier.tierLevel && !map.has(tier.tierLevel)) {
+            map.set(tier.tierLevel, tier);
+          }
+        });
+        const list = Array.from(map.values()).sort((a, b) => (a.tierLevel || 0) - (b.tierLevel || 0));
+        if (list.length > 0) return list;
+      }
       const response: any = await apiClient.get('/loyalty/v1/tiers', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -621,6 +645,64 @@ export const LoyaltyService = {
     const from = fromDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const to = toDate || new Date().toISOString();
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.post(
+                '/loyalty/v1/clearinghouse/reconciliation-report',
+                { fromDate: from, toDate: to },
+                { headers: { 'X-Tenant-Id': t.id } }
+              );
+              return res?.data || res;
+            } catch {
+              return null;
+            }
+          })
+        );
+        const valid = results.filter(Boolean);
+        if (valid.length > 0) {
+          const pMap = new Map<number, any>();
+          let grandTx = 0, grandIssued = 0, grandRedeemed = 0, grandPayable = 0, grandReceivable = 0, grandFiat = 0, grandNet = 0;
+          valid.forEach((r) => {
+            grandTx += r.grandTotalTransactions || 0;
+            grandIssued += r.grandTotalPointsIssued || 0;
+            grandRedeemed += r.grandTotalPointsRedeemed || 0;
+            grandPayable += r.grandTotalFiatPayable || 0;
+            grandReceivable += r.grandTotalFiatReceivable || 0;
+            grandFiat += r.grandTotalFiatAmount || 0;
+            grandNet += r.grandTotalNetSettlement || 0;
+            if (Array.isArray(r.partnerSummaries)) {
+              r.partnerSummaries.forEach((p: any) => {
+                if (p && p.partnerId) {
+                  if (pMap.has(p.partnerId)) {
+                    const ex = pMap.get(p.partnerId);
+                    ex.transactionsCount = (ex.transactionsCount || 0) + (p.transactionsCount || 0);
+                    ex.pointsIssued = (ex.pointsIssued || 0) + (p.pointsIssued || 0);
+                    ex.pointsRedeemed = (ex.pointsRedeemed || 0) + (p.pointsRedeemed || 0);
+                    ex.netClearingBalance = (ex.netClearingBalance || 0) + (p.netClearingBalance || 0);
+                  } else {
+                    pMap.set(p.partnerId, { ...p });
+                  }
+                }
+              });
+            }
+          });
+          return {
+            periodFrom: from,
+            periodTo: to,
+            grandTotalTransactions: grandTx,
+            grandTotalPointsIssued: grandIssued,
+            grandTotalPointsRedeemed: grandRedeemed,
+            grandTotalFiatPayable: grandPayable,
+            grandTotalFiatReceivable: grandReceivable,
+            grandTotalFiatAmount: grandFiat,
+            grandTotalNetSettlement: grandNet,
+            partnerSummaries: Array.from(pMap.values()),
+            generatedAt: new Date().toISOString(),
+          };
+        }
+      }
       const response: any = await apiClient.post(
         '/loyalty/v1/clearinghouse/reconciliation-report',
         { fromDate: from, toDate: to },
@@ -666,6 +748,29 @@ export const LoyaltyService = {
 
   async getDisputes(tenantId: string = getStoredTenantId()): Promise<DisputeItemModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/clearinghouse/disputes', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              if (Array.isArray(res)) return res;
+              if (res && Array.isArray(res.data)) return res.data;
+              return [];
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, any>();
+        results.flat().forEach((d) => {
+          if (d && d.disputeCode && !map.has(d.disputeCode)) {
+            map.set(d.disputeCode, d);
+          }
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/clearinghouse/disputes', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -690,6 +795,58 @@ export const LoyaltyService = {
   // 6. Số liệu thống kê Dashboard
   async getDashboardStats(tenantId: string = getStoredTenantId()): Promise<DashboardStatsModel> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/dashboard/stats', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return res?.data || res;
+            } catch {
+              return null;
+            }
+          })
+        );
+        const valid = results.filter(Boolean);
+        if (valid.length > 0) {
+          let totalMembers = 0, activeMembers = 0, totalEarned = 0, totalBurned = 0, activeVouchers = 0, totalTx = 0, clearingAmt = 0;
+          const tierMap = new Map<number, any>();
+          valid.forEach((s) => {
+            totalMembers += s.totalMembers || 0;
+            activeMembers += s.activeMembers || 0;
+            totalEarned += s.totalEarnedPoints || 0;
+            totalBurned += s.totalBurnedPoints || 0;
+            activeVouchers += s.activeVouchers || 0;
+            totalTx += s.totalTransactions || 0;
+            clearingAmt += s.clearingSettledAmount || 0;
+            if (Array.isArray(s.tierDistributions)) {
+              s.tierDistributions.forEach((td: any) => {
+                if (td && td.tierLevel != null) {
+                  const ex = tierMap.get(td.tierLevel) || { ...td, memberCount: 0 };
+                  ex.memberCount += td.memberCount || 0;
+                  tierMap.set(td.tierLevel, ex);
+                }
+              });
+            }
+          });
+          const tierDistributions = Array.from(tierMap.values()).map((td) => ({
+            ...td,
+            percentage: totalMembers > 0 ? Math.round((td.memberCount / totalMembers) * 100) : 0,
+          }));
+          return {
+            totalMembers,
+            activeMembers,
+            totalEarnedPoints: totalEarned,
+            totalBurnedPoints: totalBurned,
+            activeVouchers,
+            totalTransactions: totalTx,
+            clearingSettledAmount: clearingAmt,
+            uptimePercent: 100.0,
+            tierDistributions,
+          };
+        }
+      }
       const response: any = await apiClient.get('/loyalty/v1/dashboard/stats', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -714,7 +871,7 @@ export const LoyaltyService = {
   async getSystemHealth(tenantId: string = getStoredTenantId()): Promise<SystemHealthResponseModel> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/dashboard/health', {
-        headers: { 'X-Tenant-Id': tenantId },
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
       });
       return response?.data || response;
     } catch (e) {
@@ -807,8 +964,32 @@ export const LoyaltyService = {
   },
 
   // 9. Quản lý Danh mục Game (Minigames)
-  async getGames(tenantId: string = getStoredTenantId()): Promise<any[]> {
+  async getGames(tenantId: string = 'ALL'): Promise<any[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/gamehub/v1/admin/games', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              if (Array.isArray(res) && res.length > 0) return res;
+              if (res && Array.isArray(res.data) && res.data.length > 0) return res.data;
+              return [];
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, any>();
+        results.flat().forEach((g) => {
+          if (g && g.gameCode && !map.has(g.gameCode)) {
+            map.set(g.gameCode, g);
+          }
+        });
+        const list = Array.from(map.values());
+        if (list.length > 0) return list;
+      }
       const response: any = await apiClient.get('/gamehub/v1/admin/games', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -946,6 +1127,26 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<ApprovalRequestModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/approvals', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<ApprovalRequestModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, ApprovalRequestModel>();
+        results.flat().forEach((item) => {
+          if (item && item.id) map.set(item.id, item);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/approvals', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1065,8 +1266,37 @@ export const LoyaltyService = {
     return unwrapObject<ApprovalRequestModel>(response);
   },
 
-  async getTierDistribution(tenantId: string = getStoredTenantId()): Promise<TierDistributionModel[]> {
+  async getTierDistribution(tenantId: string = 'ALL'): Promise<TierDistributionModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/tiers/distribution', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<TierDistributionModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, TierDistributionModel>();
+        results.flat().forEach((d) => {
+          if (d && d.tierLevel) {
+            const existing = map.get(d.tierLevel);
+            if (existing) {
+              map.set(d.tierLevel, {
+                ...existing,
+                memberCount: (existing.memberCount || 0) + (d.memberCount || 0),
+              });
+            } else {
+              map.set(d.tierLevel, { ...d });
+            }
+          }
+        });
+        return Array.from(map.values()).sort((a, b) => (a.tierLevel || 0) - (b.tierLevel || 0));
+      }
       const response: any = await apiClient.get('/loyalty/v1/tiers/distribution', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -1083,6 +1313,26 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<NatcashPaymentPointModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/payment-points', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<NatcashPaymentPointModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, NatcashPaymentPointModel>();
+        results.flat().forEach((item) => {
+          if (item && item.id) map.set(item.id, item);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/payment-points', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1224,6 +1474,26 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<MonthlyBudgetModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/budgets', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<MonthlyBudgetModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, MonthlyBudgetModel>();
+        results.flat().forEach((b) => {
+          if (b && b.id) map.set(b.id, b);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/budgets', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1248,6 +1518,27 @@ export const LoyaltyService = {
   // 15. Phân khúc (CN-03), Kịch bản nhắc nhở (CN-04) & Trung tâm cảnh báo (CN-05)
   async getSegments(tenantId: string = getStoredTenantId()): Promise<CustomerSegmentModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/segments', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<CustomerSegmentModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, CustomerSegmentModel>();
+        results.flat().forEach((s) => {
+          if (s && s.segmentCode && !map.has(s.segmentCode)) {
+            map.set(s.segmentCode, s);
+          }
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/segments', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -1287,6 +1578,27 @@ export const LoyaltyService = {
 
   async getReminderScenarios(tenantId: string = getStoredTenantId()): Promise<ReminderScenarioModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/engagement/scenarios', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<ReminderScenarioModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, ReminderScenarioModel>();
+        results.flat().forEach((s) => {
+          if (s && s.scenarioCode && !map.has(s.scenarioCode)) {
+            map.set(s.scenarioCode, s);
+          }
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/engagement/scenarios', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -1309,6 +1621,25 @@ export const LoyaltyService = {
 
   async getReminderSendLogs(tenantId: string = getStoredTenantId()): Promise<ReminderSendLogModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/engagement/scenarios', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<ReminderSendLogModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, ReminderSendLogModel>();
+        results.flat().forEach((l) => {
+          if (l && l.id) map.set(l.id, l);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/engagement/scenarios', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -1324,6 +1655,28 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<SystemAlertModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/alerts', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<SystemAlertModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, SystemAlertModel>();
+        results.flat().forEach((a) => {
+          if (a && a.alertCode && !map.has(a.alertCode)) {
+            map.set(a.alertCode, a);
+          }
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/alerts', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1359,6 +1712,28 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<ProgramEffectivenessModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/reports/effectiveness', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<ProgramEffectivenessModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, ProgramEffectivenessModel>();
+        results.flat().forEach((item) => {
+          if (item && item.campaignCode && !map.has(item.campaignCode)) {
+            map.set(item.campaignCode, item);
+          }
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/reports/effectiveness', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1375,6 +1750,27 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<CrossSellReportModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/reports/cross-sell', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<CrossSellReportModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string, CrossSellReportModel>();
+        results.flat().forEach((c) => {
+          const key = `${c.sourcePartnerCode}_${c.targetPartnerCode}`;
+          if (!map.has(key)) map.set(key, c);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/reports/cross-sell', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1391,7 +1787,7 @@ export const LoyaltyService = {
   ): Promise<PointsLiabilityReportModel | null> {
     try {
       const response: any = await apiClient.get('/loyalty/v1/reports/points-liability', {
-        headers: { 'X-Tenant-Id': tenantId },
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
       });
       return unwrapObject<PointsLiabilityReportModel>(response);
     } catch (e) {
@@ -1402,6 +1798,25 @@ export const LoyaltyService = {
 
   async getReportSchedules(tenantId: string = getStoredTenantId()): Promise<ScheduledReportModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/reports/schedules', {
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<ScheduledReportModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, ScheduledReportModel>();
+        results.flat().forEach((s) => {
+          if (s && s.id) map.set(s.id, s);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/reports/schedules', {
         headers: { 'X-Tenant-Id': tenantId },
       });
@@ -1434,6 +1849,26 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<LearningQuestionModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/admin/learning/questions', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<LearningQuestionModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<number, LearningQuestionModel>();
+        results.flat().forEach((q) => {
+          if (q && q.id) map.set(q.id, q);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/admin/learning/questions', {
         params,
         headers: { 'X-Tenant-Id': tenantId },
@@ -1480,7 +1915,7 @@ export const LoyaltyService = {
     try {
       const response: any = await apiClient.get('/loyalty/v1/admin/games/statistics', {
         params,
-        headers: { 'X-Tenant-Id': tenantId },
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
       });
       return unwrapObject<GameStatisticsResponseModel>(response);
     } catch (e) {
@@ -1495,6 +1930,26 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<AgentLoyaltyItemModel[]> {
     try {
+      if (!tenantId || tenantId === 'ALL') {
+        const results = await Promise.all(
+          RAW_TENANTS.map(async (t) => {
+            try {
+              const res: any = await apiClient.get('/loyalty/v1/admin/agents', {
+                params,
+                headers: { 'X-Tenant-Id': t.id },
+              });
+              return unwrapList<AgentLoyaltyItemModel>(res);
+            } catch {
+              return [];
+            }
+          })
+        );
+        const map = new Map<string | number, AgentLoyaltyItemModel>();
+        results.flat().forEach((a) => {
+          if (a && a.id) map.set(a.id, a);
+        });
+        return Array.from(map.values());
+      }
       const response: any = await apiClient.get('/loyalty/v1/admin/agents', {
         params,
         headers: { 'X-Tenant-Id': tenantId },

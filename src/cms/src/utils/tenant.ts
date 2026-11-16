@@ -4,23 +4,20 @@
  * Zero hardcoded default tenant value for any specific entity.
  */
 
-export const getStoredTenantId = (): string => {
-  if (typeof window === 'undefined') return 'ALL';
-  return (
-    localStorage.getItem('selected_tenant_id') ||
-    localStorage.getItem('tenant_id') ||
-    'ALL'
-  );
-};
-
-export const setStoredTenantId = (tenantId: string): void => {
-  if (typeof window === 'undefined') return;
-  if (tenantId && tenantId.trim()) {
-    const clean = tenantId.trim();
-    localStorage.setItem('selected_tenant_id', clean);
-    localStorage.setItem('tenant_id', clean);
-  } else {
+// Clear any legacy persistent partner override to guarantee default is ALL
+if (typeof window !== 'undefined') {
+  try {
     localStorage.removeItem('selected_tenant_id');
     localStorage.removeItem('tenant_id');
+  } catch {
+    // Ignore storage errors
   }
+}
+
+export const getStoredTenantId = (): string => {
+  return 'ALL';
+};
+
+export const setStoredTenantId = (_tenantId: string): void => {
+  // Always default to 'ALL' on initial page loads and resets
 };

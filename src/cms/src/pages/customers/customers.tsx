@@ -50,9 +50,7 @@ export const Customers: React.FC = () => {
   const [items, setItems] = useState<LoyaltyMemberAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchPhone, setSearchPhone] = useState('');
-  const [selectedTenant, setSelectedTenant] = useState(
-    () => getStoredTenantId()
-  );
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
 
   // HV-08 Member 360 Drawer state
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -288,14 +286,12 @@ export const Customers: React.FC = () => {
             value={selectedTenant}
             onChange={(val) => {
               setSelectedTenant(val);
-              localStorage.setItem('selected_tenant_id', val);
             }}
           />
         }
         onReset={() => {
           setSearchPhone('');
           setSelectedTenant('ALL');
-          localStorage.setItem('selected_tenant_id', 'ALL');
           fetchData();
         }}
         onRefresh={fetchData}

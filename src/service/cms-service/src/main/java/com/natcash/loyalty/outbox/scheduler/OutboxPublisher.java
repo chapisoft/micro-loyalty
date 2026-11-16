@@ -39,10 +39,13 @@ public class OutboxPublisher {
         this.outboxRepository = outboxRepository;
         this.outboxService = outboxService;
         this.lockHelper = lockHelper;
-        this.restTemplate = new RestTemplate();
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(5000);
+        this.restTemplate = new RestTemplate(factory);
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(initialDelay = 15000, fixedDelay = 5000)
     public void publishPendingEvents() {
         boolean acquired = lockHelper.tryLock(RedisKeys.LOCK_OUTBOX_PUBLISHER, 500L, 5000L);
         if (!acquired) {

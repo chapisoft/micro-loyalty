@@ -30,12 +30,10 @@ export default function AuditLogPage() {
   const toast = useRef<Toast>(null);
 
   // Thuê bao hiện tại đang chọn
-  const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => getStoredTenantId()
-  );
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
 
   const [query, setQuery] = useState<AuditLogQuery>({
-    tenantId: getStoredTenantId(),
+    tenantId: 'ALL',
     tableName: '',
     operation: '',
     username: '',
@@ -56,7 +54,6 @@ export default function AuditLogPage() {
 
   const handleTenantChange = (newTenant: string) => {
     setSelectedTenant(newTenant);
-    localStorage.setItem('selected_tenant_id', newTenant);
     setFromDate(null);
     setToDate(null);
     setQuery({

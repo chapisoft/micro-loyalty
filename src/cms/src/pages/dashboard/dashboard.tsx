@@ -24,9 +24,7 @@ export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [selectedTenant, setSelectedTenant] = useState<string>(
-    () => getStoredTenantId()
-  );
+  const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [showSystemHealth, setShowSystemHealth] = useState(false);
@@ -49,11 +47,6 @@ export const Dashboard: React.FC = () => {
 
   const handleTenantChange = (tenant: string) => {
     setSelectedTenant(tenant);
-    try {
-      localStorage.setItem('selected_tenant_id', tenant);
-    } catch {
-      // Ignore storage errors in restricted contexts
-    }
   };
 
   const fetchDashboardData = useCallback(async () => {
