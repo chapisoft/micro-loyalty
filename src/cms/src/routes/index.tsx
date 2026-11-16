@@ -275,5 +275,16 @@ export const routes: RouteObject[] = [
 // eslint-disable-next-line react-refresh/only-export-components
 export const noAuthRoutes: RouteObject[] = [
   auth,
-  { path: '*', element: <NotFoundPage /> },
+  {
+    path: 'login',
+    element: <Navigate to={paths.login} replace />,
+  },
+  {
+    path: 'signin',
+    element: <Navigate to={paths.login} replace />,
+  },
+  {
+    path: 'logout',
+    element: <Navigate to={paths.login} replace />,
+  },
 ];
