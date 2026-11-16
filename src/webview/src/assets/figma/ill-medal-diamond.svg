@@ -1,0 +1,32 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Illustration &#194;&#183; Natcash &#194;&#183; medal &#194;&#183; diamond">
+<path id="Vector" opacity="0.16" d="M30.75 57C41.3124 57 49.875 55.8247 49.875 54.375C49.875 52.9253 41.3124 51.75 30.75 51.75C20.1876 51.75 11.625 52.9253 11.625 54.375C11.625 55.8247 20.1876 57 30.75 57Z" fill="#CDA960"/>
+<path id="Vector_2" d="M16.125 36.75L10.125 55.125L21 51.75L28.125 57.375L32.625 40.125L16.125 36.75Z" fill="#285588"/>
+<path id="Vector_3" d="M31.125 39.375L37.875 57.375L43.875 51L53.625 54L45.375 35.25L31.125 39.375Z" fill="#4B8ED9"/>
+<path id="Vector_4" d="M31.125 52.125C44.1727 52.125 54.75 41.5477 54.75 28.5C54.75 15.4523 44.1727 4.875 31.125 4.875C18.0773 4.875 7.5 15.4523 7.5 28.5C7.5 41.5477 18.0773 52.125 31.125 52.125Z" fill="#285588"/>
+<path id="Vector_5" d="M29.25 49.875C42.2977 49.875 52.875 39.2977 52.875 26.25C52.875 13.2023 42.2977 2.625 29.25 2.625C16.2023 2.625 5.625 13.2023 5.625 26.25C5.625 39.2977 16.2023 49.875 29.25 49.875Z" fill="url(#paint0_linear_0_4)"/>
+<path id="Vector_6" d="M29.25 46.5C40.4338 46.5 49.5 37.4338 49.5 26.25C49.5 15.0662 40.4338 6 29.25 6C18.0662 6 9 15.0662 9 26.25C9 37.4338 18.0662 46.5 29.25 46.5Z" fill="url(#paint1_linear_0_4)" stroke="#E4F2FF" stroke-width="2"/>
+<path id="Vector_7" opacity="0.7" d="M13.875 19.5C18.125 11.5 24.625 7.75 33.375 8.25" stroke="white" stroke-width="5" stroke-linecap="round"/>
+<path id="Vector_8" d="M18 21L24.375 26.25L29.25 16.5L34.5 26.25L40.875 21L38.25 34.125H20.625L18 21Z" fill="#285588"/>
+<path id="Vector_9" d="M18 19.125L24.375 24.375L29.25 14.625L34.5 24.375L40.875 19.125L38.25 32.25H20.625L18 19.125Z" fill="white"/>
+<g id="Vector_10">
+<path d="M21.75 36.75H37.125Z" fill="black"/>
+<path d="M21.75 36.75H37.125" stroke="#285588" stroke-width="5" stroke-linecap="round"/>
+</g>
+<path id="Vector_11" d="M18 20.625C18.8284 20.625 19.5 19.9534 19.5 19.125C19.5 18.2966 18.8284 17.625 18 17.625C17.1716 17.625 16.5 18.2966 16.5 19.125C16.5 19.9534 17.1716 20.625 18 20.625Z" fill="white"/>
+<path id="Vector_12" d="M29.25 16.125C30.0784 16.125 30.75 15.4534 30.75 14.625C30.75 13.7966 30.0784 13.125 29.25 13.125C28.4216 13.125 27.75 13.7966 27.75 14.625C27.75 15.4534 28.4216 16.125 29.25 16.125Z" fill="white"/>
+<path id="Vector_13" d="M40.875 20.625C41.7034 20.625 42.375 19.9534 42.375 19.125C42.375 18.2966 41.7034 17.625 40.875 17.625C40.0466 17.625 39.375 18.2966 39.375 19.125C39.375 19.9534 40.0466 20.625 40.875 20.625Z" fill="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="5.625" y1="2.625" x2="52.875" y2="49.875" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="0.47" stop-color="#93C6F8"/>
+<stop offset="1" stop-color="#285588"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_4" x1="13.86" y1="6" x2="43.02" y2="46.5" gradientUnits="userSpaceOnUse">
+<stop stop-color="#E4F2FF"/>
+<stop offset="0.4" stop-color="#93C6F8"/>
+<stop offset="1" stop-color="#4B8ED9"/>
+</linearGradient>
+</defs>
+</svg>

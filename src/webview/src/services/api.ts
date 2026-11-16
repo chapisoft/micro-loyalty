@@ -31,20 +31,24 @@ export const getTenantId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramTenant = urlParams.get('tenantId') || urlParams.get('tenant_id');
   if (paramTenant) return paramTenant;
+  const envTenant = import.meta.env.VITE_TENANT_ID || import.meta.env.VITE_DEFAULT_TENANT;
+  if (envTenant) return envTenant;
   const runtimeTenant = (window as unknown as { __RUNTIME_CONFIG__?: { TENANT_ID?: string } }).__RUNTIME_CONFIG__?.TENANT_ID;
   if (runtimeTenant) return runtimeTenant;
   const stored = localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id');
   if (stored) return stored;
-  return 'DEFAULT';
+  return 'TENANT_NATCASH';
 };
 
 export const getDefaultUserId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramUser = urlParams.get('userId') || urlParams.get('user_id') || urlParams.get('phone');
   if (paramUser) return paramUser;
+  const envUser = import.meta.env.VITE_DEFAULT_USER_ID || import.meta.env.VITE_DEFAULT_USER;
+  if (envUser) return envUser;
   const storedUser = sessionStorage.getItem('loyalty_user');
   if (storedUser) return storedUser;
-  return '';
+  return '84988888888';
 };
 
 const API_BASE = getApiBaseUrl();
@@ -98,6 +102,13 @@ export interface MemberProfile {
 
 export interface MilestoneItem {
   id: number;
+  /** loyalty-service sends `milestoneId` (CampaignMilestoneDto.MilestoneItemDto); `id` kept for older payloads */
+  milestoneId?: number;
+  startDate?: string;
+  endDate?: string;
+  progressPercentage?: number;
+  rewardVoucherId?: number;
+  rewardGameTurns?: number;
   campaignCode: string;
   campaignName: string;
   campaignCategory?: string;
@@ -879,4 +890,66 @@ export const LoyaltyApi = {
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
     return res.json();
   },
+
+  // 30. Danh sách hạng hội viên (ngưỡng, giữ hạng, hệ số, lượt miễn phí) — TierController
+  async getTiers(): Promise<TierItem[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/tiers`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 31. Danh mục game đang bật (game nội bộ + game đối tác) — GameHubController
+  async getGamesList(category?: string, externalUserId: string = getDefaultUserId()): Promise<GameListItem[]> {
+    const res = await fetch(`${API_BASE}/gamehub/v1/games/list`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId, category }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    const data = await res.json();
+    return (Array.isArray(data) ? data : data.games) || [];
+  },
+
+  // 32. Tham số hệ thống cấu hình trên CMS (vd. LOYALTY_CHECKIN_REWARDS, LOYALTY_PROGRAM_TERMS)
+  async getSystemParameter(paramKey: string): Promise<SystemParameterItem> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/system-parameters/${encodeURIComponent(paramKey)}`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
 };
+
+export interface TierItem {
+  id: number;
+  code: string;
+  name: string;
+  tierLevel: number;
+  minPoints: number;
+  keepTierPoints?: number;
+  pointMultiplier: number;
+  freeDailyTurns: number;
+  description?: string;
+  status?: string;
+}
+
+export interface GameListItem {
+  id: number;
+  gameCode: string;
+  gameName: string;
+  category: string;
+  pricePerTurn?: number;
+  freeTurnsDaily?: number;
+  remainingTurnsToday?: number;
+  gameUrl?: string;
+  iconUrl?: string;
+  status?: string;
+}
+
+export interface SystemParameterItem {
+  paramKey: string;
+  paramName?: string;
+  paramValue?: string;
+  defaultValue?: string;
+  valueType?: string;
+  description?: string;
+  updatedAt?: string;
+}

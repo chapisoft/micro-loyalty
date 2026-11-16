@@ -1,0 +1,32 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="112" height="112" viewBox="0 0 112 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Illustration &#194;&#183; Natcash &#194;&#183; medal &#194;&#183; gold">
+<path id="Vector" opacity="0.16" d="M57.4 106.4C77.1166 106.4 93.1 104.206 93.1 101.5C93.1 98.7938 77.1166 96.6 57.4 96.6C37.6834 96.6 21.7 98.7938 21.7 101.5C21.7 104.206 37.6834 106.4 57.4 106.4Z" fill="#CDA960"/>
+<path id="Vector_2" d="M30.1 68.6L18.9 102.9L39.2 96.6L52.5 107.1L60.9 74.9L30.1 68.6Z" fill="#BD6500"/>
+<path id="Vector_3" d="M58.1 73.5L70.7 107.1L81.9 95.2L100.1 100.8L84.7 65.8L58.1 73.5Z" fill="#FF9E16"/>
+<path id="Vector_4" d="M58.1 97.3C82.4558 97.3 102.2 77.5558 102.2 53.2C102.2 28.8442 82.4558 9.1 58.1 9.1C33.7442 9.1 14 28.8442 14 53.2C14 77.5558 33.7442 97.3 58.1 97.3Z" fill="#BD6500"/>
+<path id="Vector_5" d="M54.6 93.1C78.9558 93.1 98.7 73.3558 98.7 49C98.7 24.6442 78.9558 4.9 54.6 4.9C30.2442 4.9 10.5 24.6442 10.5 49C10.5 73.3558 30.2442 93.1 54.6 93.1Z" fill="url(#paint0_linear_0_149)"/>
+<path id="Vector_6" d="M54.6 86.8C75.4764 86.8 92.4 69.8764 92.4 49C92.4 28.1236 75.4764 11.2 54.6 11.2C33.7236 11.2 16.8 28.1236 16.8 49C16.8 69.8764 33.7236 86.8 54.6 86.8Z" fill="url(#paint1_linear_0_149)" stroke-width="2" stroke="#FFF1AC"/>
+<path id="Vector_7" opacity="0.7" d="M25.9 36.4C33.8333 21.4667 45.9667 14.4667 62.3 15.4" stroke-width="5" stroke-linecap="round" stroke="white"/>
+<path id="Vector_8" d="M33.6 39.2L45.5 49L54.6 30.8L64.4 49L76.3 39.2L71.4 63.7H38.5L33.6 39.2Z" fill="#BD6500"/>
+<path id="Vector_9" d="M33.6 35.7L45.5 45.5L54.6 27.3L64.4 45.5L76.3 35.7L71.4 60.2H38.5L33.6 35.7Z" fill="#FFF8D9"/>
+<g id="Vector_10">
+<path d="M40.6 68.6H69.3Z" fill="black"/>
+<path d="M40.6 68.6H69.3" stroke-width="5" stroke-linecap="round" stroke="#BD6500"/>
+</g>
+<path id="Vector_11" d="M33.6 38.5C35.1464 38.5 36.4 37.2464 36.4 35.7C36.4 34.1536 35.1464 32.9 33.6 32.9C32.0536 32.9 30.8 34.1536 30.8 35.7C30.8 37.2464 32.0536 38.5 33.6 38.5Z" fill="white"/>
+<path id="Vector_12" d="M54.6 30.1C56.1464 30.1 57.4 28.8464 57.4 27.3C57.4 25.7536 56.1464 24.5 54.6 24.5C53.0536 24.5 51.8 25.7536 51.8 27.3C51.8 28.8464 53.0536 30.1 54.6 30.1Z" fill="white"/>
+<path id="Vector_13" d="M76.3 38.5C77.8464 38.5 79.1 37.2464 79.1 35.7C79.1 34.1536 77.8464 32.9 76.3 32.9C74.7536 32.9 73.5 34.1536 73.5 35.7C73.5 37.2464 74.7536 38.5 76.3 38.5Z" fill="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_149" x1="10.5" y1="4.9" x2="98.7" y2="93.1" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFF8D9"/>
+<stop offset="0.47" stop-color="#FFD45A"/>
+<stop offset="1" stop-color="#BD6500"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_149" x1="25.872" y1="11.2" x2="80.304" y2="86.8" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFF1AC"/>
+<stop offset="0.4" stop-color="#FFD45A"/>
+<stop offset="1" stop-color="#FF9E16"/>
+</linearGradient>
+</defs>
+</svg>

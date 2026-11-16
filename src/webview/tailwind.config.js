@@ -6,7 +6,13 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        nc: ['"Be Vietnam Pro"', 'Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
+        // Figma "App · Customer journeys" tokens
+        brand: { DEFAULT: '#FF8600', soft: '#FFF8EB', cream: '#FFF2D1' },
+        page: '#F7F8FA',
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
