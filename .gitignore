@@ -225,3 +225,17 @@ docs/**/audit/
 docs/AI_gen_docs/
 **/docs/AI_gen_docs/
 AI_gen_docs/
+
+# ------------------------------------------------------------------------------
+# 8. AGENT SKILLS & EXTERNAL DESIGN ASSETS
+# ------------------------------------------------------------------------------
+.claude/
+.agents/skills/design-taste-frontend/
+.agents/skills/ui-ux-pro-max/
+docs/ba/thiet_ke/
+docs/ba/hinh/
+docs/ba/*.docx
+skills-lock.json
+test*.js
+test*.gz
+
