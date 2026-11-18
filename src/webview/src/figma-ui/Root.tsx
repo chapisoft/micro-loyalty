@@ -6,11 +6,11 @@ import MemberTiers, { ProgramTerms } from './screens/MemberTiers';
 import CoinsHistory from './screens/CoinsHistory';
 import { MissionsList, MissionDetail, CheckIn } from './screens/Missions';
 import { InviteFriends, InvitedWelcome } from './screens/Invite';
-import { RewardStore, RewardDetail, RedeemResult, MyVouchers, ShowVoucher } from './screens/Rewards';
+import { RewardStore, RewardDetail, RedeemDone, MyVouchers, MyVoucherDetail, ShowVoucher } from './screens/Rewards';
 import { GameHub, Wheel, ScratchCard, GameResult, GetPlays, LearningList, LearningDetail, Lesson, PlayHistory } from './screens/Games';
-import { WhereToUse, PayAtCounter } from './screens/UseCoins';
+import { PayAtCounter } from './screens/UseCoins';
 import { Inbox, OfferDetail, NotificationSettings } from './screens/Inbox';
-import { AgentHome } from './screens/Agent';
+import { AgentHome, AgentMissions, AgentMissionDetail, AgentNetwork, AgentVouchers, AgentVoucherDetail, AgentMyVouchers, AgentMyVoucherDetail } from './screens/Agent';
 
 // In-house mini-game players (routed with back navigation returning directly to /games)
 const FlappyNatcomGame = lazy(() => import('../pages/games/FlappyNatcomGame').then((m) => ({ default: m.FlappyNatcomGame })));
@@ -59,12 +59,13 @@ export const Root: React.FC = () => {
         <Route path="/invite" element={<InviteFriends />} />
         <Route path="/invited" element={<InvitedWelcome />} />
 
-        {/* 3 · Redeem */}
+        {/* 3 · Vouchers: Store / My vouchers (Get voucher with coins, Collect free ones, Use by "How to use") */}
         <Route path="/rewards" element={<RewardStore />} />
         <Route path="/rewards/:id" element={<RewardDetail />} />
-        <Route path="/rewards/:id/done" element={<RedeemResult />} />
+        <Route path="/rewards/:id/done" element={<RedeemDone />} />
         <Route path="/my-vouchers" element={<MyVouchers />} />
-        <Route path="/my-vouchers/:id" element={<ShowVoucher />} />
+        <Route path="/my-vouchers/:id" element={<MyVoucherDetail />} />
+        <Route path="/my-vouchers/:id/code" element={<ShowVoucher />} />
 
         {/* 4 · Play & GameHub */}
         <Route path="/games" element={<GameHub />} />
@@ -91,17 +92,25 @@ export const Root: React.FC = () => {
         <Route path="/untangle" element={<GamePlayer Component={UntangleRopeGame} />} />
         <Route path="/pullpin" element={<GamePlayer Component={PullThePinGame} />} />
 
-        {/* 5 · Use coins at partners */}
-        <Route path="/use-coins" element={<WhereToUse />} />
+        {/* 5 · Pay at counter (LM-17): the customer shows the code, the cashier scans it. LM-04 "Where to use" was removed (17/11). */}
         <Route path="/pay-at-counter" element={<PayAtCounter />} />
+        <Route path="/use-coins" element={<Navigate to="/rewards" replace />} />
 
         {/* 6 · Targeted content */}
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/inbox/:id" element={<OfferDetail />} />
         <Route path="/notifications" element={<NotificationSettings />} />
 
-        {/* 7 · Agent & Super Agent */}
+        {/* 7 · Agent & Super Agent (no games; bar Home · Missions · [Network] · Vouchers) */}
         <Route path="/agent" element={<AgentHome />} />
+        <Route path="/agent/missions" element={<AgentMissions />} />
+        <Route path="/agent/missions/:code" element={<AgentMissionDetail />} />
+        <Route path="/agent/network" element={<AgentNetwork />} />
+        <Route path="/agent/vouchers" element={<AgentVouchers />} />
+        <Route path="/agent/vouchers/:id" element={<AgentVoucherDetail />} />
+        <Route path="/agent/my-vouchers" element={<AgentMyVouchers />} />
+        <Route path="/agent/my-vouchers/:id" element={<AgentMyVoucherDetail />} />
+        <Route path="/agent/my-vouchers/:id/code" element={<ShowVoucher />} />
 
         {/* Legacy route redirects to new Figma UI */}
         <Route path="/gamehub" element={<Navigate to="/games" replace />} />

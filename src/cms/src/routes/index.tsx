@@ -200,6 +200,13 @@ const mainAppRoutes: RouteObject = {
       }),
     },
     {
+      path: paths.bannersPopupsOffers,
+      lazy: safeLazy(async () => {
+        const { BannersPopupsOffersPage } = await import('@/pages/engagement/BannersPopupsOffersPage');
+        return { Component: BannersPopupsOffersPage };
+      }),
+    },
+    {
       path: paths.budgetManagement,
       lazy: safeLazy(async () => {
         const { BudgetManagementPage } = await import('@/pages/reports/BudgetManagementPage');
@@ -239,6 +246,13 @@ const mainAppRoutes: RouteObject = {
       lazy: safeLazy(async () => {
         const { GameStatisticsPage } = await import('@/pages/games/GameStatisticsPage');
         return { Component: GameStatisticsPage };
+      }),
+    },
+    {
+      path: paths.leaderboardPrizes,
+      lazy: safeLazy(async () => {
+        const { LeaderboardPrizesPage } = await import('@/pages/games/LeaderboardPrizesPage');
+        return { Component: LeaderboardPrizesPage };
       }),
     },
     {

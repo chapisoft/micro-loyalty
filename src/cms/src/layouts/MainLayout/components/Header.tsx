@@ -70,6 +70,7 @@ const Header: React.FC = () => {
     paths.customers,
     paths.customerSegments,
     paths.reminderScenarios,
+    paths.bannersPopupsOffers,
   ].some((p) => location.pathname.startsWith(p));
 
   const isRewardsGroupActive = [
@@ -78,6 +79,7 @@ const Header: React.FC = () => {
     paths.gameHubConfig,
     paths.learningQuizBank,
     paths.gameStatistics,
+    paths.leaderboardPrizes,
   ].some((p) => location.pathname.startsWith(p));
 
   const isPartnerGroupActive = [
@@ -150,6 +152,11 @@ const Header: React.FC = () => {
             icon: 'pi pi-bell',
             command: () => handleNavigate(paths.reminderScenarios),
           },
+          {
+            label: t('nav.banners_popups_offers'),
+            icon: 'pi pi-images',
+            command: () => handleNavigate(paths.bannersPopupsOffers),
+          },
         ],
       },
       {
@@ -181,6 +188,11 @@ const Header: React.FC = () => {
             label: t('nav.game_stats'),
             icon: 'pi pi-chart-line',
             command: () => handleNavigate(paths.gameStatistics),
+          },
+          {
+            label: t('nav.leaderboard_prizes'),
+            icon: 'pi pi-trophy',
+            command: () => handleNavigate(paths.leaderboardPrizes),
           },
         ],
       },

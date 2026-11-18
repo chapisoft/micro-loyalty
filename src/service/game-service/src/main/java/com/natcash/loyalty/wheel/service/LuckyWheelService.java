@@ -15,6 +15,7 @@ import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.PointActionType;
 import com.natcash.loyalty.domain.enums.PrizeType;
 import com.natcash.loyalty.exception.LoyaltyException;
+import com.natcash.loyalty.game.service.GameLeaderboardService;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.lock.DistributedLockHelper;
@@ -35,6 +36,7 @@ import org.redisson.api.RAtomicLong;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +65,9 @@ public class LuckyWheelService {
     private final LoyaltyPointLedgerRepository ledgerRepository;
     private final LoyaltyPartnerRepository partnerRepository;
     private final DistributedLockHelper lockHelper;
+
+    @Autowired(required = false)
+    private GameLeaderboardService gameLeaderboardService;
     private final RedissonClient redissonClient;
 
     public LuckyWheelService(LuckyWheelRepository wheelRepository,
@@ -147,7 +152,9 @@ public class LuckyWheelService {
             BigDecimal currentPoints = account.getCurrentPoints();
 
             // 1. Trừ điểm nếu vòng quay có thu phí điểm
-            if (wheel.getPricePerSpin() != null && wheel.getPricePerSpin().compareTo(BigDecimal.ZERO) > 0) {
+            boolean coinPurchasedSpin = wheel.getPricePerSpin() != null
+                    && wheel.getPricePerSpin().compareTo(BigDecimal.ZERO) > 0;
+            if (coinPurchasedSpin) {
                 if (currentPoints.compareTo(wheel.getPricePerSpin()) < 0) {
                     log.warn("[SPIN-INSUFFICIENT-POINTS] user={}, balance={}, price={}",
                             userId, currentPoints, wheel.getPricePerSpin());
@@ -292,7 +299,14 @@ public class LuckyWheelService {
                 ledgerRepository.save(rewardLedger);
             }
 
-            // 5. Tính toán góc dừng Canvas (360 độ / số ô)
+            // 5. Cộng điểm tham gia Game points (pts) — lượt mua bằng coin KHÔNG cộng pts
+            if (gameLeaderboardService != null) {
+                gameLeaderboardService.awardGamePoints(
+                        tenantId, userId, GameLeaderboardService.SOURCE_LUCKY_PARTICIPATION, 0,
+                        wheel.getWheelCode(), "SPIN_" + Instant.now().toEpochMilli(), coinPurchasedSpin);
+            }
+
+            // 6. Tính toán góc dừng Canvas (360 độ / số ô)
             int totalSlices = prizes.size();
             double sliceAngle = 360.0 / totalSlices;
             double winningAngle = (winningIndex * sliceAngle) + (sliceAngle / 2.0);

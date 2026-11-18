@@ -77,6 +77,11 @@ public class CampaignMilestoneEntity {
     @Builder.Default
     private CommonStatus status = CommonStatus.ACTIVE;
 
+    /** "Who can join" (NV-05): CUSTOMER · AGENT · SUPER_AGENT */
+    @Column(name = "audience_role", nullable = false, length = 20)
+    @Builder.Default
+    private String audienceRole = "CUSTOMER";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

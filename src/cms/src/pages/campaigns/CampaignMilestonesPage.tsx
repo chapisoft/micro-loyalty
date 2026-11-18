@@ -1,4 +1,3 @@
-import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -53,6 +52,7 @@ interface CampaignMilestoneItem {
   rewardPoints: number;
   rewardVoucherId?: number | null;
   rewardGameTurns: number;
+  audienceRole?: string;
   status: CommonStatus;
   startDate: string;
   endDate: string;
@@ -103,6 +103,7 @@ export const CampaignMilestonesPage: React.FC = () => {
     campaignCode: 'CAMP_DEFAULT',
     campaignName: '',
     missionCategory: CampaignMissionCategory.SPEND_TIERED,
+    audienceRole: 'CUSTOMER',
     whenEvent: 'TOPUP_SUCCESS',
     ifMinBillAmount: 100,
     thenRewardPoints: 50,
@@ -133,6 +134,23 @@ export const CampaignMilestonesPage: React.FC = () => {
     { label: t('campaign.cat_cross_sell'), value: CampaignMissionCategory.CROSS_SELL },
     { label: t('campaign.cat_referral'), value: CampaignMissionCategory.REFERRAL },
   ], [t]);
+
+  const audienceRoleOptions = useMemo(() => [
+    { label: t('campaign.audience_customer'), value: 'CUSTOMER' },
+    { label: t('campaign.audience_agent'), value: 'AGENT' },
+    { label: t('campaign.audience_super_agent'), value: 'SUPER_AGENT' },
+  ], [t]);
+
+  const renderAudienceLabel = useCallback((role?: string) => {
+    switch ((role || 'CUSTOMER').toUpperCase()) {
+      case 'AGENT':
+        return t('campaign.audience_agent');
+      case 'SUPER_AGENT':
+        return t('campaign.audience_super_agent');
+      default:
+        return t('campaign.audience_customer');
+    }
+  }, [t]);
 
   const fetchRulesAndTracking = useCallback(async (tenantId: string) => {
     setRulesLoading(true);
@@ -239,6 +257,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             rewardPoints: m.rewardPoints || 0,
             rewardVoucherId: m.rewardVoucherId ?? null,
             rewardGameTurns: m.rewardGameTurns || 0,
+            audienceRole: m.audienceRole || 'CUSTOMER',
             status: (m.status as CommonStatus) || CommonStatus.ACTIVE,
             startDate: m.startDate ? String(m.startDate).substring(0, 10) : formatLocalDate(new Date()),
             endDate: m.endDate ? String(m.endDate).substring(0, 10) : formatLocalDate(new Date(Date.now() + 180 * 86400000)),
@@ -361,6 +380,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       rewardPoints: 100,
       rewardGameTurns: 1,
       rewardVoucherId: null,
+      audienceRole: 'CUSTOMER',
       status: CommonStatus.ACTIVE,
       startDate: today,
       endDate: endSixMonths,
@@ -459,6 +479,7 @@ export const CampaignMilestonesPage: React.FC = () => {
         rewardPoints: formData.rewardPoints || 0,
         rewardVoucherId: formData.rewardVoucherId ? Number(formData.rewardVoucherId) : null,
         rewardGameTurns: formData.rewardGameTurns || 0,
+        audienceRole: formData.audienceRole || 'CUSTOMER',
         startDate: formData.startDate ? new Date(formData.startDate + 'T00:00:00').toISOString() : new Date().toISOString(),
         endDate: formData.endDate ? new Date(formData.endDate + 'T23:59:59').toISOString() : new Date(Date.now() + 180 * 86400000).toISOString(),
         status: formData.status || CommonStatus.ACTIVE,
@@ -760,6 +781,15 @@ export const CampaignMilestonesPage: React.FC = () => {
                 style={{ minWidth: '13rem' }}
               />
               <Column
+                field="audienceRole"
+                header={t('campaign.who_can_join')}
+                body={(row: CampaignMilestoneItem) => (
+                  <span className="text-xs font-medium text-900">{renderAudienceLabel(row.audienceRole)}</span>
+                )}
+                sortable
+                style={{ minWidth: '10rem' }}
+              />
+              <Column
                 field="startDate"
                 header={t('milestone.date_range')}
                 body={(row: CampaignMilestoneItem) => (
@@ -790,6 +820,7 @@ export const CampaignMilestonesPage: React.FC = () => {
                     campaignCode: 'CAMP_' + Math.floor(1000 + Math.random() * 9000),
                     campaignName: '',
                     missionCategory: CampaignMissionCategory.SPEND_TIERED,
+                    audienceRole: 'CUSTOMER',
                     whenEvent: 'TOPUP_SUCCESS',
                     ifMinBillAmount: 100,
                     thenRewardPoints: 50,
@@ -815,6 +846,7 @@ export const CampaignMilestonesPage: React.FC = () => {
                 <Column field="ruleCode" header={t('campaign.rule_code')} body={(r: CampaignRuleModel) => <span className="font-bold font-mono text-900">{r.ruleCode}</span>} style={{ minWidth: '10rem' }} />
                 <Column field="campaignName" header={t('campaign.rule_name')} style={{ minWidth: '14rem' }} />
                 <Column field="missionCategory" header={t('campaign.mission_category')} body={(r: CampaignRuleModel) => <span className="text-900">{r.missionCategory}</span>} style={{ minWidth: '11rem' }} />
+                <Column field="audienceRole" header={t('campaign.who_can_join')} body={(r: CampaignRuleModel) => <span className="text-xs font-medium text-900">{renderAudienceLabel(r.audienceRole)}</span>} style={{ minWidth: '10rem' }} />
                 <Column header={t('campaign.when_if_col')} body={(r: CampaignRuleModel) => <div className="text-xs"><div>{t('campaign.when_prefix')}: {r.whenEvent}</div><div className="text-500">{t('campaign.min_bill_prefix')}: {Number(r.ifMinBillAmount || 0).toLocaleString()}</div></div>} style={{ minWidth: '13rem' }} />
                 <Column header={t('campaign.then_limits_col')} body={(r: CampaignRuleModel) => <div className="text-xs"><div>{t('campaign.rule_reward_summary', { points: r.thenRewardPoints, turns: r.thenRewardTurns })}</div><div className="text-500">{t('campaign.rule_limit_summary', { perUser: r.limitMaxPerUser ?? '∞', total: r.limitMaxTotal ?? '∞' })}</div></div>} style={{ minWidth: '12rem' }} />
                 <Column field="status" header={t('common.status')} body={(r: CampaignRuleModel) => <StatusBadge status={r.status} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
@@ -1070,15 +1102,27 @@ export const CampaignMilestonesPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="field mb-3">
-          <label htmlFor="status" className="font-bold">{t('common.status')}</label>
-          <Dropdown
-            id="status"
-            value={formData.status}
-            options={statusOptions}
-            onChange={(e) => setFormData({ ...formData, status: e.value })}
-            appendTo="self"
-          />
+        <div className="formgrid grid mb-3">
+          <div className="field col-6">
+            <label htmlFor="audienceRole" className="font-bold">{t('campaign.who_can_join')}</label>
+            <Dropdown
+              id="audienceRole"
+              value={formData.audienceRole || 'CUSTOMER'}
+              options={audienceRoleOptions}
+              onChange={(e) => setFormData({ ...formData, audienceRole: e.value })}
+              appendTo="self"
+            />
+          </div>
+          <div className="field col-6">
+            <label htmlFor="status" className="font-bold">{t('common.status')}</label>
+            <Dropdown
+              id="status"
+              value={formData.status}
+              options={statusOptions}
+              onChange={(e) => setFormData({ ...formData, status: e.value })}
+              appendTo="self"
+            />
+          </div>
         </div>
         </div>
 
@@ -1114,7 +1158,11 @@ export const CampaignMilestonesPage: React.FC = () => {
             <label className="text-sm font-medium">{t('campaign.when_event_label')}</label>
             <InputText value={ruleForm.whenEvent || ''} onChange={(e) => setRuleForm({ ...ruleForm, whenEvent: e.target.value })} className="font-mono" />
           </div>
-          <div className="col-12 field">
+          <div className="col-12 md:col-6 field">
+            <label className="text-sm font-medium">{t('campaign.who_can_join')}</label>
+            <Dropdown value={ruleForm.audienceRole || 'CUSTOMER'} options={audienceRoleOptions} onChange={(e) => setRuleForm({ ...ruleForm, audienceRole: e.value })} appendTo="self" />
+          </div>
+          <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('campaign.if_min_bill_label')}</label>
             <InputNumber value={ruleForm.ifMinBillAmount ?? undefined} onValueChange={(e) => setRuleForm({ ...ruleForm, ifMinBillAmount: e.value ?? undefined })} min={0} />
           </div>

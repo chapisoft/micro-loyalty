@@ -32,6 +32,10 @@ public class GameMonthlyLeaderboardEntity {
     @Column(name = "leaderboard_month", nullable = false, length = 10)
     private String leaderboardMonth;
 
+    @Column(name = "board_type", nullable = false, length = 30)
+    @Builder.Default
+    private String boardType = "ALL";
+
     @Column(name = "external_user_id", nullable = false, length = 100)
     private String externalUserId;
 

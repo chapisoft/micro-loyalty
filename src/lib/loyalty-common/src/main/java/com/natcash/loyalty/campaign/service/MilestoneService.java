@@ -129,6 +129,13 @@ public class MilestoneService {
 
     @Transactional(readOnly = true)
     public ActiveCampaignsResponse getActiveCampaigns(String tenantId, String externalUserId) {
+        return getActiveCampaigns(tenantId, externalUserId, "CUSTOMER");
+    }
+
+    /** Missions for one audience (NV-05 "Who can join"): customers never see agent missions and vice versa. */
+    @Transactional(readOnly = true)
+    public ActiveCampaignsResponse getActiveCampaigns(String tenantId, String externalUserId, String role) {
+        String audience = role == null || role.isBlank() ? "CUSTOMER" : role.trim().toUpperCase();
         Instant now = Instant.now();
         List<CampaignMilestoneEntity> activeMilestones = campaignRepository
                 .findByTenantIdAndStatusAndStartDateBeforeAndEndDateAfterOrderByCampaignCodeAscMilestoneStepAsc(
@@ -148,6 +155,9 @@ public class MilestoneService {
 
         List<MilestoneItemDto> dtoList = new ArrayList<>();
         for (CampaignMilestoneEntity m : activeMilestones) {
+            if (!audience.equals(m.getAudienceRole() == null ? "CUSTOMER" : m.getAudienceRole())) {
+                continue;
+            }
             UserMilestoneEntity userProgress = userProgressMap.get(m.getId());
             BigDecimal currentVal = userProgress != null && userProgress.getCurrentProgress() != null
                     ? userProgress.getCurrentProgress()
@@ -185,6 +195,7 @@ public class MilestoneService {
                     .status(status)
                     .startDate(m.getStartDate())
                     .endDate(m.getEndDate())
+                    .audienceRole(m.getAudienceRole())
                     .build());
         }
 
@@ -325,6 +336,7 @@ public class MilestoneService {
         if (request.getStartDate() == null) request.setStartDate(Instant.now());
         if (request.getEndDate() == null) request.setEndDate(Instant.now().plusSeconds(90L * 86400L));
         if (request.getStatus() == null) request.setStatus(CommonStatus.ACTIVE);
+        if (request.getAudienceRole() == null || request.getAudienceRole().isBlank()) request.setAudienceRole("CUSTOMER");
         if (request.getRewardPoints() == null) request.setRewardPoints(BigDecimal.ZERO);
         if (request.getRewardGameTurns() == null) request.setRewardGameTurns(0);
 
@@ -347,6 +359,7 @@ public class MilestoneService {
         if (request.getStartDate() != null) entity.setStartDate(request.getStartDate());
         if (request.getEndDate() != null) entity.setEndDate(request.getEndDate());
         if (request.getStatus() != null) entity.setStatus(request.getStatus());
+        if (request.getAudienceRole() != null && !request.getAudienceRole().isBlank()) entity.setAudienceRole(request.getAudienceRole().trim().toUpperCase());
         entity.setPartnerId(request.getPartnerId());
         entity.setUpdatedAt(Instant.now());     
 

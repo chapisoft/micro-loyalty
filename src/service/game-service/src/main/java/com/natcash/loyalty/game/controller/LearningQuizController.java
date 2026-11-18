@@ -3,6 +3,7 @@ package com.natcash.loyalty.game.controller;
 import com.natcash.loyalty.game.entity.GameMonthlyLeaderboardEntity;
 import com.natcash.loyalty.game.entity.LearningCourseEntity;
 import com.natcash.loyalty.game.entity.LearningQuestionEntity;
+import com.natcash.loyalty.game.service.GameLeaderboardService;
 import com.natcash.loyalty.game.service.LearningQuizService;
 import com.natcash.loyalty.game.service.LearningQuizService.QuestionPublicDto;
 import com.natcash.loyalty.game.service.LearningQuizService.QuizSubmitResponse;
@@ -35,6 +36,7 @@ import java.util.Map;
 public class LearningQuizController {
 
     private final LearningQuizService learningQuizService;
+    private final GameLeaderboardService gameLeaderboardService;
 
     @GetMapping("/gamehub/v1/learning/courses")
     @Operation(summary = "Danh sách khóa học EdTech")
@@ -62,11 +64,12 @@ public class LearningQuizController {
     }
 
     @GetMapping("/gamehub/v1/leaderboard")
-    @Operation(summary = "Bảng xếp hạng game và học tập theo tháng")
+    @Operation(summary = "Bảng xếp hạng game và học tập theo tháng (ALL / LEARNING / MINI_GAMES)")
     public ResponseEntity<List<GameMonthlyLeaderboardEntity>> getLeaderboard(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "month", required = false) String month) {
-        return ResponseEntity.ok(learningQuizService.getLeaderboard(resolveTenantId(headerTenantId), month));
+            @RequestParam(value = "month", required = false) String month,
+            @RequestParam(value = "board", required = false, defaultValue = "ALL") String board) {
+        return ResponseEntity.ok(gameLeaderboardService.getLeaderboard(resolveTenantId(headerTenantId), month, board));
     }
 
     @GetMapping("/loyalty/v1/admin/learning/questions")

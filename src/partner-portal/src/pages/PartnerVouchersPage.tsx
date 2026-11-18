@@ -97,12 +97,36 @@ export const PartnerVouchersPage: React.FC = () => {
     );
   }, [vouchers, keyword]);
 
+  const renderAcquireType = (acquireType?: string) => {
+    switch (acquireType) {
+      case 'FREE_COLLECT':
+        return <Tag value={t('voucher.acquire_free')} severity="success" />;
+      case 'GIVEN':
+        return <Tag value={t('voucher.acquire_given')} severity="info" />;
+      default:
+        return <Tag value={t('voucher.acquire_coins')} severity="warning" />;
+    }
+  };
+
+  const renderUsageType = (usageType?: string) => {
+    switch (usageType) {
+      case 'NATCASH_STORE':
+        return <Tag value={t('voucher.usage_natcash_store')} severity="info" />;
+      case 'ONLINE':
+        return <Tag value={t('voucher.usage_online')} severity="success" />;
+      default:
+        return <Tag value={t('voucher.usage_partner_code')} severity="secondary" />;
+    }
+  };
+
   const handleExport = () => {
     exportToExcel(
       filteredVouchers,
       [
         { header: t('voucher.code'), field: 'voucherCode' },
         { header: t('voucher.name'), field: 'voucherName' },
+        { header: t('voucher.acquire_type'), field: 'acquireType' },
+        { header: t('voucher.usage_type'), field: 'usageType' },
         { header: t('voucher.discount'), field: 'discountValue' },
         { header: t('voucher.remaining'), field: 'availableQuantity' },
         { header: t('common.status'), field: 'status' },
@@ -189,6 +213,18 @@ export const PartnerVouchersPage: React.FC = () => {
               header={t('voucher.name')}
               body={(r: VoucherItemModel) => <span className="text-900">{r.voucherName}</span>}
               style={{ minWidth: '15rem' }}
+            />
+            <Column
+              field="acquireType"
+              header={t('voucher.acquire_type')}
+              body={(r: VoucherItemModel) => renderAcquireType(r.acquireType)}
+              style={{ minWidth: '9.5rem', textAlign: 'center' }}
+            />
+            <Column
+              field="usageType"
+              header={t('voucher.usage_type')}
+              body={(r: VoucherItemModel) => renderUsageType(r.usageType)}
+              style={{ minWidth: '11rem', textAlign: 'center' }}
             />
             <Column
               field="discountValue"

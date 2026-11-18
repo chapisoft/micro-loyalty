@@ -84,6 +84,23 @@ export interface VoucherItemModel {
   status: string;
   startDate: string;
   endDate: string;
+  /** VQ-04 "How customers get it" / "How customers use it" (Figma 18/11) */
+  acquireType?: 'COINS' | 'FREE_COLLECT' | 'GIVEN';
+  usageType?: 'NATCASH_STORE' | 'PARTNER_CODE' | 'ONLINE';
+  categoryCode?: string;
+  audienceRole?: 'CUSTOMER' | 'AGENT' | 'SUPER_AGENT';
+  eligibleTiers?: string[];
+  perCustomerLimit?: number;
+  batchQuantity?: number;
+  batchPeriod?: 'NONE' | 'DAILY' | 'WEEKLY';
+  validDaysAfterCollect?: number;
+  requireEkyc?: boolean;
+  showInFreeStrip?: boolean;
+  stripOrder?: number;
+  serviceLink?: string;
+  branchScope?: string;
+  imageUrl?: string;
+  i18nJson?: string;
 }
 
 export interface MilestoneItemModel {
@@ -99,6 +116,7 @@ export interface MilestoneItemModel {
   rewardPoints?: number;
   rewardVoucherId?: number | null;
   rewardGameTurns?: number;
+  audienceRole?: 'CUSTOMER' | 'AGENT' | 'SUPER_AGENT' | string;
   startDate?: string;
   endDate?: string;
   status: string;
@@ -1924,6 +1942,163 @@ export const LoyaltyService = {
     }
   },
 
+  // 17b. Bảng xếp hạng Game points & Giải thưởng (GM-10 · Figma 18/11)
+  async getLeaderboardRulesAdmin(tenantId: string = getStoredTenantId()): Promise<GamePointRuleModel[]> {
+    try {
+      const res: any = await apiClient.get('/gamehub/v1/admin/leaderboard/rules', {
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+      });
+      return unwrapList<GamePointRuleModel>(res);
+    } catch {
+      return [];
+    }
+  },
+
+  async saveLeaderboardRuleAdmin(data: Partial<GamePointRuleModel>, tenantId: string = getStoredTenantId()): Promise<GamePointRuleModel> {
+    const res: any = await apiClient.post('/gamehub/v1/admin/leaderboard/rules', data, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<GamePointRuleModel>(res);
+  },
+
+  async getLeaderboardPrizesAdmin(tenantId: string = getStoredTenantId()): Promise<LeaderboardPrizeModel[]> {
+    try {
+      const res: any = await apiClient.get('/gamehub/v1/admin/leaderboard/prizes', {
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+      });
+      return unwrapList<LeaderboardPrizeModel>(res);
+    } catch {
+      return [];
+    }
+  },
+
+  async saveLeaderboardPrizeAdmin(data: Partial<LeaderboardPrizeModel>, tenantId: string = getStoredTenantId()): Promise<LeaderboardPrizeModel> {
+    const res: any = await apiClient.post('/gamehub/v1/admin/leaderboard/prizes', data, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<LeaderboardPrizeModel>(res);
+  },
+
+  async deleteLeaderboardPrizeAdmin(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
+    await apiClient.delete(`/gamehub/v1/admin/leaderboard/prizes/${id}`, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+  },
+
+  async getLeaderboardPayoutsAdmin(month?: string, tenantId: string = getStoredTenantId()): Promise<LeaderboardPayoutModel[]> {
+    try {
+      const res: any = await apiClient.get('/gamehub/v1/admin/leaderboard/payouts', {
+        params: month ? { month } : undefined,
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+      });
+      return unwrapList<LeaderboardPayoutModel>(res);
+    } catch {
+      return [];
+    }
+  },
+
+  async closeLeaderboardMonthAdmin(month?: string, tenantId: string = getStoredTenantId()): Promise<LeaderboardPayoutModel[]> {
+    const res: any = await apiClient.post('/gamehub/v1/admin/leaderboard/close-month', null, {
+      params: month ? { month } : undefined,
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapList<LeaderboardPayoutModel>(res);
+  },
+
+  async approveLeaderboardPayoutAdmin(id: number, tenantId: string = getStoredTenantId()): Promise<LeaderboardPayoutModel> {
+    const res: any = await apiClient.post(`/gamehub/v1/admin/leaderboard/payouts/${id}/approve`, null, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<LeaderboardPayoutModel>(res);
+  },
+
+  async rejectLeaderboardPayoutAdmin(id: number, tenantId: string = getStoredTenantId()): Promise<LeaderboardPayoutModel> {
+    const res: any = await apiClient.post(`/gamehub/v1/admin/leaderboard/payouts/${id}/reject`, null, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<LeaderboardPayoutModel>(res);
+  },
+
+  // 17c. Banners, Popups & Targeted Offers (CN-06 · Figma 18/11 · Plan GĐ 5)
+  async getContentBannersAdmin(tenantId: string = getStoredTenantId()): Promise<ContentBannerModel[]> {
+    try {
+      const res: any = await apiClient.get('/loyalty/v1/engagement/admin/banners', {
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+      });
+      return unwrapList<ContentBannerModel>(res);
+    } catch {
+      return [];
+    }
+  },
+
+  async saveContentBannerAdmin(data: Partial<ContentBannerModel>, tenantId: string = getStoredTenantId()): Promise<ContentBannerModel> {
+    const res: any = await apiClient.post('/loyalty/v1/engagement/admin/banners', data, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<ContentBannerModel>(res);
+  },
+
+  async deleteContentBannerAdmin(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
+    await apiClient.delete(`/loyalty/v1/engagement/admin/banners/${id}`, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+  },
+
+  async getPopupRulesAdmin(tenantId: string = getStoredTenantId()): Promise<PopupRuleModel[]> {
+    try {
+      const res: any = await apiClient.get('/loyalty/v1/engagement/admin/popup-rules', {
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+      });
+      return unwrapList<PopupRuleModel>(res);
+    } catch {
+      return [];
+    }
+  },
+
+  async savePopupRuleAdmin(data: Partial<PopupRuleModel>, tenantId: string = getStoredTenantId()): Promise<PopupRuleModel> {
+    const res: any = await apiClient.post('/loyalty/v1/engagement/admin/popup-rules', data, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<PopupRuleModel>(res);
+  },
+
+  async getTargetedOffersAdmin(tenantId: string = getStoredTenantId()): Promise<TargetedOfferModel[]> {
+    try {
+      const res: any = await apiClient.get('/loyalty/v1/engagement/admin/targeted-offers', {
+        headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+      });
+      return unwrapList<TargetedOfferModel>(res);
+    } catch {
+      return [];
+    }
+  },
+
+  async saveTargetedOfferAdmin(data: Partial<TargetedOfferModel>, tenantId: string = getStoredTenantId()): Promise<TargetedOfferModel> {
+    const res: any = await apiClient.post('/loyalty/v1/engagement/admin/targeted-offers', data, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+    return unwrapObject<TargetedOfferModel>(res);
+  },
+
+  async deleteTargetedOfferAdmin(id: number, tenantId: string = getStoredTenantId()): Promise<void> {
+    await apiClient.delete(`/loyalty/v1/engagement/admin/targeted-offers/${id}`, {
+      headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId },
+    });
+  },
+
+  async sendTargetedOfferAdmin(
+    id: number,
+    userIds?: string[],
+    tenantId: string = getStoredTenantId()
+  ): Promise<{ deliveredCount: number; totalSentCount: number; status: string }> {
+    const res: any = await apiClient.post(
+      `/loyalty/v1/engagement/admin/targeted-offers/${id}/send`,
+      userIds && userIds.length > 0 ? { userIds } : {},
+      { headers: { 'X-Tenant-Id': tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId } }
+    );
+    return unwrapObject<{ deliveredCount: number; totalSentCount: number; status: string }>(res);
+  },
+
   // 18. Quản trị Đại lý & Tổng Đại lý (AG-03)
   async getAdminAgents(
     params?: { roleType?: string; month?: string },
@@ -2392,6 +2567,7 @@ export interface CampaignRuleModel {
   campaignCode: string;
   campaignName: string;
   missionCategory: string;
+  audienceRole?: 'CUSTOMER' | 'AGENT' | 'SUPER_AGENT' | string;
   whenEvent: string;
   ifMinBillAmount?: number;
   ifPartnerId?: number | null;
@@ -2753,6 +2929,97 @@ export interface RotateApiKeyResultModel {
   keyPrefix: string;
   graceExpiresAt?: string;
   previousKeyId?: number;
+}
+
+export interface GamePointRuleModel {
+  id?: number;
+  sourceCode: string;
+  boardType: 'ALL' | 'LEARNING' | 'MINI_GAMES' | string;
+  formulaType: 'FIXED' | 'PER_SCORE_UNIT' | string;
+  basePts: number;
+  scoreDivisor: number;
+  maxPtsPerAction: number;
+  dailyCapPts: number;
+  status: string;
+  description?: string;
+}
+
+export interface LeaderboardPrizeModel {
+  id?: number;
+  boardType: 'ALL' | 'LEARNING' | 'MINI_GAMES' | string;
+  rankFrom: number;
+  rankTo: number;
+  prizeType: 'VOUCHER' | 'TELCO_DATA' | 'BADGE_AND_TURNS' | 'LOYALTY_COIN' | string;
+  prizeLabel: string;
+  prizeValue: number;
+  voucherCode?: string;
+  sponsorName?: string;
+  status: string;
+}
+
+export interface LeaderboardPayoutModel {
+  id: number;
+  leaderboardMonth: string;
+  boardType: string;
+  externalUserId: string;
+  displayName?: string;
+  rankPosition: number;
+  totalPts: number;
+  prizeLabel?: string;
+  prizeType?: string;
+  prizeValue?: number;
+  approvalStatus: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PAID' | string;
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
+export interface ContentBannerModel {
+  id?: number;
+  placement: 'NATCASH_HOME_SLIDER' | 'LOYALTY_HOME' | 'VOUCHER_STORE' | 'GAME_HUB' | string;
+  title: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  imageUrl?: string;
+  deepLink?: string;
+  segmentCode: string;
+  i18nJson?: string;
+  displayOrder: number;
+  startDate?: string;
+  endDate?: string;
+  status: string;
+}
+
+export interface PopupRuleModel {
+  id?: number;
+  ruleCode: string;
+  popupType: 'REWARD_READY' | 'VOUCHER_EXPIRING' | 'MISSION_ENDING' | 'CAMPAIGN_POPUP' | string;
+  priority: number;
+  thresholdDays?: number | null;
+  title: string;
+  body?: string;
+  ctaLabel?: string;
+  deepLink?: string;
+  segmentCode: string;
+  windowStartHour: number;
+  windowEndHour: number;
+  cooldownHours: number;
+  enabled: boolean;
+  status: string;
+}
+
+export interface TargetedOfferModel {
+  id?: number;
+  offerCode?: string;
+  title: string;
+  body: string;
+  segmentCode: string;
+  voucherCode?: string;
+  channels: string;
+  deepLink?: string;
+  validUntil?: string;
+  sentCount?: number;
+  lastSentAt?: string;
+  status: string;
 }
 
 export const loyaltyService = LoyaltyService;

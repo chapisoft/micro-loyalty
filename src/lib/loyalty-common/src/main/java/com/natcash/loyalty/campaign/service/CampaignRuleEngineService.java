@@ -78,6 +78,9 @@ public class CampaignRuleEngineService {
         entity.setLimitsConfig(request.getLimitsConfig() != null ? request.getLimitsConfig() : "{}");
         entity.setSponsorType(request.getSponsorType() != null ? request.getSponsorType() : SponsorType.PLATFORM);
         entity.setPartnerId(request.getPartnerId());
+        entity.setAudienceRole(request.getAudienceRole() != null && !request.getAudienceRole().isBlank()
+                ? request.getAudienceRole().trim().toUpperCase()
+                : "CUSTOMER");
         entity.setStartDate(start);
         entity.setEndDate(end);
         entity.setStatus(request.getStatus() != null ? request.getStatus() : CommonStatus.ACTIVE);

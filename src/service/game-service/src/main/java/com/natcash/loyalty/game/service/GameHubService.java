@@ -80,6 +80,7 @@ import org.redisson.api.RAtomicLong;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -122,6 +123,9 @@ public class GameHubService {
     private final GamePrizeRepository gamePrizeRepository;
     private final LoyaltyPartnerRepository partnerRepository;
     private final MilestoneService milestoneService;
+
+    @Autowired(required = false)
+    private GameLeaderboardService gameLeaderboardService;
 
     public GameHubService(GameHubRepository gameRepository,
                           GameSessionRepository sessionRepository,
@@ -455,6 +459,12 @@ public class GameHubService {
                 if (pointsToAward.compareTo(BigDecimal.ZERO) > 0) {
                     milestoneService.recordProgress(tenantId, userId, null, CampaignMetric.EARN_POINTS, pointsToAward);
                 }
+            }
+
+            // 8. Cộng Game points (pts) vào bảng xếp hạng tháng (tách khỏi Coin, kiểm trần ngày)
+            if (gameLeaderboardService != null) {
+                gameLeaderboardService.awardGamePoints(
+                        tenantId, userId, GameLeaderboardService.SOURCE_MINI_GAME, score, gameCode, finalTxRef, false);
             }
 
             log.info("[GAME-RESULT-SUBMITTED] tenantId={}, user={}, game={}, score={}, pointsAwarded={}, newBalance={}, txRef={}",
@@ -1156,6 +1166,10 @@ public class GameHubService {
 
             // 5. Ghi lịch sử chơi game bất biến
             String transactionRef = CentralizedCodeGeneratorService.get().generateCode(CodeType.GAME_PLAY_TX);
+            if (gameLeaderboardService != null) {
+                gameLeaderboardService.awardGamePoints(
+                        tenantId, userId, GameLeaderboardService.SOURCE_LUCKY_PARTICIPATION, 0, gameCode, transactionRef, false);
+            }
             GamePlayHistoryEntity history = GamePlayHistoryEntity.builder()
                     .tenantId(tenantId)
                     .externalUserId(userId)

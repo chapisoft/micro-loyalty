@@ -145,6 +145,8 @@ public class RewardWalletService {
         RewardWalletInquiryResponse inquiry = inquiry(tenantId, RewardWalletInquiryRequest.builder()
                 .externalUserId(userId)
                 .partnerId(request.getPartnerId())
+                .branchCode(request.getBranchCode())
+                .filterStoreUsageOnly(Boolean.TRUE)
                 .build());
 
         return QrTokenVerifyResponse.builder()
@@ -170,7 +172,12 @@ public class RewardWalletService {
                 .findByTenantIdAndAccount_ExternalUserIdAndStatusAndExpiresAtAfter(
                         tenantId, userId, VoucherStatus.ACTIVE, now);
 
+        boolean filterStoreOnly = Boolean.TRUE.equals(request.getFilterStoreUsageOnly())
+                || (request.getBranchCode() != null && !request.getBranchCode().isBlank());
+        String reqBranch = request.getBranchCode() != null ? request.getBranchCode().trim() : null;
+
         List<AvailableVoucherDto> voucherDtos = redemptions.stream()
+                .filter(r -> matchesPosVoucherFilter(r.getVoucher(), filterStoreOnly, reqBranch))
                 .map(r -> {
                     LoyaltyVoucherEntity v = r.getVoucher();
                     return AvailableVoucherDto.builder()
@@ -183,6 +190,8 @@ public class RewardWalletService {
                             .discountValue(v != null ? v.getDiscountValue() : BigDecimal.ZERO)
                             .minBillAmount(v != null ? v.getMinBillAmount() : BigDecimal.ZERO)
                             .maxDiscountAmount(v != null ? v.getMaxDiscountAmount() : null)
+                            .usageType(v != null ? v.getUsageType() : null)
+                            .branchScope(v != null ? v.getBranchScope() : null)
                             .expiresAt(r.getExpiresAt())
                             .build();
                 })
@@ -212,6 +221,29 @@ public class RewardWalletService {
                 .availableVouchers(voucherDtos)
                 .totalVouchers(voucherDtos.size())
                 .build();
+    }
+
+    private boolean matchesPosVoucherFilter(LoyaltyVoucherEntity voucher, boolean filterStoreOnly, String branchCode) {
+        if (!filterStoreOnly) {
+            return true;
+        }
+        if (voucher == null) {
+            return false;
+        }
+        if (!"NATCASH_STORE".equalsIgnoreCase(voucher.getUsageType())) {
+            return false;
+        }
+        if (branchCode != null && !branchCode.isBlank()
+                && voucher.getBranchScope() != null && !voucher.getBranchScope().isBlank()) {
+            String[] allowedBranches = voucher.getBranchScope().split(",");
+            for (String b : allowedBranches) {
+                if (branchCode.equalsIgnoreCase(b.trim())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
     @Transactional

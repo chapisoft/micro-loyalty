@@ -362,4 +362,58 @@ class RewardWalletServiceTest {
 
         verify(rBucket, times(1)).getAndDelete();
     }
+
+    @Test
+    @DisplayName("BE-13.8: POS inquiry lọc đúng voucher NATCASH_STORE và phạm vi chi nhánh")
+    void testRewardWalletInquiry_PosStoreAndBranchFilter() {
+        ProfileResponse profile = ProfileResponse.builder()
+                .accountId(1L)
+                .externalUserId("USER_001")
+                .currentPoints(new BigDecimal("1200.00"))
+                .build();
+        when(accountService.getOrCreateProfile(eq("TENANT_DELIMART"), any())).thenReturn(profile);
+
+        LoyaltyVoucherEntity storeMatching = LoyaltyVoucherEntity.builder()
+                .voucherCode("DELI_POS_OK")
+                .title("Delimart 50 HTG")
+                .usageType("NATCASH_STORE")
+                .branchScope("DL-PV-02, DL-33-01")
+                .discountType(DiscountType.FIXED_AMOUNT)
+                .discountValue(new BigDecimal("50.00"))
+                .build();
+        LoyaltyVoucherEntity storeOtherBranch = LoyaltyVoucherEntity.builder()
+                .voucherCode("DELI_OTHER_BRANCH")
+                .title("Delimart Cap-Haitien")
+                .usageType("NATCASH_STORE")
+                .branchScope("DL-CH-01")
+                .discountType(DiscountType.FIXED_AMOUNT)
+                .discountValue(new BigDecimal("50.00"))
+                .build();
+        LoyaltyVoucherEntity partnerCodeVoucher = LoyaltyVoucherEntity.builder()
+                .voucherCode("EPI_CODE")
+                .title("Epi d'Or code")
+                .usageType("PARTNER_CODE")
+                .discountType(DiscountType.FIXED_AMOUNT)
+                .discountValue(new BigDecimal("100.00"))
+                .build();
+
+        when(redemptionRepository.findByTenantIdAndAccount_ExternalUserIdAndStatusAndExpiresAtAfter(
+                eq("TENANT_DELIMART"), eq("USER_001"), eq(VoucherStatus.ACTIVE), any()))
+                .thenReturn(List.of(
+                        LoyaltyVoucherRedemptionEntity.builder().id(1L).redemptionCode("R1").voucher(storeMatching).status(VoucherStatus.ACTIVE).expiresAt(Instant.now().plusSeconds(3600)).build(),
+                        LoyaltyVoucherRedemptionEntity.builder().id(2L).redemptionCode("R2").voucher(storeOtherBranch).status(VoucherStatus.ACTIVE).expiresAt(Instant.now().plusSeconds(3600)).build(),
+                        LoyaltyVoucherRedemptionEntity.builder().id(3L).redemptionCode("R3").voucher(partnerCodeVoucher).status(VoucherStatus.ACTIVE).expiresAt(Instant.now().plusSeconds(3600)).build()
+                ));
+
+        RewardWalletInquiryResponse res = rewardWalletService.inquiry("TENANT_DELIMART",
+                RewardWalletInquiryRequest.builder()
+                        .externalUserId("USER_001")
+                        .branchCode("DL-PV-02")
+                        .filterStoreUsageOnly(Boolean.TRUE)
+                        .build());
+
+        assertEquals(1, res.getTotalVouchers());
+        assertEquals("DELI_POS_OK", res.getAvailableVouchers().get(0).getVoucherCode());
+        assertEquals("NATCASH_STORE", res.getAvailableVouchers().get(0).getUsageType());
+    }
 }

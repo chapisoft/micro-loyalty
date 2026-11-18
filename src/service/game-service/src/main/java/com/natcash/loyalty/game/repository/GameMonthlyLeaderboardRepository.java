@@ -14,6 +14,12 @@ public interface GameMonthlyLeaderboardRepository extends JpaRepository<GameMont
     List<GameMonthlyLeaderboardEntity> findTop50ByTenantIdAndLeaderboardMonthOrderByTotalScoreDesc(
             String tenantId, String leaderboardMonth);
 
+    List<GameMonthlyLeaderboardEntity> findTop100ByTenantIdAndLeaderboardMonthAndBoardTypeOrderByTotalScoreDesc(
+            String tenantId, String leaderboardMonth, String boardType);
+
     Optional<GameMonthlyLeaderboardEntity> findByTenantIdAndLeaderboardMonthAndExternalUserId(
             String tenantId, String leaderboardMonth, String externalUserId);
+
+    Optional<GameMonthlyLeaderboardEntity> findByTenantIdAndLeaderboardMonthAndBoardTypeAndExternalUserId(
+            String tenantId, String leaderboardMonth, String boardType, String externalUserId);
 }

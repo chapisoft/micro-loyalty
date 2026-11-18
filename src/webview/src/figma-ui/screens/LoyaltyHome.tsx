@@ -4,12 +4,17 @@ import {
   LoyaltyApi,
   getDefaultUserId,
   type CatalogVoucherItem,
+  type ContentBannerItem,
+  type UserVoucherItem,
   type ExpiringBucketsResponse,
   type MemberProfile,
   type MilestoneItem,
 } from '../../services/api';
 import { GameArt } from '../GameArt';
-import { Screen, SectionHeader, Skeleton, ErrorBlock, SlideRow, fmt, ddmm } from '../ui';
+import { QrCode } from 'lucide-react';
+import { Screen, SectionHeader, Skeleton, ErrorBlock, SlideRow, Popup, PrimaryButton, SecondaryButton, fmt, ddmm, ddmmyyyy, toDate } from '../ui';
+import { userState } from './Rewards';
+import { artGift, artHourglass, artCup } from '../art';
 import { tierLook, tierLabel } from '../tiers';
 import { normMilestone } from '../data';
 import { loadGames, type GameEntry } from '../games';
@@ -18,15 +23,11 @@ import type { SegmentProfileResponse } from '../../services/api';
 import iconHistory from '../../assets/figma/icon-history.svg';
 import iconBell from '../../assets/figma/icon-bell.svg';
 import illCalendar from '../../assets/figma/ill-calendar-gold.svg';
-import illTicket from '../../assets/figma/ill-ticket-gold.svg';
-import illGame from '../../assets/figma/ill-game.svg';
-import illShop from '../../assets/figma/ill-shop-gold.svg';
 import illTicket2 from '../../assets/figma/ill-ticket-gold-2.svg';
 import illGift from '../../assets/figma/ill-gift-gold.svg';
 import iconFuel from '../../assets/figma/icon-fuel.svg';
 import iconCheck from '../../assets/figma/icon-check.svg';
 import iconGift from '../../assets/figma/icon-gift.svg';
-import iconUsers from '../../assets/figma/icon-users.svg';
 
 interface Mission {
   code: string;
@@ -65,7 +66,30 @@ interface HomeData {
   referralReward: number;
   games: GameEntry[];
   segment: SegmentProfileResponse | null;
+  vouchers: UserVoucherItem[];
+  banners: ContentBannerItem[];
 }
+
+interface Reminder { art: string; title: string; text: string; cta: string; to: string }
+const DAY = 86_400_000;
+/**
+ * Reminder popup when Loyalty opens (Figma 582:1234 / 1524 / 1814; CMS CN-06): at most one per opening,
+ * priority reward waiting > voucher about to expire (≤ 3 days) > mission about to end (≤ 2 days), only 08:00–20:00.
+ * shortcut: rules are applied here from data the app already loads; move to GET /me/popup when CN-06 ships (plan GĐ5).
+ */
+const pickReminder = (d: HomeData): Reminder | null => {
+  const h = new Date().getHours();
+  if (h < 8 || h >= 20) return null;
+  const now = Date.now();
+  const claim = d.missions.find((m) => m.steps.some((s) => s.status === 'COMPLETED'));
+  if (claim) return { art: artCup, title: 'You have a reward to claim', text: `${claim.name}: your reward is waiting.`, cta: 'Claim reward', to: `/missions/${encodeURIComponent(claim.code)}` };
+  const exp = (x: UserVoucherItem) => toDate(x.expiresAt || x.validUntil).getTime();
+  const v = d.vouchers.find((x) => userState(x) === 'ready' && exp(x) - now <= 3 * DAY && exp(x) > now);
+  if (v) return { art: artGift, title: 'Your voucher expires soon', text: `${v.discountText || v.title} · valid until ${ddmmyyyy(v.validUntil)}.`, cta: 'Use voucher', to: `/my-vouchers/${v.id}` };
+  const end = d.missions.find((m) => m.steps.some((s) => s.status === 'IN_PROGRESS' && s.expiresAt && new Date(s.expiresAt).getTime() - now <= 2 * DAY && new Date(s.expiresAt).getTime() > now));
+  if (end) return { art: artHourglass, title: 'A mission ends soon', text: `${end.name} ends in 2 days or less.`, cta: 'See mission', to: `/missions/${encodeURIComponent(end.code)}` };
+  return null;
+};
 
 export const LoyaltyHome: React.FC = () => {
   const navigate = useNavigate();
@@ -77,7 +101,7 @@ export const LoyaltyHome: React.FC = () => {
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      const [profile, ms, expiring, deals, refs, games, segment] = await Promise.all([
+      const [profile, ms, expiring, deals, refs, games, segment, vouchers, homeContent] = await Promise.all([
         LoyaltyApi.getProfile(userId),
         LoyaltyApi.getMilestones(userId).catch(() => ({ milestones: [] as unknown[] })),
         LoyaltyApi.getExpiringBuckets(userId).catch(() => null),
@@ -85,6 +109,8 @@ export const LoyaltyHome: React.FC = () => {
         LoyaltyApi.getMyReferrals(userId).catch(() => null),
         loadGames(),
         LoyaltyApi.getSegmentProfile(userId).catch(() => null), // CN-01 · content for the member's segment
+        LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]),
+        LoyaltyApi.getMeHome(userId, 'LOYALTY_HOME').catch(() => ({ banners: [] as ContentBannerItem[] })),
       ]);
       // The live API returns {items, ekycVerifiedCount}; the typed client says {referrals, totalEkycVerified}.
       const r = refs as unknown as Record<string, unknown> | null;
@@ -98,6 +124,8 @@ export const LoyaltyHome: React.FC = () => {
         deals: (deals || []).filter((d) => d.status !== 'INACTIVE').slice(0, 6),
         referralCount: refItems.length,
         referralReward: Number(r?.rewardPerReferral) || 0,
+        vouchers,
+        banners: homeContent?.banners || [],
       });
     } catch {
       setFailed(true);
@@ -113,18 +141,81 @@ export const LoyaltyHome: React.FC = () => {
   const isNew = !!p && !p.currentPoints && !p.tierPoints && !data?.missions.length;
   const expiringCoins = data?.expiring?.totalExpiringPoints || 0;
   const year = useMemo(() => new Date().getFullYear(), []);
+  const [reminder, setReminder] = useState<Reminder | null>(null);
+  useEffect(() => {
+    if (!data) return;
+    let cancelled = false;
+    const resolvePopup = async () => {
+      try {
+        if (sessionStorage.getItem('loyalty_popup_shown')) return;
+      } catch {
+        // ignore storage errors
+      }
+      const now = Date.now();
+      const hasClaimableReward = data.missions.some((m) => m.steps.some((s) => s.status === 'COMPLETED'));
+      const voucherDays = data.vouchers
+        .filter((x) => userState(x) === 'ready')
+        .map((x) => Math.ceil((toDate(x.expiresAt || x.validUntil).getTime() - now) / DAY))
+        .filter((d) => d >= 0)
+        .sort((a, b) => a - b)[0];
+      const missionDays = data.missions
+        .flatMap((m) => m.steps)
+        .filter((s) => s.status === 'IN_PROGRESS' && s.expiresAt)
+        .map((s) => Math.ceil((new Date(s.expiresAt!).getTime() - now) / DAY))
+        .filter((d) => d >= 0)
+        .sort((a, b) => a - b)[0];
+
+      try {
+        const res = await LoyaltyApi.getMePopup({
+          externalUserId: userId,
+          hasClaimableReward,
+          expiringVoucherDays: voucherDays,
+          endingMissionDays: missionDays,
+          localHour: new Date().getHours(),
+        });
+        if (cancelled) return;
+        if (res?.popup) {
+          const pop = res.popup;
+          const art = pop.popupType === 'VOUCHER_EXPIRING' ? artGift : pop.popupType === 'MISSION_ENDING' ? artHourglass : artCup;
+          try { sessionStorage.setItem('loyalty_popup_shown', '1'); } catch { /* ignore */ }
+          setReminder({
+            art,
+            title: pop.title,
+            text: pop.body || '',
+            cta: pop.ctaLabel || 'Open',
+            to: pop.deepLink?.startsWith('/') ? pop.deepLink : '/missions',
+          });
+        }
+      } catch {
+        if (cancelled) return;
+        const r = pickReminder(data);
+        if (r) {
+          try { sessionStorage.setItem('loyalty_popup_shown', '1'); } catch { /* ignore */ }
+        }
+        setReminder(r);
+      }
+    };
+    void resolvePopup();
+    return () => { cancelled = true; };
+  }, [data, userId]);
 
   return (
-    <Screen title="Rewards">
-      <div className="flex w-full items-center gap-2">
-        <p className="min-w-0 flex-1 text-[14px] font-medium leading-5 text-slate-500">{isNew ? 'Your journey starts here' : 'Your benefits'}</p>
-        <button type="button" aria-label="Coins history" onClick={() => go('/coins')} className="flex size-11 items-center justify-center">
-          <img src={iconHistory} alt="" className="size-5" />
-        </button>
-        <button type="button" aria-label="Inbox" onClick={() => go('/inbox')} className="flex size-11 items-center justify-center">
-          <img src={iconBell} alt="" className="size-5" />
-        </button>
-      </div>
+    <Screen
+      title="Rewards"
+      tab={{ shell: 'customer', active: 'home' }}
+      barTitle
+      hero={
+        <div className="flex items-center gap-1 pt-3">
+          <p className="min-w-0 flex-1 text-[15px] font-semibold">{isNew ? 'Your journey starts here' : 'Your benefits'}</p>
+          <button type="button" aria-label="Coins history" onClick={() => go('/coins')} className="flex size-10 items-center justify-center">
+            <img src={iconHistory} alt="" className="size-[22px] brightness-0 invert" />
+          </button>
+          <button type="button" aria-label="Notifications" onClick={() => go('/inbox')} className="-mr-2 flex size-10 items-center justify-center">
+            <img src={iconBell} alt="" className="size-[22px] brightness-0 invert" />
+          </button>
+        </div>
+      }
+    >
 
       {failed && <ErrorBlock onRetry={load} />}
       {!data && !failed && (
@@ -137,56 +228,58 @@ export const LoyaltyHome: React.FC = () => {
 
       {data && p && (
         <>
-          {/* Member card · HV-02 274:1272 */}
-          <button type="button" onClick={() => go('/tiers')} className="flex w-full flex-col gap-2 rounded-[20px] p-4 text-left" style={{ background: look.cardBg }}>
+          {/* Member card · HV-02 (Figma 330:230): overlaps the orange header; "Pay at counter" opens LM-17 */}
+          <div role="button" tabIndex={0} onClick={() => go('/tiers')} onKeyDown={(e) => e.key === 'Enter' && go('/tiers')} className="flex w-full cursor-pointer flex-col gap-2 rounded-[20px] p-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.06)]" style={{ background: look.cardBg }}>
             <div className="flex w-full items-center gap-1.5">
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-[17px] font-semibold leading-[17px] text-brand">{tierLabel(p.tier?.name, p.tier?.code)} tier ›</span>
-                <span className="text-[36px] font-semibold leading-[52px]">{fmt(p.currentPoints)}</span>
-                <span className="text-[12px] leading-[17px] text-slate-500">available coins</span>
+                <span className="text-[17px] font-semibold leading-[22px] text-brand">{tierLabel(p.tier?.name, p.tier?.code)} tier ›</span>
+                <span className="text-[36px] font-semibold leading-[48px]">{fmt(p.currentPoints)}</span>
+                <span className="text-[13px] leading-[18px] text-slate-500">available coins</span>
               </div>
-              <img src={look.medal} alt="" className="size-[112px] shrink-0" />
+              <img src={look.medal} alt="" className="size-[104px] shrink-0" />
             </div>
-            <div className="h-px w-full bg-slate-200" />
-            <span className="text-[11px] leading-4 text-slate-500">
-              {isNew ? 'Start earning today' : `${fmt(p.tierPoints)} tier pts · ${year} period`}
-            </span>
-          </button>
-
-          {/* Quick actions · 274:1296 */}
-          <div className="grid w-full grid-cols-4 gap-2.5">
-            {[
-              { ill: illCalendar, label: 'Check-in', to: '/checkin' },
-              { ill: illTicket, label: 'Redeem', to: '/rewards' },
-              { ill: illGame, label: 'Games', to: '/games' },
-              { ill: illShop, label: 'Use coins', to: '/use-coins' },
-            ].map((a) => (
-              <button key={a.label} type="button" onClick={() => go(a.to)} className="flex flex-col items-center gap-1">
-                <img src={a.ill} alt="" className="size-[52px]" />
-                <span className="text-center text-[11px] font-medium leading-4">{a.label}</span>
+            <div className="h-px w-full bg-black/10" />
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-[12px] leading-4 text-slate-500">{isNew ? 'Start earning today' : `${fmt(p.tierPoints)} tier pts · ${year} period`}</span>
+              <button type="button" onClick={(e) => { e.stopPropagation(); go('/pay-at-counter'); }} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-semibold text-[#FE810D]">
+                <QrCode className="size-4" /> Pay at counter
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* CN-01 · Home by segment — headline and call to action are set per segment in the CMS */}
-          {data.segment && (data.segment.headline || data.segment.segmentName) && (
-            <button
-              type="button"
-              onClick={() => go(data.segment?.ctaTarget?.replace(/^#/, '') || '/missions')}
-              className="flex w-full items-center gap-3 rounded-[20px] bg-[#EDF5EF] p-4 text-left"
-            >
-              <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[11px] font-medium text-brand">{data.segment.badgeText || data.segment.segmentName}</span>
-                <span className="text-[18px] font-semibold leading-6">{data.segment.headline || data.segment.segmentName}</span>
-                {(data.segment.subheadline || (data.segment as { description?: string }).description) && (
-                  <span className="text-[12px] leading-[17px] text-slate-500">{data.segment.subheadline || (data.segment as { description?: string }).description}</span>
-                )}
-                <span className="text-[12px] font-semibold text-brand">{data.segment.ctaLabel || 'See missions'} ›</span>
-              </span>
-              <img src={illCalendar} alt="" className="size-16 shrink-0 rounded-full bg-white p-2" />
-            </button>
+          {/* CMS Banners · CN-06 (GET /me/home) */}
+          {data.banners.length > 0 && (
+            <SlideRow className="gap-3">
+              {data.banners.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => b.deepLink && go(b.deepLink.startsWith('/') ? b.deepLink : '/rewards')}
+                  className={`flex ${data.banners.length === 1 ? 'w-full' : 'w-[300px]'} max-w-full shrink-0 snap-start items-center gap-3 rounded-[20px] bg-gradient-to-r from-[#FFF3E3] to-[#FFE4C4] p-3.5 text-left`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-semibold text-slate-900">{b.title}</p>
+                    {b.subtitle && <p className="mt-0.5 line-clamp-2 text-[12px] leading-[17px] text-slate-600">{b.subtitle}</p>}
+                    {b.ctaLabel && <span className="mt-1.5 inline-block text-[12px] font-semibold text-brand">{b.ctaLabel} ›</span>}
+                  </div>
+                  {b.imageUrl && <img src={b.imageUrl} alt="" className="size-14 shrink-0 rounded-xl object-cover" />}
+                </button>
+              ))}
+            </SlideRow>
           )}
 
+          {/* Play every day · 274:1443 */}
+          <SectionHeader title="Play every day" action="Games ›" onAction={() => go('/games')} />
+          <SlideRow className="gap-3">
+            {data.games.map((g) => (
+              <button key={g.code} type="button" onClick={() => go(g.route || `/games?open=${encodeURIComponent(g.code)}`)} className="flex w-[88px] shrink-0 flex-col items-center gap-1.5">
+                <span className="size-[68px] overflow-hidden rounded-[16px]">
+                  <GameArt code={g.code} iconUrl={g.iconUrl} />
+                </span>
+                <span className="line-clamp-2 text-center text-[11px] font-medium leading-4">{g.name}</span>
+              </button>
+            ))}
+          </SlideRow>
           {/* Coins expiring soon · 274:1341 */}
           {expiringCoins > 0 && (
             <button type="button" onClick={() => go('/coins/expiring')} className="flex w-full items-center gap-2.5 rounded-[20px] bg-[#EDF5EF] p-3.5 text-left">
@@ -195,7 +288,7 @@ export const LoyaltyHome: React.FC = () => {
                 <span className="text-[16px] font-semibold leading-[23px]">
                   {fmt(expiringCoins)} coins{data.expiring?.nearestExpiryDate ? ` · Use by ${ddmm(data.expiring.nearestExpiryDate)}` : ''}
                 </span>
-                <span className="text-[12px] leading-[17px] text-slate-500">Redeem a reward before they expire.</span>
+                <span className="text-[12px] leading-[17px] text-slate-500">Get a voucher before they expire.</span>
               </div>
               <img src={illTicket2} alt="" className="size-14 shrink-0" />
             </button>
@@ -207,7 +300,7 @@ export const LoyaltyHome: React.FC = () => {
               <SectionHeader title="Missions in progress" action="See all ›" onAction={() => go('/missions')} />
               <SlideRow className="gap-3">
                 {data.missions.map((m) => (
-                  <button key={m.code} type="button" onClick={() => go(`/missions/${encodeURIComponent(m.code)}`)} className="flex w-[358px] max-w-full shrink-0 snap-start flex-col gap-2.5 rounded-[20px] bg-white p-3.5 text-left">
+                  <button key={m.code} type="button" onClick={() => go(`/missions/${encodeURIComponent(m.code)}`)} className={`flex ${data.missions.length === 1 ? 'w-full' : 'w-[300px]'} max-w-full shrink-0 snap-start flex-col gap-2.5 rounded-[20px] bg-white p-3.5 text-left`}>
                     <div className="flex w-full items-center gap-2.5">
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-brand-soft">
                         <img src={iconFuel} alt="" className="size-[15px]" />
@@ -246,21 +339,24 @@ export const LoyaltyHome: React.FC = () => {
             </button>
           )}
 
-          {/* Invite friends · pinned, always on · 545:923 */}
-          <button type="button" onClick={() => go('/invite')} className="flex w-full flex-col gap-2 rounded-[20px] bg-brand-soft p-4 text-left">
-            <span className="flex w-full items-center gap-2.5">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-[20px] bg-white">
-                <img src={iconUsers} alt="" className="size-[19px]" />
-              </span>
+          {/* CN-01 · Home by segment — headline and call to action are set per segment in the CMS */}
+          {data.segment && (data.segment.headline || data.segment.segmentName) && (
+            <button
+              type="button"
+              onClick={() => go(data.segment?.ctaTarget?.replace(/^#/, '') || '/missions')}
+              className="flex w-full items-center gap-3 rounded-[20px] bg-[#EDF5EF] p-4 text-left"
+            >
               <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[15px] font-semibold leading-[22px]">Invite friends</span>
-                <span className="text-[12px] leading-[17px] text-slate-500">
-                  Always on{data.referralReward ? ` · you +${fmt(data.referralReward)} coins per friend` : ''} · {data.referralCount} joined
-                </span>
+                <span className="text-[11px] font-medium text-brand">{data.segment.badgeText || data.segment.segmentName}</span>
+                <span className="text-[18px] font-semibold leading-6">{data.segment.headline || data.segment.segmentName}</span>
+                {(data.segment.subheadline || (data.segment as { description?: string }).description) && (
+                  <span className="text-[12px] leading-[17px] text-slate-500">{data.segment.subheadline || (data.segment as { description?: string }).description}</span>
+                )}
+                <span className="text-[12px] font-semibold text-brand">{data.segment.ctaLabel || 'See missions'} ›</span>
               </span>
-            </span>
-            <span className="text-[12px] font-semibold leading-[17px] text-brand">Invite &amp; track ›</span>
-          </button>
+              <img src={illCalendar} alt="" className="size-16 shrink-0 rounded-full bg-white p-2" />
+            </button>
+          )}
 
           {/* Hot deals · 274:1428 */}
           <SectionHeader title="Hot deals" action="See all ›" onAction={() => go('/rewards')} />
@@ -269,7 +365,7 @@ export const LoyaltyHome: React.FC = () => {
               <img src={dealPhoto({ partnerName: '', title: '' } as CatalogVoucherItem)} alt="" className="size-16 shrink-0 rounded-[14px] object-cover opacity-80" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="text-[15px] font-semibold">New partner deals are on the way</span>
-                <span className="text-[12px] leading-[17px] text-slate-500">Browse the Reward store to see what you can redeem with coins.</span>
+                <span className="text-[12px] leading-[17px] text-slate-500">Open the Store to see vouchers you can get with coins.</span>
               </span>
             </button>
           ) : (
@@ -294,20 +390,21 @@ export const LoyaltyHome: React.FC = () => {
             </>
           )}
 
-          {/* Play every day · 274:1443 */}
-          <SectionHeader title="Play every day" action="Games ›" onAction={() => go('/games')} />
-          <SlideRow className="gap-3">
-            {data.games.map((g) => (
-              <button key={g.code} type="button" onClick={() => go(g.route || `/games?open=${encodeURIComponent(g.code)}`)} className="flex w-[88px] shrink-0 flex-col items-center gap-1.5">
-                <span className="size-[68px] overflow-hidden rounded-[16px]">
-                  <GameArt code={g.code} iconUrl={g.iconUrl} />
-                </span>
-                <span className="line-clamp-2 text-center text-[11px] font-medium leading-4">{g.name}</span>
-              </button>
-            ))}
-          </SlideRow>
         </>
       )}
+      <Popup open={!!reminder} onClose={() => setReminder(null)}>
+        {reminder && (
+          <>
+            <img src={reminder.art} alt="" className="size-24 object-contain" />
+            <h2 className="text-[19px] font-semibold">{reminder.title}</h2>
+            <p className="text-[13px] leading-5 text-slate-500">{reminder.text}</p>
+            <div className="mt-2 flex w-full flex-col gap-2">
+              <PrimaryButton onClick={() => { setReminder(null); go(reminder.to); }}>{reminder.cta}</PrimaryButton>
+              <SecondaryButton onClick={() => setReminder(null)}>Later</SecondaryButton>
+            </div>
+          </>
+        )}
+      </Popup>
     </Screen>
   );
 };

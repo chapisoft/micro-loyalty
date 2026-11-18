@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 public class VoucherDto {
 
@@ -35,6 +36,23 @@ public class VoucherDto {
         private Instant startDate;
         private Instant endDate;
         private VoucherStatus status;
+        // CMS VQ-04 "How to get" / "How to use" (Figma 18/11)
+        private String acquireType;
+        private String usageType;
+        private String categoryCode;
+        private String audienceRole;
+        private List<String> eligibleTiers;
+        private Integer perCustomerLimit;
+        private Integer batchQuantity;
+        private String batchPeriod;
+        private Integer validDaysAfterCollect;
+        private Boolean requireEkyc;
+        private Boolean showInFreeStrip;
+        private Integer stripOrder;
+        private String serviceLink;
+        private String branchScope;
+        private String imageUrl;
+        private String i18nJson;
     }
 
     @Data
@@ -49,9 +67,18 @@ public class VoucherDto {
         private String category;
         private String discountText;
         private String minOrder;
+        /** dd/MM/yyyy, kept for existing clients */
         private String validUntil;
+        /** ISO instant of validUntil */
+        private Instant expiresAt;
         private String status;
         private String terms;
+        private Long voucherId;
+        private String voucherCode;
+        private String acquireType;
+        private String usageType;
+        private String serviceLink;
+        private String imageUrl;
     }
 
     @Data
@@ -73,6 +100,22 @@ public class VoucherDto {
         private Instant startDate;
         private Instant endDate;
         private VoucherStatus status;
+        private String acquireType;
+        private String usageType;
+        private String categoryCode;
+        private String audienceRole;
+        private List<String> eligibleTiers;
+        private Integer perCustomerLimit;
+        private Integer batchQuantity;
+        private String batchPeriod;
+        private Integer validDaysAfterCollect;
+        private Boolean requireEkyc;
+        private Boolean showInFreeStrip;
+        private Integer stripOrder;
+        private String serviceLink;
+        private String branchScope;
+        private String imageUrl;
+        private String i18nJson;
     }
 
     @Data

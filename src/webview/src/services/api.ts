@@ -302,11 +302,80 @@ export interface LearningQuizSubmitResponse {
 
 export interface LearningLeaderboardItem {
   rank: number;
+  rankPosition?: number;
+  boardType?: 'ALL' | 'LEARNING' | 'MINI_GAMES' | string;
   externalUserId: string;
   maskedPhone?: string;
   displayName: string;
   totalPoints: number;
+  totalScore?: number;
   badge?: string;
+}
+
+export interface LeaderboardRuleItem {
+  id?: number;
+  sourceCode: string;
+  boardType: string;
+  formulaType: string;
+  basePts: number;
+  scoreDivisor: number;
+  maxPtsPerAction: number;
+  dailyCapPts: number;
+  description?: string;
+}
+
+export interface LeaderboardPrizeItem {
+  id?: number;
+  boardType: string;
+  rankFrom: number;
+  rankTo: number;
+  prizeType: string;
+  prizeLabel: string;
+  prizeValue?: number;
+  sponsorName?: string;
+}
+
+export interface LeaderboardRulesResponse {
+  boardType: string;
+  month: string;
+  rules: LeaderboardRuleItem[];
+  prizes: LeaderboardPrizeItem[];
+  coinPurchasedPlaysEarnPts: boolean;
+  resetDayOfMonth: number;
+}
+
+export interface ContentBannerItem {
+  id: number;
+  placement: string;
+  title: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  imageUrl?: string;
+  deepLink?: string;
+  segmentCode?: string;
+  i18nJson?: string;
+  displayOrder?: number;
+}
+
+export interface StartupPopupRule {
+  id?: number;
+  ruleCode: string;
+  popupType: 'REWARD_READY' | 'VOUCHER_EXPIRING' | 'MISSION_ENDING' | 'CAMPAIGN_POPUP' | string;
+  priority: number;
+  title: string;
+  body?: string;
+  ctaLabel?: string;
+  deepLink?: string;
+}
+
+export interface MeHomeResponse {
+  banners: ContentBannerItem[];
+  bannersByPlacement?: Record<string, ContentBannerItem[]>;
+}
+
+export interface MePopupResponse {
+  popup: StartupPopupRule | null;
+  suppressedReason?: string | null;
 }
 
 export interface ScratchCardPlayResponse {
@@ -327,11 +396,20 @@ export interface AgentSubordinateItem {
   agentId: string;
   agentName: string;
   agentCode: string;
-  ekycCount: number;
+  /** Per-agent progress is not in GET /agents/me yet (only network totals); undefined = unknown, never shown as 0. */
+  ekycCount?: number;
   targetCount: number;
-  qualified: boolean;
+  qualified?: boolean;
   province?: string;
+  phoneNumber?: string;
   lastActiveAt?: string;
+}
+
+export interface AgentPlaybook {
+  code: string;
+  title: string;
+  category: string;
+  steps: { title: string; detail: string }[];
 }
 
 export interface AgentDashboardResponse {
@@ -351,7 +429,51 @@ export interface AgentDashboardResponse {
   subordinateTotal?: number;
   subordinateQualifiedCount?: number;
   subordinates?: AgentSubordinateItem[];
+  playbooks?: AgentPlaybook[];
 }
+
+/** GET /agents/me returns nested entities ({agent, monthlyKpi, networkKpi, subAgents, playbooks}); the screens use this flat shape. */
+const toAgentDashboard = (raw: any): AgentDashboardResponse => {
+  if (!raw?.agent) return raw as AgentDashboardResponse; // already flat
+  const a = raw.agent;
+  const k = raw.monthlyKpi || {};
+  const n = raw.networkKpi || null;
+  const month = String(raw.kpiMonth || k.kpiMonth || '');
+  const [y, m] = month.split('-').map(Number);
+  const steps = (j: string) => {
+    try {
+      return (JSON.parse(j || '[]') as { title: string; detail: string }[]).map((x) => ({ title: x.title, detail: x.detail }));
+    } catch {
+      return [];
+    }
+  };
+  return {
+    agentRole: a.agentRole,
+    agentCode: a.agentCode,
+    agentName: a.fullName,
+    monthLabel: y && m ? new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '',
+    monthlyTargetCustomers: Number(k.targetCustomers ?? a.monthlyCustomerTarget) || 0,
+    currentCustomersCount: Number(k.qualifiedCustomers) || 0,
+    pendingEkycCount: Math.max((Number(k.ekycCount) || 0) - (Number(k.qualifiedCustomers) || 0), 0) || undefined,
+    rewardAmount: Number(a.rewardAmountHtg) || 0,
+    rewardCurrency: 'HTG',
+    rewardClaimed: /PAID|CLAIMED/i.test(k.rewardStatus || ''),
+    superAgentNetworkRate: n ? Number(n.achievementRatePct) : undefined,
+    superAgentTargetRate: n ? Number(n.minRateRequiredPct) : undefined,
+    superAgentRewardAmount: n ? Number(n.rewardAmount ?? a.rewardAmountHtg) : undefined,
+    subordinateTotal: n ? Number(n.totalSubAgents) : raw.subAgents?.length,
+    subordinateQualifiedCount: n ? Number(n.qualifiedSubAgents) : undefined,
+    subordinates: (raw.subAgents || []).map((s: any) => ({
+      agentId: String(s.id),
+      agentName: s.fullName,
+      agentCode: s.agentCode,
+      targetCount: Number(s.monthlyCustomerTarget) || 0,
+      province: s.province,
+      phoneNumber: s.phoneNumber,
+    })),
+    playbooks: (raw.playbooks || []).map((p: any) => ({ code: p.playbookCode, title: p.title, category: p.category, steps: steps(p.stepsJson) })),
+  };
+};
 
 export interface WheelPrizeItem {
   prizeId: number;
@@ -389,9 +511,23 @@ export interface UserVoucherItem {
   discountText: string;
   minOrder: string;
   validUntil: string;
+  /** ISO instant of validUntil (validUntil itself is dd/MM/yyyy) */
+  expiresAt?: string;
   status: string;
   terms: string;
+  /** Catalogue voucher this one was issued from (when the service sends it). */
+  voucherId?: number;
+  voucherCode?: string;
+  /** How Use works (CMS "How to use"): Natcash payment at store · partner code · online service. Missing = partner code. */
+  usageType?: VoucherUsageType;
+  serviceLink?: string;
+  imageUrl?: string;
 }
+
+/** CMS "How customers get it". Missing on older payloads: free when pointCost is 0, otherwise coins. */
+export type VoucherAcquireType = 'COINS' | 'FREE_COLLECT' | 'GIVEN';
+/** CMS "How customers use it". */
+export type VoucherUsageType = 'NATCASH_STORE' | 'PARTNER_CODE' | 'ONLINE';
 
 export interface CatalogVoucherItem {
   id: number;
@@ -411,6 +547,15 @@ export interface CatalogVoucherItem {
   startDate?: string;
   endDate?: string;
   status: string;
+  /** Fields added with the CMS VQ-04 form (Figma 18/11); optional until loyalty-service returns them. */
+  categoryCode?: string;
+  acquireType?: VoucherAcquireType;
+  usageType?: VoucherUsageType;
+  eligibleTiers?: string[];
+  perCustomerLimit?: number;
+  validDaysAfterCollect?: number;
+  imageUrl?: string;
+  terms?: string;
 }
 
 export interface LedgerItem {
@@ -661,8 +806,54 @@ export const LoyaltyApi = {
     return res.json();
   },
 
-  async getLearningLeaderboard(): Promise<LearningLeaderboardItem[]> {
-    const res = await fetch(`${API_BASE}/gamehub/v1/leaderboard`, {
+  async getLearningLeaderboard(board: 'ALL' | 'LEARNING' | 'MINI_GAMES' = 'ALL'): Promise<LearningLeaderboardItem[]> {
+    const qs = new URLSearchParams({ board });
+    const res = await fetch(`${API_BASE}/gamehub/v1/leaderboard?${qs.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    const rows = (await res.json()) as any[];
+    return (Array.isArray(rows) ? rows : []).map((r, idx) => ({
+      ...r,
+      rank: Number(r.rank ?? r.rankPosition ?? idx + 1),
+      totalPoints: Number(r.totalPoints ?? r.totalScore ?? 0),
+    }));
+  },
+
+  async getLeaderboardRules(board: 'ALL' | 'LEARNING' | 'MINI_GAMES' = 'ALL'): Promise<LeaderboardRulesResponse> {
+    const qs = new URLSearchParams({ board });
+    const res = await fetch(`${API_BASE}/gamehub/v1/leaderboard/rules?${qs.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async getMeHome(externalUserId: string = getDefaultUserId(), placement?: string): Promise<MeHomeResponse> {
+    const qs = new URLSearchParams({ externalUserId });
+    if (placement) qs.set('placement', placement);
+    const res = await fetch(`${API_BASE}/loyalty/v1/engagement/me/home?${qs.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  async getMePopup(params: {
+    externalUserId?: string;
+    hasClaimableReward?: boolean;
+    expiringVoucherDays?: number;
+    endingMissionDays?: number;
+    localHour?: number;
+  }): Promise<MePopupResponse> {
+    const qs = new URLSearchParams({
+      externalUserId: params.externalUserId || getDefaultUserId(),
+      hasClaimableReward: String(Boolean(params.hasClaimableReward)),
+      localHour: String(params.localHour ?? new Date().getHours()),
+    });
+    if (params.expiringVoucherDays !== undefined) qs.set('expiringVoucherDays', String(params.expiringVoucherDays));
+    if (params.endingMissionDays !== undefined) qs.set('endingMissionDays', String(params.endingMissionDays));
+    const res = await fetch(`${API_BASE}/loyalty/v1/engagement/me/popup?${qs.toString()}`, {
       headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
@@ -687,7 +878,7 @@ export const LoyaltyApi = {
       { headers: getAuthHeaders() }
     );
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
-    return res.json();
+    return toAgentDashboard(await res.json());
   },
 
   // 15. Lấy cấu hình và giải thưởng vòng quay may mắn
@@ -730,8 +921,9 @@ export const LoyaltyApi = {
   },
 
   // 18. Lấy danh mục voucher đối tác khả dụng để đổi điểm
-  async getVoucherCatalog(): Promise<CatalogVoucherItem[]> {
-    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers`, {
+  /** `audience` CUSTOMER / AGENT / SUPER_AGENT: vouchers meant for that role only (CMS "Who can get it"). */
+  async getVoucherCatalog(audience?: 'CUSTOMER' | 'AGENT' | 'SUPER_AGENT'): Promise<CatalogVoucherItem[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers${audience ? `?audience=${audience}` : ''}`, {
       headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
@@ -744,6 +936,18 @@ export const LoyaltyApi = {
       method: 'POST',
       headers: getAuthHeaders(true),
       body: JSON.stringify({ externalUserId, voucherCode }),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 19b. Collect a free voucher (no coins). Reserved on collect: stock is counted, never sold out at the counter.
+  // shortcut: endpoint planned in plan/figma_sync_completion_plan.md GĐ1, not in loyalty-service yet; callers show the error toast until it ships.
+  async collectVoucher(externalUserId: string, voucherCode: string): Promise<UserVoucherItem> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/${encodeURIComponent(voucherCode)}/collect`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId }),
     });
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
     return res.json();

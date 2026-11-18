@@ -79,9 +79,10 @@ public class MilestoneController {
     @GetMapping("/active-campaigns")
     public ResponseEntity<ActiveCampaignsResponse> getActiveCampaignsGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId) {
+            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId,
+            @RequestParam(value = "role", required = false) String role) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, externalUserId);
+        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, externalUserId, role);
         return ResponseEntity.ok(response);
     }
 

@@ -279,7 +279,7 @@ export const AgentPortalModal: React.FC<AgentPortalModalProps> = ({
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-900 truncate">{sub.agentName}</p>
                           <p className="text-[11px] font-mono text-slate-500">
-                            {sub.ekycCount.toLocaleString()} / {(sub.targetCount || targetCustomers).toLocaleString()}
+                            {(sub.ekycCount ?? 0).toLocaleString()} / {(sub.targetCount || targetCustomers).toLocaleString()}
                           </p>
                         </div>
                         <span

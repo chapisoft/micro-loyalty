@@ -54,6 +54,7 @@ public final class CampaignMilestoneDto {
         private Long rewardVoucherId;
         private Integer rewardGameTurns;
         private MilestoneStatus status; // IN_PROGRESS, COMPLETED, CLAIMED
+        private String audienceRole;
         private Instant startDate;
         private Instant endDate;
     }

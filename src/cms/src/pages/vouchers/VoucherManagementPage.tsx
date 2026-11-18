@@ -1,4 +1,3 @@
-import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -13,6 +12,9 @@ import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { FileUpload } from 'primereact/fileupload';
 import { Steps } from 'primereact/steps';
+import { SelectButton } from 'primereact/selectbutton';
+import { MultiSelect } from 'primereact/multiselect';
+import { InputSwitch } from 'primereact/inputswitch';
 import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
@@ -41,7 +43,34 @@ export interface VoucherItem {
   validFrom: string;
   validTo: string;
   status: CommonStatus;
+  // VQ-04 "How customers get it" / "How customers use it"
+  acquireType: 'COINS' | 'FREE_COLLECT' | 'GIVEN';
+  usageType: 'NATCASH_STORE' | 'PARTNER_CODE' | 'ONLINE';
+  categoryCode?: string;
+  audienceRole: 'CUSTOMER' | 'AGENT' | 'SUPER_AGENT';
+  eligibleTiers: string[];
+  perCustomerLimit?: number;
+  batchQuantity?: number;
+  batchPeriod: 'NONE' | 'DAILY' | 'WEEKLY';
+  validDaysAfterCollect?: number;
+  requireEkyc: boolean;
+  showInFreeStrip: boolean;
+  stripOrder?: number;
+  serviceLink?: string;
+  imageUrl?: string;
+  /** Name and condition in English, Français, Kreyòl (stored as i18nJson) */
+  i18n: Record<'en' | 'fr' | 'ht', { name?: string; condition?: string }>;
 }
+
+const EMPTY_I18N = { en: {}, fr: {}, ht: {} } as VoucherItem['i18n'];
+const parseI18n = (raw?: string): VoucherItem['i18n'] => {
+  try {
+    return { ...EMPTY_I18N, ...(raw ? JSON.parse(raw) : {}) };
+  } catch {
+    return { ...EMPTY_I18N };
+  }
+};
+const TIER_OPTIONS = ['SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].map((x) => ({ label: x.charAt(0) + x.slice(1).toLowerCase(), value: x }));
 
 export const VoucherManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -107,6 +136,21 @@ export const VoucherManagementPage: React.FC = () => {
             validFrom: item.startDate ? String(item.startDate).substring(0, 10) : new Date().toISOString().substring(0, 10),
             validTo: item.endDate ? String(item.endDate).substring(0, 10) : new Date(Date.now() + 90 * 86400000).toISOString().substring(0, 10),
             status: (item.status as CommonStatus) || CommonStatus.ACTIVE,
+            acquireType: item.acquireType || 'COINS',
+            usageType: item.usageType || 'PARTNER_CODE',
+            categoryCode: item.categoryCode,
+            audienceRole: item.audienceRole || 'CUSTOMER',
+            eligibleTiers: item.eligibleTiers || [],
+            perCustomerLimit: item.perCustomerLimit,
+            batchQuantity: item.batchQuantity,
+            batchPeriod: item.batchPeriod || 'NONE',
+            validDaysAfterCollect: item.validDaysAfterCollect,
+            requireEkyc: !!item.requireEkyc,
+            showInFreeStrip: !!item.showInFreeStrip,
+            stripOrder: item.stripOrder,
+            serviceLink: item.serviceLink,
+            imageUrl: item.imageUrl,
+            i18n: parseI18n(item.i18nJson),
           }))
         );
       } else {
@@ -278,7 +322,23 @@ export const VoucherManagementPage: React.FC = () => {
         startDate: formData.validFrom ? new Date(formData.validFrom).toISOString() : new Date().toISOString(),
         endDate: formData.validTo ? new Date(formData.validTo).toISOString() : new Date(Date.now() + 90 * 86400000).toISOString(),
         status: formData.status || CommonStatus.ACTIVE,
+        acquireType: formData.acquireType || 'COINS',
+        usageType: formData.usageType || 'PARTNER_CODE',
+        categoryCode: formData.categoryCode || '',
+        audienceRole: formData.audienceRole || 'CUSTOMER',
+        eligibleTiers: formData.eligibleTiers || [],
+        perCustomerLimit: formData.perCustomerLimit || 1,
+        batchQuantity: formData.batchQuantity || 0,
+        batchPeriod: formData.batchPeriod || 'NONE',
+        validDaysAfterCollect: formData.validDaysAfterCollect || 0,
+        requireEkyc: !!formData.requireEkyc,
+        showInFreeStrip: !!formData.showInFreeStrip,
+        stripOrder: formData.stripOrder,
+        serviceLink: formData.serviceLink || '',
+        imageUrl: formData.imageUrl || '',
+        i18nJson: JSON.stringify(formData.i18n || EMPTY_I18N),
       };
+      if (payload.acquireType === 'FREE_COLLECT') payload.pointCost = 0;
 
       if (isEdit && formData.id) {
         await LoyaltyService.updateVoucher(formData.id, payload, selectedTenant);
@@ -313,6 +373,10 @@ export const VoucherManagementPage: React.FC = () => {
   };
 
   const saveItem = () => {
+    if (formData.usageType === 'ONLINE' && !formData.serviceLink) {
+      toastRef.current?.show({ severity: 'warn', summary: t('common.warning'), detail: t('voucher.service_link_required', 'Online vouchers need a service link'), life: 3000 });
+      return;
+    }
     if (!formData.voucherCode || !formData.title) {
       toastRef.current?.show({
         severity: 'warn',
@@ -716,6 +780,24 @@ export const VoucherManagementPage: React.FC = () => {
             style={{ minWidth: '7.5rem', textAlign: 'center' }}
           />
           <Column
+            field="acquireType"
+            header={t('voucher.how_to_get', 'How to get')}
+            body={(row: VoucherItem) => (
+              <Tag value={row.acquireType === 'FREE_COLLECT' ? t('voucher.acquire_free', 'Free – collect') : row.acquireType === 'GIVEN' ? t('voucher.acquire_given', 'Given only') : t('voucher.acquire_coins', 'With coins')} severity={row.acquireType === 'FREE_COLLECT' ? 'success' : row.acquireType === 'GIVEN' ? 'info' : 'warning'} />
+            )}
+            sortable
+            style={{ minWidth: '8.5rem', textAlign: 'center' }}
+          />
+          <Column
+            field="usageType"
+            header={t('voucher.how_to_use', 'How to use')}
+            body={(row: VoucherItem) => (
+              <span className="text-sm">{row.usageType === 'NATCASH_STORE' ? t('voucher.usage_store', 'Natcash at store') : row.usageType === 'ONLINE' ? t('voucher.usage_online', 'Online service') : t('voucher.usage_partner', 'Partner code')}</span>
+            )}
+            sortable
+            style={{ minWidth: '9rem' }}
+          />
+          <Column
             field="remainingQuantity"
             header={<span title={t('voucher.inventory_tooltip')}>{t('voucher.inventory')}</span>}
             body={(row: VoucherItem) => (
@@ -744,7 +826,7 @@ export const VoucherManagementPage: React.FC = () => {
       {/* MODAL DIALOG: THÊM / SỬA VOUCHER */}
       <Dialog
         visible={showDialog}
-        style={{ width: '540px' }}
+        style={{ width: '760px', maxWidth: '96vw' }}
         header={isEdit ? t('voucher.edit_title') : t('voucher.create_title')}
         modal
         className="border-round-xl"
@@ -856,6 +938,7 @@ export const VoucherManagementPage: React.FC = () => {
                 onValueChange={(e) => setFormData({ ...formData, pointsRequired: e.value || 0 })}
                 min={0}
                 placeholder="0"
+                disabled={formData.acquireType === 'FREE_COLLECT' || formData.acquireType === 'GIVEN'}
               />
             </div>
             <div className="field col-6">
@@ -893,6 +976,114 @@ export const VoucherManagementPage: React.FC = () => {
                 appendTo="self"
               />
             </div>
+          </div>
+
+          {/* VQ-04 · Category, image, audience, names in 3 languages */}
+          <div className="formgrid grid mb-3">
+            <div className="field col-6">
+              <label htmlFor="categoryCode" className="font-bold text-900">{t('voucher.category', 'Category')}</label>
+              <InputText id="categoryCode" value={formData.categoryCode || ''} onChange={(e) => setFormData({ ...formData, categoryCode: e.target.value.toUpperCase() })} placeholder="GROCERY, FUEL, TELECOM…" />
+              <small className="text-500">{t('voucher.category_hint', 'Used by the Store filters in the app')}</small>
+            </div>
+            <div className="field col-6">
+              <label htmlFor="audienceRole" className="font-bold text-900">{t('voucher.audience', 'Who can get it')}</label>
+              <Dropdown id="audienceRole" value={formData.audienceRole || 'CUSTOMER'} options={[{ label: 'Customers', value: 'CUSTOMER' }, { label: 'Agents', value: 'AGENT' }, { label: 'Super Agents', value: 'SUPER_AGENT' }]} onChange={(e) => setFormData({ ...formData, audienceRole: e.value })} appendTo="self" />
+            </div>
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="imageUrl" className="font-bold text-900">{t('voucher.image_url', 'Image URL')}</label>
+            <InputText id="imageUrl" value={formData.imageUrl || ''} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://…/delimart-15.png" />
+          </div>
+          <div className="formgrid grid mb-3">
+            {(['en', 'fr', 'ht'] as const).map((lng) => (
+              <div key={lng} className="field col-4">
+                <label className="font-bold text-900">{t('voucher.name_in', 'Name')} · {lng === 'en' ? 'English' : lng === 'fr' ? 'Français' : 'Kreyòl'}</label>
+                <InputText value={formData.i18n?.[lng]?.name || ''} onChange={(e) => setFormData({ ...formData, i18n: { ...(formData.i18n || EMPTY_I18N), [lng]: { ...(formData.i18n?.[lng] || {}), name: e.target.value } } })} />
+                <InputText className="mt-2" placeholder={t('voucher.condition', 'Condition')} value={formData.i18n?.[lng]?.condition || ''} onChange={(e) => setFormData({ ...formData, i18n: { ...(formData.i18n || EMPTY_I18N), [lng]: { ...(formData.i18n?.[lng] || {}), condition: e.target.value } } })} />
+              </div>
+            ))}
+          </div>
+
+          {/* VQ-04 · How customers get it (decides the button in the app) */}
+          <div className="surface-50 border-round-lg p-3 mb-3">
+            <div className="font-bold text-900 mb-2">{t('voucher.how_to_get', 'How customers get it')}</div>
+            <SelectButton
+              value={formData.acquireType || 'COINS'}
+              options={[
+                { label: t('voucher.acquire_coins', 'Get with coins'), value: 'COINS' },
+                { label: t('voucher.acquire_free', 'Free – collect'), value: 'FREE_COLLECT' },
+                { label: t('voucher.acquire_given', 'Given only'), value: 'GIVEN' },
+              ]}
+              onChange={(e) => e.value && setFormData({ ...formData, acquireType: e.value, pointsRequired: e.value === 'FREE_COLLECT' ? 0 : formData.pointsRequired })}
+            />
+            <small className="text-500 block mt-2">
+              {formData.acquireType === 'FREE_COLLECT'
+                ? t('voucher.acquire_free_hint', 'App button “Collect”: saved to My vouchers with a small toast, reserved when collected.')
+                : formData.acquireType === 'GIVEN'
+                ? t('voucher.acquire_given_hint', 'Not shown in the Store; sent by a mission, game or campaign.')
+                : t('voucher.acquire_coins_hint', 'App button “Get voucher”: coins are deducted, popup “Voucher added”.')}
+            </small>
+            {formData.acquireType === 'FREE_COLLECT' && (
+              <div className="formgrid grid mt-3">
+                <div className="field col-4">
+                  <label className="font-bold text-900">{t('voucher.batch_quantity', 'Quantity per batch')}</label>
+                  <InputNumber value={formData.batchQuantity} onValueChange={(e) => setFormData({ ...formData, batchQuantity: e.value || undefined })} min={0} />
+                </div>
+                <div className="field col-4">
+                  <label className="font-bold text-900">{t('voucher.batch_period', 'New batch')}</label>
+                  <Dropdown value={formData.batchPeriod || 'NONE'} options={[{ label: 'One batch only', value: 'NONE' }, { label: 'Every day 00:00', value: 'DAILY' }, { label: 'Every Monday 00:00', value: 'WEEKLY' }]} onChange={(e) => setFormData({ ...formData, batchPeriod: e.value })} appendTo="self" />
+                </div>
+                <div className="field col-4">
+                  <label className="font-bold text-900">{t('voucher.per_customer_limit', 'Limit per customer')}</label>
+                  <InputNumber value={formData.perCustomerLimit ?? 1} onValueChange={(e) => setFormData({ ...formData, perCustomerLimit: e.value || 1 })} min={1} suffix=" / batch" />
+                </div>
+                <div className="field col-4">
+                  <label className="font-bold text-900">{t('voucher.valid_days_after_collect', 'Valid after collecting')}</label>
+                  <InputNumber value={formData.validDaysAfterCollect} onValueChange={(e) => setFormData({ ...formData, validDaysAfterCollect: e.value || undefined })} min={1} suffix=" days" />
+                  <small className="text-500">{t('voucher.fixed_date_hint', 'The app shows a fixed date')}</small>
+                </div>
+                <div className="field col-8">
+                  <label className="font-bold text-900">{t('voucher.eligible_tiers', 'Eligible tiers')}</label>
+                  <MultiSelect value={formData.eligibleTiers || []} options={TIER_OPTIONS} onChange={(e) => setFormData({ ...formData, eligibleTiers: e.value })} placeholder={t('voucher.all_tiers', 'All tiers')} display="chip" appendTo="self" />
+                  <small className="text-500">{t('voucher.eligible_tiers_hint', 'Other tiers see it locked: “See member tiers”')}</small>
+                </div>
+                <div className="field col-6 flex align-items-center gap-2">
+                  <InputSwitch checked={!!formData.requireEkyc} onChange={(e) => setFormData({ ...formData, requireEkyc: !!e.value })} />
+                  <span>{t('voucher.require_ekyc', 'Verified wallets only (eKYC)')}</span>
+                </div>
+                <div className="field col-6 flex align-items-center gap-2">
+                  <InputSwitch checked={!!formData.showInFreeStrip} onChange={(e) => setFormData({ ...formData, showInFreeStrip: !!e.value })} />
+                  <span>{t('voucher.show_in_free_strip', 'Show in “Free to collect” on the Store')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* VQ-04 · How customers use it (decides what Use opens) */}
+          <div className="surface-50 border-round-lg p-3 mb-3">
+            <div className="font-bold text-900 mb-2">{t('voucher.how_to_use', 'How customers use it')}</div>
+            <SelectButton
+              value={formData.usageType || 'PARTNER_CODE'}
+              options={[
+                { label: t('voucher.usage_store', 'Natcash payment at store'), value: 'NATCASH_STORE' },
+                { label: t('voucher.usage_partner', 'Partner code'), value: 'PARTNER_CODE' },
+                { label: t('voucher.usage_online', 'Online service'), value: 'ONLINE' },
+              ]}
+              onChange={(e) => e.value && setFormData({ ...formData, usageType: e.value })}
+            />
+            <small className="text-500 block mt-2">
+              {formData.usageType === 'NATCASH_STORE'
+                ? t('voucher.usage_store_hint', 'Use → Pay at counter with this voucher; the cashier scans one code.')
+                : formData.usageType === 'ONLINE'
+                ? t('voucher.usage_online_hint', 'Use → opens the service checkout (top-up, data, bills) with the voucher applied.')
+                : t('voucher.usage_partner_hint', 'Use → shows QR / barcode for the partner’s own POS; needs code stock.')}
+            </small>
+            {formData.usageType === 'ONLINE' && (
+              <div className="field mt-3 mb-0">
+                <label className="font-bold text-900">{t('voucher.service_link', 'Service link')} <span className="text-red-500">*</span></label>
+                <InputText value={formData.serviceLink || ''} onChange={(e) => setFormData({ ...formData, serviceLink: e.target.value })} placeholder="natcash://topup" />
+              </div>
+            )}
           </div>
 
           <div className="field mb-3">

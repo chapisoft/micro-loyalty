@@ -87,6 +87,71 @@ public class LoyaltyVoucherEntity {
     @Builder.Default
     private VoucherStatus status = VoucherStatus.ACTIVE;
 
+    // ── CMS VQ-04 "How to get" / "How to use" (V34, Figma 18/11) ──
+    /** COINS · FREE_COLLECT · GIVEN */
+    @Column(name = "acquire_type", nullable = false, length = 20)
+    @Builder.Default
+    private String acquireType = "COINS";
+
+    /** NATCASH_STORE · PARTNER_CODE · ONLINE */
+    @Column(name = "usage_type", nullable = false, length = 20)
+    @Builder.Default
+    private String usageType = "PARTNER_CODE";
+
+    @Column(name = "category_code", length = 50)
+    private String categoryCode;
+
+    /** CUSTOMER · AGENT · SUPER_AGENT */
+    @Column(name = "audience_role", nullable = false, length = 20)
+    @Builder.Default
+    private String audienceRole = "CUSTOMER";
+
+    /** Comma-separated tier codes; empty = all tiers. */
+    @Column(name = "eligible_tiers", length = 200)
+    private String eligibleTiers;
+
+    @Column(name = "per_customer_limit", nullable = false)
+    @Builder.Default
+    private Integer perCustomerLimit = 1;
+
+    @Column(name = "batch_quantity")
+    private Integer batchQuantity;
+
+    /** NONE · DAILY · WEEKLY (new batch every Monday 00:00 UTC) */
+    @Column(name = "batch_period", nullable = false, length = 20)
+    @Builder.Default
+    private String batchPeriod = "NONE";
+
+    @Column(name = "batch_started_at")
+    private Instant batchStartedAt;
+
+    @Column(name = "valid_days_after_collect")
+    private Integer validDaysAfterCollect;
+
+    @Column(name = "require_ekyc", nullable = false)
+    @Builder.Default
+    private Boolean requireEkyc = false;
+
+    @Column(name = "show_in_free_strip", nullable = false)
+    @Builder.Default
+    private Boolean showInFreeStrip = false;
+
+    @Column(name = "strip_order")
+    private Integer stripOrder;
+
+    @Column(name = "service_link", length = 500)
+    private String serviceLink;
+
+    @Column(name = "branch_scope", length = 500)
+    private String branchScope;
+
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
+    /** {"en":{"name","condition","terms"},"fr":{…},"ht":{…}} */
+    @Column(name = "i18n_json", columnDefinition = "text")
+    private String i18nJson;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

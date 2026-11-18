@@ -77,6 +77,11 @@ public class CampaignRuleConditionEntity {
     @Column(name = "partner_id")
     private Long partnerId;
 
+    /** CUSTOMER · AGENT · SUPER_AGENT (Figma 18/11 NV-05 "Who can join") */
+    @Column(name = "audience_role", nullable = false, length = 20)
+    @Builder.Default
+    private String audienceRole = "CUSTOMER";
+
     @Column(name = "start_date", nullable = false)
     private Instant startDate;
 

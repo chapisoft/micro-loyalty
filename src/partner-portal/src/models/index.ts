@@ -160,6 +160,12 @@ export interface VoucherItemModel {
   voucherName: string;
   discountType?: string;
   discountValue: number;
+  acquireType?: 'COINS' | 'FREE_COLLECT' | 'GIVEN' | string;
+  usageType?: 'NATCASH_STORE' | 'PARTNER_CODE' | 'ONLINE' | string;
+  categoryCode?: string;
+  branchScope?: string;
+  batchQuantity?: number;
+  batchPeriod?: string;
   availableQuantity?: number;
   remainingQuantity?: number;
   totalQuantity: number;

@@ -8,7 +8,7 @@ import {
   type LedgerItem,
   type MemberProfile,
 } from '../../services/api';
-import { Screen, Skeleton, ErrorBlock, fmt, ddmmyyyy } from '../ui';
+import { Screen, Skeleton, ErrorBlock, Chip, SlideRow, fmt, ddmmyyyy } from '../ui';
 import iconCalendar from '../../assets/figma/icon-calendar-days.svg';
 import iconTicket from '../../assets/figma/icon-ticket.svg';
 import iconFuel from '../../assets/figma/icon-fuel-green.svg';
@@ -23,6 +23,10 @@ const rowIcon = (item: LedgerItem) => {
   return { src: iconFuel, bg: 'bg-emerald-50' };
 };
 
+type LedgerTab = 'earned' | 'used' | 'expired';
+const isExpiry = (it: LedgerItem) => /EXPIR/i.test(it.changeType);
+const tabOf = (it: LedgerItem): LedgerTab => (isExpiry(it) ? 'expired' : it.pointChange >= 0 ? 'earned' : 'used');
+
 const daysLeft = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
 
 /** DT-01 · Coins history (Figma 274:2420); with `sheet` the FIFO batch sheet (495:1294) opens on top. */
@@ -35,6 +39,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [tab, setTab] = useState<LedgerTab>('earned');
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -67,7 +72,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
   };
 
   const months: [string, LedgerItem[]][] = [];
-  (items || []).forEach((it) => {
+  (items || []).filter((it) => tabOf(it) === tab).forEach((it) => {
     const m = monthTitle(it.createdAt);
     const last = months[months.length - 1];
     if (last && last[0] === m) last[1].push(it);
@@ -79,8 +84,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
     .sort((a, b) => a.expiredAt.localeCompare(b.expiredAt));
 
   return (
-    <Screen title="Coins history" back="/">
-      <h2 className="text-[22px] font-semibold leading-8">Coins history</h2>
+    <Screen title="Coins history">
       {failed && <ErrorBlock onRetry={load} />}
       {!profile && !failed && <Skeleton className="h-[170px]" />}
 
@@ -95,6 +99,20 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
               : 'No coins expiring soon · see batches ›'}
           </span>
         </button>
+      )}
+
+      {items && (
+        <SlideRow>
+          {(['earned', 'used', 'expired'] as LedgerTab[]).map((k) => (
+            <Chip key={k} on={tab === k} onClick={() => setTab(k)}>{k === 'earned' ? 'Earned' : k === 'used' ? 'Used' : 'Expired'}</Chip>
+          ))}
+        </SlideRow>
+      )}
+
+      {items && items.length > 0 && months.length === 0 && (
+        <div className="rounded-[20px] bg-white p-5 text-center text-[13px] text-slate-500">
+          {tab === 'expired' ? 'No coins have expired. Oldest coins are used first.' : tab === 'used' ? 'You have not used coins yet.' : 'No coins earned on this page yet.'}
+        </div>
       )}
 
       {items && items.length === 0 && (
@@ -127,7 +145,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
                 </div>
                 <span className="text-[12px] leading-[17px] text-slate-500">
                   {it.referenceCode ? `${it.referenceCode} · ` : ''}
-                  {plus ? 'Credited' : 'Completed'}
+                  {isExpiry(it) ? 'Expired' : plus ? 'Credited' : 'Completed'}
                 </span>
               </div>
             );

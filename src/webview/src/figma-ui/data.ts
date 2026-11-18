@@ -39,6 +39,8 @@ export const PARAM = {
   CHECKIN_REWARDS: 'LOYALTY_CHECKIN_REWARDS',
   /** JSON { version, effectiveDate, sections: [{ title, body }] } or plain text */
   PROGRAM_TERMS: 'LOYALTY_PROGRAM_TERMS',
+  /** Amount above which the Natcash app asks for the PIN after the cashier scans (QT-05, 18/11) */
+  PIN_LIMIT: 'PAY_AT_COUNTER_PIN_LIMIT_HTG',
 } as const;
 
 export interface ProgramTermsDoc {
