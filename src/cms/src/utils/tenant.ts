@@ -18,6 +18,7 @@ export const getStoredTenantId = (): string => {
   return 'ALL';
 };
 
-export const setStoredTenantId = (_tenantId: string): void => {
+export const setStoredTenantId = (tenantId: string): void => {
   // Always default to 'ALL' on initial page loads and resets
+  void tenantId;
 };

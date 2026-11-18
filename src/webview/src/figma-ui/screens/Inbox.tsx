@@ -33,7 +33,7 @@ export const Inbox: React.FC = () => {
     navigate(target(m));
   };
   return (
-    <Screen title="Inbox" back="/">
+    <Screen title="Notifications" back="/">
       <div className="flex items-center">
         <div className="flex-1">
           <h2 className="text-[22px] font-semibold">Inbox</h2>
@@ -87,7 +87,7 @@ export const OfferDetail: React.FC = () => {
           </div>
           <p className="text-[12px] text-slate-500">Sent {time(m.createdAt)}</p>
           <p className="whitespace-pre-line text-[14px] leading-6">{m.body}</p>
-          <PrimaryButton onClick={() => navigate('/use-coins')}>See where to use it</PrimaryButton>
+          <PrimaryButton onClick={() => navigate(m.actionUrl?.startsWith('/') ? m.actionUrl : '/rewards')}>See offer in Store</PrimaryButton>
           <SecondaryButton onClick={() => navigate('/inbox')}>Back to inbox</SecondaryButton>
         </>
       )}

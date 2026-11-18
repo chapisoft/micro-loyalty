@@ -46,9 +46,10 @@ public class VoucherController {
     @GetMapping
     @Operation(summary = "Lấy danh sách tất cả voucher khả dụng", description = "Trả về danh sách voucher của đối tác cho CMS và Portal")
     public ResponseEntity<List<VoucherResponse>> getAllVouchers(
-            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestParam(value = "audience", required = false) String audience) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<VoucherResponse> vouchers = voucherService.getAllVouchers(tenantId);
+        List<VoucherResponse> vouchers = voucherService.getAllVouchers(tenantId, audience);
         return ResponseEntity.ok(vouchers);
     }
 
@@ -147,6 +148,16 @@ public class VoucherController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         UserVoucherResponse response = voucherService.redeemVoucher(tenantId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{voucherCode}/collect")
+    @Operation(summary = "Collect a free voucher", description = "Lưu voucher miễn phí vào My vouchers (giữ chỗ khi lưu, giới hạn theo đợt và theo khách)")
+    public ResponseEntity<UserVoucherResponse> collectVoucher(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("voucherCode") String voucherCode,
+            @RequestBody RedeemVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        return ResponseEntity.ok(voucherService.collectVoucher(tenantId, request.getExternalUserId(), voucherCode));
     }
 
     @PostMapping("/batch-import")

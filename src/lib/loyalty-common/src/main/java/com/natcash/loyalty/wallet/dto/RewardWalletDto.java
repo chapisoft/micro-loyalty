@@ -32,6 +32,10 @@ public final class RewardWalletDto {
         private String externalUserId;
 
         private Long partnerId;
+
+        private String branchCode;
+
+        private Boolean filterStoreUsageOnly;
     }
 
     @Data
@@ -50,6 +54,8 @@ public final class RewardWalletDto {
         private BigDecimal discountValue;
         private BigDecimal minBillAmount;
         private BigDecimal maxDiscountAmount;
+        private String usageType;
+        private String branchScope;
         private Instant expiresAt;
     }
 
@@ -132,6 +138,8 @@ public final class RewardWalletDto {
         private String qrToken;
 
         private Long partnerId;
+
+        private String branchCode;
     }
 
     @Data

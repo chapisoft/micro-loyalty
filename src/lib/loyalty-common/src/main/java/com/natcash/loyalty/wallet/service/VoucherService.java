@@ -35,8 +35,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Arrays;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,8 +79,17 @@ public class VoucherService {
 
     @Transactional(readOnly = true)
     public List<VoucherResponse> getAllVouchers(String tenantId) {
+        return getAllVouchers(tenantId, null);
+    }
+
+    /** `audience` = CUSTOMER / AGENT / SUPER_AGENT for the webview; null = every voucher (CMS, Partner portal). */
+    @Transactional(readOnly = true)
+    public List<VoucherResponse> getAllVouchers(String tenantId, String audience) {
         List<LoyaltyVoucherEntity> vouchers = voucherRepository.findByTenantId(tenantId);
-        return vouchers.stream().map(this::mapToVoucherResponse).collect(Collectors.toList());
+        return vouchers.stream()
+                .filter(v -> audience == null || audience.isBlank() || audience.equalsIgnoreCase(v.getAudienceRole()))
+                .map(this::mapToVoucherResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -122,8 +136,15 @@ public class VoucherService {
                             .discountText(discountText)
                             .minOrder(minOrder)
                             .validUntil(DATE_FORMATTER.format(r.getExpiresAt()))
+                            .expiresAt(r.getExpiresAt())
                             .status(r.getStatus().name())
                             .terms(v != null ? v.getDescription() : MessageUtils.getMessage("voucher.default_terms"))
+                            .voucherId(v != null ? v.getId() : null)
+                            .voucherCode(v != null ? v.getVoucherCode() : null)
+                            .acquireType(v != null ? v.getAcquireType() : null)
+                            .usageType(v != null ? v.getUsageType() : null)
+                            .serviceLink(v != null ? v.getServiceLink() : null)
+                            .imageUrl(v != null ? v.getImageUrl() : null)
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -176,6 +197,7 @@ public class VoucherService {
             entity.setEndDate(request.getEndDate());
         if (request.getStatus() != null)
             entity.setStatus(request.getStatus());
+        applyGetAndUse(entity, request);
 
         LoyaltyVoucherEntity saved = voucherRepository.save(entity);
         return mapToVoucherResponse(saved);
@@ -195,6 +217,10 @@ public class VoucherService {
             LoyaltyVoucherEntity voucher = voucherRepository.findByTenantIdAndVoucherCode(tenantId, request.getVoucherCode())
                     .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND, MessageUtils.getMessage("voucher.not_found")));
 
+            if (voucher.getAcquireType() != null && !ACQUIRE_COINS.equals(voucher.getAcquireType())) {
+                // free vouchers use POST /{code}/collect; "given" vouchers come only from missions, games or campaigns
+                throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Voucher " + voucher.getVoucherCode() + " is not sold for coins");
+            }
             if (voucher.getAvailableQuantity() <= 0) {
                 throw new LoyaltyException(ErrorCode.VOUCHER_OUT_OF_STOCK, MessageUtils.getMessage("voucher.out_of_stock"));
             }
@@ -249,10 +275,171 @@ public class VoucherService {
                     .discountText(voucher.getDiscountValue() + " " + CurrencyCode.HTG.getCode())
                     .minOrder(MessageUtils.getMessage("voucher.min_order", voucher.getMinBillAmount()))
                     .validUntil(DATE_FORMATTER.format(savedRedemption.getExpiresAt()))
+                    .expiresAt(savedRedemption.getExpiresAt())
                     .status("AVAILABLE")
                     .terms(voucher.getDescription())
+                    .voucherId(voucher.getId())
+                    .voucherCode(voucher.getVoucherCode())
+                    .acquireType(voucher.getAcquireType())
+                    .usageType(voucher.getUsageType())
+                    .serviceLink(voucher.getServiceLink())
+                    .imageUrl(voucher.getImageUrl())
                     .build();
         });
+    }
+
+    /**
+     * Collect a free voucher (Figma 18/11 "Free – collect"): no coins, reserved on collect so it is never sold out at the counter,
+     * `perCustomerLimit` per batch, tier-restricted when `eligibleTiers` is set, valid `validDaysAfterCollect` days.
+     */
+    @Transactional
+    public UserVoucherResponse collectVoucher(String tenantId, String externalUserId, String voucherCode) {
+        String lockKey = RedisKeys.getVoucherRedeemLockKey(tenantId, externalUserId);
+        SystemParameterService paramService = SystemParameterService.get();
+        long waitTimeMs = paramService.getLong(tenantId, SystemParamSpec.REDISSON_LOCK_BURN_TIMEOUT_MS);
+        long shortLeaseMs = paramService.getLong(tenantId, SystemParamSpec.REDISSON_LOCK_SHORT_LEASE_MS);
+        int defaultDays = paramService.getInt(tenantId, SystemParamSpec.VOUCHER_DEFAULT_VALIDITY_DAYS);
+        return lockHelper.executeWithLock(lockKey, waitTimeMs, shortLeaseMs, () -> {
+            LoyaltyAccountEntity account = accountRepository.findByTenantIdAndExternalUserId(tenantId, externalUserId)
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.ACCOUNT_NOT_FOUND, MessageUtils.getMessage("voucher.account_not_found")));
+            LoyaltyVoucherEntity voucher = voucherRepository.findByTenantIdAndVoucherCode(tenantId, voucherCode)
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND, MessageUtils.getMessage("voucher.not_found")));
+            Instant now = Instant.now();
+
+            if (!ACQUIRE_FREE.equals(voucher.getAcquireType())) {
+                throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Voucher " + voucherCode + " is not free to collect");
+            }
+            if (voucher.getStatus() != VoucherStatus.ACTIVE || now.isBefore(voucher.getStartDate()) || now.isAfter(voucher.getEndDate())) {
+                throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Voucher " + voucherCode + " is not open now");
+            }
+            List<String> tiers = splitCsv(voucher.getEligibleTiers());
+            String tier = account.getTier() != null && account.getTier().getCode() != null ? account.getTier().getCode().name() : "";
+            if (!tiers.isEmpty() && !tiers.contains(tier)) {
+                throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, "Voucher " + voucherCode + " is for " + String.join(", ", tiers) + " members");
+            }
+            // shortcut: eKYC status is not stored in loyalty-service (it lives in the Natcash wallet / WSO2); enforce
+            // require_ekyc + FREE_VOUCHER_REQUIRE_EKYC once the account carries the eKYC flag (plan GĐ1, integration tier).
+
+            refreshBatch(voucher, now);
+            Instant since = batchStart(voucher.getBatchPeriod(), now);
+            long already = redemptionRepository.countByAccount_IdAndVoucher_IdAndCreatedAtAfter(account.getId(), voucher.getId(),
+                    since != null ? since : Instant.EPOCH);
+            int limit = voucher.getPerCustomerLimit() != null && voucher.getPerCustomerLimit() > 0 ? voucher.getPerCustomerLimit() : 1;
+            if (already >= limit) {
+                throw new LoyaltyException(ErrorCode.TRANSACTION_DUPLICATE, "LIMIT: voucher " + voucherCode + " already collected");
+            }
+            if (voucher.getAvailableQuantity() <= 0) {
+                throw new LoyaltyException(ErrorCode.VOUCHER_OUT_OF_STOCK, MessageUtils.getMessage("voucher.out_of_stock"));
+            }
+
+            voucher.setAvailableQuantity(voucher.getAvailableQuantity() - 1); // reserved on collect
+            voucherRepository.save(voucher);
+
+            int days = voucher.getValidDaysAfterCollect() != null && voucher.getValidDaysAfterCollect() > 0 ? voucher.getValidDaysAfterCollect() : defaultDays;
+            Instant expires = now.plus(days, ChronoUnit.DAYS);
+            LoyaltyVoucherRedemptionEntity saved = redemptionRepository.save(LoyaltyVoucherRedemptionEntity.builder()
+                    .tenantId(tenantId)
+                    .account(account)
+                    .voucher(voucher)
+                    .redemptionCode(CentralizedCodeGeneratorService.get().generateCode(CodeType.VOUCHER_REDEMPTION_CODE, Map.of("scope", voucher.getVoucherCode())))
+                    .pointsUsed(BigDecimal.ZERO)
+                    .status(VoucherStatus.ACTIVE)
+                    .expiresAt(expires)
+                    .build());
+            log.info("[VOUCHER-COLLECT-SUCCESS] tenantId={}, user={}, voucher={}", tenantId, externalUserId, voucherCode);
+
+            return UserVoucherResponse.builder()
+                    .id(saved.getId())
+                    .code(saved.getRedemptionCode())
+                    .title(voucher.getTitle())
+                    .discountText(voucher.getDiscountType() == DiscountType.PERCENTAGE ? voucher.getDiscountValue() + "%"
+                            : voucher.getDiscountValue() + " " + CurrencyCode.HTG.getCode())
+                    .minOrder(MessageUtils.getMessage("voucher.min_order", voucher.getMinBillAmount()))
+                    .validUntil(DATE_FORMATTER.format(expires))
+                    .expiresAt(expires)
+                    .status(VoucherStatus.ACTIVE.name())
+                    .terms(voucher.getDescription())
+                    .voucherId(voucher.getId())
+                    .voucherCode(voucher.getVoucherCode())
+                    .acquireType(voucher.getAcquireType())
+                    .usageType(voucher.getUsageType())
+                    .serviceLink(voucher.getServiceLink())
+                    .imageUrl(voucher.getImageUrl())
+                    .build();
+        });
+    }
+
+    static final String ACQUIRE_COINS = "COINS";
+    static final String ACQUIRE_FREE = "FREE_COLLECT";
+    private static final List<String> ACQUIRE_TYPES = List.of(ACQUIRE_COINS, ACQUIRE_FREE, "GIVEN");
+    private static final List<String> USAGE_TYPES = List.of("NATCASH_STORE", "PARTNER_CODE", "ONLINE");
+    private static final List<String> AUDIENCES = List.of("CUSTOMER", "AGENT", "SUPER_AGENT");
+    private static final List<String> BATCH_PERIODS = List.of("NONE", "DAILY", "WEEKLY");
+
+    /** Start of the current free-voucher batch (UTC): today 00:00 for DAILY, Monday 00:00 for WEEKLY, null for NONE. */
+    static Instant batchStart(String period, Instant now) {
+        if ("DAILY".equals(period)) {
+            return now.truncatedTo(ChronoUnit.DAYS);
+        }
+        if ("WEEKLY".equals(period)) {
+            return now.atZone(ZoneOffset.UTC).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS).toInstant();
+        }
+        return null;
+    }
+
+    /** Opens a new batch lazily on the first collect after the period rolls over (no scheduler needed). */
+    static boolean refreshBatch(LoyaltyVoucherEntity v, Instant now) {
+        Instant start = batchStart(v.getBatchPeriod(), now);
+        if (start == null || v.getBatchQuantity() == null) {
+            return false;
+        }
+        if (v.getBatchStartedAt() == null || v.getBatchStartedAt().isBefore(start)) {
+            v.setBatchStartedAt(start);
+            v.setAvailableQuantity(v.getBatchQuantity());
+            return true;
+        }
+        return false;
+    }
+
+    private static List<String> splitCsv(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(csv.split(",")).map(String::trim).filter(x -> !x.isEmpty()).map(String::toUpperCase).collect(Collectors.toList());
+    }
+
+    private static String pick(String value, List<String> allowed, String field) {
+        String v = value.trim().toUpperCase();
+        if (!allowed.contains(v)) {
+            throw new LoyaltyException(ErrorCode.VALIDATION_ERROR, field + " must be one of " + allowed);
+        }
+        return v;
+    }
+
+    /** Fields of the CMS VQ-04 "How to get" / "How to use" sections; null = keep the current value. */
+    private void applyGetAndUse(LoyaltyVoucherEntity e, CreateVoucherRequest r) {
+        if (r.getAcquireType() != null) e.setAcquireType(pick(r.getAcquireType(), ACQUIRE_TYPES, "acquireType"));
+        if (r.getUsageType() != null) e.setUsageType(pick(r.getUsageType(), USAGE_TYPES, "usageType"));
+        if (r.getAudienceRole() != null) e.setAudienceRole(pick(r.getAudienceRole(), AUDIENCES, "audienceRole"));
+        if (r.getBatchPeriod() != null) e.setBatchPeriod(pick(r.getBatchPeriod(), BATCH_PERIODS, "batchPeriod"));
+        if (r.getCategoryCode() != null) e.setCategoryCode(r.getCategoryCode().isBlank() ? null : r.getCategoryCode().trim().toUpperCase());
+        if (r.getEligibleTiers() != null) e.setEligibleTiers(r.getEligibleTiers().isEmpty() ? null : String.join(",", r.getEligibleTiers()).toUpperCase());
+        if (r.getPerCustomerLimit() != null) e.setPerCustomerLimit(Math.max(1, r.getPerCustomerLimit()));
+        if (r.getBatchQuantity() != null) e.setBatchQuantity(r.getBatchQuantity() > 0 ? r.getBatchQuantity() : null);
+        if (r.getValidDaysAfterCollect() != null) e.setValidDaysAfterCollect(r.getValidDaysAfterCollect() > 0 ? r.getValidDaysAfterCollect() : null);
+        if (r.getRequireEkyc() != null) e.setRequireEkyc(r.getRequireEkyc());
+        if (r.getShowInFreeStrip() != null) e.setShowInFreeStrip(r.getShowInFreeStrip());
+        if (r.getStripOrder() != null) e.setStripOrder(r.getStripOrder());
+        if (r.getServiceLink() != null) e.setServiceLink(r.getServiceLink().isBlank() ? null : r.getServiceLink().trim());
+        if (r.getBranchScope() != null) e.setBranchScope(r.getBranchScope().isBlank() ? null : r.getBranchScope().trim());
+        if (r.getImageUrl() != null) e.setImageUrl(r.getImageUrl().isBlank() ? null : r.getImageUrl().trim());
+        if (r.getI18nJson() != null) e.setI18nJson(r.getI18nJson().isBlank() ? null : r.getI18nJson());
+        if (ACQUIRE_FREE.equals(e.getAcquireType())) {
+            e.setPointCost(BigDecimal.ZERO);
+        }
+        if ("ONLINE".equals(e.getUsageType()) && (e.getServiceLink() == null || e.getServiceLink().isBlank())) {
+            throw new LoyaltyException(ErrorCode.VALIDATION_ERROR, "serviceLink is required for online vouchers");
+        }
     }
 
     @Transactional
@@ -294,6 +481,7 @@ public class VoucherService {
             entity.setTotalQuantity(request.getTotalQuantity());
             entity.setAvailableQuantity(Math.max(0, entity.getAvailableQuantity() + diff));
         }
+        applyGetAndUse(entity, request);
 
         LoyaltyVoucherEntity updated = voucherRepository.save(entity);
         return mapToVoucherResponse(updated);
@@ -355,6 +543,13 @@ public class VoucherService {
             }
         }
 
+        // a free voucher whose period rolled over shows its new batch before the first collect opens it
+        Integer available = v.getAvailableQuantity();
+        Instant start = batchStart(v.getBatchPeriod(), Instant.now());
+        if (start != null && v.getBatchQuantity() != null && (v.getBatchStartedAt() == null || v.getBatchStartedAt().isBefore(start))) {
+            available = v.getBatchQuantity();
+        }
+
         return VoucherResponse.builder()
                 .id(v.getId())
                 .voucherCode(v.getVoucherCode())
@@ -368,11 +563,27 @@ public class VoucherService {
                 .minBillAmount(v.getMinBillAmount())
                 .maxDiscountAmount(v.getMaxDiscountAmount())
                 .totalQuantity(v.getTotalQuantity())
-                .availableQuantity(v.getAvailableQuantity())
+                .availableQuantity(available)
                 .pointCost(v.getPointCost())
                 .startDate(v.getStartDate())
                 .endDate(v.getEndDate())
                 .status(v.getStatus())
+                .acquireType(v.getAcquireType())
+                .usageType(v.getUsageType())
+                .categoryCode(v.getCategoryCode())
+                .audienceRole(v.getAudienceRole())
+                .eligibleTiers(splitCsv(v.getEligibleTiers()))
+                .perCustomerLimit(v.getPerCustomerLimit())
+                .batchQuantity(v.getBatchQuantity())
+                .batchPeriod(v.getBatchPeriod())
+                .validDaysAfterCollect(v.getValidDaysAfterCollect())
+                .requireEkyc(v.getRequireEkyc())
+                .showInFreeStrip(v.getShowInFreeStrip())
+                .stripOrder(v.getStripOrder())
+                .serviceLink(v.getServiceLink())
+                .branchScope(v.getBranchScope())
+                .imageUrl(v.getImageUrl())
+                .i18nJson(v.getI18nJson())
                 .build();
     }
 }

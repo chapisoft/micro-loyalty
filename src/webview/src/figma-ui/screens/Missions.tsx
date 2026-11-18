@@ -4,9 +4,9 @@ import { Check, Gift, Fuel, ShoppingBag, Smartphone, Users, Info, ChevronDown, Q
 import { LoyaltyApi, getDefaultUserId, type MemberProfile, type MilestoneItem } from '../../services/api';
 import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
 import {
-  Screen, SectionHeader, Skeleton, ErrorBlock, Pill, BottomBar, PrimaryButton, SecondaryButton, Popup, Empty, SlideRow, useLoad, fmt, ddmm, ddmmyyyy,
+  Screen, Hero, SectionHeader, Skeleton, ErrorBlock, Pill, BottomBar, PrimaryButton, SecondaryButton, Popup, Empty, SlideRow, useLoad, fmt, ddmm, ddmmyyyy,
 } from '../ui';
-import { artCalendar, artGift, artEmptyBox } from '../art';
+import { artCalendar, artGift, artEmptyBox, aiMissions } from '../art';
 import { normMilestone, paramJson, PARAM } from '../data';
 
 const uid = () => getDefaultUserId();
@@ -141,19 +141,18 @@ export const MissionsList: React.FC = () => {
   );
 
   return (
-    <Screen title="Missions" back="/">
-      <div>
-        <h2 className="text-[22px] font-semibold leading-8">Your missions</h2>
-        <p className="mt-2 text-[13px] text-slate-500">
-          {data ? `${count('AVAILABLE')} available · ${count('IN_PROGRESS')} in progress · tracked automatically` : 'Every goal you reach unlocks a reward.'}
-        </p>
-      </div>
+    <Screen
+      title="Missions"
+      back="/"
+      tab={{ shell: 'customer', active: 'missions' }}
+      hero={<Hero title="Missions" sub="Reach goals, unlock rewards" coins={data?.profile.currentPoints} onCoins={() => navigate('/coins')} art={aiMissions} />}
+    >
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[144px]" />}
       {data && (
         <>
-          {/* Check-in strip (NV-01 330:236) / compact streak row (330:246) */}
-          <button type="button" onClick={() => navigate('/checkin')} className="flex w-full flex-col gap-2 rounded-[20px] bg-white p-3.5 text-left">
+          {/* Check-in is a mission set in the CMS (17/11): the strip shows only while a check-in program is configured */}
+          {data.rewards.length > 0 && <button type="button" onClick={() => navigate('/checkin')} className="flex w-full flex-col gap-2 rounded-[20px] bg-white p-3.5 text-left">
             <span className="flex w-full items-center gap-2">
               <span className="flex-1 text-[15px] font-semibold">This week's check-in · {streak}-day streak</span>
               {!doneToday && <span className="rounded-[12px] bg-brand px-3 py-1.5 text-[12px] font-semibold text-white">Check in</span>}
@@ -162,7 +161,7 @@ export const MissionsList: React.FC = () => {
             <span className="text-[11px] text-slate-500">
               {doneToday ? 'Checked in today · come back tomorrow' : data.rewards[today - 1] !== undefined ? `Check in today for +${data.rewards[today - 1]} coins` : 'Check in 7 days for a weekend gift.'}
             </span>
-          </button>
+          </button>}
 
           {/* Tabs · In progress / Available / Completed (330:246) */}
           <div className="grid w-full grid-cols-3 gap-1.5 rounded-[16px] bg-white p-1">

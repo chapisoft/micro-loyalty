@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { useTranslation } from 'react-i18next';
-import { getStoredTenantId } from '@/utils/tenant';
 import i18n from '@/language';
 
 export interface TenantOption {

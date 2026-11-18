@@ -18,6 +18,9 @@ public interface LoyaltyVoucherRedemptionRepository extends JpaRepository<Loyalt
     List<LoyaltyVoucherRedemptionEntity> findByTenantIdAndAccount_ExternalUserIdAndStatusAndExpiresAtAfter(
             String tenantId, String externalUserId, VoucherStatus status, Instant now);
 
+    /** Free-voucher limit per customer within the current batch. */
+    long countByAccount_IdAndVoucher_IdAndCreatedAtAfter(Long accountId, Long voucherId, Instant since);
+
     Optional<LoyaltyVoucherRedemptionEntity> findByTenantIdAndRedemptionCode(
             String tenantId, String redemptionCode);
 

@@ -1,4 +1,3 @@
-import { getStoredTenantId } from '@/utils/tenant';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';

@@ -1,102 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LoyaltyApi, getDefaultUserId, type PartnerLocationItem } from '../../services/api';
-import { generateBarcode128Svg } from '../../utils/barcode128';
-import { Screen, SectionHeader, Skeleton, ErrorBlock, Pill, SecondaryButton, Empty, SlideRow, useLoad, fmt } from '../ui';
-import { QrCode } from '../qr';
-import { artMap, artGift, artEmptyBox, partnerPhoto } from '../art';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Wallet, Ticket, Clock } from 'lucide-react';
+import { LoyaltyApi, getDefaultUserId, type UserVoucherItem } from '../../services/api';
+import { Screen, Skeleton, ErrorBlock, useLoad, fmt } from '../ui';
+import { paramJson, PARAM } from '../data';
+import { CodeTabs, cleanBrand } from './Rewards';
 
 const uid = () => getDefaultUserId();
-const nice = (s: string) => s.replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
-// ───────────────────────── LM-04 · Where to use coins ─────────────────────────
-export const WhereToUse: React.FC = () => {
-  const navigate = useNavigate();
-  const [cat, setCat] = useState('All');
-  const [data, failed, reload] = useLoad(async () => {
-    const [p, partners] = await Promise.all([LoyaltyApi.getProfile(uid()), LoyaltyApi.getWhereToUsePartners().catch(() => [] as PartnerLocationItem[])]);
-    return { coins: p.currentPoints || 0, partners: partners.filter((x) => !x.status || x.status === 'ACTIVE') };
-  });
-  // Category chips come from the partners' categories (CMS), one row per partner with its branch count.
-  const CATS = ['All', ...Array.from(new Set((data?.partners || []).map((p) => p.category).filter(Boolean)))];
-  const grouped = Object.values(
-    (data?.partners || []).reduce<Record<string, { p: PartnerLocationItem; n: number }>>((acc, p) => {
-      acc[p.partnerCode] = acc[p.partnerCode] ? { ...acc[p.partnerCode], n: acc[p.partnerCode].n + 1 } : { p, n: 1 };
-      return acc;
-    }, {}),
-  ).filter(({ p }) => cat === 'All' || p.category === cat);
-
-  return (
-    <Screen title="Use coins" back="/">
-      <div>
-        <h2 className="text-[24px] font-semibold leading-8">Where to use coins</h2>
-        <p className="text-[13px] text-slate-500">1 coin = 1 HTG at partners. Pick the way that suits you.</p>
-      </div>
-      {failed && <ErrorBlock onRetry={reload} />}
-      {!data && !failed && <Skeleton className="h-[240px]" />}
-      {data && (
-        <>
-          <div className="w-full overflow-hidden rounded-[20px] bg-white">
-            <div className="flex h-[150px] items-center justify-center bg-brand-soft"><img src={artMap} alt="" className="size-[130px] object-contain" /></div>
-            <div className="flex items-end gap-3 p-4">
-              <div className="flex-1">
-                <p className="text-[12px] text-slate-500">Available coins</p>
-                <p className="text-[28px] font-semibold">{fmt(data.coins)} coins</p>
-              </div>
-              <Pill tone="green">≈ {fmt(data.coins)} HTG</Pill>
-            </div>
-          </div>
-          <SectionHeader title="2 ways to use coins" />
-          <button type="button" onClick={() => navigate('/pay-at-counter')} className="flex w-full items-start gap-3 rounded-[20px] bg-white p-4 text-left">
-            <img src={partnerPhoto('grocery')} alt="" className="size-16 rounded-[14px] object-cover" />
-            <span className="flex flex-1 flex-col gap-1">
-              <span className="flex items-center gap-2 text-[15px] font-semibold"><span className="flex size-5 items-center justify-center rounded-full bg-brand text-[11px] text-white">1</span>Pay with coins in Natcash</span>
-              <span className="text-[12px] text-slate-500">On the payment confirmation screen, the app suggests how many coins you can use at accepting stores. At the counter, show your reward QR.</span>
-              <span className="text-[12px] font-semibold text-brand">Show my reward QR ›</span>
-            </span>
-          </button>
-          <button type="button" onClick={() => navigate('/rewards')} className="flex w-full items-start gap-3 rounded-[20px] bg-white p-4 text-left">
-            <img src={artGift} alt="" className="size-16 rounded-[14px] bg-brand-soft object-contain p-1" />
-            <span className="flex flex-1 flex-col gap-1">
-              <span className="flex items-center gap-2 text-[15px] font-semibold"><span className="flex size-5 items-center justify-center rounded-full bg-brand text-[11px] text-white">2</span>Redeem for vouchers</span>
-              <span className="text-[12px] text-slate-500">Pick a reward in the Reward store. Vouchers are saved in “My vouchers”.</span>
-              <span className="text-[12px] font-semibold text-brand">Open Reward store ›</span>
-            </span>
-          </button>
-          <SectionHeader title="Partners accepting coins" />
-          <SlideRow>
-            {CATS.map((c) => (
-              <button key={c} type="button" onClick={() => setCat(c)} className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-semibold ${cat === c ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white'}`}>{c === 'All' ? c : nice(c)}</button>
-            ))}
-          </SlideRow>
-          {grouped.length === 0 && <Empty art={artEmptyBox} title="No partners in this category yet" />}
-          {grouped.length > 0 && (
-            <div className="w-full divide-y divide-slate-100 rounded-[20px] bg-white px-4">
-              {grouped.map(({ p, n }) => (
-                <div key={p.partnerCode} className="flex items-center gap-3 py-3">
-                  <img src={partnerPhoto(`${p.partnerName} ${p.category}`)} alt="" className="size-11 rounded-xl object-cover" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-[14px] font-semibold">{p.partnerName}</span>
-                    <span className="text-[11px] text-slate-500">{nice(p.category)} · {n} {n === 1 ? 'store' : 'stores'}</span>
-                  </span>
-                  <Pill tone="orange">{p.burnPolicyText || 'Natcash payment'}</Pill>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </Screen>
-  );
-};
-
-// ───────────────────────── LM-17 · Pay at the counter · reward wallet QR (60 s) ─────────────────────────
+/**
+ * LM-17 · Pay at counter (Figma 692:2 / 768:2; with a voucher picked 765:137 / 768:405).
+ * The customer shows the code, the cashier scans it. Cart and amount live on the POS; the POS shows the customer's coins and
+ * vouchers (wallet/inquiry) and the cashier applies what the customer asks for. No coin switch on the phone (decision 18/11).
+ * Scan = paid; above PAY_AT_COUNTER_PIN_LIMIT_HTG the Natcash app asks for the PIN. The result is the Natcash app's own
+ * Payment results screen, so this screen never jumps to a result by itself.
+ */
 export const PayAtCounter: React.FC = () => {
   const navigate = useNavigate();
+  const [sp] = useSearchParams();
+  const voucherId = sp.get('voucher');
   const [token, setToken] = useState<string>();
   const [left, setLeft] = useState(60);
   const [failed, setFailed] = useState(false);
-  const [profile] = useLoad(() => LoyaltyApi.getProfile(uid()));
+  const [voucher] = useLoad<UserVoucherItem | undefined>(
+    async () => (voucherId ? (await LoyaltyApi.getUserVouchers(uid())).find((v) => String(v.id) === voucherId) : undefined),
+    [voucherId],
+  );
+  const [pinLimit] = useLoad(() => paramJson<number>(PARAM.PIN_LIMIT));
 
   const refresh = async () => {
     setFailed(false);
@@ -116,30 +46,41 @@ export const PayAtCounter: React.FC = () => {
     return () => clearInterval(t);
   }, []);
   useEffect(() => {
-    if (left <= 0 && token) void refresh(); // each code is single-use and expires; fetch a fresh one
+    if (left <= 0 && token) void refresh(); // each code works once and expires; fetch a fresh one
   }, [left, token]);
 
   return (
-    <Screen title="Pay at the counter" back="/use-coins">
-      <div>
-        <h2 className="text-[22px] font-semibold">Show this at the cashier</h2>
-        <p className="text-[13px] text-slate-500">The POS scans it and applies coins and vouchers to the bill.</p>
-      </div>
+    <Screen title="Pay at counter">
       {failed && <ErrorBlock onRetry={refresh} />}
       {!token && !failed && <Skeleton className="h-[380px]" />}
       {token && (
-        <div className="flex w-full flex-col items-center gap-3 rounded-[20px] bg-white p-4">
-          <QrCode value={token} size={190} />
-          <div className="w-full" dangerouslySetInnerHTML={{ __html: generateBarcode128Svg(token.slice(0, 24), 56) }} />
-          <Pill tone="orange" className="px-4 py-1.5 text-[12px]">Refreshes in 0:{String(Math.max(left, 0)).padStart(2, '0')}</Pill>
-          <div className="mt-1 grid w-full grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-            <div><p className="text-[11px] text-slate-500">Coins available</p><p className="text-[18px] font-semibold">{fmt(profile?.currentPoints)} coins</p></div>
-            <div><p className="text-[11px] text-slate-500">Usable here</p><p className="text-[13px] font-semibold">per the store's policy</p></div>
-          </div>
+        <div className="flex w-full flex-col items-center gap-3 rounded-[16px] bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+          <h2 className="text-[17px] font-semibold">Show this code to the cashier</h2>
+          <p className="flex items-center gap-1 text-[12px] text-slate-500">
+            <Clock className="size-3.5" /> Refreshes in 0:{String(Math.max(left, 0)).padStart(2, '0')} · works once
+          </p>
+          <CodeTabs value={token} />
         </div>
       )}
-      <p className="text-[12px] text-slate-500">Each code is signed, works once and expires after 60 seconds, so a screenshot cannot be reused.</p>
-      <SecondaryButton onClick={() => navigate('/use-coins')}>I’m done</SecondaryButton>
+      <div className="w-full divide-y divide-slate-100 rounded-[16px] bg-white px-4">
+        <div className="flex items-center gap-3 py-3">
+          <span className="flex size-9 items-center justify-center rounded-full bg-[#FFF1E3]"><Wallet className="size-[18px] text-[#FE810D]" /></span>
+          <span className="flex-1 text-[15px] font-semibold">Natcash wallet</span>
+        </div>
+        {voucherId && (
+          <button type="button" onClick={() => navigate(-1)} className="flex w-full items-center gap-3 py-3 text-left">
+            <span className="flex size-9 items-center justify-center rounded-full bg-[#FFF1E3]"><Ticket className="size-[18px] text-[#FE810D]" /></span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-[15px] font-semibold">{voucher ? `${cleanBrand(voucher.partnerName)} · ${voucher.discountText || voucher.title}` : 'Voucher'}</span>
+              <span className="text-[12px] text-slate-500">Cashier applies it when scanning</span>
+            </span>
+            <span className="text-[14px] font-semibold text-[#FE810D]">Change</span>
+          </button>
+        )}
+      </div>
+      <p className="rounded-[14px] bg-[#FFF4EA] p-3 text-[13px] leading-5 text-slate-700">
+        The cashier scans your code. Your coins and vouchers show on the cashier’s screen – tell them what to use. {pinLimit ? `Amounts above ${fmt(Number(pinLimit))} HTG ask for your PIN.` : 'Large amounts ask for your PIN in Natcash.'}
+      </p>
     </Screen>
   );
 };

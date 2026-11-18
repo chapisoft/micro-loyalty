@@ -114,6 +114,15 @@ class LoyaltyJSBridgeManager {
   /**
    * Đóng cửa sổ Webview và quay lại màn hình chính của ứng dụng
    */
+  /** Online voucher: open the Natcash service checkout (top-up, data, bills) with the voucher applied. */
+  public openService(serviceLink: string, voucherCode: string): void {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'openService', payload: { serviceLink, voucherCode } }));
+    } else if (/^https?:/.test(serviceLink)) {
+      window.location.href = serviceLink;
+    }
+  }
+
   public closeWebview(): void {
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'closeWebview' }));

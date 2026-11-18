@@ -33,11 +33,13 @@ export const paths = {
   natcashPaymentPoints: '/partners/payment-points',
   customerSegments: '/engagement/segments',
   reminderScenarios: '/engagement/scenarios',
+  bannersPopupsOffers: '/engagement/banners-popups',
   budgetManagement: '/reports/budgets',
   programEffectiveness: '/reports/effectiveness',
   alertCenter: '/reports/alerts',
   advancedReports: '/reports/advanced',
   learningQuizBank: '/games/learning-quiz',
   gameStatistics: '/games/statistics',
+  leaderboardPrizes: '/games/leaderboard-prizes',
   agentLoyaltyManagement: '/agents/loyalty',
 } as const;

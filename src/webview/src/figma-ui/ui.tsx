@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
+import { changeLanguage } from '../language';
 import iconArrowLeft from '../assets/figma/icon-arrow-left.svg';
 import iconEllipsis from '../assets/figma/icon-ellipsis.svg';
 import iconX from '../assets/figma/icon-x.svg';
@@ -9,46 +11,292 @@ import iconX from '../assets/figma/icon-x.svg';
 
 export const fmt = (n: number | undefined | null) => Math.round(Number(n) || 0).toLocaleString('en-US');
 
+/** Accepts ISO dates and the service's dd/MM/yyyy strings. */
+export const toDate = (v?: string) => {
+  if (!v) return new Date(NaN);
+  const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])) : new Date(v);
+};
+
 export const ddmm = (iso?: string) => {
   if (!iso) return '';
-  const d = new Date(iso);
+  const d = toDate(iso);
   return Number.isNaN(d.getTime()) ? '' : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
 export const ddmmyyyy = (iso?: string) => {
   const s = ddmm(iso);
-  return s ? `${s}/${new Date(iso as string).getFullYear()}` : '';
+  return s ? `${s}/${toDate(iso).getFullYear()}` : '';
 };
 
-/** Webview top bar: back · title · [… | ×]. `back` = parent route; omitted → browser history. */
-export const WebviewHeader: React.FC<{ title: string; back?: string }> = ({ title, back }) => {
+/** Phone column: every screen, bar and sheet is centred at this width so tablets and desktop browsers keep the phone layout. */
+const COL = 'mx-auto w-full max-w-[430px]';
+
+/**
+ * Webview top bar: back · title · [… | ×].
+ * Back rule (Figma 17/11): detail screens go to the previous screen (no `back`), post-action screens pass their flow root,
+ * tab roots pass "/" (Loyalty Home). "…" opens the More sheet over the current screen; "×" closes Loyalty.
+ * `orange`: transparent bar on the orange header background (white icons, white title).
+ */
+export const WebviewHeader: React.FC<{ title: string; back?: string; orange?: boolean; hideTitle?: boolean }> = ({ title, back, orange, hideTitle }) => {
   const navigate = useNavigate();
+  const [more, setMore] = React.useState(false);
   const goBack = () => (back ? navigate(back) : window.history.length > 1 ? navigate(-1) : LoyaltyJSBridge.closeWebview());
   return (
-    <header className="sticky top-0 z-30 flex h-[52px] items-center gap-2 bg-white px-4 py-1">
-      <button type="button" aria-label="Back" onClick={goBack} className="flex size-11 shrink-0 items-center justify-center">
-        <img src={iconArrowLeft} alt="" className="size-[22px]" />
-      </button>
-      <h1 className="min-w-0 flex-1 truncate text-[14px] font-semibold leading-5 text-slate-900">{title}</h1>
-      <div className="flex h-11 w-[88px] shrink-0 items-center rounded-[22px] border border-slate-200 bg-white">
-        <button type="button" aria-label="More options" className="flex size-11 items-center justify-center">
-          <img src={iconEllipsis} alt="" className="size-[18px]" />
+    <header className={orange ? 'relative z-10' : 'sticky top-0 z-30 bg-white'}>
+      <div className="flex h-[52px] items-center gap-2 px-4">
+        <button type="button" aria-label="Back" onClick={goBack} className="-ml-2 flex size-11 shrink-0 items-center justify-center">
+          <img src={iconArrowLeft} alt="" className={`size-[22px] ${orange ? 'brightness-0 invert' : ''}`} />
         </button>
-        <button type="button" aria-label="Close Loyalty" onClick={() => LoyaltyJSBridge.closeWebview()} className="flex size-11 items-center justify-center">
-          <img src={iconX} alt="" className="size-[18px]" />
-        </button>
+        <h1 className={`min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 ${orange ? 'text-white' : 'text-slate-900'} ${hideTitle ? 'invisible' : ''}`}>{title}</h1>
+        <div className={`flex h-10 w-[88px] shrink-0 items-center justify-around rounded-[20px] bg-white ${orange ? '' : 'border border-slate-200'}`}>
+          <button type="button" aria-label="More options" onClick={() => setMore(true)} className="flex size-10 items-center justify-center">
+            <img src={iconEllipsis} alt="" className="size-[18px]" />
+          </button>
+          <button type="button" aria-label="Close Loyalty" onClick={() => LoyaltyJSBridge.closeWebview()} className="flex size-10 items-center justify-center">
+            <img src={iconX} alt="" className="size-[18px]" />
+          </button>
+        </div>
       </div>
+      <MoreSheet open={more} onClose={() => setMore(false)} />
     </header>
   );
 };
 
-/** Full-height page in the Figma grey (#F7F8FA) with the Be Vietnam Pro type. */
-export const Screen: React.FC<{ title: string; back?: string; children: React.ReactNode }> = ({ title, back, children }) => (
-  <div className="min-h-screen bg-page font-nc text-slate-900">
-    <WebviewHeader title={title} back={back} />
-    <main className="mx-auto flex w-full max-w-[430px] flex-col gap-[18px] px-4 pb-8 pt-4">{children}</main>
+/**
+ * Orange header background exported from Figma ("Top gradient" 706:260 / 706:102 / 706:221 / 708:36): solid #FE810D with a
+ * curved bottom and two soft white shapes. All tab roots use the same drawing; only the height changes.
+ * Heights are the Figma ones minus the 32 px phone status bar (the native app draws that).
+ */
+export const HEADER_H = { home: 234, missions: 194, games: 210, vouchers: 246, network: 194 } as const;
+/** Where the content starts under the orange header (Figma y minus the status bar): Home card overlaps the curve, Missions starts below it. */
+const CONTENT_Y = { home: 120, missions: 186, games: 176, vouchers: 212, network: 186 } as const;
+const HeaderBg: React.FC<{ h: number }> = ({ h }) => {
+  const c = h - 56;
+  return (
+    <svg aria-hidden className="pointer-events-none absolute inset-x-0 top-0 w-full" height={h} viewBox={`0 0 390 ${h}`} preserveAspectRatio="none">
+      <path d={`M0 0H390V${c}C260 ${c + 37.333} 130 ${c + 37.333} 0 ${c}V0Z`} fill="#FE810D" />
+      <ellipse cx="350" cy="-22" rx="150" ry="90" fill="#fff" fillOpacity="0.07" />
+      <ellipse cx="40" cy={c - 14} rx="120" ry="50" fill="#fff" fillOpacity="0.05" />
+    </svg>
+  );
+};
+
+// ───────────── Bottom tab bars (Figma components 593:218 customer · 743:221 agent · 743:462 super agent) ─────────────
+export type Shell = 'customer' | 'agent' | 'super';
+export type TabKey = 'home' | 'missions' | 'games' | 'network' | 'vouchers';
+const TAB_LABEL: Record<TabKey, string> = { home: 'Home', missions: 'Missions', games: 'Games', network: 'Network', vouchers: 'Vouchers' };
+/** Outline icon when idle, filled when selected (Figma tab bar). */
+const TabIcon: React.FC<{ k: TabKey; on: boolean }> = ({ k, on }) => {
+  const p = { fill: on ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const cut = on ? '#fff' : 'currentColor';
+  return (
+    <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
+      {k === 'home' && <><path {...p} d="M3.5 10.2 12 3.5l8.5 6.7V19a1.5 1.5 0 0 1-1.5 1.5h-4.2v-5.7H9.2v5.7H5A1.5 1.5 0 0 1 3.5 19z" />{on && <rect x="9.6" y="14.2" width="4.8" height="6.3" rx="0.8" fill="#fff" />}</>}
+      {k === 'missions' && <><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" strokeWidth={on ? 2.6 : 1.8} /><circle cx="12" cy="12" r="3.6" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.8} /></>}
+      {k === 'games' && <><rect {...p} x="2.5" y="6.5" width="19" height="11.5" rx="4.5" /><path d="M7 12.3h4M9 10.3v4" stroke={cut} strokeWidth={1.8} strokeLinecap="round" /><circle cx="15.6" cy="11.4" r="1" fill={cut} /><circle cx="17.6" cy="13.6" r="1" fill={cut} /></>}
+      {k === 'network' && <><circle {...p} cx="9" cy="8" r="3.2" /><path {...p} d="M3 20a6 6 0 0 1 12 0z" /><circle {...p} cx="17.2" cy="9" r="2.5" /><path fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" d="M16.2 14.3a5 5 0 0 1 5 5.3" /></>}
+      {k === 'vouchers' && <><path {...p} d="M3 8.2a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2.3a1.8 1.8 0 0 0 0 3.6v2.3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2.3a1.8 1.8 0 0 0 0-3.6z" /><path d="M9.5 6.5v11" stroke={cut} strokeWidth={1.6} strokeDasharray="1.6 1.8" /></>}
+    </svg>
+  );
+};
+export const SHELL_TABS: Record<Shell, [TabKey, string][]> = {
+  customer: [['home', '/'], ['missions', '/missions'], ['games', '/games'], ['vouchers', '/rewards']],
+  agent: [['home', '/agent'], ['missions', '/agent/missions'], ['vouchers', '/agent/vouchers']],
+  super: [['home', '/agent'], ['missions', '/agent/missions'], ['network', '/agent/network'], ['vouchers', '/agent/vouchers']],
+};
+/** Base path of the voucher screens for a shell (customer `/rewards`, agents `/agent/vouchers`). */
+export const voucherBase = (shell: Shell) => (shell === 'customer' ? { store: '/rewards', mine: '/my-vouchers' } : { store: '/agent/vouchers', mine: '/agent/my-vouchers' });
+
+export const TabBar: React.FC<{ shell: Shell; active: TabKey }> = ({ shell, active }) => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <div className="h-[84px]" />
+      <nav aria-label="Loyalty menu" className="fixed inset-x-0 bottom-0 z-20">
+        <div className={`${COL} flex h-[70px] rounded-t-[20px] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.06)]`}>
+          {SHELL_TABS[shell].map(([k, to]) => {
+            const on = k === active;
+            return (
+              <button key={k} type="button" onClick={() => !on && navigate(to)} aria-current={on ? 'page' : undefined} className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 ${on ? 'text-[#FE810D]' : 'text-[#8B8B93]'}`}>
+                {on && <span className="absolute left-1/2 top-0 h-[3px] w-9 -translate-x-1/2 rounded-b-[3px] bg-[#FE810D]" />}
+                <TabIcon k={k} on={on} />
+                <span className={`truncate text-[12px] ${on ? 'font-semibold' : 'font-medium'}`}>{TAB_LABEL[k]}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </>
+  );
+};
+
+/**
+ * Page in the phone column (max 430 px, centred on tablets and desktop) on the Figma grey #F5F5F5, Be Vietnam Pro.
+ * `hero` + `heroH`: tab-root orange header (Figma 17/11) drawn behind the bar and the hero block; content may overlap its curve.
+ * `barTitle`: keep the title in the bar (Home shows "Rewards" in the bar); otherwise the hero carries the title, not shown twice.
+ * `tab`: bottom tab bar of the shell.
+ */
+export const Screen: React.FC<{
+  title: string;
+  back?: string;
+  hero?: React.ReactNode;
+  heroH?: number;
+  barTitle?: boolean;
+  tab?: { shell: Shell; active: TabKey };
+  children: React.ReactNode;
+}> = ({ title, back, hero, heroH, barTitle, tab, children }) => (
+  <div className="min-h-screen bg-[#F5F5F5] font-nc text-[#1F1F24]">
+    <div className={`${COL} relative min-h-screen`}>
+      {hero && <HeaderBg h={heroH ?? HEADER_H[tab?.active || 'missions']} />}
+      <WebviewHeader title={title} back={back} orange={!!hero} hideTitle={!!hero && !barTitle} />
+      {hero && <div className="relative px-4 pb-3 text-white" style={{ minHeight: CONTENT_Y[tab?.active || 'missions'] - 52 }}>{hero}</div>}
+      <main className={`relative flex flex-col gap-[14px] px-4 ${tab ? 'pb-4' : 'pb-8'} ${hero ? 'pt-1' : 'pt-4'}`}>{children}</main>
+    </div>
+    {tab && <TabBar shell={tab.shell} active={tab.active} />}
   </div>
 );
+
+/** Content of the orange header (Figma Missions / Games / Vouchers): title 22, one line, white coins pill, AI illustration on orange. */
+export const Hero: React.FC<{ title: string; sub?: string; coins?: number; onCoins?: () => void; art?: string; children?: React.ReactNode }> = ({ title, sub, coins, onCoins, art, children }) => (
+  <div className="flex flex-col gap-3.5">
+    <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h2 className="text-[22px] font-bold leading-7">{title}</h2>
+        {sub && <p className="text-[13px] leading-[18px] text-white/90">{sub}</p>}
+        {coins !== undefined && (
+          <button type="button" onClick={onCoins} className="mt-2 flex h-8 w-fit items-center gap-1.5 rounded-full bg-white pl-1.5 pr-3 text-[15px] font-bold text-[#1F1F24]">
+            <CoinDot className="size-[22px]" /> {fmt(coins)} <span className="ml-0.5 text-[16px] font-semibold text-[#FE810D]">›</span>
+          </button>
+        )}
+      </div>
+      {art && <img src={art} alt="" className="-my-3 h-[96px] w-[128px] shrink-0 object-contain [mask-image:radial-gradient(closest-side,#000_72%,transparent)]" />}
+    </div>
+    {children}
+  </div>
+);
+
+export const CoinDot: React.FC<{ className?: string }> = ({ className = 'size-[18px]' }) => (
+  <svg viewBox="0 0 20 20" className={className} aria-hidden>
+    <circle cx="10" cy="10" r="9.5" fill="#FFD36B" />
+    <circle cx="10" cy="10" r="7" fill="#FFB020" />
+    <circle cx="10" cy="10" r="4" fill="none" stroke="#FFF3D1" strokeWidth="1.6" />
+  </svg>
+);
+
+/** Pill segmented control inside the orange header (Store / My vouchers): white track 20 %, selected pill white with orange text. */
+export const Segmented: React.FC<{ items: { key: string; label: React.ReactNode }[]; value: string; onChange: (k: string) => void }> = ({ items, value, onChange }) => (
+  <div role="tablist" className="flex w-full rounded-full bg-white/20 p-1">
+    {items.map((it) => (
+      <button key={it.key} type="button" role="tab" aria-selected={value === it.key} onClick={() => onChange(it.key)} className={`flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-full text-[14px] font-semibold ${value === it.key ? 'bg-white text-[#FE810D] shadow-sm' : 'text-white'}`}>
+        {it.label}
+      </button>
+    ))}
+  </div>
+);
+
+/** Soft filter chip (selected: #FFE9D4 with orange text). */
+export const Chip: React.FC<{ on?: boolean; onClick?: () => void; children: React.ReactNode }> = ({ on, onClick, children }) => (
+  <button type="button" onClick={onClick} className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] ${on ? 'border border-[#FE810D] bg-[#FFF4EA] font-semibold text-[#FE810D]' : 'border border-slate-200 bg-white text-slate-700'}`}>
+    {children}
+  </button>
+);
+
+/**
+ * Standard list card (Figma "My vouchers" 330:250, the reference the reviewer approved):
+ * white, radius 16, soft shadow; photo 100×80 with the partner tag; 3 lines; action on the right.
+ */
+export const ListCard: React.FC<{
+  photo: string;
+  tag?: string;
+  title: string;
+  sub?: string;
+  line3?: React.ReactNode;
+  action?: React.ReactNode;
+  dim?: boolean;
+  onClick?: () => void;
+}> = ({ photo, tag, title, sub, line3, action, dim, onClick }) => (
+  <div className="flex w-full items-center gap-2.5 rounded-[16px] bg-white p-1.5 pr-3 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+    <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
+      <span className="relative h-20 w-[100px] shrink-0 overflow-hidden rounded-[12px]">
+        <img src={photo} alt="" className={`size-full object-cover ${dim ? 'opacity-50 grayscale' : ''}`} />
+        {tag && <span className="absolute left-1.5 top-1.5 max-w-[88px] truncate rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-slate-900">{tag}</span>}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className={`truncate text-[16px] font-bold leading-5 ${dim ? 'text-slate-400' : ''}`}>{title}</span>
+        {sub && <span className="truncate text-[12.5px] leading-4 text-[#8B8B93]">{sub}</span>}
+        {line3 && <span className="mt-1 flex min-w-0">{line3}</span>}
+      </span>
+    </button>
+    {action && <span className="shrink-0">{action}</span>}
+  </div>
+);
+
+/** Small dark toast above the tab bar ("Saved to My vouchers · View"). */
+export const Toast: React.FC<{ text: string | null; action?: string; onAction?: () => void }> = ({ text, action, onAction }) =>
+  text ? (
+    <div role="status" className="fixed inset-x-0 bottom-[88px] z-40 px-4">
+      <div className={`${COL} flex items-center gap-2.5 rounded-[14px] bg-[#1F1F24]/95 px-3.5 py-3 text-[14px] font-medium text-white shadow-lg`}>
+        <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden><circle cx="12" cy="12" r="10" fill="#22C55E" /><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <span className="min-w-0 flex-1">{text}</span>
+        {action && <button type="button" onClick={onAction} className="font-semibold text-[#FFB066]">{action}</button>}
+      </div>
+    </div>
+  ) : null;
+
+export function useToast(ms = 3500): [string | null, (t: string) => void] {
+  const [text, setText] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!text) return;
+    const t = setTimeout(() => setText(null), ms);
+    return () => clearTimeout(t);
+  }, [text, ms]);
+  return [text, setText];
+}
+
+// ───────────── "…" More sheet (Figma 732:2) and Language sheet (CN-05b) ─────────────
+const LANGS: [string, string][] = [['en', 'English'], ['fr', 'Français'], ['ht', 'Kreyòl Ayisyen']];
+const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const navigate = useNavigate();
+  const [lang, setLang] = React.useState(false);
+  const { i18n } = useTranslation();
+  const go = (to: string) => {
+    onClose();
+    navigate(to);
+  };
+  const isAgent = typeof window !== 'undefined' && window.location.hash.startsWith('#/agent');
+  const rows: [string, () => void][] = [
+    ...(isAgent ? [] : ([['Share Rewards', () => go('/invite')]] as [string, () => void][])),
+    ['Coins history', () => go('/coins')],
+    ['Notification settings', () => go('/notifications')],
+    ['Language', () => setLang(true)],
+    ['Program terms', () => go('/terms')],
+  ];
+  return (
+    <>
+      <Sheet open={open && !lang} onClose={onClose} title="More">
+        <div className="divide-y divide-slate-100 rounded-[16px] bg-[#F7F7F8]">
+          {rows.map(([label, fn]) => (
+            <button key={label} type="button" onClick={fn} className="flex h-12 w-full items-center px-4 text-left text-[15px]">
+              <span className="flex-1">{label}</span>
+              <span className="text-slate-400">›</span>
+            </button>
+          ))}
+        </div>
+      </Sheet>
+      <Sheet open={open && lang} onClose={() => { setLang(false); onClose(); }} title="Language">
+        <div className="divide-y divide-slate-100 rounded-[16px] bg-[#F7F7F8]">
+          {LANGS.map(([code, label]) => (
+            <button key={code} type="button" onClick={() => { changeLanguage(code); setLang(false); onClose(); }} className="flex h-12 w-full items-center px-4 text-left text-[15px]">
+              <span className={`flex-1 ${i18n.language === code ? 'font-semibold' : ''}`}>{label}</span>
+              {i18n.language === code && <span className="text-[#FE810D]">✓</span>}
+            </button>
+          ))}
+        </div>
+      </Sheet>
+    </>
+  );
+};
 
 export const SectionHeader: React.FC<{ title: string; action?: string; onAction?: () => void }> = ({ title, action, onAction }) => (
   <div className="flex w-full items-center gap-2">

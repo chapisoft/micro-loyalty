@@ -3,14 +3,14 @@ import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from '
 import { ArrowLeft, HelpCircle, Volume2, PlusCircle, Trophy, ShieldCheck, Volume1, Mic, Check } from 'lucide-react';
 import { soundHaptics } from '../../utils/soundHaptics';
 import {
-  LoyaltyApi, getDefaultUserId, type LearningCourseItem, type LearningQuestionItem, type LearningQuizSubmitResponse, type WheelPrizeItem,
+  LoyaltyApi, getDefaultUserId, type LearningCourseItem, type LearningQuestionItem, type LearningQuizSubmitResponse, type WheelPrizeItem, type LeaderboardRulesResponse,
 } from '../../services/api';
 import { GameArt } from '../GameArt';
 import { IN_HOUSE, CAT, loadGames, catLabel, type GameEntry } from '../games';
 import {
-  Screen, SectionHeader, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, ResultBlock, InfoRows, Empty, Popup, Sheet, SlideRow, useLoad, fmt,
+  Screen, Hero, SectionHeader, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, ResultBlock, InfoRows, Empty, Popup, Sheet, SlideRow, useLoad, fmt,
 } from '../ui';
-import { artCup, artEmptyBox, artGamepad, artHourglass } from '../art';
+import { artCup, artEmptyBox, artGamepad, artHourglass, aiGames } from '../art';
 
 const uid = () => getDefaultUserId();
 
@@ -56,7 +56,34 @@ const PODIUM = {
   3: { block: 'h-[48px] bg-gradient-to-b from-[#F3B07A] to-[#C9773D] text-[#3B1D00]', ring: 'ring-[#F3B07A]', name: 'text-[#F3B07A]' },
 } as const;
 
-const Leaderboard: React.FC<{ board: BoardRow[] }> = ({ board }) => {
+type LeaderboardTab = 'ALL' | 'LEARNING' | 'MINI_GAMES';
+
+const Leaderboard: React.FC<{ initialBoard: BoardRow[] }> = ({ initialBoard }) => {
+  const [boardType, setBoardType] = useState<LeaderboardTab>('ALL');
+  const [board, setBoard] = useState<BoardRow[]>(initialBoard);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [rulesData, setRulesData] = useState<LeaderboardRulesResponse | null>(null);
+
+  const switchBoard = async (next: LeaderboardTab) => {
+    setBoardType(next);
+    try {
+      const rows = await LoyaltyApi.getLearningLeaderboard(next);
+      setBoard(rows);
+    } catch {
+      setBoard(next === 'ALL' ? initialBoard : []);
+    }
+  };
+
+  const openRules = async () => {
+    setRulesOpen(true);
+    try {
+      const info = await LoyaltyApi.getLeaderboardRules(boardType);
+      setRulesData(info);
+    } catch {
+      setRulesData(null);
+    }
+  };
+
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const msLeft = end.getTime() - now.getTime();
@@ -76,7 +103,7 @@ const Leaderboard: React.FC<{ board: BoardRow[] }> = ({ board }) => {
           <span className="absolute -bottom-2 flex size-5 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-slate-900">{r}</span>
         </span>
         <span className="mt-1 max-w-full truncate text-[13px] font-semibold text-white">{name}</span>
-        <span className={`text-[12px] font-semibold ${PODIUM[r].name}`}>{row ? `${fmt(row.totalPoints)} coins` : 'Open spot'}</span>
+        <span className={`text-[12px] font-semibold ${PODIUM[r].name}`}>{row ? `${fmt(row.totalPoints)} pts` : 'Open spot'}</span>
         <span className={`mt-1 flex w-full items-center justify-center rounded-t-[14px] px-1 text-center text-[12px] font-semibold ${PODIUM[r].block}`}>
           {row?.badge || `#${r}`}
         </span>
@@ -89,10 +116,31 @@ const Leaderboard: React.FC<{ board: BoardRow[] }> = ({ board }) => {
       <div className="relative flex items-start gap-2">
         <div className="flex-1">
           <p className="flex items-center gap-1.5 text-[16px] font-semibold"><Trophy className="size-4 text-[#FFD36B]" /> {month} leaderboard</p>
-          <p className="text-[11px] text-white/70">Most coins from games this month</p>
+          <p className="text-[11px] text-white/70">Top players by game points this month</p>
         </div>
         <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold">⏳ {left}</span>
       </div>
+
+      <div className="relative flex items-center gap-1.5">
+        {([
+          { k: 'ALL', l: 'All' },
+          { k: 'LEARNING', l: 'Learning' },
+          { k: 'MINI_GAMES', l: 'Mini games' },
+        ] as const).map((t) => (
+          <button
+            key={t.k}
+            type="button"
+            onClick={() => switchBoard(t.k)}
+            className={`rounded-full px-3 py-1 text-[11px] font-semibold ${boardType === t.k ? 'bg-[#FFBF40] text-[#2E1440]' : 'bg-white/10 text-white/85'}`}
+          >
+            {t.l}
+          </button>
+        ))}
+        <button type="button" onClick={openRules} className="ml-auto text-[11px] font-semibold text-[#FFC759]">
+          Rules ›
+        </button>
+      </div>
+
       <div className="relative mt-2 flex items-end gap-2">
         <Slot r={2} />
         <Slot r={1} />
@@ -103,16 +151,56 @@ const Leaderboard: React.FC<{ board: BoardRow[] }> = ({ board }) => {
           <span className="w-4 text-white/60">{x.rank}</span>
           <span className="flex size-8 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold">{initials(x.displayName || x.maskedPhone || '?')}</span>
           <span className="flex-1">{x.displayName || x.maskedPhone}</span>
-          <span className="font-semibold">{fmt(x.totalPoints)} coins</span>
+          <span className="font-semibold">{fmt(x.totalPoints)} pts</span>
         </div>
       ))}
       <div className="relative flex items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#FF8600] to-[#FFA23F] px-3 py-2.5">
         <span className="text-[15px] font-semibold">{me ? `#${me.rank}` : '—'}</span>
         <span className="flex-1">
-          <span className="block text-[13px] font-semibold">{me ? `You · ${fmt(me.totalPoints)} coins` : 'You’re not on the board yet'}</span>
-          <span className="block text-[11px] text-white/85">{board.length ? 'Play this month to climb the ranks' : 'Be the first — play a game to get on the board'}</span>
+          <span className="block text-[13px] font-semibold">{me ? `You · ${fmt(me.totalPoints)} pts` : 'You’re not on the board yet'}</span>
+          <span className="block text-[11px] text-white/85">{board.length ? 'Play & learn this month to climb the ranks' : 'Be the first — play a game to earn game points'}</span>
         </span>
       </div>
+
+      <Sheet open={rulesOpen} onClose={() => setRulesOpen(false)} title="Leaderboard rules & prizes">
+        <div className="flex flex-col gap-3 text-[13px] text-slate-700">
+          <div className="rounded-2xl bg-amber-50 p-3 text-[12px] text-amber-900">
+            <p className="font-semibold">Game points (pts) are separate from Natcash Coins</p>
+            <p className="mt-1">Pts are non-spendable and reset on the 1st of every month. Buying extra plays with coins never earns pts.</p>
+          </div>
+          <div>
+            <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-slate-500">Monthly rank prizes</p>
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 px-3">
+              {(rulesData?.prizes?.length ? rulesData.prizes : [
+                { boardType: 'ALL', rankFrom: 1, rankTo: 1, prizeType: 'VOUCHER', prizeLabel: '10 GB 4G + Voucher 200 HTG' },
+                { boardType: 'ALL', rankFrom: 2, rankTo: 2, prizeType: 'TELCO_DATA', prizeLabel: '5 GB 4G Data Pack' },
+                { boardType: 'ALL', rankFrom: 3, rankTo: 3, prizeType: 'VOUCHER', prizeLabel: 'Voucher 100 HTG' },
+                { boardType: 'ALL', rankFrom: 4, rankTo: 100, prizeType: 'BADGE_AND_TURNS', prizeLabel: 'Top 100 Badge + 1 free play/day' },
+              ]).map((p, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2 text-[12px]">
+                  <span className="font-semibold text-slate-900">
+                    {p.rankFrom === p.rankTo ? `#${p.rankFrom}` : `#${p.rankFrom}–#${p.rankTo}`}
+                  </span>
+                  <span className="text-right text-slate-600">{p.prizeLabel}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {rulesData?.rules && rulesData.rules.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-slate-500">How pts are earned (daily caps)</p>
+              <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 px-3">
+                {rulesData.rules.map((r, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-2 text-[12px]">
+                    <span className="font-medium text-slate-800">{r.sourceCode.replace(/_/g, ' ')}</span>
+                    <span className="text-right text-slate-500">Cap {fmt(r.dailyCapPts)} pts/day</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Sheet>
     </div>
   );
 };
@@ -123,14 +211,15 @@ export const GameHub: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const [cat, setCat] = useState('ALL');
   const [data, failed, reload] = useLoad(async () => {
-    const [plays, courses, board, catalogue, wheel] = await Promise.all([
+    const [plays, courses, board, catalogue, wheel, coins] = await Promise.all([
       loadPlays(),
       LoyaltyApi.getLearningCourses().catch(() => [] as LearningCourseItem[]),
       LoyaltyApi.getLearningLeaderboard().catch(() => []),
       loadGames(),
       LoyaltyApi.getLuckyWheelConfig(uid()).catch(() => null),
+      LoyaltyApi.getProfile(uid()).then((p) => p.currentPoints).catch(() => undefined),
     ]);
-    return { plays, courses, board, catalogue, wheel };
+    return { plays, courses, board, catalogue, wheel, coins };
   });
   // Catalogue (CMS) + learning courses (CMS). Categories and their order come from the data.
   const items: GameEntry[] = useMemo(() => {
@@ -151,7 +240,7 @@ export const GameHub: React.FC = () => {
   const openGame = (g: GameEntry) => (g.route ? navigate(g.route) : setParams({ open: g.code }));
 
   return (
-    <Screen title="Games" back="/">
+    <Screen title="Games" back="/" tab={{ shell: 'customer', active: 'games' }} hero={<Hero title="Games" sub="Play daily, win coins" coins={data?.coins} onCoins={() => navigate('/coins')} art={aiGames} />}>
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[72px]" />}
       {data && <PlaysBar free={data.plays.free} saved={data.plays.saved} />}
@@ -210,7 +299,7 @@ export const GameHub: React.FC = () => {
         ))}
       </div>
 
-      {data && <Leaderboard board={data.board} />}
+      {data && <Leaderboard initialBoard={data.board} />}
 
       {/* GM-01 · Open partner game (388:914) */}
       <Sheet open={!!partner} onClose={() => setParams({})} title={`Open ${partner?.name ?? ''}?`}>

@@ -1,4 +1,3 @@
-import { getStoredTenantId } from '@/utils/tenant';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';

@@ -13,3 +13,8 @@ import photoData from '../assets/figma/photo-data.jpg';
 
 // shortcut: vouchers carry no image in the API yet; the two Figma photos stand in by partner type until an imageUrl field exists.
 export const partnerPhoto = (text: string) => (/natcom|data|\bgb\b|ringme|telecom/i.test(text) ? photoData : photoGrocery);
+
+/** AI illustrations on Natcash orange (Figma Foundations 706:2 / 706:3 / 706:4) for the orange tab-root headers. */
+export { default as aiGift } from '../assets/figma/ai-gift-orange.png';
+export { default as aiMissions } from '../assets/figma/ai-missions-orange.png';
+export { default as aiGames } from '../assets/figma/ai-games-orange.png';

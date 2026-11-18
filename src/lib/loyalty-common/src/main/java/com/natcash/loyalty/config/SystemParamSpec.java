@@ -120,15 +120,32 @@ public enum SystemParamSpec {
             null,
             "Số ngày hiệu lực mặc định của mã voucher sau khi hội viên quy đổi"),
 
-    // Nhóm Mã QR Động
+    PAY_AT_COUNTER_PIN_LIMIT_HTG(
+            "PAY_AT_COUNTER_PIN_LIMIT_HTG",
+            "PIN limit at the counter (HTG)",
+            "POLICY",
+            ParamType.DECIMAL,
+            "2000.00",
+            null,
+            "Ask for the PIN in the Natcash app above this amount after the cashier scans the customer code"),
+    FREE_VOUCHER_REQUIRE_EKYC(
+            "FREE_VOUCHER_REQUIRE_EKYC",
+            "Free vouchers need eKYC",
+            "POLICY",
+            ParamType.BOOLEAN,
+            "true",
+            null,
+            "Only verified wallets can collect free vouchers"),
+
+    // Nhóm Mã QR Động — mã của KHÁCH, thu ngân quét (Figma 18/11)
     REWARD_WALLET_DYNAMIC_QR_TTL_SECONDS(
             "REWARD_WALLET_DYNAMIC_QR_TTL_SECONDS",
-            "Thời gian sống mã QR động Ví Phần Thưởng (giây)",
+            "Customer pay code lifetime (seconds)",
             "QR",
             ParamType.INTEGER,
             "60",
             null,
-            "Thời gian hiệu lực (TTL) của mã QR động thanh toán tại POS"),
+            "Lifetime of the customer pay code (QR / barcode) the cashier scans at the POS; each code works once"),
     QR_MIN_TTL_SECONDS(
             "QR_MIN_TTL_SECONDS",
             "Thời gian sống QR tối thiểu cho phép (giây)",

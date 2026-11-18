@@ -64,6 +64,9 @@ public class LearningQuizService {
     @Autowired(required = false)
     private GameHubService gameHubService;
 
+    @Autowired(required = false)
+    private GameLeaderboardService gameLeaderboardService;
+
     public LearningQuizService(LearningCourseRepository courseRepository,
                                LearningQuestionRepository questionRepository,
                                LearningUserProgressRepository progressRepository,
@@ -139,7 +142,18 @@ public class LearningQuizService {
                     .ifPresent(account -> creditQuizPoints(tenantId, account, course, pointsAwarded));
         }
 
-        updateLeaderboard(tenantId, externalUserId, score);
+        if (gameLeaderboardService != null) {
+            gameLeaderboardService.awardGamePoints(
+                    tenantId,
+                    externalUserId,
+                    GameLeaderboardService.SOURCE_LEARNING_LESSON,
+                    score,
+                    course.getCourseCode(),
+                    "QUIZ_" + progress.getId(),
+                    false);
+        } else {
+            updateLeaderboard(tenantId, externalUserId, score);
+        }
 
         return QuizSubmitResponse.builder()
                 .progressId(progress.getId())
