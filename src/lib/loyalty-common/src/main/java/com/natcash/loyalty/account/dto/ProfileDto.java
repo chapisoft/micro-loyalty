@@ -66,6 +66,7 @@ public final class ProfileDto {
         private String name;
         private Integer tierLevel;
         private BigDecimal minPoints;
+        private BigDecimal keepTierPoints;
         private BigDecimal pointMultiplier;
         private Integer freeDailyTurns;
         private String description;

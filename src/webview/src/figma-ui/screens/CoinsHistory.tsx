@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LoyaltyApi,
   getDefaultUserId,
@@ -9,7 +10,8 @@ import {
   type MemberProfile,
 } from '../../services/api';
 import { CalendarCheck, Fuel, Gamepad2, Gift, Hourglass, Ticket, Users } from 'lucide-react';
-import { Screen, Skeleton, ErrorBlock, CoinDot, fmt, ddmmyyyy } from '../ui';
+import { Screen, Skeleton, ErrorBlock, CoinDot, Empty, fmt, ddmmyyyy } from '../ui';
+import { artEmptyBox } from '../art';
 
 const PAGE = 20;
 
@@ -37,6 +39,7 @@ const daysLeft = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now(
 
 /** DT-01 · Coins history (Figma 274:2420); with `sheet` the FIFO batch sheet (495:1294) opens on top. */
 export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const userId = getDefaultUserId();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
@@ -48,6 +51,14 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
   const [tab, setTab] = useState<LedgerTab>('earned');
 
   const load = useCallback(async () => {
+    if (!userId) {
+      setProfile(null);
+      setExpiring(null);
+      setItems([]);
+      setTotal(0);
+      setFailed(false);
+      return;
+    }
     setFailed(false);
     try {
       const [p, e, l] = await Promise.all([
@@ -97,10 +108,14 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
 
   return (
     <Screen title="Coins history">
-      {/* Figma DT-01 (274:2420 · 720:3): white page, balance + Earn more, underline tabs, grey month bands, plain rows */}
-      <div className="-mx-4 -mb-8 -mt-4 min-h-[calc(100vh-52px)] bg-white pb-8">
-        {failed && <div className="p-4"><ErrorBlock onRetry={load} /></div>}
-        {!profile && !failed && <div className="p-4"><Skeleton className="h-[110px]" /></div>}
+      {!userId ? (
+        <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
+      ) : (
+        <>
+          {/* Figma DT-01 (274:2420 · 720:3): white page, balance + Earn more, underline tabs, grey month bands, plain rows */}
+          <div className="-mx-4 -mb-8 -mt-4 min-h-[calc(100vh-52px)] bg-white pb-8">
+            {failed && <div className="p-4"><ErrorBlock onRetry={load} /></div>}
+            {!profile && !failed && <div className="p-4"><Skeleton className="h-[110px]" /></div>}
 
         {profile && (
           <div className="flex items-start gap-3 px-4 pb-4 pt-3">
@@ -238,6 +253,8 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
             </button>
           </div>
         </div>
+      )}
+        </>
       )}
     </Screen>
   );

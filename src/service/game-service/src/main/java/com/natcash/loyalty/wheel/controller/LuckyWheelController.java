@@ -1,5 +1,6 @@
 package com.natcash.loyalty.wheel.controller;
 
+import com.natcash.loyalty.security.SecurityContextUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.AutoBalancePrizesResponse;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.SpinWheelRequest;
@@ -39,11 +40,12 @@ public class LuckyWheelController {
     public ResponseEntity<WheelConfigResponse> getWheelConfigGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestParam(value = "wheelCode", required = false, defaultValue = "LUCKY_WHEEL") String wheelCode,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId) {
+            @RequestParam(value = "externalUserId", required = false) String externalUserId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(externalUserId);
         WheelConfigRequest request = WheelConfigRequest.builder()
                 .wheelCode(wheelCode)
-                .externalUserId(externalUserId)
+                .externalUserId(resolvedUserId)
                 .build();
         WheelConfigResponse response = luckyWheelService.getWheelConfig(tenantId, request);
         return ResponseEntity.ok(response);
@@ -55,7 +57,13 @@ public class LuckyWheelController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestBody(required = false) WheelConfigRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        WheelConfigResponse response = luckyWheelService.getWheelConfig(tenantId, request);
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(
+                request != null ? request.getExternalUserId() : null);
+        WheelConfigRequest effectiveRequest = WheelConfigRequest.builder()
+                .wheelCode(request != null ? request.getWheelCode() : "LUCKY_WHEEL")
+                .externalUserId(resolvedUserId)
+                .build();
+        WheelConfigResponse response = luckyWheelService.getWheelConfig(tenantId, effectiveRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -96,6 +104,8 @@ public class LuckyWheelController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody SpinWheelRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String resolvedUserId = SecurityContextUtils.resolveUserId(request.getExternalUserId());
+        request.setExternalUserId(resolvedUserId);
         SpinWheelResponse response = luckyWheelService.executeSpin(tenantId, request);
         return ResponseEntity.ok(response);
     }

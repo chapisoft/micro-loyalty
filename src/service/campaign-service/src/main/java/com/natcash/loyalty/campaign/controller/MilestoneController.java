@@ -6,6 +6,7 @@ import com.natcash.loyalty.campaign.dto.CampaignMilestoneDto.ClaimRewardRequest;
 import com.natcash.loyalty.campaign.dto.CampaignMilestoneDto.ClaimRewardResponse;
 import com.natcash.loyalty.campaign.entity.CampaignMilestoneEntity;
 import com.natcash.loyalty.campaign.service.MilestoneService;
+import com.natcash.loyalty.security.SecurityContextUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,19 +80,21 @@ public class MilestoneController {
     @GetMapping("/active-campaigns")
     public ResponseEntity<ActiveCampaignsResponse> getActiveCampaignsGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId,
+            @RequestParam(value = "externalUserId", required = false) String externalUserId,
             @RequestParam(value = "role", required = false) String role) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, externalUserId, role);
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(externalUserId);
+        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, resolvedUserId, role);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/list")
     public ResponseEntity<ActiveCampaignsResponse> getMilestonesList(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId) {
+            @RequestParam(value = "externalUserId", required = false) String externalUserId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, externalUserId);
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(externalUserId);
+        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, resolvedUserId);
         return ResponseEntity.ok(response);
     }
 
@@ -100,7 +103,8 @@ public class MilestoneController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody ActiveCampaignsRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, request.getExternalUserId());
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(request.getExternalUserId());
+        ActiveCampaignsResponse response = milestoneService.getActiveCampaigns(tenantId, resolvedUserId);
         return ResponseEntity.ok(response);
     }
 
@@ -109,6 +113,8 @@ public class MilestoneController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody ClaimRewardRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String resolvedUserId = SecurityContextUtils.resolveUserId(request.getExternalUserId());
+        request.setExternalUserId(resolvedUserId);
         ClaimRewardResponse response = milestoneService.claimReward(tenantId, request);
         return ResponseEntity.ok(response);
     }

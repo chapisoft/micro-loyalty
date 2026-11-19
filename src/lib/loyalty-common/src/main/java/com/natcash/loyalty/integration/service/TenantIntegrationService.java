@@ -18,6 +18,7 @@ import com.natcash.loyalty.integration.entity.TenantIntegrationEntity;
 import com.natcash.loyalty.integration.provider.PaymentGatewayProvider;
 import com.natcash.loyalty.integration.provider.SmsGatewayProvider;
 import com.natcash.loyalty.integration.repository.TenantIntegrationRepository;
+import com.natcash.loyalty.security.SignatureUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 import com.natcash.loyalty.util.MessageUtils;
 
@@ -197,6 +198,62 @@ public class TenantIntegrationService {
     }
 
     /**
+     * Xác thực danh tính User từ nhà cung cấp định danh của từng thuê bao (IDENTITY_PROVIDER).
+     */
+    public boolean verifyTenantUserIdentity(
+            String tenantId,
+            String externalUserId,
+            String verifyCode,
+            Long timestamp,
+            String signature) {
+        Optional<TenantIntegrationEntity> configOpt = getIntegrationConfig(tenantId, IntegrationType.IDENTITY_PROVIDER);
+        if (configOpt.isEmpty()) {
+            return true;
+        }
+        TenantIntegrationEntity config = configOpt.get();
+        if (!Boolean.TRUE.equals(config.getIsActive())) {
+            return true;
+        }
+        Map<String, Object> creds = parseJson(config.getAuthCredentials());
+        IntegrationAuthType authType = config.getAuthType();
+
+        if (authType == IntegrationAuthType.HMAC_SHA256) {
+            if (timestamp == null || signature == null || signature.isBlank()) {
+                return false;
+            }
+            long driftTolerance = SystemParameterService.get().getLong(
+                    tenantId, SystemParamSpec.HMAC_DRIFT_TOLERANCE_SECONDS);
+            if (!SignatureUtils.isTimestampValid(timestamp, driftTolerance)) {
+                return false;
+            }
+            Object rawSecret = creds.get("secretKey");
+            String secretKey = rawSecret != null ? String.valueOf(rawSecret).trim() : null;
+            if (secretKey == null || secretKey.isBlank()) {
+                return false;
+            }
+            String canonicalData = tenantId + "|" + externalUserId + "|" + timestamp;
+            return SignatureUtils.verifySignature(canonicalData, signature, secretKey);
+        }
+
+        if (authType == IntegrationAuthType.BEARER_TOKEN || authType == IntegrationAuthType.API_KEY) {
+            if (verifyCode == null || verifyCode.isBlank()) {
+                return false;
+            }
+            Object expectedToken = authType == IntegrationAuthType.API_KEY
+                    ? creds.get("apiKey")
+                    : creds.get("token");
+            if (expectedToken != null && !String.valueOf(expectedToken).isBlank()) {
+                return verifyCode.trim().equals(String.valueOf(expectedToken).trim());
+            }
+            Object tokenPrefix = creds.get("tokenPrefix");
+            if (tokenPrefix != null && !String.valueOf(tokenPrefix).isBlank()) {
+                return verifyCode.trim().startsWith(String.valueOf(tokenPrefix).trim());
+            }
+        }
+        return verifyCode != null && !verifyCode.isBlank();
+    }
+
+    /**
      * Kiểm tra kết nối thử nghiệm tới Endpoint của đối tác
      */
     public TestConnectionResponse testConnection(TestConnectionRequest request) {
@@ -227,6 +284,14 @@ public class TenantIntegrationService {
                         .httpStatus(res.isSuccess() ? HttpStatus.OK.value() : HttpStatus.BAD_GATEWAY.value())
                         .responsePayload(res.getMessage())
                         .message(MessageUtils.getMessage("integration.test.payment_success"))
+                        .latencyMs(System.currentTimeMillis() - start)
+                        .build();
+            } else if (request.getIntegrationType() == IntegrationType.IDENTITY_PROVIDER) {
+                return TestConnectionResponse.builder()
+                        .success(true)
+                        .httpStatus(HttpStatus.OK.value())
+                        .responsePayload(MessageUtils.getMessage("integration.test.idp_success"))
+                        .message(MessageUtils.getMessage("integration.test.idp_success"))
                         .latencyMs(System.currentTimeMillis() - start)
                         .build();
             } else {

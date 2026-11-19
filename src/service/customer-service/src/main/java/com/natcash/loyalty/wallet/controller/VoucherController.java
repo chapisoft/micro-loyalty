@@ -4,6 +4,7 @@ import com.natcash.loyalty.audit.event.AuditLogEvent;
 import com.natcash.loyalty.audit.service.SystemAuditLogService;
 import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.VoucherStatus;
+import com.natcash.loyalty.security.SecurityContextUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 import com.natcash.loyalty.util.MessageUtils;
 import com.natcash.loyalty.wallet.dto.VoucherDto.CreateVoucherRequest;
@@ -57,10 +58,11 @@ public class VoucherController {
     @Operation(summary = "Lấy kho voucher của người dùng", description = "Trả về danh sách voucher đã nhận/sở hữu của người dùng theo trạng thái")
     public ResponseEntity<List<UserVoucherResponse>> getMyVouchers(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId,
+            @RequestParam(value = "externalUserId", required = false) String externalUserId,
             @RequestParam(value = "status", required = false, defaultValue = "ALL") String status) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        List<UserVoucherResponse> userVouchers = voucherService.getUserVouchers(tenantId, externalUserId, status);
+        String resolvedUserId = SecurityContextUtils.resolveUserId(externalUserId);
+        List<UserVoucherResponse> userVouchers = voucherService.getUserVouchers(tenantId, resolvedUserId, status);
         return ResponseEntity.ok(userVouchers);
     }
 

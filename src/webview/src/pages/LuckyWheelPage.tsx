@@ -231,20 +231,20 @@ export const LuckyWheelPage: React.FC<LuckyWheelPageProps> = ({
   const [currentAngle, setCurrentAngle] = useState(INITIAL_WHEEL_ANGLE);
 
   const tenantId = new URLSearchParams(window.location.search).get('tenantId') || getTenantId();
-  const userId = new URLSearchParams(window.location.search).get('userId') || getDefaultUserId() || 'USER_DEFAULT';
+  const userId = new URLSearchParams(window.location.search).get('userId') || getDefaultUserId();
   const wheelCode = new URLSearchParams(window.location.search).get('wheelCode') || (tenantId === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
   const today = new Date().toISOString().slice(0, 10);
 
   const [points, setPoints] = useState<number>(() => {
     if (propUserPoints !== undefined) return propUserPoints;
-    const saved = localStorage.getItem(`loyalty_points_${userId}`);
-    return saved !== null ? Number(saved) : 2480;
+    const saved = userId ? localStorage.getItem(`loyalty_points_${userId}`) : null;
+    return saved !== null ? Number(saved) : 0;
   });
 
   const [freeTurns, setFreeTurns] = useState<number>(() => {
     if (propFreeTurns !== undefined) return propFreeTurns;
-    const saved = localStorage.getItem(`loyalty_wheel_turns_${userId}_${today}`);
-    return saved !== null ? Number(saved) : 2;
+    const saved = userId ? localStorage.getItem(`loyalty_wheel_turns_${userId}_${today}`) : null;
+    return saved !== null ? Number(saved) : 0;
   });
 
   useEffect(() => {

@@ -240,8 +240,8 @@ const INITIAL_PARTNER_LIMIT = 5;
 
 // ───────────────────────── VQ-01 · Store (Figma 330:247) ─────────────────────────
 export const RewardStore: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const b = voucherBase(shell);
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>(FILTER_ALL);
@@ -257,15 +257,17 @@ export const RewardStore: React.FC<{ shell?: Shell }> = ({ shell = 'customer' })
   const [toast, setToast] = useToast();
 
   const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
     const [p, c, mine, masterCategories] = await Promise.all([
-      LoyaltyApi.getProfile(uid()),
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
       LoyaltyApi.getVoucherCatalog(audienceOf(shell)),
-      LoyaltyApi.getUserVouchers(uid()).catch(() => [] as UserVoucherItem[]),
+      userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]),
       LoyaltyApi.getGeneralCategories(GeneralCategoryType.VOUCHER_CATEGORY).catch(() => [] as GeneralCategoryItem[]),
     ]);
     return {
-      coins: p.currentPoints || 0,
-      tier: p.tier?.code || '',
+      isGuest: !userId,
+      coins: p?.currentPoints || 0,
+      tier: p?.tier?.code || '',
       catalog: c.filter((v) => v.status !== CommonStatus.INACTIVE && acquireOf(v) !== VoucherAcquireTypeEnum.GIVEN),
       mine,
       masterCategories: masterCategories
@@ -391,8 +393,13 @@ export const RewardStore: React.FC<{ shell?: Shell }> = ({ shell = 'customer' })
 
   const savedToastText = t('figma_ui.vouchers.saved_toast');
   const collect = async (v: CatalogVoucherItem) => {
+    const userId = uid();
+    if (!userId) {
+      setToast(t('sso.guest_login_required_desc'));
+      return;
+    }
     try {
-      await LoyaltyApi.collectVoucher(uid(), v.voucherCode);
+      await LoyaltyApi.collectVoucher(userId, v.voucherCode);
       setCollected((s) => new Set(s).add(v.voucherCode));
       setToast(savedToastText);
     } catch (e) {
@@ -780,8 +787,8 @@ const VoucherStoresSection: React.FC<{ stores: PartnerLocationItem[] }> = ({ sto
 // ───────────────────────── VQ-02 · Voucher details (Figma 330:248, free 818:60) ─────────────────────────
 export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
   const { id = '' } = useParams();
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const b = voucherBase(shell);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result>(null);
@@ -789,13 +796,14 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
   const [collectedNow, setCollectedNow] = useState(false);
   const [toast, setToast] = useToast();
   const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
     const [p, c, mine, locations] = await Promise.all([
-      LoyaltyApi.getProfile(uid()),
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
       LoyaltyApi.getVoucherCatalog(audienceOf(shell)),
-      LoyaltyApi.getUserVouchers(uid()).catch(() => [] as UserVoucherItem[]),
+      userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]),
       LoyaltyApi.getWhereToUsePartners().catch(() => [] as PartnerLocationItem[]),
     ]);
-    return { coins: p.currentPoints || 0, tier: p.tier?.code || '', v: c.find((x) => String(x.id) === id), mine, locations };
+    return { isGuest: !userId, coins: p?.currentPoints || 0, tier: p?.tier?.code || '', v: c.find((x) => String(x.id) === id), mine, locations };
   }, [id]);
   const v = data?.v;
   const free = v ? acquireOf(v) === VoucherAcquireTypeEnum.FREE_COLLECT : false;
@@ -813,10 +821,15 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
 
   const getVoucher = async () => {
     if (!v || !data) return;
+    const userId = uid();
+    if (!userId) {
+      setToast(t('sso.guest_login_required_desc'));
+      return;
+    }
     if (data.coins < v.pointCost) return setResult('short');
     setBusy(true);
     try {
-      const item = await LoyaltyApi.redeemVoucher(uid(), v.voucherCode);
+      const item = await LoyaltyApi.redeemVoucher(userId, v.voucherCode);
       setIssued(item);
       setResult(/PENDING|ISSUING|PROCESSING|AWAIT/i.test(item.status || '') ? 'pending' : isData(v.title) ? 'data' : 'added');
     } catch (e) {
@@ -828,9 +841,14 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
 
   const collect = async () => {
     if (!v) return;
+    const userId = uid();
+    if (!userId) {
+      setToast(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
-      await LoyaltyApi.collectVoucher(uid(), v.voucherCode);
+      await LoyaltyApi.collectVoucher(userId, v.voucherCode);
       setCollectedNow(true);
       setToast(savedToastText);
     } catch {
@@ -898,6 +916,8 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
                         : v.availableQuantity !== undefined
                         ? t('figma_ui.vouchers.left_count', { count: fmt(v.availableQuantity) })
                         : t('figma_ui.vouchers.while_stock_lasts')
+                      : data?.isGuest
+                      ? t('sso.guest_login_required')
                       : t('figma_ui.vouchers.balance_coins', { coins: fmt(data!.coins) })}
                   </p>
                 </div>
@@ -969,14 +989,16 @@ type MineTab = 'all' | 'ready' | 'used' | 'expired';
 
 // ───────────────────────── VQ-03 · My vouchers (Figma 330:250) ─────────────────────────
 export const MyVouchers: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const b = voucherBase(shell);
   const [q, setQ] = useState('');
   const [tab, setTab] = useState<MineTab>('all');
   const [data, failed, reload] = useLoad(async () => {
-    const [p, mine] = await Promise.all([LoyaltyApi.getProfile(uid()).catch(() => null), LoyaltyApi.getUserVouchers(uid())]);
-    return { coins: p?.currentPoints, mine };
+    const userId = uid();
+    if (!userId) return { isGuest: true, coins: undefined, mine: [] as UserVoucherItem[] };
+    const [p, mine] = await Promise.all([LoyaltyApi.getProfile(userId).catch(() => null), LoyaltyApi.getUserVouchers(userId)]);
+    return { isGuest: false, coins: p?.currentPoints, mine };
   });
   const all = data?.mine || [];
   const count = (tabKey: MineTab) => (tabKey === 'all' ? all.length : all.filter((v) => (tabKey === 'ready' ? ['ready', 'pending'] : [tabKey]).includes(userState(v))).length);
@@ -1008,7 +1030,11 @@ export const MyVouchers: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) 
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <><Skeleton className="h-[92px]" /><Skeleton className="h-[92px]" /></>}
       {data && list.length === 0 && (
-        <Empty art={artEmptyBox} title={tab === 'all' ? t('figma_ui.vouchers.empty_mine') : t('figma_ui.vouchers.empty_mine_tab')} text={t('figma_ui.vouchers.empty_mine_sub')}>
+        <Empty
+          art={artEmptyBox}
+          title={data.isGuest ? t('sso.guest_login_required') : tab === 'all' ? t('figma_ui.vouchers.empty_mine') : t('figma_ui.vouchers.empty_mine_tab')}
+          text={data.isGuest ? t('sso.guest_login_required_desc') : t('figma_ui.vouchers.empty_mine_sub')}
+        >
           <PrimaryButton className="mt-3" onClick={() => navigate(b.store)}>{t('figma_ui.vouchers.open_store')}</PrimaryButton>
         </Empty>
       )}
@@ -1052,8 +1078,9 @@ export const MyVoucherDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
     const [mine, locations] = await Promise.all([
-      LoyaltyApi.getUserVouchers(uid()),
+      userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]),
       LoyaltyApi.getWhereToUsePartners().catch(() => [] as PartnerLocationItem[]),
     ]);
     return { v: mine.find((x) => String(x.id) === id), locations };
@@ -1140,7 +1167,10 @@ export const CodeTabs: React.FC<{ value: string; digits?: string }> = ({ value, 
 export const ShowVoucher: React.FC = () => {
   const { id = '' } = useParams();
   const { t } = useTranslation();
-  const [data, failed, reload] = useLoad(() => LoyaltyApi.getUserVouchers(uid()), [id]);
+  const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
+    return userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]);
+  }, [id]);
   const v = data?.find((x) => String(x.id) === id);
   const code = v ? v.redemptionCode || v.code : '';
   return (

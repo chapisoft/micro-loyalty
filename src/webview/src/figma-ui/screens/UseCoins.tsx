@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Wallet, Ticket, Clock } from 'lucide-react';
 import { LoyaltyApi, getDefaultUserId, type UserVoucherItem } from '../../services/api';
-import { Screen, Skeleton, ErrorBlock, useLoad, fmt } from '../ui';
+import { Screen, Skeleton, ErrorBlock, Empty, useLoad, fmt } from '../ui';
+import { artEmptyBox } from '../art';
 import { paramJson, PARAM } from '../data';
 import { CodeTabs, cleanBrand, userValueTitle } from './Rewards';
 
@@ -16,22 +18,25 @@ const uid = () => getDefaultUserId();
  * Payment results screen, so this screen never jumps to a result by itself.
  */
 export const PayAtCounter: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [sp] = useSearchParams();
   const voucherId = sp.get('voucher');
+  const userId = uid();
   const [token, setToken] = useState<string>();
   const [left, setLeft] = useState(60);
   const [failed, setFailed] = useState(false);
   const [voucher] = useLoad<UserVoucherItem | undefined>(
-    async () => (voucherId ? (await LoyaltyApi.getUserVouchers(uid())).find((v) => String(v.id) === voucherId) : undefined),
-    [voucherId],
+    async () => (userId && voucherId ? (await LoyaltyApi.getUserVouchers(userId)).find((v) => String(v.id) === voucherId) : undefined),
+    [voucherId, userId],
   );
   const [pinLimit] = useLoad(() => paramJson<number>(PARAM.PIN_LIMIT));
 
   const refresh = async () => {
+    if (!userId) return;
     setFailed(false);
     try {
-      const r = await LoyaltyApi.generateRewardQrToken(uid());
+      const r = await LoyaltyApi.generateRewardQrToken(userId);
       setToken(r.qrToken);
       setLeft(r.expiresInSeconds > 0 ? r.expiresInSeconds : 60);
     } catch {
@@ -39,15 +44,24 @@ export const PayAtCounter: React.FC = () => {
     }
   };
   useEffect(() => {
-    void refresh();
-  }, []);
+    if (userId) void refresh();
+  }, [userId]);
   useEffect(() => {
-    const t = setInterval(() => setLeft((s) => s - 1), 1000);
-    return () => clearInterval(t);
-  }, []);
+    if (!userId) return;
+    const tmr = setInterval(() => setLeft((s) => s - 1), 1000);
+    return () => clearInterval(tmr);
+  }, [userId]);
   useEffect(() => {
-    if (left <= 0 && token) void refresh(); // each code works once and expires; fetch a fresh one
-  }, [left, token]);
+    if (userId && left <= 0 && token) void refresh(); // each code works once and expires; fetch a fresh one
+  }, [left, token, userId]);
+
+  if (!userId) {
+    return (
+      <Screen title="Pay at counter">
+        <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen title="Pay at counter">

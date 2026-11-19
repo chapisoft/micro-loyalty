@@ -221,17 +221,18 @@ const WeekStrip: React.FC<{ profile?: MemberProfile | null; compact?: boolean; r
 
 // ───────────────────────── NV-01 · Missions & weekly check-in ─────────────────────────
 export const MissionsList: React.FC = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
     const [m, p, rewards, refs, pts] = await Promise.all([
       loadMissions(),
-      LoyaltyApi.getProfile(uid()),
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
       loadCheckinRewards(),
-      LoyaltyApi.getMyReferrals(uid()).catch(() => null),
+      userId ? LoyaltyApi.getMyReferrals(userId).catch(() => null) : Promise.resolve(null),
       LoyaltyApi.getPartners().catch(() => []),
     ]);
-    return { ...m, profile: p, rewards, referrals: refs, partners: pts };
+    return { ...m, profile: p, rewards, referrals: refs, partners: pts, isGuest: !userId };
   });
 
   const all = data?.missions || [];
@@ -559,12 +560,13 @@ export const MissionsList: React.FC = () => {
 // ───────────────────────── NV-02 · Mission details (+ ready to claim + claimed popup) ─────────────────────────
 export const MissionDetail: React.FC = () => {
   const { code = '' } = useParams();
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [data, failed, reload] = useLoad(loadMissions, [code]);
   const [rulesOpen, setRulesOpen] = useState(true);
   const [claimed, setClaimed] = useState<{ coins: number; balance?: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const userId = uid();
   const m = data?.missions.find((x) => x.code === code);
   const Icon = m ? missionIcon(m) : Fuel;
   const claimCoins = m?.claimable.reduce((s, x) => s + x.rewardPoints, 0) || 0;
@@ -600,10 +602,14 @@ export const MissionDetail: React.FC = () => {
 
   const claim = async () => {
     if (!m) return;
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
       let balance: number | undefined;
-      for (const s of m.claimable) balance = (await LoyaltyApi.claimMission(s.id)).newPointBalance ?? balance;
+      for (const s of m.claimable) balance = (await LoyaltyApi.claimMission(s.id, userId)).newPointBalance ?? balance;
       setClaimed({ coins: claimCoins, balance });
     } catch {
       alert(t('figma_ui.missions.claim_failed'));
@@ -742,7 +748,9 @@ export const MissionDetail: React.FC = () => {
           )}
 
           <BottomBar>
-            {m.claimable.length > 0 ? (
+            {!userId ? (
+              <SecondaryButton disabled>{t('sso.guest_login_required')}</SecondaryButton>
+            ) : m.claimable.length > 0 ? (
               <PrimaryButton onClick={claim} disabled={busy}>{t('figma_ui.missions.claim_coins_btn', { coins: fmt(claimCoins) })}</PrimaryButton>
             ) : (
               <PrimaryButton onClick={() => navigate('/pay-at-counter')}>
@@ -772,8 +780,12 @@ export const MissionDetail: React.FC = () => {
 export const CheckIn: React.FC = () => {
   const { t } = useTranslation();
   const [data, failed, reload] = useLoad(async () => {
-    const [p, rewards] = await Promise.all([LoyaltyApi.getProfile(uid()), loadCheckinRewards()]);
-    return { p, rewards };
+    const userId = uid();
+    const [p, rewards] = await Promise.all([
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
+      loadCheckinRewards(),
+    ]);
+    return { p, rewards, isGuest: !userId };
   });
   const profile = data?.p;
   const rewards = data?.rewards || [];
@@ -791,6 +803,11 @@ export const CheckIn: React.FC = () => {
   const weekEnd = new Date(weekStart.getTime() + 6 * 86_400_000);
 
   const checkIn = async () => {
+    const userId = uid();
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     const pts = reward ?? 10;
     const nextStreak = Math.min((info.streak || 0) + 1, 7);
@@ -798,18 +815,18 @@ export const CheckIn: React.FC = () => {
       const r = (await LoyaltyApi.submitGameResult(
         'DAILY_CHECKIN',
         info.today,
-        uid(),
+        userId,
         undefined,
         JSON.stringify({ day: info.today, gameCode: 'DAILY_CHECKIN', pointsAwarded: pts })
       ).catch((err) => {
         console.warn('[checkIn] submitGameResult note:', err);
         return { pointsAwarded: pts };
       })) as { pointsAwarded?: number };
-      recordLocalCheckin(uid(), nextStreak);
+      recordLocalCheckin(userId, nextStreak);
       setDone({ coins: r?.pointsAwarded ?? pts, streak: nextStreak });
     } catch (e) {
       console.warn('[checkIn] error handled:', e);
-      recordLocalCheckin(uid(), nextStreak);
+      recordLocalCheckin(userId, nextStreak);
       setDone({ coins: pts, streak: nextStreak });
     } finally {
       setBusy(false);
@@ -828,8 +845,8 @@ export const CheckIn: React.FC = () => {
   return (
     <Screen title={t('figma_ui.missions.daily_checkin_title')} back="/missions">
       {failed && <ErrorBlock onRetry={reload} />}
-      {!profile && !failed && <Skeleton className="h-[160px]" />}
-      {profile && (
+      {!data && !failed && <Skeleton className="h-[160px]" />}
+      {data && (
         <div className="flex w-full flex-col gap-4 pb-10">
           {/* ── Top Banner: Streak & Status (Matching Figma NV-03) ── */}
           <div className="flex w-full items-center justify-between gap-3 rounded-[24px] bg-[#FFFBEB] p-5 shadow-[0_2px_10px_rgba(245,158,11,0.06)]">
@@ -908,10 +925,17 @@ export const CheckIn: React.FC = () => {
               {t('figma_ui.missions.day_7_gift_desc')}
             </p>
           </div>
-
           {/* ── Action Button ── */}
           <div className="flex w-full flex-col gap-3 pt-2">
-            {info.doneToday ? (
+            {data.isGuest ? (
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-[20px] bg-[#E8EDF5] py-4 text-center text-[15px] font-semibold text-[#64748B] transition cursor-default"
+              >
+                {t('sso.guest_login_required')}
+              </button>
+            ) : info.doneToday ? (
               <button
                 type="button"
                 disabled

@@ -3,6 +3,7 @@ package com.natcash.loyalty.account.controller;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileRequest;
 import com.natcash.loyalty.account.dto.ProfileDto.ProfileResponse;
 import com.natcash.loyalty.account.service.AccountService;
+import com.natcash.loyalty.security.SecurityContextUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 
 import jakarta.validation.Valid;
@@ -28,11 +29,12 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<ProfileResponse> getProfileGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId) {
+            @RequestParam(value = "externalUserId", required = false) String externalUserId) {
 
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String resolvedUserId = SecurityContextUtils.resolveUserId(externalUserId);
         ProfileRequest request = ProfileRequest.builder()
-                .externalUserId(externalUserId)
+                .externalUserId(resolvedUserId)
                 .build();
         ProfileResponse response = accountService.getOrCreateProfile(tenantId, request);
         return ResponseEntity.ok(response);
@@ -44,6 +46,7 @@ public class AccountController {
             @Valid @RequestBody ProfileRequest request) {
 
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        request.setExternalUserId(SecurityContextUtils.resolveUserId(request.getExternalUserId()));
         ProfileResponse response = accountService.getOrCreateProfile(tenantId, request);
         return ResponseEntity.ok(response);
     }

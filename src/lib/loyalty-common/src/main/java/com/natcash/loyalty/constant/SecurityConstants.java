@@ -53,10 +53,16 @@ public final class SecurityConstants {
     public static final String CLAIM_PARTNER_NAME = "partnerName";
     public static final String CLAIM_TENANT_ID_CAMEL = "tenantId";
     public static final String CLAIM_BRANCH_ID = "branchId";
+    public static final String CLAIM_EXTERNAL_USER_ID = "externalUserId";
+    public static final String CLAIM_PHONE_NUMBER = "phoneNumber";
+    public static final String CLAIM_ACCOUNT_ROLE = "accountRole";
     public static final String CLAIM_IAT = "iat";
     public static final String CLAIM_EXP = "exp";
 
     public static final String PUBLIC_MEDIA_PATH_PATTERN = "/loyalty/v1/media/**";
+    public static final String ACCOUNT_ROLE_CUSTOMER = "CUSTOMER";
+    public static final String ACCOUNT_ROLE_AGENT = "AGENT";
+    public static final String ACCOUNT_ROLE_SUPER_AGENT = "SUPER_AGENT";
 
     public static final String[] PUBLIC_ENDPOINTS = {
             "/actuator/**",

@@ -18,6 +18,8 @@ public interface LoyaltyAccountRepository extends JpaRepository<LoyaltyAccountEn
 
     Optional<LoyaltyAccountEntity> findByTenantIdAndExternalUserId(String tenantId, String externalUserId);
 
+    Optional<LoyaltyAccountEntity> findByTenantIdAndPhoneNumber(String tenantId, String phoneNumber);
+
     List<LoyaltyAccountEntity> findByTenantId(String tenantId);
 
     long countByTenantId(String tenantId);

@@ -865,187 +865,187 @@ export const GameManagementPage: React.FC = () => {
         onHide={() => setShowPrizeFormDialog(false)}
       >
         <div className="p-fluid">
-        <div className="surface-100 p-3 border-round-lg mb-3">
-          <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_1')}</div>
-          <div className="field mb-2">
-            <label htmlFor="prizeCode" className="font-bold text-xs">{t('game.prize_code_label')}</label>
-            <InputText
-              id="prizeCode"
-              value={prizeFormData.prizeCode || ''}
-              onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeCode: e.target.value })}
-              placeholder={t('game.prize_code_placeholder')}
-              required
-            />
-          </div>
-
-          <div className="grid">
-            <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameVi" className="font-bold text-xs">{t('game.name_vi_label')}</label>
+          <div className="surface-100 p-3 border-round-lg mb-3">
+            <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_1')}</div>
+            <div className="field mb-2">
+              <label htmlFor="prizeCode" className="font-bold text-xs">{t('game.prize_code_label')}</label>
               <InputText
-                id="nameVi"
-                value={prizeFormData.nameVi || prizeFormData.prizeName || ''}
-                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameVi: e.target.value, prizeName: e.target.value })}
-                placeholder={t('game.name_vi_placeholder')}
+                id="prizeCode"
+                value={prizeFormData.prizeCode || ''}
+                onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeCode: e.target.value })}
+                placeholder={t('game.prize_code_placeholder')}
                 required
               />
             </div>
-            <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameEn" className="font-bold text-xs">{t('game.name_en_label')}</label>
-              <InputText
-                id="nameEn"
-                value={prizeFormData.nameEn || ''}
-                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameEn: e.target.value })}
-                placeholder={t('game.name_en_placeholder')}
-              />
-            </div>
-            <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameFr" className="font-bold text-xs">{t('game.name_fr_label')}</label>
-              <InputText
-                id="nameFr"
-                value={prizeFormData.nameFr || ''}
-                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameFr: e.target.value })}
-                placeholder="100 Points Bonus"
-              />
-            </div>
-            <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="nameHt" className="font-bold text-xs">{t('game.name_ht_label')}</label>
-              <InputText
-                id="nameHt"
-                value={prizeFormData.nameHt || ''}
-                onChange={(e) => setPrizeFormData({ ...prizeFormData, nameHt: e.target.value })}
-                placeholder="100 Pwen Kado"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div className="surface-100 p-3 border-round-lg mb-3">
-          <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_2')}</div>
-          <div className="grid">
-            <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="prizeType" className="font-bold text-xs">{t('game.prize_type_label')}</label>
-              <Dropdown
-                id="prizeType"
-                value={prizeFormData.prizeType || 'POINTS'}
-                options={prizeTypes}
-                onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })}
-              />
-            </div>
-            <div className="col-12 md:col-6 field mb-2">
-              <label htmlFor="prizeValue" className="font-bold text-xs">{t('game.prize_value_label')}</label>
-              <InputNumber
-                id="prizeValue"
-                value={prizeFormData.prizeValue || 0}
-                min={0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })}
-              />
+            <div className="grid">
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="nameVi" className="font-bold text-xs">{t('game.name_vi_label')}</label>
+                <InputText
+                  id="nameVi"
+                  value={prizeFormData.nameVi || prizeFormData.prizeName || ''}
+                  onChange={(e) => setPrizeFormData({ ...prizeFormData, nameVi: e.target.value, prizeName: e.target.value })}
+                  placeholder={t('game.name_vi_placeholder')}
+                  required
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="nameEn" className="font-bold text-xs">{t('game.name_en_label')}</label>
+                <InputText
+                  id="nameEn"
+                  value={prizeFormData.nameEn || ''}
+                  onChange={(e) => setPrizeFormData({ ...prizeFormData, nameEn: e.target.value })}
+                  placeholder={t('game.name_en_placeholder')}
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="nameFr" className="font-bold text-xs">{t('game.name_fr_label')}</label>
+                <InputText
+                  id="nameFr"
+                  value={prizeFormData.nameFr || ''}
+                  onChange={(e) => setPrizeFormData({ ...prizeFormData, nameFr: e.target.value })}
+                  placeholder="100 Points Bonus"
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="nameHt" className="font-bold text-xs">{t('game.name_ht_label')}</label>
+                <InputText
+                  id="nameHt"
+                  value={prizeFormData.nameHt || ''}
+                  onChange={(e) => setPrizeFormData({ ...prizeFormData, nameHt: e.target.value })}
+                  placeholder="100 Pwen Kado"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="grid">
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="probabilityWeight" className="font-bold text-xs">{t('game.probability_weight_label')}</label>
-              <InputNumber
-                id="probabilityWeight"
-                value={prizeFormData.probabilityWeight || 100}
-                min={1}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 100 })}
-              />
+          <div className="surface-100 p-3 border-round-lg mb-3">
+            <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_2')}</div>
+            <div className="grid">
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="prizeType" className="font-bold text-xs">{t('game.prize_type_label')}</label>
+                <Dropdown
+                  id="prizeType"
+                  value={prizeFormData.prizeType || 'POINTS'}
+                  options={prizeTypes}
+                  onChange={(e) => setPrizeFormData({ ...prizeFormData, prizeType: e.value })}
+                />
+              </div>
+              <div className="col-12 md:col-6 field mb-2">
+                <label htmlFor="prizeValue" className="font-bold text-xs">{t('game.prize_value_label')}</label>
+                <InputNumber
+                  id="prizeValue"
+                  value={prizeFormData.prizeValue || 0}
+                  min={0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, prizeValue: e.value || 0 })}
+                />
+              </div>
             </div>
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="displayOrder" className="font-bold text-xs">{t('game.display_order_label')}</label>
-              <InputNumber
-                id="displayOrder"
-                value={prizeFormData.displayOrder || 1}
-                min={1}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })}
-              />
-            </div>
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="iconSymbol" className="font-bold text-xs">{t('game.icon_symbol_label')}</label>
-              <InputText
-                id="iconSymbol"
-                value={prizeFormData.iconSymbol || '🎁'}
-                onChange={(e) => setPrizeFormData({ ...prizeFormData, iconSymbol: e.target.value })}
-                placeholder="🏆, 💎, ⚽, 🎁"
-              />
+
+            <div className="grid">
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="probabilityWeight" className="font-bold text-xs">{t('game.probability_weight_label')}</label>
+                <InputNumber
+                  id="probabilityWeight"
+                  value={prizeFormData.probabilityWeight || 100}
+                  min={1}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, probabilityWeight: e.value || 100 })}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="displayOrder" className="font-bold text-xs">{t('game.display_order_label')}</label>
+                <InputNumber
+                  id="displayOrder"
+                  value={prizeFormData.displayOrder || 1}
+                  min={1}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, displayOrder: e.value || 1 })}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="iconSymbol" className="font-bold text-xs">{t('game.icon_symbol_label')}</label>
+                <InputText
+                  id="iconSymbol"
+                  value={prizeFormData.iconSymbol || '🎁'}
+                  onChange={(e) => setPrizeFormData({ ...prizeFormData, iconSymbol: e.target.value })}
+                  placeholder="🏆, 💎, ⚽, 🎁"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="surface-100 p-3 border-round-lg mb-3">
-          <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_3')}</div>
-          <div className="grid">
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="dailyBudgetLimit" className="font-bold text-xs">{t('game.daily_budget_label')}</label>
-              <InputNumber
-                id="dailyBudgetLimit"
-                value={prizeFormData.dailyBudgetLimit || 0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyBudgetLimit: e.value || 0 })}
-                placeholder={t('game.unlimited_zero_hint')}
-              />
-            </div>
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="weeklyBudgetLimit" className="font-bold text-xs">{t('game.weekly_budget_label')}</label>
-              <InputNumber
-                id="weeklyBudgetLimit"
-                value={prizeFormData.weeklyBudgetLimit || 0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyBudgetLimit: e.value || 0 })}
-                placeholder={t('game.unlimited_zero_hint')}
-              />
-            </div>
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="monthlyBudgetLimit" className="font-bold text-xs">{t('game.monthly_budget_label')}</label>
-              <InputNumber
-                id="monthlyBudgetLimit"
-                value={prizeFormData.monthlyBudgetLimit || 0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyBudgetLimit: e.value || 0 })}
-                placeholder={t('game.unlimited_zero_hint')}
-              />
-            </div>
+          <div className="surface-100 p-3 border-round-lg mb-3">
+            <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_3')}</div>
+            <div className="grid">
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="dailyBudgetLimit" className="font-bold text-xs">{t('game.daily_budget_label')}</label>
+                <InputNumber
+                  id="dailyBudgetLimit"
+                  value={prizeFormData.dailyBudgetLimit || 0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyBudgetLimit: e.value || 0 })}
+                  placeholder={t('game.unlimited_zero_hint')}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="weeklyBudgetLimit" className="font-bold text-xs">{t('game.weekly_budget_label')}</label>
+                <InputNumber
+                  id="weeklyBudgetLimit"
+                  value={prizeFormData.weeklyBudgetLimit || 0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyBudgetLimit: e.value || 0 })}
+                  placeholder={t('game.unlimited_zero_hint')}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="monthlyBudgetLimit" className="font-bold text-xs">{t('game.monthly_budget_label')}</label>
+                <InputNumber
+                  id="monthlyBudgetLimit"
+                  value={prizeFormData.monthlyBudgetLimit || 0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyBudgetLimit: e.value || 0 })}
+                  placeholder={t('game.unlimited_zero_hint')}
+                />
+              </div>
 
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="dailyMaxWinners" className="font-bold text-xs">{t('game.daily_max_winners_label')}</label>
-              <InputNumber
-                id="dailyMaxWinners"
-                value={prizeFormData.dailyMaxWinners || 0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyMaxWinners: e.value || 0 })}
-                placeholder={t('game.unlimited_zero_hint')}
-              />
-            </div>
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="weeklyMaxWinners" className="font-bold text-xs">{t('game.weekly_max_winners_label')}</label>
-              <InputNumber
-                id="weeklyMaxWinners"
-                value={prizeFormData.weeklyMaxWinners || 0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyMaxWinners: e.value || 0 })}
-                placeholder={t('game.unlimited_zero_hint')}
-              />
-            </div>
-            <div className="col-12 md:col-4 field mb-2">
-              <label htmlFor="monthlyMaxWinners" className="font-bold text-xs">{t('game.monthly_max_winners_label')}</label>
-              <InputNumber
-                id="monthlyMaxWinners"
-                value={prizeFormData.monthlyMaxWinners || 0}
-                onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyMaxWinners: e.value || 0 })}
-                placeholder={t('game.unlimited_zero_hint')}
-              />
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="dailyMaxWinners" className="font-bold text-xs">{t('game.daily_max_winners_label')}</label>
+                <InputNumber
+                  id="dailyMaxWinners"
+                  value={prizeFormData.dailyMaxWinners || 0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, dailyMaxWinners: e.value || 0 })}
+                  placeholder={t('game.unlimited_zero_hint')}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="weeklyMaxWinners" className="font-bold text-xs">{t('game.weekly_max_winners_label')}</label>
+                <InputNumber
+                  id="weeklyMaxWinners"
+                  value={prizeFormData.weeklyMaxWinners || 0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, weeklyMaxWinners: e.value || 0 })}
+                  placeholder={t('game.unlimited_zero_hint')}
+                />
+              </div>
+              <div className="col-12 md:col-4 field mb-2">
+                <label htmlFor="monthlyMaxWinners" className="font-bold text-xs">{t('game.monthly_max_winners_label')}</label>
+                <InputNumber
+                  id="monthlyMaxWinners"
+                  value={prizeFormData.monthlyMaxWinners || 0}
+                  onValueChange={(e) => setPrizeFormData({ ...prizeFormData, monthlyMaxWinners: e.value || 0 })}
+                  placeholder={t('game.unlimited_zero_hint')}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="field mb-3">
-          <label htmlFor="prizeStatus" className="font-bold">{t('common.status')}</label>
-          <Dropdown
-            id="prizeStatus"
-            value={prizeFormData.status || CommonStatus.ACTIVE}
-            options={[
-              { label: t('common.active'), value: CommonStatus.ACTIVE },
-              { label: t('common.inactive'), value: CommonStatus.INACTIVE },
-            ]}
-            onChange={(e) => setPrizeFormData({ ...prizeFormData, status: e.value })}
-          />
-        </div>
+          <div className="field mb-3">
+            <label htmlFor="prizeStatus" className="font-bold">{t('common.status')}</label>
+            <Dropdown
+              id="prizeStatus"
+              value={prizeFormData.status || CommonStatus.ACTIVE}
+              options={[
+                { label: t('common.active'), value: CommonStatus.ACTIVE },
+                { label: t('common.inactive'), value: CommonStatus.INACTIVE },
+              ]}
+              onChange={(e) => setPrizeFormData({ ...prizeFormData, status: e.value })}
+            />
+          </div>
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">
@@ -1079,109 +1079,109 @@ export const GameManagementPage: React.FC = () => {
         onHide={() => setShowGameDialog(false)}
       >
         <div className="p-fluid">
-        <div className="field mb-3">
-          <label htmlFor="gameCode" className="font-bold">
-            {t('game.game_code')}
-          </label>
-          <InputText
-            id="gameCode"
-            value={gameFormData.gameCode || ''}
-            onChange={(e) => setGameFormData({ ...gameFormData, gameCode: e.target.value })}
-            placeholder={t('game.game_code_placeholder')}
-            required
-            disabled={!!gameFormData.id}
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="gameName" className="font-bold">
-            {t('game.game_name')}
-          </label>
-          <InputText
-            id="gameName"
-            value={gameFormData.gameName || ''}
-            onChange={(e) => setGameFormData({ ...gameFormData, gameName: e.target.value })}
-            placeholder={t('game.game_name_placeholder')}
-            required
-          />
-        </div>
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="category" className="font-bold">
-              {t('game.category')}
+          <div className="field mb-3">
+            <label htmlFor="gameCode" className="font-bold">
+              {t('game.game_code')}
+            </label>
+            <InputText
+              id="gameCode"
+              value={gameFormData.gameCode || ''}
+              onChange={(e) => setGameFormData({ ...gameFormData, gameCode: e.target.value })}
+              placeholder={t('game.game_code_placeholder')}
+              required
+              disabled={!!gameFormData.id}
+            />
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="gameName" className="font-bold">
+              {t('game.game_name')}
+            </label>
+            <InputText
+              id="gameName"
+              value={gameFormData.gameName || ''}
+              onChange={(e) => setGameFormData({ ...gameFormData, gameName: e.target.value })}
+              placeholder={t('game.game_name_placeholder')}
+              required
+            />
+          </div>
+          <div className="grid">
+            <div className="col-12 md:col-6 field mb-3">
+              <label htmlFor="category" className="font-bold">
+                {t('game.category')}
+              </label>
+              <Dropdown
+                id="category"
+                value={gameFormData.category || 'INSTANT_WIN'}
+                options={categoryOptions}
+                onChange={(e) => setGameFormData({ ...gameFormData, category: e.value })}
+              />
+            </div>
+            <div className="col-12 md:col-6 field mb-3">
+              <label htmlFor="freeTurnsDaily" className="font-bold">
+                {t('game.free_turns_daily')}
+              </label>
+              <InputNumber
+                id="freeTurnsDaily"
+                value={gameFormData.freeTurnsDaily || 0}
+                min={0}
+                onValueChange={(e) => setGameFormData({ ...gameFormData, freeTurnsDaily: e.value || 0 })}
+              />
+            </div>
+          </div>
+          <div className="grid">
+            <div className="col-12 md:col-6 field mb-3">
+              <label htmlFor="pricePerTurnHtg" className="font-bold">
+                {t('game.price_per_turn_htg')}
+              </label>
+              <InputNumber
+                id="pricePerTurnHtg"
+                value={gameFormData.pricePerTurnHtg || 0}
+                min={0}
+                onValueChange={(e) => setGameFormData({ ...gameFormData, pricePerTurnHtg: e.value || 0 })}
+              />
+            </div>
+            <div className="col-12 md:col-6 field mb-3">
+              <label htmlFor="dailyBudgetLimit" className="font-bold">
+                {t('game.daily_budget_total')}
+              </label>
+              <InputNumber
+                id="dailyBudgetLimit"
+                value={gameFormData.dailyBudgetLimit ?? 0}
+                onValueChange={(e) => setGameFormData({ ...gameFormData, dailyBudgetLimit: e.value ?? 0 })}
+              />
+            </div>
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="description" className="font-bold">{t('game.description_label')}</label>
+            <InputTextarea
+              id="description"
+              rows={2}
+              value={gameFormData.description || ''}
+              onChange={(e) => setGameFormData({ ...gameFormData, description: e.target.value })}
+              placeholder={t('game.description_placeholder')}
+            />
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="rulesText" className="font-bold">{t('game.rules_text_label')}</label>
+            <InputTextarea
+              id="rulesText"
+              rows={3}
+              value={gameFormData.rulesText || ''}
+              onChange={(e) => setGameFormData({ ...gameFormData, rulesText: e.target.value })}
+              placeholder={t('game.rules_text_placeholder')}
+            />
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="status" className="font-bold">
+              {t('common.status')}
             </label>
             <Dropdown
-              id="category"
-              value={gameFormData.category || 'INSTANT_WIN'}
-              options={categoryOptions}
-              onChange={(e) => setGameFormData({ ...gameFormData, category: e.value })}
+              id="status"
+              value={gameFormData.status || CommonStatus.ACTIVE}
+              options={statusOptions}
+              onChange={(e) => setGameFormData({ ...gameFormData, status: e.value })}
             />
           </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="freeTurnsDaily" className="font-bold">
-              {t('game.free_turns_daily')}
-            </label>
-            <InputNumber
-              id="freeTurnsDaily"
-              value={gameFormData.freeTurnsDaily || 0}
-              min={0}
-              onValueChange={(e) => setGameFormData({ ...gameFormData, freeTurnsDaily: e.value || 0 })}
-            />
-          </div>
-        </div>
-        <div className="grid">
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="pricePerTurnHtg" className="font-bold">
-              {t('game.price_per_turn_htg')}
-            </label>
-            <InputNumber
-              id="pricePerTurnHtg"
-              value={gameFormData.pricePerTurnHtg || 0}
-              min={0}
-              onValueChange={(e) => setGameFormData({ ...gameFormData, pricePerTurnHtg: e.value || 0 })}
-            />
-          </div>
-          <div className="col-12 md:col-6 field mb-3">
-            <label htmlFor="dailyBudgetLimit" className="font-bold">
-              {t('game.daily_budget_total')}
-            </label>
-            <InputNumber
-              id="dailyBudgetLimit"
-              value={gameFormData.dailyBudgetLimit ?? 0}
-              onValueChange={(e) => setGameFormData({ ...gameFormData, dailyBudgetLimit: e.value ?? 0 })}
-            />
-          </div>
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="description" className="font-bold">{t('game.description_label')}</label>
-          <InputTextarea
-            id="description"
-            rows={2}
-            value={gameFormData.description || ''}
-            onChange={(e) => setGameFormData({ ...gameFormData, description: e.target.value })}
-            placeholder={t('game.description_placeholder')}
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="rulesText" className="font-bold">{t('game.rules_text_label')}</label>
-          <InputTextarea
-            id="rulesText"
-            rows={3}
-            value={gameFormData.rulesText || ''}
-            onChange={(e) => setGameFormData({ ...gameFormData, rulesText: e.target.value })}
-            placeholder={t('game.rules_text_placeholder')}
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="status" className="font-bold">
-            {t('common.status')}
-          </label>
-          <Dropdown
-            id="status"
-            value={gameFormData.status || CommonStatus.ACTIVE}
-            options={statusOptions}
-            onChange={(e) => setGameFormData({ ...gameFormData, status: e.value })}
-          />
-        </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
@@ -1212,62 +1212,62 @@ export const GameManagementPage: React.FC = () => {
         onHide={() => setShowParamsDialog(false)}
       >
         <div className="p-fluid">
-        <div className="p-3 bg-blue-50 border-1 border-blue-200 border-round-xl mb-4 text-blue-900">
-          <div className="flex align-items-center gap-2 mb-1">
-            <i className="pi pi-info-circle text-blue-600 font-bold" />
-            <span className="font-bold">{t('game.game_code_label')}: {paramsFormData.gameCode}</span>
+          <div className="p-3 bg-blue-50 border-1 border-blue-200 border-round-xl mb-4 text-blue-900">
+            <div className="flex align-items-center gap-2 mb-1">
+              <i className="pi pi-info-circle text-blue-600 font-bold" />
+              <span className="font-bold">{t('game.game_code_label')}: {paramsFormData.gameCode}</span>
+            </div>
+            <span className="text-xs">
+              {t('game.params_note')}
+            </span>
           </div>
-          <span className="text-xs">
-            {t('game.params_note')}
-          </span>
-        </div>
 
-        {/* Dynamic Parameter Fields Based On Game Category */}
-        {paramsFormData.category === 'QUIZ' && (
-          <div className="grid">
-            <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="quizQuestionCount" className="font-bold">{t('game.quiz_question_count_label')}</label>
-              <InputNumber
-                id="quizQuestionCount"
-                value={paramsFormData.quizQuestionCount || 5}
-                min={1}
-                max={20}
-                onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizQuestionCount: e.value || 5 })}
-              />
-              <small className="text-500">{t('game.quiz_question_count_desc')}</small>
+          {/* Dynamic Parameter Fields Based On Game Category */}
+          {paramsFormData.category === 'QUIZ' && (
+            <div className="grid">
+              <div className="col-12 md:col-6 field mb-3">
+                <label htmlFor="quizQuestionCount" className="font-bold">{t('game.quiz_question_count_label')}</label>
+                <InputNumber
+                  id="quizQuestionCount"
+                  value={paramsFormData.quizQuestionCount || 5}
+                  min={1}
+                  max={20}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizQuestionCount: e.value || 5 })}
+                />
+                <small className="text-500">{t('game.quiz_question_count_desc')}</small>
+              </div>
+              <div className="col-12 md:col-6 field mb-3">
+                <label htmlFor="quizCountdownSec" className="font-bold">{t('game.quiz_countdown_label')}</label>
+                <InputNumber
+                  id="quizCountdownSec"
+                  value={paramsFormData.quizCountdownSec || 20}
+                  min={5}
+                  max={60}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizCountdownSec: e.value || 20 })}
+                />
+                <small className="text-500">{t('game.quiz_countdown_desc')}</small>
+              </div>
+              <div className="col-12 field mb-3">
+                <label htmlFor="quizRewardPoints" className="font-bold">{t('game.quiz_reward_points_label')}</label>
+                <InputNumber
+                  id="quizRewardPoints"
+                  value={paramsFormData.quizRewardPoints || 150}
+                  min={10}
+                  onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizRewardPoints: e.value || 150 })}
+                />
+              </div>
             </div>
-            <div className="col-12 md:col-6 field mb-3">
-              <label htmlFor="quizCountdownSec" className="font-bold">{t('game.quiz_countdown_label')}</label>
-              <InputNumber
-                id="quizCountdownSec"
-                value={paramsFormData.quizCountdownSec || 20}
-                min={5}
-                max={60}
-                onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizCountdownSec: e.value || 20 })}
-              />
-              <small className="text-500">{t('game.quiz_countdown_desc')}</small>
-            </div>
-            <div className="col-12 field mb-3">
-              <label htmlFor="quizRewardPoints" className="font-bold">{t('game.quiz_reward_points_label')}</label>
-              <InputNumber
-                id="quizRewardPoints"
-                value={paramsFormData.quizRewardPoints || 150}
-                min={10}
-                onValueChange={(e) => setParamsFormData({ ...paramsFormData, quizRewardPoints: e.value || 150 })}
-              />
-            </div>
-          </div>
-        )}
+          )}
 
-        <div className="field mb-3 mt-3">
-          <div className="flex align-items-center justify-content-between p-2 border-1 surface-border border-round">
-            <span className="font-bold text-sm">{t('game.allow_points_spin_label')}</span>
-            <InputSwitch
-              checked={paramsFormData.allowPointsSpin ?? true}
-              onChange={(e) => setParamsFormData({ ...paramsFormData, allowPointsSpin: e.value })}
-            />
+          <div className="field mb-3 mt-3">
+            <div className="flex align-items-center justify-content-between p-2 border-1 surface-border border-round">
+              <span className="font-bold text-sm">{t('game.allow_points_spin_label')}</span>
+              <InputSwitch
+                checked={paramsFormData.allowPointsSpin ?? true}
+                onChange={(e) => setParamsFormData({ ...paramsFormData, allowPointsSpin: e.value })}
+              />
+            </div>
           </div>
-        </div>
         </div>
 
         <div className="flex justify-content-end gap-2 mt-4">

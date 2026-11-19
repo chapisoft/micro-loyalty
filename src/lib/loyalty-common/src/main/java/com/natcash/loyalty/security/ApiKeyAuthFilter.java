@@ -56,7 +56,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
                 || pathMatcher.match("/loyalty-service" + SecurityConstants.PUBLIC_MEDIA_PATH_PATTERN, path))) {
             return true;
         }
-        if (path != null && (path.endsWith("/auth/me") || path.endsWith("/users/me"))) {
+        if (path != null && (path.endsWith("/auth/me") || path.endsWith("/users/me") || path.endsWith("/sso/me-context"))) {
             return false;
         }
         for (String pattern : SecurityConstants.PUBLIC_ENDPOINTS) {
@@ -104,13 +104,22 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
                         }
                     }
                 }
+                if (claims.get(SecurityConstants.CLAIM_ACCOUNT_ROLE) != null) {
+                    String accountRole = String.valueOf(claims.get(SecurityConstants.CLAIM_ACCOUNT_ROLE)).trim().toUpperCase();
+                    if (!accountRole.isEmpty()) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + accountRole));
+                    }
+                }
                 if (claims.get(SecurityConstants.CLAIM_PARTNER_ID) != null) {
                     authorities.add(new SimpleGrantedAuthority(SecurityConstants.ROLE_PARTNER));
-                    if (claims.get(SecurityConstants.CLAIM_TENANT_ID_CAMEL) != null) {
-                        String headerTenant = request.getHeader(LoyaltyConstants.TENANT_HEADER);
-                        if (headerTenant == null || headerTenant.isBlank()) {
-                            TenantContext.setTenantId(String.valueOf(claims.get(SecurityConstants.CLAIM_TENANT_ID_CAMEL)));
-                        }
+                }
+                Object claimTenant = claims.get(SecurityConstants.CLAIM_TENANT_ID_CAMEL) != null
+                        ? claims.get(SecurityConstants.CLAIM_TENANT_ID_CAMEL)
+                        : claims.get(SecurityConstants.CLAIM_TENANT_ID);
+                if (claimTenant != null) {
+                    String headerTenant = request.getHeader(LoyaltyConstants.TENANT_HEADER);
+                    if (headerTenant == null || headerTenant.isBlank()) {
+                        TenantContext.setTenantId(String.valueOf(claimTenant).trim());
                     }
                 }
                 UsernamePasswordAuthenticationToken authentication =

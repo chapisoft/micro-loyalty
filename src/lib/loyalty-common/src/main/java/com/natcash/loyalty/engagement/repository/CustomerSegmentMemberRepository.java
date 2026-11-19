@@ -12,6 +12,8 @@ import java.util.Optional;
 @Repository
 public interface CustomerSegmentMemberRepository extends JpaRepository<CustomerSegmentMemberEntity, Long> {
 
+    List<CustomerSegmentMemberEntity> findByTenantId(String tenantId);
+
     List<CustomerSegmentMemberEntity> findByTenantIdAndSegmentCodeOrderByScoreDesc(
             String tenantId, CustomerSegmentCode segmentCode);
 

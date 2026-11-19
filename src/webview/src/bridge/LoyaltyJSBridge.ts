@@ -29,11 +29,25 @@ export interface SharePayload {
   url: string;
 }
 
+export interface NativeSessionPayload {
+  sessionTicket?: string;
+  token?: string;
+  tenantId?: string;
+  externalUserId?: string;
+  phoneNumber?: string;
+  fullName?: string;
+  accountRole?: string;
+  partnerCode?: string;
+  timestamp?: number;
+  signature?: string;
+}
+
 declare global {
   interface Window {
     ReactNativeWebView?: {
       postMessage: (message: string) => void;
     };
+    __LOYALTY_HOST_SESSION__?: NativeSessionPayload;
     LoyaltyJSBridge?: {
       onNativeCallback: (callbackId: string, data: any) => void;
       onNativeEvent: (eventName: string, data: any) => void;
@@ -79,20 +93,15 @@ class LoyaltyJSBridgeManager {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(message);
       } else {
-        // Mock fallback khi chạy thử nghiệm trên trình duyệt PC / Sandbox
-        console.warn(`[LoyaltyJSBridge] Browser simulation mode for action: ${action}`, payload);
+        // Khi chạy trực tiếp trên trình duyệt ngoài Native WebView: không cấp token hoặc dữ liệu tài khoản giả
         setTimeout(() => {
-          if (action === 'requestPayment') {
-            resolve({ success: true, transactionId: 'TXN_SIMULATED_' + Date.now() });
-          } else if (action === 'requestScanQR') {
-            resolve({ success: true, qrData: 'QR:NATCASH:USR001:1724400000:hash' });
-          } else if (action === 'getUserToken') {
-            resolve({ success: true, token: 'mock_jwt_token' });
+          if (action === 'getUserToken' || action === 'getNativeSession') {
+            resolve({ success: false, token: null });
           } else {
-            resolve({ success: true });
+            resolve({ success: false });
           }
           this.callbacks.delete(callbackId);
-        }, 500);
+        }, 50);
       }
     });
   }
@@ -144,6 +153,45 @@ class LoyaltyJSBridgeManager {
   public async getUserToken(): Promise<string | null> {
     const res = await this.sendToNative('getUserToken');
     return res && res.token ? res.token : null;
+  }
+
+  /**
+   * Nhận thông tin phiên SSO hoặc Assertion đã ký từ SuperApp chủ quản (injected state hoặc ReactNativeWebView)
+   */
+  public async getNativeSession(): Promise<NativeSessionPayload | null> {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    if (window.__LOYALTY_HOST_SESSION__) {
+      return { ...window.__LOYALTY_HOST_SESSION__ };
+    }
+    if (!window.ReactNativeWebView) {
+      return null;
+    }
+    return new Promise<NativeSessionPayload | null>((resolve) => {
+      const callbackId = 'cb_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+      const timer = setTimeout(() => {
+        if (this.callbacks.has(callbackId)) {
+          this.callbacks.delete(callbackId);
+          resolve(null);
+        }
+      }, 1200);
+      this.callbacks.set(callbackId, (data: any) => {
+        clearTimeout(timer);
+        if (data && typeof data === 'object' && (data.sessionTicket || data.externalUserId || data.token || data.signature)) {
+          resolve(data as NativeSessionPayload);
+        } else {
+          resolve(null);
+        }
+      });
+      window.ReactNativeWebView!.postMessage(
+        JSON.stringify({
+          action: 'getUserSession',
+          callbackId,
+          payload: {},
+        })
+      );
+    });
   }
 
   /**

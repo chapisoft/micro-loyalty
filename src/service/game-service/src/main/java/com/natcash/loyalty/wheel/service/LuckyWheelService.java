@@ -117,13 +117,14 @@ public class LuckyWheelService {
                 .build()
         ).collect(Collectors.toList());
 
+        boolean hasUser = request != null && request.getExternalUserId() != null && !request.getExternalUserId().isBlank();
         return WheelConfigResponse.builder()
                 .wheelId(wheel.getId())
                 .wheelCode(wheel.getWheelCode())
                 .wheelName(wheel.getWheelName())
                 .pricePerSpin(wheel.getPricePerSpin())
                 .freeSpinsDaily(wheel.getFreeSpinsDaily())
-                .remainingSpinsToday(wheel.getFreeSpinsDaily())
+                .remainingSpinsToday(hasUser ? wheel.getFreeSpinsDaily() : 0)
                 .prizes(prizeDtos)
                 .build();
     }

@@ -1,18 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { QrCode, ShieldCheck, Sparkles, Briefcase } from 'lucide-react';
+import useSSOAuth from '../../hooks/useSSOAuth';
 import {
   LoyaltyApi,
   getDefaultUserId,
+  type ApplicablePolicyItem,
   type CatalogVoucherItem,
   type ContentBannerItem,
   type UserVoucherItem,
   type ExpiringBucketsResponse,
   type MemberProfile,
   type MilestoneItem,
+  type RecommendedMissionItem,
+  type RecommendedVoucherItem,
+  type TenantUserContextResponse,
+  type TierItem,
 } from '../../services/api';
 import { GameArt } from '../GameArt';
-import { QrCode } from 'lucide-react';
-import { Screen, SectionHeader, Skeleton, ErrorBlock, SlideRow, Popup, PrimaryButton, SecondaryButton, fmt, ddmm, ddmmyyyy, toDate } from '../ui';
+import { Screen, SectionHeader, Skeleton, ErrorBlock, SlideRow, Popup, Pill, CoinDot, PrimaryButton, SecondaryButton, fmt, ddmm, ddmmyyyy, toDate } from '../ui';
 import { userState, cleanBrand, valueTitle, userValueTitle } from './Rewards';
 import { artGift, artHourglass, artCup } from '../art';
 import { tierLook, tierLabel } from '../tiers';
@@ -68,6 +75,8 @@ interface HomeData {
   segment: SegmentProfileResponse | null;
   vouchers: UserVoucherItem[];
   banners: ContentBannerItem[];
+  userContext: TenantUserContextResponse | null;
+  tiers: TierItem[];
 }
 
 interface Reminder { art: string; title: string; text: string; cta: string; to: string }
@@ -92,25 +101,29 @@ const pickReminder = (d: HomeData): Reminder | null => {
 };
 
 export const LoyaltyHome: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const go = (path: string) => navigate(path);
-  const userId = getDefaultUserId();
+  const { session, userContext: authContext } = useSSOAuth();
+  const userId = session?.externalUserId || getDefaultUserId();
   const [data, setData] = useState<HomeData | null>(null);
   const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      const [profile, ms, expiring, deals, refs, games, segment, vouchers, homeContent] = await Promise.all([
-        LoyaltyApi.getProfile(userId),
+      const [profile, ms, expiring, deals, refs, games, segment, vouchers, homeContent, freshContext, tiers] = await Promise.all([
+        userId ? LoyaltyApi.getProfile(userId) : Promise.resolve(null),
         LoyaltyApi.getMilestones(userId).catch(() => ({ milestones: [] as unknown[] })),
-        LoyaltyApi.getExpiringBuckets(userId).catch(() => null),
-        LoyaltyApi.getVoucherCatalog().catch(() => [] as CatalogVoucherItem[]),
-        LoyaltyApi.getMyReferrals(userId).catch(() => null),
+        userId ? LoyaltyApi.getExpiringBuckets(userId).catch(() => null) : Promise.resolve(null),
+        LoyaltyApi.getVoucherCatalog('CUSTOMER').catch(() => [] as CatalogVoucherItem[]),
+        userId ? LoyaltyApi.getMyReferrals(userId).catch(() => null) : Promise.resolve(null),
         loadGames(),
-        LoyaltyApi.getSegmentProfile(userId).catch(() => null), // CN-01 · content for the member's segment
-        LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]),
+        userId ? LoyaltyApi.getSegmentProfile(userId).catch(() => null) : Promise.resolve(null),
+        userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]),
         LoyaltyApi.getMeHome(userId, 'LOYALTY_HOME').catch(() => ({ banners: [] as ContentBannerItem[] })),
+        userId && session?.token ? LoyaltyApi.getMeContext(userId).catch(() => authContext) : Promise.resolve(null),
+        LoyaltyApi.getTiers().catch(() => [] as TierItem[]),
       ]);
       // The live API returns {items, ekycVerifiedCount}; the typed client says {referrals, totalEkycVerified}.
       const r = refs as unknown as Record<string, unknown> | null;
@@ -126,24 +139,26 @@ export const LoyaltyHome: React.FC = () => {
         referralReward: Number(r?.rewardPerReferral) || 0,
         vouchers,
         banners: homeContent?.banners || [],
+        userContext: freshContext,
+        tiers: (tiers || []).filter((tier) => tier.status !== 'INACTIVE').sort((a, b) => a.tierLevel - b.tierLevel),
       });
     } catch {
       setFailed(true);
     }
-  }, [userId]);
+  }, [userId, authContext, session?.token]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const [reminder, setReminder] = useState<Reminder | null>(null);
   const p = data?.profile;
   const look = tierLook(p?.tier?.code);
   const isNew = !!p && !p.currentPoints && !p.tierPoints && !data?.missions.length;
   const expiringCoins = data?.expiring?.totalExpiringPoints || 0;
   const year = useMemo(() => new Date().getFullYear(), []);
-  const [reminder, setReminder] = useState<Reminder | null>(null);
   useEffect(() => {
-    if (!data) return;
+    if (!data || !userId) return;
     let cancelled = false;
     const resolvePopup = async () => {
       try {
@@ -226,26 +241,68 @@ export const LoyaltyHome: React.FC = () => {
         </>
       )}
 
-      {data && p && (
+      {data && (
         <>
-          {/* Member card · HV-02 (Figma 330:230): overlaps the orange header; "Pay at counter" opens LM-17 */}
-          <div role="button" tabIndex={0} onClick={() => go('/tiers')} onKeyDown={(e) => e.key === 'Enter' && go('/tiers')} className="flex w-full cursor-pointer flex-col gap-2 rounded-[20px] p-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.06)]" style={{ background: look.cardBg }}>
-            <div className="flex w-full items-center gap-1.5">
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-[17px] font-semibold leading-[22px] text-brand">{tierLabel(p.tier?.name, p.tier?.code)} tier ›</span>
-                <span className="text-[36px] font-semibold leading-[48px]">{fmt(p.currentPoints)}</span>
-                <span className="text-[13px] leading-[18px] text-slate-500">available coins</span>
+          {p ? (
+            /* Member card · HV-02 (Figma 330:230): overlaps the orange header; "Pay at counter" opens LM-17 */
+            <div role="button" tabIndex={0} onClick={() => go('/tiers')} onKeyDown={(e) => e.key === 'Enter' && go('/tiers')} className="flex w-full cursor-pointer flex-col gap-2 rounded-[20px] p-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.06)]" style={{ background: look.cardBg }}>
+              {(p.fullName || data.userContext?.accountRole === 'AGENT' || data.userContext?.accountRole === 'SUPER_AGENT') && (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-slate-900">
+                    {p.fullName || p.externalUserId}
+                    {p.phoneNumber ? (
+                      <span className="ml-1.5 text-[11.5px] font-normal text-slate-500">· {p.phoneNumber}</span>
+                    ) : null}
+                  </p>
+                  {(data.userContext?.accountRole === 'AGENT' || data.userContext?.accountRole === 'SUPER_AGENT') && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); go('/agent'); }}
+                      className="flex h-7 shrink-0 items-center gap-1 rounded-full bg-white/90 px-2.5 text-[11.5px] font-semibold text-slate-800 shadow-sm"
+                    >
+                      <Briefcase className="size-3.5 text-[#FE810D]" />
+                      {t('sso.open_agent_portal')}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="flex w-full items-center gap-1.5">
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-[17px] font-semibold leading-[22px] text-brand">{tierLabel(p.tier?.name, p.tier?.code)} tier ›</span>
+                  <span className="text-[36px] font-semibold leading-[48px]">{fmt(p.currentPoints)}</span>
+                  <span className="text-[13px] leading-[18px] text-slate-500">available coins</span>
+                </div>
+                <img src={look.medal} alt="" className="size-[104px] shrink-0" />
               </div>
-              <img src={look.medal} alt="" className="size-[104px] shrink-0" />
+              <div className="h-px w-full bg-black/10" />
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-[12px] leading-4 text-slate-500">{isNew ? 'Start earning today' : `${fmt(p.tierPoints)} tier pts · ${year} period`}</span>
+                <button type="button" onClick={(e) => { e.stopPropagation(); go('/pay-at-counter'); }} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-semibold text-[#FE810D]">
+                  <QrCode className="size-4" /> Pay at counter
+                </button>
+              </div>
             </div>
-            <div className="h-px w-full bg-black/10" />
-            <div className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 truncate text-[12px] leading-4 text-slate-500">{isNew ? 'Start earning today' : `${fmt(p.tierPoints)} tier pts · ${year} period`}</span>
-              <button type="button" onClick={(e) => { e.stopPropagation(); go('/pay-at-counter'); }} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-semibold text-[#FE810D]">
-                <QrCode className="size-4" /> Pay at counter
-              </button>
+          ) : (
+            /* Guest Member Card: hiển thị dữ liệu chung cho khách vãng lai khi chưa đăng nhập */
+            <div role="button" tabIndex={0} onClick={() => go('/tiers')} onKeyDown={(e) => e.key === 'Enter' && go('/tiers')} className="flex w-full cursor-pointer flex-col gap-2 rounded-[20px] p-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.06)]" style={{ background: look.cardBg }}>
+              <p className="truncate text-[13px] font-semibold text-slate-900">{t('sso.guest_card_title')}</p>
+              <div className="flex w-full items-center gap-1.5">
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-[17px] font-semibold leading-[22px] text-brand">{t('sso.guest_view_tiers')} ›</span>
+                  <span className="text-[36px] font-semibold leading-[48px]">0</span>
+                  <span className="text-[13px] leading-[18px] text-slate-500">available coins</span>
+                </div>
+                <img src={look.medal} alt="" className="size-[104px] shrink-0" />
+              </div>
+              <div className="h-px w-full bg-black/10" />
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 text-[12px] leading-4 text-slate-600">{t('sso.guest_card_sub')}</span>
+                <button type="button" onClick={(e) => { e.stopPropagation(); go('/tiers'); }} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[12.5px] font-semibold text-[#FE810D]">
+                  {t('sso.guest_view_tiers')}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* CMS Banners · CN-06 (GET /me/home) */}
           {data.banners.length > 0 && (
@@ -297,7 +354,7 @@ export const LoyaltyHome: React.FC = () => {
           {/* Missions in progress · 274:1355 / new customer "Get started" · 330:228 */}
           {data.missions.length > 0 ? (
             <>
-              <SectionHeader title="Missions in progress" action="See all ›" onAction={() => go('/missions')} />
+              <SectionHeader title={p ? 'Missions in progress' : 'Missions'} action="See all ›" onAction={() => go('/missions')} />
               <SlideRow className="gap-3">
                 {data.missions.map((m) => (
                   <button key={m.code} type="button" onClick={() => go(`/missions/${encodeURIComponent(m.code)}`)} className={`flex ${data.missions.length === 1 ? 'w-full' : 'w-[300px]'} max-w-full shrink-0 snap-start flex-col gap-2.5 rounded-[20px] bg-white p-3.5 text-left`}>
@@ -372,14 +429,18 @@ export const LoyaltyHome: React.FC = () => {
             <>
               <SlideRow className="gap-3">
                 {data.deals.map((v) => {
-                  const enough = (p.currentPoints || 0) >= v.pointCost;
+                  const enough = p ? (p.currentPoints || 0) >= v.pointCost : false;
+                  const priceLabel = p
+                    ? `${enough ? '' : 'Needs '}${fmt(v.pointCost)} coins`
+                    : v.pointCost === 0
+                    ? 'Free'
+                    : `${fmt(v.pointCost)} coins`;
                   return (
                     <button key={v.id} type="button" onClick={() => go(`/rewards/${v.id}`)} className="relative flex h-[150px] w-[173px] shrink-0 flex-col justify-end gap-0.5 overflow-hidden rounded-[20px] px-3.5 pb-3.5 pt-3 text-left">
                       <img src={dealPhoto(v)} alt="" className="absolute inset-0 size-full object-cover" />
                       <span className="absolute inset-0 bg-gradient-to-b from-[rgba(15,23,41,0)] from-35% to-[rgba(15,23,41,0.78)]" />
                       <span className="absolute left-3 top-3 rounded-full bg-brand px-2.5 py-1 text-[12px] font-semibold leading-[17px] text-white">
-                        {enough ? '' : 'Needs '}
-                        {fmt(v.pointCost)} coins
+                        {priceLabel}
                       </span>
                       <span className="relative truncate text-[12px] font-medium leading-[17px] text-white/90">{cleanBrand(v.partnerName)}</span>
                       <span className="relative line-clamp-1 text-[20px] font-semibold leading-[29px] text-white">{valueTitle(v)}</span>
@@ -388,6 +449,133 @@ export const LoyaltyHome: React.FC = () => {
                 })}
               </SlideRow>
             </>
+          )}
+
+          {/* Tenant User Applicable Policies & Tier Perks (authenticated) OR Public Tier Overview (Guest) */}
+          {p ? (
+            <section className="flex flex-col gap-2.5 rounded-[20px] bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="size-4 shrink-0 text-[#FE810D]" />
+                <h2 className="min-w-0 flex-1 text-[16px] font-semibold text-slate-900">{t('sso.policies_section_title')}</h2>
+              </div>
+              <div className="grid grid-cols-3 gap-2 rounded-[14px] bg-[#FFF8F2] p-2.5 text-center">
+                <div>
+                  <p className="text-[15px] font-bold text-[#FE810D]">×{Number(p.tier?.pointMultiplier || 1).toFixed(2).replace(/\.00$/, '')}</p>
+                  <p className="text-[11px] leading-4 text-slate-500">{t('sso.policies_earn_multiplier')}</p>
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-slate-900">{p.tier?.freeDailyTurns ?? 1}</p>
+                  <p className="text-[11px] leading-4 text-slate-500">{t('sso.policies_free_plays_day')}</p>
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-slate-900">{fmt(data.userContext?.payAtCounterPinLimitHtg ?? 2000)} HTG</p>
+                  <p className="text-[11px] leading-4 text-slate-500">{t('sso.policies_pin_limit')}</p>
+                </div>
+              </div>
+              {(data.userContext?.applicablePolicies || []).length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {(data.userContext?.applicablePolicies || []).map((pol: ApplicablePolicyItem, idx: number) => (
+                    <div key={pol.partnerCode || idx} className="flex items-center justify-between gap-2 rounded-[12px] border border-slate-100 bg-[#FAFAFB] px-3 py-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-slate-800">{pol.partnerName}</p>
+                        <p className="text-[11.5px] text-slate-500">
+                          {t('sso.policies_exchange_rate', { rate: pol.pointExchangeRate })} · {t('sso.policies_max_burn', { pct: pol.maxBurnPercentage })}
+                        </p>
+                      </div>
+                      <Pill tone="green">{fmt(pol.maxBurnPointsPerTx)} max</Pill>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : data.tiers.length > 0 && (
+            <>
+              <SectionHeader title="Membership tiers" action="See all ›" onAction={() => go('/tiers')} />
+              <div className="grid w-full grid-cols-2 gap-2.5">
+                {data.tiers.slice(0, 4).map((tier) => (
+                  <button
+                    key={tier.code}
+                    type="button"
+                    onClick={() => go('/tiers')}
+                    className="flex items-center gap-2.5 rounded-[16px] bg-white p-3 text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
+                  >
+                    <img src={tierLook(tier.code).medal} alt="" className="size-10 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-slate-900">{tierLabel(tier.name, tier.code)}</p>
+                      <p className="text-[11px] text-slate-500">
+                        ×{Number(tier.pointMultiplier || 1).toFixed(1).replace(/\.0$/, '')} · {tier.freeDailyTurns} plays/day
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Personalized Recommendations tailored to user's Tier, Role, Segment & Coins */}
+          {(((data.userContext?.recommendedVouchers || []).length > 0) || ((data.userContext?.recommendedMissions || []).length > 0)) && (
+            <section className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 shrink-0 text-[#FE810D]" />
+                <h2 className="min-w-0 flex-1 text-[18px] font-semibold leading-[26px] text-slate-900">{t('sso.recommended_section_title')}</h2>
+              </div>
+
+              {(data.userContext?.recommendedVouchers || []).length > 0 && (
+                <>
+                  <p className="-mt-1.5 text-[12px] text-slate-500">{t('sso.recommended_vouchers_sub')}</p>
+                  <SlideRow className="gap-3">
+                    {(data.userContext?.recommendedVouchers || []).map((rv: RecommendedVoucherItem) => (
+                      <button
+                        key={rv.id}
+                        type="button"
+                        onClick={() => go(`/rewards/${rv.id}`)}
+                        className="flex w-[224px] shrink-0 flex-col justify-between gap-2 rounded-[18px] bg-white p-3.5 text-left shadow-[0_2px_12px_rgba(0,0,0,0.05)]"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="truncate text-[11px] font-semibold text-slate-500">{rv.partnerName}</span>
+                            <Pill tone={rv.freeCollect ? 'green' : rv.affordable ? 'orange' : 'grey'}>
+                              {rv.freeCollect ? 'Free' : `${fmt(rv.pointCost)} ${t('sso.coins_short')}`}
+                            </Pill>
+                          </div>
+                          <p className="line-clamp-2 text-[14px] font-semibold leading-5 text-slate-900">{rv.title}</p>
+                        </div>
+                        {rv.matchReason && (
+                          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[#FFF4EA] px-2.5 py-0.5 text-[11px] font-medium text-[#E06C00]">
+                            <CoinDot className="size-3" /> {rv.matchReason}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </SlideRow>
+                </>
+              )}
+
+              {(data.userContext?.recommendedMissions || []).length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-[12px] text-slate-500">{t('sso.recommended_missions_sub')}</p>
+                  {(data.userContext?.recommendedMissions || []).slice(0, 3).map((rm: RecommendedMissionItem) => (
+                    <button
+                      key={rm.milestoneId}
+                      type="button"
+                      onClick={() => go(`/missions/${encodeURIComponent(rm.campaignCode)}`)}
+                      className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-white p-3.5 text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-[14px] font-semibold text-slate-900">{rm.campaignName}</span>
+                          {rm.matchReason && <Pill tone={rm.status === 'COMPLETED' ? 'green' : 'orange'}>{rm.matchReason}</Pill>}
+                        </div>
+                        <p className="mt-0.5 text-[12px] text-slate-500">
+                          {fmt(rm.currentProgress)} / {fmt(rm.targetValue)} · +{fmt(rm.rewardPoints)} {t('sso.coins_short')}
+                        </p>
+                      </div>
+                      <span className="text-slate-400">›</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
         </>

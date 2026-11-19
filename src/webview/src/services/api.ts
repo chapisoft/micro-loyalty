@@ -31,24 +31,44 @@ export const getTenantId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramTenant = urlParams.get('tenantId') || urlParams.get('tenant_id');
   if (paramTenant) return paramTenant;
+  const sessionTenant = sessionStorage.getItem('loyalty_tenant');
+  if (sessionTenant) return sessionTenant;
+  const stored = localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id');
+  if (stored) return stored;
   const envTenant = import.meta.env.VITE_TENANT_ID || import.meta.env.VITE_DEFAULT_TENANT;
   if (envTenant) return envTenant;
   const runtimeTenant = (window as unknown as { __RUNTIME_CONFIG__?: { TENANT_ID?: string } }).__RUNTIME_CONFIG__?.TENANT_ID;
   if (runtimeTenant) return runtimeTenant;
-  const stored = localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id');
-  if (stored) return stored;
   return 'TENANT_NATCASH';
 };
 
 export const getDefaultUserId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
-  const paramUser = urlParams.get('userId') || urlParams.get('user_id') || urlParams.get('phone');
-  if (paramUser) return paramUser;
-  const envUser = import.meta.env.VITE_DEFAULT_USER_ID || import.meta.env.VITE_DEFAULT_USER;
-  if (envUser) return envUser;
-  const storedUser = sessionStorage.getItem('loyalty_user');
-  if (storedUser) return storedUser;
-  return '84988888888';
+  const paramUser = urlParams.get('userId') || urlParams.get('externalUserId');
+  if (paramUser && paramUser.trim()) {
+    return paramUser.trim();
+  }
+  if (sessionStorage.getItem('loyalty_auth_verified') === '1') {
+    return sessionStorage.getItem('loyalty_user') || '';
+  }
+  return '';
+};
+
+const parseApiError = async (res: Response): Promise<Error> => {
+  try {
+    const body = await res.json();
+    if (body && typeof body.message === 'string' && body.message.trim()) {
+      const err = new Error(body.message);
+      (err as Error & { status?: number; code?: string }).status = res.status;
+      (err as Error & { status?: number; code?: string }).code = body.code;
+      return err;
+    }
+  } catch {
+    // ignore JSON parse failure
+  }
+  const err = new Error(`HTTP_${res.status}`);
+  (err as Error & { status?: number }).status = res.status;
+  return err;
 };
 
 const API_BASE = getApiBaseUrl();
@@ -81,19 +101,23 @@ export interface MemberProfile {
   hasCheckedInToday?: boolean;
   cycleEndAt?: string;
   tier: {
-    tierId: number;
+    id?: number;
+    tierId?: number;
     code: string;
     name: string;
     tierLevel: number;
+    minPoints?: number;
     pointMultiplier: number;
     freeDailyTurns: number;
     keepTierPoints?: number;
     upgradePoints?: number;
+    description?: string;
   };
   nextTierProgress: {
     nextTierCode: string;
     nextTierName: string;
-    requiredPoints: number;
+    requiredPoints?: number;
+    targetTierPoints?: number;
     currentTierPoints: number;
     pointsNeeded: number;
     progressPercentage: number;
@@ -631,10 +655,11 @@ export const LoyaltyApi = {
     return res.json();
   },
 
-  // 2. Lấy danh sách nhiệm vụ cột mốc
+  // 2. Lấy danh sách nhiệm vụ cột mốc (hỗ trợ Guest nếu externalUserId rỗng)
   async getMilestones(externalUserId: string = getDefaultUserId()): Promise<{ campaigns: unknown[]; milestones: MilestoneItem[] }> {
+    const query = externalUserId ? `?externalUserId=${encodeURIComponent(externalUserId)}` : '';
     const res = await fetch(
-      `${API_BASE}/loyalty/v1/milestones/list?externalUserId=${encodeURIComponent(externalUserId)}`,
+      `${API_BASE}/loyalty/v1/milestones/list${query}`,
       { headers: getAuthHeaders() }
     );
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
@@ -885,14 +910,18 @@ export const LoyaltyApi = {
     return toAgentDashboard(await res.json());
   },
 
-  // 15. Lấy cấu hình và giải thưởng vòng quay may mắn
+  // 15. Lấy cấu hình và giải thưởng vòng quay may mắn (hỗ trợ Guest nếu externalUserId rỗng)
   async getLuckyWheelConfig(externalUserId: string = getDefaultUserId(), wheelCode?: string): Promise<WheelConfigData> {
     const tenant = getTenantId();
     const effectiveWheelCode =
       wheelCode ||
       (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
+    const qs = new URLSearchParams({ wheelCode: effectiveWheelCode });
+    if (externalUserId) {
+      qs.set('externalUserId', externalUserId);
+    }
     const res = await fetch(
-      `${API_BASE}/loyalty/v1/luckydraw/config?wheelCode=${encodeURIComponent(effectiveWheelCode)}&externalUserId=${encodeURIComponent(externalUserId)}`,
+      `${API_BASE}/loyalty/v1/luckydraw/config?${qs.toString()}`,
       { headers: getAuthHeaders() }
     );
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
@@ -1133,7 +1162,196 @@ export const LoyaltyApi = {
     const data = await res.json();
     return Array.isArray(data) ? data : [];
   },
+
+  // 33. Xác thực và định danh tài khoản user của Tenant (Natcash / Delimart / Micro-CRM)
+  async authenticateTenantUser(req: TenantUserAuthRequest): Promise<TenantUserContextResponse> {
+    const tenantId = req.tenantId || getTenantId();
+    const res = await fetch(`${API_BASE}/loyalty/v1/sso/authenticate-tenant-user`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(true),
+        'X-Tenant-Id': tenantId,
+      },
+      body: JSON.stringify({ ...req, tenantId }),
+    });
+    if (!res.ok) throw await parseApiError(res);
+    return res.json();
+  },
+
+  // 34. Sinh vé phiên SSO B2B2C cho luồng kiểm thử tích hợp SuperApp
+  async generateSsoTicket(
+    req: {
+      partnerCode: string;
+      externalUserId: string;
+      username?: string;
+      phoneNumber?: string;
+      fullName?: string;
+      accountRole?: string;
+      timestamp?: number;
+      signature?: string;
+    },
+    tenantId: string = getTenantId()
+  ): Promise<{ sessionTicket: string; expiresInSeconds: number; webviewLaunchUrl?: string }> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/sso/generate-session-ticket`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(true),
+        'X-Tenant-Id': tenantId,
+      },
+      body: JSON.stringify(req),
+    });
+    if (!res.ok) throw await parseApiError(res);
+    return res.json();
+  },
+
+  // 35. Đổi vé phiên SSO lấy JWT thật và ngữ cảnh cá nhân hóa
+  async exchangeSsoTicket(sessionTicket: string, tenantId: string = getTenantId()): Promise<SsoExchangeResponse> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/sso/exchange-token`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(true),
+        'X-Tenant-Id': tenantId,
+      },
+      body: JSON.stringify({ sessionTicket }),
+    });
+    if (!res.ok) throw await parseApiError(res);
+    return res.json();
+  },
+
+  // 36. Truy vấn ngữ cảnh cá nhân hóa 360° của tài khoản đang đăng nhập
+  async getMeContext(externalUserId?: string): Promise<TenantUserContextResponse> {
+    const qs = externalUserId ? `?externalUserId=${encodeURIComponent(externalUserId)}` : '';
+    const res = await fetch(`${API_BASE}/loyalty/v1/sso/me-context${qs}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw await parseApiError(res);
+    return res.json();
+  },
+
+  // 37. Danh sách tài khoản user thuộc Tenant phục vụ định danh & chuyển đổi tài khoản
+  async getTenantAccounts(tenantId: string = getTenantId()): Promise<TenantAccountSummary[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/sso/tenant-accounts?tenantId=${encodeURIComponent(tenantId)}`, {
+      headers: {
+        ...getAuthHeaders(),
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    if (!res.ok) throw await parseApiError(res);
+    return res.json();
+  },
 };
+
+export interface ApplicablePolicyItem {
+  partnerCode?: string;
+  partnerName: string;
+  partnerType?: string;
+  pointExchangeRate: number;
+  tierPointMultiplier: number;
+  maxBurnPercentage: number;
+  minBurnPoints: number;
+  maxBurnPointsPerTx: number;
+  maxBurnPointsPerDay: number;
+  payAtCounterPinLimitHtg?: number;
+  policySummary?: string;
+}
+
+export interface RecommendedVoucherItem {
+  id: number;
+  voucherCode: string;
+  title: string;
+  description?: string;
+  partnerName: string;
+  discountType?: string;
+  discountValue: number;
+  minBillAmount?: number;
+  pointCost: number;
+  acquireType?: string;
+  usageType?: string;
+  categoryCode?: string;
+  audienceRole?: string;
+  imageUrl?: string;
+  affordable: boolean;
+  freeCollect: boolean;
+  matchReason?: string;
+}
+
+export interface RecommendedMissionItem {
+  milestoneId: number;
+  campaignCode: string;
+  campaignName: string;
+  milestoneStep: number;
+  targetMetric?: string;
+  targetValue: number;
+  currentProgress: number;
+  rewardPoints: number;
+  status: string;
+  audienceRole?: string;
+  matchReason?: string;
+}
+
+export interface TenantAccountSummary {
+  tenantId: string;
+  externalUserId: string;
+  phoneNumber?: string;
+  fullName?: string;
+  accountRole: string;
+  tierCode?: string;
+  tierName?: string;
+  currentPoints: number;
+  tierPoints: number;
+  segmentCode?: string;
+  segmentName?: string;
+  status?: string;
+}
+
+export interface TenantUserAuthRequest {
+  tenantId?: string;
+  externalUserId?: string;
+  phoneNumber?: string;
+  fullName?: string;
+  verifyCode?: string;
+  authMethod?: 'OTP_PIN' | 'SSO_SWITCH' | 'TENANT_TOKEN' | 'NATIVE_BRIDGE' | 'HMAC_ASSERTION';
+  partnerCode?: string;
+  accountRole?: string;
+  timestamp?: number;
+  signature?: string;
+}
+
+export interface TenantUserContextResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
+  tenantId: string;
+  externalUserId: string;
+  phoneNumber?: string;
+  fullName?: string;
+  accountRole: string;
+  expiringPoints?: number;
+  nearestExpiryDate?: string;
+  payAtCounterPinLimitHtg?: number;
+  profile?: MemberProfile;
+  segmentCode?: string;
+  segmentName?: string;
+  segmentHeadline?: string;
+  segmentSubheadline?: string;
+  segmentCtaLabel?: string;
+  segmentCtaTarget?: string;
+  applicablePolicies?: ApplicablePolicyItem[];
+  recommendedVouchers?: RecommendedVoucherItem[];
+  recommendedMissions?: RecommendedMissionItem[];
+}
+
+export interface SsoExchangeResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
+  tenantId: string;
+  externalUserId: string;
+  fullName?: string;
+  phoneNumber?: string;
+  accountRole?: string;
+  userContext?: TenantUserContextResponse;
+}
 
 export interface GeneralCategoryItem {
   tenantId?: string;

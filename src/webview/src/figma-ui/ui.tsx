@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
+import useSSOAuth from '../hooks/useSSOAuth';
 import { changeLanguage, SUPPORTED_LANGUAGES } from '../language';
 import iconArrowLeft from '../assets/figma/icon-arrow-left.svg';
 import iconEllipsis from '../assets/figma/icon-ellipsis.svg';
@@ -298,25 +299,51 @@ const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onC
   const navigate = useNavigate();
   const [lang, setLang] = React.useState(false);
   const { t, i18n } = useTranslation();
+  const { session, userContext, logout } = useSSOAuth();
   const go = (to: string) => {
     onClose();
     navigate(to);
   };
   const isAgent = typeof window !== 'undefined' && window.location.hash.startsWith('#/agent');
+  const accountRole = userContext?.accountRole || session?.accountRole || 'CUSTOMER';
+  const canAccessAgent = accountRole === 'AGENT' || accountRole === 'SUPER_AGENT';
   const rows: [string, () => void][] = [
+    ...(canAccessAgent
+      ? [[isAgent ? t('sso.open_customer_portal') : t('sso.open_agent_portal'), () => go(isAgent ? '/' : '/agent')] as [string, () => void]]
+      : []),
     ...(isAgent ? [] : ([[t('figma_ui.more.share_rewards'), () => go('/invite')]] as [string, () => void][])),
     [t('figma_ui.more.coins_history'), () => go('/coins')],
     [t('figma_ui.more.notification_settings'), () => go('/notifications')],
     [t('figma_ui.more.language'), () => setLang(true)],
     [t('figma_ui.more.program_terms'), () => go('/terms')],
+    ...(session
+      ? [[t('sso.sign_out'), () => { onClose(); logout(); navigate('/', { replace: true }); }] as [string, () => void]]
+      : []),
   ];
   return (
     <>
       <Sheet open={open && !lang} onClose={onClose} title={t('figma_ui.common.more')}>
+        {session ? (
+          <div className="rounded-[16px] bg-[#FFF4EA] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#E06C00]">{t('sso.current_account_label')}</p>
+            <p className="mt-0.5 truncate text-[14px] font-bold text-slate-900">
+              {session.fullName || session.externalUserId}
+              <span className="ml-1.5 text-[12px] font-normal text-slate-600">· {session.phoneNumber || session.externalUserId}</span>
+            </p>
+            <p className="mt-0.5 text-[12px] text-slate-600">
+              {t('sso.tenant_label')}: <span className="font-semibold">{session.tenantId}</span> · {accountRole}
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-[16px] bg-slate-100 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('sso.guest_badge_title')}</p>
+            <p className="mt-0.5 text-[12.5px] leading-5 text-slate-700">{t('sso.guest_badge_sub')}</p>
+          </div>
+        )}
         <div className="divide-y divide-slate-100 rounded-[16px] bg-[#F7F7F8]">
           {rows.map(([label, fn]) => (
             <button key={label} type="button" onClick={fn} className="flex h-12 w-full items-center px-4 text-left text-[15px]">
-              <span className="flex-1">{label}</span>
+              <span className={`flex-1 ${label === t('sso.sign_out') ? 'font-semibold text-[#FE810D]' : ''}`}>{label}</span>
               <span className="text-slate-400">›</span>
             </button>
           ))}
@@ -396,8 +423,8 @@ export const PrimaryButton: React.FC<{ children: React.ReactNode; onClick?: () =
   </button>
 );
 
-export const SecondaryButton: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string }> = ({ children, onClick, className = '' }) => (
-  <button type="button" onClick={onClick} className={`flex h-[46px] ${/\b(w-|flex-)/.test(className) ? '' : 'w-full'} items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-[14px] font-semibold ${className}`}>
+export const SecondaryButton: React.FC<{ children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }> = ({ children, onClick, disabled, className = '' }) => (
+  <button type="button" onClick={onClick} disabled={disabled} className={`flex h-[46px] ${/\b(w-|flex-)/.test(className) ? '' : 'w-full'} items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-[14px] font-semibold disabled:opacity-60 ${className}`}>
     {children}
   </button>
 );

@@ -12,7 +12,11 @@ import iconShield from '../../assets/figma/icon-shield-check.svg';
 export const MemberTiers: React.FC = () => {
   const navigate = useNavigate();
   const [data, failed, reload] = useLoad(async () => {
-    const [tiers, profile] = await Promise.all([LoyaltyApi.getTiers(), LoyaltyApi.getProfile(getDefaultUserId()).catch(() => null)]);
+    const userId = getDefaultUserId();
+    const [tiers, profile] = await Promise.all([
+      LoyaltyApi.getTiers(),
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
+    ]);
     return {
       tiers: tiers.filter((t) => t.status !== 'INACTIVE').sort((a, b) => a.tierLevel - b.tierLevel || a.minPoints - b.minPoints),
       current: profile?.tier?.code?.toUpperCase(),
