@@ -3,7 +3,6 @@ import i18n from '../language';
 import { LoyaltyJSBridge, type NativeSessionPayload } from '../bridge/LoyaltyJSBridge';
 import {
   LoyaltyApi,
-  getDefaultUserId,
   getTenantId,
   type SsoExchangeResponse,
   type TenantUserAuthRequest,
@@ -67,12 +66,14 @@ const persistSession = (ctx: {
   sessionStorage.setItem('loyalty_token', ctx.accessToken);
   sessionStorage.setItem('loyalty_tenant', ctx.tenantId);
   sessionStorage.setItem('loyalty_user', ctx.externalUserId);
+  sessionStorage.setItem('loyalty_auth_verified', '1');
   localStorage.setItem('selected_tenant_id', ctx.tenantId);
 };
 
 const clearStoredSession = () => {
   sessionStorage.removeItem('loyalty_token');
   sessionStorage.removeItem('loyalty_user');
+  sessionStorage.removeItem('loyalty_auth_verified');
   sessionStorage.removeItem('loyalty_popup_shown');
 };
 
@@ -258,6 +259,9 @@ export const SSOAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
 
     const bootstrapAuth = async () => {
+      if (sessionStorage.getItem('loyalty_auth_verified') !== '1') {
+        clearStoredSession();
+      }
       const params = new URLSearchParams(window.location.search);
       const ticket = params.get('ticket');
       const theme = params.get('theme');
@@ -402,34 +406,12 @@ export const SSOAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       }
 
-      // Truy cập trực tiếp (bỏ qua ứng dụng Tenant) -> tự động nạp thông tin tài khoản mặc định
-      const defaultUserId = userIdParam || getDefaultUserId();
-      try {
-        const ctx = await LoyaltyApi.authenticateTenantUser({
-          tenantId: tenantIdParam,
-          externalUserId: defaultUserId,
-          phoneNumber: phoneParam || defaultUserId,
-          fullName: fullNameParam || undefined,
-          accountRole: accountRoleParam || undefined,
-          authMethod: 'SSO_SWITCH',
-        });
-        if (active) {
-          applyAuthenticatedContext(ctx);
-        }
-      } catch (err) {
-        console.warn('[useSSOAuth] Default account auto-auth fallback:', err);
-        if (active) {
-          setSelectedTenantId(tenantIdParam);
-          setSession({
-            tenantId: tenantIdParam,
-            externalUserId: defaultUserId,
-            token: '',
-          });
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
+      // Truy cập trực tiếp không kèm thông tin xác thực -> duy trì chế độ Khách vãng lai (Guest), tuyệt đối không tự động gán tài khoản mặc định
+      if (active) {
+        setSelectedTenantId(tenantIdParam);
+        setSession(null);
+        setUserContext(null);
+        setLoading(false);
       }
     };
 

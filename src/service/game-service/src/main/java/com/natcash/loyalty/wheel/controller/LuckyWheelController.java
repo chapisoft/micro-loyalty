@@ -42,7 +42,7 @@ public class LuckyWheelController {
             @RequestParam(value = "wheelCode", required = false, defaultValue = "LUCKY_WHEEL") String wheelCode,
             @RequestParam(value = "externalUserId", required = false) String externalUserId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        String resolvedUserId = SecurityContextUtils.resolveUserId(externalUserId);
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(externalUserId);
         WheelConfigRequest request = WheelConfigRequest.builder()
                 .wheelCode(wheelCode)
                 .externalUserId(resolvedUserId)
@@ -57,7 +57,13 @@ public class LuckyWheelController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestBody(required = false) WheelConfigRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
-        WheelConfigResponse response = luckyWheelService.getWheelConfig(tenantId, request);
+        String resolvedUserId = SecurityContextUtils.resolveOptionalUserId(
+                request != null ? request.getExternalUserId() : null);
+        WheelConfigRequest effectiveRequest = WheelConfigRequest.builder()
+                .wheelCode(request != null ? request.getWheelCode() : "LUCKY_WHEEL")
+                .externalUserId(resolvedUserId)
+                .build();
+        WheelConfigResponse response = luckyWheelService.getWheelConfig(tenantId, effectiveRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -98,6 +104,8 @@ public class LuckyWheelController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @Valid @RequestBody SpinWheelRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String resolvedUserId = SecurityContextUtils.resolveUserId(request.getExternalUserId());
+        request.setExternalUserId(resolvedUserId);
         SpinWheelResponse response = luckyWheelService.executeSpin(tenantId, request);
         return ResponseEntity.ok(response);
     }

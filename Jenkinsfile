@@ -719,13 +719,20 @@ pipeline {
                         }
 
                         OK=0
-                        for i in $(seq 1 20); do
+                        for i in $(seq 1 30); do
                             ALL_UP=1
                             if ! curl -s -f "http://${GATEWAY_HOST}:18095/gateway-health" > /dev/null || \
                                ! curl -s -f "http://${GATEWAY_HOST}:18095/index.html" > /dev/null || \
                                ! curl -s -f "http://${GATEWAY_HOST}:18095/portal/index.html" > /dev/null || \
                                ! curl -s -f "http://${GATEWAY_HOST}:18095/partner-portal/index.html" > /dev/null; then
                                 ALL_UP=0
+                            fi
+
+                            if [ "$ALL_UP" -eq 1 ] && [ "${DEPLOY_BACKEND}" = "true" ]; then
+                                if ! curl -s -f "http://${GATEWAY_HOST}:18095/actuator/health/liveness" > /dev/null || \
+                                   ! curl -s -f "http://${GATEWAY_HOST}:18095/actuator/health/readiness" > /dev/null; then
+                                    ALL_UP=0
+                                fi
                             fi
 
                             if [ "$ALL_UP" -eq 1 ] && [ -n "${BACKEND_SERVICES_TO_BUILD}" ] && command -v docker >/dev/null 2>&1; then
@@ -742,7 +749,7 @@ pipeline {
                                 OK=1
                                 break
                             fi
-                            echo "Lần thử $i/20 chưa sẵn sàng (${GATEWAY_HOST}:18095), chờ 4s..."
+                            echo "Lần thử $i/30 chưa sẵn sàng (${GATEWAY_HOST}:18095), chờ 4s..."
                             sleep 4
                         done
 
@@ -765,19 +772,59 @@ pipeline {
                                 SSH_USER="${SSH_USER_CRED:-$DEPLOY_SERVER_USER}"
                                 SSH_OPTS="-i ${SSH_KEY} -p ${DEPLOY_SERVER_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
                                 REMOTE="${SSH_USER}@${DEPLOY_SERVER_LAN}"
-                                ssh $SSH_OPTS "$REMOTE" "cd '${DEPLOY_PATH}' && bash scripts/healthcheck.sh"
+                                ssh $SSH_OPTS "$REMOTE" "BACKEND_SERVICES_TO_BUILD='${BACKEND_SERVICES_TO_BUILD}' DEPLOY_PATH='${DEPLOY_PATH}' bash -s" <<'REMOTE_EOF'
+set -e
+service_port() {
+    case "$1" in
+        cms-service) echo 8081 ;;
+        customer-service) echo 8082 ;;
+        game-service) echo 8083 ;;
+        campaign-service) echo 8084 ;;
+        partner-service) echo 8085 ;;
+        *) echo 8081 ;;
+    esac
+}
+for svc in ${BACKEND_SERVICES_TO_BUILD}; do
+    SVC_PORT=$(service_port "$svc")
+    READY=0
+    for i in $(seq 1 30); do
+        if docker exec "loyalty-saas-${svc}" curl -s -f "http://127.0.0.1:${SVC_PORT}/actuator/health/liveness" > /dev/null 2>&1; then
+            READY=1
+            break
+        fi
+        echo "Chờ loyalty-saas-${svc}:${SVC_PORT} khởi động ($i/30)..."
+        sleep 4
+    done
+    if [ "$READY" -ne 1 ]; then
+        echo "Timeout chờ loyalty-saas-${svc} sẵn sàng."
+        exit 1
+    fi
+done
+if docker ps --format '{{.Names}}' | grep -qx 'loyalty-saas-gateway'; then
+    docker exec loyalty-saas-gateway nginx -s reload || true
+fi
+cd "${DEPLOY_PATH}" && bash scripts/healthcheck.sh
+REMOTE_EOF
                             '''
                         }
                     }
 
                     sh '''
                         set -e
-                        API_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_API_URL}" || echo "000")
-                        CMS_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_CMS_URL}" || echo "000")
-                        PORTAL_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_PORTAL_URL}" || echo "000")
-                        PARTNER_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_PARTNER_URL}" || echo "000")
-                        echo "Public Verify -> api=${API_CODE}, cms=${CMS_CODE}, portal=${PORTAL_CODE}, partner=${PARTNER_CODE}"
-                        test "$API_CODE" = "200" -a "$CMS_CODE" = "200" -a "$PORTAL_CODE" = "200" -a "$PARTNER_CODE" = "200"
+                        PUB_OK=0
+                        for i in $(seq 1 6); do
+                            API_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_API_URL}" || echo "000")
+                            CMS_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_CMS_URL}" || echo "000")
+                            PORTAL_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_PORTAL_URL}" || echo "000")
+                            PARTNER_CODE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "${PUBLIC_PARTNER_URL}" || echo "000")
+                            echo "Public Verify ($i/6) -> api=${API_CODE}, cms=${CMS_CODE}, portal=${PORTAL_CODE}, partner=${PARTNER_CODE}"
+                            if [ "$API_CODE" = "200" ] && [ "$CMS_CODE" = "200" ] && [ "$PORTAL_CODE" = "200" ] && [ "$PARTNER_CODE" = "200" ]; then
+                                PUB_OK=1
+                                break
+                            fi
+                            sleep 3
+                        done
+                        test "$PUB_OK" = "1"
                     '''
                 }
             }

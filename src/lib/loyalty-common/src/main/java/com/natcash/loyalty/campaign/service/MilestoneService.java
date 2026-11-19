@@ -40,6 +40,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,8 +142,9 @@ public class MilestoneService {
                 .findByTenantIdAndStatusAndStartDateBeforeAndEndDateAfterOrderByCampaignCodeAscMilestoneStepAsc(
                         tenantId, CommonStatus.ACTIVE, now, now);
 
-        List<UserMilestoneEntity> userProgressList = userMilestoneRepository
-                .findByTenantIdAndAccount_ExternalUserId(tenantId, externalUserId);
+        List<UserMilestoneEntity> userProgressList = (externalUserId != null && !externalUserId.isBlank())
+                ? userMilestoneRepository.findByTenantIdAndAccount_ExternalUserId(tenantId, externalUserId)
+                : Collections.emptyList();
 
         Map<Long, UserMilestoneEntity> userProgressMap = userProgressList.stream()
                 .collect(Collectors.toMap(u -> u.getMilestone().getId(), u -> u, (a, b) -> a));

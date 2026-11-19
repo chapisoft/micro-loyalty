@@ -66,9 +66,14 @@ export const Customers: React.FC = () => {
   const [lockSubmitting, setLockSubmitting] = useState(false);
 
   const fetchData = async () => {
+    const userPhone = searchPhone.trim();
+    if (!userPhone) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const userPhone = searchPhone.trim() || 'CUST_001';
       const response: any = await apiClient.get(
         `/loyalty/v1/profile?externalUserId=${encodeURIComponent(userPhone)}`,
         { headers: { 'X-Tenant-Id': selectedTenant } }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Settings, Gift, Clock, Sparkles, Bell } from 'lucide-react';
 import { LoyaltyApi, getDefaultUserId, type InboxMessageItem, type NotificationPreferencesDto } from '../../services/api';
 import { Screen, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, Empty, useLoad, ddmm } from '../ui';
@@ -25,11 +26,13 @@ const target = (m: InboxMessageItem) => {
 
 // ───────────────────────── CN-02 · Inbox ─────────────────────────
 export const Inbox: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [data, failed, reload] = useLoad(() => LoyaltyApi.getInboxMessages(uid()));
+  const userId = uid();
+  const [data, failed, reload] = useLoad(async () => (userId ? LoyaltyApi.getInboxMessages(userId) : ([] as InboxMessageItem[])));
   const list = Array.isArray(data) ? (data as InboxMessageItem[]) : data?.messages || [];
   const open = (m: InboxMessageItem) => {
-    if (!m.isRead) void LoyaltyApi.markInboxRead(m.id).catch(() => undefined);
+    if (!m.isRead && userId) void LoyaltyApi.markInboxRead(m.id, userId).catch(() => undefined);
     navigate(target(m));
   };
   return (
@@ -43,7 +46,13 @@ export const Inbox: React.FC = () => {
       </div>
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[200px]" />}
-      {data && list.length === 0 && <Empty art={artEmptyBox} title="No notifications yet" text="Rewards, offers and reminders will show up here." />}
+      {data && list.length === 0 && (
+        <Empty
+          art={artEmptyBox}
+          title={!userId ? t('sso.guest_login_required') : 'No notifications yet'}
+          text={!userId ? t('sso.guest_login_required_desc') : 'Rewards, offers and reminders will show up here.'}
+        />
+      )}
       {list.map((m) => {
         const k = kind(m);
         return (
@@ -67,7 +76,8 @@ export const Inbox: React.FC = () => {
 export const OfferDetail: React.FC = () => {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const [data, failed, reload] = useLoad(() => LoyaltyApi.getInboxMessages(uid()), [id]);
+  const userId = uid();
+  const [data, failed, reload] = useLoad(async () => (userId ? LoyaltyApi.getInboxMessages(userId) : ([] as InboxMessageItem[])), [id, userId]);
   const list = Array.isArray(data) ? (data as InboxMessageItem[]) : data?.messages || [];
   const m = list.find((x) => String(x.id) === id);
   return (
@@ -103,15 +113,17 @@ const Toggle: React.FC<{ on: boolean; disabled?: boolean; onChange?: (v: boolean
 );
 
 export const NotificationSettings: React.FC = () => {
-  const [prefs, failed, reload] = useLoad(() => LoyaltyApi.getNotificationPreferences(uid()));
+  const { t } = useTranslation();
+  const userId = uid();
+  const [prefs, failed, reload] = useLoad(async () => (userId ? LoyaltyApi.getNotificationPreferences(userId) : null), [userId]);
   const [local, setLocal] = useState<NotificationPreferencesDto>();
   const p = local || prefs;
   const save = async (patch: Partial<NotificationPreferencesDto>) => {
-    if (!p) return;
+    if (!p || !userId) return;
     const next = { ...p, ...patch };
     setLocal(next);
     try {
-      setLocal(await LoyaltyApi.updateNotificationPreferences(next));
+      setLocal(await LoyaltyApi.updateNotificationPreferences(next, userId));
     } catch {
       setLocal(p);
       alert('Could not save. Please try again.');
@@ -132,8 +144,14 @@ export const NotificationSettings: React.FC = () => {
         <h2 className="text-[22px] font-semibold">Notifications</h2>
         <p className="text-[13px] text-slate-500">Choose what Natcash Rewards may send you.</p>
       </div>
-      {failed && <ErrorBlock onRetry={reload} />}
-      {!p && !failed && <Skeleton className="h-[260px]" />}
+      {!userId ? (
+        <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
+      ) : (
+        <>
+          {failed && <ErrorBlock onRetry={reload} />}
+          {!p && !failed && <Skeleton className="h-[260px]" />}
+        </>
+      )}
       {p && (
         <div className="w-full divide-y divide-slate-100 rounded-[20px] bg-white px-4">
           {rows.map((r) => (

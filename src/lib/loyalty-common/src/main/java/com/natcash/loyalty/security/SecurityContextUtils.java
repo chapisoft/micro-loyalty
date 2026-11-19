@@ -123,6 +123,23 @@ public final class SecurityContextUtils {
     }
 
     /**
+     * Xác định externalUserId tùy chọn cho các API công khai (hỗ trợ Guest / Khách vãng lai).
+     * Nếu có phiên JWT hội viên, vẫn kiểm tra chống IDOR nghiêm ngặt; nếu chưa đăng nhập, trả về "" khi tham số trống.
+     */
+    public static String resolveOptionalUserId(String requestedUserId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (isEndUserSession(auth)) {
+            String jwtUserId = getAuthenticatedExternalUserId()
+                    .orElseThrow(() -> new LoyaltyException(ErrorCode.UNAUTHORIZED));
+            if (requestedUserId != null && !requestedUserId.isBlank() && !requestedUserId.trim().equals(jwtUserId)) {
+                throw new LoyaltyException(ErrorCode.IDOR_FORBIDDEN);
+            }
+            return jwtUserId;
+        }
+        return requestedUserId != null && !requestedUserId.isBlank() ? requestedUserId.trim() : "";
+    }
+
+    /**
      * Bắt buộc có danh tính JWT đã xác thực (dùng cho endpoint /sso/me-context).
      */
     public static String resolveAuthenticatedUserId(String requestedUserId) {

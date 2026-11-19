@@ -1761,7 +1761,14 @@ export default {
     "current_account_label": "Tài khoản đang kết nối",
     "tenant_label": "Nền tảng",
     "segment_label": "Phân khúc",
-    "coins_short": "Coin"
+    "coins_short": "Coin",
+    "guest_badge_title": "Khách vãng lai (Chưa đăng nhập)",
+    "guest_badge_sub": "Mở từ ứng dụng đối tác để đồng bộ điểm, Coin và ưu đãi cá nhân.",
+    "guest_card_title": "Khách vãng lai · Chưa đăng nhập",
+    "guest_card_sub": "Đăng nhập từ ứng dụng để tích Coin, đổi ưu đãi và nhận đặc quyền hội viên",
+    "guest_view_tiers": "Xem quyền lợi hạng",
+    "guest_login_required": "Chưa đăng nhập tài khoản",
+    "guest_login_required_desc": "Vui lòng truy cập từ ứng dụng đối tác và đăng nhập tài khoản để sử dụng tính năng cá nhân này."
   },
   "notification": {
     "dice_title": "Đặt Cược Tài Xỉu!",

@@ -93,20 +93,15 @@ class LoyaltyJSBridgeManager {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(message);
       } else {
-        // Mock fallback khi chạy thử nghiệm trên trình duyệt PC / Sandbox
-        console.warn(`[LoyaltyJSBridge] Browser simulation mode for action: ${action}`, payload);
+        // Khi chạy trực tiếp trên trình duyệt ngoài Native WebView: không cấp token hoặc dữ liệu tài khoản giả
         setTimeout(() => {
-          if (action === 'requestPayment') {
-            resolve({ success: true, transactionId: 'TXN_SIMULATED_' + Date.now() });
-          } else if (action === 'requestScanQR') {
-            resolve({ success: true, qrData: 'QR:NATCASH:USR001:1724400000:hash' });
-          } else if (action === 'getUserToken') {
-            resolve({ success: true, token: 'mock_jwt_token' });
+          if (action === 'getUserToken' || action === 'getNativeSession') {
+            resolve({ success: false, token: null });
           } else {
-            resolve({ success: true });
+            resolve({ success: false });
           }
           this.callbacks.delete(callbackId);
-        }, 500);
+        }, 50);
       }
     });
   }

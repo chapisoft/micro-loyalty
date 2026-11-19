@@ -44,18 +44,14 @@ export const getTenantId = (): string => {
 
 export const getDefaultUserId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
-  const paramUser = urlParams.get('userId') || urlParams.get('user_id') || urlParams.get('phone');
-  if (paramUser) return paramUser;
-  const storedUser = sessionStorage.getItem('loyalty_user');
-  if (storedUser) return storedUser;
-  const envUser =
-    (import.meta as unknown as { env?: { VITE_DEFAULT_USER_ID?: string } }).env?.VITE_DEFAULT_USER_ID;
-  if (envUser) return envUser;
-  const runtimeUser = (
-    window as unknown as { __RUNTIME_CONFIG__?: { DEFAULT_USER_ID?: string } }
-  ).__RUNTIME_CONFIG__?.DEFAULT_USER_ID;
-  if (runtimeUser) return runtimeUser;
-  return '84988888888';
+  const paramUser = urlParams.get('userId') || urlParams.get('externalUserId');
+  if (paramUser && paramUser.trim()) {
+    return paramUser.trim();
+  }
+  if (sessionStorage.getItem('loyalty_auth_verified') === '1') {
+    return sessionStorage.getItem('loyalty_user') || '';
+  }
+  return '';
 };
 
 const parseApiError = async (res: Response): Promise<Error> => {
@@ -655,10 +651,11 @@ export const LoyaltyApi = {
     return res.json();
   },
 
-  // 2. Lấy danh sách nhiệm vụ cột mốc
+  // 2. Lấy danh sách nhiệm vụ cột mốc (hỗ trợ Guest nếu externalUserId rỗng)
   async getMilestones(externalUserId: string = getDefaultUserId()): Promise<{ campaigns: unknown[]; milestones: MilestoneItem[] }> {
+    const query = externalUserId ? `?externalUserId=${encodeURIComponent(externalUserId)}` : '';
     const res = await fetch(
-      `${API_BASE}/loyalty/v1/milestones/list?externalUserId=${encodeURIComponent(externalUserId)}`,
+      `${API_BASE}/loyalty/v1/milestones/list${query}`,
       { headers: getAuthHeaders() }
     );
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
@@ -909,14 +906,18 @@ export const LoyaltyApi = {
     return toAgentDashboard(await res.json());
   },
 
-  // 15. Lấy cấu hình và giải thưởng vòng quay may mắn
+  // 15. Lấy cấu hình và giải thưởng vòng quay may mắn (hỗ trợ Guest nếu externalUserId rỗng)
   async getLuckyWheelConfig(externalUserId: string = getDefaultUserId(), wheelCode?: string): Promise<WheelConfigData> {
     const tenant = getTenantId();
     const effectiveWheelCode =
       wheelCode ||
       (tenant === 'TENANT_NATCASH' ? 'LUCKY_WHEEL_NATCASH' : tenant === 'TENANT_MICRO_CRM' ? 'LUCKY_WHEEL_CRM' : 'LUCKY_WHEEL');
+    const qs = new URLSearchParams({ wheelCode: effectiveWheelCode });
+    if (externalUserId) {
+      qs.set('externalUserId', externalUserId);
+    }
     const res = await fetch(
-      `${API_BASE}/loyalty/v1/luckydraw/config?wheelCode=${encodeURIComponent(effectiveWheelCode)}&externalUserId=${encodeURIComponent(externalUserId)}`,
+      `${API_BASE}/loyalty/v1/luckydraw/config?${qs.toString()}`,
       { headers: getAuthHeaders() }
     );
     if (!res.ok) throw new Error(`HTTP_${res.status}`);

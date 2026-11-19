@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Search, SlidersHorizontal, Lock, CalendarDays } from 'lucide-react';
 import {
   LoyaltyApi,
@@ -104,6 +105,7 @@ type How = 'all' | 'free' | 'coins';
 
 // ───────────────────────── VQ-01 · Store (Figma 330:247) ─────────────────────────
 export const RewardStore: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const b = voucherBase(shell);
   const [q, setQ] = useState('');
@@ -115,14 +117,16 @@ export const RewardStore: React.FC<{ shell?: Shell }> = ({ shell = 'customer' })
   const [collected, setCollected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useToast();
   const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
     const [p, c, mine] = await Promise.all([
-      LoyaltyApi.getProfile(uid()),
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
       LoyaltyApi.getVoucherCatalog(audienceOf(shell)),
-      LoyaltyApi.getUserVouchers(uid()).catch(() => [] as UserVoucherItem[]),
+      userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]),
     ]);
     return {
-      coins: p.currentPoints || 0,
-      tier: p.tier?.code || '',
+      isGuest: !userId,
+      coins: p?.currentPoints || 0,
+      tier: p?.tier?.code || '',
       catalog: c.filter((v) => v.status !== 'INACTIVE' && acquireOf(v) !== 'GIVEN'),
       mine,
     };
@@ -147,8 +151,13 @@ export const RewardStore: React.FC<{ shell?: Shell }> = ({ shell = 'customer' })
   }, [data, q, cat, how, affordable, sort]);
 
   const collect = async (v: CatalogVoucherItem) => {
+    const userId = uid();
+    if (!userId) {
+      setToast(t('sso.guest_login_required_desc'));
+      return;
+    }
     try {
-      await LoyaltyApi.collectVoucher(uid(), v.voucherCode);
+      await LoyaltyApi.collectVoucher(userId, v.voucherCode);
       setCollected((s) => new Set(s).add(v.voucherCode));
       setToast('Saved to My vouchers');
     } catch (e) {
@@ -280,6 +289,7 @@ type Result = null | 'added' | 'data' | 'pending' | 'short' | 'soldout' | 'faile
 // ───────────────────────── VQ-02 · Voucher details (Figma 330:248, free 818:60) ─────────────────────────
 export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
   const { id = '' } = useParams();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const b = voucherBase(shell);
   const [busy, setBusy] = useState(false);
@@ -288,8 +298,13 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
   const [collectedNow, setCollectedNow] = useState(false);
   const [toast, setToast] = useToast();
   const [data, failed, reload] = useLoad(async () => {
-    const [p, c, mine] = await Promise.all([LoyaltyApi.getProfile(uid()), LoyaltyApi.getVoucherCatalog(audienceOf(shell)), LoyaltyApi.getUserVouchers(uid()).catch(() => [] as UserVoucherItem[])]);
-    return { coins: p.currentPoints || 0, tier: p.tier?.code || '', v: c.find((x) => String(x.id) === id), mine };
+    const userId = uid();
+    const [p, c, mine] = await Promise.all([
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
+      LoyaltyApi.getVoucherCatalog(audienceOf(shell)),
+      userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]),
+    ]);
+    return { isGuest: !userId, coins: p?.currentPoints || 0, tier: p?.tier?.code || '', v: c.find((x) => String(x.id) === id), mine };
   }, [id]);
   const v = data?.v;
   const free = v ? acquireOf(v) === 'FREE_COLLECT' : false;
@@ -299,10 +314,15 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
 
   const getVoucher = async () => {
     if (!v || !data) return;
+    const userId = uid();
+    if (!userId) {
+      setToast(t('sso.guest_login_required_desc'));
+      return;
+    }
     if (data.coins < v.pointCost) return setResult('short');
     setBusy(true);
     try {
-      const item = await LoyaltyApi.redeemVoucher(uid(), v.voucherCode);
+      const item = await LoyaltyApi.redeemVoucher(userId, v.voucherCode);
       setIssued(item);
       setResult(/PENDING|ISSUING|PROCESSING|AWAIT/i.test(item.status || '') ? 'pending' : isData(v.title) ? 'data' : 'added');
     } catch (e) {
@@ -313,9 +333,14 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
   };
   const collect = async () => {
     if (!v) return;
+    const userId = uid();
+    if (!userId) {
+      setToast(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
-      await LoyaltyApi.collectVoucher(uid(), v.voucherCode);
+      await LoyaltyApi.collectVoucher(userId, v.voucherCode);
       setCollectedNow(true);
       setToast('Saved to My vouchers');
     } catch {
@@ -373,7 +398,7 @@ export const RewardDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }
                     <p className="flex items-center gap-1 text-[20px] font-bold text-[#FE810D]"><CoinDot className="size-5" />{fmt(v.pointCost)}</p>
                   )}
                   <p className="truncate text-[12px] text-slate-500">
-                    {free ? (locked ? `${(v.eligibleTiers || []).map(nice).join(', ')} only` : v.availableQuantity !== undefined ? `${fmt(v.availableQuantity)} left` : 'While stock lasts') : `Balance ${fmt(data!.coins)} coins`}
+                    {free ? (locked ? `${(v.eligibleTiers || []).map(nice).join(', ')} only` : v.availableQuantity !== undefined ? `${fmt(v.availableQuantity)} left` : 'While stock lasts') : data?.isGuest ? t('sso.guest_login_required') : `Balance ${fmt(data!.coins)} coins`}
                   </p>
                 </div>
                 {free && locked ? (
@@ -425,13 +450,16 @@ type MineTab = 'all' | 'ready' | 'used' | 'expired';
 
 // ───────────────────────── VQ-03 · My vouchers (Figma 330:250) ─────────────────────────
 export const MyVouchers: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const b = voucherBase(shell);
   const [q, setQ] = useState('');
   const [tab, setTab] = useState<MineTab>('all');
   const [data, failed, reload] = useLoad(async () => {
-    const [p, mine] = await Promise.all([LoyaltyApi.getProfile(uid()).catch(() => null), LoyaltyApi.getUserVouchers(uid())]);
-    return { coins: p?.currentPoints, mine };
+    const userId = uid();
+    if (!userId) return { isGuest: true, coins: undefined, mine: [] as UserVoucherItem[] };
+    const [p, mine] = await Promise.all([LoyaltyApi.getProfile(userId).catch(() => null), LoyaltyApi.getUserVouchers(userId)]);
+    return { isGuest: false, coins: p?.currentPoints, mine };
   });
   const all = data?.mine || [];
   const count = (t: MineTab) => (t === 'all' ? all.length : all.filter((v) => (t === 'ready' ? ['ready', 'pending'] : [t]).includes(userState(v))).length);
@@ -456,7 +484,11 @@ export const MyVouchers: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) 
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <><Skeleton className="h-[92px]" /><Skeleton className="h-[92px]" /></>}
       {data && list.length === 0 && (
-        <Empty art={artEmptyBox} title={tab === 'all' ? 'No vouchers yet' : 'Nothing here'} text="Get vouchers with coins, or collect free ones in the Store.">
+        <Empty
+          art={artEmptyBox}
+          title={data.isGuest ? t('sso.guest_login_required') : tab === 'all' ? 'No vouchers yet' : 'Nothing here'}
+          text={data.isGuest ? t('sso.guest_login_required_desc') : 'Get vouchers with coins, or collect free ones in the Store.'}
+        >
           <PrimaryButton className="mt-3" onClick={() => navigate(b.store)}>Open Store</PrimaryButton>
         </Empty>
       )}
@@ -489,7 +521,10 @@ export const MyVouchers: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) 
 export const MyVoucherDetail: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) => {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const [data, failed, reload] = useLoad(() => LoyaltyApi.getUserVouchers(uid()), [id]);
+  const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
+    return userId ? LoyaltyApi.getUserVouchers(userId) : ([] as UserVoucherItem[]);
+  }, [id]);
   const v = data?.find((x) => String(x.id) === id);
   const st = v ? userState(v) : 'ready';
   return (
@@ -564,7 +599,10 @@ export const CodeTabs: React.FC<{ value: string; digits?: string }> = ({ value, 
 // ───────────────────────── VQ-03 · Show partner code (Figma 495:1494) ─────────────────────────
 export const ShowVoucher: React.FC = () => {
   const { id = '' } = useParams();
-  const [data, failed, reload] = useLoad(() => LoyaltyApi.getUserVouchers(uid()), [id]);
+  const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
+    return userId ? LoyaltyApi.getUserVouchers(userId) : ([] as UserVoucherItem[]);
+  }, [id]);
   const v = data?.find((x) => String(x.id) === id);
   const code = v ? v.redemptionCode || v.code : '';
   return (

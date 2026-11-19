@@ -1761,7 +1761,14 @@ export default {
     "current_account_label": "Compte partenaire connecté",
     "tenant_label": "Plateforme",
     "segment_label": "Segment",
-    "coins_short": "coins"
+    "coins_short": "coins",
+    "guest_badge_title": "Mode invité (Non connecté)",
+    "guest_badge_sub": "Ouvrez depuis l'application partenaire pour synchroniser vos points et offres.",
+    "guest_card_title": "Invité · Non connecté",
+    "guest_card_sub": "Connectez-vous depuis l'app pour gagner des coins et profiter des avantages",
+    "guest_view_tiers": "Voir les niveaux",
+    "guest_login_required": "Compte non connecté",
+    "guest_login_required_desc": "Veuillez ouvrir l'espace fidélité depuis votre application partenaire connectée pour accéder à cette fonctionnalité."
   },
   "notification": {
     "dice_title": "Pari aux Dés !",

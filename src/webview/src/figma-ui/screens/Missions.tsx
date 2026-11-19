@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Check, Gift, Fuel, ShoppingBag, Smartphone, Users, Info, ChevronDown, QrCode, Sparkles, Lock } from 'lucide-react';
 import { LoyaltyApi, getDefaultUserId, type MemberProfile, type MilestoneItem } from '../../services/api';
 import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
@@ -122,13 +123,19 @@ const WeekStrip: React.FC<{ profile?: MemberProfile | null; compact?: boolean; r
 
 // ───────────────────────── NV-01 · Missions & weekly check-in ─────────────────────────
 export const MissionsList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'IN_PROGRESS' | 'AVAILABLE' | 'COMPLETED'>('IN_PROGRESS');
+  const [tab, setTab] = useState<'IN_PROGRESS' | 'AVAILABLE' | 'COMPLETED'>(() => (uid() ? 'IN_PROGRESS' : 'AVAILABLE'));
   const [program, setProgram] = useState<string>('All');
   const [open, setOpen] = useState<string | null>(null);
   const [data, failed, reload] = useLoad(async () => {
-    const [m, p, rewards] = await Promise.all([loadMissions(), LoyaltyApi.getProfile(uid()), loadCheckinRewards()]);
-    return { ...m, profile: p, rewards };
+    const userId = uid();
+    const [m, p, rewards] = await Promise.all([
+      loadMissions(),
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
+      loadCheckinRewards(),
+    ]);
+    return { ...m, profile: p, rewards, isGuest: !userId };
   });
   const all = data?.missions || [];
   const count = (s: string) => all.filter((m) => stateOf(m) === s).length;
@@ -145,7 +152,7 @@ export const MissionsList: React.FC = () => {
       title="Missions"
       back="/"
       tab={{ shell: 'customer', active: 'missions' }}
-      hero={<Hero title="Missions" sub="Reach goals, unlock rewards" coins={data?.profile.currentPoints} onCoins={() => navigate('/coins')} art={aiMissions} />}
+      hero={<Hero title="Missions" sub="Reach goals, unlock rewards" coins={data?.profile?.currentPoints} onCoins={() => navigate('/coins')} art={aiMissions} />}
     >
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[144px]" />}
@@ -196,8 +203,8 @@ export const MissionsList: React.FC = () => {
           {inTab.length === 0 && (
             <Empty
               art={artGift}
-              title={tab === 'IN_PROGRESS' ? 'No missions in progress' : tab === 'AVAILABLE' ? 'No new missions right now' : 'No completed missions yet'}
-              text={tab === 'IN_PROGRESS' ? 'Open Available to pick a mission.' : 'New programs are added by Natcash and partners.'}
+              title={data.isGuest && tab !== 'AVAILABLE' ? t('sso.guest_login_required') : tab === 'IN_PROGRESS' ? 'No missions in progress' : tab === 'AVAILABLE' ? 'No new missions right now' : 'No completed missions yet'}
+              text={data.isGuest && tab !== 'AVAILABLE' ? t('sso.guest_login_required_desc') : tab === 'IN_PROGRESS' ? 'Open Available to pick a mission.' : 'New programs are added by Natcash and partners.'}
             />
           )}
 
@@ -265,11 +272,13 @@ export const MissionsList: React.FC = () => {
 // ───────────────────────── NV-02 · Mission details (+ ready to claim + claimed popup) ─────────────────────────
 export const MissionDetail: React.FC = () => {
   const { code = '' } = useParams();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [data, failed, reload] = useLoad(loadMissions, [code]);
   const [rulesOpen, setRulesOpen] = useState(true);
   const [claimed, setClaimed] = useState<{ coins: number; balance?: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const userId = uid();
   const m = data?.missions.find((x) => x.code === code);
   const Icon = m ? missionIcon(m) : Fuel;
   const claimCoins = m?.claimable.reduce((s, x) => s + x.rewardPoints, 0) || 0;
@@ -277,10 +286,14 @@ export const MissionDetail: React.FC = () => {
 
   const claim = async () => {
     if (!m) return;
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
       let balance: number | undefined;
-      for (const s of m.claimable) balance = (await LoyaltyApi.claimMission(s.id)).newPointBalance ?? balance;
+      for (const s of m.claimable) balance = (await LoyaltyApi.claimMission(s.id, userId)).newPointBalance ?? balance;
       setClaimed({ coins: claimCoins, balance });
     } catch {
       alert('Could not claim the reward. Please try again.');
@@ -364,7 +377,9 @@ export const MissionDetail: React.FC = () => {
           )}
 
           <BottomBar>
-            {m.claimable.length > 0 ? (
+            {!userId ? (
+              <SecondaryButton disabled>{t('sso.guest_login_required')}</SecondaryButton>
+            ) : m.claimable.length > 0 ? (
               <PrimaryButton onClick={claim} disabled={busy}>Claim {fmt(claimCoins)} coins</PrimaryButton>
             ) : (
               <PrimaryButton onClick={() => LoyaltyJSBridge.requestScanQR().catch(() => undefined)}>
@@ -388,10 +403,15 @@ export const MissionDetail: React.FC = () => {
 
 // ───────────────────────── NV-03 · Daily check-in (+ success popup, checked-in state) ─────────────────────────
 export const CheckIn: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [data, failed, reload] = useLoad(async () => {
-    const [p, rewards] = await Promise.all([LoyaltyApi.getProfile(uid()), loadCheckinRewards()]);
-    return { p, rewards };
+    const userId = uid();
+    const [p, rewards] = await Promise.all([
+      userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
+      loadCheckinRewards(),
+    ]);
+    return { p, rewards, isGuest: !userId };
   });
   const profile = data?.p;
   const rewards = data?.rewards || [];
@@ -409,11 +429,16 @@ export const CheckIn: React.FC = () => {
   const weekEnd = new Date(weekStart.getTime() + 6 * 86_400_000);
 
   const checkIn = async () => {
+    const userId = uid();
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
       // shortcut: loyalty-service has no dedicated check-in endpoint; the legacy app records it as a DAILY_CHECKIN game result
       // The amount shown comes from the CMS table; the server's response is what we display after the call.
-      const r = (await LoyaltyApi.submitGameResult('DAILY_CHECKIN', info.today, uid(), undefined, JSON.stringify({ day: info.today, gameCode: 'DAILY_CHECKIN', pointsAwarded: reward }))) as { pointsAwarded?: number };
+      const r = (await LoyaltyApi.submitGameResult('DAILY_CHECKIN', info.today, userId, undefined, JSON.stringify({ day: info.today, gameCode: 'DAILY_CHECKIN', pointsAwarded: reward }))) as { pointsAwarded?: number };
       setDone({ coins: r?.pointsAwarded ?? reward, streak: info.streak + 1 });
     } catch {
       alert('Check-in failed. Please try again.');
@@ -426,14 +451,16 @@ export const CheckIn: React.FC = () => {
     <Screen title="Daily check-in" back="/">
       <h2 className="text-[22px] font-semibold leading-8">Check-in</h2>
       {failed && <ErrorBlock onRetry={reload} />}
-      {!profile && !failed && <Skeleton className="h-[160px]" />}
-      {profile && (
+      {!data && !failed && <Skeleton className="h-[160px]" />}
+      {data && (
         <>
           <div className="flex w-full items-center gap-3 rounded-[20px] bg-brand-soft p-5">
             <div className="flex flex-1 flex-col gap-2">
               <span className="text-[24px] font-semibold leading-8">{info.streak}-day streak</span>
               <span className="text-[15px] font-medium text-brand">
-                {info.doneToday
+                {data.isGuest
+                  ? t('sso.guest_login_required_desc')
+                  : info.doneToday
                   ? tomorrow !== undefined ? `Come back tomorrow for +${tomorrow} coins.` : 'Come back tomorrow to keep your streak.'
                   : reward !== undefined ? `Check in today for +${reward} coins.` : 'Check in today to keep your streak.'}
               </span>
@@ -459,7 +486,9 @@ export const CheckIn: React.FC = () => {
             </div>
             <p className="text-[12px] text-white/80">Complete all 7 days to open it.</p>
           </div>
-          {info.doneToday ? (
+          {data.isGuest ? (
+            <SecondaryButton disabled className="bg-slate-100 text-slate-500">{t('sso.guest_login_required')}</SecondaryButton>
+          ) : info.doneToday ? (
             <SecondaryButton className="bg-slate-100 text-slate-500">Checked in today · back tomorrow</SecondaryButton>
           ) : (
             <PrimaryButton onClick={checkIn} disabled={busy}>Check in</PrimaryButton>

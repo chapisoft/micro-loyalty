@@ -278,12 +278,14 @@ const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onC
     ['Notification settings', () => go('/notifications')],
     ['Language', () => setLang(true)],
     ['Program terms', () => go('/terms')],
-    [t('sso.sign_out'), () => { onClose(); logout(); navigate('/', { replace: true }); }],
+    ...(session
+      ? [[t('sso.sign_out'), () => { onClose(); logout(); navigate('/', { replace: true }); }] as [string, () => void]]
+      : []),
   ];
   return (
     <>
       <Sheet open={open && !lang} onClose={onClose} title="More">
-        {session && (
+        {session ? (
           <div className="rounded-[16px] bg-[#FFF4EA] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[#E06C00]">{t('sso.current_account_label')}</p>
             <p className="mt-0.5 truncate text-[14px] font-bold text-slate-900">
@@ -293,6 +295,11 @@ const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onC
             <p className="mt-0.5 text-[12px] text-slate-600">
               {t('sso.tenant_label')}: <span className="font-semibold">{session.tenantId}</span> · {accountRole}
             </p>
+          </div>
+        ) : (
+          <div className="rounded-[16px] bg-slate-100 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('sso.guest_badge_title')}</p>
+            <p className="mt-0.5 text-[12.5px] leading-5 text-slate-700">{t('sso.guest_badge_sub')}</p>
           </div>
         )}
         <div className="divide-y divide-slate-100 rounded-[16px] bg-[#F7F7F8]">
@@ -378,8 +385,8 @@ export const PrimaryButton: React.FC<{ children: React.ReactNode; onClick?: () =
   </button>
 );
 
-export const SecondaryButton: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string }> = ({ children, onClick, className = '' }) => (
-  <button type="button" onClick={onClick} className={`flex h-[46px] w-full items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-[14px] font-semibold ${className}`}>
+export const SecondaryButton: React.FC<{ children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }> = ({ children, onClick, disabled, className = '' }) => (
+  <button type="button" onClick={onClick} disabled={disabled} className={`flex h-[46px] w-full items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-[14px] font-semibold disabled:opacity-60 ${className}`}>
     {children}
   </button>
 );

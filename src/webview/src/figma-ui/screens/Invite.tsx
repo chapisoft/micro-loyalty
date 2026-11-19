@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Copy, MessageSquare, Share2, Check } from 'lucide-react';
 import { LoyaltyApi, getDefaultUserId, type ReferralFriendItem } from '../../services/api';
 import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
@@ -36,8 +37,13 @@ const friendStep = (f: ReferralFriendItem) => {
 
 // ───────────────────────── NV-06 · Invite friends ─────────────────────────
 export const InviteFriends: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [data, failed, reload] = useLoad(loadReferral);
+  const userId = getDefaultUserId();
+  const [data, failed, reload] = useLoad(async (): Promise<Referral | null> => {
+    if (!userId) return null;
+    return loadReferral();
+  });
   const [copied, setCopied] = React.useState(false);
   const thisMonth = (data?.friends || []).filter((f) => {
     const d = new Date(f.invitedAt);
@@ -62,9 +68,15 @@ export const InviteFriends: React.FC = () => {
           {data?.rewardPer ? `You get +${fmt(data.rewardPer)} coins` : 'You earn coins'} for each friend who opens a wallet, completes eKYC and makes a first payment.
         </p>
       </div>
-      {failed && <ErrorBlock onRetry={reload} />}
-      {!data && !failed && <Skeleton className="h-[220px]" />}
-      {data && (
+      {!userId ? (
+        <Empty art={artGift} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
+      ) : (
+        <>
+          {failed && <ErrorBlock onRetry={reload} />}
+          {!data && !failed && <Skeleton className="h-[220px]" />}
+        </>
+      )}
+      {userId && data && (
         <>
           <div className="flex w-full flex-col gap-3 rounded-[20px] bg-white p-4">
             <div className="flex items-start gap-3">
@@ -148,14 +160,15 @@ export const InvitedWelcome: React.FC = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const ref = params.get('ref') || '';
-  const [profile] = useLoad(() => LoyaltyApi.getProfile(getDefaultUserId()).catch(() => null));
+  const userId = getDefaultUserId();
+  const [profile] = useLoad(() => (userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null)));
   return (
     <Screen title="Welcome" back="/">
       <ResultBlock art={artGift} title={ref ? 'You were invited' : 'Welcome to Natcash Rewards'} value="Welcome bonus" valueTone="green" sub="Yours after your first payment with Natcash." />
       <InfoRows
         rows={[
           ['Invited by', ref || '—'],
-          ['Wallet', 'Opened ✓'],
+          ['Wallet', profile ? 'Opened ✓' : '—'],
           ['eKYC · first payment', profile && profile.currentPoints > 0 ? 'Done' : 'To do'],
         ]}
       />

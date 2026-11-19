@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, HelpCircle, Volume2, PlusCircle, Trophy, ShieldCheck, Volume1, Mic, Check } from 'lucide-react';
 import { soundHaptics } from '../../utils/soundHaptics';
 import {
@@ -17,8 +18,10 @@ const uid = () => getDefaultUserId();
 const gameName = (code?: string) => IN_HOUSE[(code || '').toUpperCase()]?.name || code || 'Game';
 
 const loadPlays = async () => {
-  const p = await LoyaltyApi.getProfile(uid());
-  return { free: p.freeDailyTurns ?? p.tier?.freeDailyTurns ?? 0, saved: p.perpetualTurns ?? 0, coins: p.currentPoints || 0 };
+  const userId = uid();
+  if (!userId) return { free: 0, saved: 0, coins: 0 };
+  const p = await LoyaltyApi.getProfile(userId).catch(() => null);
+  return { free: p?.freeDailyTurns ?? p?.tier?.freeDailyTurns ?? 0, saved: p?.perpetualTurns ?? 0, coins: p?.currentPoints || 0 };
 };
 
 const PlaysBar: React.FC<{ free: number; saved: number }> = ({ free, saved }) => {
@@ -211,13 +214,14 @@ export const GameHub: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const [cat, setCat] = useState('ALL');
   const [data, failed, reload] = useLoad(async () => {
+    const userId = uid();
     const [plays, courses, board, catalogue, wheel, coins] = await Promise.all([
       loadPlays(),
       LoyaltyApi.getLearningCourses().catch(() => [] as LearningCourseItem[]),
       LoyaltyApi.getLearningLeaderboard().catch(() => []),
       loadGames(),
-      LoyaltyApi.getLuckyWheelConfig(uid()).catch(() => null),
-      LoyaltyApi.getProfile(uid()).then((p) => p.currentPoints).catch(() => undefined),
+      LoyaltyApi.getLuckyWheelConfig(userId).catch(() => null),
+      userId ? LoyaltyApi.getProfile(userId).then((p) => p.currentPoints).catch(() => undefined) : Promise.resolve(undefined),
     ]);
     return { plays, courses, board, catalogue, wheel, coins };
   });
@@ -362,9 +366,11 @@ const DarkStats: React.FC<{ free: number; coins: number; unit: string }> = ({ fr
 
 // ───────────────────────── GM-02 · Rewards Wheel ─────────────────────────
 export const Wheel: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const userId = uid();
   const [data, failed, reload] = useLoad(async () => {
     const [cfg, plays] = await Promise.all([LoyaltyApi.getLuckyWheelConfig(uid()), loadPlays()]);
     return { cfg, plays };
@@ -373,15 +379,19 @@ export const Wheel: React.FC = () => {
   const left = data?.cfg.remainingSpinsToday ?? 0;
   const price = Number(data?.cfg.pricePerSpin) || 20;
   const coins = data?.plays.coins ?? 0;
-  const canSpinPoints = left <= 0 && coins >= price;
+  const canSpinPoints = !!userId && left <= 0 && coins >= price;
   const seg = 360 / Math.max(prizes.length, 1);
 
   const spin = async (usePoints = false) => {
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     if (!data || spinning) return;
     setSpinning(true);
     soundHaptics.playClick();
     try {
-      const r = (await LoyaltyApi.spinLuckyWheel(uid(), usePoints, data.cfg.wheelCode)) as Record<string, unknown> & { wonPrize?: Partial<WheelPrizeItem> & { sliceIndex?: number } };
+      const r = (await LoyaltyApi.spinLuckyWheel(userId, usePoints, data.cfg.wheelCode)) as Record<string, unknown> & { wonPrize?: Partial<WheelPrizeItem> & { sliceIndex?: number } };
       const prizeId = (r.prizeId as number) ?? r.wonPrize?.prizeId;
       const idx = Math.max(0, (r.winningIndex as number) ?? r.wonPrize?.sliceIndex ?? prizes.findIndex((p) => p.prizeId === prizeId));
       setRotation((rot) => rot + 360 * 5 + (360 - (rot % 360)) - idx * seg - seg / 2);
@@ -437,14 +447,14 @@ export const Wheel: React.FC = () => {
           </div>
           <button
             type="button"
-            disabled={spinning || (left <= 0 && !canSpinPoints)}
+            disabled={!userId || spinning || (left <= 0 && !canSpinPoints)}
             onClick={() => spin(left <= 0)}
             className="h-12 rounded-[14px] bg-gradient-to-r from-[#374151] via-[#EF4444] to-[#EAB308] text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98] transition-all"
           >
-            {spinning ? 'SPINNING...' : left > 0 ? `SPIN NOW (FREE · ${left} LEFT)` : canSpinPoints ? `SPIN WITH ${fmt(price)} COINS` : 'NO SPINS LEFT'}
+            {!userId ? t('sso.guest_login_required') : spinning ? 'SPINNING...' : left > 0 ? `SPIN NOW (FREE · ${left} LEFT)` : canSpinPoints ? `SPIN WITH ${fmt(price)} COINS` : 'NO SPINS LEFT'}
           </button>
           <p className="text-center text-[11px] text-white/70">
-            {left > 0 ? `You have ${left} free spins left today` : canSpinPoints ? `Cost: ${fmt(price)} coins per spin` : 'Earn more spins or coins through missions'}
+            {!userId ? t('sso.guest_login_required_desc') : left > 0 ? `You have ${left} free spins left today` : canSpinPoints ? `Cost: ${fmt(price)} coins per spin` : 'Earn more spins or coins through missions'}
           </p>
           {prizes.length === 0 && <p className="text-center text-[12px] text-white/70">The wheel has no prizes configured yet.</p>}
         </>
@@ -455,7 +465,9 @@ export const Wheel: React.FC = () => {
 
 // ───────────────────────── GM-02 · Lucky Scratch Card ─────────────────────────
 export const ScratchCard: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const userId = uid();
   const [data, failed, reload] = useLoad(loadPlays);
   const [cells, setCells] = useState<string[] | null>(null);
   const [shown, setShown] = useState<boolean[]>(Array(9).fill(false));
@@ -463,9 +475,13 @@ export const ScratchCard: React.FC = () => {
   const [result, setResult] = useState<Awaited<ReturnType<typeof LoyaltyApi.playScratchCard>> | null>(null);
 
   const start = async () => {
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return null;
+    }
     setBusy(true);
     try {
-      const r = await LoyaltyApi.playScratchCard(uid());
+      const r = await LoyaltyApi.playScratchCard(userId);
       setResult(r);
       setCells(r.scratchMatrix);
       return r;
@@ -504,8 +520,8 @@ export const ScratchCard: React.FC = () => {
           ))}
         </div>
       </div>
-      <button type="button" disabled={busy || (data?.free ?? 0) <= 0} onClick={revealAll} className="h-12 rounded-[14px] bg-gradient-to-r from-[#374151] via-[#EF4444] to-[#EAB308] text-[14px] font-semibold disabled:opacity-60">
-        SCRATCH ALL
+      <button type="button" disabled={!userId || busy || (data?.free ?? 0) <= 0} onClick={revealAll} className="h-12 rounded-[14px] bg-gradient-to-r from-[#374151] via-[#EF4444] to-[#EAB308] text-[14px] font-semibold disabled:opacity-60">
+        {!userId ? t('sso.guest_login_required') : 'SCRATCH ALL'}
       </button>
       <p className="text-center text-[11px] text-white/70">{data?.free ?? 0} free play left this week · scratch to reveal</p>
     </DarkGame>
@@ -551,19 +567,25 @@ export const GameResult: React.FC = () => {
 
 // ───────────────────────── GM-01 · Get a play with coins (+ play added) ─────────────────────────
 export const GetPlays: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const userId = uid();
   const [busy, setBusy] = useState(false);
   const [added, setAdded] = useState(false);
   const [data, failed, reload] = useLoad(async () => {
-    const [cfg, plays] = await Promise.all([LoyaltyApi.getLuckyWheelConfig(uid()).catch(() => null), loadPlays()]);
+    const [cfg, plays] = await Promise.all([LoyaltyApi.getLuckyWheelConfig(userId).catch(() => null), loadPlays()]);
     return { price: Number(cfg?.pricePerSpin) || 0, code: cfg?.wheelCode || 'WHEEL', plays };
   });
   const buy = async () => {
     if (!data) return;
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
-      const s = await LoyaltyApi.initGameSession(data.code);
-      await LoyaltyApi.inGameCheckout(data.code, s.sessionToken, 1, data.price);
+      const s = await LoyaltyApi.initGameSession(data.code, userId);
+      await LoyaltyApi.inGameCheckout(data.code, s.sessionToken, 1, data.price, userId);
       setAdded(true);
     } catch {
       alert('Could not add the play. Please try again.');
@@ -573,10 +595,11 @@ export const GetPlays: React.FC = () => {
   };
   return (
     <Screen title="Get plays" back="/games">
-      {failed && <ErrorBlock onRetry={reload} />}
-      {!data && !failed && <Skeleton className="h-[300px]" />}
-      {data && !data.price && <Empty art={artGamepad} title="Getting plays with coins isn’t open yet" text="Natcash sets the coin price for a play. Do a mission or check in to earn free plays." />}
-      {data && !!data.price && !added && (
+      {!userId && <Empty art={artGamepad} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />}
+      {userId && failed && <ErrorBlock onRetry={reload} />}
+      {userId && !data && !failed && <Skeleton className="h-[300px]" />}
+      {userId && data && !data.price && <Empty art={artGamepad} title="Getting plays with coins isn’t open yet" text="Natcash sets the coin price for a play. Do a mission or check in to earn free plays." />}
+      {userId && data && !!data.price && !added && (
         <>
           <ResultBlock art={artGamepad} title="1 extra play" value={`${fmt(data.price)} coins / play`} valueTone="orange" sub="Plays you get are added to your saved plays and never reset." />
           <InfoRows
@@ -682,6 +705,7 @@ export const LearningDetail: React.FC = () => {
 
 export const Lesson: React.FC = () => {
   const { id = '' } = useParams();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [qs, failed, reload] = useLoad(() => LoyaltyApi.getLearningQuestions(id), [id]);
   const [i, setI] = useState(0);
@@ -694,9 +718,14 @@ export const Lesson: React.FC = () => {
 
   const next = async () => {
     if (i < list.length - 1) return setI(i + 1);
+    const userId = uid();
+    if (!userId) {
+      alert(t('sso.guest_login_required_desc'));
+      return;
+    }
     setBusy(true);
     try {
-      setResult(await LoyaltyApi.submitLearningQuiz(id, list.map((x) => ({ questionId: x.id, selectedOptionIndex: answers[x.id] ?? -1 })), uid()));
+      setResult(await LoyaltyApi.submitLearningQuiz(id, list.map((x) => ({ questionId: x.id, selectedOptionIndex: answers[x.id] ?? -1 })), userId));
     } catch {
       alert('Could not submit the lesson. Please try again.');
     } finally {
@@ -753,9 +782,12 @@ export const Lesson: React.FC = () => {
 // ───────────────────────── GM-01 · Play history ─────────────────────────
 interface PlayRow { id?: number | string; gameType?: string; gameCode?: string; prizeName?: string; pointsAwarded?: number; outcome?: string; playedAt?: string; createdAt?: string }
 export const PlayHistory: React.FC = () => {
+  const { t } = useTranslation();
+  const userId = uid();
   const [filter, setFilter] = useState<'All' | 'Prizes' | 'Wheel' | 'Mini'>('All');
   const [data, failed, reload] = useLoad(async () => {
-    const r = (await LoyaltyApi.getGamePlayHistory(uid(), 0, 50)) as { items?: PlayRow[]; content?: PlayRow[] } | PlayRow[];
+    if (!userId) return [] as PlayRow[];
+    const r = (await LoyaltyApi.getGamePlayHistory(userId, 0, 50)) as { items?: PlayRow[]; content?: PlayRow[] } | PlayRow[];
     return Array.isArray(r) ? r : r.items || r.content || [];
   });
   const won = (r: PlayRow) => (r.pointsAwarded || 0) > 0 || (!!r.prizeName && !/no.?luck|no prize/i.test(r.prizeName));
@@ -783,7 +815,13 @@ export const PlayHistory: React.FC = () => {
               </button>
             ))}
           </SlideRow>
-          {rows.length === 0 && <Empty art={artGamepad} title="No plays yet" text="Your games and prizes will show up here." />}
+          {rows.length === 0 && (
+            <Empty
+              art={artGamepad}
+              title={!userId ? t('sso.guest_login_required') : 'No plays yet'}
+              text={!userId ? t('sso.guest_login_required_desc') : 'Your games and prizes will show up here.'}
+            />
+          )}
           {rows.length > 0 && (
             <div className="w-full divide-y divide-slate-100 rounded-[20px] bg-white px-4">
               {rows.map((r, k) => {

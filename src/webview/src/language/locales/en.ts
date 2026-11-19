@@ -1761,7 +1761,14 @@ export default {
     "current_account_label": "Connected tenant account",
     "tenant_label": "Tenant",
     "segment_label": "Segment",
-    "coins_short": "coins"
+    "coins_short": "coins",
+    "guest_badge_title": "Guest mode (Not signed in)",
+    "guest_badge_sub": "Open from the partner app to sync your points, coins, and personal offers.",
+    "guest_card_title": "Guest · Not signed in",
+    "guest_card_sub": "Sign in from the app to earn coins, redeem vouchers, and unlock tier perks",
+    "guest_view_tiers": "View member tiers",
+    "guest_login_required": "Not signed in",
+    "guest_login_required_desc": "Please open Loyalty from your signed-in partner app to access personal account features."
   },
   "notification": {
     "dice_title": "Dice Roll Bet!",

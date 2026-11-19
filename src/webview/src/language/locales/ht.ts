@@ -1761,7 +1761,14 @@ export default {
     "current_account_label": "Kont patnè ki konekte",
     "tenant_label": "Platfòm",
     "segment_label": "Segman",
-    "coins_short": "pyès"
+    "coins_short": "pyès",
+    "guest_badge_title": "Mòd envite (Pa konekte)",
+    "guest_badge_sub": "Louvri soti nan aplikasyon patnè a pou senkronize pwen ak òf ou yo.",
+    "guest_card_title": "Envite · Pa konekte",
+    "guest_card_sub": "Konekte soti nan app la pou fè pyès, pran koupon ak avantaj nivo yo",
+    "guest_view_tiers": "Gade nivo manm yo",
+    "guest_login_required": "Kont pa konekte",
+    "guest_login_required_desc": "Tanpri louvri espas fidelite a soti nan aplikasyon patnè ou konekte a pou itilize fonksyon pèsonèl sa a."
   },
   "notification": {
     "dice_title": "Parye sou De !",

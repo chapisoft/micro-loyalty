@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Users, Network as NetworkIcon, ChevronRight, Phone, BookOpen } from 'lucide-react';
 import { LoyaltyApi, getDefaultUserId, type AgentDashboardResponse, type AgentSubordinateItem, type AgentPlaybook } from '../../services/api';
 import { Screen, Hero, Skeleton, Pill, SecondaryButton, PrimaryButton, Empty, Popup, Sheet, Chip, SlideRow, useLoad, fmt, ddmmyyyy, type Shell } from '../ui';
@@ -18,10 +19,19 @@ const loadDashboard = () => (cached ??= LoyaltyApi.getAgentDashboard(uid()).catc
 
 type AgentData = { d: AgentDashboardResponse; shell: Shell; coins?: number };
 const AgentGate: React.FC<{ children: (a: AgentData) => React.ReactNode; title: string }> = ({ children, title }) => {
+  const { t } = useTranslation();
+  const userId = uid();
   const [data, failed, reload] = useLoad(async () => {
-    const [d, p] = await Promise.all([loadDashboard(), LoyaltyApi.getProfile(uid()).catch(() => null)]);
+    if (!userId) return null;
+    const [d, p] = await Promise.all([loadDashboard(), LoyaltyApi.getProfile(userId).catch(() => null)]);
     return { d, shell: (d.agentRole === 'SUPER_AGENT' ? 'super' : 'agent') as Shell, coins: p?.currentPoints };
-  });
+  }, [userId]);
+  if (!userId)
+    return (
+      <Screen title={title}>
+        <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
+      </Screen>
+    );
   if (failed)
     return (
       <Screen title={title}>
