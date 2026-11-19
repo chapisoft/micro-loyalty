@@ -39,7 +39,7 @@ WITH seed_tenants AS (
     UNION SELECT 'TENANT_MICRO_CRM'
 )
 INSERT INTO cfg_general_categories (tenant_id, category_type, code, name, display_order, status, description, metadata)
-SELECT t.tenant_id, 'VOUCHER_CATEGORY', c.code, c.name, c.display_order, 1, c.description, c.metadata
+SELECT t.tenant_id, 'VOUCHER_CATEGORY', c.code, c.name, c.display_order, 1, c.description, CAST(c.metadata AS jsonb)
 FROM seed_tenants t
 CROSS JOIN (VALUES
     ('FOOD_DRINK',    'Food & drink',    1, 'Restaurants, coffee shops and beverages',          '{"icon":"FOOD_DRINK"}'),
