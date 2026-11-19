@@ -3,6 +3,7 @@ import i18n from '../language';
 import { LoyaltyJSBridge, type NativeSessionPayload } from '../bridge/LoyaltyJSBridge';
 import {
   LoyaltyApi,
+  getDefaultUserId,
   getTenantId,
   type SsoExchangeResponse,
   type TenantUserAuthRequest,
@@ -360,23 +361,24 @@ export const SSOAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const storedToken = sessionStorage.getItem('loyalty_token');
       const storedUser = sessionStorage.getItem('loyalty_user');
-      if (storedToken && storedUser) {
+      const storedTenant = sessionStorage.getItem('loyalty_tenant');
+      const hasTenantOverride = Boolean(params.get('tenantId') || params.get('tenant_id'));
+      const sameUserAndTenant =
+        (!userIdParam || userIdParam === storedUser) &&
+        (!hasTenantOverride || tenantIdParam === storedTenant);
+
+      if (storedToken && storedUser && sameUserAndTenant) {
         try {
           const ctx = await LoyaltyApi.getMeContext();
           if (active) {
             applyAuthenticatedContext(ctx);
           }
+          if (active) setLoading(false);
+          return;
         } catch (err: any) {
           console.warn('[useSSOAuth] Stored session expired or invalid:', err);
           clearStoredSession();
-          if (active) {
-            setSession(null);
-            setUserContext(null);
-          }
-        } finally {
-          if (active) setLoading(false);
         }
-        return;
       }
 
       if (window.ReactNativeWebView && userIdParam) {
@@ -400,8 +402,34 @@ export const SSOAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       }
 
-      if (active) {
-        setLoading(false);
+      // Truy cập trực tiếp (bỏ qua ứng dụng Tenant) -> tự động nạp thông tin tài khoản mặc định
+      const defaultUserId = userIdParam || getDefaultUserId();
+      try {
+        const ctx = await LoyaltyApi.authenticateTenantUser({
+          tenantId: tenantIdParam,
+          externalUserId: defaultUserId,
+          phoneNumber: phoneParam || defaultUserId,
+          fullName: fullNameParam || undefined,
+          accountRole: accountRoleParam || undefined,
+          authMethod: 'SSO_SWITCH',
+        });
+        if (active) {
+          applyAuthenticatedContext(ctx);
+        }
+      } catch (err) {
+        console.warn('[useSSOAuth] Default account auto-auth fallback:', err);
+        if (active) {
+          setSelectedTenantId(tenantIdParam);
+          setSession({
+            tenantId: tenantIdParam,
+            externalUserId: defaultUserId,
+            token: '',
+          });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 

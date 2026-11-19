@@ -309,9 +309,7 @@ public class SsoTicketService {
                 : null;
 
         if (AUTH_METHOD_SSO_SWITCH.equals(authMethod)) {
-            if (existingAccount == null && existingAgent == null) {
-                throw new LoyaltyException(ErrorCode.ACCOUNT_NOT_FOUND, MessageUtils.getMessage("account.not_found"));
-            }
+            // Cho phép đồng bộ hoặc tự khởi tạo hồ sơ mặc định qua syncTenantAccountProfile khi truy cập trực tiếp
         } else if (AUTH_METHOD_HMAC_ASSERTION.equals(authMethod)) {
             verifyUserHmacAssertion(
                     tenantId,
@@ -476,9 +474,7 @@ public class SsoTicketService {
                     continue;
                 }
                 AgentLoyaltyProgramEntity agent = agentByUser.get(acc.getExternalUserId());
-                String role = agent != null && agent.getAgentRole() != null
-                        ? agent.getAgentRole().name()
-                        : SecurityConstants.ACCOUNT_ROLE_CUSTOMER;
+                String role = resolveAccountRole(acc, agent, null);
                 CustomerSegmentCode segCode = userSegmentMap.getOrDefault(acc.getExternalUserId(), CustomerSegmentCode.GENERAL);
                 CustomerSegmentEntity segEntity = segmentDefMap.get(segCode);
 
@@ -623,12 +619,19 @@ public class SsoTicketService {
     }
 
     private String resolveAccountRole(String tenantId, String externalUserId, String requestedRole) {
-        if (agentRepository != null && externalUserId != null && !externalUserId.isBlank()) {
-            Optional<AgentLoyaltyProgramEntity> agentOpt = agentRepository.findByTenantIdAndExternalUserId(tenantId, externalUserId);
-            if (agentOpt.isPresent() && agentOpt.get().getStatus() == CommonStatus.ACTIVE && agentOpt.get().getAgentRole() != null) {
-                return agentOpt.get().getAgentRole().name();
-            }
-        }
+        LoyaltyAccountEntity account = (accountRepository != null && externalUserId != null && !externalUserId.isBlank())
+                ? accountRepository.findByTenantIdAndExternalUserId(tenantId, externalUserId).orElse(null)
+                : null;
+        AgentLoyaltyProgramEntity agent = (agentRepository != null && externalUserId != null && !externalUserId.isBlank())
+                ? agentRepository.findByTenantIdAndExternalUserId(tenantId, externalUserId).orElse(null)
+                : null;
+        return resolveAccountRole(account, agent, requestedRole);
+    }
+
+    private String resolveAccountRole(
+            LoyaltyAccountEntity account,
+            AgentLoyaltyProgramEntity agent,
+            String requestedRole) {
         if (requestedRole != null && !requestedRole.isBlank()) {
             String upper = requestedRole.trim().toUpperCase();
             if (SecurityConstants.ACCOUNT_ROLE_AGENT.equals(upper)
@@ -636,6 +639,25 @@ public class SsoTicketService {
                     || SecurityConstants.ACCOUNT_ROLE_CUSTOMER.equals(upper)) {
                 return upper;
             }
+        }
+        boolean hasActiveAccount = account != null && account.getStatus() == CommonStatus.ACTIVE;
+        boolean hasActiveAgent = agent != null
+                && agent.getStatus() == CommonStatus.ACTIVE
+                && agent.getAgentRole() != null;
+
+        if (hasActiveAccount) {
+            if (!hasActiveAgent) {
+                return SecurityConstants.ACCOUNT_ROLE_CUSTOMER;
+            }
+            String accName = account.getFullName() != null ? account.getFullName().trim() : "";
+            String agentName = agent.getFullName() != null ? agent.getFullName().trim() : "";
+            if (!accName.isEmpty() && !accName.equalsIgnoreCase(agentName)) {
+                return SecurityConstants.ACCOUNT_ROLE_CUSTOMER;
+            }
+            return agent.getAgentRole().name();
+        }
+        if (hasActiveAgent) {
+            return agent.getAgentRole().name();
         }
         return SecurityConstants.ACCOUNT_ROLE_CUSTOMER;
     }

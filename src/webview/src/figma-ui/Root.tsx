@@ -2,7 +2,6 @@ import React, { lazy, Suspense } from 'react';
 import { HashRouter, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import { SSOAuthProvider, useSSOAuth } from '../hooks/useSSOAuth';
 import { Skeleton } from './ui';
-import TenantAuthGate from './screens/TenantAuthGate';
 import LoyaltyHome from './screens/LoyaltyHome';
 import MemberTiers, { ProgramTerms } from './screens/MemberTiers';
 import CoinsHistory from './screens/CoinsHistory';
@@ -42,7 +41,7 @@ const GamePlayer: React.FC<{ Component: React.ComponentType<{ onBack: () => void
  * Fully replaces legacy App.tsx layout so the new design renders consistently across all views.
  */
 const AppRoutes: React.FC = () => {
-  const { loading, isAuthenticated } = useSSOAuth();
+  const { loading } = useSSOAuth();
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F5]">
@@ -53,9 +52,6 @@ const AppRoutes: React.FC = () => {
         </div>
       </div>
     );
-  }
-  if (!isAuthenticated) {
-    return <TenantAuthGate />;
   }
   return (
     <Routes>

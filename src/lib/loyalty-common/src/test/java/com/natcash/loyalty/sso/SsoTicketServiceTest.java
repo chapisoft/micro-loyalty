@@ -626,4 +626,59 @@ class SsoTicketServiceTest {
                         .build()));
         assertEquals(ErrorCode.UNAUTHORIZED, idpRejectEx.getErrorCode());
     }
+
+    @Test
+    @DisplayName("BE-08-UT-10: Tài khoản khách hàng VIP trùng externalUserId với đại lý khác tên vẫn giữ đúng vai trò CUSTOMER")
+    void testResolveCustomerRoleWhenAccountNameDiffersFromSeededAgent() {
+        SsoTicketService fullService = new SsoTicketService(
+                redisService, objectMapper, accountService, accountRepository, agentRepository,
+                bucketRepository, segmentRepository, segmentMemberRepository, policyRepository,
+                voucherRepository, partnerRepository, milestoneRepository, userMilestoneRepository);
+
+        String tenantId = "TENANT_NATCASH";
+        String userId = "50937123456";
+
+        LoyaltyAccountEntity vipAccount = LoyaltyAccountEntity.builder()
+                .tenantId(tenantId)
+                .externalUserId(userId)
+                .phoneNumber(userId)
+                .fullName("Jean-Baptiste Natcash VIP")
+                .currentPoints(new BigDecimal("5040"))
+                .tierPoints(new BigDecimal("4200"))
+                .status(CommonStatus.ACTIVE)
+                .build();
+        AgentLoyaltyProgramEntity seededAgent = AgentLoyaltyProgramEntity.builder()
+                .tenantId(tenantId)
+                .agentCode("AG_DEL_001")
+                .externalUserId(userId)
+                .fullName("Agent Delmas 32 - Marc Antoine")
+                .phoneNumber("+50937123456")
+                .agentRole(AgentRoleType.AGENT)
+                .status(CommonStatus.ACTIVE)
+                .build();
+        ProfileResponse profile = ProfileResponse.builder()
+                .accountId(1L)
+                .tenantId(tenantId)
+                .externalUserId(userId)
+                .phoneNumber(userId)
+                .fullName("Jean-Baptiste Natcash VIP")
+                .currentPoints(new BigDecimal("5040"))
+                .tierPoints(new BigDecimal("4200"))
+                .status(CommonStatus.ACTIVE)
+                .build();
+
+        when(accountRepository.findByTenantIdAndExternalUserId(tenantId, userId)).thenReturn(Optional.of(vipAccount));
+        when(agentRepository.findByTenantIdAndExternalUserId(tenantId, userId)).thenReturn(Optional.of(seededAgent));
+        when(accountService.getOrCreateProfile(eq(tenantId), any(ProfileRequest.class))).thenReturn(profile);
+
+        TenantUserContextResponse ctx = fullService.authenticateTenantUser(tenantId, TenantUserAuthRequest.builder()
+                .tenantId(tenantId)
+                .externalUserId(userId)
+                .authMethod("SSO_SWITCH")
+                .build());
+
+        assertEquals("CUSTOMER", ctx.getAccountRole());
+        assertEquals(userId, ctx.getExternalUserId());
+        assertNotNull(ctx.getAccessToken());
+    }
 }

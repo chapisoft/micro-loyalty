@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { QrCode, ShieldCheck, Sparkles, ArrowRightLeft, Briefcase } from 'lucide-react';
+import { QrCode, ShieldCheck, Sparkles, Briefcase } from 'lucide-react';
 import useSSOAuth from '../../hooks/useSSOAuth';
 import {
   LoyaltyApi,
@@ -102,7 +102,7 @@ export const LoyaltyHome: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const go = (path: string) => navigate(path);
-  const { session, userContext: authContext, logout } = useSSOAuth();
+  const { session, userContext: authContext } = useSSOAuth();
   const userId = session?.externalUserId || getDefaultUserId();
   const [data, setData] = useState<HomeData | null>(null);
   const [failed, setFailed] = useState(false);
@@ -121,7 +121,7 @@ export const LoyaltyHome: React.FC = () => {
         LoyaltyApi.getSegmentProfile(userId).catch(() => null), // CN-01 · content for the member's segment
         LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]),
         LoyaltyApi.getMeHome(userId, 'LOYALTY_HOME').catch(() => ({ banners: [] as ContentBannerItem[] })),
-        LoyaltyApi.getMeContext(userId).catch(() => authContext),
+        session?.token ? LoyaltyApi.getMeContext(userId).catch(() => authContext) : Promise.resolve(authContext),
       ]);
       // The live API returns {items, ekycVerifiedCount}; the typed client says {referrals, totalEkycVerified}.
       const r = refs as unknown as Record<string, unknown> | null;
@@ -148,12 +148,12 @@ export const LoyaltyHome: React.FC = () => {
     void load();
   }, [load]);
 
+  const [reminder, setReminder] = useState<Reminder | null>(null);
   const p = data?.profile;
   const look = tierLook(p?.tier?.code);
   const isNew = !!p && !p.currentPoints && !p.tierPoints && !data?.missions.length;
   const expiringCoins = data?.expiring?.totalExpiringPoints || 0;
   const year = useMemo(() => new Date().getFullYear(), []);
-  const [reminder, setReminder] = useState<Reminder | null>(null);
   useEffect(() => {
     if (!data) return;
     let cancelled = false;
@@ -242,46 +242,26 @@ export const LoyaltyHome: React.FC = () => {
         <>
           {/* Member card · HV-02 (Figma 330:230): overlaps the orange header; "Pay at counter" opens LM-17 */}
           <div role="button" tabIndex={0} onClick={() => go('/tiers')} onKeyDown={(e) => e.key === 'Enter' && go('/tiers')} className="flex w-full cursor-pointer flex-col gap-2 rounded-[20px] p-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.06)]" style={{ background: look.cardBg }}>
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-slate-900">
+            {(p.fullName || data.userContext?.accountRole === 'AGENT' || data.userContext?.accountRole === 'SUPER_AGENT') && (
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-slate-900">
                   {p.fullName || p.externalUserId}
-                  <span className="ml-1.5 text-[11.5px] font-normal text-slate-500">· {p.phoneNumber || p.externalUserId}</span>
+                  {p.phoneNumber ? (
+                    <span className="ml-1.5 text-[11.5px] font-normal text-slate-500">· {p.phoneNumber}</span>
+                  ) : null}
                 </p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                  <Pill tone="grey">{session?.tenantId || p.tenantId}</Pill>
-                  {data.userContext?.accountRole && (
-                    <Pill tone={data.userContext.accountRole === 'CUSTOMER' ? 'orange' : 'blue'}>
-                      {data.userContext.accountRole === 'SUPER_AGENT'
-                        ? t('sso.role_super_agent')
-                        : data.userContext.accountRole === 'AGENT'
-                          ? t('sso.role_agent')
-                          : t('sso.role_customer')}
-                    </Pill>
-                  )}
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-1.5">
                 {(data.userContext?.accountRole === 'AGENT' || data.userContext?.accountRole === 'SUPER_AGENT') && (
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); go('/agent'); }}
-                    className="flex h-7 items-center gap-1 rounded-full bg-white/90 px-2.5 text-[11.5px] font-semibold text-slate-800 shadow-sm"
+                    className="flex h-7 shrink-0 items-center gap-1 rounded-full bg-white/90 px-2.5 text-[11.5px] font-semibold text-slate-800 shadow-sm"
                   >
                     <Briefcase className="size-3.5 text-[#FE810D]" />
                     {t('sso.open_agent_portal')}
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); logout(); }}
-                  className="flex h-7 items-center gap-1 rounded-full bg-white/90 px-2.5 text-[11.5px] font-semibold text-slate-700 shadow-sm"
-                >
-                  <ArrowRightLeft className="size-3 text-slate-500" />
-                  {t('sso.switch_account')}
-                </button>
               </div>
-            </div>
+            )}
             <div className="flex w-full items-center gap-1.5">
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="text-[17px] font-semibold leading-[22px] text-brand">{tierLabel(p.tier?.name, p.tier?.code)} tier ›</span>

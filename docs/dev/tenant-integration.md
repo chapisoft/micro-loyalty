@@ -63,7 +63,7 @@ sequenceDiagram
 | :--- | :--- | :--- | :--- |
 | **Luồng 1: Vé Phiên Một Lần B2B** (`Single-Use Session Ticket`) | Tenant Backend ký số `HMAC-SHA256` xin vé `sessionTicket` qua API, mở Webview kèm `?ticket=...&tenantId=...` để đổi JWT HS256 và xóa vé nguyên tử trên Redis | Khuyến nghị mặc định cho SuperApp trên môi trường Production (Natcash App, Delimart App) | Rất cao — `secretKey` không bao giờ rời khỏi máy chủ Tenant |
 | **Luồng 2: Cầu Nối Native & Khẳng Định Danh Tính** (`LoyaltyJSBridge` / `HMAC_ASSERTION` / `TENANT_TOKEN`) | SuperApp tiêm phiên qua `window.__LOYALTY_HOST_SESSION__` hoặc sự kiện `getUserSession` / `onNativeSession`, hoặc gửi token đối chiếu qua `IDENTITY_PROVIDER` | Ứng dụng React Native nhúng Webview cần đổi tài khoản động trong phiên hoặc tích hợp trực tiếp IdP riêng của Tenant | Cao — xác thực HMAC-SHA256 hoặc đối chiếu trực tiếp IdP của Tenant |
-| **Luồng 3: Cổng Xác Thực Độc Lập Trên Webview** (`TenantAuthGate`) | Chặn 100% truy cập dữ liệu chưa định danh trên trình duyệt và yêu cầu đăng nhập định danh theo Tenant (`OTP_PIN` hoặc nhập vé `SSO`) | Người dùng truy cập Web Portal độc lập trên trình duyệt hoặc kiểm thử tích hợp UAT / Sandbox | Kiểm soát truy cập đầy đủ qua JWT HS256 và `SecurityContextUtils` |
+| **Luồng 3: Tự Động Nạp Thông Tin Mặc Định Khi Truy Cập Trực Tiếp** (`SSO_SWITCH`) | Khi mở thẳng Webview mà không đi từ ứng dụng Tenant (không có `ticket`, chữ ký URL hay `LoyaltyJSBridge`), tự động nạp `tenantId` và `externalUserId` mặc định (`84988888888` hoặc cấu hình môi trường) và mở thẳng Trang chủ Loyalty | Mở xem trực tiếp Webview trong quá trình phát triển, trình diễn hoặc kiểm thử UI mà không cần đăng nhập qua SuperApp | Cấp JWT HS256 và tải đầy đủ hồ sơ mặc định của Tenant |
 
 ---
 
@@ -325,8 +325,8 @@ Phục vụ các kịch bản xác thực khẳng định danh tính qua chữ k
 | :--- | :--- |
 | `HMAC_ASSERTION` | Bắt buộc có `timestamp` hợp lệ trong khoảng ±300 giây và `signature` khớp với chuỗi chuẩn hóa `tenantId + "\|" + externalUserId + "\|" + timestamp` ký bằng `secretKey` của đối tác |
 | `NATIVE_BRIDGE` / `TENANT_TOKEN` | Nếu có kèm `timestamp`/`signature`, thực hiện kiểm tra chữ ký HMAC tương tự `HMAC_ASSERTION`; đồng thời đối chiếu xác thực thông qua `TenantIntegrationService.verifyTenantUserIdentity(...)` theo cấu hình `IDENTITY_PROVIDER` của Tenant |
-| `OTP_PIN` | Kiểm tra mã xác thực tối thiểu 4 ký tự trên luồng đăng nhập Webview (`TenantAuthGate`) và kiểm tra trạng thái tài khoản `ACTIVE` |
-| `SSO_SWITCH` | Chỉ chuyển phiên giữa các tài khoản thực tế đã tồn tại và đang `ACTIVE` thuộc Tenant |
+| `OTP_PIN` | Kiểm tra mã xác thực tối thiểu 4 ký tự cho các yêu cầu xác thực trực tiếp bằng mã PIN/OTP và kiểm tra trạng thái tài khoản `ACTIVE` |
+| `SSO_SWITCH` | Đồng bộ hoặc tự động khởi tạo hồ sơ mặc định theo `tenantId` và `externalUserId` khi truy cập trực tiếp hoặc chuyển đổi ngữ cảnh mặc định |
 
 **Ví dụ Request Body cho `HMAC_ASSERTION`:**
 ```json
@@ -369,8 +369,8 @@ Khi Webview khởi động (`bootstrapAuth`), hệ thống tự động thực h
    * Đọc ngay biến toàn cục `window.__LOYALTY_HOST_SESSION__` nếu ứng dụng gốc tiêm sẵn qua `injectedJavaScriptBeforeContentLoaded`.
    * Hoặc gửi message `{ "action": "getUserSession", "callbackId": "...", "payload": {} }` qua `window.ReactNativeWebView.postMessage(...)` (chờ phản hồi tối đa `1.200 ms`).
    * Việc kiểm tra `getNativeSession()` diễn ra trước `sessionStorage` để bảo đảm khi người dùng đăng xuất và chuyển sang tài khoản mới trên SuperApp, Webview luôn cập nhật theo tài khoản mới thay vì giữ phiên cũ.
-5. **Phiên lưu cục bộ (`sessionStorage`):** Nếu chưa có phiên truyền mới từ ứng dụng gốc và người dùng đang có `loyalty_token` hợp lệ trong tab hiện tại, gọi `GET /loyalty/v1/sso/me-context` để khôi phục phiên.
-6. **Cổng xác thực `TenantAuthGate`:** Nếu tất cả các bước trên đều chưa xác thực, chặn toàn bộ tuyến đường nghiệp vụ tại [Root.tsx](../../src/webview/src/figma-ui/Root.tsx) và hiển thị [TenantAuthGate.tsx](../../src/webview/src/figma-ui/screens/TenantAuthGate.tsx).
+5. **Phiên lưu cục bộ (`sessionStorage`):** Nếu chưa có phiên truyền mới từ ứng dụng gốc, người dùng đang có `loyalty_token` hợp lệ trong tab hiện tại và không có tham số đổi `tenantId` / `userId`, gọi `GET /loyalty/v1/sso/me-context` để khôi phục phiên.
+6. **Tự động nạp tài khoản mặc định khi truy cập trực tiếp:** Nếu người dùng bỏ qua ứng dụng Tenant và vào thẳng Webview (không truyền vé SSO, chữ ký HMAC hay phiên Native), hệ thống sử dụng `tenantId` cấu hình (`TENANT_NATCASH` hoặc `VITE_TENANT_ID`) cùng `externalUserId` mặc định (`84988888888` hoặc `VITE_DEFAULT_USER_ID`), gọi `POST /loyalty/v1/sso/authenticate-tenant-user` (`authMethod = "SSO_SWITCH"`) để lấy ngữ cảnh 360° mặc định và mở thẳng [LoyaltyHome.tsx](../../src/webview/src/figma-ui/screens/LoyaltyHome.tsx). Trường hợp API SSO chưa sẵn sàng, Webview vẫn hiển thị giao diện Trang chủ theo dữ liệu mặc định thay vì chặn đăng nhập.
 
 ### 4.2. Mã Nguồn Mẫu Tích Hợp Trên React Native (`natcash-eu-app`)
 

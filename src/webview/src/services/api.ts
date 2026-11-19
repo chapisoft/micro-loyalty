@@ -28,11 +28,11 @@ const getApiBaseUrl = (): string => {
 };
 
 export const getTenantId = (): string => {
-  const sessionTenant = sessionStorage.getItem('loyalty_tenant');
-  if (sessionTenant) return sessionTenant;
   const urlParams = new URLSearchParams(window.location.search);
   const paramTenant = urlParams.get('tenantId') || urlParams.get('tenant_id');
   if (paramTenant) return paramTenant;
+  const sessionTenant = sessionStorage.getItem('loyalty_tenant');
+  if (sessionTenant) return sessionTenant;
   const stored = localStorage.getItem('selected_tenant_id') || localStorage.getItem('tenant_id');
   if (stored) return stored;
   const envTenant = import.meta.env.VITE_TENANT_ID || import.meta.env.VITE_DEFAULT_TENANT;
@@ -43,12 +43,19 @@ export const getTenantId = (): string => {
 };
 
 export const getDefaultUserId = (): string => {
-  const storedUser = sessionStorage.getItem('loyalty_user');
-  if (storedUser) return storedUser;
   const urlParams = new URLSearchParams(window.location.search);
   const paramUser = urlParams.get('userId') || urlParams.get('user_id') || urlParams.get('phone');
   if (paramUser) return paramUser;
-  return '';
+  const storedUser = sessionStorage.getItem('loyalty_user');
+  if (storedUser) return storedUser;
+  const envUser =
+    (import.meta as unknown as { env?: { VITE_DEFAULT_USER_ID?: string } }).env?.VITE_DEFAULT_USER_ID;
+  if (envUser) return envUser;
+  const runtimeUser = (
+    window as unknown as { __RUNTIME_CONFIG__?: { DEFAULT_USER_ID?: string } }
+  ).__RUNTIME_CONFIG__?.DEFAULT_USER_ID;
+  if (runtimeUser) return runtimeUser;
+  return '84988888888';
 };
 
 const parseApiError = async (res: Response): Promise<Error> => {
