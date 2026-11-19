@@ -12,6 +12,11 @@ spring:
     allow-bean-definition-overriding: true
   application:
     name: ${SPRING_APPLICATION_NAME:loyalty-service-natcash}
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${LOYALTY_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${LOYALTY_MULTIPART_MAX_REQUEST_SIZE:10MB}
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:natcash_loyalty_db}?sslmode=disable
     username: ${POSTGRES_USER:natcash_loyalty}
@@ -125,3 +130,7 @@ loyalty:
     max-retries: 5
     publish-interval-ms: 2000
   locales-path: /app/locales
+  media:
+    storage-dir: ${LOYALTY_MEDIA_STORAGE_DIR:/app/uploads}
+    max-file-size-bytes: ${LOYALTY_MEDIA_MAX_FILE_SIZE_BYTES:5242880}
+    public-url-prefix: /loyalty/v1/media

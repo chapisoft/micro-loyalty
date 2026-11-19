@@ -1,9 +1,10 @@
-import { defineConfig, type ProxyOptions } from 'vite';
+import { defineConfig, loadEnv, type ProxyOptions } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 
-const createApiProxy = (target: string, bypassHtml = false): ProxyOptions => ({
+const baseApiProxy = (target: string, bypassHtml = false): ProxyOptions => ({
   target,
   changeOrigin: true,
+  secure: false, // chỉ áp dụng cho dev proxy (npm run dev), không vào bản build
   rewrite: (reqPath) => reqPath.replace(/^\/loyalty-service/, ''),
   ...(bypassHtml
     ? {
@@ -16,7 +17,12 @@ const createApiProxy = (target: string, bypassHtml = false): ProxyOptions => ({
     : {}),
 });
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // VITE_PROXY_TARGET: đặt (vd https://api.mid.io.vn) để đi qua gateway; trống thì dùng microservice cục bộ.
+  const proxyTarget = (loadEnv(mode, '.', '').VITE_PROXY_TARGET || '').trim();
+  const createApiProxy = (target: string, bypassHtml = false): ProxyOptions =>
+    baseApiProxy(proxyTarget || target, bypassHtml);
+  return {
   plugins: [react()],
   resolve: {
     alias: [
@@ -102,4 +108,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

@@ -277,6 +277,7 @@ public final class GameHubDto {
         private Boolean maintenanceMode;
         private Integer maxDailyTurnsPerUser;
         private String welcomeBannerText;
+        private String lobbyBannerUrl;
     }
 
     @Data

@@ -14,6 +14,11 @@ spring:
     allow-bean-definition-overriding: true
   application:
     name: ${SPRING_APPLICATION_NAME:loyalty-service-saas}
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${LOYALTY_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${LOYALTY_MULTIPART_MAX_REQUEST_SIZE:10MB}
   lifecycle:
     timeout-per-shutdown-phase: 30s
   datasource:
@@ -135,6 +140,10 @@ loyalty:
   stream:
     channel-prefix: loyalty.events.
   locales-path: /app/locales
+  media:
+    storage-dir: ${LOYALTY_MEDIA_STORAGE_DIR:/app/uploads}
+    max-file-size-bytes: ${LOYALTY_MEDIA_MAX_FILE_SIZE_BYTES:5242880}
+    public-url-prefix: /loyalty/v1/media
 
 management:
   endpoints:

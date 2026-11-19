@@ -184,6 +184,8 @@ public class MilestoneService {
                     .partnerName(p != null ? p.getPartnerName() : null)
                     .campaignCode(m.getCampaignCode())
                     .campaignName(m.getCampaignName())
+                    .description(m.getDescription())
+                    .imageUrl(m.getImageUrl())
                     .milestoneStep(m.getMilestoneStep())
                     .targetMetric(m.getTargetMetric())
                     .targetValue(m.getTargetValue())
@@ -339,6 +341,9 @@ public class MilestoneService {
         if (request.getAudienceRole() == null || request.getAudienceRole().isBlank()) request.setAudienceRole("CUSTOMER");
         if (request.getRewardPoints() == null) request.setRewardPoints(BigDecimal.ZERO);
         if (request.getRewardGameTurns() == null) request.setRewardGameTurns(0);
+        if (request.getImageUrl() != null) {
+            request.setImageUrl(normalizeOptionalUrl(request.getImageUrl()));
+        }
 
         return campaignRepository.save(request);
     }
@@ -349,6 +354,8 @@ public class MilestoneService {
                 .orElseThrow(() -> new LoyaltyException(ErrorCode.NOT_FOUND, MessageUtils.getMessage("milestone.not_found_id", id)));
 
         if (request.getCampaignName() != null) entity.setCampaignName(request.getCampaignName());
+        if (request.getDescription() != null) entity.setDescription(request.getDescription());
+        if (request.getImageUrl() != null) entity.setImageUrl(normalizeOptionalUrl(request.getImageUrl()));
         if (request.getCampaignCode() != null) entity.setCampaignCode(request.getCampaignCode().trim().toUpperCase());
         if (request.getMilestoneStep() != null) entity.setMilestoneStep(request.getMilestoneStep());
         if (request.getTargetMetric() != null) entity.setTargetMetric(request.getTargetMetric());
@@ -369,5 +376,12 @@ public class MilestoneService {
     @Transactional
     public void deleteMilestone(String tenantId, Long id) {
         campaignRepository.findByIdAndTenantId(id, tenantId).ifPresent(campaignRepository::delete);
+    }
+
+    private String normalizeOptionalUrl(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return raw.trim();
     }
 }

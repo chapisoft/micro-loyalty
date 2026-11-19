@@ -5,7 +5,7 @@ RUN apk add --no-cache tzdata curl \
     && cp /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime \
     && echo "Asia/Ho_Chi_Minh" > /etc/timezone \
     && addgroup -S appgroup && adduser -S appuser -G appgroup \
-    && mkdir -p /app/module /app/lib /app/etc /app/config /app/locales /app/logs \
+    && mkdir -p /app/module /app/lib /app/etc /app/config /app/locales /app/logs /app/uploads \
     && chown -R appuser:appgroup /app
 
 WORKDIR /app

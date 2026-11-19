@@ -23,9 +23,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -33,6 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +58,8 @@ class ApprovalQueueServiceTest {
     private LoyaltyPointLedgerRepository ledgerRepository;
     @Mock
     private PointBucketFifoService fifoService;
+    @Mock
+    private JdbcTemplate jdbcTemplate;
 
     private ApprovalQueueService approvalQueueService;
 
@@ -64,6 +70,7 @@ class ApprovalQueueServiceTest {
         ReflectionTestUtils.setField(approvalQueueService, "accountRepository", accountRepository);
         ReflectionTestUtils.setField(approvalQueueService, "ledgerRepository", ledgerRepository);
         ReflectionTestUtils.setField(approvalQueueService, "fifoService", fifoService);
+        ReflectionTestUtils.setField(approvalQueueService, "jdbcTemplate", jdbcTemplate);
 
         lenient().when(lockHelper.executeWithLock(anyString(), ArgumentMatchers.<Supplier<?>>any()))
                 .thenAnswer(inv -> ((Supplier<?>) inv.getArgument(1)).get());
@@ -141,5 +148,34 @@ class ApprovalQueueServiceTest {
         LoyaltyException ex = assertThrows(LoyaltyException.class,
                 () -> approvalQueueService.reject(TENANT_ID, 3L, "checker_bob", "too late"));
         assertEquals(ErrorCode.APPROVAL_ALREADY_PROCESSED, ex.getErrorCode());
+    }
+
+    @Test
+    void approve_shouldUpdateLeaderboardPayoutWhenTargetIsLeaderboardPayout() {
+        ApprovalRequestEntity pending = ApprovalRequestEntity.builder()
+                .id(4L)
+                .requestCode("APR_004")
+                .tenantId(TENANT_ID)
+                .targetType(ApprovalTargetType.LEADERBOARD_PAYOUT)
+                .targetId("77")
+                .actionType(ApprovalActionType.CREATE)
+                .makerUsername("system_job")
+                .status(ApprovalStatus.PENDING)
+                .build();
+
+        when(approvalRepository.findByIdAndTenantId(4L, TENANT_ID)).thenReturn(Optional.of(pending));
+        when(approvalRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ApprovalItemResponse result = approvalQueueService.approve(TENANT_ID, 4L, "checker_bob", "Verified top 1");
+
+        assertEquals(ApprovalStatus.APPROVED, result.getStatus());
+        verify(jdbcTemplate).update(
+                contains("UPDATE leaderboard_payouts"),
+                eq("APPROVED"),
+                eq("checker_bob"),
+                any(Timestamp.class),
+                any(Timestamp.class),
+                eq(77L),
+                eq(TENANT_ID));
     }
 }

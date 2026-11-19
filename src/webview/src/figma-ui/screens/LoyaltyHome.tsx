@@ -13,7 +13,7 @@ import {
 import { GameArt } from '../GameArt';
 import { QrCode } from 'lucide-react';
 import { Screen, SectionHeader, Skeleton, ErrorBlock, SlideRow, Popup, PrimaryButton, SecondaryButton, fmt, ddmm, ddmmyyyy, toDate } from '../ui';
-import { userState } from './Rewards';
+import { userState, cleanBrand, valueTitle, userValueTitle } from './Rewards';
 import { artGift, artHourglass, artCup } from '../art';
 import { tierLook, tierLabel } from '../tiers';
 import { normMilestone } from '../data';
@@ -85,7 +85,7 @@ const pickReminder = (d: HomeData): Reminder | null => {
   if (claim) return { art: artCup, title: 'You have a reward to claim', text: `${claim.name}: your reward is waiting.`, cta: 'Claim reward', to: `/missions/${encodeURIComponent(claim.code)}` };
   const exp = (x: UserVoucherItem) => toDate(x.expiresAt || x.validUntil).getTime();
   const v = d.vouchers.find((x) => userState(x) === 'ready' && exp(x) - now <= 3 * DAY && exp(x) > now);
-  if (v) return { art: artGift, title: 'Your voucher expires soon', text: `${v.discountText || v.title} · valid until ${ddmmyyyy(v.validUntil)}.`, cta: 'Use voucher', to: `/my-vouchers/${v.id}` };
+  if (v) return { art: artGift, title: 'Your voucher expires soon', text: `${userValueTitle(v)} · valid until ${ddmmyyyy(v.validUntil)}.`, cta: 'Use voucher', to: `/my-vouchers/${v.id}` };
   const end = d.missions.find((m) => m.steps.some((s) => s.status === 'IN_PROGRESS' && s.expiresAt && new Date(s.expiresAt).getTime() - now <= 2 * DAY && new Date(s.expiresAt).getTime() > now));
   if (end) return { art: artHourglass, title: 'A mission ends soon', text: `${end.name} ends in 2 days or less.`, cta: 'See mission', to: `/missions/${encodeURIComponent(end.code)}` };
   return null;
@@ -313,12 +313,12 @@ export const LoyaltyHome: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex w-full gap-1.5">
-                      {m.steps.slice(0, 3).map((s) => {
+                      {m.steps.slice(0, 3).map((s, idx) => {
                         const done = s.status === 'COMPLETED' || s.status === 'CLAIMED';
                         return (
                           <span key={s.id} className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full p-1.5 ${done ? 'bg-emerald-50' : 'bg-brand-soft'}`}>
                             <img src={done ? iconCheck : iconGift} alt="" className="size-[13px]" />
-                            <span className="whitespace-nowrap text-[11px] font-medium leading-[15px] text-slate-500">Goal {s.milestoneStep}</span>
+                            <span className="whitespace-nowrap text-[11px] font-medium leading-[15px] text-slate-500">Goal {idx + 1}</span>
                             <span className={`whitespace-nowrap text-[11px] font-semibold leading-4 ${done ? 'text-emerald-700' : 'text-brand'}`}>+{fmt(s.rewardPoints)}</span>
                           </span>
                         );
@@ -381,8 +381,8 @@ export const LoyaltyHome: React.FC = () => {
                         {enough ? '' : 'Needs '}
                         {fmt(v.pointCost)} coins
                       </span>
-                      <span className="relative truncate text-[12px] font-medium leading-[17px] text-white/90">{v.partnerName}</span>
-                      <span className="relative line-clamp-1 text-[20px] font-semibold leading-[29px] text-white">{v.title}</span>
+                      <span className="relative truncate text-[12px] font-medium leading-[17px] text-white/90">{cleanBrand(v.partnerName)}</span>
+                      <span className="relative line-clamp-1 text-[20px] font-semibold leading-[29px] text-white">{valueTitle(v)}</span>
                     </button>
                   );
                 })}

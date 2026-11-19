@@ -58,6 +58,9 @@ public class LoyaltyPartnerEntity {
     @Column(name = "webhook_url", length = 500)
     private String webhookUrl;
 
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
     @Column(name = "ip_whitelist")
     private String ipWhitelist;
 

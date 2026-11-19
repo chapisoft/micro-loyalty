@@ -106,6 +106,8 @@ package-lock.json.bak
 # PostgreSQL / Redis local mount data
 deploy/postgres_data/
 deploy/redis_data/
+uploads/
+deploy/micro-loyalty/uploads/
 **/data/postgres/
 **/data/redis/
 

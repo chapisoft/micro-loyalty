@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, Volume2, PlusCircle, Trophy, ShieldCheck, Volume1, Mic, Check } from 'lucide-react';
 import { soundHaptics } from '../../utils/soundHaptics';
@@ -8,9 +8,10 @@ import {
 import { GameArt } from '../GameArt';
 import { IN_HOUSE, CAT, loadGames, catLabel, type GameEntry } from '../games';
 import {
-  Screen, Hero, SectionHeader, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, ResultBlock, InfoRows, Empty, Popup, Sheet, SlideRow, useLoad, fmt,
+  Screen, Hero, Chip, SectionHeader, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, ResultBlock, InfoRows, Empty, Popup, Sheet, SlideRow, useLoad, fmt,
 } from '../ui';
 import { artCup, artEmptyBox, artGamepad, artHourglass, aiGames } from '../art';
+import illGame from '../../assets/figma/ill-game.svg';
 
 const uid = () => getDefaultUserId();
 
@@ -21,29 +22,29 @@ const loadPlays = async () => {
   return { free: p.freeDailyTurns ?? p.tier?.freeDailyTurns ?? 0, saved: p.perpetualTurns ?? 0, coins: p.currentPoints || 0 };
 };
 
+/** Free plays card — same look as the Home member card (cream card overlapping the orange header, illustration, soft shadow). */
 const PlaysBar: React.FC<{ free: number; saved: number }> = ({ free, saved }) => {
   const navigate = useNavigate();
   return (
-    <div className="flex w-full items-center gap-3 rounded-[20px] bg-white p-4">
-      <div className="flex-1">
-        <p className="text-[15px] font-semibold">{free} free {free === 1 ? 'play' : 'plays'} left</p>
-        <p className="text-[11px] text-slate-500">+{saved} saved plays · resets Monday</p>
+    <div className="flex w-full items-center gap-3 rounded-[20px] bg-gradient-to-br from-[#FFF4DD] to-[#FFE6BF] p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      <img src={illGame} alt="" className="size-[60px] shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] text-slate-600">Free plays this week</p>
+        <p className="text-[28px] font-semibold leading-8">{free}<span className="ml-1 text-[14px] font-medium text-slate-500">left</span></p>
+        <p className="text-[12px] text-slate-500">+{saved} saved · resets Monday</p>
       </div>
-      <button type="button" onClick={() => navigate('/games/get-plays')} className="rounded-full border border-brand bg-brand-soft px-4 py-2 text-[12px] font-semibold text-brand">Get plays</button>
+      <button type="button" onClick={() => navigate('/games/get-plays')} className="h-9 shrink-0 rounded-full bg-[#FE810D] px-4 text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(254,129,13,0.3)]">Get plays</button>
     </div>
   );
 };
 
-/** Grid card: square cover art, name and category (Game hub). */
+/** Game tile — identical to the Home "Play every day" tile: 68px rounded icon, name below, no card around it. */
 const GameCard: React.FC<{ g: GameEntry; onClick: () => void }> = ({ g, onClick }) => (
-  <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-1.5 rounded-[20px] bg-white p-2 pb-3 text-center shadow-[0_2px_10px_rgba(15,23,42,0.06)] active:scale-[0.98]">
-    <span className="relative aspect-square w-full overflow-hidden rounded-[16px]">
+  <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-1.5 active:scale-[0.97]">
+    <span className="relative size-[68px] overflow-hidden rounded-[16px]">
       <GameArt code={g.code} iconUrl={g.iconUrl} />
-      {g.partnerUrl && <span className="absolute left-1.5 top-1.5 rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-semibold text-white">Partner</span>}
-      {g.freeLeft ? <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-semibold text-white">{g.freeLeft} free</span> : null}
     </span>
-    <span className="w-full truncate text-[12px] font-semibold leading-4">{g.name}</span>
-    <span className="text-[10px] text-slate-500">{catLabel(g.category)}</span>
+    <span className="line-clamp-2 w-full text-center text-[11px] font-medium leading-4">{g.name}</span>
   </button>
 );
 
@@ -74,15 +75,11 @@ const Leaderboard: React.FC<{ initialBoard: BoardRow[] }> = ({ initialBoard }) =
     }
   };
 
-  const openRules = async () => {
-    setRulesOpen(true);
-    try {
-      const info = await LoyaltyApi.getLeaderboardRules(boardType);
-      setRulesData(info);
-    } catch {
-      setRulesData(null);
-    }
-  };
+  useEffect(() => {
+    LoyaltyApi.getLeaderboardRules(boardType).then(setRulesData).catch(() => setRulesData(null));
+  }, [boardType]);
+  const openRules = () => setRulesOpen(true);
+  const prizeFor = (r: number) => rulesData?.prizes?.find((p) => p.rankFrom <= r && r <= p.rankTo)?.prizeLabel;
 
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -96,16 +93,16 @@ const Leaderboard: React.FC<{ initialBoard: BoardRow[] }> = ({ initialBoard }) =
     const row = top(r);
     const name = row ? row.displayName || row.maskedPhone || 'Player' : '—';
     return (
-      <div className="flex flex-1 flex-col items-center gap-1">
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
         {r === 1 && <span className="text-[18px]">👑</span>}
         <span className={`relative flex items-center justify-center rounded-full bg-white/15 font-semibold text-white ring-[3px] ${PODIUM[r].ring} ${r === 1 ? 'size-[68px] text-[20px]' : 'size-[54px] text-[16px]'}`}>
           {row ? initials(name) : '?'}
           <span className="absolute -bottom-2 flex size-5 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-slate-900">{r}</span>
         </span>
-        <span className="mt-1 max-w-full truncate text-[13px] font-semibold text-white">{name}</span>
+        <span className="mt-1 w-full truncate text-center text-[13px] font-semibold text-white">{name}</span>
         <span className={`text-[12px] font-semibold ${PODIUM[r].name}`}>{row ? `${fmt(row.totalPoints)} pts` : 'Open spot'}</span>
-        <span className={`mt-1 flex w-full items-center justify-center rounded-t-[14px] px-1 text-center text-[12px] font-semibold ${PODIUM[r].block}`}>
-          {row?.badge || `#${r}`}
+        <span className={`mt-1 flex w-full items-center justify-center rounded-t-[14px] px-1.5 text-center text-[11px] font-semibold leading-[14px] ${PODIUM[r].block}`}>
+          <span className="line-clamp-3">{prizeFor(r) || `#${r}`}</span>
         </span>
       </div>
     );
@@ -150,7 +147,7 @@ const Leaderboard: React.FC<{ initialBoard: BoardRow[] }> = ({ initialBoard }) =
         <div key={x.rank} className="relative flex items-center gap-3 rounded-[14px] bg-white/10 px-3 py-2.5 text-[13px]">
           <span className="w-4 text-white/60">{x.rank}</span>
           <span className="flex size-8 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold">{initials(x.displayName || x.maskedPhone || '?')}</span>
-          <span className="flex-1">{x.displayName || x.maskedPhone}</span>
+          <span className="min-w-0 flex-1 truncate">{x.displayName || x.maskedPhone}</span>
           <span className="font-semibold">{fmt(x.totalPoints)} pts</span>
         </div>
       ))}
@@ -246,35 +243,14 @@ export const GameHub: React.FC = () => {
       {data && <PlaysBar free={data.plays.free} saved={data.plays.saved} />}
 
       {data?.wheel && (
-        <button type="button" onClick={() => navigate('/games/wheel')} className="flex w-full items-center gap-3 rounded-[20px] bg-[#1C2B33] p-4 text-left text-white">
-          <div className="flex-1">
-            <p className="text-[22px] font-semibold">{data.wheel.wheelName}</p>
-            <p className="mb-3 text-[12px] text-white/75">{data.wheel.remainingSpinsToday} free spins left</p>
-            <span className="rounded-[14px] bg-brand px-5 py-2.5 text-[13px] font-semibold">Play the wheel!</span>
+        <button type="button" onClick={() => navigate('/games/wheel')} className="flex w-full items-center gap-3 rounded-[20px] bg-[#1C2B33] px-[18px] py-5 text-left text-white">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <p className="text-[22px] font-semibold leading-7">Rewards Wheel</p>
+            <p className="text-[13px] text-white/75">Win coins and Loyalty rewards</p>
+            <span className="mt-2.5 flex h-12 w-full max-w-[200px] items-center justify-center rounded-[12px] bg-[#FF8600] text-[14px] font-semibold">Play the wheel</span>
           </div>
-          <span className="size-[96px] shrink-0"><GameArt code="WHEEL" /></span>
+          <span className="size-[92px] shrink-0"><GameArt code="WHEEL" /></span>
         </button>
-      )}
-
-      {items.length > 0 && (
-        <>
-          <SectionHeader title="🔥 Hot this week" />
-          {/* shortcut: the catalogue has no "featured" flag yet, so the first games in CMS order are featured */}
-          <SlideRow className="gap-3">
-            {items.slice(0, 6).map((g) => (
-              <button key={`hot-${g.code}-${g.name}`} type="button" onClick={() => openGame(g)} className="flex w-[200px] shrink-0 flex-col overflow-hidden rounded-[20px] bg-white text-left shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
-                <span className="relative flex h-[120px] w-full items-center justify-center overflow-hidden bg-gradient-to-br from-brand-soft to-[#FFE2B8]">
-                  <GameArt code={g.code} iconUrl={g.iconUrl} className="h-[108px] w-[108px]" />
-                  {g.partnerUrl && <span className="absolute left-2 top-2 rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-semibold text-white">Partner</span>}
-                </span>
-                <span className="px-3 pb-3 pt-2">
-                  <span className="block truncate text-[14px] font-semibold">{g.name}</span>
-                  <span className="text-[11px] text-slate-500">{catLabel(g.category)}</span>
-                </span>
-              </button>
-            ))}
-          </SlideRow>
-        </>
       )}
 
       <SectionHeader title="All games" action="Play history ›" onAction={() => navigate('/games/history')} />
@@ -284,16 +260,16 @@ export const GameHub: React.FC = () => {
             const n = c === 'ALL' ? items.length : items.filter((g) => g.category === c).length;
             const on = cat === c;
             return (
-              <button key={c} type="button" onClick={() => setCat(c)} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold ${on ? 'bg-brand text-white shadow-[0_4px_12px_rgba(255,134,0,0.35)]' : 'border border-slate-200 bg-white text-slate-700'}`}>
+              <Chip key={c} on={on} onClick={() => setCat(c)}>
                 {c === 'ALL' ? 'All games' : catLabel(c)}
-                <span className={`rounded-full px-1.5 text-[11px] ${on ? 'bg-white/25' : 'bg-slate-100 text-slate-500'}`}>{n}</span>
-              </button>
+                <span className="text-[12px] font-normal text-slate-400">{n}</span>
+              </Chip>
             );
           })}
         </SlideRow>
       )}
       {data && items.length === 0 && <Empty art={artGamepad} title="No games yet" text="Games will appear here once Natcash publishes them." />}
-      <div className="grid w-full grid-cols-3 gap-2.5">
+      <div className="grid w-full grid-cols-4 gap-x-2 gap-y-4">
         {shown.map((g) => (
           <GameCard key={`${g.code}-${g.name}`} g={g} onClick={() => openGame(g)} />
         ))}

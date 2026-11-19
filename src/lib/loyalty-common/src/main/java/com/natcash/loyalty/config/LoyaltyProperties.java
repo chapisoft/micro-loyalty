@@ -48,6 +48,7 @@ public class LoyaltyProperties {
     private Gateway gateway = new Gateway();
     private PublicUrls publicUrls = new PublicUrls();
     private Integration integration = new Integration();
+    private Media media = new Media();
 
     @PostConstruct
     void registerInstance() {
@@ -237,5 +238,13 @@ public class LoyaltyProperties {
             private String gatewayUrl = "";
             private String brandname = "";
         }
+    }
+
+    @Getter
+    @Setter
+    public static class Media {
+        private String storageDir = "./uploads";
+        private long maxFileSizeBytes = 5_242_880L;
+        private String publicUrlPrefix = "/loyalty/v1/media";
     }
 }

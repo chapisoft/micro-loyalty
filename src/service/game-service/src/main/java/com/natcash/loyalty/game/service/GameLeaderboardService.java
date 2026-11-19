@@ -1,6 +1,10 @@
 package com.natcash.loyalty.game.service;
 
+import com.natcash.loyalty.approval.dto.ApprovalDto.CreateApprovalRequest;
+import com.natcash.loyalty.approval.service.ApprovalQueueService;
 import com.natcash.loyalty.constant.ErrorCode;
+import com.natcash.loyalty.domain.enums.ApprovalActionType;
+import com.natcash.loyalty.domain.enums.ApprovalTargetType;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.game.entity.GameMonthlyLeaderboardEntity;
 import com.natcash.loyalty.game.entity.GamePointLedgerEntity;
@@ -16,6 +20,7 @@ import com.natcash.loyalty.game.repository.LeaderboardPrizeRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +68,9 @@ public class GameLeaderboardService {
     private final GameMonthlyLeaderboardRepository leaderboardRepository;
     private final LeaderboardPrizeRepository prizeRepository;
     private final LeaderboardPayoutRepository payoutRepository;
+
+    @Autowired(required = false)
+    private ApprovalQueueService approvalQueueService;
 
     /**
      * Awards monthly game pts for a completed gameplay/learning event.
@@ -289,10 +297,43 @@ public class GameLeaderboardService {
                         .prizeValue(matched.getPrizeValue())
                         .approvalStatus(APPROVAL_PENDING)
                         .build());
+                enqueueApprovalIfAvailable(tenantId, payout);
                 created.add(payout);
             }
         }
         return created;
+    }
+
+    private void enqueueApprovalIfAvailable(String tenantId, LeaderboardPayoutEntity payout) {
+        if (approvalQueueService == null || payout == null || payout.getId() == null) {
+            return;
+        }
+        try {
+            Map<String, Object> payloadAfter = new LinkedHashMap<>();
+            payloadAfter.put("payoutId", payout.getId());
+            payloadAfter.put("leaderboardMonth", payout.getLeaderboardMonth());
+            payloadAfter.put("boardType", payout.getBoardType());
+            payloadAfter.put("rankPosition", payout.getRankPosition());
+            payloadAfter.put("externalUserId", payout.getExternalUserId());
+            payloadAfter.put("totalPts", payout.getTotalPts());
+            payloadAfter.put("prizeLabel", payout.getPrizeLabel());
+            payloadAfter.put("prizeType", payout.getPrizeType());
+            payloadAfter.put("prizeValue", payout.getPrizeValue());
+
+            approvalQueueService.submitRequest(tenantId, CreateApprovalRequest.builder()
+                    .targetType(ApprovalTargetType.LEADERBOARD_PAYOUT)
+                    .targetId(String.valueOf(payout.getId()))
+                    .actionType(ApprovalActionType.CREATE)
+                    .title(String.format("Leaderboard %s %s #%d - %s",
+                            payout.getLeaderboardMonth(), payout.getBoardType(),
+                            payout.getRankPosition(), payout.getPrizeLabel()))
+                    .payloadAfter(payloadAfter)
+                    .reason("Monthly leaderboard close payout requiring dual approval (QT-04)")
+                    .build());
+        } catch (Exception ex) {
+            log.warn("[LEADERBOARD-APPROVAL] Failed to enqueue QT-04 request for payoutId={}: {}",
+                    payout.getId(), ex.getMessage());
+        }
     }
 
     @Transactional

@@ -45,6 +45,8 @@ public final class CampaignMilestoneDto {
         private String partnerName;
         private String campaignCode;
         private String campaignName;
+        private String description;
+        private String imageUrl;
         private Integer milestoneStep;
         private CampaignMetric targetMetric;
         private BigDecimal targetValue;

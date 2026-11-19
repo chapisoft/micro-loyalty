@@ -45,6 +45,12 @@ public class CampaignMilestoneEntity {
     @Column(name = "campaign_name", nullable = false, length = 255)
     private String campaignName;
 
+    @Column(name = "description", columnDefinition = "text")
+    private String description;
+
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Column(name = "milestone_step", nullable = false)
     private Integer milestoneStep;
 
