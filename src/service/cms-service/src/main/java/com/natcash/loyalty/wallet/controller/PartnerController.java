@@ -121,6 +121,7 @@ public class PartnerController {
                 .webhookUrl(request.getWebhookUrl())
                 .webhookSecret(request.getWebhookSecret())
                 .ipWhitelist(request.getIpWhitelist())
+                .logoUrl(normalizeOptionalUrl(request.getLogoUrl()))
                 .status(status)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -167,6 +168,7 @@ public class PartnerController {
         if (request.getWebhookUrl() != null) entity.setWebhookUrl(request.getWebhookUrl());
         if (request.getWebhookSecret() != null) entity.setWebhookSecret(request.getWebhookSecret());
         if (request.getIpWhitelist() != null) entity.setIpWhitelist(request.getIpWhitelist());
+        if (request.getLogoUrl() != null) entity.setLogoUrl(normalizeOptionalUrl(request.getLogoUrl()));
 
         if (request.getPartnerType() != null) {
             try {
@@ -257,6 +259,13 @@ public class PartnerController {
         return str.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
+    private String normalizeOptionalUrl(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return raw.trim();
+    }
+
     private PartnerResponse mapToResponse(LoyaltyPartnerEntity p) {
         return PartnerResponse.builder()
                 .id(p.getId())
@@ -268,6 +277,7 @@ public class PartnerController {
                 .webhookUrl(p.getWebhookUrl())
                 .webhookSecret(p.getWebhookSecret())
                 .ipWhitelist(p.getIpWhitelist())
+                .logoUrl(p.getLogoUrl())
                 .status(p.getStatus() != null ? p.getStatus().name() : null)
                 .createdAt(p.getCreatedAt() != null ? p.getCreatedAt().toString() : null)
                 .updatedAt(p.getUpdatedAt() != null ? p.getUpdatedAt().toString() : null)
@@ -287,6 +297,7 @@ public class PartnerController {
         private String webhookUrl;
         private String webhookSecret;
         private String ipWhitelist;
+        private String logoUrl;
         private Object status;
     }
 
@@ -304,6 +315,7 @@ public class PartnerController {
         private String webhookUrl;
         private String webhookSecret;
         private String ipWhitelist;
+        private String logoUrl;
         private String status;
         private String createdAt;
         private String updatedAt;

@@ -8,6 +8,11 @@ spring:
     allow-bean-definition-overriding: true
   application:
     name: cms-service
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${LOYALTY_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${LOYALTY_MULTIPART_MAX_REQUEST_SIZE:10MB}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -108,6 +113,10 @@ loyalty:
     sms:
       gateway-url: ${NATCOM_SMS_GATEWAY_URL:}
       brandname: ${NATCOM_SMS_BRANDNAME:}
+  media:
+    storage-dir: ${LOYALTY_MEDIA_STORAGE_DIR:./uploads}
+    max-file-size-bytes: ${LOYALTY_MEDIA_MAX_FILE_SIZE_BYTES:5242880}
+    public-url-prefix: ${LOYALTY_MEDIA_PUBLIC_URL_PREFIX:/loyalty/v1/media}
 
 # Cấu hình OpenAPI
 springdoc:

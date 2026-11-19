@@ -59,6 +59,7 @@ public final class SecurityConstants {
     public static final String CLAIM_IAT = "iat";
     public static final String CLAIM_EXP = "exp";
 
+    public static final String PUBLIC_MEDIA_PATH_PATTERN = "/loyalty/v1/media/**";
     public static final String ACCOUNT_ROLE_CUSTOMER = "CUSTOMER";
     public static final String ACCOUNT_ROLE_AGENT = "AGENT";
     public static final String ACCOUNT_ROLE_SUPER_AGENT = "SUPER_AGENT";

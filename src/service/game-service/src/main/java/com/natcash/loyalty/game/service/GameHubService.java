@@ -311,7 +311,22 @@ public class GameHubService {
 
         return lockHelper.executeWithLock(lockKey, () -> {
             GameHubEntity game = gameRepository.findByTenantIdAndGameCode(tenantId, gameCode)
-                    .orElseThrow(() -> new LoyaltyException(ErrorCode.POLICY_VIOLATION, MessageUtils.getMessage("game.info_not_found")));
+                    .orElseGet(() -> {
+                        if ("DAILY_CHECKIN".equalsIgnoreCase(gameCode)) {
+                            return GameHubEntity.builder()
+                                    .tenantId(tenantId)
+                                    .gameCode("DAILY_CHECKIN")
+                                    .gameName("Daily Check-in Streak")
+                                    .category("DAILY_CHECKIN")
+                                    .pricePerTurn(BigDecimal.ZERO)
+                                    .freeTurnsDaily(1)
+                                    .dailyBudgetLimit(BigDecimal.valueOf(50000))
+                                    .allowPointsSpin(true)
+                                    .status(GameStatus.ACTIVE)
+                                    .build();
+                        }
+                        throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, MessageUtils.getMessage("game.info_not_found"));
+                    });
 
             if (game.getStatus() != GameStatus.ACTIVE) {
                 throw new LoyaltyException(ErrorCode.POLICY_VIOLATION, MessageUtils.getMessage("game.unavailable_for_result"));
@@ -335,13 +350,26 @@ public class GameHubService {
             PrizeType rewardType = PrizeType.POINTS;
             String message = MessageUtils.getMessage("game.play.completed_default");
 
-            Map<String, Object> paramsMap = parseGameParams(game.getGameParams());
+            Map<String, Object> detailsMap = parseGameParams(request.getDetails());
+            if (detailsMap.containsKey("pointsAwarded") && detailsMap.get("pointsAwarded") != null) {
+                try {
+                    pointsToAward = new BigDecimal(String.valueOf(detailsMap.get("pointsAwarded")));
+                } catch (Exception ignored) {}
+            }
 
-            GameCategory categoryEnum = GameCategory.fromCode(game.getCategory());
-            if (categoryEnum == null) {
-                pointsToAward = BigDecimal.valueOf(score > 0 ? score * 10L : 20L);
-                message = MessageUtils.getMessage("game.play.completed_points", pointsToAward);
-            } else {
+            if (pointsToAward.compareTo(BigDecimal.ZERO) <= 0) {
+                if ("DAILY_CHECKIN".equalsIgnoreCase(gameCode)) {
+                    int day = Math.max(1, Math.min(score > 0 ? score : 1, 7));
+                    long[] defaultDailyCoins = {10L, 20L, 30L, 40L, 50L, 80L, 200L};
+                    pointsToAward = BigDecimal.valueOf(defaultDailyCoins[day - 1]);
+                    message = MessageUtils.getMessage("game.play.completed_points", pointsToAward);
+                } else {
+                    Map<String, Object> paramsMap = parseGameParams(game.getGameParams());
+                    GameCategory categoryEnum = GameCategory.fromCode(game.getCategory());
+                    if (categoryEnum == null) {
+                        pointsToAward = BigDecimal.valueOf(score > 0 ? score * 10L : 20L);
+                        message = MessageUtils.getMessage("game.play.completed_points", pointsToAward);
+                    } else {
                 switch (categoryEnum) {
                     case QUIZ -> {
                         int maxScore = paramsMap.containsKey("quizQuestionCount") ? ((Number) paramsMap.get("quizQuestionCount")).intValue() : 5;
@@ -372,6 +400,8 @@ public class GameHubService {
                     }
                 }
             }
+        }
+    }
 
             // 3. Khống chế hạn mức ngân sách ngày của Game qua Redis Atomic
             if (game.getDailyBudgetLimit() != null && game.getDailyBudgetLimit().compareTo(BigDecimal.ZERO) > 0) {
@@ -673,8 +703,8 @@ public class GameHubService {
                         : SystemParameterService.get().getDecimal(effectiveTenantId, SystemParamSpec.GAME_DEFAULT_DAILY_BUDGET)));
         entity.setAllowPointsSpin(dto.getAllowPointsSpin() != null ? dto.getAllowPointsSpin() : (entity.getAllowPointsSpin() != null ? entity.getAllowPointsSpin() : true));
         if (dto.getGameUrl() != null) entity.setGameUrl(dto.getGameUrl());
-        if (dto.getIconUrl() != null) entity.setIconUrl(dto.getIconUrl());
-        if (dto.getBannerUrl() != null) entity.setBannerUrl(dto.getBannerUrl());
+        if (dto.getIconUrl() != null) entity.setIconUrl(dto.getIconUrl().isBlank() ? null : dto.getIconUrl().trim());
+        if (dto.getBannerUrl() != null) entity.setBannerUrl(dto.getBannerUrl().isBlank() ? null : dto.getBannerUrl().trim());
         if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
         if (dto.getRulesText() != null) entity.setRulesText(dto.getRulesText());
         entity.setStatus(dto.getStatus() != null ? dto.getStatus() : (entity.getStatus() != null ? entity.getStatus() : GameStatus.ACTIVE));
@@ -714,6 +744,7 @@ public class GameHubService {
                 .maintenanceMode(config.getMaintenanceMode())
                 .maxDailyTurnsPerUser(config.getMaxDailyTurnsPerUser())
                 .welcomeBannerText(config.getWelcomeBannerText())
+                .lobbyBannerUrl(config.getLobbyBannerUrl())
                 .build();
     }
 
@@ -734,9 +765,13 @@ public class GameHubService {
         if (dto.getWelcomeBannerText() != null) {
             config.setWelcomeBannerText(dto.getWelcomeBannerText());
         }
+        if (dto.getLobbyBannerUrl() != null) {
+            String trimmed = dto.getLobbyBannerUrl().trim();
+            config.setLobbyBannerUrl(trimmed.isEmpty() ? null : trimmed);
+        }
 
         configRepository.save(config);
-        return dto;
+        return getGlobalConfig(tenantId);
     }
 
     @Transactional(readOnly = true)
@@ -1330,7 +1365,10 @@ public class GameHubService {
         entity.setMonthlyMaxWinners(dto.getMonthlyMaxWinners());
         entity.setColorCode(dto.getColorCode());
         entity.setIconSymbol(dto.getIconSymbol());
-        entity.setBgImageUrl(dto.getBgImageUrl());
+        if (dto.getBgImageUrl() != null) {
+            String trimmedBg = dto.getBgImageUrl().trim();
+            entity.setBgImageUrl(trimmedBg.isEmpty() ? null : trimmedBg);
+        }
         entity.setDisplayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0);
         entity.setStatus(dto.getStatus() != null ? CommonStatus.fromCode(dto.getStatus()) : CommonStatus.ACTIVE);
         entity.setUpdatedAt(Instant.now());

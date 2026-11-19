@@ -90,11 +90,13 @@ services:
       LOYALTY_SERVICE_PORT: 8081
       SPRING_APPLICATION_NAME: cms-service
       SPRING_FLYWAY_ENABLED: "true"
+      LOYALTY_MEDIA_STORAGE_DIR: /app/uploads
       JAVA_OPTS: ${LOYALTY_JVM_OPTS:--Xms128m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError}
     volumes:
       - ./config/backend:/app/config:ro
       - ./locales:/app/locales:ro
       - ./logs/cms-service:/app/logs
+      - ./uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy

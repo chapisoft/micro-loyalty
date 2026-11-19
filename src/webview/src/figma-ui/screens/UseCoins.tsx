@@ -6,7 +6,7 @@ import { LoyaltyApi, getDefaultUserId, type UserVoucherItem } from '../../servic
 import { Screen, Skeleton, ErrorBlock, Empty, useLoad, fmt } from '../ui';
 import { artEmptyBox } from '../art';
 import { paramJson, PARAM } from '../data';
-import { CodeTabs, cleanBrand } from './Rewards';
+import { CodeTabs, cleanBrand, userValueTitle } from './Rewards';
 
 const uid = () => getDefaultUserId();
 
@@ -85,7 +85,7 @@ export const PayAtCounter: React.FC = () => {
           <button type="button" onClick={() => navigate(-1)} className="flex w-full items-center gap-3 py-3 text-left">
             <span className="flex size-9 items-center justify-center rounded-full bg-[#FFF1E3]"><Ticket className="size-[18px] text-[#FE810D]" /></span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[15px] font-semibold">{voucher ? `${cleanBrand(voucher.partnerName)} · ${voucher.discountText || voucher.title}` : 'Voucher'}</span>
+              <span className="truncate text-[15px] font-semibold">{voucher ? `${cleanBrand(voucher.partnerName)} · ${userValueTitle(voucher)}` : 'Voucher'}</span>
               <span className="text-[12px] text-slate-500">Cashier applies it when scanning</span>
             </span>
             <span className="text-[14px] font-semibold text-[#FE810D]">Change</span>

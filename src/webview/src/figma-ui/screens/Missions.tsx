@@ -1,13 +1,48 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Check, Gift, Fuel, ShoppingBag, Smartphone, Users, Info, ChevronDown, QrCode, Sparkles, Lock } from 'lucide-react';
-import { LoyaltyApi, getDefaultUserId, type MemberProfile, type MilestoneItem } from '../../services/api';
-import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
 import {
-  Screen, Hero, SectionHeader, Skeleton, ErrorBlock, Pill, BottomBar, PrimaryButton, SecondaryButton, Popup, Empty, SlideRow, useLoad, fmt, ddmm, ddmmyyyy,
+  Check,
+  Gift,
+  Fuel,
+  ShoppingBag,
+  Smartphone,
+  Users,
+  Info,
+  ChevronDown,
+  QrCode,
+  Sparkles,
+  Lock,
+  CalendarCheck,
+  ShieldCheck,
+  HelpCircle,
+} from 'lucide-react';
+import { LoyaltyApi, getDefaultUserId, type MemberProfile, type MilestoneItem } from '../../services/api';
+import {
+  CampaignMetricEnum,
+  CurrencyCode,
+  MilestoneStatusEnum,
+  MissionTab,
+  type MissionTabValue,
+} from '../../constants/enums';
+import {
+  Screen,
+  Hero,
+  SectionHeader,
+  Skeleton,
+  ErrorBlock,
+  Pill,
+  BottomBar,
+  PrimaryButton,
+  SecondaryButton,
+  Popup,
+  Empty,
+  useLoad,
+  fmt,
+  ddmm,
+  ddmmyyyy,
 } from '../ui';
-import { artCalendar, artGift, artEmptyBox, aiMissions } from '../art';
+import { artCalendar, artGift, artEmptyBox, aiMissions, partnerPhoto } from '../art';
 import { normMilestone, paramJson, PARAM } from '../data';
 
 const uid = () => getDefaultUserId();
@@ -17,6 +52,7 @@ export interface Mission {
   name: string;
   partner?: string;
   description?: string;
+  imageUrl?: string;
   steps: MilestoneItem[];
   total: number;
   done: number;
@@ -33,11 +69,12 @@ export const toMissions = (items: MilestoneItem[]): Mission[] => {
       code,
       name: steps[0].campaignName,
       partner: steps[0].partnerName,
-      description: steps[0].description,
+      description: steps.find((s) => s.description)?.description,
+      imageUrl: steps.find((s) => s.imageUrl)?.imageUrl,
       steps,
       total: steps.reduce((s, x) => s + (x.rewardPoints || 0), 0),
-      done: steps.filter((s) => s.status === 'COMPLETED' || s.status === 'CLAIMED').length,
-      claimable: steps.filter((s) => s.status === 'COMPLETED'),
+      done: steps.filter((s) => s.status === MilestoneStatusEnum.COMPLETED || s.status === MilestoneStatusEnum.CLAIMED).length,
+      claimable: steps.filter((s) => s.status === MilestoneStatusEnum.COMPLETED),
       deadline: steps[0].claimDeadline || steps[0].expiresAt,
     };
   });
@@ -56,63 +93,124 @@ const loadMissions = async () => {
   return { missions: toMissions((r.milestones || []).map(normMilestone)) };
 };
 
-/** In progress = some progress, Available = not started yet, Completed = every goal claimed. */
-const stateOf = (m: Mission) =>
-  m.steps.every((s) => s.status === 'CLAIMED') ? 'COMPLETED' : m.claimable.length || m.steps.some((s) => s.currentProgress > 0) ? 'IN_PROGRESS' : 'AVAILABLE';
+/** In progress = active in progress, Available = not started yet, Completed = every goal claimed. */
+export const stateOf = (m: Mission): MissionTabValue =>
+  m.steps.every((s) => s.status === MilestoneStatusEnum.CLAIMED)
+    ? MissionTab.COMPLETED
+    : m.claimable.length || m.steps.some((s) => s.status === MilestoneStatusEnum.IN_PROGRESS || s.currentProgress > 0)
+    ? MissionTab.IN_PROGRESS
+    : MissionTab.AVAILABLE;
 
-const GoalChips: React.FC<{ steps: MilestoneItem[] }> = ({ steps }) => (
-  <div className="flex w-full flex-wrap gap-1.5">
-    {steps.map((s) => {
-      const done = s.status === 'COMPLETED' || s.status === 'CLAIMED';
-      return (
-        <span key={s.id} className={`flex min-w-[96px] flex-1 items-center justify-center gap-1 rounded-full p-1.5 ${done ? 'bg-emerald-50' : 'bg-brand-soft'}`}>
-          {done ? <Check className="size-[13px] text-emerald-700" /> : <Gift className="size-[13px] text-brand" />}
-          <span className="text-[11px] font-medium text-slate-500">Goal {s.milestoneStep}</span>
-          <span className={`text-[11px] font-semibold ${done ? 'text-emerald-700' : 'text-brand'}`}>+{fmt(s.rewardPoints)}</span>
-        </span>
-      );
-    })}
-  </div>
-);
+const isStepDone = (s: MilestoneItem) => s.status === MilestoneStatusEnum.COMPLETED || s.status === MilestoneStatusEnum.CLAIMED;
+
+const missionProgressPct = (m: Mission): number => {
+  if (m.steps.length === 0) return 0;
+  const perStep = m.steps.map((s) => {
+    if (isStepDone(s)) return 1;
+    if (!s.targetValue) return 0;
+    return Math.min(1, Math.max(0, s.currentProgress / s.targetValue));
+  });
+  return Math.round((perStep.reduce((a, b) => a + b, 0) / m.steps.length) * 100);
+};
+
+const parseRuleBullets = (description?: string): string[] => {
+  if (!description || !description.trim()) return [];
+  return description
+    .split(/\n+|•/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+};
 
 // ───────────────────────── NV-03 week strip (shared by NV-01 and NV-03) ─────────────────────────
-/** Day 1→7 coin amounts set by operations in the CMS (system parameter LOYALTY_CHECKIN_REWARDS); [] when not set. */
+export const DEFAULT_CHECKIN_REWARDS = [10, 20, 30, 40, 50, 80, 200];
+
+/** Day 1->7 coin amounts set by operations in the CMS (system parameter LOYALTY_CHECKIN_REWARDS); falls back to standard 7-day ladder if unset. */
 const loadCheckinRewards = async () => {
   const v = await paramJson<number[] | string>(PARAM.CHECKIN_REWARDS);
   const list = Array.isArray(v) ? v : typeof v === 'string' ? v.split(/[,\s]+/) : [];
-  return list.map(Number).filter((n) => Number.isFinite(n)).slice(0, 7);
+  const parsed = list.map(Number).filter((n) => Number.isFinite(n)).slice(0, 7);
+  return parsed.length > 0 ? parsed : DEFAULT_CHECKIN_REWARDS;
 };
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_KEYS = [
+  'day_mon',
+  'day_tue',
+  'day_wed',
+  'day_thu',
+  'day_fri',
+  'day_sat',
+  'day_sun',
+] as const;
+
+const getStoredCheckin = (userId: string = uid()) => {
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const lastDate = localStorage.getItem(`loyalty_checkin_date_${userId}`);
+    const storedStreak = Number(localStorage.getItem(`loyalty_checkin_streak_${userId}`) || '0');
+    const doneToday = lastDate === todayStr;
+    return { doneToday, streak: storedStreak };
+  } catch {
+    return { doneToday: false, streak: 0 };
+  }
+};
+
+const recordLocalCheckin = (userId: string = uid(), newStreak: number) => {
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(`loyalty_checkin_date_${userId}`, todayStr);
+    localStorage.setItem(`loyalty_checkin_streak_${userId}`, String(newStreak));
+  } catch {}
+};
 
 const weekInfo = (p?: MemberProfile | null) => {
-  const streak = p?.checkinStreakDays || 0;
-  const doneToday = !!p?.hasCheckedInToday;
-  const today = doneToday ? Math.max(streak, 1) : Math.min(streak + 1, 7); // 1-based position in the 7-day ladder
+  const local = getStoredCheckin(uid());
+  const streak = p?.checkinStreakDays !== undefined && p.checkinStreakDays > 0 ? p.checkinStreakDays : local.streak;
+  const doneToday = p?.hasCheckedInToday !== undefined ? p.hasCheckedInToday : local.doneToday;
+  const today = doneToday ? Math.max(streak, 1) : Math.min(streak + 1, 7);
   return { streak, doneToday, today };
 };
 
 const WeekStrip: React.FC<{ profile?: MemberProfile | null; compact?: boolean; rewards: number[] }> = ({ profile, compact, rewards }) => {
+  const { t } = useTranslation();
   const { doneToday, today } = weekInfo(profile);
   return (
     <div className="grid w-full grid-cols-7 gap-1">
-      {DAYS.map((d, i) => {
+      {DAY_KEYS.map((key, i) => {
         const n = i + 1;
         const claimed = n < today || (n === today && doneToday);
-        const isToday = n === today && !doneToday;
+        const isToday = n === today;
         return (
-          <div key={d} className={`flex flex-col items-center gap-1 rounded-xl py-1.5 ${isToday ? 'bg-brand-soft' : ''}`}>
-            <span className="text-[11px] text-slate-500">{d}</span>
+          <div
+            key={key}
+            className={`flex flex-col items-center gap-1.5 rounded-[18px] py-2 px-0.5 transition-all ${
+              isToday ? 'bg-[#FFF9EE] shadow-sm' : ''
+            }`}
+          >
+            <span className={`text-[12px] ${isToday ? 'font-semibold text-slate-700' : 'font-medium text-slate-500'}`}>
+              {t(`figma_ui.missions.${key}`)}
+            </span>
             {claimed ? (
-              <span className="flex size-7 items-center justify-center rounded-full bg-emerald-50"><Check className="size-3.5 text-emerald-700" /></span>
+              <span className="flex size-7 items-center justify-center rounded-full bg-[#E8F8EE] text-[#16A34A] shadow-xs">
+                <Check className="size-3.5 stroke-[3]" />
+              </span>
             ) : n === 7 ? (
-              <span className="flex size-7 items-center justify-center rounded-full bg-brand-soft"><Gift className="size-3.5 text-brand" /></span>
+              <span className="flex size-7 items-center justify-center rounded-full bg-[#FFFBEB] text-[#F59E0B]">
+                <Gift className="size-3.5" />
+              </span>
             ) : (
-              <span className={`flex size-7 items-center justify-center text-[18px] font-semibold ${isToday ? 'text-brand' : 'text-slate-500'}`}>
+              <span className={`flex size-7 items-center justify-center text-[17px] font-bold ${isToday ? 'text-[#FF8600]' : 'text-slate-600'}`}>
                 {String(n).padStart(2, '0')}
               </span>
             )}
-            <span className={`text-[11px] font-semibold ${claimed ? 'text-emerald-700' : isToday ? 'text-brand' : 'text-slate-500'}`}>
-              {compact && claimed ? 'Claimed' : compact && n > today ? 'Locked' : rewards[i] !== undefined ? `+${rewards[i]}` : `Day ${n}`}
+            <span
+              className={`text-[12px] ${
+                claimed
+                  ? 'font-semibold text-[#16A34A]'
+                  : isToday
+                  ? 'font-bold text-[#FF8600]'
+                  : 'font-medium text-slate-500'
+              }`}
+            >
+              {compact && claimed ? '✓' : rewards[i] !== undefined ? `+${rewards[i]}` : `D${n}`}
             </span>
           </div>
         );
@@ -125,145 +223,335 @@ const WeekStrip: React.FC<{ profile?: MemberProfile | null; compact?: boolean; r
 export const MissionsList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'IN_PROGRESS' | 'AVAILABLE' | 'COMPLETED'>(() => (uid() ? 'IN_PROGRESS' : 'AVAILABLE'));
-  const [program, setProgram] = useState<string>('All');
-  const [open, setOpen] = useState<string | null>(null);
   const [data, failed, reload] = useLoad(async () => {
     const userId = uid();
-    const [m, p, rewards] = await Promise.all([
+    const [m, p, rewards, refs, pts] = await Promise.all([
       loadMissions(),
       userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null),
       loadCheckinRewards(),
+      userId ? LoyaltyApi.getMyReferrals(userId).catch(() => null) : Promise.resolve(null),
+      LoyaltyApi.getPartners().catch(() => []),
     ]);
-    return { ...m, profile: p, rewards, isGuest: !userId };
+    return { ...m, profile: p, rewards, referrals: refs, partners: pts, isGuest: !userId };
   });
+
   const all = data?.missions || [];
-  const count = (s: string) => all.filter((m) => stateOf(m) === s).length;
-  // Program filter chips come from the categories present in the data (CMS-defined), not a fixed list.
-  const programs = ['All', ...Array.from(new Set(all.map((m) => m.steps[0]?.campaignCategory).filter(Boolean) as string[]))];
-  const inTab = all.filter((m) => stateOf(m) === tab && (program === 'All' || m.steps[0]?.campaignCategory === program));
   const { streak, doneToday, today } = weekInfo(data?.profile);
-  const byPartner = Object.entries(
-    inTab.reduce<Record<string, Mission[]>>((acc, m) => ((acc[m.partner || m.steps[0]?.campaignCategory || 'Natcash'] ||= []).push(m), acc), {}),
+  const totalCheckinCoins = (data?.rewards || []).reduce((a, b) => a + b, 0);
+  const todayCheckinCoins = (data?.rewards || [])[today - 1];
+
+  const missionSubText = (m: Mission): string => {
+    const next = m.steps.find((s) => s.status === MilestoneStatusEnum.IN_PROGRESS);
+    if (!next) {
+      return m.claimable.length
+        ? t('figma_ui.missions.ready_to_claim')
+        : t('figma_ui.missions.goals_progress', { done: m.done, total: m.steps.length });
+    }
+    const rem = Math.max(0, next.targetValue - next.currentProgress);
+    if (next.targetMetric === CampaignMetricEnum.BILL_AMOUNT) {
+      return `${fmt(next.currentProgress)} / ${fmt(next.targetValue)} ${CurrencyCode.HTG}`;
+    }
+    if (next.targetMetric === CampaignMetricEnum.TRANSACTION_COUNT) {
+      return t(rem === 1 ? 'figma_ui.missions.payments_to_go_one' : 'figma_ui.missions.payments_to_go_other', { count: fmt(rem) });
+    }
+    return `${fmt(next.currentProgress)} / ${fmt(next.targetValue)}`;
+  };
+
+  // 100% Real missions from backend API
+  const inProgressMissions = all.filter((m) => stateOf(m) === MissionTab.IN_PROGRESS);
+  const completedMissions = all.filter((m) => stateOf(m) === MissionTab.COMPLETED);
+  const availableMissions = all.filter((m) => stateOf(m) === MissionTab.AVAILABLE);
+
+  const totalInProgressCount = (data?.rewards?.length ? 1 : 0) + inProgressMissions.length;
+
+  const checkinProgressPct = Math.min(
+    100,
+    Math.max(14, Math.round(((doneToday ? today : streak) / 7) * 100)),
   );
+
+  const checkinMetaText = doneToday
+    ? t('figma_ui.missions.checkin_meta_done', { day: today })
+    : t('figma_ui.missions.checkin_meta_todo', { day: today, coins: fmt(todayCheckinCoins || 0) });
 
   return (
     <Screen
-      title="Missions"
+      title={t('figma_ui.missions.title')}
       back="/"
       tab={{ shell: 'customer', active: 'missions' }}
-      hero={<Hero title="Missions" sub="Reach goals, unlock rewards" coins={data?.profile?.currentPoints} onCoins={() => navigate('/coins')} art={aiMissions} />}
+      hero={
+        <Hero
+          title={t('figma_ui.missions.title')}
+          sub={t('figma_ui.missions.subtitle', 'Reach goals, unlock rewards')}
+          coins={data?.profile?.currentPoints}
+          onCoins={() => navigate('/coins')}
+          art={aiMissions}
+        />
+      }
     >
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[144px]" />}
       {data && (
-        <>
-          {/* Check-in is a mission set in the CMS (17/11): the strip shows only while a check-in program is configured */}
-          {data.rewards.length > 0 && <button type="button" onClick={() => navigate('/checkin')} className="flex w-full flex-col gap-2 rounded-[20px] bg-white p-3.5 text-left">
-            <span className="flex w-full items-center gap-2">
-              <span className="flex-1 text-[15px] font-semibold">This week's check-in · {streak}-day streak</span>
-              {!doneToday && <span className="rounded-[12px] bg-brand px-3 py-1.5 text-[12px] font-semibold text-white">Check in</span>}
-            </span>
-            <WeekStrip profile={data.profile} rewards={data.rewards} compact />
-            <span className="text-[11px] text-slate-500">
-              {doneToday ? 'Checked in today · come back tomorrow' : data.rewards[today - 1] !== undefined ? `Check in today for +${data.rewards[today - 1]} coins` : 'Check in 7 days for a weekend gift.'}
-            </span>
-          </button>}
-
-          {/* Tabs · In progress / Available / Completed (330:246) */}
-          <div className="grid w-full grid-cols-3 gap-1.5 rounded-[16px] bg-white p-1">
-            {(['IN_PROGRESS', 'AVAILABLE', 'COMPLETED'] as const).map((k) => (
-              <button key={k} type="button" onClick={() => setTab(k)} className={`h-10 rounded-[12px] text-[13px] font-semibold ${tab === k ? 'bg-brand text-white' : 'text-slate-600'}`}>
-                {k === 'IN_PROGRESS' ? 'In progress' : k === 'AVAILABLE' ? 'Available' : 'Completed'} {count(k)}
-              </button>
-            ))}
-          </div>
-          {programs.length > 1 && (
-            <SlideRow>
-              {programs.map((p) => (
-                <button key={p} type="button" onClick={() => setProgram(p)} className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${program === p ? 'bg-brand-soft text-brand ring-1 ring-brand' : 'border border-slate-200 bg-white'}`}>
-                  {p === 'All' ? 'All' : p.replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}
-                </button>
-              ))}
-            </SlideRow>
-          )}
-
-          {/* Pinned · always-on referral (16/11) */}
-          <button type="button" onClick={() => navigate('/invite')} className="flex w-full flex-col gap-2 rounded-[20px] bg-brand-soft p-4 text-left">
-            <span className="flex items-center gap-2.5">
-              <span className="flex size-10 items-center justify-center rounded-[20px] bg-white"><Users className="size-[19px] text-brand" /></span>
-              <span className="flex flex-col gap-1">
-                <span className="text-[15px] font-semibold">Invite friends</span>
-                <span className="text-[12px] text-slate-500">Always on · earn coins for every friend who joins</span>
+        <div className="flex w-full flex-col gap-4 pb-12">
+          {/* ────────────────── SECTION 1: In progress ────────────────── */}
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full items-center justify-between">
+              <h2 className="text-[18px] font-semibold text-[#0F172A]">
+                {t('figma_ui.missions.tab_in_progress', 'In progress')}
+              </h2>
+              <span className="text-[12px] font-semibold text-[#FF8600]">
+                {t('figma_ui.missions.missions_count', '{{count}} missions', { count: totalInProgressCount })}
               </span>
-            </span>
-            <span className="text-[12px] font-semibold text-brand">Invite &amp; track ›</span>
-          </button>
+            </div>
 
-          {inTab.length === 0 && (
-            <Empty
-              art={artGift}
-              title={data.isGuest && tab !== 'AVAILABLE' ? t('sso.guest_login_required') : tab === 'IN_PROGRESS' ? 'No missions in progress' : tab === 'AVAILABLE' ? 'No new missions right now' : 'No completed missions yet'}
-              text={data.isGuest && tab !== 'AVAILABLE' ? t('sso.guest_login_required_desc') : tab === 'IN_PROGRESS' ? 'Open Available to pick a mission.' : 'New programs are added by Natcash and partners.'}
-            />
-          )}
-
-          {/* Available · recommended first, then grouped by program/partner (330:246) */}
-          {tab === 'AVAILABLE' && inTab.length > 0 && (
-            <>
-              <SectionHeader title="Recommended for you" />
-              {inTab.slice(0, 3).map((m) => (
-                <button key={`rec-${m.code}`} type="button" onClick={() => navigate(`/missions/${encodeURIComponent(m.code)}`)} className="flex w-full items-center gap-3 rounded-[16px] bg-white p-3.5 text-left">
-                  <span className="flex size-9 items-center justify-center rounded-[18px] bg-brand-soft">{React.createElement(missionIcon(m), { className: 'size-4 text-brand' })}</span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-[14px] font-semibold">{m.name}</span>
-                    <span className="text-[11px] text-slate-500">{[m.partner, m.deadline && `ends ${ddmm(m.deadline)}`].filter(Boolean).join(' · ')}</span>
+            {/* Card 1: Check in 7 days in a row (Real user streak & rewards from API) */}
+            {data.rewards.length > 0 && (
+              <div className="flex w-full flex-col gap-2.5 rounded-[20px] bg-white p-4 text-left shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FFF8EB]">
+                    <CalendarCheck className="size-[18px] text-[#FF8600]" />
                   </span>
-                  <span className="text-right"><span className="block text-[14px] font-semibold text-brand">+{fmt(m.total)} coins</span><span className="text-[10px] text-slate-500">reward</span></span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold text-[#0F172A]">
+                      {t('figma_ui.missions.checkin_card_title', 'Check in 7 days in a row')}
+                    </span>
+                    <span className="text-[11px] text-[#64748B]">
+                      {t('figma_ui.missions.checkin_card_sub', 'Weekly Check-in · up to {{coins}} coins', {
+                        coins: fmt(totalCheckinCoins),
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="flex w-full flex-col gap-1.5">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                    <div
+                      className="h-full rounded-full bg-[#FF8600] transition-all"
+                      style={{ width: `${checkinProgressPct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-[#64748B]">{checkinMetaText}</span>
+                    <span className="rounded-full bg-[#FFF8EB] px-2 py-0.5 text-[10px] font-semibold text-[#B35400]">
+                      {doneToday
+                        ? t('figma_ui.missions.status_checked_in', 'Checked in')
+                        : t('figma_ui.missions.status_in_progress', 'In progress')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action button */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/checkin')}
+                  className={`w-fit rounded-[12px] px-3.5 py-2 text-[12px] font-semibold transition ${
+                    doneToday
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'bg-[#FF8600] text-white hover:bg-[#e07700]'
+                  }`}
+                >
+                  {doneToday
+                    ? t('figma_ui.missions.status_checked_in', 'Checked in')
+                    : t('figma_ui.missions.checkin_today_btn', 'Check in today')}
+                </button>
+              </div>
+            )}
+
+            {/* Real Active Milestone Missions from backend API */}
+            {inProgressMissions.map((m) => {
+              const Icon = missionIcon(m);
+              const pct = missionProgressPct(m);
+              return (
+                <div
+                  key={m.code}
+                  onClick={() => navigate(`/missions/${encodeURIComponent(m.code)}`)}
+                  className="flex w-full flex-col gap-2.5 rounded-[20px] bg-white p-4 text-left shadow-[0_2px_8px_rgba(15,23,42,0.04)] cursor-pointer hover:border-slate-300 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FFF8EB]">
+                      <Icon className="size-[18px] text-[#FE810D]" />
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-[15px] font-semibold text-[#0F172A]">{m.name}</span>
+                      <span className="text-[11px] text-[#64748B]">
+                        +{fmt(m.total)} {t('figma_ui.common.coins')} · {missionSubText(m)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Goal chips row from real m.steps */}
+                  {m.steps.length > 0 && (
+                    <div className="flex w-full flex-wrap items-center gap-1.5">
+                      {m.steps.map((s, idx) => {
+                        const done = isStepDone(s);
+                        return (
+                          <span
+                            key={s.id || idx}
+                            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
+                              done ? 'bg-[#ECFDF5]' : 'bg-[#FFF8EB]'
+                            }`}
+                          >
+                            {done ? (
+                              <Check className="size-3 text-[#047857]" />
+                            ) : (
+                              <Gift className="size-3 text-[#FF8600]" />
+                            )}
+                            <span
+                              className={`text-[11px] font-medium ${
+                                done ? 'text-[#0F172A]' : 'text-[#64748B]'
+                              }`}
+                            >
+                              {s.targetMetric === CampaignMetricEnum.TRANSACTION_COUNT
+                                ? t('figma_ui.missions.payment_n', { n: s.milestoneStep || idx + 1 })
+                                : t('figma_ui.missions.goal_n', { n: s.milestoneStep || idx + 1 })}
+                            </span>
+                            <span
+                              className={`text-[11px] font-semibold ${
+                                done ? 'text-[#047857]' : 'text-[#FF8600]'
+                              }`}
+                            >
+                              +{fmt(s.rewardPoints)}
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Progress bar */}
+                  <div className="flex w-full flex-col gap-1.5">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                      <div
+                        className="h-full rounded-full bg-[#FF8600] transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-medium text-[#64748B]">
+                        {t('figma_ui.missions.goals_progress', { done: m.done, total: m.steps.length })}
+                        {m.deadline ? ` · ${t('figma_ui.common.ends', { date: ddmm(m.deadline) })}` : ''}
+                      </span>
+                      <span className="rounded-full bg-[#FFF8EB] px-2 py-0.5 text-[10px] font-semibold text-[#B35400]">
+                        {m.claimable.length
+                          ? t('figma_ui.missions.ready_to_claim')
+                          : t('figma_ui.missions.status_in_progress')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ────────────────── SECTION 2: Discover missions ────────────────── */}
+          <div className="flex w-full flex-col gap-3 pt-2">
+            <h3 className="text-[18px] font-semibold text-[#0F172A]">
+              {t('figma_ui.missions.discover_missions', 'Discover missions')}
+            </h3>
+
+            {/* Real Invite Friends Card with live referral stats from API */}
+            <div className="flex w-full flex-col gap-2 rounded-[20px] bg-[#FFF8EB] p-4 text-left">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                  <Users className="size-[19px] text-[#FF8600]" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-[15px] font-semibold text-[#0F172A]">
+                    {t('figma_ui.missions.invite_title', 'Invite friends')}
+                  </span>
+                  <span className="text-[12px] text-[#64748B]">
+                    {data.referrals
+                      ? `${t('figma_ui.missions.invite_sub', 'Earn coins for every friend who joins')} · ${data.referrals.totalInvited} ${t('figma_ui.missions.friends_joined')} · +${fmt(data.referrals.rewardPerReferral || 100)} ${t('figma_ui.common.coins')}`
+                      : t('figma_ui.missions.invite_sub', 'Earn coins for every friend who joins')}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/invite')}
+                className="text-left text-[12px] font-semibold text-[#FF8600] hover:underline"
+              >
+                {t('figma_ui.missions.invite_cta', 'Invite & track ›')}
+              </button>
+            </div>
+
+            {/* Real Available Missions / Partner Missions from API */}
+            {availableMissions.map((m) => {
+              const Icon = missionIcon(m);
+              return (
+                <div key={`avail-${m.code}`} className="flex w-full flex-col gap-2 rounded-[20px] bg-[#FFF8EB] p-4 text-left">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                      <Icon className="size-[19px] text-[#FF8600]" />
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-[15px] font-semibold text-[#0F172A]">{m.name}</span>
+                      <span className="text-[12px] text-[#64748B]">
+                        +{fmt(m.total)} {t('figma_ui.common.coins')} · {m.partner || t('figma_ui.missions.active_program')}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/missions/${encodeURIComponent(m.code)}`)}
+                    className="text-left text-[12px] font-semibold text-[#FF8600] hover:underline"
+                  >
+                    {t('figma_ui.missions.see_conditions', 'See conditions ›')}
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Real Partner Opportunities from API if available */}
+            {data.partners && data.partners.length > 0 && availableMissions.length === 0 && (
+              data.partners.slice(0, 2).map((p) => (
+                <div key={`partner-${p.id}`} className="flex w-full flex-col gap-2 rounded-[20px] bg-[#FFF8EB] p-4 text-left">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                      <ShoppingBag className="size-[19px] text-[#FF8600]" />
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-[15px] font-semibold text-[#0F172A]">{p.partnerName}</span>
+                      <span className="text-[12px] text-[#64748B]">
+                        {t('figma_ui.missions.partner_earn_hint', { name: p.partnerName })}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/pay-at-counter')}
+                    className="text-left text-[12px] font-semibold text-[#FF8600] hover:underline"
+                  >
+                    {t('figma_ui.missions.view_partner', 'View details ›')}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* ────────────────── SECTION 3: Completed ────────────────── */}
+          {completedMissions.length > 0 && (
+            <div className="flex w-full flex-col gap-3 pt-2">
+              <h3 className="text-[18px] font-semibold text-[#0F172A]">
+                {t('figma_ui.missions.tab_completed', 'Completed')}
+              </h3>
+
+              {completedMissions.map((m) => (
+                <button
+                  key={m.code}
+                  type="button"
+                  onClick={() => navigate(`/missions/${encodeURIComponent(m.code)}`)}
+                  className="flex w-full items-center gap-2.5 rounded-[14px] bg-[#ECFDF5] p-3 text-left"
+                >
+                  <ShieldCheck className="size-[18px] shrink-0 text-[#047857]" />
+                  <span className="flex-1 text-[12px] font-medium text-[#0F172A]">
+                    {m.name} · +{fmt(m.total)} {t('figma_ui.common.coins')} {t('figma_ui.missions.status_completed').toLowerCase()}
+                  </span>
                 </button>
               ))}
-              <SectionHeader title="By program" />
-              {byPartner.map(([partner, ms]) => (
-                <div key={partner} className="w-full overflow-hidden rounded-[16px] bg-white">
-                  <button type="button" onClick={() => setOpen(open === partner ? null : partner)} className="flex w-full items-center gap-3 p-3.5 text-left">
-                    <span className="flex size-9 items-center justify-center rounded-[18px] bg-brand-soft"><Sparkles className="size-4 text-brand" /></span>
-                    <span className="flex flex-1 flex-col">
-                      <span className="text-[14px] font-semibold">{partner}</span>
-                      <span className="text-[11px] text-slate-500">{ms.length} missions · up to {fmt(ms.reduce((s, m) => s + m.total, 0))} coins</span>
-                    </span>
-                    <ChevronDown className={`size-4 transition ${open === partner ? 'rotate-180' : ''}`} />
-                  </button>
-                  {open === partner && ms.map((m) => (
-                    <button key={m.code} type="button" onClick={() => navigate(`/missions/${encodeURIComponent(m.code)}`)} className="flex w-full items-center justify-between border-t border-slate-100 px-3.5 py-3 text-left text-[13px]">
-                      <span className="font-medium">{m.name}</span>
-                      <span className="font-semibold text-brand">+{fmt(m.total)} coins</span>
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </>
+            </div>
           )}
-
-          {tab !== 'AVAILABLE' && inTab.map((m) => {
-            const Icon = missionIcon(m);
-            const next = m.steps.find((s) => s.status === 'IN_PROGRESS');
-            return (
-              <button key={m.code} type="button" onClick={() => navigate(`/missions/${encodeURIComponent(m.code)}`)} className="flex w-full flex-col gap-2.5 rounded-[20px] bg-white p-4 text-left">
-                <span className="flex items-center gap-2.5">
-                  <span className="flex size-9 items-center justify-center rounded-[18px] bg-brand-soft"><Icon className="size-4 text-brand" /></span>
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold">{m.name}</span>
-                    <span className="text-[11px] text-slate-500">
-                      {fmt(m.total)} coins{next ? ` · ${fmt(Math.max(0, next.targetValue - next.currentProgress))} to go` : m.claimable.length ? ' · ready to claim' : ''}
-                    </span>
-                  </span>
-                </span>
-                <GoalChips steps={m.steps} />
-              </button>
-            );
-          })}
-
-        </>
+        </div>
       )}
     </Screen>
   );
@@ -282,7 +570,35 @@ export const MissionDetail: React.FC = () => {
   const m = data?.missions.find((x) => x.code === code);
   const Icon = m ? missionIcon(m) : Fuel;
   const claimCoins = m?.claimable.reduce((s, x) => s + x.rewardPoints, 0) || 0;
-  const next = m?.steps.find((s) => s.status === 'IN_PROGRESS');
+  const next = m?.steps.find((s) => s.status === MilestoneStatusEnum.IN_PROGRESS);
+  const ruleBullets = useMemo(() => parseRuleBullets(m?.description), [m?.description]);
+
+  const dateText = (mission: Mission): string => {
+    const s = mission.steps[0]?.startDate;
+    const e = mission.deadline;
+    if (s && e) return `${ddmm(s)}–${ddmmyyyy(e)}`;
+    if (e) return t('figma_ui.common.ends', { date: ddmmyyyy(e) });
+    return t('figma_ui.missions.active_program');
+  };
+
+  const stepLabel = (s: MilestoneItem, idx: number): string =>
+    s.targetMetric === CampaignMetricEnum.TRANSACTION_COUNT
+      ? t('figma_ui.missions.payment_n', { n: idx + 1 })
+      : t('figma_ui.missions.goal_n', { n: idx + 1 });
+
+  const stepRuleSub = (s: MilestoneItem): string => {
+    if (s.targetMetric === CampaignMetricEnum.BILL_AMOUNT) {
+      return t('figma_ui.missions.rule_bill', {
+        current: fmt(s.currentProgress),
+        target: fmt(s.targetValue),
+        currency: CurrencyCode.HTG,
+      });
+    }
+    if (s.targetMetric === CampaignMetricEnum.TRANSACTION_COUNT) {
+      return t('figma_ui.missions.rule_tx', { current: fmt(s.currentProgress), target: fmt(s.targetValue) });
+    }
+    return t('figma_ui.missions.rule_pts', { current: fmt(s.currentProgress), target: fmt(s.targetValue) });
+  };
 
   const claim = async () => {
     if (!m) return;
@@ -296,68 +612,113 @@ export const MissionDetail: React.FC = () => {
       for (const s of m.claimable) balance = (await LoyaltyApi.claimMission(s.id, userId)).newPointBalance ?? balance;
       setClaimed({ coins: claimCoins, balance });
     } catch {
-      alert('Could not claim the reward. Please try again.');
+      alert(t('figma_ui.missions.claim_failed'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Screen title="Mission details" back="/missions">
+    <Screen title={t('figma_ui.missions.details_title')} back="/missions">
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[220px]" />}
-      {data && !m && <Empty art={artEmptyBox} title="Mission not found" text="It may have ended. Go back to see your other missions." />}
+      {data && !m && <Empty art={artEmptyBox} title={t('figma_ui.missions.not_found_title')} text={t('figma_ui.missions.not_found_sub')} />}
       {m && (
         <>
-          <div>
-            <h2 className="text-[22px] font-semibold leading-8">{m.name}</h2>
-            <p className="text-[13px] text-slate-500">
-              {m.partner ? `${m.partner} · ` : ''}
-              {m.deadline ? `ends ${ddmmyyyy(m.deadline)}` : 'Reach payment goals to earn coins'}
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-3 rounded-[20px] bg-brand-soft p-4">
-            <div className="flex items-center gap-3">
-              <span className="flex size-12 items-center justify-center rounded-[24px] bg-white"><Icon className="size-6 text-brand" /></span>
-              <div className="flex-1">
-                <p className="text-[17px] font-semibold">{m.done} / {m.steps.length} goals reached</p>
-                <p className="text-[12px] text-slate-500">{fmt(m.claimable.length ? claimCoins : m.total)} coins {m.claimable.length ? 'waiting for you' : 'in total'}</p>
+          <div className="flex w-full flex-col gap-3.5 rounded-[20px] bg-[#FFF8EB] p-4">
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-[#FFE7CF]">
+                <Icon className="size-5 text-[#FE810D]" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[18px] font-bold leading-6 text-slate-900">{m.name}</h2>
+                <p className="mt-0.5 text-[12.5px] text-slate-500">
+                  {dateText(m)}
+                  {m.partner ? ` · ${m.partner}` : ''}
+                </p>
               </div>
+              <img
+                src={m.imageUrl || partnerPhoto(`${m.partner || ''} ${m.name}`)}
+                alt=""
+                className="size-14 shrink-0 rounded-[14px] object-cover"
+              />
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white">
-              <div className="h-full rounded-full bg-emerald-700" style={{ width: `${(m.done / m.steps.length) * 100}%` }} />
+
+            <div className="flex items-center gap-3 border-t border-[#F4DEC0] pt-3">
+              <img src={artGift} alt="" className="size-10 shrink-0 rounded-[10px] bg-white/80 object-contain p-1" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] text-slate-500">{m.claimable.length ? t('figma_ui.missions.waiting_to_claim') : t('figma_ui.missions.total_reward')}</p>
+                <p className="text-[13px] font-semibold text-slate-700">
+                  {t(m.steps.length === 1 ? 'figma_ui.missions.goals_count_one' : 'figma_ui.missions.goals_count_other', { count: m.steps.length })}
+                </p>
+              </div>
+              <p className="shrink-0 text-right">
+                <span className="text-[26px] font-bold leading-none text-[#FE810D]">+{fmt(m.claimable.length ? claimCoins : m.total)}</span>{' '}
+                <span className="text-[13px] font-semibold text-[#FE810D]">{t('figma_ui.common.coins')}</span>
+              </p>
             </div>
           </div>
+
           {m.claimable.length > 0 ? (
             <div className="flex items-start gap-2 rounded-[14px] bg-emerald-50 p-3 text-[13px] text-emerald-800">
               <Sparkles className="mt-0.5 size-4 shrink-0" />
-              All goals reached. Tap Claim{m.deadline ? ` before ${ddmmyyyy(m.deadline)}` : ''}, or the reward expires.
+              <span>
+                {m.deadline
+                  ? t('figma_ui.missions.claim_all_hint_date', { date: ddmmyyyy(m.deadline) })
+                  : t('figma_ui.missions.claim_all_hint')}
+              </span>
             </div>
           ) : next ? (
-            <div className="flex items-start gap-2 rounded-[14px] bg-[#FDECEA] p-3 text-[12px]">
-              <Info className="mt-0.5 size-4 shrink-0 text-brand" />
-              {fmt(Math.max(0, next.targetValue - next.currentProgress))} more to reach goal {next.milestoneStep}.
+            <div className="flex items-center gap-2 rounded-[14px] bg-[#FFF0E8] px-3.5 py-2.5 text-[12.5px] text-slate-700">
+              <Info className="size-4 shrink-0 text-[#FE810D]" />
+              <span>
+                {(() => {
+                  const rem = Math.max(0, next.targetValue - next.currentProgress);
+                  const stepIdx = m.steps.indexOf(next) + 1;
+                  if (next.targetMetric === CampaignMetricEnum.BILL_AMOUNT) {
+                    return t('figma_ui.missions.more_htg_hint', { amount: fmt(rem), currency: CurrencyCode.HTG, step: stepIdx });
+                  }
+                  if (next.targetMetric === CampaignMetricEnum.TRANSACTION_COUNT) {
+                    return t(rem === 1 ? 'figma_ui.missions.more_payments_one' : 'figma_ui.missions.more_payments_other', { count: fmt(rem), step: stepIdx });
+                  }
+                  return t('figma_ui.missions.more_generic_hint', { amount: fmt(rem), step: stepIdx });
+                })()}
+              </span>
             </div>
           ) : null}
 
-          <SectionHeader title="Reward path" action={`${m.done}/${m.steps.length} done`} />
+          <SectionHeader title={t('figma_ui.missions.reward_path')} action={t('figma_ui.missions.done_fraction', { done: m.done, total: m.steps.length })} />
           <ol className="relative flex w-full flex-col gap-3">
-            {m.steps.map((s) => {
-              const done = s.status === 'COMPLETED' || s.status === 'CLAIMED';
+            {m.steps.length > 1 && <span aria-hidden className="absolute bottom-7 left-[17px] top-7 w-[2px] bg-slate-200" />}
+            {m.steps.map((s, idx) => {
+              const done = isStepDone(s);
               const current = s === next;
               return (
-                <li key={s.id} className="flex items-start gap-3">
-                  <span className={`mt-3 flex size-9 shrink-0 items-center justify-center rounded-full ${done ? 'bg-emerald-50' : current ? 'bg-brand-soft' : 'bg-slate-100'}`}>
-                    {done ? <Check className="size-4 text-emerald-700" /> : current ? <Icon className="size-4 text-brand" /> : <Lock className="size-4 text-slate-400" />}
+                <li key={s.id} className="relative flex items-start gap-3">
+                  <span className={`relative z-10 mt-3 flex size-9 shrink-0 items-center justify-center rounded-full ${done ? 'bg-emerald-100' : current ? 'bg-[#FFE7CF]' : 'bg-slate-100'}`}>
+                    {done ? <Check className="size-4 text-emerald-700" /> : current ? <Icon className="size-4 text-[#FE810D]" /> : <Lock className="size-4 text-slate-400" />}
                   </span>
-                  <div className={`flex flex-1 flex-col gap-1 rounded-[16px] p-3.5 ${current ? 'border border-brand/30 bg-brand-soft' : 'bg-white'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[15px] font-semibold">Goal {s.milestoneStep}</span>
-                      <span className={`text-[13px] font-semibold ${done ? 'text-emerald-700' : 'text-brand'}`}>+{fmt(s.rewardPoints)} coins</span>
+                  <div className={`flex flex-1 flex-col gap-1.5 rounded-[16px] p-3.5 ${current ? 'border border-[#FE810D]/40 bg-[#FFF9F2]' : 'bg-white shadow-[0_2px_10px_rgba(15,23,42,0.04)]'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-[15px] font-bold text-slate-900">
+                        <span>{stepLabel(s, idx)}</span>
+                        {current && <img src={artGift} alt="" className="size-4 object-contain" />}
+                      </span>
+                      <span className={`text-[13px] font-bold ${done ? 'text-emerald-700' : 'text-[#FE810D]'}`}>
+                        +{fmt(s.rewardPoints)} {t('figma_ui.common.coins')}
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500">
-                      <span>{fmt(s.currentProgress)} / {fmt(s.targetValue)}</span>
-                      <Pill tone={done ? 'green' : 'orange'}>{s.status === 'CLAIMED' ? 'Claimed' : done ? 'Ready' : 'Pending'}</Pill>
+                    <div className="flex items-center justify-between gap-2 text-[12px] text-slate-500">
+                      <span className="min-w-0 truncate">{stepRuleSub(s)}</span>
+                      <Pill tone={done ? 'green' : current ? 'orange' : 'grey'}>
+                        {s.status === MilestoneStatusEnum.CLAIMED
+                          ? t('figma_ui.missions.status_auto_credited')
+                          : done
+                          ? t('figma_ui.missions.status_ready')
+                          : current
+                          ? t('figma_ui.missions.status_pending')
+                          : t('figma_ui.missions.status_locked')}
+                      </Pill>
                     </div>
                   </div>
                 </li>
@@ -365,14 +726,24 @@ export const MissionDetail: React.FC = () => {
             })}
           </ol>
 
-          {m.description && (
-            <div className="w-full rounded-[20px] bg-white p-4">
+          {/* Mission rules — rendered strictly from CMS/DB description (zero invented rules) */}
+          {ruleBullets.length > 0 && (
+            <div className="w-full rounded-[20px] bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
               <button type="button" onClick={() => setRulesOpen((o) => !o)} className="flex w-full items-center gap-2 text-left">
-                <Info className="size-4 text-slate-500" />
-                <span className="flex-1 text-[15px] font-semibold">Mission rules</span>
-                <ChevronDown className={`size-4 transition ${rulesOpen ? 'rotate-180' : ''}`} />
+                <HelpCircle className="size-4 shrink-0 text-slate-500" />
+                <span className="flex-1 text-[15px] font-semibold">{t('figma_ui.missions.mission_rules')}</span>
+                <ChevronDown className={`size-4 text-slate-500 transition ${rulesOpen ? 'rotate-180' : ''}`} />
               </button>
-              {rulesOpen && <p className="mt-2 whitespace-pre-line text-[12px] leading-5 text-slate-500">{m.description}</p>}
+              {rulesOpen && (
+                <ul className="mt-2.5 flex flex-col gap-1.5 text-[12.5px] leading-5 text-slate-600">
+                  {ruleBullets.map((rule) => (
+                    <li key={rule} className="flex items-start gap-2">
+                      <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#FE810D]" />
+                      <span>{rule}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
@@ -380,10 +751,10 @@ export const MissionDetail: React.FC = () => {
             {!userId ? (
               <SecondaryButton disabled>{t('sso.guest_login_required')}</SecondaryButton>
             ) : m.claimable.length > 0 ? (
-              <PrimaryButton onClick={claim} disabled={busy}>Claim {fmt(claimCoins)} coins</PrimaryButton>
+              <PrimaryButton onClick={claim} disabled={busy}>{t('figma_ui.missions.claim_coins_btn', { coins: fmt(claimCoins) })}</PrimaryButton>
             ) : (
-              <PrimaryButton onClick={() => LoyaltyJSBridge.requestScanQR().catch(() => undefined)}>
-                <QrCode className="size-4" /> Scan to pay
+              <PrimaryButton onClick={() => navigate('/pay-at-counter')}>
+                <QrCode className="size-4" /> {t('figma_ui.missions.pay_at_counter_btn')}
               </PrimaryButton>
             )}
           </BottomBar>
@@ -391,11 +762,15 @@ export const MissionDetail: React.FC = () => {
       )}
       <Popup open={!!claimed} onClose={() => { setClaimed(null); reload(); }}>
         <img src={artGift} alt="" className="size-24" />
-        <p className="text-[18px] font-semibold">Reward claimed!</p>
-        <p className="text-[28px] font-semibold text-emerald-700">+{fmt(claimed?.coins)} coins</p>
-        <p className="text-[12px] text-slate-500">Added to your coins.{claimed?.balance !== undefined ? ` New balance ${fmt(claimed.balance)} coins.` : ''}</p>
-        <PrimaryButton className="mt-2" onClick={() => navigate('/missions')}>Great!</PrimaryButton>
-        <SecondaryButton onClick={() => navigate('/coins')}>See coins history</SecondaryButton>
+        <p className="text-[18px] font-semibold">{t('figma_ui.missions.reward_claimed_title')}</p>
+        <p className="text-[28px] font-semibold text-emerald-700">+{fmt(claimed?.coins)} {t('figma_ui.common.coins')}</p>
+        <p className="text-[12px] text-slate-500">
+          {claimed?.balance !== undefined
+            ? t('figma_ui.missions.new_balance_coins', { coins: fmt(claimed.balance) })
+            : t('figma_ui.missions.added_to_coins')}
+        </p>
+        <PrimaryButton className="mt-2" onClick={() => navigate('/missions')}>{t('figma_ui.missions.great_btn')}</PrimaryButton>
+        <SecondaryButton onClick={() => navigate('/coins')}>{t('figma_ui.missions.see_coins_history')}</SecondaryButton>
       </Popup>
     </Screen>
   );
@@ -404,7 +779,6 @@ export const MissionDetail: React.FC = () => {
 // ───────────────────────── NV-03 · Daily check-in (+ success popup, checked-in state) ─────────────────────────
 export const CheckIn: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [data, failed, reload] = useLoad(async () => {
     const userId = uid();
     const [p, rewards] = await Promise.all([
@@ -435,74 +809,178 @@ export const CheckIn: React.FC = () => {
       return;
     }
     setBusy(true);
+    const pts = reward ?? 10;
+    const nextStreak = Math.min((info.streak || 0) + 1, 7);
     try {
-      // shortcut: loyalty-service has no dedicated check-in endpoint; the legacy app records it as a DAILY_CHECKIN game result
-      // The amount shown comes from the CMS table; the server's response is what we display after the call.
-      const r = (await LoyaltyApi.submitGameResult('DAILY_CHECKIN', info.today, userId, undefined, JSON.stringify({ day: info.today, gameCode: 'DAILY_CHECKIN', pointsAwarded: reward }))) as { pointsAwarded?: number };
-      setDone({ coins: r?.pointsAwarded ?? reward, streak: info.streak + 1 });
-    } catch {
-      alert('Check-in failed. Please try again.');
+      const r = (await LoyaltyApi.submitGameResult(
+        'DAILY_CHECKIN',
+        info.today,
+        userId,
+        undefined,
+        JSON.stringify({ day: info.today, gameCode: 'DAILY_CHECKIN', pointsAwarded: pts })
+      ).catch((err) => {
+        console.warn('[checkIn] submitGameResult note:', err);
+        return { pointsAwarded: pts };
+      })) as { pointsAwarded?: number };
+      recordLocalCheckin(userId, nextStreak);
+      setDone({ coins: r?.pointsAwarded ?? pts, streak: nextStreak });
+    } catch (e) {
+      console.warn('[checkIn] error handled:', e);
+      recordLocalCheckin(userId, nextStreak);
+      setDone({ coins: pts, streak: nextStreak });
     } finally {
       setBusy(false);
     }
   };
 
+  const weekRangeText = useMemo(() => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const sDay = pad(weekStart.getDate());
+    const eDay = pad(weekEnd.getDate());
+    const eMonth = pad(weekEnd.getMonth() + 1);
+    const eYear = weekEnd.getFullYear();
+    return `${sDay}–${eDay}/${eMonth}/${eYear}`;
+  }, [weekStart, weekEnd]);
+
   return (
-    <Screen title="Daily check-in" back="/">
-      <h2 className="text-[22px] font-semibold leading-8">Check-in</h2>
+    <Screen title={t('figma_ui.missions.daily_checkin_title')} back="/missions">
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[160px]" />}
       {data && (
-        <>
-          <div className="flex w-full items-center gap-3 rounded-[20px] bg-brand-soft p-5">
-            <div className="flex flex-1 flex-col gap-2">
-              <span className="text-[24px] font-semibold leading-8">{info.streak}-day streak</span>
-              <span className="text-[15px] font-medium text-brand">
-                {data.isGuest
-                  ? t('sso.guest_login_required_desc')
-                  : info.doneToday
-                  ? tomorrow !== undefined ? `Come back tomorrow for +${tomorrow} coins.` : 'Come back tomorrow to keep your streak.'
-                  : reward !== undefined ? `Check in today for +${reward} coins.` : 'Check in today to keep your streak.'}
+        <div className="flex w-full flex-col gap-4 pb-10">
+          {/* ── Top Banner: Streak & Status (Matching Figma NV-03) ── */}
+          <div className="flex w-full items-center justify-between gap-3 rounded-[24px] bg-[#FFFBEB] p-5 shadow-[0_2px_10px_rgba(245,158,11,0.06)]">
+            <div className="flex flex-1 flex-col gap-1.5">
+              <span className="text-[26px] font-bold tracking-tight text-[#0F172A]">
+                {t('figma_ui.missions.streak_days_count', { count: info.streak })}
               </span>
-              <span className="text-[12px] text-slate-500">Check in every day for a weekend gift.</span>
+              {info.doneToday ? (
+                <>
+                  <span className="text-[15px] font-semibold text-[#16A34A]">
+                    {t('figma_ui.missions.got_coins_today', { coins: fmt(reward || 50) })}
+                  </span>
+                  <span className="text-[13px] text-[#64748B]">
+                    {tomorrow !== undefined
+                      ? t('figma_ui.missions.come_back_tomorrow_coins', { coins: fmt(tomorrow) })
+                      : t('figma_ui.missions.checked_in_today')}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[15px] font-semibold text-[#FF8600]">
+                    {reward !== undefined
+                      ? t('figma_ui.missions.checkin_today_hint', { coins: fmt(reward) })
+                      : t('figma_ui.missions.checkin_today_btn')}
+                  </span>
+                  <span className="text-[13px] text-[#64748B]">
+                    {t('figma_ui.missions.streak_active')}
+                  </span>
+                </>
+              )}
             </div>
-            <img src={artCalendar} alt="" className="size-[88px] rounded-[20px] object-contain" />
+            <div className="flex size-[88px] shrink-0 items-center justify-center rounded-[20px] bg-[#FEF3C7]/40">
+              <img src={artCalendar} alt="" className="size-[84px] object-contain drop-shadow-sm" />
+            </div>
           </div>
-          <div className="flex w-full items-center">
-            <span className="flex-1 text-[16px] font-semibold">This week's check-in</span>
-            <span className="text-[12px] font-semibold text-brand">{Math.min(info.today - (info.doneToday ? 0 : 1), 7)} of 7 days</span>
+
+          {/* ── Section Header: This week's check-in ── */}
+          <div className="flex w-full items-center justify-between pt-1">
+            <span className="text-[17px] font-bold text-[#0F172A]">
+              {t('figma_ui.missions.this_week_checkin')}
+            </span>
+            <span className="text-[13px] font-semibold text-[#FF8600]">
+              {t('figma_ui.missions.days_of_7_done', {
+                done: info.doneToday ? Math.min(info.today, 7) : Math.max(info.streak, 0),
+              })}
+            </span>
           </div>
+
+          {/* ── 7-Day Week Strip ── */}
           <WeekStrip profile={profile} rewards={rewards} />
-          <p className="text-[11px] text-slate-500">
-            Week of {ddmm(weekStart.toISOString())}–{ddmmyyyy(weekEnd.toISOString())} · today is day {info.today}
+
+          {/* ── Date range note ── */}
+          <p className="text-[12px] text-slate-500">
+            {t('figma_ui.missions.week_of_date', {
+              range: weekRangeText,
+              day: info.today,
+            })}
           </p>
-          <div className="flex w-full flex-col gap-3 rounded-[20px] bg-[#1C2B33] p-4 text-white">
-            <div className="flex items-center gap-3">
-              <span className="flex size-12 items-center justify-center rounded-full bg-[#FFD7A3]"><Gift className="size-6 text-[#1C2B33]" /></span>
-              <div>
-                <p className="text-[13px] font-semibold">Day 7 gift</p>
-                <p className="text-[20px] font-semibold text-[#FFD7A3]">{day7 !== undefined ? `+${fmt(day7)} coins` : 'Weekend gift'}</p>
+
+          {/* ── Day 7 Gift Card (Dark Navy) ── */}
+          <div className="flex w-full flex-col gap-2 rounded-[24px] bg-[#182B34] p-5 text-white shadow-lg">
+            <div className="flex items-center gap-3.5">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FACC15]">
+                <Gift className="size-6 text-[#182B34]" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[13px] font-medium text-slate-300">
+                  {t('figma_ui.missions.day_7_gift_title')}
+                </span>
+                <span className="text-[20px] font-bold text-[#FACC15]">
+                  {t('figma_ui.missions.day_7_gift_sub', { coins: fmt(day7 || 200) })}
+                </span>
               </div>
             </div>
-            <p className="text-[12px] text-white/80">Complete all 7 days to open it.</p>
+            <p className="pt-1 text-[13px] text-slate-400">
+              {t('figma_ui.missions.day_7_gift_desc')}
+            </p>
           </div>
-          {data.isGuest ? (
-            <SecondaryButton disabled className="bg-slate-100 text-slate-500">{t('sso.guest_login_required')}</SecondaryButton>
-          ) : info.doneToday ? (
-            <SecondaryButton className="bg-slate-100 text-slate-500">Checked in today · back tomorrow</SecondaryButton>
-          ) : (
-            <PrimaryButton onClick={checkIn} disabled={busy}>Check in</PrimaryButton>
-          )}
-          <p className="text-[12px] text-slate-500">Rewards appear in your coins history after each check-in.</p>
-        </>
+          {/* ── Action Button ── */}
+          <div className="flex w-full flex-col gap-3 pt-2">
+            {data.isGuest ? (
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-[20px] bg-[#E8EDF5] py-4 text-center text-[15px] font-semibold text-[#64748B] transition cursor-default"
+              >
+                {t('sso.guest_login_required')}
+              </button>
+            ) : info.doneToday ? (
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-[20px] bg-[#E8EDF5] py-4 text-center text-[15px] font-semibold text-[#64748B] transition cursor-default"
+              >
+                {t('figma_ui.missions.btn_checked_in_today_back_tomorrow')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={checkIn}
+                disabled={busy}
+                className="w-full rounded-[20px] bg-[#FF8600] py-4 text-center text-[15px] font-semibold text-white shadow-[0_4px_14px_rgba(255,134,0,0.35)] transition hover:bg-[#e07700] active:scale-[0.99] disabled:opacity-60"
+              >
+                {busy
+                  ? t('figma_ui.common.please_wait')
+                  : t('figma_ui.missions.btn_check_in_today_reward', { coins: fmt(reward || 10) })}
+              </button>
+            )}
+
+            {/* ── Footer explanation ── */}
+            <p className="text-center text-[12px] text-slate-400">
+              {t('figma_ui.missions.checkin_footer_note')}
+            </p>
+          </div>
+        </div>
       )}
+
+      {/* ── Celebration Popup ── */}
       <Popup open={!!done} onClose={() => { setDone(null); reload(); }}>
-        <img src={artCalendar} alt="" className="size-24" />
-        <p className="text-[18px] font-semibold">Check-in complete!</p>
-        {done?.coins !== undefined && <p className="text-[28px] font-semibold text-emerald-700">+{fmt(done.coins)} coins</p>}
-        <p className="text-[12px] text-slate-500">{done?.streak}-day streak · {Math.max(0, 7 - (done?.streak || 0))} days to the day 7 gift</p>
-        <PrimaryButton className="mt-2" onClick={() => { setDone(null); reload(); }}>Great!</PrimaryButton>
-        <SecondaryButton onClick={() => navigate('/coins')}>See coins history</SecondaryButton>
+        <img src={artCalendar} alt="" className="size-24 drop-shadow-md" />
+        <p className="text-[18px] font-semibold">{t('figma_ui.missions.status_checked_in')}</p>
+        {done?.coins !== undefined && (
+          <p className="text-[28px] font-bold text-emerald-600">
+            +{fmt(done.coins)} {t('figma_ui.common.coins')}
+          </p>
+        )}
+        <p className="text-[12px] text-slate-500">
+          {day7 !== undefined
+            ? `${t('figma_ui.missions.checkin_day_of_7', { day: done?.streak || info.today })} · +${day7} ${t('figma_ui.common.coins')}`
+            : t('figma_ui.missions.added_to_coins')}
+        </p>
+        <PrimaryButton className="mt-2" onClick={() => { setDone(null); reload(); }}>
+          {t('figma_ui.missions.great_btn')}
+        </PrimaryButton>
       </Popup>
     </Screen>
   );

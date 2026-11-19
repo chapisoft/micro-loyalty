@@ -16,7 +16,8 @@ public enum ApprovalTargetType {
     POINT_ADJUSTMENT("POINT_ADJUSTMENT", "enum.approval_target_type.point_adjustment"),
     PAYMENT_BATCH("PAYMENT_BATCH", "enum.approval_target_type.payment_batch"),
     SYSTEM_PARAM("SYSTEM_PARAM", "enum.approval_target_type.system_param"),
-    ACCOUNT_LOCK("ACCOUNT_LOCK", "enum.approval_target_type.account_lock");
+    ACCOUNT_LOCK("ACCOUNT_LOCK", "enum.approval_target_type.account_lock"),
+    LEADERBOARD_PAYOUT("LEADERBOARD_PAYOUT", "enum.approval_target_type.leaderboard_payout");
 
     @JsonValue
     private final String code;

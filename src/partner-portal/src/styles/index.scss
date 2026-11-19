@@ -598,6 +598,45 @@ header.sticky {
     font-size: 0.85rem !important;
     padding: 0.85rem 1rem !important;
     border-bottom: 1.5px solid #e2e8f0 !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+
+    .p-column-header-content {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 0.35rem !important;
+      width: 100% !important;
+    }
+
+    .p-sortable-column-icon,
+    [data-pc-section='sort'] {
+      margin-left: 0 !important;
+      flex-shrink: 0 !important;
+    }
+
+    &.p-selection-column,
+    &.p-align-center,
+    &.text-center,
+    &[style*='text-align: center'],
+    &[style*='text-align:center'] {
+      text-align: center !important;
+
+      .p-column-header-content {
+        justify-content: center !important;
+      }
+    }
+
+    &.p-align-right,
+    &.text-right,
+    &[style*='text-align: right'],
+    &[style*='text-align:right'] {
+      text-align: right !important;
+
+      .p-column-header-content {
+        justify-content: flex-end !important;
+      }
+    }
   }
 
   .p-datatable-tbody > tr {
@@ -609,6 +648,11 @@ header.sticky {
       font-size: 0.9rem !important;
       font-weight: 400 !important;
       border-bottom: 1px solid #f1f5f9 !important;
+      vertical-align: middle !important;
+
+      &.p-selection-column {
+        text-align: center !important;
+      }
 
       // Status tags inside datatable must be font-weight: 400 with soft styling
       .p-tag {

@@ -49,6 +49,9 @@ public class GameHubConfigEntity {
     @Column(name = "welcome_banner_text", length = 500)
     private String welcomeBannerText;
 
+    @Column(name = "lobby_banner_url", length = 500)
+    private String lobbyBannerUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

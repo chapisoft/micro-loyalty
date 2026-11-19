@@ -13,12 +13,12 @@ const validLangs = ['vi', 'en', 'fr', 'ht'];
 const initialLang =
   (queryLang && validLangs.includes(queryLang) ? queryLang : null) ||
   localStorage.getItem('loyalty_webview_lng') ||
-  'vi';
+  'en';
 
 i18next.use(initReactI18next).init({
   debug: false,
   lng: initialLang,
-  fallbackLng: 'vi',
+  fallbackLng: 'en',
   interpolation: {
     escapeValue: false, // React already escapes values
   },

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Settings, Gift, Clock, Sparkles, Bell } from 'lucide-react';
 import { LoyaltyApi, getDefaultUserId, type InboxMessageItem, type NotificationPreferencesDto } from '../../services/api';
-import { Screen, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, Empty, useLoad, ddmm } from '../ui';
+import { Screen, Skeleton, ErrorBlock, Pill, PrimaryButton, SecondaryButton, Empty, Switch, useLoad, ddmm } from '../ui';
 import { artEmptyBox, partnerPhoto } from '../art';
 
 const uid = () => getDefaultUserId();
@@ -106,12 +106,6 @@ export const OfferDetail: React.FC = () => {
 };
 
 // ───────────────────────── CN-04 · Notification settings ─────────────────────────
-const Toggle: React.FC<{ on: boolean; disabled?: boolean; onChange?: (v: boolean) => void; label: string }> = ({ on, disabled, onChange, label }) => (
-  <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange?.(!on)} className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-brand' : 'bg-slate-200'} disabled:opacity-60`}>
-    <span className={`absolute top-1 size-5 rounded-full bg-white shadow transition-all ${on ? 'left-6' : 'left-1'}`} />
-  </button>
-);
-
 export const NotificationSettings: React.FC = () => {
   const { t } = useTranslation();
   const userId = uid();
@@ -160,7 +154,7 @@ export const NotificationSettings: React.FC = () => {
                 <p className="text-[15px] font-semibold">{r.title}</p>
                 <p className="text-[12px] text-slate-500">{r.sub}</p>
               </div>
-              <Toggle label={r.title} on={r.on} disabled={r.disabled} onChange={r.set} />
+              <Switch label={r.title} on={r.on} disabled={r.disabled} onChange={r.set} />
             </div>
           ))}
         </div>

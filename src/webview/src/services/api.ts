@@ -138,6 +138,7 @@ export interface MilestoneItem {
   campaignCategory?: string;
   partnerName?: string;
   description?: string;
+  imageUrl?: string;
   milestoneStep: number;
   targetMetric: string;
   targetValue: number;
@@ -578,6 +579,9 @@ export interface CatalogVoucherItem {
   eligibleTiers?: string[];
   perCustomerLimit?: number;
   validDaysAfterCollect?: number;
+  showInFreeStrip?: boolean;
+  stripOrder?: number;
+  branchScope?: string;
   imageUrl?: string;
   terms?: string;
 }
@@ -1150,6 +1154,15 @@ export const LoyaltyApi = {
     return res.json();
   },
 
+  async getGeneralCategories(categoryType: string): Promise<GeneralCategoryItem[]> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/general-categories?categoryType=${encodeURIComponent(categoryType)}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  },
+
   // 33. Xác thực và định danh tài khoản user của Tenant (Natcash / Delimart / Micro-CRM)
   async authenticateTenantUser(req: TenantUserAuthRequest): Promise<TenantUserContextResponse> {
     const tenantId = req.tenantId || getTenantId();
@@ -1338,6 +1351,18 @@ export interface SsoExchangeResponse {
   phoneNumber?: string;
   accountRole?: string;
   userContext?: TenantUserContextResponse;
+}
+
+export interface GeneralCategoryItem {
+  tenantId?: string;
+  categoryType?: string;
+  code: string;
+  name: string;
+  parentCode?: string;
+  displayOrder?: number;
+  status?: number;
+  description?: string;
+  metadata?: string;
 }
 
 export interface TierItem {

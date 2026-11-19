@@ -36,12 +36,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -68,6 +70,9 @@ public class ApprovalQueueService {
 
     @Autowired(required = false)
     private PointBucketFifoService fifoService;
+
+    @Autowired(required = false)
+    private JdbcTemplate jdbcTemplate;
 
     public ApprovalQueueService(ApprovalRequestRepository approvalRepository,
                                 SystemAuditLogService auditLogService,
@@ -201,6 +206,7 @@ public class ApprovalQueueService {
         entity.setRejectReason(rejectReason);
         entity.setReviewedAt(Instant.now());
 
+        applyRejectedSideEffect(tenantId, entity, checker);
         ApprovalRequestEntity saved = approvalRepository.save(entity);
 
         recordAudit(tenantId, "REJECT", String.valueOf(saved.getId()), checker,
@@ -211,6 +217,10 @@ public class ApprovalQueueService {
     }
 
     private void applyApprovedSideEffect(String tenantId, ApprovalRequestEntity entity) {
+        if (entity.getTargetType() == ApprovalTargetType.LEADERBOARD_PAYOUT) {
+            applyLeaderboardPayoutDecision(tenantId, entity, true, entity.getCheckerUsername());
+            return;
+        }
         if (accountRepository == null || entity.getPayloadAfter() == null) {
             return;
         }
@@ -223,6 +233,36 @@ public class ApprovalQueueService {
             }
         } catch (JsonProcessingException ex) {
             log.warn("Unable to parse approval payloadAfter JSON for request {}: {}", entity.getRequestCode(), ex.getMessage());
+        }
+    }
+
+    private void applyRejectedSideEffect(String tenantId, ApprovalRequestEntity entity, String checker) {
+        if (entity.getTargetType() == ApprovalTargetType.LEADERBOARD_PAYOUT) {
+            applyLeaderboardPayoutDecision(tenantId, entity, false, checker);
+        }
+    }
+
+    private void applyLeaderboardPayoutDecision(String tenantId, ApprovalRequestEntity entity, boolean approved, String checker) {
+        if (jdbcTemplate == null || entity.getTargetId() == null || entity.getTargetId().isBlank()) {
+            return;
+        }
+        try {
+            Long payoutId = Long.parseLong(entity.getTargetId().trim());
+            Timestamp nowTs = Timestamp.from(Instant.now());
+            String nextStatus = approved ? ApprovalStatus.APPROVED.name() : ApprovalStatus.REJECTED.name();
+            if (approved) {
+                jdbcTemplate.update(
+                        "UPDATE leaderboard_payouts SET approval_status = ?, approved_by = ?, approved_at = ?, notified_at = ? " +
+                                "WHERE id = ? AND tenant_id = ? AND approval_status = 'PENDING_APPROVAL'",
+                        nextStatus, checker, nowTs, nowTs, payoutId, tenantId);
+            } else {
+                jdbcTemplate.update(
+                        "UPDATE leaderboard_payouts SET approval_status = ?, approved_by = ?, approved_at = ? " +
+                                "WHERE id = ? AND tenant_id = ? AND approval_status = 'PENDING_APPROVAL'",
+                        nextStatus, checker, nowTs, payoutId, tenantId);
+            }
+        } catch (NumberFormatException ex) {
+            log.warn("Invalid leaderboard payout targetId '{}' on approval {}", entity.getTargetId(), entity.getRequestCode());
         }
     }
 

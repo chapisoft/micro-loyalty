@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import useSSOAuth from '../hooks/useSSOAuth';
-import { changeLanguage } from '../language';
+import { changeLanguage, SUPPORTED_LANGUAGES } from '../language';
 import iconArrowLeft from '../assets/figma/icon-arrow-left.svg';
 import iconEllipsis from '../assets/figma/icon-ellipsis.svg';
 import iconX from '../assets/figma/icon-x.svg';
@@ -39,22 +40,39 @@ const COL = 'mx-auto w-full max-w-[430px]';
  * tab roots pass "/" (Loyalty Home). "…" opens the More sheet over the current screen; "×" closes Loyalty.
  * `orange`: transparent bar on the orange header background (white icons, white title).
  */
-export const WebviewHeader: React.FC<{ title: string; back?: string; orange?: boolean; hideTitle?: boolean }> = ({ title, back, orange, hideTitle }) => {
+export const WebviewHeader: React.FC<{ title: string; back?: string; orange?: boolean; transparent?: boolean; hideTitle?: boolean }> = ({
+  title,
+  back,
+  orange,
+  transparent,
+  hideTitle,
+}) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [more, setMore] = React.useState(false);
   const goBack = () => (back ? navigate(back) : window.history.length > 1 ? navigate(-1) : LoyaltyJSBridge.closeWebview());
+  const overlay = !!orange || !!transparent;
   return (
-    <header className={orange ? 'relative z-10' : 'sticky top-0 z-30 bg-white'}>
+    <header className={overlay ? 'relative z-10' : 'sticky top-0 z-30 bg-white'}>
       <div className="flex h-[52px] items-center gap-2 px-4">
-        <button type="button" aria-label="Back" onClick={goBack} className="-ml-2 flex size-11 shrink-0 items-center justify-center">
-          <img src={iconArrowLeft} alt="" className={`size-[22px] ${orange ? 'brightness-0 invert' : ''}`} />
+        <button
+          type="button"
+          aria-label={t('figma_ui.common.back')}
+          onClick={goBack}
+          className={
+            transparent
+              ? 'flex size-9 shrink-0 items-center justify-center rounded-full bg-white/90 shadow-sm'
+              : '-ml-2 flex size-11 shrink-0 items-center justify-center'
+          }
+        >
+          <img src={iconArrowLeft} alt="" className={`size-[20px] ${orange ? 'brightness-0 invert' : ''}`} />
         </button>
         <h1 className={`min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 ${orange ? 'text-white' : 'text-slate-900'} ${hideTitle ? 'invisible' : ''}`}>{title}</h1>
-        <div className={`flex h-10 w-[88px] shrink-0 items-center justify-around rounded-[20px] bg-white ${orange ? '' : 'border border-slate-200'}`}>
-          <button type="button" aria-label="More options" onClick={() => setMore(true)} className="flex size-10 items-center justify-center">
+        <div className={`flex h-10 w-[88px] shrink-0 items-center justify-around rounded-[20px] bg-white ${transparent ? 'shadow-sm' : orange ? '' : 'border border-slate-200'}`}>
+          <button type="button" aria-label={t('figma_ui.common.more_options')} onClick={() => setMore(true)} className="flex size-10 items-center justify-center">
             <img src={iconEllipsis} alt="" className="size-[18px]" />
           </button>
-          <button type="button" aria-label="Close Loyalty" onClick={() => LoyaltyJSBridge.closeWebview()} className="flex size-10 items-center justify-center">
+          <button type="button" aria-label={t('figma_ui.common.close_loyalty')} onClick={() => LoyaltyJSBridge.closeWebview()} className="flex size-10 items-center justify-center">
             <img src={iconX} alt="" className="size-[18px]" />
           </button>
         </div>
@@ -71,7 +89,7 @@ export const WebviewHeader: React.FC<{ title: string; back?: string; orange?: bo
  */
 export const HEADER_H = { home: 234, missions: 194, games: 210, vouchers: 246, network: 194 } as const;
 /** Where the content starts under the orange header (Figma y minus the status bar): Home card overlaps the curve, Missions starts below it. */
-const CONTENT_Y = { home: 120, missions: 186, games: 176, vouchers: 212, network: 186 } as const;
+const CONTENT_Y = { home: 120, missions: 186, games: 150, vouchers: 212, network: 186 } as const;
 const HeaderBg: React.FC<{ h: number }> = ({ h }) => {
   const c = h - 56;
   return (
@@ -86,7 +104,13 @@ const HeaderBg: React.FC<{ h: number }> = ({ h }) => {
 // ───────────── Bottom tab bars (Figma components 593:218 customer · 743:221 agent · 743:462 super agent) ─────────────
 export type Shell = 'customer' | 'agent' | 'super';
 export type TabKey = 'home' | 'missions' | 'games' | 'network' | 'vouchers';
-const TAB_LABEL: Record<TabKey, string> = { home: 'Home', missions: 'Missions', games: 'Games', network: 'Network', vouchers: 'Vouchers' };
+const TAB_LABEL_KEY: Record<TabKey, string> = {
+  home: 'figma_ui.tabs.home',
+  missions: 'figma_ui.tabs.missions',
+  games: 'figma_ui.tabs.games',
+  network: 'figma_ui.tabs.network',
+  vouchers: 'figma_ui.tabs.vouchers',
+};
 /** Outline icon when idle, filled when selected (Figma tab bar). */
 const TabIcon: React.FC<{ k: TabKey; on: boolean }> = ({ k, on }) => {
   const p = { fill: on ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -111,6 +135,7 @@ export const voucherBase = (shell: Shell) => (shell === 'customer' ? { store: '/
 
 export const TabBar: React.FC<{ shell: Shell; active: TabKey }> = ({ shell, active }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
     <>
       <div className="h-[84px]" />
@@ -122,7 +147,7 @@ export const TabBar: React.FC<{ shell: Shell; active: TabKey }> = ({ shell, acti
               <button key={k} type="button" onClick={() => !on && navigate(to)} aria-current={on ? 'page' : undefined} className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 ${on ? 'text-[#FE810D]' : 'text-[#8B8B93]'}`}>
                 {on && <span className="absolute left-1/2 top-0 h-[3px] w-9 -translate-x-1/2 rounded-b-[3px] bg-[#FE810D]" />}
                 <TabIcon k={k} on={on} />
-                <span className={`truncate text-[12px] ${on ? 'font-semibold' : 'font-medium'}`}>{TAB_LABEL[k]}</span>
+                <span className={`truncate text-[12px] ${on ? 'font-semibold' : 'font-medium'}`}>{t(TAB_LABEL_KEY[k])}</span>
               </button>
             );
           })}
@@ -143,16 +168,24 @@ export const Screen: React.FC<{
   back?: string;
   hero?: React.ReactNode;
   heroH?: number;
+  cover?: string;
+  coverClass?: string;
   barTitle?: boolean;
   tab?: { shell: Shell; active: TabKey };
   children: React.ReactNode;
-}> = ({ title, back, hero, heroH, barTitle, tab, children }) => (
+}> = ({ title, back, hero, heroH, cover, coverClass = '', barTitle, tab, children }) => (
   <div className="min-h-screen bg-[#F5F5F5] font-nc text-[#1F1F24]">
     <div className={`${COL} relative min-h-screen`}>
       {hero && <HeaderBg h={heroH ?? HEADER_H[tab?.active || 'missions']} />}
-      <WebviewHeader title={title} back={back} orange={!!hero} hideTitle={!!hero && !barTitle} />
+      {!hero && cover && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[210px] overflow-hidden">
+          <img src={cover} alt="" className={`size-full object-cover ${coverClass}`} />
+          <span className="absolute inset-x-0 top-0 h-[108px] bg-gradient-to-b from-white/95 via-white/60 to-transparent" />
+        </div>
+      )}
+      <WebviewHeader title={title} back={back} orange={!!hero} transparent={!hero && !!cover} hideTitle={!!hero && !barTitle} />
       {hero && <div className="relative px-4 pb-3 text-white" style={{ minHeight: CONTENT_Y[tab?.active || 'missions'] - 52 }}>{hero}</div>}
-      <main className={`relative flex flex-col gap-[14px] px-4 ${tab ? 'pb-4' : 'pb-8'} ${hero ? 'pt-1' : 'pt-4'}`}>{children}</main>
+      <main className={`relative flex flex-col gap-[14px] px-4 ${tab ? 'pb-4' : 'pb-8'} ${hero ? 'pt-1' : cover ? 'pt-[118px]' : 'pt-4'}`}>{children}</main>
     </div>
     {tab && <TabBar shell={tab.shell} active={tab.active} />}
   </div>
@@ -210,18 +243,24 @@ export const Chip: React.FC<{ on?: boolean; onClick?: () => void; children: Reac
 export const ListCard: React.FC<{
   photo: string;
   tag?: string;
+  tagIcon?: React.ReactNode;
   title: string;
   sub?: string;
   line3?: React.ReactNode;
   action?: React.ReactNode;
   dim?: boolean;
   onClick?: () => void;
-}> = ({ photo, tag, title, sub, line3, action, dim, onClick }) => (
+}> = ({ photo, tag, tagIcon, title, sub, line3, action, dim, onClick }) => (
   <div className="flex w-full items-center gap-2.5 rounded-[16px] bg-white p-1.5 pr-3 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
     <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
       <span className="relative h-20 w-[100px] shrink-0 overflow-hidden rounded-[12px]">
         <img src={photo} alt="" className={`size-full object-cover ${dim ? 'opacity-50 grayscale' : ''}`} />
-        {tag && <span className="absolute left-1.5 top-1.5 max-w-[88px] truncate rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-slate-900">{tag}</span>}
+        {tag && (
+          <span className="absolute left-1.5 top-1.5 inline-flex max-w-[90px] items-center gap-1 rounded-full bg-white/95 px-1.5 py-0.5 text-[11px] font-medium text-slate-900 shadow-sm">
+            {tagIcon}
+            <span className="truncate">{tag}</span>
+          </span>
+        )}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className={`truncate text-[16px] font-bold leading-5 ${dim ? 'text-slate-400' : ''}`}>{title}</span>
@@ -256,7 +295,6 @@ export function useToast(ms = 3500): [string | null, (t: string) => void] {
 }
 
 // ───────────── "…" More sheet (Figma 732:2) and Language sheet (CN-05b) ─────────────
-const LANGS: [string, string][] = [['en', 'English'], ['fr', 'Français'], ['ht', 'Kreyòl Ayisyen']];
 const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const [lang, setLang] = React.useState(false);
@@ -273,18 +311,18 @@ const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onC
     ...(canAccessAgent
       ? [[isAgent ? t('sso.open_customer_portal') : t('sso.open_agent_portal'), () => go(isAgent ? '/' : '/agent')] as [string, () => void]]
       : []),
-    ...(isAgent ? [] : ([['Share Rewards', () => go('/invite')]] as [string, () => void][])),
-    ['Coins history', () => go('/coins')],
-    ['Notification settings', () => go('/notifications')],
-    ['Language', () => setLang(true)],
-    ['Program terms', () => go('/terms')],
+    ...(isAgent ? [] : ([[t('figma_ui.more.share_rewards'), () => go('/invite')]] as [string, () => void][])),
+    [t('figma_ui.more.coins_history'), () => go('/coins')],
+    [t('figma_ui.more.notification_settings'), () => go('/notifications')],
+    [t('figma_ui.more.language'), () => setLang(true)],
+    [t('figma_ui.more.program_terms'), () => go('/terms')],
     ...(session
       ? [[t('sso.sign_out'), () => { onClose(); logout(); navigate('/', { replace: true }); }] as [string, () => void]]
       : []),
   ];
   return (
     <>
-      <Sheet open={open && !lang} onClose={onClose} title="More">
+      <Sheet open={open && !lang} onClose={onClose} title={t('figma_ui.common.more')}>
         {session ? (
           <div className="rounded-[16px] bg-[#FFF4EA] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[#E06C00]">{t('sso.current_account_label')}</p>
@@ -311,9 +349,9 @@ const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onC
           ))}
         </div>
       </Sheet>
-      <Sheet open={open && lang} onClose={() => { setLang(false); onClose(); }} title="Language">
+      <Sheet open={open && lang} onClose={() => { setLang(false); onClose(); }} title={t('figma_ui.common.language')}>
         <div className="divide-y divide-slate-100 rounded-[16px] bg-[#F7F7F8]">
-          {LANGS.map(([code, label]) => (
+          {SUPPORTED_LANGUAGES.map(({ code, label }) => (
             <button key={code} type="button" onClick={() => { changeLanguage(code); setLang(false); onClose(); }} className="flex h-12 w-full items-center px-4 text-left text-[15px]">
               <span className={`flex-1 ${i18n.language === code ? 'font-semibold' : ''}`}>{label}</span>
               {i18n.language === code && <span className="text-[#FE810D]">✓</span>}
@@ -379,15 +417,29 @@ export const PrimaryButton: React.FC<{ children: React.ReactNode; onClick?: () =
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className={`flex h-[46px] w-full items-center justify-center gap-2 rounded-[14px] bg-brand text-[14px] font-semibold text-white disabled:opacity-50 ${className}`}
+    className={`flex h-[46px] ${/\b(w-|flex-)/.test(className) ? '' : 'w-full'} items-center justify-center gap-2 rounded-[14px] bg-brand text-[14px] font-semibold text-white disabled:opacity-50 ${className}`}
   >
     {children}
   </button>
 );
 
 export const SecondaryButton: React.FC<{ children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }> = ({ children, onClick, disabled, className = '' }) => (
-  <button type="button" onClick={onClick} disabled={disabled} className={`flex h-[46px] w-full items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-[14px] font-semibold disabled:opacity-60 ${className}`}>
+  <button type="button" onClick={onClick} disabled={disabled} className={`flex h-[46px] ${/\b(w-|flex-)/.test(className) ? '' : 'w-full'} items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-[14px] font-semibold disabled:opacity-60 ${className}`}>
     {children}
+  </button>
+);
+
+export const Switch: React.FC<{ on: boolean; disabled?: boolean; onChange?: (v: boolean) => void; label: string }> = ({ on, disabled, onChange, label }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={on}
+    aria-label={label}
+    disabled={disabled}
+    onClick={() => onChange?.(!on)}
+    className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-[#FE810D]' : 'bg-slate-200'} disabled:opacity-60`}
+  >
+    <span className={`absolute top-1 size-5 rounded-full bg-white shadow transition-all ${on ? 'left-6' : 'left-1'}`} />
   </button>
 );
 
@@ -433,26 +485,41 @@ export const ResultBlock: React.FC<{
 );
 
 /** Centered popup over a dimmed screen (check-in complete, reward claimed, lesson complete). */
-export const Popup: React.FC<{ open: boolean; onClose: () => void; children: React.ReactNode }> = ({ open, onClose, children }) =>
-  open ? (
+export const Popup: React.FC<{ open: boolean; onClose: () => void; children: React.ReactNode }> = ({ open, onClose, children }) => {
+  const { t } = useTranslation();
+  return open ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-6" role="dialog">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-slate-900/45" />
+      <button type="button" aria-label={t('figma_ui.common.close')} onClick={onClose} className="absolute inset-0 bg-slate-900/45" />
       <div className="relative flex w-full max-w-[340px] flex-col items-center gap-2 rounded-[24px] bg-white p-5 text-center font-nc">{children}</div>
     </div>
   ) : null;
+};
 
 /** Bottom sheet (FIFO batches, filters). */
-export const Sheet: React.FC<{ open: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ open, onClose, title, children }) =>
-  open ? (
+export const Sheet: React.FC<{ open: boolean; onClose: () => void; title: string; centerTitle?: boolean; children: React.ReactNode }> = ({
+  open,
+  onClose,
+  title,
+  centerTitle = false,
+  children,
+}) => {
+  const { t } = useTranslation();
+  return open ? (
     <div className="fixed inset-0 z-40 flex flex-col justify-end font-nc" role="dialog" aria-label={title}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-slate-900/45" />
-      <div className="relative mx-auto flex max-h-[85vh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[24px] bg-white px-5 pb-6 pt-2.5">
-        <span className="mx-auto h-1 w-10 rounded-sm bg-slate-300" />
-        <h2 className="mt-2 text-[19px] font-semibold">{title}</h2>
+      <button type="button" aria-label={t('figma_ui.common.close')} onClick={onClose} className="absolute inset-0 bg-slate-900/45" />
+      <div className="relative mx-auto flex max-h-[88vh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[24px] bg-white px-5 pb-6 pt-2.5">
+        <span className="mx-auto h-1 w-10 shrink-0 rounded-sm bg-slate-300" />
+        <div className="flex items-center gap-2 pt-1">
+          <h2 className={`min-w-0 flex-1 text-[18px] font-semibold ${centerTitle ? 'pl-8 text-center' : ''}`}>{title}</h2>
+          <button type="button" aria-label={t('figma_ui.common.close')} onClick={onClose} className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100">
+            <X className="size-5" />
+          </button>
+        </div>
         {children}
       </div>
     </div>
   ) : null;
+};
 
 export const Empty: React.FC<{ art?: string; title: string; text?: string; children?: React.ReactNode }> = ({ art, title, text, children }) => (
   <div className="flex w-full flex-col items-center gap-1 rounded-[20px] bg-white p-5 text-center">
@@ -513,12 +580,15 @@ export const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) =
   <div className={`animate-pulse rounded-[20px] bg-slate-200/70 ${className}`} />
 );
 
-export const ErrorBlock: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
-  <div className="rounded-[20px] bg-white p-4 text-center">
-    <p className="text-[14px] font-semibold">Couldn’t load this page</p>
-    <p className="mt-1 text-[12px] text-slate-500">Check your connection and try again.</p>
-    <button type="button" onClick={onRetry} className="mt-3 h-11 rounded-[14px] bg-brand px-5 text-[14px] font-semibold text-white">
-      Try again
-    </button>
-  </div>
-);
+export const ErrorBlock: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="rounded-[20px] bg-white p-4 text-center">
+      <p className="text-[14px] font-semibold">{t('figma_ui.common.load_error_title')}</p>
+      <p className="mt-1 text-[12px] text-slate-500">{t('figma_ui.common.load_error_sub')}</p>
+      <button type="button" onClick={onRetry} className="mt-3 h-11 rounded-[14px] bg-brand px-5 text-[14px] font-semibold text-white">
+        {t('figma_ui.common.try_again')}
+      </button>
+    </div>
+  );
+};

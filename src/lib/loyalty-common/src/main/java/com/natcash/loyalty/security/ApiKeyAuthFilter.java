@@ -50,6 +50,12 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
             return true;
         }
         String path = request.getRequestURI();
+        if ((HttpMethod.GET.matches(request.getMethod()) || HttpMethod.HEAD.matches(request.getMethod()))
+                && path != null
+                && (pathMatcher.match(SecurityConstants.PUBLIC_MEDIA_PATH_PATTERN, path)
+                || pathMatcher.match("/loyalty-service" + SecurityConstants.PUBLIC_MEDIA_PATH_PATTERN, path))) {
+            return true;
+        }
         if (path != null && (path.endsWith("/auth/me") || path.endsWith("/users/me") || path.endsWith("/sso/me-context"))) {
             return false;
         }
