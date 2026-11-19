@@ -50,6 +50,11 @@ pipeline {
             defaultValue: false,
             description: 'Chỉ kiểm tra diff và build kiểm thử, không đồng bộ/deploy lên Docker Compose'
         )
+        booleanParam(
+            name: 'ALLOW_REMOTE_SSH',
+            defaultValue: false,
+            description: 'Cho phép build/deploy qua SSH từ Jenkins ngoài (mặc định false để tránh chạy trùng với Jenkins nội bộ trên server 35.247.156.176)'
+        )
     }
 
     environment {
@@ -110,12 +115,27 @@ pipeline {
                     env.SYNC_SCRIPTS            = 'false'
                     env.SYNC_COMPOSE            = 'false'
                     env.HAS_DEPLOY_CHANGES      = 'false'
+                    env.IS_LOCAL_DEPLOY_HOST    = 'false'
+                    env.ALLOW_DEPLOY_EXECUTOR   = 'false'
 
                     env.BACKEND_SERVICES_TO_BUILD = ''
                     env.MAVEN_PL_MODULES          = ''
                     env.TARGET_SERVICES_LIST      = ''
                     env.RESTART_SERVICES_LIST     = ''
                     env.CHANGED_FILES_SUMMARY     = ''
+
+                    def isLocalDeployHost = sh(
+                        script: "[ -d '${env.DEPLOY_PATH}' ] && command -v docker >/dev/null 2>&1",
+                        returnStatus: true
+                    ) == 0
+                    env.IS_LOCAL_DEPLOY_HOST  = isLocalDeployHost ? 'true' : 'false'
+                    env.ALLOW_DEPLOY_EXECUTOR = (isLocalDeployHost || params.ALLOW_REMOTE_SSH) ? 'true' : 'false'
+
+                    if (env.ALLOW_DEPLOY_EXECUTOR != 'true') {
+                        echo "Jenkins ngoài (${env.BUILD_URL ?: 'external'}) không chứa ${env.DEPLOY_PATH}. Theo chính sách dự án, CI/CD tự động chỉ chạy trên Jenkins nội bộ tại 35.247.156.176 (bật ALLOW_REMOTE_SSH=true nếu muốn chạy từ xa)."
+                        currentBuild.description = "SKIPPED (External Jenkins)"
+                        return
+                    }
 
                     if (env.IS_MAIN_BRANCH != 'true') {
                         echo "Nhánh [${branch}] (raw: '${rawBranch}') không phải 'main'. Bỏ qua toàn bộ quy trình build và deploy."
@@ -329,6 +349,7 @@ pipeline {
         stage('1. Build Changed Backend Microservices') {
             when {
                 allOf {
+                    expression { env.ALLOW_DEPLOY_EXECUTOR == 'true' }
                     expression { env.IS_MAIN_BRANCH == 'true' }
                     expression { env.DEPLOY_BACKEND == 'true' }
                 }
@@ -380,6 +401,7 @@ pipeline {
         stage('2. Build CMS Frontend (loyalty-cms)') {
             when {
                 allOf {
+                    expression { env.ALLOW_DEPLOY_EXECUTOR == 'true' }
                     expression { env.IS_MAIN_BRANCH == 'true' }
                     expression { env.DEPLOY_CMS == 'true' }
                 }
@@ -401,6 +423,7 @@ pipeline {
         stage('3. Build Webview Frontend (loyalty-webview)') {
             when {
                 allOf {
+                    expression { env.ALLOW_DEPLOY_EXECUTOR == 'true' }
                     expression { env.IS_MAIN_BRANCH == 'true' }
                     expression { env.DEPLOY_WEBVIEW == 'true' }
                 }
@@ -423,6 +446,7 @@ pipeline {
         stage('3B. Build Partner Portal Frontend (loyalty-partner-portal)') {
             when {
                 allOf {
+                    expression { env.ALLOW_DEPLOY_EXECUTOR == 'true' }
                     expression { env.IS_MAIN_BRANCH == 'true' }
                     expression { env.DEPLOY_PARTNER_PORTAL == 'true' }
                 }
@@ -446,6 +470,7 @@ pipeline {
         stage('4. Selective Sync & Rolling Deploy') {
             when {
                 allOf {
+                    expression { env.ALLOW_DEPLOY_EXECUTOR == 'true' }
                     expression { env.IS_MAIN_BRANCH == 'true' }
                     expression { env.HAS_DEPLOY_CHANGES == 'true' }
                     expression { !params.DRY_RUN }
@@ -575,7 +600,7 @@ pipeline {
                             docker ps --filter 'name=loyalty-saas-' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                         '''
                     } else {
-                        echo "Không thấy ${env.DEPLOY_PATH} cục bộ, chuyển sang SSH LAN ${env.DEPLOY_SERVER_LAN}:${env.DEPLOY_SERVER_PORT}..."
+                        echo "Không thấy ${env.DEPLOY_PATH} cục bộ, chuyển sang SSH (ưu tiên LAN ${env.DEPLOY_SERVER_LAN}, dự phòng ${env.DEPLOY_SERVER_HOST}) cổng ${env.DEPLOY_SERVER_PORT}..."
                         withCredentials([sshUserPrivateKey(
                             credentialsId: env.SSH_CREDENTIAL_ID,
                             keyFileVariable: 'SSH_KEY',
@@ -584,8 +609,12 @@ pipeline {
                             sh '''
                                 set -e
                                 SSH_USER="${SSH_USER_CRED:-$DEPLOY_SERVER_USER}"
-                                SSH_OPTS="-i ${SSH_KEY} -p ${DEPLOY_SERVER_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-                                REMOTE="${SSH_USER}@${DEPLOY_SERVER_LAN}"
+                                SSH_OPTS="-i ${SSH_KEY} -p ${DEPLOY_SERVER_PORT} -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                                TARGET_SSH_HOST="${DEPLOY_SERVER_HOST}"
+                                if ssh -i "${SSH_KEY}" -p "${DEPLOY_SERVER_PORT}" -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SSH_USER}@${DEPLOY_SERVER_LAN}" "true" >/dev/null 2>&1; then
+                                    TARGET_SSH_HOST="${DEPLOY_SERVER_LAN}"
+                                fi
+                                REMOTE="${SSH_USER}@${TARGET_SSH_HOST}"
 
                                 sync_dir() {
                                     SRC_DIR="$1"
@@ -687,6 +716,7 @@ pipeline {
         stage('5. Health Check Verification') {
             when {
                 allOf {
+                    expression { env.ALLOW_DEPLOY_EXECUTOR == 'true' }
                     expression { env.IS_MAIN_BRANCH == 'true' }
                     expression { env.HAS_DEPLOY_CHANGES == 'true' }
                     expression { !params.DRY_RUN }
@@ -770,8 +800,12 @@ pipeline {
                             sh '''
                                 set -e
                                 SSH_USER="${SSH_USER_CRED:-$DEPLOY_SERVER_USER}"
-                                SSH_OPTS="-i ${SSH_KEY} -p ${DEPLOY_SERVER_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-                                REMOTE="${SSH_USER}@${DEPLOY_SERVER_LAN}"
+                                SSH_OPTS="-i ${SSH_KEY} -p ${DEPLOY_SERVER_PORT} -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                                TARGET_SSH_HOST="${DEPLOY_SERVER_HOST}"
+                                if ssh -i "${SSH_KEY}" -p "${DEPLOY_SERVER_PORT}" -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SSH_USER}@${DEPLOY_SERVER_LAN}" "true" >/dev/null 2>&1; then
+                                    TARGET_SSH_HOST="${DEPLOY_SERVER_LAN}"
+                                fi
+                                REMOTE="${SSH_USER}@${TARGET_SSH_HOST}"
                                 ssh $SSH_OPTS "$REMOTE" "BACKEND_SERVICES_TO_BUILD='${BACKEND_SERVICES_TO_BUILD}' DEPLOY_PATH='${DEPLOY_PATH}' bash -s" <<'REMOTE_EOF'
 set -e
 service_port() {
@@ -834,24 +868,24 @@ REMOTE_EOF
     post {
         success {
             script {
-                if (env.IS_MAIN_BRANCH == 'true' && env.HAS_DEPLOY_CHANGES == 'true' && !params.DRY_RUN) {
+                if (env.ALLOW_DEPLOY_EXECUTOR == 'true' && env.IS_MAIN_BRANCH == 'true' && env.HAS_DEPLOY_CHANGES == 'true' && !params.DRY_RUN) {
                     def scopeDesc = env.TARGET_SERVICES_LIST ?: (env.RESTART_SERVICES_LIST ? "restart:${env.RESTART_SERVICES_LIST}" : 'scripts/compose')
                     sendDeployNotification('SUCCESS', "Phân hệ cập nhật: ${scopeDesc}")
                 } else {
-                    echo "Không phát sinh triển khai mới (IS_MAIN_BRANCH=${env.IS_MAIN_BRANCH}, HAS_DEPLOY_CHANGES=${env.HAS_DEPLOY_CHANGES}, DRY_RUN=${params.DRY_RUN})."
+                    echo "Không phát sinh triển khai mới (ALLOW_DEPLOY_EXECUTOR=${env.ALLOW_DEPLOY_EXECUTOR}, IS_MAIN_BRANCH=${env.IS_MAIN_BRANCH}, HAS_DEPLOY_CHANGES=${env.HAS_DEPLOY_CHANGES}, DRY_RUN=${params.DRY_RUN})."
                 }
             }
         }
         failure {
             script {
-                if (env.IS_MAIN_BRANCH == 'true') {
+                if (env.ALLOW_DEPLOY_EXECUTOR == 'true' && env.IS_MAIN_BRANCH == 'true') {
                     sendDeployNotification('FAILED', "Lỗi tại phân hệ: ${env.TARGET_SERVICES_LIST ?: params.TARGET_SERVICE}")
                 }
             }
         }
         aborted {
             script {
-                if (env.IS_MAIN_BRANCH == 'true') {
+                if (env.ALLOW_DEPLOY_EXECUTOR == 'true' && env.IS_MAIN_BRANCH == 'true') {
                     sendDeployNotification('ABORTED', "Build bị hủy (Targets: ${env.TARGET_SERVICES_LIST ?: params.TARGET_SERVICE})")
                 }
             }
