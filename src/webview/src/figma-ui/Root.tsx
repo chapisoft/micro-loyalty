@@ -1,6 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { HashRouter, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import useSSOAuth from '../hooks/useSSOAuth';
+import { SSOAuthProvider, useSSOAuth } from '../hooks/useSSOAuth';
+import { Skeleton } from './ui';
+import TenantAuthGate from './screens/TenantAuthGate';
 import LoyaltyHome from './screens/LoyaltyHome';
 import MemberTiers, { ProgramTerms } from './screens/MemberTiers';
 import CoinsHistory from './screens/CoinsHistory';
@@ -39,12 +41,24 @@ const GamePlayer: React.FC<{ Component: React.ComponentType<{ onBack: () => void
  * Figma Customer Journey Screens ("App · Customer journeys").
  * Fully replaces legacy App.tsx layout so the new design renders consistently across all views.
  */
-export const Root: React.FC = () => {
-  const { loading } = useSSOAuth(); // exchanges ?ticket= for a token before the screens call the API
-  if (loading) return <div className="min-h-screen bg-page" />;
+const AppRoutes: React.FC = () => {
+  const { loading, isAuthenticated } = useSSOAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5]">
+        <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 p-4 pt-10">
+          <Skeleton className="h-[177px]" />
+          <Skeleton className="h-[96px]" />
+          <Skeleton className="h-[120px]" />
+        </div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <TenantAuthGate />;
+  }
   return (
-    <HashRouter>
-      <Routes>
+    <Routes>
         {/* 1 · Entry & membership */}
         <Route path="/" element={<LoyaltyHome />} />
         <Route path="/tiers" element={<MemberTiers />} />
@@ -121,8 +135,19 @@ export const Root: React.FC = () => {
         <Route path="/home" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </HashRouter>
   );
 };
+
+/**
+ * Figma Customer Journey Screens ("App · Customer journeys").
+ * Fully replaces legacy App.tsx layout so the new design renders consistently across all views.
+ */
+export const Root: React.FC = () => (
+  <SSOAuthProvider>
+    <HashRouter>
+      <AppRoutes />
+    </HashRouter>
+  </SSOAuthProvider>
+);
 
 export default Root;

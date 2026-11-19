@@ -172,6 +172,7 @@ public class AccountService {
                     .name(tier.getName())
                     .tierLevel(tier.getTierLevel())
                     .minPoints(tier.getMinPoints())
+                    .keepTierPoints(tier.getKeepTierPoints())
                     .pointMultiplier(tier.getPointMultiplier())
                     .freeDailyTurns(tier.getFreeDailyTurns())
                     .description(tier.getDescription())

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
+import useSSOAuth from '../hooks/useSSOAuth';
 import { changeLanguage } from '../language';
 import iconArrowLeft from '../assets/figma/icon-arrow-left.svg';
 import iconEllipsis from '../assets/figma/icon-ellipsis.svg';
@@ -259,26 +260,45 @@ const LANGS: [string, string][] = [['en', 'English'], ['fr', 'Français'], ['ht'
 const MoreSheet: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const [lang, setLang] = React.useState(false);
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { session, userContext, logout } = useSSOAuth();
   const go = (to: string) => {
     onClose();
     navigate(to);
   };
   const isAgent = typeof window !== 'undefined' && window.location.hash.startsWith('#/agent');
+  const accountRole = userContext?.accountRole || session?.accountRole || 'CUSTOMER';
+  const canAccessAgent = accountRole === 'AGENT' || accountRole === 'SUPER_AGENT';
   const rows: [string, () => void][] = [
+    ...(canAccessAgent
+      ? [[isAgent ? t('sso.open_customer_portal') : t('sso.open_agent_portal'), () => go(isAgent ? '/' : '/agent')] as [string, () => void]]
+      : []),
     ...(isAgent ? [] : ([['Share Rewards', () => go('/invite')]] as [string, () => void][])),
     ['Coins history', () => go('/coins')],
     ['Notification settings', () => go('/notifications')],
     ['Language', () => setLang(true)],
     ['Program terms', () => go('/terms')],
+    [t('sso.sign_out'), () => { onClose(); logout(); navigate('/', { replace: true }); }],
   ];
   return (
     <>
       <Sheet open={open && !lang} onClose={onClose} title="More">
+        {session && (
+          <div className="rounded-[16px] bg-[#FFF4EA] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#E06C00]">{t('sso.current_account_label')}</p>
+            <p className="mt-0.5 truncate text-[14px] font-bold text-slate-900">
+              {session.fullName || session.externalUserId}
+              <span className="ml-1.5 text-[12px] font-normal text-slate-600">· {session.phoneNumber || session.externalUserId}</span>
+            </p>
+            <p className="mt-0.5 text-[12px] text-slate-600">
+              {t('sso.tenant_label')}: <span className="font-semibold">{session.tenantId}</span> · {accountRole}
+            </p>
+          </div>
+        )}
         <div className="divide-y divide-slate-100 rounded-[16px] bg-[#F7F7F8]">
           {rows.map(([label, fn]) => (
             <button key={label} type="button" onClick={fn} className="flex h-12 w-full items-center px-4 text-left text-[15px]">
-              <span className="flex-1">{label}</span>
+              <span className={`flex-1 ${label === t('sso.sign_out') ? 'font-semibold text-[#FE810D]' : ''}`}>{label}</span>
               <span className="text-slate-400">›</span>
             </button>
           ))}

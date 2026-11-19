@@ -1,5 +1,6 @@
 package com.natcash.loyalty.wheel.controller;
 
+import com.natcash.loyalty.security.SecurityContextUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.AutoBalancePrizesResponse;
 import com.natcash.loyalty.wheel.dto.LuckyWheelDto.SpinWheelRequest;
@@ -39,11 +40,12 @@ public class LuckyWheelController {
     public ResponseEntity<WheelConfigResponse> getWheelConfigGet(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestParam(value = "wheelCode", required = false, defaultValue = "LUCKY_WHEEL") String wheelCode,
-            @RequestParam(value = "externalUserId", required = false, defaultValue = "84988888888") String externalUserId) {
+            @RequestParam(value = "externalUserId", required = false) String externalUserId) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String resolvedUserId = SecurityContextUtils.resolveUserId(externalUserId);
         WheelConfigRequest request = WheelConfigRequest.builder()
                 .wheelCode(wheelCode)
-                .externalUserId(externalUserId)
+                .externalUserId(resolvedUserId)
                 .build();
         WheelConfigResponse response = luckyWheelService.getWheelConfig(tenantId, request);
         return ResponseEntity.ok(response);
