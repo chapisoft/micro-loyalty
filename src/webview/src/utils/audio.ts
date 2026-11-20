@@ -393,7 +393,71 @@ class GameAudioEngine {
   }
 
   /**
-   * 23. Bộ Rung Phản Hồi Xúc Giác Haptic Feedback Chuẩn Mobile
+   * 24. Tiếng Nhặt Đồng Xu Đơn (Nhẹ nhàng, êm tai, tần số trong trẻo, không leng xeng dồn dập)
+   */
+  public playCoinPickup(pitchMultiplier: number = 1.0) {
+    if (this.isMuted) return;
+    try {
+      const ctx = this.getOrCreateContext();
+      if (!ctx || !this.masterGain) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      const mult = Math.min(1.6, Math.max(0.75, pitchMultiplier));
+      const baseFreq = 987.77 * mult; // B5
+      const highFreq = 1318.51 * mult; // E6
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(baseFreq, now);
+      osc.frequency.setValueAtTime(highFreq, now + 0.035);
+
+      // Âm lượng nhẹ nhàng 0.16 (thay vì 0.9 như coin_rain), suy giảm nhanh 80ms
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(now);
+      osc.stop(now + 0.085);
+    } catch {
+      /* ignore audio errors */
+    }
+  }
+
+  /**
+   * 25. Tiếng Ăn Vật Phẩm Nâng Cấp / Power-Up Chime (Shield, Magnet, Turbo)
+   */
+  public playPowerUp() {
+    if (this.isMuted) return;
+    try {
+      const ctx = this.getOrCreateContext();
+      if (!ctx || !this.masterGain) return;
+      const now = ctx.currentTime;
+      // Hợp âm thăng hoa 4 nốt (C5 - E5 - G5 - C6) ngắn gọn, êm ái
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + i * 0.045);
+
+        gain.gain.setValueAtTime(0.2, now + i * 0.045);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.09);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+        osc.start(now + i * 0.045);
+        osc.stop(now + i * 0.045 + 0.09);
+      });
+      this.triggerHaptic('light');
+    } catch {
+      /* ignore audio errors */
+    }
+  }
+
+  /**
+   * 26. Bộ Rung Phản Hồi Xúc Giác Haptic Feedback Chuẩn Mobile
    */
   public triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' = 'light') {
     if (typeof navigator === 'undefined' || !navigator.vibrate) return;

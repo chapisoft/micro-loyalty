@@ -11,19 +11,38 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Dropdown } from 'primereact/dropdown';
+import { Calendar } from 'primereact/calendar';
 import { Tag } from 'primereact/tag';
 import { useTranslation } from 'react-i18next';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { StandardRowActions } from '@/components/StandardRowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TenantSelector } from '@/components/TenantSelector';
-import { CommonStatus, CustomerSegmentCode } from '@/models';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import { CommonStatus, MediaFolder } from '@/models';
 import {
   LoyaltyService,
   ContentBannerModel,
+  CustomerSegmentModel,
   PopupRuleModel,
   TargetedOfferModel,
+  VoucherItemModel,
 } from '@/service/loyalty.service';
+
+type BannerI18nMap = Record<'en' | 'fr' | 'ht', { title?: string; subtitle?: string }>;
+const EMPTY_BANNER_I18N: BannerI18nMap = { en: {}, fr: {}, ht: {} };
+const parseBannerI18n = (raw?: string): BannerI18nMap => {
+  try {
+    return { ...EMPTY_BANNER_I18N, ...(raw ? JSON.parse(raw) : {}) };
+  } catch {
+    return { ...EMPTY_BANNER_I18N };
+  }
+};
+const toDateValue = (raw?: string): Date | null => {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+};
 
 export const BannersPopupsOffersPage: React.FC = () => {
   const { t } = useTranslation();
@@ -37,9 +56,12 @@ export const BannersPopupsOffersPage: React.FC = () => {
   const [banners, setBanners] = useState<ContentBannerModel[]>([]);
   const [popups, setPopups] = useState<PopupRuleModel[]>([]);
   const [offers, setOffers] = useState<TargetedOfferModel[]>([]);
+  const [segments, setSegments] = useState<CustomerSegmentModel[]>([]);
+  const [vouchers, setVouchers] = useState<VoucherItemModel[]>([]);
 
   const [showBannerDialog, setShowBannerDialog] = useState(false);
   const [bannerForm, setBannerForm] = useState<Partial<ContentBannerModel>>({});
+  const [bannerI18n, setBannerI18n] = useState<BannerI18nMap>(EMPTY_BANNER_I18N);
 
   const [showPopupDialog, setShowPopupDialog] = useState(false);
   const [popupForm, setPopupForm] = useState<Partial<PopupRuleModel>>({});
@@ -57,13 +79,33 @@ export const BannersPopupsOffersPage: React.FC = () => {
     [t]
   );
 
-  const segmentOptions = useMemo(
-    () => [
+  const segmentOptions = useMemo(() => {
+    const opts = [
       { label: t('cn06.segment_all'), value: 'ALL' },
-      ...Object.values(CustomerSegmentCode).map((code) => ({ label: code, value: code })),
-    ],
-    [t]
-  );
+      ...segments.map((s) => ({
+        label: s.segmentName ? `${s.segmentName} (${s.segmentCode})` : s.segmentCode,
+        value: s.segmentCode,
+      })),
+    ];
+    for (const code of [bannerForm.segmentCode, offerForm.segmentCode]) {
+      if (code && code !== 'ALL' && !opts.some((o) => o.value === code)) {
+        opts.push({ label: code, value: code });
+      }
+    }
+    return opts;
+  }, [segments, bannerForm.segmentCode, offerForm.segmentCode, t]);
+
+  const voucherOptions = useMemo(() => {
+    const opts = vouchers.map((v) => ({
+      label: `[${v.voucherCode}] ${v.title}`,
+      value: v.voucherCode,
+    }));
+    const current = offerForm.voucherCode?.trim();
+    if (current && !opts.some((o) => o.value === current)) {
+      opts.push({ label: current, value: current });
+    }
+    return opts;
+  }, [vouchers, offerForm.voucherCode]);
 
   const popupTypeOptions = useMemo(
     () => [
@@ -95,14 +137,18 @@ export const BannersPopupsOffersPage: React.FC = () => {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [bannerList, popupList, offerList] = await Promise.all([
+      const [bannerList, popupList, offerList, segmentList, voucherList] = await Promise.all([
         LoyaltyService.getContentBannersAdmin(selectedTenant),
         LoyaltyService.getPopupRulesAdmin(selectedTenant),
         LoyaltyService.getTargetedOffersAdmin(selectedTenant),
+        LoyaltyService.getSegments(selectedTenant),
+        LoyaltyService.getVouchers(selectedTenant),
       ]);
       setBanners(bannerList);
       setPopups(popupList);
       setOffers(offerList);
+      setSegments(Array.isArray(segmentList) ? segmentList : []);
+      setVouchers(Array.isArray(voucherList) ? voucherList : []);
     } finally {
       setLoading(false);
     }
@@ -122,8 +168,11 @@ export const BannersPopupsOffersPage: React.FC = () => {
       deepLink: '/rewards',
       segmentCode: 'ALL',
       displayOrder: banners.length + 1,
+      startDate: '',
+      endDate: '',
       status: CommonStatus.ACTIVE,
     });
+    setBannerI18n({ en: {}, fr: {}, ht: {} });
     setShowBannerDialog(true);
   };
 
@@ -148,7 +197,13 @@ export const BannersPopupsOffersPage: React.FC = () => {
     }
     setSaving(true);
     try {
-      await LoyaltyService.saveContentBannerAdmin(bannerForm, selectedTenant);
+      await LoyaltyService.saveContentBannerAdmin(
+        {
+          ...bannerForm,
+          i18nJson: JSON.stringify(bannerI18n),
+        },
+        selectedTenant
+      );
       toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('cn06.saved') });
       setShowBannerDialog(false);
       await loadAll();
@@ -292,6 +347,7 @@ export const BannersPopupsOffersPage: React.FC = () => {
                   <StandardRowActions
                     onEdit={() => {
                       setBannerForm({ ...row });
+                      setBannerI18n(parseBannerI18n(row.i18nJson));
                       setShowBannerDialog(true);
                     }}
                     onDelete={() => handleDeleteBanner(row)}
@@ -403,7 +459,7 @@ export const BannersPopupsOffersPage: React.FC = () => {
       </div>
 
       {/* Dialog Banner */}
-      <Dialog visible={showBannerDialog} style={{ width: '38rem' }} header={t('cn06.banner_dialog_title')} modal onHide={() => setShowBannerDialog(false)}>
+      <Dialog visible={showBannerDialog} style={{ width: '44rem', maxWidth: '96vw' }} header={t('cn06.banner_dialog_title')} modal onHide={() => setShowBannerDialog(false)}>
         <div className="p-fluid grid">
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('cn06.placement')}</label>
@@ -411,7 +467,7 @@ export const BannersPopupsOffersPage: React.FC = () => {
           </div>
           <div className="col-12 md:col-6 field">
             <label className="text-sm font-medium">{t('cn06.segment')}</label>
-            <Dropdown value={bannerForm.segmentCode || 'ALL'} options={segmentOptions} onChange={(e) => setBannerForm({ ...bannerForm, segmentCode: e.value })} appendTo="self" />
+            <Dropdown value={bannerForm.segmentCode || 'ALL'} options={segmentOptions} onChange={(e) => setBannerForm({ ...bannerForm, segmentCode: e.value })} filter appendTo="self" />
           </div>
           <div className="col-12 field">
             <label className="text-sm font-medium">{t('cn06.title')} *</label>
@@ -420,6 +476,16 @@ export const BannersPopupsOffersPage: React.FC = () => {
           <div className="col-12 field">
             <label className="text-sm font-medium">{t('cn06.subtitle')}</label>
             <InputTextarea rows={2} value={bannerForm.subtitle || ''} onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })} />
+          </div>
+          <div className="col-12 field">
+            <ImageUploadField
+              value={bannerForm.imageUrl}
+              onChange={(url) => setBannerForm({ ...bannerForm, imageUrl: url })}
+              folder={MediaFolder.BANNERS}
+              tenantId={selectedTenant}
+              label={t('cn06.image_url')}
+              aspect="banner"
+            />
           </div>
           <div className="col-6 field">
             <label className="text-sm font-medium">{t('cn06.cta_label')}</label>
@@ -430,12 +496,69 @@ export const BannersPopupsOffersPage: React.FC = () => {
             <InputText value={bannerForm.deepLink || ''} onChange={(e) => setBannerForm({ ...bannerForm, deepLink: e.target.value })} className="font-mono" />
           </div>
           <div className="col-6 field">
+            <label className="text-sm font-medium">{t('cn06.start_date')}</label>
+            <Calendar
+              value={toDateValue(bannerForm.startDate)}
+              onChange={(e) => setBannerForm({ ...bannerForm, startDate: e.value ? (e.value as Date).toISOString() : '' })}
+              dateFormat="yy-mm-dd"
+              showIcon
+              showButtonBar
+              appendTo="self"
+            />
+          </div>
+          <div className="col-6 field">
+            <label className="text-sm font-medium">{t('cn06.end_date')}</label>
+            <Calendar
+              value={toDateValue(bannerForm.endDate)}
+              onChange={(e) => setBannerForm({ ...bannerForm, endDate: e.value ? (e.value as Date).toISOString() : '' })}
+              dateFormat="yy-mm-dd"
+              showIcon
+              showButtonBar
+              appendTo="self"
+            />
+          </div>
+          <div className="col-6 field">
             <label className="text-sm font-medium">{t('cn06.order')}</label>
             <InputNumber value={bannerForm.displayOrder ?? 1} onValueChange={(e) => setBannerForm({ ...bannerForm, displayOrder: e.value ?? 1 })} min={1} />
           </div>
           <div className="col-6 field">
             <label className="text-sm font-medium">{t('common.status')}</label>
             <Dropdown value={bannerForm.status || CommonStatus.ACTIVE} options={statusOptions} onChange={(e) => setBannerForm({ ...bannerForm, status: e.value })} appendTo="self" />
+          </div>
+          <div className="col-12">
+            <div className="surface-50 border-round-lg p-3 border-1 surface-border">
+              <div className="text-sm font-bold text-900 mb-2">{t('cn06.i18n_section')}</div>
+              <div className="grid">
+                {(['en', 'fr', 'ht'] as const).map((lng) => (
+                  <div key={lng} className="col-12 md:col-4 field mb-0">
+                    <label className="text-xs font-semibold text-700">
+                      {lng === 'en' ? 'English' : lng === 'fr' ? 'Français' : 'Kreyòl'}
+                    </label>
+                    <InputText
+                      value={bannerI18n[lng]?.title || ''}
+                      placeholder={t('cn06.title')}
+                      onChange={(e) =>
+                        setBannerI18n((prev) => ({
+                          ...prev,
+                          [lng]: { ...prev[lng], title: e.target.value },
+                        }))
+                      }
+                    />
+                    <InputText
+                      className="mt-2"
+                      value={bannerI18n[lng]?.subtitle || ''}
+                      placeholder={t('cn06.subtitle')}
+                      onChange={(e) =>
+                        setBannerI18n((prev) => ({
+                          ...prev,
+                          [lng]: { ...prev[lng], subtitle: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex justify-content-end gap-2 mt-3">
@@ -499,7 +622,7 @@ export const BannersPopupsOffersPage: React.FC = () => {
           </div>
           <div className="col-6 field">
             <label className="text-sm font-medium">{t('cn06.segment')}</label>
-            <Dropdown value={offerForm.segmentCode || 'ALL'} options={segmentOptions} onChange={(e) => setOfferForm({ ...offerForm, segmentCode: e.value })} appendTo="self" />
+            <Dropdown value={offerForm.segmentCode || 'ALL'} options={segmentOptions} onChange={(e) => setOfferForm({ ...offerForm, segmentCode: e.value })} filter appendTo="self" />
           </div>
           <div className="col-12 field">
             <label className="text-sm font-medium">{t('cn06.title')} *</label>
@@ -511,7 +634,15 @@ export const BannersPopupsOffersPage: React.FC = () => {
           </div>
           <div className="col-6 field">
             <label className="text-sm font-medium">{t('cn06.voucher_code')}</label>
-            <InputText value={offerForm.voucherCode || ''} onChange={(e) => setOfferForm({ ...offerForm, voucherCode: e.target.value })} className="font-mono" />
+            <Dropdown
+              value={offerForm.voucherCode || null}
+              options={voucherOptions}
+              onChange={(e) => setOfferForm({ ...offerForm, voucherCode: e.value || '' })}
+              placeholder={t('cn06.voucher_placeholder')}
+              filter
+              showClear
+              appendTo="self"
+            />
           </div>
           <div className="col-6 field">
             <label className="text-sm font-medium">{t('cn06.channels')}</label>

@@ -224,6 +224,41 @@ class SoundHapticsEngine {
   }
 
   /**
+   * 6b. Tiếng rót nước / bọt nước (Water Pouring / Liquid Stream)
+   */
+  public playWaterPour(bubbles = 3): void {
+    if (this.muted) return;
+    this.triggerHaptic(30);
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+      const now = this.audioCtx.currentTime;
+
+      // Chuỗi âm thanh bọt nước với tần số cao độ tăng dần mô phỏng dòng chất lỏng chảy vào bình
+      for (let i = 0; i < Math.max(2, bubbles); i++) {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        const startTime = now + i * 0.08;
+        const baseFreq = 460 + i * 110;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq, startTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.45, startTime + 0.07);
+
+        gain.gain.setValueAtTime(0.28, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.07);
+
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.07);
+      }
+    } catch {
+      /* ignore audio/storage errors */
+    }
+  }
+
+  /**
    * 7. Tiếng vỗ cánh bay / Nhảy (Flap / Jump)
    */
   public playFlap(): void {
@@ -483,6 +518,123 @@ class SoundHapticsEngine {
       gain.connect(this.audioCtx.destination);
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.1);
+    } catch {
+      /* ignore audio/storage errors */
+    }
+  }
+
+  /**
+   * 16. Tiếng Combo thăng tiến theo bậc thang âm nhạc (Do-Re-Mi-Fa-Sol)
+   */
+  public playComboProgress(streak: number): void {
+    if (this.muted) return;
+    this.triggerHaptic(Math.min(35, 12 + streak * 4));
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+      const pitches = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.5];
+      const freq = pitches[Math.min(streak - 1, pitches.length - 1)] || 523.25;
+
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.08, this.audioCtx.currentTime + 0.12);
+
+      gain.gain.setValueAtTime(0.35, this.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.12);
+
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start();
+      osc.stop(this.audioCtx.currentTime + 0.12);
+    } catch {
+      /* ignore audio/storage errors */
+    }
+  }
+
+  /**
+   * 17. Tiếng Kích hoạt Fever Mode / Siêu cấp bùng nổ
+   */
+  public playFeverActive(): void {
+    if (this.muted) return;
+    this.triggerHaptic([30, 25, 45, 20, 60]);
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+      [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+        if (!this.audioCtx) return;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'triangle';
+        const start = this.audioCtx.currentTime + idx * 0.04;
+        osc.frequency.setValueAtTime(freq, start);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.25, start + 0.16);
+
+        gain.gain.setValueAtTime(0.35, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.16);
+
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(start);
+        osc.stop(start + 0.16);
+      });
+    } catch {
+      /* ignore audio/storage errors */
+    }
+  }
+
+  /**
+   * 18. Tiếng Nhịp tim đếm ngược hồi sinh (Heartbeat Tick)
+   */
+  public playHeartbeatTick(): void {
+    if (this.muted) return;
+    this.triggerHaptic([35, 40, 25]);
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(110, this.audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(55, this.audioCtx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.65, this.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.08);
+
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start();
+      osc.stop(this.audioCtx.currentTime + 0.08);
+    } catch {
+      /* ignore audio/storage errors */
+    }
+  }
+
+  /**
+   * 19. Tiếng Nhận thưởng Vật phẩm Viễn thông / Xu Natcash
+   */
+  public playNatcashReward(): void {
+    if (this.muted) return;
+    this.triggerHaptic([20, 25, 40]);
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+      [659.25, 830.61, 987.77, 1318.51].forEach((freq, idx) => {
+        if (!this.audioCtx) return;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'sine';
+        const start = this.audioCtx.currentTime + idx * 0.045;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.4, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(start);
+        osc.stop(start + 0.18);
+      });
     } catch {
       /* ignore audio/storage errors */
     }

@@ -562,6 +562,47 @@ header.sticky {
     padding: 0.75rem 1rem !important;
     border-bottom: 1.5px solid #e2e8f0 !important;
     white-space: nowrap !important;
+    vertical-align: middle !important;
+
+    .p-column-header-content {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 0.35rem !important;
+      width: 100% !important;
+    }
+
+    .p-column-title,
+    .p-sortable-column-icon,
+    .p-sortable-column-badge,
+    [data-pc-section='sort'] {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      flex-shrink: 0 !important;
+    }
+
+    &.p-selection-column,
+    &.p-align-center,
+    &.text-center,
+    &[style*='text-align: center'],
+    &[style*='text-align:center'] {
+      text-align: center !important;
+
+      .p-column-header-content {
+        justify-content: center !important;
+      }
+    }
+
+    &.p-align-right,
+    &.text-right,
+    &[style*='text-align: right'],
+    &[style*='text-align:right'] {
+      text-align: right !important;
+
+      .p-column-header-content {
+        justify-content: flex-end !important;
+      }
+    }
   }
 
   .p-datatable-tbody > tr {
@@ -569,26 +610,56 @@ header.sticky {
 
     > td {
       padding: 0.75rem 1rem !important;
-      color: #1e293b !important;
+      color: #334155 !important;
       font-size: 0.94rem !important;
       font-weight: 400 !important;
       border-bottom: 1px solid #f1f5f9 !important;
       line-height: 1.4 !important;
+      vertical-align: middle !important;
 
-      // Status tags inside datatable must be font-weight: 400 with soft styling
-      .p-tag {
-        font-weight: 400 !important;
-        font-size: 0.85rem !important;
-        border-radius: 9999px !important;
-        padding: 0.25rem 0.75rem !important;
-        letter-spacing: 0 !important;
-        text-transform: none !important;
+      &.p-selection-column {
+        text-align: center !important;
       }
 
-      // Code columns can be font-semibold/600
+      // Status tags inside datatable must be font-weight: 500 with soft pill styling
+      .p-tag {
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
+        border-radius: 9999px !important;
+        padding: 0.25rem 0.85rem !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+
+        &.p-tag-success {
+          background-color: #E6F6EA !important;
+          color: #1E693A !important;
+          border: none !important;
+        }
+
+        &.p-tag-secondary,
+        &.p-tag-info {
+          background-color: #F1F5F9 !important;
+          color: #475569 !important;
+          border: none !important;
+        }
+
+        &.p-tag-warning {
+          background-color: #FEF3C7 !important;
+          color: #D97706 !important;
+          border: none !important;
+        }
+
+        &.p-tag-danger {
+          background-color: #FEE2E2 !important;
+          color: #DC2626 !important;
+          border: none !important;
+        }
+      }
+
+      // Code columns unified with standard table text color
       .col-code, [data-code="true"], .cell-code {
         font-weight: 600 !important;
-        color: #0f172a !important;
+        color: #334155 !important;
       }
     }
 
@@ -814,3 +885,5 @@ header.sticky {
   justify-content: center !important;
   gap: 0.5rem !important;
 }
+
+@import './figma-standard';

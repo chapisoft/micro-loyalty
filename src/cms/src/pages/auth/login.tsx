@@ -161,7 +161,7 @@ export function Login() {
         {/* Middle Value Pitch */}
         <div className="my-auto py-5 relative z-1" style={{ maxWidth: 580 }}>
           <div
-            className="inline-flex align-items-center gap-2 px-3 py-1 mb-4 border-round-3xl"
+            className="inline-flex align-items-center gap-2 px-3 py-1 mb-4 border-round-xl"
             style={{
               background: 'rgba(255, 107, 0, 0.08)',
               border: '1.5px solid rgba(255, 107, 0, 0.25)',
@@ -313,7 +313,7 @@ export function Login() {
         {/* Center Card */}
         <div className="my-auto mx-auto w-full" style={{ maxWidth: 460 }}>
           <div
-            className="p-5 md:p-6 border-round-2xl"
+            className="p-5 md:p-6 border-round-xl"
             style={{
               background: 'rgba(255, 255, 255, 0.98)',
               backdropFilter: 'blur(20px) saturate(180%)',

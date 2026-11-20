@@ -141,7 +141,7 @@ export function SandboxGroupsPage() {
       </div>
 
       {/* Table */}
-      <div className="surface-card p-4 border-round-2xl border-1 surface-border shadow-1">
+      <div className="surface-card p-4 border-round-xl border-1 surface-border shadow-1">
         <DataTable value={groups} loading={loading} paginator rows={10} emptyMessage={t('sandbox.no_groups')} className="p-datatable-sm">
           <Column
             header={t('common.order_number', 'STT')}

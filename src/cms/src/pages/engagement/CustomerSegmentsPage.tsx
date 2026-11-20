@@ -186,7 +186,7 @@ export const CustomerSegmentsPage: React.FC = () => {
       >
         <div className="flex justify-content-between align-items-center mb-3">
           <span className="text-sm text-600">{t('segment.members_preview')}</span>
-          <Button icon="pi pi-download" label={t('common.export_csv')} size="small" outlined onClick={handleExportCsv} disabled={members.length === 0} />
+          <Button icon="pi pi-file-excel" label={t('common.export_excel', 'Xuất Excel')} size="small" outlined onClick={handleExportCsv} disabled={members.length === 0} />
         </div>
         {membersLoading ? (
           <div className="flex flex-column gap-2"><Skeleton height="2.2rem" /><Skeleton height="2.2rem" /></div>

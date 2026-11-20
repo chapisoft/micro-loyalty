@@ -16,24 +16,39 @@ type PowerUpType = 'SHIELD' | 'MAGNET' | 'TURBO';
 
 interface Obstacle {
   lane: Lane;
-  y: number; // distance from top (horizon) to bottom (screen)
+  z: number; // world depth from player (0 = player, 110 = horizon)
   type: 'TAPTAP' | 'BARRIER_LOW' | 'BARRIER_HIGH';
-  width: number;
-  height: number;
   passed: boolean;
 }
 
 interface CoinItem {
   lane: Lane;
-  y: number;
+  z: number;
   collected: boolean;
 }
 
 interface PowerUpItem {
   lane: Lane;
-  y: number;
+  z: number;
   type: PowerUpType;
   collected: boolean;
+}
+
+const FOV = 24;
+const MAX_Z = 115;
+
+function projectZ(z: number, horizonY: number, playerBaseY: number) {
+  const clampedZ = Math.max(-10, z);
+  const scale = FOV / (FOV + clampedZ);
+  const screenY = horizonY + scale * (playerBaseY - horizonY);
+  return { scale, screenY };
+}
+
+function getLaneXAtZ(lane: number, z: number, width: number, horizonY: number, playerBaseY: number) {
+  const { scale } = projectZ(z, horizonY, playerBaseY);
+  const roadHalfBottom = width * 0.44;
+  const laneOffset = (lane - 1) * (roadHalfBottom * 0.64) * scale;
+  return width * 0.5 + laneOffset;
 }
 
 export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, onClaimReward }) => {
@@ -63,26 +78,31 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
 
   // Runner player ref
   const playerRef = useRef<{
-    lane: Lane;
-    x: number;
-    targetX: number;
-    jumpY: number;
-    vy: number;
+    targetLane: Lane;
+    lanePos: number;
+    jumpHeight: number;
+    jumpVel: number;
     state: 'RUN' | 'JUMP' | 'SLIDE';
     slideTimer: number;
+    pendingSlide: boolean;
     shield: boolean;
     runCycle: number;
   }>({
-    lane: 1,
-    x: 180,
-    targetX: 180,
-    jumpY: 0,
-    vy: 0,
+    targetLane: 1,
+    lanePos: 1,
+    jumpHeight: 0,
+    jumpVel: 0,
     state: 'RUN',
     slideTimer: 0,
+    pendingSlide: false,
     shield: false,
     runCycle: 0,
   });
+
+  const gameStateRef = useRef<'IDLE' | 'RUNNING' | 'GAMEOVER'>(gameState);
+  gameStateRef.current = gameState;
+  const highScoreRef = useRef<number>(highScore);
+  highScoreRef.current = highScore;
 
   const obstaclesRef = useRef<Obstacle[]>([]);
   const coinsRef = useRef<CoinItem[]>([]);
@@ -91,30 +111,23 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
   const frameIdRef = useRef<number | null>(null);
   const distRef = useRef<number>(0);
   const coinsCountRef = useRef<number>(0);
-  const lastSpawnYRef = useRef<number>(0);
+  const spawnCooldownRef = useRef<number>(1.25);
+  const roadScrollZRef = useRef<number>(0);
   const magnetTimerRef = useRef<number>(0);
   const turboTimerRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
-  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number; time: number; consumed: boolean } | null>(null);
+  const lastReportedDistRef = useRef<number>(-1);
+  const lastReportedSpeedRef = useRef<number>(-1);
+  const lastHudSyncRef = useRef<number>(0);
+  const bufferedActionRef = useRef<{ action: 'JUMP' | 'SLIDE'; expiresAt: number } | null>(null);
   const invulnerableUntilRef = useRef<number>(0);
+  const canvasSizeRef = useRef<{ width: number; height: number }>({ width: 360, height: 460 });
+  const lastCoinSoundTimeRef = useRef<number>(0);
+  const coinPitchStepRef = useRef<number>(0);
 
-  const GRAVITY = 0.85;
-  const JUMP_FORCE = -14.5;
-
-  const getLaneX = (lane: Lane, width: number) => {
-    const centerX = width * 0.5;
-    const spread = width * 0.28;
-    return centerX + (lane - 1) * spread;
-  };
-
-  const getLanePerspectiveX = (lane: Lane, yProgress: number, width: number) => {
-    const centerX = width * 0.5;
-    const clampedProgress = Math.max(0, Math.min(1.2, yProgress));
-    // True non-linear perspective convergence towards vanishing point
-    const curve = Math.pow(clampedProgress, 1.25);
-    const spread = 16 + curve * (width * 0.28 - 16);
-    return centerX + (lane - 1) * spread;
-  };
+  const RUNNER_GRAVITY = 1480; // px/s^2
+  const RUNNER_JUMP_VEL = 430; // px/s (~0.58s airtime)
 
   const toggleSound = () => {
     const next = !soundEnabled;
@@ -123,16 +136,14 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
   };
 
   const startGame = useCallback(() => {
-    const width = canvasRef.current?.parentElement?.clientWidth || 360;
-    const centerLaneX = getLaneX(1, width);
     playerRef.current = {
-      lane: 1,
-      x: centerLaneX,
-      targetX: centerLaneX,
-      jumpY: 0,
-      vy: 0,
+      targetLane: 1,
+      lanePos: 1,
+      jumpHeight: 0,
+      jumpVel: 0,
       state: 'RUN',
       slideTimer: 0,
+      pendingSlide: false,
       shield: false,
       runCycle: 0,
     };
@@ -142,99 +153,113 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     fxRef.current.clear();
     distRef.current = 0;
     coinsCountRef.current = 0;
-    lastSpawnYRef.current = 0;
+    spawnCooldownRef.current = 1.25; // Safe start runway before first obstacle arrives
+    roadScrollZRef.current = 0;
     magnetTimerRef.current = 0;
     turboTimerRef.current = 0;
+    lastTimeRef.current = 0;
+    lastReportedDistRef.current = 0;
+    lastReportedSpeedRef.current = 1;
+    lastHudSyncRef.current = 0;
+    bufferedActionRef.current = null;
     invulnerableUntilRef.current = 0;
+
+    gameStateRef.current = 'RUNNING';
     setDistance(0);
     setCoins(0);
     setHasShield(false);
     setMagnetSeconds(0);
     setTurboSeconds(0);
     setSpeedMultiplier(1);
+    setShowRewardModal(false);
     setGameState('RUNNING');
     GameSounds.playStart();
   }, []);
 
-  // Initialize player position on mount
-  useEffect(() => {
-    const width = canvasRef.current?.parentElement?.clientWidth || 360;
-    const centerLaneX = getLaneX(1, width);
-    playerRef.current.x = centerLaneX;
-    playerRef.current.targetX = centerLaneX;
+  const moveLeft = useCallback(() => {
+    if (gameStateRef.current !== 'RUNNING') return;
+    const p = playerRef.current;
+    if (p.targetLane > 0) {
+      p.targetLane = (p.targetLane - 1) as Lane;
+      GameSounds.playTap();
+      const { width, height } = canvasSizeRef.current;
+      const horizonY = height * 0.28;
+      const playerBaseY = height * 0.80;
+      const px = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+      fxRef.current.spawnSmokePuff(px, playerBaseY, 4);
+    }
   }, []);
 
-  const moveLeft = useCallback(() => {
-    if (gameState !== 'RUNNING') return;
-    const p = playerRef.current;
-    if (p.lane > 0) {
-      p.lane = (p.lane - 1) as Lane;
-      const width = canvasRef.current?.parentElement?.clientWidth || 360;
-      p.targetX = getLaneX(p.lane, width);
-      GameSounds.playTap();
-      const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
-      fxRef.current.spawnSmokePuff(p.x, playerBaseY, 4);
-    }
-  }, [gameState]);
-
   const moveRight = useCallback(() => {
-    if (gameState !== 'RUNNING') return;
+    if (gameStateRef.current !== 'RUNNING') return;
     const p = playerRef.current;
-    if (p.lane < 2) {
-      p.lane = (p.lane + 1) as Lane;
-      const width = canvasRef.current?.parentElement?.clientWidth || 360;
-      p.targetX = getLaneX(p.lane, width);
+    if (p.targetLane < 2) {
+      p.targetLane = (p.targetLane + 1) as Lane;
       GameSounds.playTap();
-      const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
-      fxRef.current.spawnSmokePuff(p.x, playerBaseY, 4);
+      const { width, height } = canvasSizeRef.current;
+      const horizonY = height * 0.28;
+      const playerBaseY = height * 0.80;
+      const px = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+      fxRef.current.spawnSmokePuff(px, playerBaseY, 4);
     }
-  }, [gameState]);
+  }, []);
 
   const jump = useCallback(() => {
-    if (gameState === 'IDLE') {
-      startGame();
-      return;
-    }
-    if (gameState === 'GAMEOVER') {
+    if (gameStateRef.current !== 'RUNNING') {
       startGame();
       return;
     }
     const p = playerRef.current;
-    if (p.jumpY <= 0.1 && p.state !== 'JUMP') {
-      p.vy = JUMP_FORCE;
+    if (p.jumpHeight <= 1 && p.state !== 'JUMP') {
+      p.jumpVel = RUNNER_JUMP_VEL;
       p.state = 'JUMP';
+      p.pendingSlide = false;
       GameSounds.playTap();
-      const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
-      fxRef.current.spawnSmokePuff(p.x, playerBaseY, 6);
+      const { width, height } = canvasSizeRef.current;
+      const horizonY = height * 0.28;
+      const playerBaseY = height * 0.80;
+      const px = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+      fxRef.current.spawnSmokePuff(px, playerBaseY, 6);
+    } else {
+      // Input buffer for smooth chained jump on touchdown
+      bufferedActionRef.current = { action: 'JUMP', expiresAt: performance.now() + 140 };
     }
-  }, [gameState, startGame, JUMP_FORCE]);
+  }, [startGame]);
 
   const slide = useCallback(() => {
-    if (gameState !== 'RUNNING') return;
+    if (gameStateRef.current !== 'RUNNING') return;
     const p = playerRef.current;
     if (p.state === 'JUMP') {
-      p.vy = 16;
+      // Fast-fall mid-air and seamlessly chain into slide
+      p.jumpVel = Math.min(p.jumpVel, -680);
+      p.pendingSlide = true;
+      bufferedActionRef.current = { action: 'SLIDE', expiresAt: performance.now() + 220 };
+      GameSounds.playScratch();
+      return;
     }
     p.state = 'SLIDE';
-    p.slideTimer = 34; // ~0.58s
+    p.slideTimer = 0.62;
     GameSounds.playScratch();
-    const playerBaseY = Math.min(window.innerHeight - 200, 480) * 0.82;
-    fxRef.current.spawnSmokePuff(p.x, playerBaseY, 5);
-  }, [gameState]);
+    const { width, height } = canvasSizeRef.current;
+    const horizonY = height * 0.28;
+    const playerBaseY = height * 0.80;
+    const px = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+    fxRef.current.spawnSmokePuff(px, playerBaseY, 5);
+  }, []);
 
   // Global Keyboard Controls (WASD / Arrows / Space)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp' || e.key === 'KeyW' || e.key === ' ' || e.code === 'Space') {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.code === 'Space') {
         e.preventDefault();
         jump();
-      } else if (e.key === 'ArrowDown' || e.key === 'KeyS') {
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         e.preventDefault();
         slide();
-      } else if (e.key === 'ArrowLeft' || e.key === 'KeyA') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         e.preventDefault();
         moveLeft();
-      } else if (e.key === 'ArrowRight' || e.key === 'KeyD') {
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         e.preventDefault();
         moveRight();
       }
@@ -244,36 +269,46 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [jump, slide, moveLeft, moveRight]);
 
-  // Touch Swipe Gesture Handlers on Canvas
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  // Unified Pointer Swipe Gesture Handlers (instant trigger on drag threshold)
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now(), consumed: false };
   };
 
-  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!touchStartRef.current) return;
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - touchStartRef.current.x;
-    const dy = touch.clientY - touchStartRef.current.y;
-    const elapsed = Date.now() - touchStartRef.current.time;
-    touchStartRef.current = null;
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    if (!start || start.consumed || gameStateRef.current !== 'RUNNING') return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) < 24) return;
 
-    if (elapsed > 600) return;
-
+    start.consumed = true;
     if (Math.abs(dy) > Math.abs(dx)) {
-      if (dy < -25) {
-        jump();
-      } else if (dy > 25) {
-        slide();
-      }
+      if (dy < 0) jump();
+      else slide();
     } else {
-      if (dx < -25) {
-        moveLeft();
-      } else if (dx > 25) {
-        moveRight();
-      } else {
-        jump();
-      }
+      if (dx < 0) moveLeft();
+      else moveRight();
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    if (!start) return;
+    pointerStartRef.current = null;
+    if (start.consumed) return;
+
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+
+    if (gameStateRef.current !== 'RUNNING') {
+      if (Math.hypot(dx, dy) < 20) startGame();
+      return;
+    }
+
+    if (elapsed > 700) return;
+    if (Math.hypot(dx, dy) < 16) {
+      jump();
     }
   };
 
@@ -281,39 +316,62 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = canvas.parentElement?.clientWidth || 360;
-    const height = Math.min(window.innerHeight - 200, 480);
+    const height = Math.min(window.innerHeight - 210, 470);
+    canvasSizeRef.current = { width, height };
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
     const horizonY = height * 0.28;
-    const playerBaseY = height * 0.82;
+    const playerBaseY = height * 0.80;
+
+    // Cache static sky & asphalt gradients once outside render loop
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+    skyGrad.addColorStop(0, '#0F172A');
+    skyGrad.addColorStop(0.3, '#581C87');
+    skyGrad.addColorStop(0.65, '#BE185D');
+    skyGrad.addColorStop(0.85, '#F97316');
+    skyGrad.addColorStop(1, '#FDE047');
+
+    const asphaltGrad = ctx.createLinearGradient(0, horizonY, 0, height);
+    asphaltGrad.addColorStop(0, '#334155');
+    asphaltGrad.addColorStop(0.35, '#1E293B');
+    asphaltGrad.addColorStop(1, '#0F172A');
+
+    lastTimeRef.current = 0;
 
     const render = (time: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = time;
-      const dt = Math.min(0.1, (time - lastTimeRef.current) / 1000);
+      const dtSec = Math.min(0.05, Math.max(0.001, (time - lastTimeRef.current) / 1000));
+      const dt60 = dtSec * 60;
       lastTimeRef.current = time;
 
+      const isRunning = gameStateRef.current === 'RUNNING';
+
       // Power-up timers countdown
-      if (gameState === 'RUNNING') {
+      if (isRunning) {
         if (magnetTimerRef.current > 0) {
-          magnetTimerRef.current = Math.max(0, magnetTimerRef.current - dt);
+          magnetTimerRef.current = Math.max(0, magnetTimerRef.current - dtSec);
           setMagnetSeconds(Math.ceil(magnetTimerRef.current));
         }
         if (turboTimerRef.current > 0) {
-          turboTimerRef.current = Math.max(0, turboTimerRef.current - dt);
+          turboTimerRef.current = Math.max(0, turboTimerRef.current - dtSec);
           setTurboSeconds(Math.ceil(turboTimerRef.current));
         }
       }
 
-      // Base run speed & Turbo
+      // Unified world speed in Z-units per second
       const isTurbo = turboTimerRef.current > 0;
-      const currentSpeed = (4.8 + Math.min(5.5, distRef.current * 0.009)) * (isTurbo ? 1.55 : 1.0);
+      const baseWorldSpeed = 38 + Math.min(34, distRef.current * 0.045);
+      const worldSpeed = baseWorldSpeed * (isTurbo ? 1.4 : 1.0);
+      if (isRunning) {
+        roadScrollZRef.current = (roadScrollZRef.current + worldSpeed * dtSec) % 16;
+      }
 
       // 0. Screen Shake Offset
       const shake = fxRef.current.getShakeOffset();
@@ -321,24 +379,18 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       ctx.translate(shake.x, shake.y);
 
       // 1. Caribbean Sunset Sky Gradient with Atmospheric Haze
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
-      skyGrad.addColorStop(0, '#0F172A');
-      skyGrad.addColorStop(0.3, '#581C87');
-      skyGrad.addColorStop(0.65, '#BE185D');
-      skyGrad.addColorStop(0.85, '#F97316');
-      skyGrad.addColorStop(1, '#FDE047');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(-20, -20, width + 40, horizonY + 20);
 
-      // Warm Sun Disk with Multi-layer Flares
-      ctx.save();
+      // Warm Sun Disk with Lightweight Translucent Flare Halo (zero shadowBlur)
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.28)';
+      ctx.beginPath();
+      ctx.arc(width * 0.5, horizonY - 14, 42, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = '#FEF08A';
-      ctx.shadowColor = '#F97316';
-      ctx.shadowBlur = 35;
       ctx.beginPath();
       ctx.arc(width * 0.5, horizonY - 14, 28, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
 
       // Distant Caribbean Mountains Silhouette
       ctx.fillStyle = '#451A03';
@@ -354,257 +406,270 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       ctx.closePath();
       ctx.fill();
 
-      // Port-au-Prince Distant Skyline & 4G Telecom Towers on Horizon
+      // Port-au-Prince Distant Skyline
       ctx.fillStyle = '#1E1B4B';
       for (let bx = 15; bx < width - 15; bx += 32) {
         const bH = 12 + Math.sin(bx * 0.1) * 8;
         ctx.fillRect(bx, horizonY - bH, 20, bH);
-        // Neon windows
         ctx.fillStyle = '#FDE047';
         ctx.fillRect(bx + 4, horizonY - bH + 3, 3, 3);
         ctx.fillRect(bx + 12, horizonY - bH + 3, 3, 3);
         ctx.fillStyle = '#1E1B4B';
       }
 
-      // 2. 3D Perspective Highway Road
-      // Lush Caribbean Grass Curbs
+      // 2. Unified 3D Perspective Highway Road (Driven 100% by projectZ)
       ctx.fillStyle = '#14532D';
       ctx.fillRect(0, horizonY, width, height - horizonY);
 
-      // 3D Asphalt Trapezoid
-      const asphaltGrad = ctx.createLinearGradient(0, horizonY, 0, height);
-      asphaltGrad.addColorStop(0, '#334155');
-      asphaltGrad.addColorStop(0.3, '#1E293B');
-      asphaltGrad.addColorStop(1, '#0F172A');
-      ctx.fillStyle = asphaltGrad;
+      const farZ = 240;
+      const nearScale = (height - horizonY) / (playerBaseY - horizonY);
+      const nearZ = FOV / nearScale - FOV;
+      const farProj = projectZ(farZ, horizonY, playerBaseY);
+      const nearProj = projectZ(nearZ, horizonY, playerBaseY);
+      const roadHalfFar = width * 0.44 * farProj.scale;
+      const roadHalfNear = width * 0.44 * nearProj.scale;
 
+      // 3D Asphalt Trapezoid
+      ctx.fillStyle = asphaltGrad;
       ctx.beginPath();
-      ctx.moveTo(width * 0.5 - 38, horizonY);
-      ctx.lineTo(width * 0.5 + 38, horizonY);
-      ctx.lineTo(width * 0.5 + width * 0.46, height);
-      ctx.lineTo(width * 0.5 - width * 0.46, height);
+      ctx.moveTo(width * 0.5 - roadHalfFar, farProj.screenY);
+      ctx.lineTo(width * 0.5 + roadHalfFar, farProj.screenY);
+      ctx.lineTo(width * 0.5 + roadHalfNear, height);
+      ctx.lineTo(width * 0.5 - roadHalfNear, height);
       ctx.closePath();
       ctx.fill();
 
-      // 3D Red-and-White Beveled Roadside Curbs
-      const curbCount = 14;
-      const curbOffset = (time * currentSpeed * 0.04) % 1;
-      for (let c = 0; c < curbCount; c++) {
-        const p1 = (c + curbOffset) / curbCount;
-        const p2 = (c + 1 + curbOffset) / curbCount;
-        if (p1 > 1.1) continue;
+      // Unified 3D Red-and-White Curbs & Yellow Lane Dashes (stepped in world Z)
+      const zStep = 8;
+      const scrollMod = roadScrollZRef.current;
+      for (let idx = 0; idx < 22; idx++) {
+        const zFarSeg = 176 - idx * zStep - (scrollMod % 16);
+        const zNearSeg = zFarSeg - zStep;
+        if (zFarSeg <= nearZ || zNearSeg >= farZ) continue;
 
-        const y1 = horizonY + Math.pow(p1, 1.4) * (height - horizonY);
-        const y2 = horizonY + Math.pow(p2, 1.4) * (height - horizonY);
+        const pFar = projectZ(Math.min(farZ, zFarSeg), horizonY, playerBaseY);
+        const pNear = projectZ(Math.max(nearZ, zNearSeg), horizonY, playerBaseY);
 
-        const leftX1 = width * 0.5 - (38 + Math.pow(p1, 1.25) * (width * 0.46 - 38));
-        const leftX2 = width * 0.5 - (38 + Math.pow(p2, 1.25) * (width * 0.46 - 38));
-        const rightX1 = width * 0.5 + (38 + Math.pow(p1, 1.25) * (width * 0.46 - 38));
-        const rightX2 = width * 0.5 + (38 + Math.pow(p2, 1.25) * (width * 0.46 - 38));
+        const halfW1 = width * 0.44 * pFar.scale;
+        const halfW2 = width * 0.44 * pNear.scale;
 
-        ctx.fillStyle = c % 2 === 0 ? '#DC2626' : '#F8FAFC';
-        // Left Curb segment
+        ctx.fillStyle = idx % 2 === 0 ? '#DC2626' : '#F8FAFC';
+        // Left curb
         ctx.beginPath();
-        ctx.moveTo(leftX1, y1);
-        ctx.lineTo(leftX1 - 8 * p1, y1);
-        ctx.lineTo(leftX2 - 8 * p2, y2);
-        ctx.lineTo(leftX2, y2);
+        ctx.moveTo(width * 0.5 - halfW1, pFar.screenY);
+        ctx.lineTo(width * 0.5 - halfW1 - 9 * pFar.scale, pFar.screenY);
+        ctx.lineTo(width * 0.5 - halfW2 - 9 * pNear.scale, pNear.screenY);
+        ctx.lineTo(width * 0.5 - halfW2, pNear.screenY);
         ctx.closePath();
         ctx.fill();
 
-        // Right Curb segment
+        // Right curb
         ctx.beginPath();
-        ctx.moveTo(rightX1, y1);
-        ctx.lineTo(rightX1 + 8 * p1, y1);
-        ctx.lineTo(rightX2 + 8 * p2, y2);
-        ctx.lineTo(rightX2, y2);
+        ctx.moveTo(width * 0.5 + halfW1, pFar.screenY);
+        ctx.lineTo(width * 0.5 + halfW1 + 9 * pFar.scale, pFar.screenY);
+        ctx.lineTo(width * 0.5 + halfW2 + 9 * pNear.scale, pNear.screenY);
+        ctx.lineTo(width * 0.5 + halfW2, pNear.screenY);
         ctx.closePath();
         ctx.fill();
-      }
 
-      // Animated 3-Lane Perspective Dividers (Rushing Dashes)
-      const dashCount = 12;
-      const dashOffset = (time * currentSpeed * 0.05) % 1;
-      ctx.lineWidth = 2.5;
+        // Alternating lane dividers
+        if (idx % 2 === 0) {
+          const zDashNear = Math.max(nearZ, zFarSeg - zStep * 0.55);
+          const pDashNear = projectZ(zDashNear, horizonY, playerBaseY);
+          const div1 = halfW1 * 0.32;
+          const div2 = width * 0.44 * pDashNear.scale * 0.32;
+          ctx.strokeStyle = `rgba(254, 240, 138, ${Math.min(0.95, pFar.scale * 1.4)})`;
+          ctx.lineWidth = Math.max(1, 2.8 * pDashNear.scale);
 
-      for (let d = 0; d < dashCount; d++) {
-        const p1 = (d + dashOffset) / dashCount;
-        const p2 = (d + 0.55 + dashOffset) / dashCount;
-        if (p1 >= 1.0) continue;
-
-        const y1 = horizonY + Math.pow(p1, 1.4) * (height - horizonY);
-        const y2 = horizonY + Math.pow(p2, 1.4) * (height - horizonY);
-
-        const dividerSpread1 = 12 + Math.pow(p1, 1.25) * (width * 0.145 - 12);
-        const dividerSpread2 = 12 + Math.pow(p2, 1.25) * (width * 0.145 - 12);
-
-        ctx.strokeStyle = `rgba(254, 240, 138, ${Math.min(1, p1 * 1.5)})`;
-
-        // Left-Center Divider
-        ctx.beginPath();
-        ctx.moveTo(width * 0.5 - dividerSpread1, y1);
-        ctx.lineTo(width * 0.5 - dividerSpread2, y2);
-        ctx.stroke();
-
-        // Center-Right Divider
-        ctx.beginPath();
-        ctx.moveTo(width * 0.5 + dividerSpread1, y1);
-        ctx.lineTo(width * 0.5 + dividerSpread2, y2);
-        ctx.stroke();
-      }
-
-      // Parallax Swaying Palm Trees along curbs
-      const treeParallax = (time * currentSpeed * 0.02) % 120;
-      for (let tIdx = 0; tIdx < 4; tIdx++) {
-        const tProgress = (tIdx * 30 + treeParallax) / 120;
-        const tScale = 0.3 + Math.pow(tProgress, 1.3) * 0.9;
-        const tY = horizonY + Math.pow(tProgress, 1.4) * (height - horizonY);
-        const tLeftX = width * 0.5 - (50 + Math.pow(tProgress, 1.25) * (width * 0.49 - 50));
-        const tRightX = width * 0.5 + (50 + Math.pow(tProgress, 1.25) * (width * 0.49 - 50));
-
-        if (tY > horizonY + 10 && tY < height + 40) {
-          // Left Tree
-          ctx.save();
-          ctx.translate(tLeftX, tY);
-          ctx.scale(tScale, tScale);
-          ctx.fillStyle = '#78350F';
-          ctx.fillRect(-3, -40, 6, 40);
-          ctx.fillStyle = '#15803D';
           ctx.beginPath();
-          ctx.arc(0, -42, 18, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
-          // Right Tree
-          ctx.save();
-          ctx.translate(tRightX, tY);
-          ctx.scale(tScale, tScale);
-          ctx.fillStyle = '#78350F';
-          ctx.fillRect(-3, -40, 6, 40);
-          ctx.fillStyle = '#16A34A';
-          ctx.beginPath();
-          ctx.arc(0, -42, 18, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          ctx.moveTo(width * 0.5 - div1, pFar.screenY);
+          ctx.lineTo(width * 0.5 - div2, pDashNear.screenY);
+          ctx.moveTo(width * 0.5 + div1, pFar.screenY);
+          ctx.lineTo(width * 0.5 + div2, pDashNear.screenY);
+          ctx.stroke();
         }
       }
 
-      // 3. Spawning & Movement Logic
-      if (gameState === 'RUNNING') {
-        distRef.current += (isTurbo ? 0.38 : 0.22) * (currentSpeed / 4.8);
-        setDistance(Math.floor(distRef.current));
-        setSpeedMultiplier(Number((currentSpeed / 4.8).toFixed(1)));
+      // Unified 3D Palm Trees along curbs
+      for (let tIdx = 5; tIdx >= 0; tIdx--) {
+        const treeZ = 180 - tIdx * 32 - ((scrollMod * 2) % 32);
+        if (treeZ <= nearZ + 2 || treeZ > 190) continue;
+        const pTree = projectZ(treeZ, horizonY, playerBaseY);
+        const roadHalf = width * 0.44 * pTree.scale;
+        const tLeftX = width * 0.5 - roadHalf - 22 * pTree.scale;
+        const tRightX = width * 0.5 + roadHalf + 22 * pTree.scale;
 
-        // Spawn obstacles and items along perspective distance
-        if (time - lastSpawnYRef.current > Math.max(850, 1500 - distRef.current * 1.5) / (currentSpeed / 4.8)) {
-          lastSpawnYRef.current = time;
+        ctx.save();
+        ctx.translate(tLeftX, pTree.screenY);
+        ctx.scale(pTree.scale, pTree.scale);
+        ctx.fillStyle = '#78350F';
+        ctx.fillRect(-3, -44, 6, 44);
+        ctx.fillStyle = '#15803D';
+        ctx.beginPath();
+        ctx.arc(0, -46, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-          const chosenLane: Lane = Math.floor(Math.random() * 3) as Lane;
-          const obsRoll = Math.random();
-          const obsType = obsRoll < 0.45 ? 'TAPTAP' : obsRoll < 0.75 ? 'BARRIER_LOW' : 'BARRIER_HIGH';
+        ctx.save();
+        ctx.translate(tRightX, pTree.screenY);
+        ctx.scale(pTree.scale, pTree.scale);
+        ctx.fillStyle = '#78350F';
+        ctx.fillRect(-3, -44, 6, 44);
+        ctx.fillStyle = '#16A34A';
+        ctx.beginPath();
+        ctx.arc(0, -46, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
 
-          obstaclesRef.current.push({
-            lane: chosenLane,
-            y: 0,
-            type: obsType,
-            width: 52,
-            height: obsType === 'TAPTAP' ? 46 : 28,
-            passed: false,
+      // 3. Spawning & World-Z Movement Logic
+      const p = playerRef.current;
+
+      if (isRunning) {
+        distRef.current += worldSpeed * 0.28 * dtSec;
+        const nextDist = Math.floor(distRef.current);
+        if (nextDist !== lastReportedDistRef.current && time - lastHudSyncRef.current >= 120) {
+          lastReportedDistRef.current = nextDist;
+          lastHudSyncRef.current = time;
+          setDistance(nextDist);
+        }
+        const nextSpeed = Number((worldSpeed / 38).toFixed(1));
+        if (nextSpeed !== lastReportedSpeedRef.current) {
+          lastReportedSpeedRef.current = nextSpeed;
+          setSpeedMultiplier(nextSpeed);
+        }
+
+        spawnCooldownRef.current -= dtSec;
+        if (spawnCooldownRef.current <= 0) {
+          const minDelay = Math.max(0.68, 1.18 - distRef.current * 0.00055);
+          spawnCooldownRef.current = minDelay / (isTurbo ? 1.25 : 1.0);
+
+          // Guarantee at least 1 open safe lane every wave!
+          const safeLane: Lane = Math.floor(Math.random() * 3) as Lane;
+          const otherLanes = ([0, 1, 2] as Lane[]).filter((l) => l !== safeLane);
+          const doubleProb =
+            distRef.current < 60
+              ? 0
+              : distRef.current < 180
+              ? 0.28
+              : Math.min(0.48, 0.28 + (distRef.current - 180) * 0.0005);
+          const doubleObstacle = Math.random() < doubleProb;
+          const obstacleLanes = doubleObstacle
+            ? otherLanes
+            : [otherLanes[Math.floor(Math.random() * otherLanes.length)]];
+
+          obstacleLanes.forEach((lane) => {
+            const obsRoll = Math.random();
+            const obsType = obsRoll < 0.42 ? 'TAPTAP' : obsRoll < 0.72 ? 'BARRIER_LOW' : 'BARRIER_HIGH';
+            obstaclesRef.current.push({
+              lane,
+              z: MAX_Z,
+              type: obsType,
+              passed: false,
+            });
           });
 
-          // Spawn coins on other lanes
-          const coinLane: Lane = ((chosenLane + 1 + Math.floor(Math.random() * 2)) % 3) as Lane;
+          // Spawn 3 coins along the open safe lane
           for (let i = 0; i < 3; i++) {
             coinsRef.current.push({
-              lane: coinLane,
-              y: -i * 38,
+              lane: safeLane,
+              z: MAX_Z + i * 10,
               collected: false,
             });
           }
 
-          // Random Power-Up Spawn (18% chance)
+          // Random Power-Up Spawn (20% chance) in safe lane ahead of coins
           if (Math.random() < 0.2) {
             const puChoices: PowerUpType[] = ['SHIELD', 'MAGNET', 'TURBO'];
             const puType = puChoices[Math.floor(Math.random() * puChoices.length)];
-            const puLane: Lane = ((chosenLane + 2) % 3) as Lane;
             powerUpsRef.current.push({
-              lane: puLane,
-              y: -50,
+              lane: safeLane,
+              z: MAX_Z + 34,
               type: puType,
               collected: false,
             });
           }
         }
 
-        // Advance obstacles along Y
+        // Advance world entities toward player (z -> negative)
         for (let i = obstaclesRef.current.length - 1; i >= 0; i--) {
           const obs = obstaclesRef.current[i];
-          obs.y += currentSpeed * 0.95;
-          if (obs.y > height + 90) obstaclesRef.current.splice(i, 1);
+          obs.z -= worldSpeed * dtSec;
+          if (obs.z < nearZ - 8) obstaclesRef.current.splice(i, 1);
         }
 
-        // Advance coins
         for (let i = coinsRef.current.length - 1; i >= 0; i--) {
           const c = coinsRef.current[i];
-          c.y += currentSpeed * 0.95;
-          if (c.y > height + 90) coinsRef.current.splice(i, 1);
+          c.z -= worldSpeed * dtSec;
+          if (c.z < nearZ - 8) coinsRef.current.splice(i, 1);
         }
 
-        // Advance power-ups
         for (let i = powerUpsRef.current.length - 1; i >= 0; i--) {
           const pu = powerUpsRef.current[i];
-          pu.y += currentSpeed * 0.95;
-          if (pu.y > height + 90) powerUpsRef.current.splice(i, 1);
+          pu.z -= worldSpeed * dtSec;
+          if (pu.z < nearZ - 8) powerUpsRef.current.splice(i, 1);
         }
 
-        // Player physics & Smooth Lane Interpolation
-        const p = playerRef.current;
-        p.x += (p.targetX - p.x) * 0.28;
-        p.runCycle += 0.26;
+        // Smooth Exponential Lane Interpolation + Run/Jump/Slide Physics
+        p.lanePos += (p.targetLane - p.lanePos) * (1 - Math.exp(-18 * dtSec));
+        p.runCycle += 15 * dtSec;
 
         if (p.state === 'JUMP') {
-          p.vy += GRAVITY;
-          p.jumpY += p.vy;
-          if (p.jumpY >= 0) {
-            p.jumpY = 0;
-            p.vy = 0;
-            p.state = 'RUN';
-            fxRef.current.spawnSmokePuff(p.x, playerBaseY, 4);
+          p.jumpHeight += p.jumpVel * dtSec;
+          p.jumpVel -= RUNNER_GRAVITY * dtSec;
+          if (p.jumpHeight <= 0) {
+            p.jumpHeight = 0;
+            p.jumpVel = 0;
+            const playerScreenX = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+            fxRef.current.spawnSmokePuff(playerScreenX, playerBaseY, 4);
+
+            const nowPerf = performance.now();
+            const buffered = bufferedActionRef.current;
+            if (p.pendingSlide || (buffered && buffered.action === 'SLIDE' && nowPerf <= buffered.expiresAt)) {
+              p.state = 'SLIDE';
+              p.slideTimer = 0.62;
+              p.pendingSlide = false;
+              bufferedActionRef.current = null;
+            } else if (buffered && buffered.action === 'JUMP' && nowPerf <= buffered.expiresAt) {
+              p.jumpVel = RUNNER_JUMP_VEL;
+              p.state = 'JUMP';
+              bufferedActionRef.current = null;
+              GameSounds.playTap();
+            } else {
+              p.state = 'RUN';
+            }
           }
         } else if (p.state === 'SLIDE') {
-          p.slideTimer -= 1;
+          p.slideTimer -= dtSec;
           if (p.slideTimer <= 0) {
             p.state = 'RUN';
           }
         }
 
-        // Collisions check with obstacles
-        const pScreenX = p.x;
-        const pScreenY = playerBaseY + p.jumpY;
+        const pScreenX = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+        const pScreenY = playerBaseY - p.jumpHeight;
 
+        // Accurate World-Z & Lane-Overlap Collision Check
         for (const obs of obstaclesRef.current) {
-          const obsScreenY = horizonY + obs.y;
-
-          if (obs.lane === p.lane && Math.abs(obsScreenY - playerBaseY) < 30) {
+          if (obs.z > -4.5 && obs.z < 6.5 && Math.abs(obs.lane - p.lanePos) < 0.44) {
             let safe = false;
-            if (obs.type === 'BARRIER_LOW' && p.state === 'JUMP' && p.jumpY < -22) {
-              safe = true; // jumped over low barrier
+            if (obs.type === 'BARRIER_LOW' && p.jumpHeight > 22) {
+              safe = true;
             } else if (obs.type === 'BARRIER_HIGH' && p.state === 'SLIDE') {
-              safe = true; // slid under high barrier
+              safe = true;
             }
 
             if (!safe && time > invulnerableUntilRef.current) {
               if (p.shield) {
-                // Shield absorbs hit!
                 p.shield = false;
                 setHasShield(false);
                 invulnerableUntilRef.current = time + 1000;
                 fxRef.current.addScreenShake(0.6);
                 fxRef.current.spawnSparkles(pScreenX, pScreenY - 20, 30, '#38BDF8');
                 fxRef.current.spawnFloatText(pScreenX, pScreenY - 35, 'SHIELD SAVED! 🛡️', '#38BDF8');
-                GameSounds.playWinFanfare();
+                GameSounds.playPowerUp();
               } else {
-                // GAMEOVER
+                gameStateRef.current = 'GAMEOVER';
                 setGameState('GAMEOVER');
                 fxRef.current.addScreenShake(0.9);
                 fxRef.current.spawnSparkles(pScreenX, pScreenY - 20, 35, '#EF4444');
@@ -619,10 +684,12 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
                   setTimeout(() => setShowRewardModal(true), 600);
                 }
 
-                if (distRef.current > highScore) {
-                  setHighScore(Math.floor(distRef.current));
+                if (distRef.current > highScoreRef.current) {
+                  const newBest = Math.floor(distRef.current);
+                  highScoreRef.current = newBest;
+                  setHighScore(newBest);
                   try {
-                    localStorage.setItem('runner_best_distance', String(Math.floor(distRef.current)));
+                    localStorage.setItem('runner_best_distance', String(newBest));
                   } catch {
                     /* ignore storage errors */
                   }
@@ -635,21 +702,21 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
 
         // Coin Magnetic Attraction & Collection
         coinsRef.current.forEach((coin) => {
-          if (!coin.collected && coin.y > 0) {
-            const coinYProgress = coin.y / (playerBaseY - horizonY);
-            let coinScreenX = getLanePerspectiveX(coin.lane, coinYProgress, width);
-            let coinScreenY = horizonY + coin.y;
+          if (!coin.collected && coin.z < MAX_Z) {
+            const proj = projectZ(coin.z, horizonY, playerBaseY);
+            let coinScreenX = getLaneXAtZ(coin.lane, coin.z, width, horizonY, playerBaseY);
+            let coinScreenY = proj.screenY;
 
-            if (magnetTimerRef.current > 0) {
-              const dist = Math.hypot(pScreenX - coinScreenX, playerBaseY - coinScreenY);
-              if (dist < 190) {
-                coinScreenX += (pScreenX - coinScreenX) * 0.22;
-                coinScreenY += (playerBaseY - coinScreenY) * 0.22;
-              }
+            if (magnetTimerRef.current > 0 && coin.z < 55) {
+              const pull = Math.min(0.4, 10 * dtSec);
+              coinScreenX += (pScreenX - coinScreenX) * pull;
+              coinScreenY += (pScreenY - 16 - coinScreenY) * pull;
             }
 
-            const dist = Math.hypot(pScreenX - coinScreenX, pScreenY - 20 - coinScreenY);
-            if (dist < 28) {
+            const laneClose = Math.abs(coin.lane - p.lanePos) < 0.65 || magnetTimerRef.current > 0;
+            const zClose = coin.z > -6 && coin.z < 10;
+            const screenClose = Math.hypot(pScreenX - coinScreenX, pScreenY - 18 - coinScreenY) < 34;
+            if ((laneClose && zClose) || screenClose) {
               coin.collected = true;
               const coinGain = isTurbo ? 2 : 1;
               coinsCountRef.current += coinGain;
@@ -661,487 +728,356 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
                 coinGain > 1 ? '+2 🪙' : '+1 🪙',
                 '#F59E0B'
               );
-              GameSounds.playCoinRain();
+              // Tiết lưu âm thanh nhặt xu (tối thiểu 70ms giữa các nốt) để không phát dồn dập đinh tai
+              const nowPerf = performance.now();
+              if (nowPerf - lastCoinSoundTimeRef.current >= 70) {
+                lastCoinSoundTimeRef.current = nowPerf;
+                coinPitchStepRef.current = (coinPitchStepRef.current + 1) % 8;
+                GameSounds.playCoinPickup(1.0 + coinPitchStepRef.current * 0.04);
+              }
             }
           }
         });
 
         // Power-Up Collection
         powerUpsRef.current.forEach((pu) => {
-          if (!pu.collected && pu.y > 0) {
-            const puYProgress = pu.y / (playerBaseY - horizonY);
-            const puScreenX = getLanePerspectiveX(pu.lane, puYProgress, width);
-            const puScreenY = horizonY + pu.y;
-            const dist = Math.hypot(pScreenX - puScreenX, pScreenY - 20 - puScreenY);
+          if (!pu.collected && pu.z > -6 && pu.z < 10 && Math.abs(pu.lane - p.lanePos) < 0.55) {
+            pu.collected = true;
+            const puProj = projectZ(pu.z, horizonY, playerBaseY);
+            const puScreenX = getLaneXAtZ(pu.lane, pu.z, width, horizonY, playerBaseY);
+            const puScreenY = puProj.screenY;
+            GameSounds.playPowerUp();
 
-            if (dist < 32) {
-              pu.collected = true;
-              GameSounds.playWinFanfare();
-
-              if (pu.type === 'SHIELD') {
-                playerRef.current.shield = true;
-                setHasShield(true);
-                fxRef.current.spawnSparkles(puScreenX, puScreenY, 25, '#38BDF8');
-                fxRef.current.spawnFloatText(puScreenX, puScreenY - 25, '4G SHIELD! 🛡️', '#38BDF8');
-              } else if (pu.type === 'MAGNET') {
-                magnetTimerRef.current = 7;
-                setMagnetSeconds(7);
-                fxRef.current.spawnSparkles(puScreenX, puScreenY, 25, '#EF4444');
-                fxRef.current.spawnFloatText(puScreenX, puScreenY - 25, 'MAGNET! 🧲', '#EF4444');
-              } else if (pu.type === 'TURBO') {
-                turboTimerRef.current = 6;
-                setTurboSeconds(6);
-                fxRef.current.spawnSparkles(puScreenX, puScreenY, 25, '#F59E0B');
-                fxRef.current.spawnFloatText(puScreenX, puScreenY - 25, '2X TURBO! ⭐', '#F59E0B');
-              }
+            if (pu.type === 'SHIELD') {
+              playerRef.current.shield = true;
+              setHasShield(true);
+              fxRef.current.spawnSparkles(puScreenX, puScreenY, 25, '#38BDF8');
+              fxRef.current.spawnFloatText(puScreenX, puScreenY - 25, '4G SHIELD! 🛡️', '#38BDF8');
+            } else if (pu.type === 'MAGNET') {
+              magnetTimerRef.current = 7;
+              setMagnetSeconds(7);
+              fxRef.current.spawnSparkles(puScreenX, puScreenY, 25, '#EF4444');
+              fxRef.current.spawnFloatText(puScreenX, puScreenY - 25, 'MAGNET! 🧲', '#EF4444');
+            } else if (pu.type === 'TURBO') {
+              turboTimerRef.current = 6;
+              setTurboSeconds(6);
+              fxRef.current.spawnSparkles(puScreenX, puScreenY, 25, '#F59E0B');
+              fxRef.current.spawnFloatText(puScreenX, puScreenY - 25, '2X TURBO! ⭐', '#F59E0B');
             }
           }
         });
       }
 
-      // 4. Draw Obstacles (3D Haitian Tap-Tap Buses & Neon Road Barriers)
+      // 4. Depth-Sorted Back-to-Front Rendering of Obstacles, Coins & Power-Ups
+      type RenderableItem =
+        | { z: number; kind: 'OBS'; obs: Obstacle }
+        | { z: number; kind: 'COIN'; coin: CoinItem }
+        | { z: number; kind: 'PU'; pu: PowerUpItem };
+
+      const renderList: RenderableItem[] = [];
       obstaclesRef.current.forEach((obs) => {
-        if (obs.y < 0) return;
-        const yProgress = obs.y / (playerBaseY - horizonY);
-        const scale = 0.35 + Math.pow(Math.min(1.2, yProgress), 1.25) * 0.72;
-        const screenX = getLanePerspectiveX(obs.lane, yProgress, width);
-        const screenY = horizonY + obs.y;
+        if (obs.z <= MAX_Z && obs.z > nearZ) renderList.push({ z: obs.z, kind: 'OBS', obs });
+      });
+      coinsRef.current.forEach((coin) => {
+        if (!coin.collected && coin.z <= MAX_Z && coin.z > nearZ) renderList.push({ z: coin.z, kind: 'COIN', coin });
+      });
+      powerUpsRef.current.forEach((pu) => {
+        if (!pu.collected && pu.z <= MAX_Z && pu.z > nearZ) renderList.push({ z: pu.z, kind: 'PU', pu });
+      });
+      renderList.sort((a, b) => b.z - a.z);
 
-        ctx.save();
-        ctx.translate(screenX, screenY);
-        ctx.scale(scale, scale);
+      renderList.forEach((entry) => {
+        const proj = projectZ(entry.z, horizonY, playerBaseY);
+        const scale = proj.scale;
 
-        if (obs.type === 'TAPTAP') {
-          // ── 3D AUTHENTIC HAITIAN TAP-TAP BUS (POP-ART MASTERPIECE) ──
-          const bounceY = Math.sin(time * 0.018 + obs.lane * 3) * 1.5;
-          ctx.translate(0, bounceY);
+        if (entry.kind === 'OBS') {
+          const obs = entry.obs;
+          const screenX = getLaneXAtZ(obs.lane, obs.z, width, horizonY, playerBaseY);
+          const screenY = proj.screenY;
 
-          // 1. Soft Ambient Ground Shadow under tires
           ctx.save();
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-          ctx.beginPath();
-          ctx.ellipse(0, 24, 38, 12, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          ctx.translate(screenX, screenY);
+          ctx.scale(scale, scale);
 
-          // 2. Volumetric Headlight Beams illuminating road
-          ctx.save();
-          const beamGrad = ctx.createLinearGradient(0, 10, 0, 75);
-          beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
-          beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0.0)');
-          ctx.fillStyle = beamGrad;
+          if (obs.type === 'TAPTAP') {
+            // ── 3D AUTHENTIC HAITIAN TAP-TAP BUS ──
+            const bounceY = Math.sin(time * 0.018 + obs.lane * 3) * 1.5;
+            ctx.translate(0, bounceY);
 
-          ctx.beginPath();
-          ctx.moveTo(-18, 10);
-          ctx.lineTo(-38, 75);
-          ctx.lineTo(-6, 75);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.moveTo(18, 10);
-          ctx.lineTo(6, 75);
-          ctx.lineTo(38, 75);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-
-          // 3. Four 3D Road Tires with Alloy Rims
-          ctx.fillStyle = '#0F172A';
-          ctx.beginPath();
-          ctx.roundRect(-34, 4, 10, 20, 4);
-          ctx.fill();
-          ctx.fillStyle = '#64748B';
-          ctx.fillRect(-32, 8, 6, 12);
-
-          ctx.fillStyle = '#0F172A';
-          ctx.beginPath();
-          ctx.roundRect(24, 4, 10, 20, 4);
-          ctx.fill();
-          ctx.fillStyle = '#64748B';
-          ctx.fillRect(26, 8, 6, 12);
-
-          // 4. Main Tap-Tap Bus Cab Body (Vibrant Caribbean Blue/Cyan 3D Metallic)
-          const cabGrad = ctx.createLinearGradient(-30, -28, 30, 25);
-          cabGrad.addColorStop(0, '#0284C7');
-          cabGrad.addColorStop(0.3, '#38BDF8');
-          cabGrad.addColorStop(0.7, '#0284C7');
-          cabGrad.addColorStop(1, '#0C4A6E');
-          ctx.fillStyle = cabGrad;
-          ctx.beginPath();
-          ctx.roundRect(-30, -28, 60, 46, 10);
-          ctx.fill();
-          ctx.strokeStyle = '#FDE047';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // 5. Haitian Kanaval Festive Stripes & Pop-Art Decals
-          ctx.fillStyle = '#DC2626'; // Scarlet Red Stripe
-          ctx.fillRect(-30, -2, 60, 8);
-          ctx.fillStyle = '#F59E0B'; // Marigold Yellow Stripe
-          ctx.fillRect(-30, 6, 60, 6);
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(-30, -3, 60, 1.5);
-
-          // Kanaval Geometric Triangular Pattern
-          ctx.fillStyle = '#FEF08A';
-          for (let px = -24; px < 24; px += 10) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.beginPath();
-            ctx.moveTo(px, -2);
-            ctx.lineTo(px + 5, 5);
-            ctx.lineTo(px + 10, -2);
+            ctx.ellipse(0, 4, 38, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.translate(0, -20);
+
+            const beamGrad = ctx.createLinearGradient(0, 10, 0, 60);
+            beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.4)');
+            beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0.0)');
+            ctx.fillStyle = beamGrad;
+            ctx.beginPath();
+            ctx.moveTo(-18, 10);
+            ctx.lineTo(-34, 60);
+            ctx.lineTo(-6, 60);
             ctx.closePath();
             ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(18, 10);
+            ctx.lineTo(6, 60);
+            ctx.lineTo(34, 60);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#0F172A';
+            ctx.beginPath();
+            ctx.roundRect(-34, 4, 10, 20, 4);
+            ctx.roundRect(24, 4, 10, 20, 4);
+            ctx.fill();
+
+            const cabGrad = ctx.createLinearGradient(-30, -28, 30, 25);
+            cabGrad.addColorStop(0, '#0284C7');
+            cabGrad.addColorStop(0.3, '#38BDF8');
+            cabGrad.addColorStop(0.7, '#0284C7');
+            cabGrad.addColorStop(1, '#0C4A6E');
+            ctx.fillStyle = cabGrad;
+            ctx.beginPath();
+            ctx.roundRect(-30, -28, 60, 46, 10);
+            ctx.fill();
+            ctx.strokeStyle = '#FDE047';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#DC2626';
+            ctx.fillRect(-30, -2, 60, 8);
+            ctx.fillStyle = '#F59E0B';
+            ctx.fillRect(-30, 6, 60, 6);
+
+            const glassGrad = ctx.createLinearGradient(0, -24, 0, -8);
+            glassGrad.addColorStop(0, '#38BDF8');
+            glassGrad.addColorStop(0.5, '#E0F2FE');
+            glassGrad.addColorStop(1, '#0284C7');
+            ctx.fillStyle = glassGrad;
+            ctx.beginPath();
+            ctx.roundRect(-24, -24, 48, 18, 5);
+            ctx.fill();
+
+            ctx.fillStyle = '#DC2626';
+            ctx.fillRect(-24, -24, 48, 6);
+            ctx.fillStyle = '#FEF08A';
+            ctx.font = 'bold 5px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('NATCOM 4G LTE', 0, -19);
+
+            ctx.fillStyle = '#FEF08A';
+            ctx.beginPath();
+            ctx.arc(-20, 10, 5, 0, Math.PI * 2);
+            ctx.arc(20, 10, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#D97706';
+            ctx.beginPath();
+            ctx.roundRect(-20, -40, 14, 9, 3);
+            ctx.fill();
+            ctx.fillStyle = '#EA580C';
+            ctx.beginPath();
+            ctx.roundRect(-4, -42, 16, 11, 2);
+            ctx.fill();
+          } else if (obs.type === 'BARRIER_LOW') {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(0, 2, 30, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#EA580C';
+            ctx.beginPath();
+            ctx.roundRect(-28, -22, 56, 16, 3);
+            ctx.fill();
+
+            ctx.fillStyle = '#FFFFFF';
+            for (let x = -24; x < 26; x += 12) {
+              ctx.beginPath();
+              ctx.moveTo(x, -22);
+              ctx.lineTo(x + 6, -22);
+              ctx.lineTo(x + 2, -6);
+              ctx.lineTo(x - 4, -6);
+              ctx.closePath();
+              ctx.fill();
+            }
+
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(-24, -6, 6, 10);
+            ctx.fillRect(18, -6, 6, 10);
+
+            const blink = Math.sin(time * 0.012) > 0;
+            ctx.fillStyle = blink ? '#FEF08A' : '#78350F';
+            ctx.beginPath();
+            ctx.arc(-22, -26, 4, 0, Math.PI * 2);
+            ctx.arc(22, -26, 4, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // HIGH OVERHEAD 4G LASER GANTRY (SLIDE UNDER)
+            ctx.fillStyle = '#0F172A';
+            ctx.beginPath();
+            ctx.roundRect(-34, -56, 68, 22, 4);
+            ctx.fill();
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#FEF08A';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('▼ SLIDE 4G ▼', 0, -42);
+
+            const laserAlpha = 0.55 + Math.sin(time * 0.01) * 0.3;
+            ctx.fillStyle = `rgba(239, 68, 68, ${laserAlpha})`;
+            ctx.fillRect(-30, -34, 60, 4);
+
+            ctx.fillStyle = '#64748B';
+            ctx.fillRect(-32, -34, 5, 38);
+            ctx.fillRect(27, -34, 5, 38);
           }
 
-          // 6. Panoramic Tinted Windshield with Horizon Sunset Reflection
-          const glassGrad = ctx.createLinearGradient(0, -24, 0, -8);
-          glassGrad.addColorStop(0, '#38BDF8');
-          glassGrad.addColorStop(0.5, '#E0F2FE');
-          glassGrad.addColorStop(1, '#0284C7');
-          ctx.fillStyle = glassGrad;
+          ctx.restore();
+        } else if (entry.kind === 'COIN') {
+          const coin = entry.coin;
+          const screenX = getLaneXAtZ(coin.lane, coin.z, width, horizonY, playerBaseY);
+          const floatY = Math.sin(time * 0.006 + coin.z * 0.15) * 4;
+          const screenY = proj.screenY - 18 * scale + floatY;
+
+          ctx.save();
+          ctx.translate(screenX, screenY);
+          ctx.scale(scale, scale);
+
+          const spinPhase = time * 0.007 + coin.lane * 1.5 + coin.z * 0.08;
+          const spin = Math.cos(spinPhase);
+          const xRadius = Math.max(1.8, 11 * Math.abs(spin));
+          const isBackSide = spin < 0;
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
           ctx.beginPath();
-          ctx.roundRect(-24, -24, 48, 18, 5);
+          ctx.ellipse(0, 18 - floatY, 12, 4, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.strokeStyle = '#0369A1';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
 
-          // Sun-Visor Top Banner
-          ctx.fillStyle = '#DC2626';
-          ctx.fillRect(-24, -24, 48, 6);
-          ctx.fillStyle = '#FEF08A';
-          ctx.font = 'bold 5px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('NATCOM 4G LTE', 0, -19);
-
-          // Windshield Wipers
-          ctx.strokeStyle = '#1E293B';
-          ctx.lineWidth = 1.2;
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.24)';
           ctx.beginPath();
-          ctx.moveTo(-14, -8);
-          ctx.lineTo(-4, -16);
-          ctx.moveTo(4, -8);
-          ctx.lineTo(14, -16);
-          ctx.stroke();
-
-          // 7. Heavy-Duty Chrome Bumper & Bull-Bar Grille
-          const bumperGrad = ctx.createLinearGradient(0, 12, 0, 22);
-          bumperGrad.addColorStop(0, '#F8FAFC');
-          bumperGrad.addColorStop(0.5, '#94A3B8');
-          bumperGrad.addColorStop(1, '#334155');
-          ctx.fillStyle = bumperGrad;
-          ctx.beginPath();
-          ctx.roundRect(-28, 12, 56, 9, 4);
+          ctx.ellipse(0, 0, xRadius + 3, 14, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.strokeStyle = '#CBD5E1';
+
+          const coinGrad = ctx.createRadialGradient(-2, -2, 2, 0, 0, 11);
+          coinGrad.addColorStop(0, '#FEF08A');
+          coinGrad.addColorStop(0.35, '#F59E0B');
+          coinGrad.addColorStop(0.8, '#D97706');
+          coinGrad.addColorStop(1, '#92400E');
+          ctx.fillStyle = coinGrad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, xRadius, 11, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#FEF08A';
           ctx.lineWidth = 1;
           ctx.stroke();
 
-          // License Plate (Haiti)
-          ctx.fillStyle = '#0F172A';
-          ctx.fillRect(-10, 14, 20, 6);
-          ctx.fillStyle = '#FEF08A';
-          ctx.font = 'bold 5px monospace';
-          ctx.textAlign = 'center';
-          ctx.fillText('HT-2048', 0, 19);
-
-          // Dual Crystal Halogen Headlights (Lit)
-          ctx.save();
-          ctx.shadowColor = '#FBBF24';
-          ctx.shadowBlur = 14;
-          ctx.fillStyle = '#FEF08A';
-          ctx.beginPath();
-          ctx.arc(-20, 10, 5.5, 0, Math.PI * 2);
-          ctx.arc(20, 10, 5.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#FFFFFF';
-          ctx.beginPath();
-          ctx.arc(-20, 10, 3, 0, Math.PI * 2);
-          ctx.arc(20, 10, 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
-          // Amber Indicator Lights
-          ctx.fillStyle = '#F97316';
-          ctx.beginPath();
-          ctx.arc(-26, 10, 2.5, 0, Math.PI * 2);
-          ctx.arc(26, 10, 2.5, 0, Math.PI * 2);
-          ctx.fill();
-
-          // 8. Roof Luggage Rack with Packed Haitian Cargo
-          ctx.fillStyle = '#475569';
-          ctx.fillRect(-26, -32, 52, 4);
-          ctx.fillRect(-22, -36, 3, 5);
-          ctx.fillRect(19, -36, 3, 5);
-
-          // Woven Haitian Straw Basket
-          ctx.fillStyle = '#D97706';
-          ctx.beginPath();
-          ctx.roundRect(-20, -41, 14, 9, 3);
-          ctx.fill();
-
-          // Vintage Orange Suitcase with Leather Straps
-          ctx.fillStyle = '#EA580C';
-          ctx.beginPath();
-          ctx.roundRect(-4, -43, 16, 11, 2);
-          ctx.fill();
-          ctx.fillStyle = '#78350F';
-          ctx.fillRect(-1, -43, 2.5, 11);
-          ctx.fillRect(7, -43, 2.5, 11);
-
-          // Spare Tire with Deep Treads
-          ctx.fillStyle = '#1E293B';
-          ctx.beginPath();
-          ctx.ellipse(17, -37, 7, 6, Math.PI * 0.1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#94A3B8';
-          ctx.beginPath();
-          ctx.arc(17, -37, 3, 0, Math.PI * 2);
-          ctx.fill();
-
-          // 9. Exhaust Tailpipe with Animated Smoke Puffs
-          ctx.fillStyle = '#64748B';
-          ctx.fillRect(-32, 16, 4, 4);
-          const smokePuff = (time * 0.008) % 1;
-          ctx.fillStyle = `rgba(226, 232, 240, ${0.45 * (1 - smokePuff)})`;
-          ctx.beginPath();
-          ctx.arc(-36 - smokePuff * 8, 14 - smokePuff * 4, 3 + smokePuff * 5, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (obs.type === 'BARRIER_LOW') {
-          // ── LOW 3D REFLECTIVE CONSTRUCTION BARRIER (JUMP OVER) ──
-          // Ambient Shadow
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-          ctx.beginPath();
-          ctx.ellipse(0, 8, 30, 6, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Main Barricade Beam
-          ctx.fillStyle = '#EA580C';
-          ctx.beginPath();
-          ctx.roundRect(-28, -16, 56, 16, 3);
-          ctx.fill();
-
-          // High-Visibility Diagonal Chevron Reflectors
-          ctx.fillStyle = '#FFFFFF';
-          for (let x = -24; x < 26; x += 12) {
-            ctx.beginPath();
-            ctx.moveTo(x, -16);
-            ctx.lineTo(x + 6, -16);
-            ctx.lineTo(x + 2, 0);
-            ctx.lineTo(x - 4, 0);
-            ctx.closePath();
-            ctx.fill();
+          if (xRadius > 5) {
+            ctx.fillStyle = '#78350F';
+            ctx.font = `bold ${Math.round(8 * Math.abs(spin))}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(isBackSide ? '★' : 'N', 0, 0);
           }
 
-          // Steel Support A-Frames
-          ctx.fillStyle = '#475569';
-          ctx.fillRect(-24, 0, 6, 14);
-          ctx.fillRect(18, 0, 6, 14);
-
-          // Pulsing Dual Amber Strobe LEDs
-          const blink = Math.sin(time * 0.012) > 0;
-          ctx.save();
-          ctx.fillStyle = blink ? '#FEF08A' : '#78350F';
-          ctx.shadowColor = '#FBBF24';
-          ctx.shadowBlur = blink ? 14 : 0;
-          ctx.beginPath();
-          ctx.arc(-22, -20, 4, 0, Math.PI * 2);
-          ctx.arc(22, -20, 4, 0, Math.PI * 2);
-          ctx.fill();
           ctx.restore();
         } else {
-          // ── HIGH OVERHEAD 4G LASER GANTRY (SLIDE UNDER) ──
-          // Overhead Cyber Signboard
-          ctx.fillStyle = '#0F172A';
-          ctx.beginPath();
-          ctx.roundRect(-34, -48, 68, 22, 4);
-          ctx.fill();
-          ctx.strokeStyle = '#F59E0B';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+          const pu = entry.pu;
+          const screenX = getLaneXAtZ(pu.lane, pu.z, width, horizonY, playerBaseY);
+          const floatY = Math.sin(time * 0.005 + pu.lane) * 5;
+          const screenY = proj.screenY - 22 * scale + floatY;
 
-          // Neon Glowing Warning Message
-          ctx.fillStyle = '#FEF08A';
-          ctx.font = 'bold 8px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('▼ SLIDE 4G ▼', 0, -34);
+          ctx.save();
+          ctx.translate(screenX, screenY);
+          ctx.scale(scale, scale);
 
-          // Glowing Holographic Laser Beam
-          const laserAlpha = 0.5 + Math.sin(time * 0.01) * 0.3;
-          ctx.fillStyle = `rgba(239, 68, 68, ${laserAlpha})`;
-          ctx.fillRect(-30, -26, 60, 4);
-
-          // Metal Gantry Support Towers
-          ctx.fillStyle = '#64748B';
-          ctx.fillRect(-32, -26, 5, 42);
-          ctx.fillRect(27, -26, 5, 42);
-        }
-
-        ctx.restore();
-      });
-
-      // 5. Draw 3D Rotating & Floating Gold Coins
-      coinsRef.current.forEach((coin) => {
-        if (coin.collected || coin.y < 0) return;
-        const yProgress = coin.y / (playerBaseY - horizonY);
-        const scale = 0.38 + Math.pow(Math.min(1.2, yProgress), 1.2) * 0.68;
-        const screenX = getLanePerspectiveX(coin.lane, yProgress, width);
-        const floatY = Math.sin(time * 0.006 + coin.y * 0.02) * 4;
-        const screenY = horizonY + coin.y + floatY;
-
-        ctx.save();
-        ctx.translate(screenX, screenY);
-        ctx.scale(scale, scale);
-
-        // 3D Horizontal Spin Phase
-        const spinPhase = time * 0.007 + coin.lane * 1.5 + coin.y * 0.015;
-        const spin = Math.cos(spinPhase);
-        const xRadius = Math.max(1.8, 11 * Math.abs(spin));
-        const isBackSide = spin < 0;
-
-        // Ground Shadow below coin
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-        ctx.beginPath();
-        ctx.ellipse(0, 18 - floatY, 12, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // Warm Golden Halo Glow
-        ctx.shadowColor = '#FBBF24';
-        ctx.shadowBlur = 12;
-
-        // 3D Coin Rim Thickness
-        if (Math.abs(spin) < 0.92) {
-          const rimOffset = (spin > 0 ? 1 : -1) * (1 - Math.abs(spin)) * 3.5;
-          ctx.fillStyle = '#B45309';
-          ctx.beginPath();
-          ctx.ellipse(rimOffset, 0, xRadius, 11, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Outer Coin Face (Rich Metallic Gold Gradient)
-        const coinGrad = ctx.createRadialGradient(-2, -2, 2, 0, 0, 11);
-        coinGrad.addColorStop(0, '#FEF08A');
-        coinGrad.addColorStop(0.35, '#F59E0B');
-        coinGrad.addColorStop(0.8, '#D97706');
-        coinGrad.addColorStop(1, '#92400E');
-        ctx.fillStyle = coinGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, xRadius, 11, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#FEF08A';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Inner Beaded Ring & Embossed Star / N Logo
-        if (xRadius > 5) {
-          ctx.strokeStyle = '#B45309';
-          ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, xRadius * 0.75, 8.2, 0, 0, Math.PI * 2);
-          ctx.stroke();
-
-          ctx.fillStyle = '#78350F';
-          ctx.font = `bold ${Math.round(8 * Math.abs(spin))}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(isBackSide ? '★' : 'N', 0, 0);
-
-          // Specular Light Gleam Sweep
-          const sweep = ((time * 0.003 + coin.lane) % 2) - 1;
-          if (sweep > -0.8 && sweep < 0.8) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+          if (pu.type === 'SHIELD') {
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
             ctx.beginPath();
-            ctx.ellipse(sweep * xRadius, 0, 2, 8, 0, 0, Math.PI * 2);
+            ctx.arc(0, 0, 21, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.42)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🛡️', 0, 0);
+          } else if (pu.type === 'MAGNET') {
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 21, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.42)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🧲', 0, 0);
+          } else {
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 21, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.42)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⭐', 0, 0);
           }
+          ctx.restore();
         }
-
-        ctx.restore();
       });
 
-      // 6. Draw 3D Floating Power-Ups
-      powerUpsRef.current.forEach((pu) => {
-        if (pu.collected || pu.y < 0) return;
-        const yProgress = pu.y / (playerBaseY - horizonY);
-        const scale = 0.48 + Math.pow(Math.min(1.2, yProgress), 1.2) * 0.58;
-        const screenX = getLanePerspectiveX(pu.lane, yProgress, width);
-        const floatY = Math.sin(time * 0.005 + pu.lane) * 5;
-        const screenY = horizonY + pu.y + floatY;
-
-        ctx.save();
-        ctx.translate(screenX, screenY);
-        ctx.scale(scale, scale);
-
-        if (pu.type === 'SHIELD') {
-          ctx.shadowColor = '#38BDF8';
-          ctx.shadowBlur = 16;
-          ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
-          ctx.beginPath();
-          ctx.arc(0, 0, 16, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.font = '16px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🛡️', 0, 0);
-        } else if (pu.type === 'MAGNET') {
-          ctx.shadowColor = '#EF4444';
-          ctx.shadowBlur = 16;
-          ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
-          ctx.beginPath();
-          ctx.arc(0, 0, 16, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.font = '16px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🧲', 0, 0);
-        } else if (pu.type === 'TURBO') {
-          ctx.shadowColor = '#F59E0B';
-          ctx.shadowBlur = 16;
-          ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
-          ctx.beginPath();
-          ctx.arc(0, 0, 16, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.font = '16px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('⭐', 0, 0);
-        }
-
-        ctx.restore();
-      });
-
-      // 7. Draw 3D Articulated Parkour Runner Athlete Character (Người Chạy)
-      const p = playerRef.current;
-      const pScreenX = p.x;
-      const pScreenY = playerBaseY + p.jumpY;
+      // 5. Draw 3D Articulated Parkour Runner Athlete Character
+      const pScreenX = getLaneXAtZ(p.lanePos, 0, width, horizonY, playerBaseY);
+      const pScreenY = playerBaseY - p.jumpHeight;
 
       ctx.save();
       ctx.translate(pScreenX, pScreenY);
 
       // Smooth Banking / Tilting Roll during lane transitions
-      const rollAngle = Math.max(-0.22, Math.min(0.22, (p.targetX - p.x) * 0.007));
+      const rollAngle = Math.max(-0.24, Math.min(0.24, (p.targetLane - p.lanePos) * 0.25));
       ctx.rotate(rollAngle);
 
-      // Ground Shadow
-      const shadowScale = Math.max(0.3, 1 - Math.abs(p.jumpY) / 120);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      // Ground Shadow anchored to player ground Y
+      const shadowScale = Math.max(0.32, 1 - p.jumpHeight / 120);
+      ctx.save();
+      ctx.translate(0, p.jumpHeight);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
       ctx.beginPath();
       ctx.ellipse(0, 8, 20 * shadowScale, 6 * shadowScale, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
 
-      // Active 4G Shield Energy Bubble
+      // Active 4G Shield Energy Bubble (zero shadowBlur)
       if (p.shield) {
+        const shieldR = 28 + Math.sin(time * 0.01) * 2;
         ctx.save();
-        ctx.shadowColor = '#38BDF8';
-        ctx.shadowBlur = 22;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.32)';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(0, -22, shieldR + 2, 0, Math.PI * 2);
+        ctx.stroke();
+
         ctx.strokeStyle = '#38BDF8';
         ctx.lineWidth = 2.5;
         ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
         ctx.beginPath();
-        ctx.arc(0, -22, 28 + Math.sin(time * 0.01) * 2, 0, Math.PI * 2);
+        ctx.arc(0, -22, shieldR, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.restore();
@@ -1447,7 +1383,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       ctx.restore();
 
       // 8. Speed Tunnel Lines for Turbo and High Speeds
-      if (isTurbo || currentSpeed > 7) {
+      if (isTurbo || worldSpeed > 52) {
         ctx.save();
         const streakAlpha = isTurbo ? 0.35 : 0.18;
         ctx.strokeStyle = `rgba(254, 240, 138, ${streakAlpha})`;
@@ -1465,7 +1401,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       }
 
       // 9. Update and Render Particles & Floating Text FX
-      fxRef.current.update();
+      fxRef.current.update(dt60);
       fxRef.current.render(ctx);
 
       ctx.restore();
@@ -1477,8 +1413,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
     return () => {
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState]);
+  }, []);
 
   const claimReward = () => {
     if (onClaimReward && rewardAmount > 0) {
@@ -1488,7 +1423,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none pb-12 animate-fade-in">
+    <div className="h-[100dvh] bg-slate-950 text-white flex flex-col overflow-hidden overscroll-none font-sans select-none">
       <GameHeader
         title={t('games.runner.title')}
         subtitle={highScore > 0 ? t('games.runner.high_score', { best: highScore }) : undefined}
@@ -1501,7 +1436,7 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-md mx-auto w-full px-3 py-2 flex flex-col items-center justify-between">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain max-w-md mx-auto w-full px-3 py-2 pb-4 flex flex-col items-center justify-between">
         {/* HUD Info Status Bar */}
         <div className="w-full flex items-center justify-between gap-2 mb-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-1.5">
           <div className="flex items-center gap-1.5 overflow-hidden">
@@ -1528,31 +1463,39 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="bg-slate-800/90 border border-slate-700/80 px-2.5 py-0.5 rounded-xl text-center min-w-[55px]">
-              <span className="text-[7px] text-slate-400 block uppercase font-bold">{t('games.runner.distance', { meters: '' })}</span>
+            <div className="bg-slate-800/90 border border-slate-700/80 px-2.5 py-0.5 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-slate-400 block uppercase font-bold">
+                {t('games.runner.distance_label')}
+              </span>
               <span className="font-mono font-black text-white text-xs">{distance}m</span>
             </div>
-            <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-0.5 rounded-xl text-center min-w-[55px]">
-              <span className="text-[7px] text-amber-300 block uppercase font-bold">{t('games.runner.coins', { coins: '' })}</span>
+            <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-0.5 rounded-xl text-center min-w-[60px]">
+              <span className="text-[8px] text-amber-300 block uppercase font-bold">
+                {t('games.runner.coins_label')}
+              </span>
               <span className="font-mono font-black text-amber-400 text-xs">★ {coins}</span>
             </div>
           </div>
         </div>
 
-        {/* Interactive 3D Canvas Runner Arena with Touch Gestures */}
+        {/* Interactive 3D Canvas Runner Arena with Unified Touch & Drag Swipe */}
         <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onClick={() => {
-            if (gameState !== 'RUNNING') startGame();
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => {
+            pointerStartRef.current = null;
           }}
-          className="relative w-full aspect-[4/5] max-h-[460px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 touch-none select-none cursor-pointer"
+          className="relative w-full aspect-[4/5] max-h-[470px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 touch-none select-none cursor-pointer"
         >
           <canvas ref={canvasRef} className="w-full h-full block" />
 
           {/* IDLE Overlay */}
           {gameState === 'IDLE' && (
-            <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute inset-0 bg-slate-950/75 flex flex-col items-center justify-center p-6 text-center"
+            >
               <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center text-3xl shadow-xl animate-bounce mb-3">
                 🏃
               </div>
@@ -1569,18 +1512,21 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
 
           {/* Game Over Overlay */}
           {gameState === 'GAMEOVER' && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20">
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20"
+            >
               <div className="w-14 h-14 rounded-2xl bg-red-600/30 border border-red-500 text-red-400 flex items-center justify-center text-2xl mb-2">
                 💥
               </div>
               <h3 className="text-lg font-black text-red-400 mb-1">{t('games.runner.game_over')}</h3>
               <div className="bg-slate-900/80 p-3 rounded-2xl border border-slate-700 w-full max-w-[200px] mb-4 space-y-1">
                 <div className="flex justify-between text-xs text-slate-400">
-                  <span>{t('games.runner.distance', { meters: '' })}</span>
+                  <span>{t('games.runner.distance_label')}</span>
                   <span className="font-mono font-bold text-white text-sm">{distance}m</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-400">
-                  <span>{t('games.runner.coins', { coins: '' })}</span>
+                  <span>{t('games.runner.coins_label')}</span>
                   <span className="font-mono font-bold text-amber-400 text-sm">★ {coins}</span>
                 </div>
               </div>
@@ -1594,37 +1540,38 @@ export const EndlessRunnerGame: React.FC<EndlessRunnerGameProps> = ({ onBack, on
           )}
         </div>
 
-        {/* 4-Way Mobile Tactile Controls (Left, Right, Jump, Slide) */}
-        <div className="w-full max-w-[340px] grid grid-cols-4 gap-2 mt-2.5">
+        {/* Sleek Translucent Icon Pads + Subtle Swipe Hint */}
+        <div className="w-full max-w-[320px] grid grid-cols-4 gap-2 mt-2">
           <button
             onClick={moveLeft}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-2xl text-slate-200 border border-slate-700 font-black text-xs shadow-lg flex flex-col items-center justify-center gap-0.5"
+            aria-label={t('games.runner.btn_left')}
+            className="py-2 bg-slate-900/80 hover:bg-slate-800 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-xl text-amber-400 border border-slate-700/80 shadow-md flex items-center justify-center"
           >
-            <ArrowLeft className="w-4 h-4 text-amber-400" />
-            <span className="text-[10px]">{t('games.runner.btn_left')}</span>
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={jump}
-            className="py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 active:scale-90 transition rounded-2xl text-slate-950 font-black text-xs shadow-lg flex flex-col items-center justify-center gap-0.5"
+            aria-label={t('games.runner.btn_jump')}
+            className="py-2 bg-amber-500/20 hover:bg-amber-500/30 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-xl text-amber-300 border border-amber-400/40 shadow-md flex items-center justify-center"
           >
-            <ArrowUp className="w-4 h-4 text-slate-950" />
-            <span className="text-[10px]">{t('games.runner.btn_jump')}</span>
+            <ArrowUp className="w-4 h-4" />
           </button>
           <button
             onClick={slide}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-2xl text-slate-200 border border-slate-700 font-black text-xs shadow-lg flex flex-col items-center justify-center gap-0.5"
+            aria-label={t('games.runner.btn_slide')}
+            className="py-2 bg-slate-900/80 hover:bg-slate-800 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-xl text-amber-400 border border-slate-700/80 shadow-md flex items-center justify-center"
           >
-            <ArrowDown className="w-4 h-4 text-amber-400" />
-            <span className="text-[10px]">{t('games.runner.btn_slide')}</span>
+            <ArrowDown className="w-4 h-4" />
           </button>
           <button
             onClick={moveRight}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-2xl text-slate-200 border border-slate-700 font-black text-xs shadow-lg flex flex-col items-center justify-center gap-0.5"
+            aria-label={t('games.runner.btn_right')}
+            className="py-2 bg-slate-900/80 hover:bg-slate-800 active:scale-90 active:bg-amber-500 active:text-slate-950 transition rounded-xl text-amber-400 border border-slate-700/80 shadow-md flex items-center justify-center"
           >
-            <ArrowRight className="w-4 h-4 text-amber-400" />
-            <span className="text-[10px]">{t('games.runner.btn_right')}</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
+        <p className="text-[11px] text-slate-400 mt-1.5 text-center">{t('games.runner.swipe_hint')}</p>
       </main>
 
       {/* ── REWARD MODAL ── */}

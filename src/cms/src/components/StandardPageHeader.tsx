@@ -1,7 +1,17 @@
 import React from 'react';
 import { Button } from 'primereact/button';
-import { AppBreadcrumb } from 'components';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { TenantSelector } from './TenantSelector';
+
+// Nhóm menu theo tiền tố đường dẫn — breadcrumb Figma luôn là "Nhóm menu / Tên trang"
+const NAV_GROUPS: [RegExp, string][] = [
+  [/^\/(tiers|policies|campaigns|customers|engagement)/, 'nav.loyalty_policies'],
+  [/^\/(vouchers|games)/, 'nav.rewards_games'],
+  [/^\/(partners|transactions|clearing|agents)/, 'nav.partner_network'],
+  [/^\/reports/, 'nav.reports_budget'],
+  [/^\/(admin|categories|system-parameters)/, 'nav.admin'],
+];
 
 export interface StandardPageHeaderProps {
   title: string;
@@ -59,6 +69,13 @@ export const StandardPageHeader: React.FC<StandardPageHeaderProps> = ({
   badge,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const groupKey = NAV_GROUPS.find(([re]) => re.test(pathname))?.[1];
+  const crumbs = groupKey
+    ? [t(groupKey), title]
+    : (breadcrumbs || []).map((b) => b.label);
+
   const allSecondaryActions = [
     ...(secondaryActions || []),
     ...(extraActions || []),
@@ -70,12 +87,19 @@ export const StandardPageHeader: React.FC<StandardPageHeaderProps> = ({
 
   return (
     <div className={`standard-page-header flex flex-column gap-2 mb-3 ${className}`}>
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <AppBreadcrumb items={breadcrumbs} />
+      {crumbs.length > 0 && (
+        <div className="fg-breadcrumb">
+          {crumbs.map((c, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span className="fg-breadcrumb-sep">/</span>}
+              <span>{c}</span>
+            </React.Fragment>
+          ))}
+        </div>
       )}
       <div className="flex flex-wrap align-items-center justify-content-between gap-3 w-full">
         <div className="flex align-items-center gap-2">
-          <h1 className="text-xl md:text-2xl font-bold text-900 m-0 line-height-2 tracking-tight">
+          <h1 className="fg-page-title">
             {title}
           </h1>
           {badge}

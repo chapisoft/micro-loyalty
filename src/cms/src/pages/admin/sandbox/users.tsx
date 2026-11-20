@@ -173,7 +173,7 @@ export function SandboxUsersPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="surface-card p-4 border-round-2xl border-1 surface-border shadow-1">
+      <div className="surface-card p-4 border-round-xl border-1 surface-border shadow-1">
         <div className="flex justify-content-between align-items-center mb-3">
           <span className="p-input-icon-left w-full md:w-20rem">
             <i className="pi pi-search" />

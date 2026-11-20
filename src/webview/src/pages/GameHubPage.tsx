@@ -36,9 +36,9 @@ export type GameHubGameId =
   | 'BLOCK'
   | 'RUNNER'
   | 'WORDLE'
-  | 'SCREW'
   | 'UNTANGLE'
-  | 'PULLPIN';
+  | 'MINESWEEPER'
+  | 'SUDOKU';
 
 export interface GameHubPageProps {
   onBack?: () => void;
@@ -257,17 +257,17 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       action: () => onSelectGame('WORDLE'),
     },
     {
-      id: 'SCREW',
-      name: t('games.screw.title'),
+      id: 'MINESWEEPER',
+      name: t('games.minesweeper.title'),
       category: 'PUZZLE',
       categoryLabel: t('gamehub.cat_puzzle'),
-      icon: '🔩',
-      bgGradient: 'bg-gradient-to-br from-slate-700 via-zinc-800 to-amber-700',
-      badge: 'HOT',
-      badgeBg: 'bg-amber-600',
-      perk: t('gamehub.perk_screw'),
-      description: t('games.screw.subtitle'),
-      action: () => onSelectGame('SCREW'),
+      icon: '💣',
+      bgGradient: 'bg-gradient-to-br from-slate-800 via-slate-900 to-red-950',
+      badge: 'PRO',
+      badgeBg: 'bg-rose-600',
+      perk: t('perks.perk_minesweeper'),
+      description: t('games.minesweeper.tut_goal'),
+      action: () => onSelectGame('MINESWEEPER'),
     },
     {
       id: 'UNTANGLE',
@@ -283,17 +283,17 @@ export const GameHubPage: React.FC<GameHubPageProps> = ({
       action: () => onSelectGame('UNTANGLE'),
     },
     {
-      id: 'PULLPIN',
-      name: t('games.pullpin.title'),
+      id: 'SUDOKU',
+      name: t('games.sudoku.title'),
       category: 'PUZZLE',
       categoryLabel: t('gamehub.cat_puzzle'),
-      icon: '🗝️',
-      bgGradient: 'bg-gradient-to-br from-amber-700 via-stone-800 to-red-900',
-      badge: 'TOP 1',
-      badgeBg: 'bg-red-600',
-      perk: t('gamehub.perk_pullpin'),
-      description: t('games.pullpin.subtitle'),
-      action: () => onSelectGame('PULLPIN'),
+      icon: '🔢',
+      bgGradient: 'bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900',
+      badge: 'BRAIN',
+      badgeBg: 'bg-sky-600',
+      perk: t('perks.perk_sudoku'),
+      description: t('games.sudoku.tut_goal'),
+      action: () => onSelectGame('SUDOKU'),
     },
     {
       id: 'SCRATCH',

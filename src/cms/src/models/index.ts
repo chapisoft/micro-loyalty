@@ -434,6 +434,31 @@ export enum ApprovalTargetType {
   SYSTEM_PARAM = 'SYSTEM_PARAM',
   MEMBER_LOCK = 'MEMBER_LOCK',
   PARTNER_PROPOSAL = 'PARTNER_PROPOSAL',
+  LEADERBOARD_PAYOUT = 'LEADERBOARD_PAYOUT',
+}
+
+export enum AudienceRole {
+  CUSTOMER = 'CUSTOMER',
+  AGENT = 'AGENT',
+  SUPER_AGENT = 'SUPER_AGENT',
+}
+
+export enum VoucherAcquireType {
+  COINS = 'COINS',
+  FREE_COLLECT = 'FREE_COLLECT',
+  GIVEN = 'GIVEN',
+}
+
+export enum VoucherUsageType {
+  NATCASH_STORE = 'NATCASH_STORE',
+  PARTNER_CODE = 'PARTNER_CODE',
+  ONLINE = 'ONLINE',
+}
+
+export enum VoucherBatchPeriod {
+  NONE = 'NONE',
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
 }
 
 export enum ApprovalStatus {
@@ -578,6 +603,15 @@ export enum TransactionStatus {
   SUCCESS = 'SUCCESS',
   PENDING = 'PENDING',
   FAILED = 'FAILED',
+}
+
+export enum MediaFolder {
+  VOUCHERS = 'vouchers',
+  MISSIONS = 'missions',
+  BANNERS = 'banners',
+  GAMES = 'games',
+  PARTNERS = 'partners',
+  GENERAL = 'general',
 }
 
 export interface IAttribute {

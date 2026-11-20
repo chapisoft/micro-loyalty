@@ -20,6 +20,8 @@ interface Tower {
   passed: boolean;
   hasCoin: boolean;
   coinCollected: boolean;
+  coinXOffset?: number;
+  coinYOffset?: number;
   isMoving?: boolean;
   baseTopHeight?: number;
   moveSpeed?: number;
@@ -63,12 +65,19 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
   const frameIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const scoreRef = useRef<number>(0);
+  const highScoreRef = useRef<number>(highScore);
+  highScoreRef.current = highScore;
+  const gameStateRef = useRef<'IDLE' | 'PLAYING' | 'GAMEOVER'>(gameState);
+  gameStateRef.current = gameState;
+  const gameOverAtRef = useRef<number>(0);
   const magnetTimerRef = useRef<number>(0);
   const doubleTimerRef = useRef<number>(0);
   const invulnerableUntilRef = useRef<number>(0);
 
-  const GRAVITY = 0.38;
-  const JUMP_FORCE = -6.8;
+  const GRAVITY = 0.24;
+  const JUMP_FORCE = -5.6;
+  const MAX_FALL_SPEED = 7.2;
+  const BIRD_HIT_RADIUS = 10;
   const TOWER_WIDTH = 56;
 
   const toggleSound = () => {
@@ -78,42 +87,51 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
   };
 
   const getDynamicSpeed = (currentScore: number) => {
-    return 2.5 + Math.min(2.5, currentScore * 0.12);
+    return 1.82 + Math.min(1.30, currentScore * 0.042);
   };
 
   const getDynamicGap = (currentScore: number) => {
-    return Math.max(92, 130 - currentScore * 1.8);
+    return Math.max(118, 152 - currentScore * 1.0);
   };
 
   const initGame = useCallback(() => {
     const width = canvasRef.current?.parentElement?.clientWidth || 360;
-    const firstTowerX = Math.round(width * 0.72);
-    const secondTowerX = firstTowerX + 210;
+    const height = Math.min(window.innerHeight - 200, 490);
+    const firstTowerX = Math.round(width + 90);
+    const secondTowerX = firstTowerX + 265;
+    const initialGap = 152;
+    const topH1 = Math.round(Math.max(60, height * 0.25));
+    const topH2 = Math.round(Math.max(60, height * 0.36));
 
-    birdRef.current = { y: 200, vy: 0, angle: 0, shield: false };
+    birdRef.current = { y: height * 0.44, vy: 0, angle: 0, shield: false };
     towersRef.current = [
       {
         x: firstTowerX,
-        topHeight: 120,
-        bottomY: 120 + 130,
+        topHeight: topH1,
+        bottomY: topH1 + initialGap,
         passed: false,
         hasCoin: true,
         coinCollected: false,
+        coinXOffset: 0,
+        coinYOffset: 0,
         isMoving: false,
       },
       {
         x: secondTowerX,
-        topHeight: 170,
-        bottomY: 170 + 130,
+        topHeight: topH2,
+        bottomY: topH2 + initialGap,
         passed: false,
         hasCoin: true,
         coinCollected: false,
+        coinXOffset: 0,
+        coinYOffset: 0,
         isMoving: false,
         powerUp: 'SHIELD',
         powerUpCollected: false,
       },
     ];
     fxRef.current.clear();
+    lastTimeRef.current = 0;
     scoreRef.current = 0;
     magnetTimerRef.current = 0;
     doubleTimerRef.current = 0;
@@ -131,26 +149,47 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
   }, [initGame]);
 
   const jump = useCallback(() => {
-    if (gameState === 'IDLE') {
+    const currentState = gameStateRef.current;
+    if (currentState === 'IDLE') {
+      lastTimeRef.current = 0;
+      gameStateRef.current = 'PLAYING';
       setGameState('PLAYING');
       birdRef.current.vy = JUMP_FORCE;
       GameSounds.playTap();
       const birdX = (canvasRef.current?.clientWidth || 360) * 0.28;
       fxRef.current.spawnSmokePuff(birdX - 10, birdRef.current.y + 6, 5);
-    } else if (gameState === 'PLAYING') {
+    } else if (currentState === 'PLAYING') {
       birdRef.current.vy = JUMP_FORCE;
       GameSounds.playTap();
       const birdX = (canvasRef.current?.clientWidth || 360) * 0.28;
       fxRef.current.spawnSmokePuff(birdX - 10, birdRef.current.y + 6, 5);
-    } else if (gameState === 'GAMEOVER') {
+    } else if (currentState === 'GAMEOVER') {
+      if (Date.now() - gameOverAtRef.current < 450) return;
       initGame();
+      lastTimeRef.current = 0;
+      gameStateRef.current = 'PLAYING';
       setGameState('PLAYING');
       birdRef.current.vy = JUMP_FORCE;
       GameSounds.playStart();
     }
-  }, [gameState, initGame, JUMP_FORCE]);
+  }, [initGame, JUMP_FORCE]);
+
+  // Keyboard support (Space / ArrowUp)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        jump();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [jump]);
 
   const handleGameOver = useCallback(() => {
+    if (gameStateRef.current === 'GAMEOVER') return;
+    gameStateRef.current = 'GAMEOVER';
+    gameOverAtRef.current = Date.now();
     setGameState('GAMEOVER');
     fxRef.current.addScreenShake(0.8);
     const birdX = (canvasRef.current?.clientWidth || 360) * 0.28;
@@ -158,7 +197,8 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
     GameSounds.playLose();
 
     const currentScore = scoreRef.current;
-    if (currentScore > highScore) {
+    if (currentScore > highScoreRef.current) {
+      highScoreRef.current = currentScore;
       setHighScore(currentScore);
       try {
         localStorage.setItem('flappy_best_score', String(currentScore));
@@ -171,21 +211,40 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       setRewardAmount(Math.min(250, currentScore * 10));
       setTimeout(() => setShowRewardModal(true), 600);
     }
-  }, [highScore]);
+  }, []);
 
   // Main Canvas Render & Animation Loop with 60 FPS Particle FX
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = canvas.parentElement?.clientWidth || 360;
     const height = Math.min(window.innerHeight - 200, 490);
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
+
+    // Pre-create static stage sky gradients once per setup (avoids per-frame allocation)
+    const daySkyGrad = ctx.createLinearGradient(0, 0, 0, height);
+    daySkyGrad.addColorStop(0, '#0284C7');
+    daySkyGrad.addColorStop(0.5, '#38BDF8');
+    daySkyGrad.addColorStop(0.85, '#FDE047');
+    daySkyGrad.addColorStop(1, '#166534');
+
+    const sunsetSkyGrad = ctx.createLinearGradient(0, 0, 0, height);
+    sunsetSkyGrad.addColorStop(0, '#311042');
+    sunsetSkyGrad.addColorStop(0.4, '#B91C1C');
+    sunsetSkyGrad.addColorStop(0.75, '#F97316');
+    sunsetSkyGrad.addColorStop(1, '#78350F');
+
+    const nightSkyGrad = ctx.createLinearGradient(0, 0, 0, height);
+    nightSkyGrad.addColorStop(0, '#030712');
+    nightSkyGrad.addColorStop(0.5, '#1E1B4B');
+    nightSkyGrad.addColorStop(0.85, '#4338CA');
+    nightSkyGrad.addColorStop(1, '#064E3B');
 
     const clouds = [
       { x: 30, y: 45, size: 50, speed: 0.3 },
@@ -200,23 +259,27 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       twinkle: Math.random() * Math.PI * 2,
     }));
 
+    lastTimeRef.current = 0;
+
     const render = (time: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = time;
-      const dt = Math.min(0.1, (time - lastTimeRef.current) / 1000);
+      const dtSec = Math.min(0.05, Math.max(0.001, (time - lastTimeRef.current) / 1000));
+      const dt60 = dtSec * 60;
       lastTimeRef.current = time;
 
+      const currentState = gameStateRef.current;
       const currentScore = scoreRef.current;
       const currentSpeed = getDynamicSpeed(currentScore);
       const currentGap = getDynamicGap(currentScore);
 
       // Power-up timers countdown
-      if (gameState === 'PLAYING') {
+      if (currentState === 'PLAYING') {
         if (magnetTimerRef.current > 0) {
-          magnetTimerRef.current = Math.max(0, magnetTimerRef.current - dt);
+          magnetTimerRef.current = Math.max(0, magnetTimerRef.current - dtSec);
           setMagnetSeconds(Math.ceil(magnetTimerRef.current));
         }
         if (doubleTimerRef.current > 0) {
-          doubleTimerRef.current = Math.max(0, doubleTimerRef.current - dt);
+          doubleTimerRef.current = Math.max(0, doubleTimerRef.current - dtSec);
           setDoubleSeconds(Math.ceil(doubleTimerRef.current));
         }
       }
@@ -227,34 +290,14 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       ctx.translate(shake.x, shake.y);
 
       // 1. Dynamic Atmosphere Sky Gradient based on Score Stage
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
-      if (currentScore < 8) {
-        // Stage 1: Caribbean Tropical Sunshine (Daytime)
-        skyGrad.addColorStop(0, '#0284C7');
-        skyGrad.addColorStop(0.5, '#38BDF8');
-        skyGrad.addColorStop(0.85, '#FDE047');
-        skyGrad.addColorStop(1, '#166534');
-      } else if (currentScore < 18) {
-        // Stage 2: Caribbean Sunset
-        skyGrad.addColorStop(0, '#311042');
-        skyGrad.addColorStop(0.4, '#B91C1C');
-        skyGrad.addColorStop(0.75, '#F97316');
-        skyGrad.addColorStop(1, '#78350F');
-      } else {
-        // Stage 3: Cyber Natcom Night
-        skyGrad.addColorStop(0, '#030712');
-        skyGrad.addColorStop(0.5, '#1E1B4B');
-        skyGrad.addColorStop(0.85, '#4338CA');
-        skyGrad.addColorStop(1, '#064E3B');
-      }
-      ctx.fillStyle = skyGrad;
+      ctx.fillStyle = currentScore < 8 ? daySkyGrad : currentScore < 18 ? sunsetSkyGrad : nightSkyGrad;
       ctx.fillRect(-20, -20, width + 40, height + 40);
 
       // Stars in Night Stage
       if (currentScore >= 18) {
         ctx.fillStyle = '#FFFFFF';
         stars.forEach((star) => {
-          star.twinkle += 0.05;
+          star.twinkle += 0.05 * dt60;
           const alpha = 0.4 + Math.sin(star.twinkle) * 0.4;
           ctx.globalAlpha = alpha;
           ctx.beginPath();
@@ -264,31 +307,32 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
         ctx.globalAlpha = 1.0;
       }
 
-      // Sun or Neon Moon Disk
+      // Sun or Neon Moon Disk (lightweight translucent halo instead of shadowBlur)
       if (currentScore < 18) {
+        ctx.fillStyle = currentScore < 8 ? 'rgba(251, 191, 36, 0.25)' : 'rgba(234, 88, 12, 0.28)';
+        ctx.beginPath();
+        ctx.arc(width * 0.85, 60, 40, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = currentScore < 8 ? '#FEF08A' : '#FED7AA';
-        ctx.shadowColor = currentScore < 8 ? '#FBBF24' : '#EA580C';
-        ctx.shadowBlur = 30;
         ctx.beginPath();
         ctx.arc(width * 0.85, 60, 26, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
       } else {
-        // Neon Cyber Moon
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.25)';
+        ctx.beginPath();
+        ctx.arc(width * 0.85, 55, 34, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = '#E0E7FF';
-        ctx.shadowColor = '#6366F1';
-        ctx.shadowBlur = 25;
         ctx.beginPath();
         ctx.arc(width * 0.85, 55, 22, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
       }
 
       // Animated multi-layer clouds
       ctx.fillStyle = currentScore < 18 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(148, 163, 184, 0.3)';
       clouds.forEach((cloud) => {
-        if (gameState === 'PLAYING') {
-          cloud.x -= cloud.speed;
+        if (currentState === 'PLAYING') {
+          cloud.x -= cloud.speed * dt60;
           if (cloud.x < -100) cloud.x = width + 50;
         }
         ctx.beginPath();
@@ -299,14 +343,14 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       });
 
       // 3. Update & Draw Towers (4G Telecom Masts)
-      if (gameState === 'PLAYING') {
+      if (currentState === 'PLAYING') {
         const towers = towersRef.current;
         const bird = birdRef.current;
         const birdX = width * 0.28;
 
         for (let i = 0; i < towers.length; i++) {
           const t = towers[i];
-          t.x -= currentSpeed;
+          t.x -= currentSpeed * dt60;
 
           // Oscillating tower movement
           if (t.isMoving && t.baseTopHeight !== undefined && t.moveSpeed && t.moveAmp) {
@@ -329,18 +373,21 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             GameSounds.playCorrect();
           }
 
-          // Coin Magnetic attraction and collection
+          // Coin Magnetic attraction and collection (pull coin offsets ONLY, never move the tower!)
           if (t.hasCoin && !t.coinCollected) {
-            let coinX = t.x + TOWER_WIDTH / 2;
-            let coinY = t.topHeight + currentGap / 2;
+            const baseCoinX = t.x + TOWER_WIDTH / 2;
+            const baseCoinY = t.topHeight + currentGap / 2;
+            let coinX = baseCoinX + (t.coinXOffset || 0);
+            let coinY = baseCoinY + (t.coinYOffset || 0);
 
             if (magnetTimerRef.current > 0) {
               const dist = Math.hypot(coinX - birdX, coinY - bird.y);
-              if (dist < 180) {
-                // Pull coin towards bird
-                t.x -= (coinX - birdX) * 0.1;
-                coinX -= (coinX - birdX) * 0.1;
-                coinY -= (coinY - bird.y) * 0.1;
+              if (dist < 185) {
+                const pullFactor = Math.min(0.4, 0.14 * dt60);
+                t.coinXOffset = (t.coinXOffset || 0) - (coinX - birdX) * pullFactor;
+                t.coinYOffset = (t.coinYOffset || 0) - (coinY - bird.y) * pullFactor;
+                coinX = baseCoinX + t.coinXOffset;
+                coinY = baseCoinY + t.coinYOffset;
               }
             }
 
@@ -351,7 +398,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
               setScore(scoreRef.current);
               fxRef.current.spawnSparkles(coinX, coinY, 18, '#FDE047');
               fxRef.current.spawnFloatText(coinX, coinY - 15, '+1 COIN! 🪙', '#F59E0B');
-              GameSounds.playCoinRain();
+              GameSounds.playCoinPickup();
             }
           }
 
@@ -362,7 +409,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             const dist = Math.hypot(pX - birdX, pY - bird.y);
             if (dist < 30) {
               t.powerUpCollected = true;
-              GameSounds.playWinFanfare();
+              GameSounds.playPowerUp();
 
               if (t.powerUp === 'SHIELD') {
                 birdRef.current.shield = true;
@@ -385,16 +432,17 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
         }
 
         // Spawn new towers dynamically with varied challenges
-        const spawnInterval = Math.max(140, 210 - currentScore * 2.5);
+        const spawnInterval = Math.max(210, 265 - currentScore * 1.4);
         const lastTower = towers.length > 0 ? towers[towers.length - 1] : null;
         if (!lastTower || lastTower.x < width - spawnInterval) {
           const minHeight = 55;
-          const maxHeight = height - currentGap - 85;
+          const maxHeight = Math.max(minHeight + 30, height - currentGap - 85);
           const topH = Math.floor(minHeight + Math.random() * (maxHeight - minHeight));
           const spawnX = lastTower ? Math.max(width + 20, lastTower.x + spawnInterval) : width + 20;
 
-          // Randomly spawn moving tower starting at score >= 5
-          const shouldMove = currentScore >= 5 && Math.random() < 0.45;
+          // Moving towers begin smoothly at score >= 12
+          const moveProb = Math.min(0.65, 0.35 + (currentScore - 12) * 0.015);
+          const shouldMove = currentScore >= 12 && Math.random() < moveProb;
           const hasPowerUp = Math.random() < 0.25;
           const powerUpChoices: PowerUpType[] = ['SHIELD', 'MAGNET', 'DOUBLE'];
           const randomPowerUp = hasPowerUp
@@ -408,10 +456,12 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             passed: false,
             hasCoin: !randomPowerUp && Math.random() > 0.25,
             coinCollected: false,
+            coinXOffset: 0,
+            coinYOffset: 0,
             isMoving: shouldMove,
             baseTopHeight: topH,
-            moveSpeed: 0.003 + Math.random() * 0.002,
-            moveAmp: Math.min(38, 20 + currentScore * 1.2),
+            moveSpeed: 0.0022 + Math.random() * 0.0014,
+            moveAmp: Math.min(32, 14 + Math.max(0, currentScore - 12) * 0.8),
             powerUp: randomPowerUp,
             powerUpCollected: false,
           });
@@ -457,8 +507,6 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
         const waveTime = time * 0.003;
         ctx.save();
         ctx.strokeStyle = '#38BDF8';
-        ctx.shadowColor = '#0284C7';
-        ctx.shadowBlur = 8;
         for (let w = 0; w < 3; w++) {
           const progress = (waveTime + w * 0.33) % 1;
           const waveRadius = 14 + progress * 32;
@@ -496,14 +544,18 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
         // Flashing Warning Aviation LED on Tower tips
         const ledBlink = Math.sin(time * 0.008) > 0;
+        if (ledBlink) {
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.32)';
+          ctx.beginPath();
+          ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight - 6, 8, 0, Math.PI * 2);
+          ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY + 6, 8, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.fillStyle = ledBlink ? '#EF4444' : '#7F1D1D';
-        ctx.shadowColor = '#EF4444';
-        ctx.shadowBlur = ledBlink ? 12 : 0;
         ctx.beginPath();
         ctx.arc(tower.x + TOWER_WIDTH / 2, tower.topHeight - 6, 4, 0, Math.PI * 2);
         ctx.arc(tower.x + TOWER_WIDTH / 2, tower.bottomY + 6, 4, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
 
         // Microwave Transmission Dish Art
         ctx.fillStyle = '#94A3B8';
@@ -523,12 +575,14 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
         // Draw Floating Coin
         if (tower.hasCoin && !tower.coinCollected) {
-          const coinX = tower.x + TOWER_WIDTH / 2;
-          const coinY = tower.topHeight + currentGap / 2 + Math.sin(time * 0.006) * 4;
+          const coinX = tower.x + TOWER_WIDTH / 2 + (tower.coinXOffset || 0);
+          const coinY = tower.topHeight + currentGap / 2 + (tower.coinYOffset || 0) + Math.sin(time * 0.006) * 4;
 
           ctx.save();
-          ctx.shadowColor = '#FBBF24';
-          ctx.shadowBlur = 12;
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.24)';
+          ctx.beginPath();
+          ctx.arc(coinX, coinY, 13, 0, Math.PI * 2);
+          ctx.fill();
           ctx.fillStyle = '#F59E0B';
           ctx.beginPath();
           ctx.arc(coinX, coinY, 9, 0, Math.PI * 2);
@@ -552,9 +606,11 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
           ctx.save();
           if (tower.powerUp === 'SHIELD') {
-            ctx.shadowColor = '#38BDF8';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = 'rgba(14, 165, 233, 0.4)';
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+            ctx.beginPath();
+            ctx.arc(pX, pY, 19, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(14, 165, 233, 0.45)';
             ctx.beginPath();
             ctx.arc(pX, pY, 14, 0, Math.PI * 2);
             ctx.fill();
@@ -563,9 +619,11 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             ctx.textBaseline = 'middle';
             ctx.fillText('🛡️', pX, pY);
           } else if (tower.powerUp === 'MAGNET') {
-            ctx.shadowColor = '#EF4444';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+            ctx.beginPath();
+            ctx.arc(pX, pY, 19, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
             ctx.beginPath();
             ctx.arc(pX, pY, 14, 0, Math.PI * 2);
             ctx.fill();
@@ -574,9 +632,11 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             ctx.textBaseline = 'middle';
             ctx.fillText('🧲', pX, pY);
           } else if (tower.powerUp === 'DOUBLE') {
-            ctx.shadowColor = '#F59E0B';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
+            ctx.beginPath();
+            ctx.arc(pX, pY, 19, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
             ctx.beginPath();
             ctx.arc(pX, pY, 14, 0, Math.PI * 2);
             ctx.fill();
@@ -593,18 +653,19 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       const bird = birdRef.current;
       const birdX = width * 0.28;
 
-      if (gameState === 'PLAYING') {
-        bird.vy += GRAVITY;
-        bird.y += bird.vy;
+      if (currentState === 'PLAYING') {
+        bird.vy = Math.min(MAX_FALL_SPEED, bird.vy + GRAVITY * dt60);
+        bird.y += bird.vy * dt60;
         bird.angle = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, bird.vy * 0.08));
 
         // Ground & Ceiling Collisions
-        if (bird.y + 14 >= height - 25 || bird.y - 14 <= 0) {
+        if (bird.y + BIRD_HIT_RADIUS >= height - 25 || bird.y - BIRD_HIT_RADIUS <= 0) {
           if (bird.shield && time > invulnerableUntilRef.current) {
             // Shield absorbs impact!
             bird.shield = false;
             setHasShield(false);
-            bird.vy = -4.5;
+            bird.vy = -4.2;
+            bird.y = Math.max(BIRD_HIT_RADIUS + 4, Math.min(height - 25 - BIRD_HIT_RADIUS - 4, bird.y));
             invulnerableUntilRef.current = time + 800;
             fxRef.current.addScreenShake(0.5);
             fxRef.current.spawnSparkles(birdX, bird.y, 25, '#38BDF8');
@@ -617,13 +678,13 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
         // Tower Collisions
         for (const t of towersRef.current) {
-          if (birdX + 13 > t.x && birdX - 13 < t.x + TOWER_WIDTH) {
-            if (bird.y - 13 < t.topHeight || bird.y + 13 > t.bottomY) {
+          if (birdX + BIRD_HIT_RADIUS > t.x && birdX - BIRD_HIT_RADIUS < t.x + TOWER_WIDTH) {
+            if (bird.y - BIRD_HIT_RADIUS < t.topHeight || bird.y + BIRD_HIT_RADIUS > t.bottomY) {
               if (bird.shield && time > invulnerableUntilRef.current) {
                 // Shield absorbs tower impact!
                 bird.shield = false;
                 setHasShield(false);
-                bird.vy = -4.5;
+                bird.vy = -4.2;
                 bird.y = t.topHeight + currentGap / 2;
                 invulnerableUntilRef.current = time + 800;
                 fxRef.current.addScreenShake(0.6);
@@ -637,8 +698,8 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
             }
           }
         }
-      } else if (gameState === 'IDLE') {
-        bird.y = height * 0.45 + Math.sin(time * 0.005) * 8;
+      } else if (currentState === 'IDLE') {
+        bird.y = height * 0.44 + Math.sin(time * 0.005) * 8;
       }
 
       // 5. Draw Bird
@@ -648,14 +709,19 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
       // Active 4G Shield Aura around Bird
       if (bird.shield) {
+        const shieldR = 24 + Math.sin(time * 0.01) * 2;
         ctx.save();
-        ctx.shadowColor = '#38BDF8';
-        ctx.shadowBlur = 18;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(0, 0, shieldR + 2, 0, Math.PI * 2);
+        ctx.stroke();
+
         ctx.strokeStyle = '#38BDF8';
         ctx.lineWidth = 2.5;
         ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
         ctx.beginPath();
-        ctx.arc(0, 0, 24 + Math.sin(time * 0.01) * 2, 0, Math.PI * 2);
+        ctx.arc(0, 0, shieldR, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.restore();
@@ -756,7 +822,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       ctx.fillRect(0, height - 25, width, 2);
 
       // 7. Update and Render Particles & Floating Text FX
-      fxRef.current.update();
+      fxRef.current.update(dt60);
       fxRef.current.render(ctx);
 
       ctx.restore();
@@ -768,7 +834,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
     return () => {
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
     };
-  }, [gameState, handleGameOver]);
+  }, [handleGameOver]);
 
   const claimReward = () => {
     if (onClaimReward && rewardAmount > 0) {
@@ -778,7 +844,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col font-sans select-none pb-12 animate-fade-in">
+    <div className="h-[100dvh] bg-slate-900 text-white flex flex-col overflow-hidden overscroll-none font-sans select-none">
       <GameHeader
         title={t('games.flappy.title')}
         subtitle={highScore > 0 ? t('games.flappy.best_score', { best: highScore }) : undefined}
@@ -791,12 +857,12 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
       />
 
       {/* ── GAME STAGE CONTAINER ── */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-3 py-3 flex flex-col items-center justify-between">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain max-w-lg mx-auto w-full px-3 py-3 pb-4 flex flex-col items-center justify-between">
         {/* Compact HUD & Status Bar */}
         <div className="w-full flex items-center justify-between gap-2 mb-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-2">
           <div className="flex items-center gap-2">
             <p className="text-[11px] text-slate-400 font-medium">
-              {t('games.flappy.speed_level', { speed: (1 + Math.min(1.0, score * 0.05)).toFixed(1) })}
+              {t('games.flappy.speed_level', { speed: (getDynamicSpeed(score) / 1.82).toFixed(1) })}
             </p>
             {/* Active Power-up Badges */}
             <div className="flex items-center gap-1.5">
@@ -834,8 +900,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
         {/* Interactive Canvas Board */}
         <div
-          onClick={jump}
-          onTouchStart={(e) => {
+          onPointerDown={(e) => {
             e.preventDefault();
             jump();
           }}
@@ -845,7 +910,7 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
           {/* Live Score Overlay */}
           <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
-            <div className="bg-black/40 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 text-2xl sm:text-3xl font-black font-mono text-white shadow-lg flex items-center gap-2">
+            <div className="bg-slate-950/70 px-4 py-1 rounded-full border border-white/20 text-2xl sm:text-3xl font-black font-mono text-white shadow-lg flex items-center gap-2">
               <span>{score}</span>
               {doubleSeconds > 0 && (
                 <span className="text-xs text-amber-400 font-bold bg-amber-500/30 px-1.5 py-0.5 rounded border border-amber-400/50">
@@ -857,14 +922,17 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
           {/* IDLE Start Overlay */}
           {gameState === 'IDLE' && (
-            <div className="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] flex flex-col items-center justify-center p-6 text-center">
+            <div className="absolute inset-0 bg-slate-950/40 flex flex-col items-center justify-center p-6 text-center">
               <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center text-3xl shadow-xl animate-bounce mb-3">
                 🕊️
               </div>
               <h3 className="text-lg font-black text-white mb-1">{t('games.flappy.btn_start')}</h3>
               <p className="text-xs text-amber-200 mb-4">{t('games.flappy.tap_to_fly')}</p>
               <button
-                onClick={jump}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  jump();
+                }}
                 className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-xl text-sm shadow-lg hover:brightness-110 active:scale-95 transition"
               >
                 {t('games.flappy.btn_start')}
@@ -874,7 +942,10 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
 
           {/* GAME OVER Overlay */}
           {gameState === 'GAMEOVER' && (
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in"
+            >
               <div className="w-14 h-14 rounded-2xl bg-red-600/30 border border-red-500 text-red-400 flex items-center justify-center text-2xl mb-2">
                 💥
               </div>
@@ -890,7 +961,10 @@ export const FlappyNatcomGame: React.FC<FlappyNatcomGameProps> = ({ onBack, onCl
                 </div>
               </div>
               <button
-                onClick={initGame}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  initGame();
+                }}
                 className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-xl text-sm shadow-lg hover:brightness-110 active:scale-95 transition flex items-center gap-1.5"
               >
                 <RotateCcw className="w-4 h-4" />

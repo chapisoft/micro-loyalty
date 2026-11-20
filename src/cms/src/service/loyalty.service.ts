@@ -117,9 +117,19 @@ export interface MilestoneItemModel {
   rewardVoucherId?: number | null;
   rewardGameTurns?: number;
   audienceRole?: 'CUSTOMER' | 'AGENT' | 'SUPER_AGENT' | string;
+  description?: string;
+  imageUrl?: string;
   startDate?: string;
   endDate?: string;
   status: string;
+}
+
+export interface MediaUploadResult {
+  url: string;
+  filename: string;
+  folder: string;
+  contentType: string;
+  size: number;
 }
 
 export interface TierDistributionModel {
@@ -599,6 +609,9 @@ export const LoyaltyService = {
           rewardPoints: m.rewardPoints || 0,
           rewardVoucherId: m.rewardVoucherId,
           rewardGameTurns: m.rewardGameTurns || 0,
+          audienceRole: m.audienceRole || 'CUSTOMER',
+          description: m.description || '',
+          imageUrl: m.imageUrl || '',
           startDate: m.startDate,
           endDate: m.endDate,
           status: m.status || 'ACTIVE',
@@ -629,6 +642,9 @@ export const LoyaltyService = {
         rewardPoints: m.rewardPoints || 0,
         rewardVoucherId: m.rewardVoucherId,
         rewardGameTurns: m.rewardGameTurns || 0,
+        audienceRole: m.audienceRole || 'CUSTOMER',
+        description: m.description || '',
+        imageUrl: m.imageUrl || '',
         startDate: m.startDate,
         endDate: m.endDate,
         status: m.status || 'ACTIVE',
@@ -2099,6 +2115,24 @@ export const LoyaltyService = {
     return unwrapObject<{ deliveredCount: number; totalSentCount: number; status: string }>(res);
   },
 
+  async uploadMedia(
+    file: File,
+    folder: string = 'general',
+    tenantId: string = getStoredTenantId()
+  ): Promise<MediaUploadResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    const effectiveTenant = !tenantId || tenantId === 'ALL' ? 'TENANT_NATCASH' : tenantId;
+    const res: any = await apiClient.post('/loyalty/v1/media/upload', formData, {
+      headers: {
+        'X-Tenant-Id': effectiveTenant,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return unwrapObject<MediaUploadResult>(res);
+  },
+
   // 18. Quản trị Đại lý & Tổng Đại lý (AG-03)
   async getAdminAgents(
     params?: { roleType?: string; month?: string },
@@ -2517,6 +2551,8 @@ export interface MemberProfile360Model {
 
 export interface NatcashPaymentPointModel {
   id: number;
+  partnerId?: number;
+  partnerCode?: string;
   branchCode: string;
   branchName: string;
   paymentPointCode: string;

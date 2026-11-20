@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RotateCcw } from 'lucide-react';
 import { GameSounds } from '../../utils/audio';
+import { soundHaptics } from '../../utils/soundHaptics';
 import { GameHeader } from '../../components/common/GameHeader';
 import { GameTutorialModal } from '../../components/common/GameTutorialModal';
 
@@ -17,6 +18,15 @@ interface PieceShape {
   matrix: number[][]; // 2D array of 0 and 1
   color: string;
   used: boolean;
+}
+
+interface DragState {
+  pieceIndex: number;
+  currentX: number;
+  currentY: number;
+  cellSize: number;
+  targetCell: { r: number; c: number } | null;
+  isValid: boolean;
 }
 
 const PIECE_TEMPLATES: { matrix: number[][]; color: string; label: string }[] = [
@@ -58,6 +68,10 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
   const [comboText, setComboText] = useState<string | null>(null);
   const [shakeBoard, setShakeBoard] = useState<boolean>(false);
   const [hoverPos, setHoverPos] = useState<{ r: number; c: number } | null>(null);
+  const [dragState, setDragState] = useState<DragState | null>(null);
+
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const toggleSound = () => {
     const next = !soundEnabled;
@@ -90,6 +104,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
     setIsGameOver(false);
     setSelectedPieceIndex(null);
     setHoverPos(null);
+    setDragState(null);
     setPieces(generateNewPieces());
     GameSounds.playTap();
   }, [generateNewPieces]);
@@ -130,14 +145,14 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
   };
 
   // Place piece on board at target cell
-  const handleCellClick = (targetR: number, targetC: number) => {
-    if (selectedPieceIndex === null || isGameOver) return;
-    const piece = pieces[selectedPieceIndex];
-    if (!piece || piece.used) return;
+  const placePiece = (pieceIndex: number, targetR: number, targetC: number): boolean => {
+    if (isGameOver) return false;
+    const piece = pieces[pieceIndex];
+    if (!piece || piece.used) return false;
 
     if (!canFitAt(grid, piece.matrix, targetR, targetC)) {
       GameSounds.playWrong();
-      return;
+      return false;
     }
 
     // Place piece
@@ -154,7 +169,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
 
     // Mark piece as used
     const updatedPieces = [...pieces];
-    updatedPieces[selectedPieceIndex].used = true;
+    updatedPieces[pieceIndex].used = true;
     setSelectedPieceIndex(null);
     setHoverPos(null);
 
@@ -195,8 +210,10 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
       setTimeout(() => setShakeBoard(false), 400);
       setTimeout(() => setComboText(null), 1400);
       GameSounds.playCoinRain();
+      soundHaptics.triggerHaptic([30, 40, 50]);
     } else {
       GameSounds.playTap();
+      soundHaptics.triggerHaptic(20);
     }
 
     const newScore = score + pointsGain;
@@ -230,7 +247,128 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
         setTimeout(() => setShowRewardModal(true), 600);
       }
     }
+
+    return true;
   };
+
+  const handleCellClick = (targetR: number, targetC: number) => {
+    if (selectedPieceIndex === null || isGameOver) return;
+    placePiece(selectedPieceIndex, targetR, targetC);
+  };
+
+  const handlePiecePointerDown = (e: React.PointerEvent<HTMLDivElement>, pIdx: number) => {
+    if (isGameOver || pieces[pIdx]?.used) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    dragStartRef.current = { x: startX, y: startY };
+
+    let cellSize = 38;
+    if (gridRef.current) {
+      cellSize = gridRef.current.clientWidth / GRID_SIZE;
+    }
+
+    setDragState({
+      pieceIndex: pIdx,
+      currentX: startX,
+      currentY: startY,
+      cellSize,
+      targetCell: null,
+      isValid: false,
+    });
+
+    soundHaptics.triggerHaptic(15);
+  };
+
+  // Drag & drop movement and snapping logic
+  useEffect(() => {
+    if (!dragState) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+      const fingerOffset = 65; // Đẩy khối lên trên 65px để ngón tay không che tầm nhìn
+
+      const piece = pieces[dragState.pieceIndex];
+      if (!piece || !gridRef.current) {
+        setDragState((prev) => (prev ? { ...prev, currentX, currentY } : null));
+        return;
+      }
+
+      const gridRect = gridRef.current.getBoundingClientRect();
+      const cellW = gridRect.width / GRID_SIZE;
+      const cellH = gridRect.height / GRID_SIZE;
+
+      const cols = piece.matrix[0].length;
+      const rows = piece.matrix.length;
+
+      // Tọa độ tâm khối khi kéo
+      const pieceCenterX = currentX;
+      const pieceCenterY = currentY - fingerOffset;
+
+      // Góc trên bên trái của khối ô
+      const pieceLeft = pieceCenterX - (cols * cellW) / 2;
+      const pieceTop = pieceCenterY - (rows * cellH) / 2;
+
+      // Xác định hàng và cột tương ứng trên bảng 8x8
+      const targetC = Math.round((pieceLeft - gridRect.left) / cellW);
+      const targetR = Math.round((pieceTop - gridRect.top) / cellH);
+
+      let targetCell: { r: number; c: number } | null = null;
+      let isValid = false;
+
+      if (
+        targetR >= 0 &&
+        targetR + rows <= GRID_SIZE &&
+        targetC >= 0 &&
+        targetC + cols <= GRID_SIZE
+      ) {
+        targetCell = { r: targetR, c: targetC };
+        isValid = canFitAt(grid, piece.matrix, targetR, targetC);
+      }
+
+      setDragState((prev) =>
+        prev
+          ? {
+              ...prev,
+              currentX,
+              currentY,
+              cellSize: cellW,
+              targetCell,
+              isValid,
+            }
+          : null
+      );
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      const dist = Math.hypot(
+        e.clientX - dragStartRef.current.x,
+        e.clientY - dragStartRef.current.y
+      );
+
+      if (dragState.targetCell && dragState.isValid) {
+        placePiece(dragState.pieceIndex, dragState.targetCell.r, dragState.targetCell.c);
+      } else if (dist < 10) {
+        // Chạm nhẹ tại chỗ -> Chuyển sang chế độ bấm chọn đặt ô
+        setSelectedPieceIndex((prev) =>
+          prev === dragState.pieceIndex ? null : dragState.pieceIndex
+        );
+        GameSounds.playTap();
+      }
+
+      setDragState(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, [dragState, grid, pieces]);
 
   const claimReward = () => {
     if (onClaimReward && rewardAmount > 0) onClaimReward(rewardAmount);
@@ -239,6 +377,26 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
 
   // Check if cell is covered by hover preview
   const isCellHovered = (rIdx: number, cIdx: number) => {
+    // 1. Chế độ kéo thả khối ô (Drag & Drop)
+    if (dragState && dragState.targetCell) {
+      const piece = pieces[dragState.pieceIndex];
+      if (!piece || piece.used) return false;
+
+      const rowOffset = rIdx - dragState.targetCell.r;
+      const colOffset = cIdx - dragState.targetCell.c;
+
+      if (
+        rowOffset >= 0 &&
+        rowOffset < piece.matrix.length &&
+        colOffset >= 0 &&
+        colOffset < piece.matrix[0].length
+      ) {
+        return piece.matrix[rowOffset][colOffset] === 1;
+      }
+      return false;
+    }
+
+    // 2. Chế độ bấm chọn (Tap to place)
     if (selectedPieceIndex === null || !hoverPos) return false;
     const piece = pieces[selectedPieceIndex];
     if (!piece || piece.used) return false;
@@ -258,6 +416,9 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
   };
 
   const isHoverValid = () => {
+    if (dragState && dragState.targetCell) {
+      return dragState.isValid;
+    }
     if (selectedPieceIndex === null || !hoverPos) return false;
     const piece = pieces[selectedPieceIndex];
     if (!piece || piece.used) return false;
@@ -265,7 +426,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none pb-12 animate-fade-in">
+    <div className="h-[100dvh] bg-slate-950 text-slate-100 flex flex-col overflow-hidden overscroll-none font-sans select-none">
       <GameHeader
         title={t('games.block.title')}
         subtitle={t('games.block.high_score', { best: highScore })}
@@ -277,7 +438,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
         onHelp={() => setShowTutorial(true)}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center p-3 max-w-md mx-auto w-full">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col items-center justify-center p-3 pb-4 max-w-md mx-auto w-full">
         {/* HUD Info Status Bar */}
         <div className="w-full grid grid-cols-3 gap-2 mb-3">
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 flex flex-col items-center shadow-md">
@@ -310,6 +471,7 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
           )}
 
           <div
+            ref={gridRef}
             className="grid gap-1 sm:gap-1.5 w-full h-full"
             style={{
               gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
@@ -363,43 +525,87 @@ export const BlockPuzzleGame: React.FC<BlockPuzzleGameProps> = ({ onBack, onClai
         </div>
 
         {/* 3 Available Pieces Tray */}
-        <div className="w-full max-w-[360px] grid grid-cols-3 gap-2 mt-4">
-          {pieces.map((piece, pIdx) => (
-            <div
-              key={piece.id}
-              onClick={() => !piece.used && setSelectedPieceIndex(pIdx)}
-              className={`aspect-square rounded-2xl p-2 flex items-center justify-center border-2 transition cursor-pointer ${
-                piece.used
-                  ? 'opacity-20 border-slate-800 bg-slate-900/30 cursor-not-allowed'
-                  : selectedPieceIndex === pIdx
-                  ? 'border-amber-400 bg-amber-500/20 shadow-lg scale-105'
-                  : 'border-slate-800 bg-slate-900 hover:border-slate-700 active:scale-95'
-              }`}
-            >
-              {!piece.used && (
-                <div
-                  className="grid gap-1"
-                  style={{
-                    gridTemplateRows: `repeat(${piece.matrix.length}, minmax(0, 1fr))`,
-                    gridTemplateColumns: `repeat(${piece.matrix[0].length}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {piece.matrix.map((row, r) =>
-                    row.map((val, c) => (
-                      <div
-                        key={`${r}-${c}`}
-                        className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm ${val === 1 ? piece.color : 'opacity-0'}`}
-                      />
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="w-full max-w-[360px] grid grid-cols-3 gap-2 mt-4 select-none touch-none">
+          {pieces.map((piece, pIdx) => {
+            const isBeingDragged = dragState?.pieceIndex === pIdx;
+            const isSelected = selectedPieceIndex === pIdx;
+
+            return (
+              <div
+                key={piece.id}
+                onPointerDown={(e) => handlePiecePointerDown(e, pIdx)}
+                className={`aspect-square rounded-2xl p-2 flex items-center justify-center border-2 transition select-none touch-none ${
+                  piece.used
+                    ? 'opacity-20 border-slate-800 bg-slate-900/30 cursor-not-allowed'
+                    : isBeingDragged
+                    ? 'opacity-25 border-amber-400 bg-amber-500/10 scale-95'
+                    : isSelected
+                    ? 'border-amber-400 bg-amber-500/20 shadow-lg scale-105 cursor-pointer'
+                    : 'border-slate-800 bg-slate-900 hover:border-slate-700 active:scale-95 cursor-grab'
+                }`}
+              >
+                {!piece.used && (
+                  <div
+                    className="grid gap-1 pointer-events-none"
+                    style={{
+                      gridTemplateRows: `repeat(${piece.matrix.length}, minmax(0, 1fr))`,
+                      gridTemplateColumns: `repeat(${piece.matrix[0].length}, minmax(0, 1fr))`,
+                    }}
+                  >
+                    {piece.matrix.map((row, r) =>
+                      row.map((val, c) => (
+                        <div
+                          key={`${r}-${c}`}
+                          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm ${val === 1 ? piece.color : 'opacity-0'}`}
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <p className="text-[11px] text-slate-400 mt-2 text-center">{t('games.block.subtitle')}</p>
       </main>
+
+      {/* ── FLOATING DRAGGED PIECE OVERLAY ── */}
+      {dragState && pieces[dragState.pieceIndex] && (
+        <div
+          className="fixed pointer-events-none z-50 transition-none"
+          style={{
+            left: `${dragState.currentX}px`,
+            top: `${dragState.currentY - 65}px`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div
+            className="grid gap-1 shadow-2xl filter drop-shadow(0 15px 25px rgba(0,0,0,0.6))"
+            style={{
+              gridTemplateRows: `repeat(${pieces[dragState.pieceIndex].matrix.length}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${pieces[dragState.pieceIndex].matrix[0].length}, minmax(0, 1fr))`,
+            }}
+          >
+            {pieces[dragState.pieceIndex].matrix.map((row, r) =>
+              row.map((val, c) => (
+                <div
+                  key={`${r}-${c}`}
+                  style={{
+                    width: `${Math.max(28, dragState.cellSize - 4)}px`,
+                    height: `${Math.max(28, dragState.cellSize - 4)}px`,
+                  }}
+                  className={`rounded-lg ${
+                    val === 1
+                      ? `${pieces[dragState.pieceIndex].color} ring-2 ring-white/70 shadow-lg scale-100`
+                      : 'opacity-0'
+                  }`}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── REWARD MODAL ── */}
       {showRewardModal && (

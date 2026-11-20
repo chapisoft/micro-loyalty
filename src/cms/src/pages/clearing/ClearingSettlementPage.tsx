@@ -553,7 +553,7 @@ export const ClearingSettlementPage: React.FC = () => {
             <div className="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
               <span className="text-sm text-600">{t('clearing.batches_desc')}</span>
               <div className="flex gap-2">
-                <Button icon="pi pi-plus" label={t('clearing.create_batch')} severity="success" size="small" onClick={() => setShowCreateBatchDialog(true)} />
+                <Button icon="pi pi-plus" label={t('common.add_new', 'Thêm mới')} size="small" onClick={() => setShowCreateBatchDialog(true)} />
                 <Button icon="pi pi-refresh" outlined size="small" onClick={fetchClearingData} loading={batchesLoading} />
               </div>
             </div>

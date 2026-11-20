@@ -215,10 +215,12 @@ export const Transactions: React.FC = () => {
         transactionId: row.transactionId,
         externalUserId: row.externalUserId,
         actionType: row.actionType,
+        sourceRef: row.referenceId || '--',
         points: row.points,
         balanceAfter: row.balanceAfter != null ? row.balanceAfter : '',
         partnerCode: row.partnerCode,
         createdAt: row.createdAt ? new Date(row.createdAt).toLocaleString('vi-VN') : '',
+        expiredAt: row.actionType === 'BURN' || row.points < 0 ? '--' : new Date(new Date(row.createdAt).setFullYear(new Date(row.createdAt).getFullYear() + 1)).toLocaleDateString('vi-VN'),
         status: row.status || 'COMPLETED',
       })),
       [
@@ -226,10 +228,12 @@ export const Transactions: React.FC = () => {
         { key: 'transactionId', header: t('transaction.id') },
         { key: 'externalUserId', header: t('transaction.phone') },
         { key: 'actionType', header: t('transaction.action_type') },
+        { key: 'sourceRef', header: t('transaction.source_campaign', 'Chương trình nguồn') },
         { key: 'points', header: t('transaction.amount') },
         { key: 'balanceAfter', header: t('transaction.balance_after') },
         { key: 'partnerCode', header: t('transaction.partner') },
         { key: 'createdAt', header: t('common.created_at') },
+        { key: 'expiredAt', header: t('transaction.expiration_date', 'Hạn dùng điểm') },
         { key: 'status', header: t('transaction.status') },
       ],
       `Lich_Su_Giao_Dich_${selectedTenant}`
@@ -424,7 +428,18 @@ export const Transactions: React.FC = () => {
             style={{ minWidth: '9rem', textAlign: 'center' }}
           />
 
-          {/* Cột 6: Biến Động Điểm */}
+          {/* Cột 6: Chương trình nguồn */}
+          <Column
+            header={t('transaction.source_campaign', 'Chương trình nguồn')}
+            body={(row: PointLedgerItem) => (
+              <span className="font-mono text-xs text-700">
+                {row.referenceId || '--'}
+              </span>
+            )}
+            style={{ minWidth: '10rem' }}
+          />
+
+          {/* Cột 7: Biến Động Điểm */}
           <Column
             field="points"
             body={pointsTemplate}
@@ -454,6 +469,24 @@ export const Transactions: React.FC = () => {
             body={dateTemplate}
             header={t('common.created_at')}
             style={{ minWidth: '12rem' }}
+          />
+
+          {/* Cột 10: Hạn Dùng Điểm FIFO */}
+          <Column
+            header={t('transaction.expiration_date', 'Hạn dùng điểm')}
+            body={(row: PointLedgerItem) => {
+              if (row.actionType === 'BURN' || row.points < 0) {
+                return <span className="text-400 text-xs italic">--</span>;
+              }
+              const expireDate = new Date(row.createdAt);
+              expireDate.setFullYear(expireDate.getFullYear() + 1);
+              return (
+                <span className="font-mono text-xs text-orange-700 font-medium">
+                  {expireDate.toLocaleDateString()}
+                </span>
+              );
+            }}
+            style={{ minWidth: '8.5rem', textAlign: 'center' }}
           />
 
           {/* Cột 10: Trạng Thái */}

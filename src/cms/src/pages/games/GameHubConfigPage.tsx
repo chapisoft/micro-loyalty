@@ -11,10 +11,11 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Toast } from 'primereact/toast';
 import { AppBreadcrumb } from 'components';
-import { CommonStatus } from '@/models';
+import { CommonStatus, MediaFolder } from '@/models';
 import { LoyaltyService } from '@/service/loyalty.service';
 import { paths } from '@/paths';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
+import { ImageUploadField } from '@/components/ImageUploadField';
 
 interface GameItem {
   id: number;
@@ -109,6 +110,7 @@ export const GameHubConfigPage: React.FC = () => {
           maintenanceMode: Boolean(configData.maintenanceMode),
           maxDailyTurnsPerUser: configData.maxDailyTurnsPerUser ?? 0,
           welcomeBannerText: configData.welcomeBannerText || prev.welcomeBannerText,
+          lobbyBannerUrl: configData.lobbyBannerUrl ?? prev.lobbyBannerUrl,
         }));
       }
 
@@ -150,6 +152,7 @@ export const GameHubConfigPage: React.FC = () => {
           maintenanceMode: globalSettings.maintenanceMode,
           maxDailyTurnsPerUser: globalSettings.maxDailyTurnsPerUser,
           welcomeBannerText: globalSettings.welcomeBannerText,
+          lobbyBannerUrl: globalSettings.lobbyBannerUrl,
         },
         selectedTenant
       );
@@ -658,17 +661,15 @@ export const GameHubConfigPage: React.FC = () => {
               </div>
 
               <div className="col-12 field mb-3">
-                <label htmlFor="bannerUrl" className="font-bold text-xs block mb-1">
-                  {t('game_hub.banner_url')}
-                </label>
-                <InputText
-                  id="bannerUrl"
+                <ImageUploadField
                   value={globalSettings.lobbyBannerUrl}
-                  onChange={(e) =>
-                    setGlobalSettings({ ...globalSettings, lobbyBannerUrl: e.target.value })
+                  onChange={(url) =>
+                    setGlobalSettings({ ...globalSettings, lobbyBannerUrl: url })
                   }
-                  className="w-full"
-                  placeholder="https://cdn.natcash.ht/gamehub/banner-main.png"
+                  folder={MediaFolder.GAMES}
+                  tenantId={selectedTenant}
+                  label={t('game_hub.banner_url')}
+                  aspect="banner"
                 />
               </div>
 

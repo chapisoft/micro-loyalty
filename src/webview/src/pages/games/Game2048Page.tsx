@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Undo2 } from 'lucide-react';
 import { GameSounds } from '../../utils/audio';
 import { GameHeader } from '../../components/common/GameHeader';
 import { GameTutorialModal } from '../../components/common/GameTutorialModal';
@@ -13,18 +13,19 @@ export interface Game2048PageProps {
 type Board = number[][];
 
 const BOARD_SIZE = 4;
+const MAX_UNDO_HISTORY = 5;
 
-function addRandomTile(b: Board): boolean {
+function addRandomTile(b: Board): { r: number; c: number } | null {
   const emptyCells: { r: number; c: number }[] = [];
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
       if (b[r][c] === 0) emptyCells.push({ r, c });
     }
   }
-  if (emptyCells.length === 0) return false;
-  const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-  b[r][c] = Math.random() < 0.9 ? 2 : 4;
-  return true;
+  if (emptyCells.length === 0) return null;
+  const chosen = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  b[chosen.r][chosen.c] = Math.random() < 0.9 ? 2 : 4;
+  return chosen;
 }
 
 function getInitialBoard(): Board {
@@ -34,6 +35,22 @@ function getInitialBoard(): Board {
   addRandomTile(newBoard);
   addRandomTile(newBoard);
   return newBoard;
+}
+
+function cloneBoard(b: Board): Board {
+  return b.map((row) => [...row]);
+}
+
+function rotateGridClockwise<T>(grid: T[][]): T[][] {
+  const res: T[][] = Array(BOARD_SIZE)
+    .fill(null)
+    .map(() => [] as T[]);
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      res[c][BOARD_SIZE - 1 - r] = grid[r][c];
+    }
+  }
+  return res;
 }
 
 export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimReward }) => {
@@ -48,6 +65,10 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
       return 0;
     }
   });
+  const [history, setHistory] = useState<{ board: Board; score: number }[]>([]);
+  const [spawnedCell, setSpawnedCell] = useState<string | null>(null);
+  const [mergedCells, setMergedCells] = useState<Set<string>>(new Set());
+  const [moveSeq, setMoveSeq] = useState<number>(0);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(!GameSounds.isSoundMuted());
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [gameWon, setGameWon] = useState<boolean>(false);
@@ -57,7 +78,7 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
   const [gainPopup, setGainPopup] = useState<number | null>(null);
   const [shake, setShake] = useState<boolean>(false);
 
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number; consumed: boolean } | null>(null);
 
   const toggleSound = () => {
     const next = !soundEnabled;
@@ -69,44 +90,56 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
     const freshBoard = getInitialBoard();
     setBoard(freshBoard);
     setScore(0);
+    setHistory([]);
+    setSpawnedCell(null);
+    setMergedCells(new Set());
     setGameOver(false);
     setGameWon(false);
     GameSounds.playTap();
   }, []);
 
+  const handleUndo = useCallback(() => {
+    if (history.length === 0) return;
+    const prev = history[history.length - 1];
+    setBoard(cloneBoard(prev.board));
+    setScore(prev.score);
+    setHistory((h) => h.slice(0, -1));
+    setSpawnedCell(null);
+    setMergedCells(new Set());
+    setGameOver(false);
+    GameSounds.playTap();
+  }, [history]);
+
   // Slide and merge one row towards the left
-  function slideLeft(row: number[]): { newRow: number[]; scoreGain: number; changed: boolean } {
+  function slideLeft(row: number[]): {
+    newRow: number[];
+    mergedFlags: boolean[];
+    scoreGain: number;
+    changed: boolean;
+  } {
     const filtered = row.filter((val) => val !== 0);
     let scoreGain = 0;
     const newRow: number[] = [];
+    const mergedFlags: boolean[] = [];
 
     for (let i = 0; i < filtered.length; i++) {
       if (i < filtered.length - 1 && filtered[i] === filtered[i + 1]) {
         const mergedVal = filtered[i] * 2;
         newRow.push(mergedVal);
+        mergedFlags.push(true);
         scoreGain += mergedVal;
         i++; // skip next merged item
       } else {
         newRow.push(filtered[i]);
+        mergedFlags.push(false);
       }
     }
     while (newRow.length < BOARD_SIZE) {
       newRow.push(0);
+      mergedFlags.push(false);
     }
     const changed = row.some((val, idx) => val !== newRow[idx]);
-    return { newRow, scoreGain, changed };
-  }
-
-  function rotateClockwise(b: Board): Board {
-    const res: Board = Array(BOARD_SIZE)
-      .fill(null)
-      .map(() => Array(BOARD_SIZE).fill(0));
-    for (let r = 0; r < BOARD_SIZE; r++) {
-      for (let c = 0; c < BOARD_SIZE; c++) {
-        res[c][BOARD_SIZE - 1 - r] = b[r][c];
-      }
-    }
-    return res;
+    return { newRow, mergedFlags, scoreGain, changed };
   }
 
   function checkGameOver(b: Board): boolean {
@@ -124,7 +157,7 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
     (direction: 'LEFT' | 'RIGHT' | 'UP' | 'DOWN') => {
       if (gameOver) return;
 
-      let rotatedBoard = board.map((row) => [...row]);
+      let rotatedBoard = cloneBoard(board);
       let rotations = 0;
 
       if (direction === 'UP') rotations = 3;
@@ -132,29 +165,48 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
       else if (direction === 'DOWN') rotations = 1;
 
       for (let i = 0; i < rotations; i++) {
-        rotatedBoard = rotateClockwise(rotatedBoard);
+        rotatedBoard = rotateGridClockwise(rotatedBoard);
       }
 
       let boardChanged = false;
       let totalGain = 0;
+      const rotatedMergedGrid: boolean[][] = [];
 
       const newRotatedBoard = rotatedBoard.map((row) => {
-        const { newRow, scoreGain, changed } = slideLeft(row);
+        const { newRow, mergedFlags, scoreGain, changed } = slideLeft(row);
         if (changed) boardChanged = true;
         totalGain += scoreGain;
+        rotatedMergedGrid.push(mergedFlags);
         return newRow;
       });
 
       if (!boardChanged) return;
 
-      // Rotate back
+      // Save undo snapshot (capped at MAX_UNDO_HISTORY steps)
+      setHistory((prev) => [...prev.slice(-(MAX_UNDO_HISTORY - 1)), { board: cloneBoard(board), score }]);
+
+      // Rotate board & merge flags back to world orientation
       let finalBoard = newRotatedBoard;
+      let finalMergedGrid = rotatedMergedGrid;
       for (let i = 0; i < (4 - rotations) % 4; i++) {
-        finalBoard = rotateClockwise(finalBoard);
+        finalBoard = rotateGridClockwise(finalBoard);
+        finalMergedGrid = rotateGridClockwise(finalMergedGrid);
       }
 
-      addRandomTile(finalBoard);
+      const spawned = addRandomTile(finalBoard);
+      const nextMerged = new Set<string>();
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          if (finalMergedGrid[r][c]) {
+            nextMerged.add(`${r}-${c}`);
+          }
+        }
+      }
+
       setBoard(finalBoard);
+      setSpawnedCell(spawned ? `${spawned.r}-${spawned.c}` : null);
+      setMergedCells(nextMerged);
+      setMoveSeq((s) => s + 1);
 
       const newScore = score + totalGain;
       setScore(newScore);
@@ -202,19 +254,19 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
     [board, gameOver, gameWon, highScore, score]
   );
 
-  // Keyboard navigation
+  // Keyboard navigation (Arrow keys + WASD)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         e.preventDefault();
         move('LEFT');
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         e.preventDefault();
         move('RIGHT');
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         e.preventDefault();
         move('UP');
-      } else if (e.key === 'ArrowDown') {
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         e.preventDefault();
         move('DOWN');
       }
@@ -223,28 +275,29 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [move]);
 
-  // Touch swipe gesture handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  // Unified pointer swipe gesture handlers (fires immediately once swipe threshold crossed)
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY, consumed: false };
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - touchStartRef.current.x;
-    const dy = touch.clientY - touchStartRef.current.y;
-    touchStartRef.current = null;
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    if (!start || start.consumed) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
 
-    if (Math.hypot(dx, dy) < 25) return; // ignore short tap
+    if (Math.hypot(dx, dy) < 26) return;
+    start.consumed = true;
 
     if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 0) move('RIGHT');
-      else move('LEFT');
+      move(dx > 0 ? 'RIGHT' : 'LEFT');
     } else {
-      if (dy > 0) move('DOWN');
-      else move('UP');
+      move(dy > 0 ? 'DOWN' : 'UP');
     }
+  };
+
+  const handlePointerUp = () => {
+    pointerStartRef.current = null;
   };
 
   const getTileStyle = (val: number) => {
@@ -253,97 +306,85 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
         return {
           bg: 'bg-gradient-to-br from-amber-100 via-amber-200 to-amber-300 border-2 border-amber-300 text-amber-950',
           size: 'text-2xl sm:text-3xl font-black',
-          shadow: 'shadow-md shadow-amber-900/20 shadow-inner',
+          shadow: 'shadow-md shadow-amber-900/20',
           label: '2 HTG',
-          badge: 'BRONZE'
         };
       case 4:
         return {
           bg: 'bg-gradient-to-br from-amber-200 via-amber-300 to-amber-400 border-2 border-amber-400 text-amber-950',
           size: 'text-2xl sm:text-3xl font-black',
-          shadow: 'shadow-md shadow-amber-900/30 shadow-inner',
+          shadow: 'shadow-md shadow-amber-900/30',
           label: '4 HTG',
-          badge: 'BRONZE'
         };
       case 8:
         return {
           bg: 'bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 border-2 border-white text-slate-900',
           size: 'text-2xl sm:text-3xl font-black',
-          shadow: 'shadow-lg shadow-slate-900/40 shadow-inner',
+          shadow: 'shadow-lg shadow-slate-900/40',
           label: '8 HTG',
-          badge: 'SILVER'
         };
       case 16:
         return {
           bg: 'bg-gradient-to-br from-slate-100 via-sky-200 to-slate-300 border-2 border-sky-200 text-slate-900',
           size: 'text-2xl sm:text-3xl font-black',
-          shadow: 'shadow-lg shadow-sky-900/40 shadow-inner',
+          shadow: 'shadow-lg shadow-sky-900/40',
           label: '16 HTG',
-          badge: 'SILVER'
         };
       case 32:
         return {
           bg: 'bg-gradient-to-br from-rose-500 via-rose-600 to-red-700 border-2 border-rose-300 text-white',
           size: 'text-2xl sm:text-3xl font-black',
-          shadow: 'shadow-lg shadow-rose-900/50 shadow-inner',
+          shadow: 'shadow-lg shadow-rose-900/50',
           label: '32 HTG',
-          badge: 'RUBY'
         };
       case 64:
         return {
           bg: 'bg-gradient-to-br from-red-600 via-rose-700 to-red-900 border-2 border-red-300 text-white',
           size: 'text-2xl sm:text-3xl font-black',
-          shadow: 'shadow-xl shadow-red-950/60 shadow-inner',
+          shadow: 'shadow-xl shadow-red-950/60',
           label: '64 HTG',
-          badge: 'RUBY'
         };
       case 128:
         return {
           bg: 'bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 border-2 border-yellow-200 text-amber-950',
           size: 'text-xl sm:text-2xl font-black',
-          shadow: 'shadow-xl shadow-amber-900/50 ring-2 ring-yellow-300 shadow-inner',
+          shadow: 'shadow-xl shadow-amber-900/50 ring-2 ring-yellow-300',
           label: '128 HTG',
-          badge: 'GOLD'
         };
       case 256:
         return {
           bg: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-orange-500 border-2 border-white text-slate-950',
           size: 'text-xl sm:text-2xl font-black',
-          shadow: 'shadow-xl shadow-amber-900/60 ring-2 ring-yellow-200 shadow-inner',
+          shadow: 'shadow-xl shadow-amber-900/60 ring-2 ring-yellow-200',
           label: '256 HTG',
-          badge: 'GOLD'
         };
       case 512:
         return {
           bg: 'bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 text-slate-950',
           size: 'text-lg sm:text-xl font-black',
-          shadow: 'shadow-2xl shadow-yellow-900/70 ring-3 ring-amber-300 shadow-inner',
+          shadow: 'shadow-2xl shadow-yellow-900/70 ring-2 ring-amber-300',
           label: '512 HTG',
-          badge: 'GOLD VIP'
         };
       case 1024:
         return {
           bg: 'bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-700 border-2 border-emerald-200 text-white',
           size: 'text-base sm:text-lg font-black',
-          shadow: 'shadow-2xl shadow-emerald-950/70 ring-3 ring-emerald-300 shadow-inner',
+          shadow: 'shadow-2xl shadow-emerald-950/70 ring-2 ring-emerald-300',
           label: '1024 HTG',
-          badge: 'EMERALD'
         };
       case 2048:
         return {
-          bg: 'bg-gradient-to-br from-yellow-300 via-amber-500 to-rose-600 border-3 border-yellow-200 text-white animate-pulse',
-          size: 'text-base sm:text-lg font-black',
-          shadow: 'shadow-2xl shadow-yellow-500/80 ring-4 ring-yellow-300 shadow-inner',
-          label: '2048 NATCASH',
-          badge: 'DIAMOND VIP'
+          bg: 'bg-gradient-to-br from-yellow-300 via-amber-500 to-rose-600 border-2 border-yellow-200 text-white animate-pulse',
+          size: 'text-sm sm:text-base font-black',
+          shadow: 'shadow-2xl shadow-yellow-500/80 ring-4 ring-yellow-300',
+          label: '2048 VIP',
         };
       default:
         return {
-          bg: 'bg-slate-800 text-white font-black',
-          size: 'text-xs',
+          bg: 'bg-gradient-to-br from-purple-500 to-indigo-700 border-2 border-purple-300 text-white',
+          size: 'text-sm font-black',
           shadow: 'shadow-2xl',
           label: `${val}`,
-          badge: 'VIP'
         };
     }
   };
@@ -356,7 +397,7 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none pb-12 animate-fade-in">
+    <div className="h-[100dvh] bg-slate-950 text-white flex flex-col overflow-hidden overscroll-none font-sans select-none">
       <GameHeader
         title={t('games.game2048.title')}
         subtitle={highScore > 0 ? t('games.game2048.best', { best: highScore }) : undefined}
@@ -369,57 +410,75 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-md mx-auto w-full px-3 py-3 flex flex-col items-center justify-between">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain max-w-md mx-auto w-full px-3 py-4 pb-4 flex flex-col items-center justify-center gap-3.5">
         {/* Score HUD Bar */}
-        <div className="w-full flex items-center justify-between gap-2 mb-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3 py-2">
-          <p className="text-[11px] text-slate-400 font-medium">{t('games.game2048.subtitle')}</p>
+        <div className="w-full max-w-[368px] flex items-center justify-between gap-2 bg-slate-900/80 border border-slate-800/90 rounded-2xl px-3.5 py-2.5 shadow-lg">
+          <p className="text-[11px] text-slate-300 font-medium leading-snug">{t('games.game2048.subtitle')}</p>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="bg-slate-800/90 border border-slate-700/80 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
-              <span className="text-[8px] text-slate-400 block uppercase font-bold">{t('games.game2048.score', { score: '' })}</span>
-              <span className="font-mono font-black text-white text-xs">{score}</span>
+            <div className="bg-slate-800/90 border border-slate-700/80 px-3 py-1 rounded-xl text-center min-w-[64px]">
+              <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">
+                {t('games.game2048.score_label')}
+              </span>
+              <span className="font-mono font-black text-white text-sm">{score}</span>
             </div>
-            <div className="bg-amber-950/60 border border-amber-500/40 px-2.5 py-1 rounded-xl text-center min-w-[60px]">
-              <span className="text-[8px] text-amber-300 block uppercase font-bold">{t('games.game2048.best_score', { best: '' })}</span>
-              <span className="font-mono font-black text-amber-400 text-xs">{highScore}</span>
+            <div className="bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-xl text-center min-w-[64px]">
+              <span className="text-[9px] text-amber-300 block uppercase font-bold tracking-wider">
+                {t('games.game2048.best_label')}
+              </span>
+              <span className="font-mono font-black text-amber-400 text-sm">{highScore}</span>
             </div>
           </div>
         </div>
 
-        {/* 2048 4x4 Grid Board with dynamic Screen Shake & Floating Merge FX */}
+        {/* 2048 4x4 Grid Board with Locked Square Rows & Smooth Spawn/Merge Animations */}
         <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className={`relative w-full aspect-square max-w-[360px] bg-slate-900/90 border-2 border-amber-500/40 rounded-3xl p-3 sm:p-4 shadow-2xl touch-none select-none flex flex-col justify-between transition-transform ${shake ? 'scale-105 rotate-1' : ''
-            }`}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => {
+            pointerStartRef.current = null;
+          }}
+          className={`relative w-full aspect-square max-w-[368px] bg-gradient-to-b from-slate-900 via-[#10182e] to-slate-950 border-2 border-amber-500/40 rounded-3xl p-3 shadow-[0_20px_50px_rgba(0,0,0,0.65)] touch-none select-none transition-transform cursor-grab active:cursor-grabbing ${
+            shake ? 'scale-[1.02]' : ''
+          }`}
         >
           {gainPopup !== null && (
             <div className="absolute -top-4 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
               <span className="px-4 py-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs rounded-full shadow-xl border border-yellow-200">
-                +{gainPopup} MERGE! ✨
+                +{gainPopup} ✨
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 w-full h-full">
+          <div className="grid grid-cols-4 grid-rows-4 gap-2.5 w-full h-full">
             {board.map((row, rIdx) =>
               row.map((cell, cIdx) => {
+                const cellKey = `${rIdx}-${cIdx}`;
                 const style = getTileStyle(cell);
+                const isSpawned = spawnedCell === cellKey;
+                const isMerged = mergedCells.has(cellKey);
+                const animClass = isMerged ? 'animate-tile-merge' : isSpawned ? 'animate-tile-spawn' : '';
+
                 return (
                   <div
-                    key={`${rIdx}-${cIdx}`}
-                    className={`rounded-2xl flex flex-col items-center justify-center font-mono font-black transition-all duration-150 relative overflow-hidden ${cell === 0 ? 'bg-slate-800/40 border border-slate-700/30' : `${style.bg} ${style.shadow} transform scale-100 active:scale-95`
-                      }`}
+                    key={cellKey}
+                    className="rounded-2xl bg-slate-800/45 border border-slate-700/35 relative overflow-hidden"
                   >
                     {cell > 0 && (
-                      <>
+                      <div
+                        key={`${cellKey}-${moveSeq}-${cell}`}
+                        className={`w-full h-full rounded-2xl flex flex-col items-center justify-center font-mono font-black relative overflow-hidden will-change-transform ${style.bg} ${style.shadow} ${animClass}`}
+                      >
                         {/* 3D Specular Highlight Gloss */}
                         <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/35 to-transparent rounded-t-2xl pointer-events-none" />
-                        <span className={`${style.size} leading-none drop-shadow-md relative z-10 tracking-tight`}>{cell}</span>
-                        <span className="text-[7.5px] sm:text-[8.5px] opacity-90 uppercase tracking-wider font-extrabold leading-none mt-0.5 relative z-10">
+                        <span className={`${style.size} leading-none drop-shadow-sm relative z-10 tracking-tight`}>
+                          {cell}
+                        </span>
+                        <span className="text-[8px] opacity-85 uppercase tracking-wider font-extrabold leading-none mt-1 relative z-10">
                           {style.label}
                         </span>
-                      </>
+                      </div>
                     )}
                   </div>
                 );
@@ -429,29 +488,46 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
 
           {/* Game Over Overlay */}
           {gameOver && (
-            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20 border border-red-500/40">
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20 border border-red-500/40"
+            >
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 border-2 border-red-300 text-white flex items-center justify-center mb-2 shadow-xl">
                 <RotateCcw className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-lg font-black text-red-400 mb-1">{t('games.game2048.game_over')}</h3>
-              <p className="text-xs text-slate-300 mb-4">{t('games.game2048.score', { score: score })}</p>
-              <button
-                onClick={resetGame}
-                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-xl text-sm shadow-lg active:scale-95 transition"
-              >
-                {t('games.game2048.btn_new_game')}
-              </button>
+              <p className="text-xs text-slate-300 mb-4">{t('games.game2048.score', { score })}</p>
+              <div className="flex gap-2">
+                {history.length > 0 && (
+                  <button
+                    onClick={handleUndo}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm border border-slate-700 active:scale-95 transition flex items-center gap-1.5"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                    <span>{t('games.game2048.btn_undo')}</span>
+                  </button>
+                )}
+                <button
+                  onClick={resetGame}
+                  className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-xl text-sm shadow-lg active:scale-95 transition"
+                >
+                  {t('games.game2048.btn_new_game')}
+                </button>
+              </div>
             </div>
           )}
 
           {/* Win 2048 Overlay */}
           {gameWon && (
-            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20 border border-amber-400/50">
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20 border border-amber-400/50"
+            >
               <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-yellow-300 via-amber-500 to-orange-600 text-slate-950 flex items-center justify-center mb-3 shadow-2xl animate-bounce border-2 border-white">
                 <span className="font-black text-2xl text-amber-950">2048</span>
               </div>
               <h3 className="text-xl font-black text-amber-300 mb-1">{t('games.game2048.win_2048')}</h3>
-              <p className="text-xs text-slate-300 mb-4">{t('games.game2048.score', { score: score })}</p>
+              <p className="text-xs text-slate-300 mb-4">{t('games.game2048.score', { score })}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setGameWon(false)}
@@ -470,37 +546,34 @@ export const Game2048Page: React.FC<Game2048PageProps> = ({ onBack, onClaimRewar
           )}
         </div>
 
-        {/* Directional Pad Controls for Mobile Helper */}
-        <div className="w-full max-w-[280px] grid grid-cols-3 gap-2 mt-4 select-none">
-          <div />
+        {/* Sleek 2-Button Action Bar (Undo + New Game) */}
+        <div className="w-full max-w-[368px] flex items-center gap-2.5">
           <button
-            onClick={() => move('UP')}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-xl text-sm font-bold text-slate-200 border border-slate-700 shadow-md flex items-center justify-center"
+            onClick={handleUndo}
+            disabled={history.length === 0}
+            className={`flex-1 py-2.5 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+              history.length > 0
+                ? 'bg-slate-800/90 hover:bg-slate-700 border-slate-700 text-white active:scale-95 shadow-md'
+                : 'bg-slate-900/50 border-slate-800/70 text-slate-600 cursor-not-allowed'
+            }`}
           >
-            ▲
+            <Undo2 className="w-4 h-4 text-amber-400" />
+            <span>
+              {t('games.game2048.btn_undo')}
+              {history.length > 0 ? ` (${history.length})` : ''}
+            </span>
           </button>
-          <div />
+
           <button
-            onClick={() => move('LEFT')}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-xl text-sm font-bold text-slate-200 border border-slate-700 shadow-md flex items-center justify-center"
+            onClick={resetGame}
+            className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-105 text-slate-950 font-black rounded-2xl text-xs shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"
           >
-            ◀
-          </button>
-          <button
-            onClick={() => move('DOWN')}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-xl text-sm font-bold text-slate-200 border border-slate-700 shadow-md flex items-center justify-center"
-          >
-            ▼
-          </button>
-          <button
-            onClick={() => move('RIGHT')}
-            className="py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-xl text-sm font-bold text-slate-200 border border-slate-700 shadow-md flex items-center justify-center"
-          >
-            ▶
+            <RotateCcw className="w-4 h-4" />
+            <span>{t('games.game2048.btn_new_game')}</span>
           </button>
         </div>
 
-        <p className="text-[11px] text-slate-400 mt-2 text-center max-w-xs">{t('games.game2048.how_to_play')}</p>
+        <p className="text-[11px] text-slate-400 text-center max-w-xs">{t('games.game2048.swipe_hint')}</p>
       </main>
 
       {/* ── REWARD MODAL ── */}

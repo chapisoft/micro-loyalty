@@ -480,7 +480,7 @@ export const PolicyConfigurationPage: React.FC = () => {
               <span className="font-normal text-900">{row.exchangeRate} HTG</span>
             )}
             sortable
-            style={{ minWidth: '7.5rem', textAlign: 'right' }}
+            style={{ minWidth: '11rem' }}
           />
           <Column
             field="maxBurnPercentage"
@@ -489,7 +489,7 @@ export const PolicyConfigurationPage: React.FC = () => {
               <span className="font-normal text-900">{row.maxBurnPercentage}%</span>
             )}
             sortable
-            style={{ minWidth: '8rem', textAlign: 'right' }}
+            style={{ minWidth: '8.5rem' }}
           />
           <Column
             field="commissionRatePercent"
@@ -500,7 +500,7 @@ export const PolicyConfigurationPage: React.FC = () => {
               </span>
             )}
             sortable
-            style={{ minWidth: '7.5rem', textAlign: 'right' }}
+            style={{ minWidth: '8rem' }}
           />
           <Column
             field="maxBurnPointsPerTx"
@@ -511,7 +511,7 @@ export const PolicyConfigurationPage: React.FC = () => {
               </span>
             )}
             sortable
-            style={{ minWidth: '9rem', textAlign: 'right' }}
+            style={{ minWidth: '9.5rem' }}
           />
           <Column
             field="settlementCycle"
@@ -525,20 +525,20 @@ export const PolicyConfigurationPage: React.FC = () => {
               );
             }}
             sortable
-            style={{ minWidth: '7rem', textAlign: 'center' }}
+            style={{ minWidth: '8.5rem' }}
           />
           <Column
             field="status"
             header={t('common.status', 'Trạng thái')}
             body={statusTemplate}
             sortable
-            style={{ minWidth: '8rem', textAlign: 'center' }}
+            style={{ minWidth: '7.5rem' }}
           />
           <Column
             field="updatedAt"
             header={t('common.updated_at', 'Cập nhật')}
             sortable
-            style={{ minWidth: '9rem', textAlign: 'center' }}
+            style={{ minWidth: '11rem' }}
           />
         </DataTable>
       </div>

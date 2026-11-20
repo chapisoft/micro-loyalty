@@ -383,7 +383,7 @@ export const TierManagementPage: React.FC = () => {
                         { header: t('tier.upgrade_points', 'Điểm nâng hạng'), getValue: (r: TierConfig) => (r.minPoints ?? 0).toLocaleString() },
                         { header: t('tier.keep_tier', 'Điểm giữ hạng'), getValue: (r: TierConfig) => (r.keepTierPoints ?? 0).toLocaleString() },
                         { header: t('tier.multiplier', 'Hệ số tích điểm'), getValue: (r: TierConfig) => `×${Number(r.pointMultiplier ?? 1.0).toFixed(2)}` },
-                        { header: t('tier.free_turns', 'Lượt quay miễn phí/ngày'), field: 'freeDailyTurns' },
+                        { header: t('tier.free_turns', 'Lượt quay miễn phí/tuần'), field: 'freeDailyTurns' },
                         { header: t('common.status', 'Trạng thái'), getValue: (r: TierConfig) => (r.status === CommonStatus.ACTIVE ? t('common.active') : t('common.inactive')) },
                         { header: t('tier.description', 'Mô tả'), field: 'description' },
                       ],
@@ -417,15 +417,26 @@ export const TierManagementPage: React.FC = () => {
                         />
                       }
                       actions={
-                        <Button
-                          label={t('tier.period_settings', 'Chu kỳ xét hạng')}
-                          icon="pi pi-calendar-times"
-                          size="small"
-                          outlined
-                          severity="secondary"
-                          onClick={() => setShowPeriodDialog(true)}
-                          className="p-button-sm font-medium"
-                        />
+                        <div className="flex align-items-center gap-2">
+                          <Button
+                            label={t('tier.view_distribution', 'Xem phân bố hạng')}
+                            icon="pi pi-chart-pie"
+                            size="small"
+                            outlined
+                            severity="info"
+                            onClick={() => setActiveTabIndex(1)}
+                            className="p-button-sm font-medium"
+                          />
+                          <Button
+                            label={t('tier.period_settings', 'Chu kỳ xét hạng')}
+                            icon="pi pi-calendar-times"
+                            size="small"
+                            outlined
+                            severity="secondary"
+                            onClick={() => setShowPeriodDialog(true)}
+                            className="p-button-sm font-medium"
+                          />
+                        </div>
                       }
                       onRefresh={() => {
                         fetchTiers();
@@ -535,7 +546,7 @@ export const TierManagementPage: React.FC = () => {
                               <Column
                                 field="freeDailyTurns"
                                 body={turnsTemplate}
-                                header={t('tier.free_turns', 'Lượt quay miễn phí')}
+                                header={t('tier.free_turns', 'Lượt quay miễn phí/tuần')}
                                 sortable
                                 style={{ minWidth: '7.5rem', textAlign: 'center' }}
                               />

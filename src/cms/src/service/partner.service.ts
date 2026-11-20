@@ -12,6 +12,7 @@ export interface Partner {
   webhookUrl?: string;
   webhookSecret?: string;
   ipWhitelist?: string;
+  logoUrl?: string;
   status: number | string; // 1 | 0 or ACTIVE | INACTIVE
   createdAt?: string;
   updatedAt?: string;

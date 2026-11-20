@@ -51,9 +51,15 @@ const KnifeHitGame = lazy(() => import('./pages/games/KnifeHitGame').then((m) =>
 const BlockPuzzleGame = lazy(() => import('./pages/games/BlockPuzzleGame').then((m) => ({ default: m.BlockPuzzleGame })));
 const EndlessRunnerGame = lazy(() => import('./pages/games/EndlessRunnerGame').then((m) => ({ default: m.EndlessRunnerGame })));
 const WordleGame = lazy(() => import('./pages/games/WordleGame').then((m) => ({ default: m.WordleGame })));
-const ScrewPuzzleGame = lazy(() => import('./pages/games/ScrewPuzzleGame').then((m) => ({ default: m.ScrewPuzzleGame })));
 const UntangleRopeGame = lazy(() => import('./pages/games/UntangleRopeGame').then((m) => ({ default: m.UntangleRopeGame })));
-const PullThePinGame = lazy(() => import('./pages/games/PullThePinGame').then((m) => ({ default: m.PullThePinGame })));
+const JigsawPuzzleGame = lazy(() => import('./pages/games/JigsawPuzzleGame').then((m) => ({ default: m.JigsawPuzzleGame })));
+const WaterSortGame = lazy(() => import('./pages/games/WaterSortGame').then((m) => ({ default: m.WaterSortGame })));
+const StackTowerGame = lazy(() => import('./pages/games/StackTowerGame').then((m) => ({ default: m.StackTowerGame })));
+const PipeConnectGame = lazy(() => import('./pages/games/PipeConnectGame').then((m) => ({ default: m.PipeConnectGame })));
+const MergeDropGame = lazy(() => import('./pages/games/MergeDropGame').then((m) => ({ default: m.MergeDropGame })));
+const WhackAMoleGame = lazy(() => import('./pages/games/WhackAMoleGame').then((m) => ({ default: m.WhackAMoleGame })));
+const MinesweeperGame = lazy(() => import('./pages/games/MinesweeperGame').then((m) => ({ default: m.MinesweeperGame })));
+const SudokuGame = lazy(() => import('./pages/games/SudokuGame').then((m) => ({ default: m.SudokuGame })));
 const UserVoucherPage = lazy(() => import('./pages/UserVoucherPage').then((m) => ({ default: m.UserVoucherPage })));
 import { GameCoverArt } from './components/game-assets/GameArtAssets';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -98,9 +104,15 @@ export type AppTabType =
   | 'BLOCK'
   | 'RUNNER'
   | 'WORDLE'
-  | 'SCREW'
   | 'UNTANGLE'
-  | 'PULLPIN'
+  | 'JIGSAW'
+  | 'WATERSORT'
+  | 'STACKTOWER'
+  | 'PIPECONNECT'
+  | 'MERGEDROP'
+  | 'WHACKAMOLE'
+  | 'MINESWEEPER'
+  | 'SUDOKU'
   | 'VOUCHERS';
 
 export const App: React.FC = () => {
@@ -209,12 +221,25 @@ export const App: React.FC = () => {
         setCurrentTab('RUNNER');
       } else if (rawHash === 'WORDLE' || rawHash === 'GAMEHUB/WORDLE') {
         setCurrentTab('WORDLE');
-      } else if (rawHash === 'SCREW' || rawHash === 'GAMEHUB/SCREW') {
-        setCurrentTab('SCREW');
       } else if (rawHash === 'UNTANGLE' || rawHash === 'GAMEHUB/UNTANGLE') {
         setCurrentTab('UNTANGLE');
-      } else if (rawHash === 'PULLPIN' || rawHash === 'GAMEHUB/PULLPIN') {
-        setCurrentTab('PULLPIN');
+      } else if (rawHash === 'JIGSAW' || rawHash === 'GAMEHUB/JIGSAW') {
+        setCurrentTab('JIGSAW');
+      } else if (rawHash === 'WATERSORT' || rawHash === 'GAMEHUB/WATERSORT') {
+        setCurrentTab('WATERSORT');
+      } else if (rawHash === 'STACKTOWER' || rawHash === 'GAMEHUB/STACKTOWER') {
+        setCurrentTab('STACKTOWER');
+      } else if (rawHash === 'PIPECONNECT' || rawHash === 'GAMEHUB/PIPECONNECT') {
+        setCurrentTab('PIPECONNECT');
+      } else if (rawHash === 'MERGEDROP' || rawHash === 'GAMEHUB/MERGEDROP') {
+        setCurrentTab('MERGEDROP');
+      } else if (rawHash === 'WHACKAMOLE' || rawHash === 'GAMEHUB/WHACKAMOLE') {
+        setCurrentTab('WHACKAMOLE');
+      } else if (rawHash === 'MINESWEEPER' || rawHash === 'GAMEHUB/MINESWEEPER') {
+        setCurrentTab('MINESWEEPER');
+      } else if (rawHash === 'SUDOKU' || rawHash === 'GAMEHUB/SUDOKU') {
+        setCurrentTab('SUDOKU');
+        setCurrentTab('WHACKAMOLE');
       } else if (rawHash === 'VOUCHERS' || rawHash === 'REWARDS') {
         setCurrentTab('VOUCHERS');
       } else {
@@ -720,17 +745,6 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* SUBGAME 10: THÁO VÍT KIM LOẠI & GỖ */}
-          {currentTab === 'SCREW' && (
-            <ScrewPuzzleGame
-              onBack={() => {
-                loadData();
-                navigateToTab('GAMEHUB');
-              }}
-              onClaimReward={(earnedPoints) => handleMinigameReward('SCREW_PUZZLE', earnedPoints)}
-            />
-          )}
-
           {/* SUBGAME 11: GỠ RỐI DÂY THỪNG 3D */}
           {currentTab === 'UNTANGLE' && (
             <UntangleRopeGame
@@ -742,14 +756,91 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* SUBGAME 12: KÉO CHỐT BẮT TRỘM & GIẢI CỨU */}
-          {currentTab === 'PULLPIN' && (
-            <PullThePinGame
+          {/* SUBGAME 13: GHÉP HÌNH JIGSAW PUZZLE */}
+          {currentTab === 'JIGSAW' && (
+            <JigsawPuzzleGame
               onBack={() => {
                 loadData();
                 navigateToTab('GAMEHUB');
               }}
-              onClaimReward={(earnedPoints) => handleMinigameReward('PULL_PIN', earnedPoints)}
+              onClaimReward={(earnedPoints) => handleMinigameReward('JIGSAW_PUZZLE', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 14: RÓT NƯỚC PHÂN MÀU */}
+          {currentTab === 'WATERSORT' && (
+            <WaterSortGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('WATER_SORT', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 15: XÂY THÁP CHỒNG GẠCH */}
+          {currentTab === 'STACKTOWER' && (
+            <StackTowerGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('STACK_TOWER', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 16: NỐI ỐNG NƯỚC */}
+          {currentTab === 'PIPECONNECT' && (
+            <PipeConnectGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('PIPE_CONNECT', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 17: HỢP NHẤT TRÁI CÂY */}
+          {currentTab === 'MERGEDROP' && (
+            <MergeDropGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('MERGE_DROP', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 18: ĐẬP CHUỘT NHẶT XU */}
+          {currentTab === 'WHACKAMOLE' && (
+            <WhackAMoleGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('WHACK_A_MOLE', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 19: DÒ MÌN CHIẾN THUẬT */}
+          {currentTab === 'MINESWEEPER' && (
+            <MinesweeperGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('MINESWEEPER', earnedPoints)}
+            />
+          )}
+
+          {/* SUBGAME 20: SUDOKU TRÍ TUỆ */}
+          {currentTab === 'SUDOKU' && (
+            <SudokuGame
+              onBack={() => {
+                loadData();
+                navigateToTab('GAMEHUB');
+              }}
+              onClaimReward={(earnedPoints) => handleMinigameReward('SUDOKU', earnedPoints)}
             />
           )}
 
@@ -1285,17 +1376,6 @@ export const App: React.FC = () => {
                       action: () => navigateToTab('WORDLE'),
                     },
                     {
-                      id: 'SCREW',
-                      name: t('games.screw.title'),
-                      categoryLabel: t('gamehub.cat_puzzle'),
-                      icon: '🔩',
-                      bgGradient: 'bg-gradient-to-br from-slate-700 via-zinc-800 to-amber-700',
-                      badge: 'HOT',
-                      badgeBg: 'bg-amber-600',
-                      perk: t('gamehub.perk_screw'),
-                      action: () => navigateToTab('SCREW'),
-                    },
-                    {
                       id: 'UNTANGLE',
                       name: t('games.untangle.title'),
                       categoryLabel: t('gamehub.cat_puzzle'),
@@ -1307,15 +1387,70 @@ export const App: React.FC = () => {
                       action: () => navigateToTab('UNTANGLE'),
                     },
                     {
-                      id: 'PULLPIN',
-                      name: t('games.pullpin.title'),
-                      categoryLabel: t('gamehub.cat_puzzle'),
-                      icon: '🗝️',
-                      bgGradient: 'bg-gradient-to-br from-amber-700 via-stone-800 to-red-900',
-                      badge: 'TOP 1',
-                      badgeBg: 'bg-red-600',
-                      perk: t('gamehub.perk_pullpin'),
-                      action: () => navigateToTab('PULLPIN'),
+                      id: 'JIGSAW',
+                      name: t('games.jigsaw.title', 'Ghép Hình: Jigsaw'),
+                      categoryLabel: t('gamehub.cat_puzzle', 'Trí Tuệ'),
+                      icon: '🧩',
+                      bgGradient: 'bg-gradient-to-br from-indigo-700 via-purple-800 to-pink-900',
+                      badge: 'HOT',
+                      badgeBg: 'bg-emerald-500',
+                      perk: t('gamehub.perk_jigsaw', 'Ghép Tranh Nhận Xu'),
+                      action: () => navigateToTab('JIGSAW'),
+                    },
+                    {
+                      id: 'WATERSORT',
+                      name: t('games.watersort.title', 'Rót Nước'),
+                      categoryLabel: t('gamehub.cat_puzzle', 'Trí Tuệ'),
+                      icon: '🧪',
+                      bgGradient: 'bg-gradient-to-br from-cyan-600 via-sky-700 to-blue-900',
+                      badge: 'HOT',
+                      badgeBg: 'bg-cyan-500',
+                      perk: t('gamehub.perk_watersort', 'Rót Nước Phân Màu'),
+                      action: () => navigateToTab('WATERSORT'),
+                    },
+                    {
+                      id: 'STACKTOWER',
+                      name: t('games.stacktower.title', 'Xây Tháp'),
+                      categoryLabel: t('gamehub.cat_arcade', 'Giải Trí'),
+                      icon: '🏗️',
+                      bgGradient: 'bg-gradient-to-br from-indigo-700 via-purple-800 to-pink-800',
+                      badge: '1-TAP',
+                      badgeBg: 'bg-amber-500',
+                      perk: t('gamehub.perk_stacktower', 'Xây Tháp Nhận Xu'),
+                      action: () => navigateToTab('STACKTOWER'),
+                    },
+                    {
+                      id: 'PIPECONNECT',
+                      name: t('games.pipeconnect.title', 'Nối Ống Nước'),
+                      categoryLabel: t('gamehub.cat_puzzle', 'Trí Tuệ'),
+                      icon: '🔧',
+                      bgGradient: 'bg-gradient-to-br from-slate-700 via-teal-800 to-cyan-900',
+                      badge: 'LOGIC',
+                      badgeBg: 'bg-teal-500',
+                      perk: t('gamehub.perk_pipeconnect', 'Nối Ống Dẫn Nước'),
+                      action: () => navigateToTab('PIPECONNECT'),
+                    },
+                    {
+                      id: 'MERGEDROP',
+                      name: t('games.mergedrop.title', 'Hợp Nhất Quả'),
+                      categoryLabel: t('gamehub.cat_puzzle', 'Trí Tuệ'),
+                      icon: '🍉',
+                      bgGradient: 'bg-gradient-to-br from-emerald-600 via-green-700 to-teal-900',
+                      badge: 'SUIKA',
+                      badgeBg: 'bg-emerald-500',
+                      perk: t('gamehub.perk_mergedrop', 'Hợp Nhất Trái Cây'),
+                      action: () => navigateToTab('MERGEDROP'),
+                    },
+                    {
+                      id: 'WHACKAMOLE',
+                      name: t('games.whackamole.title', 'Đập Chuột'),
+                      categoryLabel: t('gamehub.cat_arcade', 'Giải Trí'),
+                      icon: '🔨',
+                      bgGradient: 'bg-gradient-to-br from-amber-700 via-orange-800 to-yellow-900',
+                      badge: 'FAST',
+                      badgeBg: 'bg-orange-500',
+                      perk: t('gamehub.perk_whackamole', 'Đập Chuột Thần Tốc'),
+                      action: () => navigateToTab('WHACKAMOLE'),
                     },
                     {
                       id: 'SCRATCH',
