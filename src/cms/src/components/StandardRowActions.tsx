@@ -88,9 +88,8 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
             type="button"
             icon={action.icon}
             rounded
-            text
+            outlined
             size="small"
-            severity={action.danger ? 'danger' : action.severity || 'secondary'}
             onClick={(e) => {
               e.stopPropagation();
               action.onClick(e);
@@ -98,7 +97,7 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
             disabled={action.disabled}
             tooltip={action.label}
             tooltipOptions={{ position: 'top' }}
-            className={`p-button-sm ${action.className || ''}`}
+            className={`p-button-sm row-action ${action.danger ? 'row-action--danger' : ''} ${action.className || ''}`}
           />
         ))}
       </div>
@@ -126,9 +125,8 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
           type="button"
           icon={action.icon}
           rounded
-          text
+          outlined
           size="small"
-          severity={action.danger ? 'danger' : action.severity || 'secondary'}
           onClick={(e) => {
             e.stopPropagation();
             action.onClick(e);
@@ -136,7 +134,7 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
           disabled={action.disabled}
           tooltip={action.label}
           tooltipOptions={{ position: 'top' }}
-          className={`p-button-sm ${action.className || ''}`}
+          className={`p-button-sm row-action ${action.danger ? 'row-action--danger' : ''} ${action.className || ''}`}
         />
       ))}
 
@@ -145,16 +143,15 @@ export const StandardRowActions: React.FC<StandardRowActionsProps> = ({
         type="button"
         icon="pi pi-ellipsis-v"
         rounded
-        text
+        outlined
         size="small"
-        severity="secondary"
         onClick={(e) => {
           e.stopPropagation();
           menuRef.current?.toggle(e);
         }}
         tooltip={t('common.more_actions', 'Hành động khác')}
         tooltipOptions={{ position: 'top' }}
-        className="p-button-sm"
+        className="p-button-sm row-action"
       />
     </div>
   );

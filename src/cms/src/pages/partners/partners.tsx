@@ -17,7 +17,8 @@ import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
 import { StatusBadge, TypeBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
-import { ApiKeyStatus, CommonStatus } from '@/models';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import { ApiKeyStatus, CommonStatus, MediaFolder } from '@/models';
 import { useGeneralCategory } from '@/hooks/useGeneralCategory';
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -193,6 +194,7 @@ export const Partners: React.FC = () => {
       webhookUrl: '',
       webhookSecret: generateRandomWebhookSecret(),
       ipWhitelist: '0.0.0.0/0',
+      logoUrl: '',
       status: 1,
     });
     setIsEdit(false);
@@ -215,6 +217,7 @@ export const Partners: React.FC = () => {
       webhookUrl: item.webhookUrl || '',
       webhookSecret: item.webhookSecret || '',
       ipWhitelist: item.ipWhitelist || '0.0.0.0/0',
+      logoUrl: item.logoUrl || '',
       status: statusVal,
     });
     setIsEdit(true);
@@ -265,6 +268,7 @@ export const Partners: React.FC = () => {
         webhookUrl: formData.webhookUrl ? formData.webhookUrl.trim() : undefined,
         webhookSecret: formData.webhookSecret ? formData.webhookSecret.trim() : undefined,
         ipWhitelist: formData.ipWhitelist ? formData.ipWhitelist.trim() : '0.0.0.0/0',
+        logoUrl: formData.logoUrl ? formData.logoUrl.trim() : '',
         status: formData.status ?? 1,
       };
 
@@ -381,10 +385,14 @@ export const Partners: React.FC = () => {
 
   const apiKeyTemplate = (rowData: Partner) => {
     if (!rowData.apiKey) return <span className="text-400 text-xs italic">{t('partner.not_issued')}</span>;
+    // Mask sensitive API Key for security (MH-LM-05 / QT-06 standard)
+    const masked = rowData.apiKey.startsWith('pk_live_')
+      ? `${rowData.apiKey.substring(0, 8)}••••••••`
+      : `${rowData.apiKey.substring(0, 4)}••••••••`;
     return (
       <div className="flex align-items-center gap-1">
-        <span className="text-900 font-mono text-xs">
-          {rowData.apiKey.length > 18 ? `${rowData.apiKey.substring(0, 15)}...` : rowData.apiKey}
+        <span className="text-900 font-mono text-xs" title={t('partner.api_key_masked_hint', 'Khóa bảo mật đã được ẩn. Nhấp sao chép để sử dụng')}>
+          {masked}
         </span>
         <Button
           icon="pi pi-copy"
@@ -594,7 +602,18 @@ export const Partners: React.FC = () => {
               <Column
                 field="partnerName"
                 header={t('partner.name')}
-                body={(rowData) => <span className="text-900">{rowData.partnerName}</span>}
+                body={(rowData: Partner) => (
+                  <div className="flex align-items-center gap-2">
+                    {rowData.logoUrl && (
+                      <img
+                        src={rowData.logoUrl}
+                        alt={rowData.partnerName}
+                        style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain', flexShrink: 0 }}
+                      />
+                    )}
+                    <span className="text-900">{rowData.partnerName}</span>
+                  </div>
+                )}
                 sortable
                 style={{ minWidth: '14rem' }}
               />
@@ -777,6 +796,17 @@ export const Partners: React.FC = () => {
                   className="p-inputtext-sm"
                 />
               </div>
+
+              <div className="col-12 field mb-0">
+                <ImageUploadField
+                  value={formData.logoUrl}
+                  onChange={(url) => setFormData({ ...formData, logoUrl: url })}
+                  folder={MediaFolder.PARTNERS}
+                  tenantId={selectedTenant}
+                  label={t('partner.logo')}
+                  aspect="square"
+                />
+              </div>
             </div>
           </div>
 
@@ -940,22 +970,55 @@ export const Partners: React.FC = () => {
         breakpoints={{ '960px': '75vw', '641px': '95vw' }}
         header={t('partner.detail_title')}
         modal
-        onHide={() => setShowDetailDialog(false)}
+        onHide={() => {
+          setShowDetailDialog(false);
+          setShowSecret(false);
+        }}
       >
         {detailPartner && (
           <div className="flex flex-column gap-3 py-2">
             <div className="flex align-items-center justify-content-between p-3 border-round bg-primary-50">
-              <div>
-                <h4 className="m-0 text-primary font-bold">{detailPartner.partnerName}</h4>
-                <code className="text-sm font-mono font-semibold text-700">{detailPartner.partnerCode}</code>
+              <div className="flex align-items-center gap-3">
+                {detailPartner.logoUrl && (
+                  <img
+                    src={detailPartner.logoUrl}
+                    alt={detailPartner.partnerName}
+                    style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'contain', background: '#fff' }}
+                  />
+                )}
+                <div>
+                  <h4 className="m-0 text-900 font-bold">{detailPartner.partnerName}</h4>
+                  <code className="text-sm font-mono font-semibold text-700">{detailPartner.partnerCode}</code>
+                </div>
               </div>
               <div>{partnerTypeTemplate(detailPartner)}</div>
             </div>
 
             <div className="flex flex-column gap-2">
-              <label className="font-semibold text-xs text-500">{t('partner.api_key_header')}</label>
+              <div className="flex justify-content-between align-items-center">
+                <label className="font-semibold text-xs text-500">{t('partner.api_key_header')}</label>
+                <Button
+                  type="button"
+                  icon={showSecret ? 'pi pi-eye-slash' : 'pi pi-eye'}
+                  label={showSecret ? t('common.hide', 'Ẩn mã') : t('common.show', 'Hiện mã')}
+                  text
+                  size="small"
+                  className="p-0 text-xs text-primary"
+                  onClick={() => setShowSecret(!showSecret)}
+                />
+              </div>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.apiKey || t('partner.not_issued')} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText
+                  value={
+                    !detailPartner.apiKey
+                      ? t('partner.not_issued')
+                      : showSecret
+                      ? detailPartner.apiKey
+                      : `${detailPartner.apiKey.substring(0, 8)}••••••••••••••••`
+                  }
+                  readOnly
+                  className="p-inputtext-sm font-mono bg-50"
+                />
                 <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.apiKey || '', 'API Key')} />
               </div>
             </div>
@@ -963,7 +1026,17 @@ export const Partners: React.FC = () => {
             <div className="flex flex-column gap-2">
               <label className="font-semibold text-xs text-500">{t('partner.secret_key_sign')}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.secretKey || t('partner.not_issued')} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText
+                  value={
+                    !detailPartner.secretKey
+                      ? t('partner.not_issued')
+                      : showSecret
+                      ? detailPartner.secretKey
+                      : '••••••••••••••••••••••••••••••••'
+                  }
+                  readOnly
+                  className="p-inputtext-sm font-mono bg-50"
+                />
                 <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.secretKey || '', 'Secret Key')} />
               </div>
             </div>
@@ -981,7 +1054,17 @@ export const Partners: React.FC = () => {
             <div className="flex flex-column gap-2">
               <label className="font-semibold text-xs text-500">{t('partner.webhook_secret_label')}</label>
               <div className="p-inputgroup">
-                <InputText value={detailPartner.webhookSecret || t('partner.not_configured')} readOnly className="p-inputtext-sm font-mono bg-50" />
+                <InputText
+                  value={
+                    !detailPartner.webhookSecret
+                      ? t('partner.not_configured')
+                      : showSecret
+                      ? detailPartner.webhookSecret
+                      : 'whsec_••••••••••••••••••••••••'
+                  }
+                  readOnly
+                  className="p-inputtext-sm font-mono bg-50"
+                />
                 {detailPartner.webhookSecret && (
                   <Button icon="pi pi-copy" severity="secondary" outlined onClick={() => copyToClipboard(detailPartner.webhookSecret || '', 'Webhook Secret')} />
                 )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, Eye, Sparkles, Flame, Zap, RotateCcw, Award, ArrowRight } from 'lucide-react';
+import { Clock, Eye, Sparkles, Flame, Zap, RotateCcw, Award, ArrowRight, Check } from 'lucide-react';
 import { GameSounds } from '../../utils/audio';
 import { GameHeader } from '../../components/common/GameHeader';
 import { GameTutorialModal } from '../../components/common/GameTutorialModal';
@@ -660,6 +660,8 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
   const [isPeeking, setIsPeeking] = useState<boolean>(false);
   const [freezeAvailable, setFreezeAvailable] = useState<boolean>(true);
   const [comboStreak, setComboStreak] = useState<number>(0);
+  const [mismatchIndices, setMismatchIndices] = useState<number[]>([]);
+  const [justMatchedPairId, setJustMatchedPairId] = useState<number | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -720,6 +722,8 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
     setIsPeeking(false);
     setFreezeAvailable(true);
     setComboStreak(0);
+    setMismatchIndices([]);
+    setJustMatchedPairId(null);
   }, []);
 
   // Mount or stage change
@@ -814,11 +818,13 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
             )
           );
           setFlippedIndices([]);
+          setJustMatchedPairId(firstCard.pairId);
+          setTimeout(() => setJustMatchedPairId(null), 450);
 
           if (nextStreak >= 2) {
-            setMatchPopup(`COMBO x${nextStreak}! 🔥`);
+            setMatchPopup(t('games.memory.combo_streak', { count: nextStreak }));
           } else {
-            setMatchPopup(`${firstCard.label} MATCH! ✨`);
+            setMatchPopup(`${t(firstCard.label)} ✨`);
           }
           setTimeout(() => setMatchPopup(null), 1000);
 
@@ -861,17 +867,19 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
           });
         }, 350);
       } else {
-        // NO MATCH -> Reset combo and flip back
+        // NO MATCH -> Shake briefly, reset combo and flip back
+        setMismatchIndices([firstIdx, secondIdx]);
         setTimeout(() => {
           GameSounds.playWrong();
           setComboStreak(0);
+          setMismatchIndices([]);
           setCards((prev) =>
             prev.map((c, i) =>
               (i === firstIdx || i === secondIdx) && !c.isMatched ? { ...c, isFlipped: false } : c
             )
           );
           setFlippedIndices([]);
-        }, 650);
+        }, 620);
       }
     }
   };
@@ -912,13 +920,15 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
   };
 
   const progressPercent = Math.min(100, Math.round((matchedCount / stageConfig.pairsCount) * 100));
+  const timePercent = Math.min(100, Math.max(0, Math.round((timeLeft / Math.max(1, totalTime)) * 100)));
+  const isCompactGrid = stageConfig.pairsCount >= 10;
   const nextStagePreview = getStageConfig(currentStage + 1);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none pb-12 animate-fade-in">
+    <div className="h-[100dvh] bg-slate-950 text-white flex flex-col overflow-hidden overscroll-none font-sans select-none">
       <GameHeader
         title={t('games.memory.title')}
-        subtitle={`${t('games.memory.stage', { stage: currentStage })}: ${t(stageConfig.theme.name)}`}
+        subtitle={`${t('games.memory.stage', { stage: currentStage })} • ${t(stageConfig.theme.name)}`}
         onBack={onBack}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
@@ -928,117 +938,70 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-3 py-2 flex flex-col items-center justify-between space-y-2.5">
-        {/* ── 1. STAGE INFO & THEME BADGE BAR ── */}
-        <div className="w-full bg-slate-900/95 border border-slate-800/90 p-2.5 rounded-2xl shadow-lg flex items-center justify-between gap-2">
-          {/* Stage & Theme Title */}
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${stageConfig.theme.bgGradient} flex items-center justify-center text-lg shadow-md shrink-0 border border-white/20`}>
-              {stageConfig.theme.icon}
-            </div>
-            <div className="overflow-hidden">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.2 rounded-md">
-                  {t('games.memory.stage', { stage: currentStage })}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded-md">
-                  {t(stageConfig.difficultyLabelKey)}
-                </span>
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain max-w-lg mx-auto w-full px-3 py-3 pb-4 flex flex-col items-center justify-center gap-3">
+        {/* ── 1. UNIFIED SLEEK TOP HUD CARD WITH INTEGRATED TIMER/PROGRESS BAR ── */}
+        <div className="w-full bg-slate-900/90 border border-slate-800/90 rounded-2xl shadow-lg overflow-hidden">
+          <div className="px-3.5 py-2.5 flex items-center justify-between gap-2">
+            {/* Stage & Theme Title */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className={`w-9 h-9 rounded-xl bg-gradient-to-br ${stageConfig.theme.bgGradient} flex items-center justify-center text-lg shadow-md shrink-0 border border-white/20`}
+              >
+                {stageConfig.theme.icon}
               </div>
-              <h2 className="text-xs sm:text-sm font-black text-white truncate drop-shadow-xs mt-0.5">
-                {t(stageConfig.theme.name)}
-              </h2>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded-md">
+                    {t('games.memory.stage', { stage: currentStage })}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-md">
+                    {t(stageConfig.difficultyLabelKey)}
+                  </span>
+                </div>
+                <h2 className="text-xs sm:text-sm font-black text-white truncate mt-0.5">
+                  {t(stageConfig.theme.name)}
+                </h2>
+              </div>
             </div>
-          </div>
 
-          {/* Accumulated Points Counter */}
-          <div className="bg-amber-950/50 border border-amber-500/40 px-2.5 py-1 rounded-xl text-center shrink-0">
-            <span className="text-[8px] text-amber-300 block uppercase font-black">
-              {t('games.memory.total_score')}
-            </span>
-            <span className="font-mono font-black text-amber-400 text-xs sm:text-sm flex items-center justify-center gap-1">
-              <Sparkles className="w-3 h-3 text-yellow-300" />
-              {accumulatedScore}
-            </span>
-          </div>
-        </div>
+            {/* Compact Timer & Total Score Pills */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div
+                className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                  timeLeft <= 10
+                    ? 'bg-red-950/70 border-red-500/50 text-red-300 animate-pulse'
+                    : 'bg-slate-800/90 border-slate-700/80 text-white'
+                }`}
+              >
+                <Clock className={`w-3.5 h-3.5 ${timeLeft <= 10 ? 'text-red-400' : 'text-amber-400'}`} />
+                <span className="font-mono text-xs font-black">{timeLeft}s</span>
+              </div>
 
-        {/* ── 2. STATS & POWER-UP ACTION BAR ── */}
-        <div className="w-full bg-slate-900/90 border border-slate-800 px-3.5 py-2 rounded-2xl shadow-md flex items-center justify-between gap-2">
-          {/* Timer with Warning Animation */}
-          <div className="flex items-center gap-2">
-            <Clock className={`w-4 h-4 ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-amber-400'}`} />
-            <div>
-              <div className="flex items-center gap-1">
-                <span className={`font-mono text-sm font-black ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
-                  {timeLeft}s
-                </span>
-                <span className="text-[10px] text-slate-400">/ {totalTime}s</span>
+              <div className="bg-amber-950/50 border border-amber-500/40 px-2.5 py-1 rounded-xl flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-yellow-300" />
+                <span className="font-mono font-black text-amber-400 text-xs">{accumulatedScore}</span>
               </div>
             </div>
           </div>
 
-          {/* Combo & Matches Tracker */}
-          <div className="flex items-center gap-2">
-            {comboStreak > 1 && (
-              <span className="flex items-center gap-1 text-[11px] font-black text-amber-400 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full animate-bounce">
-                <Flame className="w-3 h-3 fill-amber-400" />
-                x{comboStreak}
-              </span>
-            )}
-            <span className="text-xs font-mono text-slate-300">
-              {moves} {t('games.memory.moves_unit')}
-            </span>
-            <span className="bg-amber-500 text-slate-950 font-black text-xs px-2 py-0.5 rounded-lg shadow-xs">
-              {matchedCount}/{stageConfig.pairsCount}
-            </span>
-          </div>
-
-          {/* Interactive Power-up Buttons */}
-          <div className="flex items-center gap-1.5">
-            {/* X-Ray Peek Button */}
-            <button
-              onClick={handleXRayPeek}
-              disabled={!peekAvailable || isPeeking}
-              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${peekAvailable && !isPeeking
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white hover:brightness-110 active:scale-95'
-                : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
-                }`}
-              title={t('games.memory.btn_peek')}
-            >
-              <Eye className="w-3 h-3" />
-              <span>{t('games.memory.btn_peek')}</span>
-            </button>
-
-            {/* Time Freeze (+10s) */}
-            <button
-              onClick={handleTimeFreeze}
-              disabled={!freezeAvailable}
-              className={`px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center gap-1 border transition shadow-xs ${freezeAvailable
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 border-emerald-400 text-white hover:brightness-110 active:scale-95'
-                : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
-                }`}
-              title={t('games.memory.btn_freeze')}
-            >
-              <Zap className="w-3 h-3" />
-              <span>{t('games.memory.btn_freeze')}</span>
-            </button>
+          {/* Slim Dual-Tone Timer Bar */}
+          <div className="w-full h-1 bg-slate-800">
+            <div
+              className={`h-full transition-all duration-500 ${
+                timeLeft <= 10
+                  ? 'bg-gradient-to-r from-red-500 to-rose-400'
+                  : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400'
+              }`}
+              style={{ width: `${timePercent}%` }}
+            />
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-          <div
-            className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
-        {/* ── 3. DYNAMIC 3D CARDS BOARD ── */}
-        <div className="relative w-full max-w-md flex-1 flex items-center justify-center p-1">
+        {/* ── 2. DYNAMIC 3D CARDS BOARD ── */}
+        <div className="relative w-full flex-1 flex items-center justify-center py-1">
           {matchPopup && (
-            <div className="absolute -top-3 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
-              <span className="px-4 py-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs rounded-full shadow-2xl border-2 border-yellow-200">
+            <div className="absolute -top-2 inset-x-0 flex justify-center z-30 pointer-events-none animate-bounce">
+              <span className="px-4 py-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs rounded-full shadow-2xl border border-yellow-200">
                 {matchPopup}
               </span>
             </div>
@@ -1047,46 +1010,70 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
           <div className={`w-full grid ${stageConfig.gridColsClass} gap-2 sm:gap-2.5`}>
             {cards.map((card, idx) => {
               const isRevealed = card.isFlipped || card.isMatched;
+              const isMismatch = mismatchIndices.includes(idx);
+              const isJustMatched = card.isMatched && justMatchedPairId === card.pairId;
 
               return (
                 <div
                   key={card.id}
                   onClick={() => handleCardClick(idx)}
-                  className="relative aspect-square rounded-2xl cursor-pointer perspective-1000 transition-transform duration-200 active:scale-95 select-none group"
+                  className={`relative ${
+                    isCompactGrid ? 'aspect-square' : 'aspect-[4/5]'
+                  } rounded-2xl cursor-pointer perspective-1000 transition-transform duration-200 active:scale-95 select-none group ${
+                    isMismatch ? 'animate-card-shake' : isJustMatched ? 'animate-card-match' : ''
+                  }`}
                 >
                   <div
-                    className={`w-full h-full rounded-2xl transition-transform duration-500 transform-style-3d relative ${isRevealed ? 'rotate-y-180 shadow-xl' : 'shadow-md'
-                      }`}
+                    className={`w-full h-full rounded-2xl transition-transform duration-500 ease-out transform-style-3d relative ${
+                      isRevealed ? 'rotate-y-180 shadow-xl' : 'shadow-lg group-hover:-translate-y-0.5'
+                    }`}
                   >
-                    {/* Card Back (Facedown - Luxury Gold Pattern) */}
+                    {/* Card Back (Deep Midnight Royal Card with Diagonal Lattice & Gold Crest) */}
                     <div
-                      className={`absolute inset-0 backface-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-400/60 rounded-2xl flex flex-col items-center justify-center p-1.5 group-hover:border-amber-300 transition overflow-hidden ${isRevealed ? 'pointer-events-none opacity-0' : 'z-10 opacity-100'
-                        }`}
+                      className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-[#161e38] to-slate-950 border border-amber-400/50 group-hover:border-amber-300/90 flex flex-col items-center justify-center p-1.5 overflow-hidden shadow-inner"
+                      style={{
+                        backgroundImage:
+                          'repeating-linear-gradient(45deg, rgba(251,191,36,0.05) 0px, rgba(251,191,36,0.05) 2px, transparent 2px, transparent 10px)',
+                      }}
                     >
-                      <div className="absolute inset-1 rounded-xl border border-amber-400/20 border-dashed" />
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg border border-yellow-200 group-hover:scale-110 transition">
-                        <span className="text-amber-950 font-black text-sm sm:text-base">★</span>
+                      <div className="absolute inset-1.5 rounded-xl border border-amber-400/25 pointer-events-none" />
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-300 via-yellow-500 to-amber-600 flex items-center justify-center shadow-[0_0_16px_rgba(245,158,11,0.35)] border border-yellow-200/80">
+                        <span className="text-slate-950 font-black text-sm leading-none">★</span>
                       </div>
-                      <span className="text-[7px] sm:text-[8px] font-black text-amber-300 uppercase tracking-widest mt-1">
-                        NATCASH
-                      </span>
                     </div>
 
-                    {/* Card Front (Faceup - Thematic Vector Art) */}
+                    {/* Card Front (Cohesive Luminous Jewel Surface + Tinted Radial Glow Medallion) */}
                     <div
-                      className={`absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br ${card.bgGradient} rounded-2xl border-2 ${card.isMatched ? 'border-amber-300 ring-2 ring-amber-400/70 shadow-amber-500/30' : 'border-white/70'
-                        } flex flex-col items-center justify-center p-1.5 text-white shadow-xl overflow-hidden ${isRevealed ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'
-                        }`}
+                      className={`absolute inset-0 backface-hidden rotate-y-180 rounded-2xl bg-gradient-to-b from-slate-800/95 via-slate-900 to-slate-950 border-2 flex flex-col items-center justify-between p-1.5 sm:p-2 overflow-hidden ${
+                        card.isMatched
+                          ? 'border-emerald-400/80 ring-2 ring-emerald-400/30 opacity-90'
+                          : isMismatch
+                          ? 'border-rose-500/80'
+                          : 'border-slate-500/60'
+                      }`}
                     >
-                      <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
+                      {/* Subtle thematic radial glow behind medallion */}
+                      <div
+                        className="absolute inset-0 pointer-events-none opacity-25"
+                        style={{
+                          background: `radial-gradient(circle at 50% 42%, ${card.accentColor}, transparent 72%)`,
+                        }}
+                      />
 
-                      {/* Icon */}
-                      <span className="text-2xl sm:text-3xl drop-shadow-md transform transition group-hover:scale-110">
-                        {card.icon}
-                      </span>
+                      {/* Corner matched check badge */}
+                      {card.isMatched && (
+                        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow z-20">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
 
-                      {/* Label */}
-                      <span className="text-[8px] sm:text-[9px] font-black tracking-tight text-white mt-1 uppercase text-center line-clamp-1 leading-none drop-shadow">
+                      <div className="flex-1 flex items-center justify-center w-full relative z-10">
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center justify-center shadow-inner">
+                          <span className="text-2xl sm:text-3xl leading-none drop-shadow">{card.icon}</span>
+                        </div>
+                      </div>
+
+                      <span className="w-full text-[8px] sm:text-[9px] font-bold tracking-tight text-slate-100 bg-slate-950/70 border border-white/10 rounded-lg px-1 py-0.5 text-center truncate relative z-10">
                         {t(card.label)}
                       </span>
                     </div>
@@ -1138,10 +1125,59 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({ onBack, onClai
           )}
         </div>
 
-        {/* Footer Subtitle */}
-        <p className="text-[11px] text-slate-400 text-center max-w-xs leading-relaxed">
-          {t('games.memory.subtitle')}
-        </p>
+        {/* ── 3. COMPACT BOTTOM DOCK (MATCH PROGRESS + POWER-UPS) ── */}
+        <div className="w-full bg-slate-900/90 border border-slate-800 px-3.5 py-2 rounded-2xl shadow-md flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="bg-amber-500 text-slate-950 font-black text-xs px-2 py-0.5 rounded-lg shadow-xs font-mono">
+              {matchedCount}/{stageConfig.pairsCount}
+            </span>
+            <div className="hidden sm:block w-14 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-400 transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-[11px] font-mono text-slate-300">
+              {moves} {t('games.memory.moves_unit')}
+            </span>
+            {comboStreak > 1 && (
+              <span className="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 rounded-full">
+                <Flame className="w-3 h-3 fill-amber-400" />
+                x{comboStreak}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleXRayPeek}
+              disabled={!peekAvailable || isPeeking}
+              className={`px-2.5 py-1.5 rounded-full text-[11px] font-black flex items-center gap-1 border transition ${
+                peekAvailable && !isPeeking
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400/80 text-white hover:brightness-110 active:scale-95 shadow-sm'
+                  : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+              }`}
+              title={t('games.memory.btn_peek')}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>{t('games.memory.btn_peek')}</span>
+            </button>
+
+            <button
+              onClick={handleTimeFreeze}
+              disabled={!freezeAvailable}
+              className={`px-2.5 py-1.5 rounded-full text-[11px] font-black flex items-center gap-1 border transition ${
+                freezeAvailable
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 border-emerald-400/80 text-white hover:brightness-110 active:scale-95 shadow-sm'
+                  : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+              }`}
+              title={t('games.memory.btn_freeze')}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>{t('games.memory.btn_freeze')}</span>
+            </button>
+          </div>
+        </div>
       </main>
 
       {/* ── STAGE CLEARED MODAL (VƯỢT ẢI THÀNH CÔNG) ── */}

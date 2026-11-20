@@ -4,6 +4,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
+import { TabView, TabPanel } from 'primereact/tabview';
 import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
@@ -29,6 +30,30 @@ export const DeadLetterPage: React.FC = () => {
   const [showBatchConfirm, setShowBatchConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+
+  const maskJsonPayload = (rawPayload: string) => {
+    if (!rawPayload) return '';
+    try {
+      const obj = JSON.parse(rawPayload);
+      const maskNode = (node: any): any => {
+        if (!node || typeof node !== 'object') return node;
+        if (Array.isArray(node)) return node.map(maskNode);
+        const copy: Record<string, any> = {};
+        for (const [k, v] of Object.entries(node)) {
+          if (/secret|password|token|apikey|api_key|credential|private/i.test(k) && typeof v === 'string') {
+            copy[k] = v.length > 8 ? `${v.substring(0, 4)}••••••••` : '••••••••';
+          } else {
+            copy[k] = maskNode(v);
+          }
+        }
+        return copy;
+      };
+      return JSON.stringify(maskNode(obj), null, 2);
+    } catch {
+      return rawPayload;
+    }
+  };
 
   const loadDeadLetters = useCallback(async () => {
     try {
@@ -85,9 +110,27 @@ export const DeadLetterPage: React.FC = () => {
     );
   }, [deadLetters, searchKeyword]);
 
+  const webhookItems = useMemo(() => {
+    return filteredItems.filter(
+      (item) =>
+        item.eventType?.toUpperCase().includes('WEBHOOK') ||
+        (item.targetUrl && item.targetUrl.startsWith('http'))
+    );
+  }, [filteredItems]);
+
+  const transactionItems = useMemo(() => {
+    return filteredItems.filter(
+      (item) =>
+        !item.eventType?.toUpperCase().includes('WEBHOOK') &&
+        !(item.targetUrl && item.targetUrl.startsWith('http'))
+    );
+  }, [filteredItems]);
+
+  const displayItems = activeTabIndex === 0 ? webhookItems : transactionItems;
+
   const handleExport = () => {
     exportToExcel(
-      filteredItems.map((item, idx) => ({
+      displayItems.map((item, idx) => ({
         stt: idx + 1,
         eventType: item.eventType,
         tenantId: item.tenantId,
@@ -105,7 +148,7 @@ export const DeadLetterPage: React.FC = () => {
         { key: 'errorMessage', header: t('dead_letter.error_message') },
         { key: 'failedAt', header: t('dead_letter.failed_at') },
       ],
-      'Danh_Sach_Dead_Letter_Queue'
+      activeTabIndex === 0 ? 'Dead_Letter_Webhook_Outbox' : 'Dead_Letter_Transaction_Events'
     );
   };
 
@@ -128,6 +171,27 @@ export const DeadLetterPage: React.FC = () => {
       />
 
       <div className="card shadow-1 border-round surface-card p-3 w-full">
+        <TabView activeIndex={activeTabIndex} onTabChange={(e) => setActiveTabIndex(e.index)} className="mb-3">
+          <TabPanel
+            header={
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-send" />
+                <span>{t('dead_letter.tab_webhook', 'Lỗi Webhook Đối Tác (Outbox)')}</span>
+                <span className="p-badge p-badge-danger">{webhookItems.length}</span>
+              </div>
+            }
+          />
+          <TabPanel
+            header={
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-database" />
+                <span>{t('dead_letter.tab_transaction', 'Sự Kiện Giao Dịch DLQ')}</span>
+                <span className="p-badge p-badge-warning">{transactionItems.length}</span>
+              </div>
+            }
+          />
+        </TabView>
+
         <UniversalFilterBar
           searchValue={searchKeyword}
           onSearchChange={setSearchKeyword}
@@ -138,7 +202,7 @@ export const DeadLetterPage: React.FC = () => {
         />
 
         <DataTable
-          value={filteredItems}
+          value={displayItems}
           emptyMessage={t('common.no_data')}
           paginator
           rows={10}
@@ -208,7 +272,7 @@ export const DeadLetterPage: React.FC = () => {
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase">Payload JSONB</label>
             <pre className="text-xs font-mono bg-gray-900 text-green-400 p-3 rounded-lg overflow-x-auto max-h-80">
-              {selectedItem?.payload}
+              {maskJsonPayload(selectedItem?.payload || '')}
             </pre>
           </div>
         </div>

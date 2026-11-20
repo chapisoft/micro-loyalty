@@ -1,5 +1,5 @@
-import React, { lazy, Suspense } from 'react';
-import { HashRouter, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { HashRouter, Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { SSOAuthProvider, useSSOAuth } from '../hooks/useSSOAuth';
 import { Skeleton } from './ui';
 import LoyaltyHome from './screens/LoyaltyHome';
@@ -23,9 +23,17 @@ const KnifeHitGame = lazy(() => import('../pages/games/KnifeHitGame').then((m) =
 const BlockPuzzleGame = lazy(() => import('../pages/games/BlockPuzzleGame').then((m) => ({ default: m.BlockPuzzleGame })));
 const EndlessRunnerGame = lazy(() => import('../pages/games/EndlessRunnerGame').then((m) => ({ default: m.EndlessRunnerGame })));
 const WordleGame = lazy(() => import('../pages/games/WordleGame').then((m) => ({ default: m.WordleGame })));
-const ScrewPuzzleGame = lazy(() => import('../pages/games/ScrewPuzzleGame').then((m) => ({ default: m.ScrewPuzzleGame })));
 const UntangleRopeGame = lazy(() => import('../pages/games/UntangleRopeGame').then((m) => ({ default: m.UntangleRopeGame })));
-const PullThePinGame = lazy(() => import('../pages/games/PullThePinGame').then((m) => ({ default: m.PullThePinGame })));
+const GoldMinerGame = lazy(() => import('../pages/games/GoldMinerGame').then((m) => ({ default: m.GoldMinerGame })));
+const HelixJumpGame = lazy(() => import('../pages/games/HelixJumpGame').then((m) => ({ default: m.HelixJumpGame })));
+const JigsawPuzzleGame = lazy(() => import('../pages/games/JigsawPuzzleGame').then((m) => ({ default: m.JigsawPuzzleGame })));
+const WaterSortGame = lazy(() => import('../pages/games/WaterSortGame').then((m) => ({ default: m.WaterSortGame })));
+const StackTowerGame = lazy(() => import('../pages/games/StackTowerGame').then((m) => ({ default: m.StackTowerGame })));
+const PipeConnectGame = lazy(() => import('../pages/games/PipeConnectGame').then((m) => ({ default: m.PipeConnectGame })));
+const MergeDropGame = lazy(() => import('../pages/games/MergeDropGame').then((m) => ({ default: m.MergeDropGame })));
+const WhackAMoleGame = lazy(() => import('../pages/games/WhackAMoleGame').then((m) => ({ default: m.WhackAMoleGame })));
+const MinesweeperGame = lazy(() => import('../pages/games/MinesweeperGame').then((m) => ({ default: m.MinesweeperGame })));
+const SudokuGame = lazy(() => import('../pages/games/SudokuGame').then((m) => ({ default: m.SudokuGame })));
 
 const GamePlayer: React.FC<{ Component: React.ComponentType<{ onBack: () => void }> }> = ({ Component }) => {
   const navigate = useNavigate();
@@ -98,9 +106,17 @@ const AppRoutes: React.FC = () => {
         <Route path="/block" element={<GamePlayer Component={BlockPuzzleGame} />} />
         <Route path="/runner" element={<GamePlayer Component={EndlessRunnerGame} />} />
         <Route path="/wordle" element={<GamePlayer Component={WordleGame} />} />
-        <Route path="/screw" element={<GamePlayer Component={ScrewPuzzleGame} />} />
         <Route path="/untangle" element={<GamePlayer Component={UntangleRopeGame} />} />
-        <Route path="/pullpin" element={<GamePlayer Component={PullThePinGame} />} />
+        <Route path="/goldminer" element={<GamePlayer Component={GoldMinerGame} />} />
+        <Route path="/helix" element={<GamePlayer Component={HelixJumpGame} />} />
+        <Route path="/jigsaw" element={<GamePlayer Component={JigsawPuzzleGame} />} />
+        <Route path="/watersort" element={<GamePlayer Component={WaterSortGame} />} />
+        <Route path="/stacktower" element={<GamePlayer Component={StackTowerGame} />} />
+        <Route path="/pipeconnect" element={<GamePlayer Component={PipeConnectGame} />} />
+        <Route path="/mergedrop" element={<GamePlayer Component={MergeDropGame} />} />
+        <Route path="/whackamole" element={<GamePlayer Component={WhackAMoleGame} />} />
+        <Route path="/minesweeper" element={<GamePlayer Component={MinesweeperGame} />} />
+        <Route path="/sudoku" element={<GamePlayer Component={SudokuGame} />} />
 
         {/* 5 · Pay at counter (LM-17): the customer shows the code, the cashier scans it. LM-04 "Where to use" was removed (17/11). */}
         <Route path="/pay-at-counter" element={<PayAtCounter />} />
@@ -134,6 +150,16 @@ const AppRoutes: React.FC = () => {
   );
 };
 
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
+  return null;
+};
+
 /**
  * Figma Customer Journey Screens ("App · Customer journeys").
  * Fully replaces legacy App.tsx layout so the new design renders consistently across all views.
@@ -141,6 +167,7 @@ const AppRoutes: React.FC = () => {
 export const Root: React.FC = () => (
   <SSOAuthProvider>
     <HashRouter>
+      <ScrollToTop />
       <AppRoutes />
     </HashRouter>
   </SSOAuthProvider>

@@ -241,3 +241,9 @@ skills-lock.json
 test*.js
 test*.gz
 
+# Reference Repositories
+Jigsaw-Puzzle/
+go-daily/
+web-games/
+
+

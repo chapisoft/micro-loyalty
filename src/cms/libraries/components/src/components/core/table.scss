@@ -1,7 +1,7 @@
-.p-datatable .p-sortable-column:not([align="right"]):not(.p-align-right):not([align="center"]):not(.p-align-center) .p-column-title,
-.p-datatable .p-sortable-column:not([align="right"]):not(.p-align-right):not([align="center"]):not(.p-align-center) .p-sortable-column-icon,
-.p-datatable .p-sortable-column:not([align="right"]):not(.p-align-right):not([align="center"]):not(.p-align-center) .p-sortable-column-badge {
-  margin-right: auto;
+.p-datatable .p-sortable-column .p-column-title,
+.p-datatable .p-sortable-column .p-sortable-column-icon,
+.p-datatable .p-sortable-column .p-sortable-column-badge {
+  margin-right: 0;
 }
 .p-paginator-left-content {
   margin-right: unset;

@@ -183,6 +183,7 @@ export const ApprovalQueuePage: React.FC = () => {
                 { label: ApprovalTargetType.PARTNER_PROPOSAL, value: ApprovalTargetType.PARTNER_PROPOSAL },
                 { label: ApprovalTargetType.PAYMENT_BATCH, value: ApprovalTargetType.PAYMENT_BATCH },
                 { label: ApprovalTargetType.SYSTEM_PARAM, value: ApprovalTargetType.SYSTEM_PARAM },
+                { label: ApprovalTargetType.LEADERBOARD_PAYOUT, value: ApprovalTargetType.LEADERBOARD_PAYOUT },
               ],
               onChange: (val) => setTargetFilter(val),
               placeholder: t('approval.target_type'),

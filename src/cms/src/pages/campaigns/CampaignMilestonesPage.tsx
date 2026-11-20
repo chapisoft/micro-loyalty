@@ -21,7 +21,8 @@ import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
-import { CommonStatus, CampaignMissionCategory, CustomerSegmentCode } from '@/models';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import { CommonStatus, CampaignMissionCategory, CustomerSegmentCode, MediaFolder } from '@/models';
 import {
   LoyaltyService,
   MilestoneItemModel,
@@ -53,6 +54,8 @@ interface CampaignMilestoneItem {
   rewardVoucherId?: number | null;
   rewardGameTurns: number;
   audienceRole?: string;
+  description?: string;
+  imageUrl?: string;
   status: CommonStatus;
   startDate: string;
   endDate: string;
@@ -258,6 +261,7 @@ export const CampaignMilestonesPage: React.FC = () => {
             rewardVoucherId: m.rewardVoucherId ?? null,
             rewardGameTurns: m.rewardGameTurns || 0,
             audienceRole: m.audienceRole || 'CUSTOMER',
+            description: m.description || '',
             status: (m.status as CommonStatus) || CommonStatus.ACTIVE,
             startDate: m.startDate ? String(m.startDate).substring(0, 10) : formatLocalDate(new Date()),
             endDate: m.endDate ? String(m.endDate).substring(0, 10) : formatLocalDate(new Date(Date.now() + 180 * 86400000)),
@@ -381,6 +385,8 @@ export const CampaignMilestonesPage: React.FC = () => {
       rewardGameTurns: 1,
       rewardVoucherId: null,
       audienceRole: 'CUSTOMER',
+      description: '',
+      imageUrl: '',
       status: CommonStatus.ACTIVE,
       startDate: today,
       endDate: endSixMonths,
@@ -407,6 +413,9 @@ export const CampaignMilestonesPage: React.FC = () => {
       campaignName: matched ? matched.name : prev?.campaignName || '',
       partnerId: firstCampaign?.partnerId ?? prev?.partnerId ?? null,
       milestoneStep: maxStep + 1,
+      audienceRole: firstCampaign?.audienceRole || prev?.audienceRole || 'CUSTOMER',
+      description: firstCampaign?.description || prev?.description || '',
+      imageUrl: firstCampaign?.imageUrl || prev?.imageUrl || '',
       startDate: firstCampaign?.startDate || prev?.startDate,
       endDate: firstCampaign?.endDate || prev?.endDate,
     }));
@@ -418,6 +427,7 @@ export const CampaignMilestonesPage: React.FC = () => {
       ...item,
       partnerId: item.partnerId ?? null,
       rewardVoucherId: item.rewardVoucherId ?? null,
+      imageUrl: item.imageUrl || '',
       startDate: item.startDate ? item.startDate.substring(0, 10) : '',
       endDate: item.endDate ? item.endDate.substring(0, 10) : '',
     });
@@ -480,6 +490,8 @@ export const CampaignMilestonesPage: React.FC = () => {
         rewardVoucherId: formData.rewardVoucherId ? Number(formData.rewardVoucherId) : null,
         rewardGameTurns: formData.rewardGameTurns || 0,
         audienceRole: formData.audienceRole || 'CUSTOMER',
+        description: (formData.description || '').trim(),
+        imageUrl: formData.imageUrl || '',
         startDate: formData.startDate ? new Date(formData.startDate + 'T00:00:00').toISOString() : new Date().toISOString(),
         endDate: formData.endDate ? new Date(formData.endDate + 'T23:59:59').toISOString() : new Date(Date.now() + 180 * 86400000).toISOString(),
         status: formData.status || CommonStatus.ACTIVE,
@@ -1123,6 +1135,32 @@ export const CampaignMilestonesPage: React.FC = () => {
               appendTo="self"
             />
           </div>
+        </div>
+
+        <div className="field mb-3">
+          <ImageUploadField
+            value={formData.imageUrl}
+            onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+            folder={MediaFolder.MISSIONS}
+            tenantId={selectedTenant}
+            label={t('milestone.image')}
+            aspect="wide"
+          />
+        </div>
+
+        <div className="field mb-3">
+          <label htmlFor="milestoneDescription" className="font-bold">
+            {t('milestone.description')}
+          </label>
+          <InputTextarea
+            id="milestoneDescription"
+            rows={4}
+            autoResize
+            value={formData.description || ''}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder={t('milestone.description_placeholder')}
+          />
+          <small className="text-500 block mt-1">{t('milestone.description_hint')}</small>
         </div>
         </div>
 

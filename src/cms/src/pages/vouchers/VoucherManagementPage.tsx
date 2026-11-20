@@ -22,8 +22,24 @@ import { StandardRowActions, RowActionItem } from '@/components/StandardRowActio
 import { StatusBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
 import { TenantSelector } from '@/components/TenantSelector';
-import { CommonStatus, DiscountType } from '@/models';
-import { LoyaltyService, PartnerItemModel, VoucherItemModel } from '@/service/loyalty.service';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import {
+  AudienceRole,
+  CommonStatus,
+  DiscountType,
+  MediaFolder,
+  VoucherAcquireType,
+  VoucherBatchPeriod,
+  VoucherUsageType,
+} from '@/models';
+import { categoryService, GeneralCategory } from '@/service/category.service';
+import {
+  LoyaltyService,
+  NatcashPaymentPointModel,
+  PartnerItemModel,
+  TierConfigModel,
+  VoucherItemModel,
+} from '@/service/loyalty.service';
 
 export interface VoucherItem {
   id: number;
@@ -57,11 +73,14 @@ export interface VoucherItem {
   showInFreeStrip: boolean;
   stripOrder?: number;
   serviceLink?: string;
+  branchScope?: string;
+  branchCodes?: string[];
   imageUrl?: string;
   /** Name and condition in English, Français, Kreyòl (stored as i18nJson) */
   i18n: Record<'en' | 'fr' | 'ht', { name?: string; condition?: string }>;
 }
 
+const VOUCHER_CATEGORY_GROUP = 'VOUCHER_CATEGORY';
 const EMPTY_I18N = { en: {}, fr: {}, ht: {} } as VoucherItem['i18n'];
 const parseI18n = (raw?: string): VoucherItem['i18n'] => {
   try {
@@ -70,7 +89,16 @@ const parseI18n = (raw?: string): VoucherItem['i18n'] => {
     return { ...EMPTY_I18N };
   }
 };
-const TIER_OPTIONS = ['SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].map((x) => ({ label: x.charAt(0) + x.slice(1).toLowerCase(), value: x }));
+const parseBranchScope = (raw?: string): string[] => {
+  if (!raw || !raw.trim()) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map((x) => String(x).trim()).filter(Boolean);
+  } catch {
+    // fallback comma-separated
+  }
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+};
 
 export const VoucherManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -79,6 +107,10 @@ export const VoucherManagementPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>('ALL');
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [partners, setPartners] = useState<PartnerItemModel[]>([]);
+  const [voucherCategories, setVoucherCategories] = useState<GeneralCategory[]>([]);
+  const [tiers, setTiers] = useState<TierConfigModel[]>([]);
+  const [paymentPoints, setPaymentPoints] = useState<NatcashPaymentPointModel[]>([]);
+  const [previewLang, setPreviewLang] = useState<'en' | 'fr' | 'ht'>('en');
   const [selectedVouchers, setSelectedVouchers] = useState<VoucherItem[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [showDialog, setShowDialog] = useState(false);
@@ -149,6 +181,8 @@ export const VoucherManagementPage: React.FC = () => {
             showInFreeStrip: !!item.showInFreeStrip,
             stripOrder: item.stripOrder,
             serviceLink: item.serviceLink,
+            branchScope: item.branchScope,
+            branchCodes: parseBranchScope(item.branchScope),
             imageUrl: item.imageUrl,
             i18n: parseI18n(item.i18nJson),
           }))
@@ -164,7 +198,7 @@ export const VoucherManagementPage: React.FC = () => {
     }
   }, [t]);
 
-  // 2. Tải danh sách Đối tác theo Liên minh để phục vụ chọn Partner
+  // 2. Tải danh sách Đối tác, Danh mục ngành hàng, Hạng hội viên & Chi nhánh điểm thanh toán
   const fetchPartners = useCallback(async (tenantId: string) => {
     try {
       const data = await LoyaltyService.getPartners(tenantId);
@@ -175,17 +209,34 @@ export const VoucherManagementPage: React.FC = () => {
     }
   }, []);
 
+  const fetchFormMasterData = useCallback(async (tenantId: string) => {
+    try {
+      const [catList, tierList, branchList] = await Promise.all([
+        categoryService.getCategoriesByType(VOUCHER_CATEGORY_GROUP),
+        LoyaltyService.getTiers(tenantId),
+        LoyaltyService.getPaymentPoints(undefined, tenantId),
+      ]);
+      setVoucherCategories(Array.isArray(catList) ? catList.filter((c) => c.status !== 0) : []);
+      setTiers(Array.isArray(tierList) ? tierList : []);
+      setPaymentPoints(Array.isArray(branchList) ? branchList : []);
+    } catch (e) {
+      console.error('[fetchFormMasterData] Error:', e);
+    }
+  }, []);
+
   // Xử lý khi thay đổi Liên minh
   const handleTenantChange = (newTenantId: string) => {
     setSelectedTenant(newTenantId);
     fetchVouchers(newTenantId);
     fetchPartners(newTenantId);
+    fetchFormMasterData(newTenantId);
   };
 
   useEffect(() => {
     fetchVouchers(selectedTenant);
     fetchPartners(selectedTenant);
-  }, [selectedTenant, fetchVouchers, fetchPartners]);
+    fetchFormMasterData(selectedTenant);
+  }, [selectedTenant, fetchVouchers, fetchPartners, fetchFormMasterData]);
 
   // Dropdown options chọn đối tác
   const partnerDropdownOptions = useMemo(() => {
@@ -211,6 +262,58 @@ export const VoucherManagementPage: React.FC = () => {
     { label: t('common.active', 'Hoạt động'), value: CommonStatus.ACTIVE },
     { label: t('common.inactive', 'Ngừng hoạt động'), value: CommonStatus.INACTIVE },
   ], [t]);
+
+  const categoryOptions = useMemo(() => {
+    const opts = voucherCategories.map((c) => ({
+      label: `${c.name} (${c.code})`,
+      value: c.code,
+    }));
+    const current = formData.categoryCode?.trim().toUpperCase();
+    if (current && !opts.some((o) => o.value === current)) {
+      opts.push({ label: current, value: current });
+    }
+    return opts;
+  }, [voucherCategories, formData.categoryCode]);
+
+  const tierOptions = useMemo(
+    () =>
+      tiers.map((tier) => ({
+        label: tier.name ? `${tier.name} (${tier.code})` : tier.code,
+        value: tier.code,
+      })),
+    [tiers]
+  );
+
+  const audienceRoleOptions = useMemo(
+    () => [
+      { label: t('voucher.audience_customer'), value: AudienceRole.CUSTOMER },
+      { label: t('voucher.audience_agent'), value: AudienceRole.AGENT },
+      { label: t('voucher.audience_super_agent'), value: AudienceRole.SUPER_AGENT },
+    ],
+    [t]
+  );
+
+  const batchPeriodOptions = useMemo(
+    () => [
+      { label: t('voucher.batch_none'), value: VoucherBatchPeriod.NONE },
+      { label: t('voucher.batch_daily'), value: VoucherBatchPeriod.DAILY },
+      { label: t('voucher.batch_weekly'), value: VoucherBatchPeriod.WEEKLY },
+    ],
+    [t]
+  );
+
+  const branchScopeOptions = useMemo(() => {
+    const selectedPartner = partners.find((p) => p.id === formData.partnerId);
+    const filtered = selectedPartner?.partnerCode
+      ? paymentPoints.filter(
+          (b) => !b.partnerCode || b.partnerCode.toUpperCase() === selectedPartner.partnerCode.toUpperCase()
+        )
+      : paymentPoints;
+    return filtered.map((b) => ({
+      label: `${b.branchName || b.branchCode} (${b.branchCode})${b.province ? ` · ${b.province}` : ''}`,
+      value: b.branchCode,
+    }));
+  }, [paymentPoints, partners, formData.partnerId]);
 
   const partnerOptionTemplate = (option: any) => {
     if (!option) return null;
@@ -254,6 +357,13 @@ export const VoucherManagementPage: React.FC = () => {
       validFrom: today,
       validTo: end90Days,
       status: CommonStatus.ACTIVE,
+      acquireType: VoucherAcquireType.COINS,
+      usageType: VoucherUsageType.NATCASH_STORE,
+      audienceRole: AudienceRole.CUSTOMER,
+      eligibleTiers: [],
+      batchPeriod: VoucherBatchPeriod.NONE,
+      branchCodes: [],
+      i18n: { en: {}, fr: {}, ht: {} },
     });
     setIsEdit(false);
     setShowDialog(true);
@@ -261,7 +371,10 @@ export const VoucherManagementPage: React.FC = () => {
 
   // Mở modal chỉnh sửa
   const editItem = (item: VoucherItem) => {
-    setFormData({ ...item });
+    setFormData({
+      ...item,
+      branchCodes: item.branchCodes ?? parseBranchScope(item.branchScope),
+    });
     setIsEdit(true);
     setShowDialog(true);
   };
@@ -335,6 +448,10 @@ export const VoucherManagementPage: React.FC = () => {
         showInFreeStrip: !!formData.showInFreeStrip,
         stripOrder: formData.stripOrder,
         serviceLink: formData.serviceLink || '',
+        branchScope:
+          formData.usageType === VoucherUsageType.ONLINE || !formData.branchCodes?.length
+            ? ''
+            : JSON.stringify(formData.branchCodes),
         imageUrl: formData.imageUrl || '',
         i18nJson: JSON.stringify(formData.i18n || EMPTY_I18N),
       };
@@ -982,17 +1099,38 @@ export const VoucherManagementPage: React.FC = () => {
           <div className="formgrid grid mb-3">
             <div className="field col-6">
               <label htmlFor="categoryCode" className="font-bold text-900">{t('voucher.category', 'Category')}</label>
-              <InputText id="categoryCode" value={formData.categoryCode || ''} onChange={(e) => setFormData({ ...formData, categoryCode: e.target.value.toUpperCase() })} placeholder="GROCERY, FUEL, TELECOM…" />
+              <Dropdown
+                id="categoryCode"
+                value={formData.categoryCode || null}
+                options={categoryOptions}
+                onChange={(e) => setFormData({ ...formData, categoryCode: e.value || '' })}
+                placeholder={t('voucher.category_placeholder')}
+                filter
+                showClear
+                appendTo="self"
+              />
               <small className="text-500">{t('voucher.category_hint', 'Used by the Store filters in the app')}</small>
             </div>
             <div className="field col-6">
               <label htmlFor="audienceRole" className="font-bold text-900">{t('voucher.audience', 'Who can get it')}</label>
-              <Dropdown id="audienceRole" value={formData.audienceRole || 'CUSTOMER'} options={[{ label: 'Customers', value: 'CUSTOMER' }, { label: 'Agents', value: 'AGENT' }, { label: 'Super Agents', value: 'SUPER_AGENT' }]} onChange={(e) => setFormData({ ...formData, audienceRole: e.value })} appendTo="self" />
+              <Dropdown
+                id="audienceRole"
+                value={formData.audienceRole || AudienceRole.CUSTOMER}
+                options={audienceRoleOptions}
+                onChange={(e) => setFormData({ ...formData, audienceRole: e.value })}
+                appendTo="self"
+              />
             </div>
           </div>
           <div className="field mb-3">
-            <label htmlFor="imageUrl" className="font-bold text-900">{t('voucher.image_url', 'Image URL')}</label>
-            <InputText id="imageUrl" value={formData.imageUrl || ''} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://…/delimart-15.png" />
+            <ImageUploadField
+              value={formData.imageUrl}
+              onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+              folder={MediaFolder.VOUCHERS}
+              tenantId={selectedTenant}
+              label={t('voucher.image_url')}
+              aspect="card"
+            />
           </div>
           <div className="formgrid grid mb-3">
             {(['en', 'fr', 'ht'] as const).map((lng) => (
@@ -1008,22 +1146,22 @@ export const VoucherManagementPage: React.FC = () => {
           <div className="surface-50 border-round-lg p-3 mb-3">
             <div className="font-bold text-900 mb-2">{t('voucher.how_to_get', 'How customers get it')}</div>
             <SelectButton
-              value={formData.acquireType || 'COINS'}
+              value={formData.acquireType || VoucherAcquireType.COINS}
               options={[
-                { label: t('voucher.acquire_coins', 'Get with coins'), value: 'COINS' },
-                { label: t('voucher.acquire_free', 'Free – collect'), value: 'FREE_COLLECT' },
-                { label: t('voucher.acquire_given', 'Given only'), value: 'GIVEN' },
+                { label: t('voucher.acquire_coins', 'Get with coins'), value: VoucherAcquireType.COINS },
+                { label: t('voucher.acquire_free', 'Free – collect'), value: VoucherAcquireType.FREE_COLLECT },
+                { label: t('voucher.acquire_given', 'Given only'), value: VoucherAcquireType.GIVEN },
               ]}
-              onChange={(e) => e.value && setFormData({ ...formData, acquireType: e.value, pointsRequired: e.value === 'FREE_COLLECT' ? 0 : formData.pointsRequired })}
+              onChange={(e) => e.value && setFormData({ ...formData, acquireType: e.value, pointsRequired: e.value === VoucherAcquireType.FREE_COLLECT ? 0 : formData.pointsRequired })}
             />
             <small className="text-500 block mt-2">
-              {formData.acquireType === 'FREE_COLLECT'
+              {formData.acquireType === VoucherAcquireType.FREE_COLLECT
                 ? t('voucher.acquire_free_hint', 'App button “Collect”: saved to My vouchers with a small toast, reserved when collected.')
-                : formData.acquireType === 'GIVEN'
+                : formData.acquireType === VoucherAcquireType.GIVEN
                 ? t('voucher.acquire_given_hint', 'Not shown in the Store; sent by a mission, game or campaign.')
                 : t('voucher.acquire_coins_hint', 'App button “Get voucher”: coins are deducted, popup “Voucher added”.')}
             </small>
-            {formData.acquireType === 'FREE_COLLECT' && (
+            {formData.acquireType === VoucherAcquireType.FREE_COLLECT && (
               <div className="formgrid grid mt-3">
                 <div className="field col-4">
                   <label className="font-bold text-900">{t('voucher.batch_quantity', 'Quantity per batch')}</label>
@@ -1031,30 +1169,36 @@ export const VoucherManagementPage: React.FC = () => {
                 </div>
                 <div className="field col-4">
                   <label className="font-bold text-900">{t('voucher.batch_period', 'New batch')}</label>
-                  <Dropdown value={formData.batchPeriod || 'NONE'} options={[{ label: 'One batch only', value: 'NONE' }, { label: 'Every day 00:00', value: 'DAILY' }, { label: 'Every Monday 00:00', value: 'WEEKLY' }]} onChange={(e) => setFormData({ ...formData, batchPeriod: e.value })} appendTo="self" />
+                  <Dropdown value={formData.batchPeriod || VoucherBatchPeriod.NONE} options={batchPeriodOptions} onChange={(e) => setFormData({ ...formData, batchPeriod: e.value })} appendTo="self" />
                 </div>
                 <div className="field col-4">
                   <label className="font-bold text-900">{t('voucher.per_customer_limit', 'Limit per customer')}</label>
-                  <InputNumber value={formData.perCustomerLimit ?? 1} onValueChange={(e) => setFormData({ ...formData, perCustomerLimit: e.value || 1 })} min={1} suffix=" / batch" />
+                  <InputNumber value={formData.perCustomerLimit ?? 1} onValueChange={(e) => setFormData({ ...formData, perCustomerLimit: e.value || 1 })} min={1} />
                 </div>
                 <div className="field col-4">
                   <label className="font-bold text-900">{t('voucher.valid_days_after_collect', 'Valid after collecting')}</label>
-                  <InputNumber value={formData.validDaysAfterCollect} onValueChange={(e) => setFormData({ ...formData, validDaysAfterCollect: e.value || undefined })} min={1} suffix=" days" />
+                  <InputNumber value={formData.validDaysAfterCollect} onValueChange={(e) => setFormData({ ...formData, validDaysAfterCollect: e.value || undefined })} min={1} />
                   <small className="text-500">{t('voucher.fixed_date_hint', 'The app shows a fixed date')}</small>
                 </div>
                 <div className="field col-8">
                   <label className="font-bold text-900">{t('voucher.eligible_tiers', 'Eligible tiers')}</label>
-                  <MultiSelect value={formData.eligibleTiers || []} options={TIER_OPTIONS} onChange={(e) => setFormData({ ...formData, eligibleTiers: e.value })} placeholder={t('voucher.all_tiers', 'All tiers')} display="chip" appendTo="self" />
+                  <MultiSelect value={formData.eligibleTiers || []} options={tierOptions} onChange={(e) => setFormData({ ...formData, eligibleTiers: e.value })} placeholder={t('voucher.all_tiers', 'All tiers')} display="chip" appendTo="self" />
                   <small className="text-500">{t('voucher.eligible_tiers_hint', 'Other tiers see it locked: “See member tiers”')}</small>
                 </div>
-                <div className="field col-6 flex align-items-center gap-2">
+                <div className="field col-5 flex align-items-center gap-2">
                   <InputSwitch checked={!!formData.requireEkyc} onChange={(e) => setFormData({ ...formData, requireEkyc: !!e.value })} />
                   <span>{t('voucher.require_ekyc', 'Verified wallets only (eKYC)')}</span>
                 </div>
-                <div className="field col-6 flex align-items-center gap-2">
+                <div className="field col-4 flex align-items-center gap-2">
                   <InputSwitch checked={!!formData.showInFreeStrip} onChange={(e) => setFormData({ ...formData, showInFreeStrip: !!e.value })} />
                   <span>{t('voucher.show_in_free_strip', 'Show in “Free to collect” on the Store')}</span>
                 </div>
+                {formData.showInFreeStrip && (
+                  <div className="field col-3">
+                    <label className="font-bold text-900">{t('voucher.strip_order')}</label>
+                    <InputNumber value={formData.stripOrder ?? 1} onValueChange={(e) => setFormData({ ...formData, stripOrder: e.value ?? 1 })} min={1} />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1063,27 +1207,156 @@ export const VoucherManagementPage: React.FC = () => {
           <div className="surface-50 border-round-lg p-3 mb-3">
             <div className="font-bold text-900 mb-2">{t('voucher.how_to_use', 'How customers use it')}</div>
             <SelectButton
-              value={formData.usageType || 'PARTNER_CODE'}
+              value={formData.usageType || VoucherUsageType.PARTNER_CODE}
               options={[
-                { label: t('voucher.usage_store', 'Natcash payment at store'), value: 'NATCASH_STORE' },
-                { label: t('voucher.usage_partner', 'Partner code'), value: 'PARTNER_CODE' },
-                { label: t('voucher.usage_online', 'Online service'), value: 'ONLINE' },
+                { label: t('voucher.usage_store', 'Natcash payment at store'), value: VoucherUsageType.NATCASH_STORE },
+                { label: t('voucher.usage_partner', 'Partner code'), value: VoucherUsageType.PARTNER_CODE },
+                { label: t('voucher.usage_online', 'Online service'), value: VoucherUsageType.ONLINE },
               ]}
               onChange={(e) => e.value && setFormData({ ...formData, usageType: e.value })}
             />
             <small className="text-500 block mt-2">
-              {formData.usageType === 'NATCASH_STORE'
+              {formData.usageType === VoucherUsageType.NATCASH_STORE
                 ? t('voucher.usage_store_hint', 'Use → Pay at counter with this voucher; the cashier scans one code.')
-                : formData.usageType === 'ONLINE'
+                : formData.usageType === VoucherUsageType.ONLINE
                 ? t('voucher.usage_online_hint', 'Use → opens the service checkout (top-up, data, bills) with the voucher applied.')
                 : t('voucher.usage_partner_hint', 'Use → shows QR / barcode for the partner’s own POS; needs code stock.')}
             </small>
-            {formData.usageType === 'ONLINE' && (
+            {formData.usageType === VoucherUsageType.ONLINE ? (
               <div className="field mt-3 mb-0">
                 <label className="font-bold text-900">{t('voucher.service_link', 'Service link')} <span className="text-red-500">*</span></label>
                 <InputText value={formData.serviceLink || ''} onChange={(e) => setFormData({ ...formData, serviceLink: e.target.value })} placeholder="natcash://topup" />
               </div>
+            ) : (
+              <div className="field mt-3 mb-0">
+                <label className="font-bold text-900">{t('voucher.branch_scope')}</label>
+                <MultiSelect
+                  value={formData.branchCodes || []}
+                  options={branchScopeOptions}
+                  onChange={(e) => setFormData({ ...formData, branchCodes: e.value || [] })}
+                  placeholder={t('voucher.branch_scope_placeholder')}
+                  filter
+                  display="chip"
+                  appendTo="self"
+                />
+                <small className="text-500 block mt-1">{t('voucher.branch_scope_hint')}</small>
+              </div>
             )}
+          </div>
+
+          {/* VQ-04 · Live App Card Preview */}
+          <div className="surface-50 border-round-lg p-3 mb-3 border-1 surface-border">
+            <div className="flex align-items-center justify-content-between mb-2">
+              <span className="font-bold text-900 text-sm">
+                <i className="pi pi-mobile mr-2 text-primary" />
+                {t('voucher.preview_title')}
+              </span>
+              <div className="flex gap-1">
+                {(['en', 'fr', 'ht'] as const).map((lng) => (
+                  <Button
+                    key={lng}
+                    type="button"
+                    label={lng.toUpperCase()}
+                    size="small"
+                    outlined={previewLang !== lng}
+                    severity={previewLang === lng ? undefined : 'secondary'}
+                    className="py-1 px-2 text-xs"
+                    onClick={() => setPreviewLang(lng)}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="surface-card border-round-xl p-3 border-1 surface-border flex align-items-center gap-3">
+              <div
+                className="relative border-round-lg overflow-hidden flex-shrink-0 flex align-items-center justify-content-center"
+                style={{
+                  width: 96,
+                  height: 68,
+                  background: 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)',
+                }}
+              >
+                {formData.imageUrl ? (
+                  <img
+                    src={formData.imageUrl}
+                    alt={formData.title || ''}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <i className="pi pi-ticket text-2xl text-primary" />
+                )}
+                <span
+                  className="text-xs font-semibold px-2 py-0 border-round-xl"
+                  style={{
+                    position: 'absolute',
+                    top: 6,
+                    left: 6,
+                    background: 'rgba(255,255,255,0.92)',
+                    color: '#0f172a',
+                    fontSize: '0.65rem',
+                  }}
+                >
+                  {partners.find((p) => p.id === formData.partnerId)?.partnerName || t('voucher.scope_all_short')}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-900 text-base white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                  {formData.i18n?.[previewLang]?.name || formData.title || t('voucher.new_title')}
+                </div>
+                <div className="text-xs text-600 mt-1 white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                  {formData.i18n?.[previewLang]?.condition ||
+                    formData.description ||
+                    (formData.minOrderValue ? `${t('voucher.min_order')}: ${formData.minOrderValue} HTG` : '—')}
+                </div>
+                <div className="flex align-items-center gap-2 mt-2 flex-wrap">
+                  {formData.categoryCode && (
+                    <Tag
+                      value={
+                        voucherCategories.find((c) => c.code === formData.categoryCode)?.name ||
+                        formData.categoryCode
+                      }
+                      severity="info"
+                      className="text-xs"
+                    />
+                  )}
+                  <span className="text-xs text-500">
+                    {formData.usageType === VoucherUsageType.ONLINE
+                      ? t('voucher.usage_online')
+                      : formData.usageType === VoucherUsageType.NATCASH_STORE
+                      ? t('voucher.usage_store')
+                      : t('voucher.usage_partner')}
+                  </span>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <span
+                  className="px-3 py-1 border-round-xl font-bold text-xs inline-block"
+                  style={{
+                    background:
+                      formData.acquireType === VoucherAcquireType.FREE_COLLECT
+                        ? '#FFF7ED'
+                        : formData.acquireType === VoucherAcquireType.GIVEN
+                        ? '#EFF6FF'
+                        : '#FF6B00',
+                    color:
+                      formData.acquireType === VoucherAcquireType.FREE_COLLECT
+                        ? '#EA580C'
+                        : formData.acquireType === VoucherAcquireType.GIVEN
+                        ? '#1D4ED8'
+                        : '#FFFFFF',
+                    border:
+                      formData.acquireType === VoucherAcquireType.FREE_COLLECT
+                        ? '1px solid #FDBA74'
+                        : 'none',
+                  }}
+                >
+                  {formData.acquireType === VoucherAcquireType.FREE_COLLECT
+                    ? t('voucher.acquire_free')
+                    : formData.acquireType === VoucherAcquireType.GIVEN
+                    ? t('voucher.acquire_given')
+                    : `${formData.pointsRequired || 0}`}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="field mb-3">

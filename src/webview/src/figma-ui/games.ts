@@ -22,10 +22,27 @@ export const IN_HOUSE: Record<string, { route: string; name: string; category: s
   BLOCK: { route: '/block', name: 'Diamond Blocks', category: CAT.BRAIN, artCode: 'BLOCK' },
   RUNNER: { route: '/runner', name: 'Port Runner', category: CAT.FUN, artCode: 'RUNNER' },
   WORDLE: { route: '/wordle', name: 'Lucky Word', category: CAT.BRAIN, artCode: 'WORDLE' },
-  SCREW: { route: '/screw', name: 'Screw Puzzle', category: CAT.BRAIN, artCode: 'SCREW' },
-  SCREW_PUZZLE: { route: '/screw', name: 'Screw Puzzle', category: CAT.BRAIN, artCode: 'SCREW' },
   UNTANGLE: { route: '/untangle', name: 'Rope Untangle', category: CAT.BRAIN, artCode: 'UNTANGLE' },
-  PULLPIN: { route: '/pullpin', name: 'Pull the Pin', category: CAT.BRAIN, artCode: 'PULLPIN' },
+  GOLDMINER: { route: '/goldminer', name: 'Gold Miner', category: CAT.FUN, artCode: 'GOLDMINER' },
+  GOLD_MINER: { route: '/goldminer', name: 'Gold Miner', category: CAT.FUN, artCode: 'GOLDMINER' },
+  HELIX: { route: '/helix', name: 'Helix Jump', category: CAT.FUN, artCode: 'HELIX' },
+  JIGSAW: { route: '/jigsaw', name: 'Jigsaw Puzzle', category: CAT.BRAIN, artCode: 'JIGSAW' },
+  JIGSAW_PUZZLE: { route: '/jigsaw', name: 'Jigsaw Puzzle', category: CAT.BRAIN, artCode: 'JIGSAW' },
+  WATERSORT: { route: '/watersort', name: 'Water Sort', category: CAT.BRAIN, artCode: 'WATERSORT' },
+  WATER_SORT: { route: '/watersort', name: 'Water Sort', category: CAT.BRAIN, artCode: 'WATERSORT' },
+  STACKTOWER: { route: '/stacktower', name: 'Stack Tower', category: CAT.FUN, artCode: 'STACKTOWER' },
+  STACK_TOWER: { route: '/stacktower', name: 'Stack Tower', category: CAT.FUN, artCode: 'STACKTOWER' },
+  PIPECONNECT: { route: '/pipeconnect', name: 'Pipe Connect', category: CAT.BRAIN, artCode: 'PIPECONNECT' },
+  PIPE_CONNECT: { route: '/pipeconnect', name: 'Pipe Connect', category: CAT.BRAIN, artCode: 'PIPECONNECT' },
+  MERGEDROP: { route: '/mergedrop', name: 'Merge Drop', category: CAT.BRAIN, artCode: 'MERGEDROP' },
+  MERGE_DROP: { route: '/mergedrop', name: 'Merge Drop', category: CAT.BRAIN, artCode: 'MERGEDROP' },
+  WHACKAMOLE: { route: '/whackamole', name: 'Whack a Mole', category: CAT.FUN, artCode: 'WHACKAMOLE' },
+  WHACK_A_MOLE: { route: '/whackamole', name: 'Whack a Mole', category: CAT.FUN, artCode: 'WHACKAMOLE' },
+  MINESWEEPER: { route: '/minesweeper', name: 'Minesweeper', category: CAT.BRAIN, artCode: 'MINESWEEPER' },
+  MINE_SWEEPER: { route: '/minesweeper', name: 'Minesweeper', category: CAT.BRAIN, artCode: 'MINESWEEPER' },
+  BOMB_SWEEPER: { route: '/minesweeper', name: 'Minesweeper', category: CAT.BRAIN, artCode: 'MINESWEEPER' },
+  SUDOKU: { route: '/sudoku', name: 'Sudoku Master', category: CAT.BRAIN, artCode: 'SUDOKU' },
+  SUDOCU: { route: '/sudoku', name: 'Sudoku Master', category: CAT.BRAIN, artCode: 'SUDOKU' },
   TREASURE_CHEST: { route: '/games/wheel', name: 'Mở Rương Báu', category: CAT.FUN, artCode: 'WHEEL' },
   TOWER_CLIMB: { route: '/runner', name: 'Tháp Kho Báu', category: CAT.FUN, artCode: 'RUNNER' },
   PENALTY_SHOOTOUT: { route: '/runner', name: 'Penalty Shootout', category: CAT.FUN, artCode: 'RUNNER' },
@@ -81,13 +98,39 @@ export async function loadGames(): Promise<{ games: GameEntry[]; fromApi: boolea
     { code: 'BLOCK', name: 'Diamond Blocks', category: CAT.BRAIN, route: '/block' },
     { code: 'RUNNER', name: 'Port Runner', category: CAT.FUN, route: '/runner' },
     { code: 'WORDLE', name: 'Lucky Word', category: CAT.BRAIN, route: '/wordle' },
-    { code: 'SCREW', name: 'Screw Puzzle', category: CAT.BRAIN, route: '/screw' },
     { code: 'UNTANGLE', name: 'Rope Untangle', category: CAT.BRAIN, route: '/untangle' },
-    { code: 'PULLPIN', name: 'Pull the Pin', category: CAT.BRAIN, route: '/pullpin' },
+    { code: 'GOLDMINER', name: 'Gold Miner', category: CAT.FUN, route: '/goldminer' },
+    { code: 'HELIX', name: 'Helix Jump', category: CAT.FUN, route: '/helix' },
+    { code: 'JIGSAW', name: 'Jigsaw Puzzle', category: CAT.BRAIN, route: '/jigsaw' },
+    { code: 'WATERSORT', name: 'Water Sort', category: CAT.BRAIN, route: '/watersort' },
+    { code: 'STACKTOWER', name: 'Stack Tower', category: CAT.FUN, route: '/stacktower' },
+    { code: 'PIPECONNECT', name: 'Pipe Connect', category: CAT.BRAIN, route: '/pipeconnect' },
+    { code: 'MERGEDROP', name: 'Merge Drop', category: CAT.BRAIN, route: '/mergedrop' },
+    { code: 'WHACKAMOLE', name: 'Whack a Mole', category: CAT.FUN, route: '/whackamole' },
+    { code: 'MINESWEEPER', name: 'Minesweeper', category: CAT.BRAIN, route: '/minesweeper' },
+    { code: 'SUDOKU', name: 'Sudoku Master', category: CAT.BRAIN, route: '/sudoku' },
   ];
 
+  const EXCLUDED_GAME_CODES = new Set([
+    'DAILY_CHECKIN',
+    'DAILYCHECKIN',
+    'CHECKIN',
+    'SCREW',
+    'SCREW_PUZZLE',
+    'TANGRAM_SCREW',
+    'PULLPIN',
+    'PULL_THE_PIN',
+    'PIGGY',
+    'PIGGY_SHOOTER',
+    'COWBOY',
+  ]);
+
   const list = await LoyaltyApi.getGamesList().catch(() => [] as GameListItem[]);
-  const active = list.filter((g) => !g.status || /ACTIVE|PUBLISHED|RUNNING/i.test(g.status));
+  const active = list.filter((g) => {
+    const c = normCode(g.gameCode);
+    if (EXCLUDED_GAME_CODES.has(c)) return false;
+    return !g.status || /ACTIVE|PUBLISHED|RUNNING/i.test(g.status);
+  });
   if (!active.length) {
     return { games: bundledEntries, fromApi: false };
   }
@@ -101,6 +144,8 @@ export async function loadGames(): Promise<{ games: GameEntry[]; fromApi: boolea
       apiMap.get(b.code) ||
       (b.code === 'SCRATCH' ? apiMap.get('SCRATCH_CARD') : undefined) ||
       (b.code === 'SCREW' ? apiMap.get('SCREW_PUZZLE') : undefined) ||
+      (b.code === 'GOLDMINER' ? apiMap.get('GOLD_MINER') : undefined) ||
+      (b.code === 'HELIX' ? apiMap.get('HELIX_JUMP') : undefined) ||
       (b.code === 'WHEEL' ? apiMap.get('LUCKY_WHEEL') || apiMap.get('LUCKY_WHEEL_NATCASH') : undefined);
     if (apiMatch) {
       return {
@@ -112,19 +157,28 @@ export async function loadGames(): Promise<{ games: GameEntry[]; fromApi: boolea
     return b;
   });
 
-  // Append any additional games from backend
+  // Deduplicate by resolved code & route so backend alias stubs never duplicate in-house tiles
+  const seenCodes = new Set<string>(result.map((r) => r.code));
+  const seenRoutes = new Set<string>(result.map((r) => r.route).filter((rt): rt is string => Boolean(rt)));
+
   active.forEach((g) => {
     const c = normCode(g.gameCode);
-    const isBundled = result.some(
-      (r) =>
-        r.code === c ||
-        (r.code === 'SCRATCH' && c === 'SCRATCH_CARD') ||
-        (r.code === 'SCREW' && c === 'SCREW_PUZZLE') ||
-        (r.code === 'WHEEL' && (c === 'LUCKY_WHEEL' || c === 'LUCKY_WHEEL_NATCASH'))
-    );
-    if (!isBundled) {
-      result.push(toEntry(g));
+    const isBundledAlias =
+      (c === 'SCRATCH_CARD' && seenCodes.has('SCRATCH')) ||
+      (c === 'SCREW_PUZZLE' && seenCodes.has('SCREW')) ||
+      (c === 'GOLD_MINER' && seenCodes.has('GOLDMINER')) ||
+      (c === 'HELIX_JUMP' && seenCodes.has('HELIX')) ||
+      ((c === 'LUCKY_WHEEL' || c === 'LUCKY_WHEEL_NATCASH') && seenCodes.has('WHEEL'));
+    if (isBundledAlias) return;
+
+    const entry = toEntry(g);
+    if (seenCodes.has(entry.code) || (entry.route && seenRoutes.has(entry.route))) {
+      return;
     }
+
+    result.push(entry);
+    seenCodes.add(entry.code);
+    if (entry.route) seenRoutes.add(entry.route);
   });
 
   return { games: result, fromApi: true };

@@ -22,8 +22,15 @@ export interface Particle {
 
 export class GameFXSystem {
   private particles: Particle[] = [];
-  private maxParticles: number = 200;
+  private maxParticles: number = 90;
   public shakeTrauma: number = 0; // 0 to 1
+
+  private pushParticle(p: Particle): void {
+    if (this.particles.length >= this.maxParticles) {
+      this.particles.shift();
+    }
+    this.particles.push(p);
+  }
 
   public update(dt: number = 1): void {
     // 1. Update particles
@@ -40,9 +47,10 @@ export class GameFXSystem {
       p.vy += p.gravity * dt;
       p.rotation += p.vRotation * dt;
 
-      // Friction
-      p.vx *= 0.98;
-      p.vy *= 0.98;
+      // Framerate-independent friction
+      const damping = Math.pow(0.98, dt);
+      p.vx *= damping;
+      p.vy *= damping;
 
       // Dynamic alpha fade
       const progress = p.life / p.maxLife;
@@ -66,15 +74,17 @@ export class GameFXSystem {
       ctx.rotate(p.rotation);
 
       if (p.type === 'FLOAT_TEXT' && p.text) {
-        // Floating juicy score popup
+        // Floating juicy score popup (outline stroke replaces expensive shadowBlur)
         const scale = 1 + Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
         ctx.scale(scale, scale);
         ctx.font = '900 13px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 8;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.strokeText(p.text, 0, 0);
+        ctx.fillStyle = p.color;
         ctx.fillText(p.text, 0, 0);
       } else if (p.type === 'CONFETTI') {
         // Fluttering 3D confetti
@@ -83,12 +93,15 @@ export class GameFXSystem {
         const height = p.size * 0.5 * Math.cos(p.life * 0.2);
         ctx.fillRect(-width / 2, -height / 2, width, height);
       } else if (p.type === 'SPARKLE') {
-        // 4-Point Radiant Diamond Star
+        // 4-Point Radiant Diamond Star with lightweight halo
+        const s = Math.max(0.5, p.size * (1 - p.life / p.maxLife));
         ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 6;
+        ctx.globalAlpha = p.alpha * 0.28;
         ctx.beginPath();
-        const s = p.size * (1 - p.life / p.maxLife);
+        ctx.arc(0, 0, s * 1.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
         ctx.moveTo(0, -s);
         ctx.quadraticCurveTo(0, 0, s, 0);
         ctx.quadraticCurveTo(0, 0, 0, s);
@@ -118,8 +131,6 @@ export class GameFXSystem {
       } else if (p.type === 'CRYSTAL_SHARD') {
         // Gemstone Faceted Shard
         ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 4;
         ctx.beginPath();
         ctx.moveTo(0, -p.size);
         ctx.lineTo(p.size * 0.8, 0);
@@ -127,6 +138,9 @@ export class GameFXSystem {
         ctx.lineTo(-p.size * 0.8, 0);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
       } else if (p.type === 'SMOKE_PUFF') {
         // Expanding Smoke Puff
         ctx.fillStyle = p.color;
@@ -157,7 +171,7 @@ export class GameFXSystem {
   }
 
   public spawnFloatText(x: number, y: number, text: string, color: string = '#F59E0B'): void {
-    this.particles.push({
+    this.pushParticle({
       x,
       y,
       vx: (Math.random() - 0.5) * 0.8,

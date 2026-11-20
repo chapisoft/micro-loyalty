@@ -16,6 +16,17 @@ const VALID_ART_CODES = new Set([
   'SCREW',
   'UNTANGLE',
   'PULLPIN',
+  'GOLDMINER',
+  'HELIX',
+  'PIGGY',
+  'JIGSAW',
+  'WATERSORT',
+  'STACKTOWER',
+  'PIPECONNECT',
+  'MERGEDROP',
+  'WHACKAMOLE',
+  'MINESWEEPER',
+  'SUDOKU',
   'SCRATCH',
   'LEARNING',
 ]);
@@ -32,6 +43,17 @@ export const resolveArtCode = (code: string): string => {
     return clean;
   }
   // Smart keyword mapping for any custom backend or partner game codes
+  if (/MINESWEEPER|SWEEPER|BOMB_SWEEP/i.test(clean)) return 'MINESWEEPER';
+  if (/SUDOKU|SUDOCU/i.test(clean)) return 'SUDOKU';
+  if (/GOLD|MINER/i.test(clean)) return 'GOLDMINER';
+  if (/HELIX|SPIRAL/i.test(clean)) return 'HELIX';
+  if (/PIGGY|PIG|COWBOY/i.test(clean)) return 'PIGGY';
+  if (/JIGSAW|PIECE|SWAP_PUZZLE/i.test(clean)) return 'JIGSAW';
+  if (/WATER|SORT|TUBE|LIQUID/i.test(clean)) return 'WATERSORT';
+  if (/STACK|TOWER|BUILD/i.test(clean)) return 'STACKTOWER';
+  if (/PIPE|PLUMB|CONNECT/i.test(clean)) return 'PIPECONNECT';
+  if (/MERGE|DROP|WATERMELON|SUIKA/i.test(clean)) return 'MERGEDROP';
+  if (/MOLE|WHACK|HAMMER/i.test(clean)) return 'WHACKAMOLE';
   if (/WHEEL|CHEST|REWARD|SPIN/i.test(clean)) return 'WHEEL';
   if (/SCRATCH|CARD|EGG|LUCKY_DICE/i.test(clean)) return 'SCRATCH';
   if (/RUN|SHOOT|TOWER|CLIMB|PENALTY/i.test(clean)) return 'RUNNER';

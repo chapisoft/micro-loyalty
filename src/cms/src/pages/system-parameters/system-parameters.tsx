@@ -91,6 +91,12 @@ export const SystemParameters: React.FC = () => {
   const [paramForm, setParamForm] = useState<Partial<SystemParameter>>({});
   const [isEditParam, setIsEditParam] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [unmaskedKeys, setUnmaskedKeys] = useState<Record<string, boolean>>({});
+  const [showFormSecret, setShowFormSecret] = useState(false);
+
+  const toggleMask = (key: string) => {
+    setUnmaskedKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // Tab 2: Code Types
   const [codeTypes, setCodeTypes] = useState<SysCodeTypeConfig[]>([]);
@@ -209,6 +215,7 @@ export const SystemParameters: React.FC = () => {
     });
     setJsonError(null);
     setIsEditParam(false);
+    setShowFormSecret(false);
     setShowParamDialog(true);
   };
 
@@ -220,6 +227,7 @@ export const SystemParameters: React.FC = () => {
     });
     setJsonError(null);
     setIsEditParam(true);
+    setShowFormSecret(false);
     setShowParamDialog(true);
   };
 
@@ -607,6 +615,32 @@ export const SystemParameters: React.FC = () => {
       );
     }
 
+    const isSensitive =
+      paramForm.groupCode === 'SECURITY' ||
+      /secret|password|token|key|credential|private/i.test(paramForm.paramKey || '');
+
+    if (isSensitive) {
+      return (
+        <div className="p-inputgroup">
+          <InputText
+            id="paramValue"
+            type={showFormSecret ? 'text' : 'password'}
+            value={paramForm.paramValue || ''}
+            onChange={(e) => setParamForm((prev) => ({ ...prev, paramValue: e.target.value }))}
+            placeholder={t('system_parameter.value_placeholder')}
+          />
+          <Button
+            type="button"
+            icon={showFormSecret ? 'pi pi-eye-slash' : 'pi pi-eye'}
+            outlined
+            severity="secondary"
+            onClick={() => setShowFormSecret(!showFormSecret)}
+            tooltip={showFormSecret ? t('common.hide', 'Ẩn giá trị') : t('common.show', 'Hiện giá trị')}
+          />
+        </div>
+      );
+    }
+
     return (
       <InputText
         id="paramValue"
@@ -703,6 +737,33 @@ export const SystemParameters: React.FC = () => {
         />
       );
     }
+
+    const isSensitive =
+      rowData.groupCode === 'SECURITY' ||
+      /secret|password|token|key|credential|private/i.test(rowData.paramKey);
+
+    if (isSensitive) {
+      const isRevealed = !!unmaskedKeys[rowData.paramKey];
+      return (
+        <div className="flex align-items-center gap-2">
+          <span className="font-mono text-sm text-700">
+            {isRevealed ? (val.length > 42 ? `${val.slice(0, 42)}...` : val) : '••••••••••••••••'}
+          </span>
+          <Button
+            type="button"
+            icon={isRevealed ? 'pi pi-eye-slash' : 'pi pi-eye'}
+            text
+            rounded
+            size="small"
+            className="p-button-sm text-500 hover:text-primary"
+            style={{ width: '1.75rem', height: '1.75rem' }}
+            onClick={() => toggleMask(rowData.paramKey)}
+            tooltip={isRevealed ? t('common.hide', 'Ẩn giá trị') : t('common.show', 'Hiện giá trị')}
+          />
+        </div>
+      );
+    }
+
     return (
       <span className="font-mono text-sm font-normal text-900" title={val}>
         {val.length > 42 ? `${val.slice(0, 42)}...` : val}

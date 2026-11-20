@@ -1,0 +1,398 @@
+// ============================================================================
+// Chuẩn CMS theo Figma (trang 320:2, 19/11): 4 kiểu nút, nút tròn trên dòng,
+// nhãn trạng thái nền nhạt, thẻ bo 12, bảng và form theo số đo VQ-04 / QT-02.
+// Import ở cuối index.scss để ghi đè các kiểu cũ.
+// ============================================================================
+$fg-orange: #FF6B00;
+$fg-orange-dark: #EA580C;
+$fg-ink: #0F172A;
+$fg-body: #334155;
+$fg-muted: #64748B;
+$fg-line: #E2E8F0;
+$fg-input-line: #CBD5E1;
+$fg-red: #DC2626;
+
+// --- Thẻ
+.p-card {
+  border-radius: 12px !important;
+  border: 1px solid $fg-line !important;
+  box-shadow: none !important;
+
+  .p-card-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: $fg-ink !important;
+    letter-spacing: 0 !important;
+  }
+
+  .p-card-subtitle {
+    font-size: 13px !important;
+    color: $fg-muted !important;
+  }
+}
+
+// --- Nút: chính (cam) · phụ (trắng viền xám) · nguy hiểm (trắng viền đỏ)
+// Nút tròn trên dòng bảng có kiểu riêng (bên dưới) nên loại khỏi các luật nút chung
+$fg-btn-scope: ':not(.p-datepicker-trigger):not(.p-inputnumber-button):not(.p-row-toggler):not(.p-paginator-element):not(.row-action):not(.p-datatable-tbody .p-button-icon-only)';
+$fg-row-scope: ':not(.p-datepicker-trigger):not(.p-inputnumber-button):not(.p-row-toggler):not(.p-paginator-element)';
+
+.p-button#{$fg-btn-scope} {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+}
+
+// Mọi nút đặc (kể cả success/info/warning/help) đều là nút chính cam
+.p-button#{$fg-btn-scope}:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-secondary):not(.p-button-danger) {
+  background: linear-gradient(135deg, $fg-orange 0%, $fg-orange-dark 100%) !important;
+  border: 1px solid $fg-orange !important;
+  color: #fff !important;
+
+  .p-button-icon,
+  .p-button-label {
+    color: #fff !important;
+  }
+
+  &:not(:disabled):hover {
+    filter: brightness(0.96);
+  }
+}
+
+// Nút phụ: viền (không phải danger) và secondary đặc
+.p-button#{$fg-btn-scope}.p-button-outlined:not(.p-button-danger),
+.p-button#{$fg-btn-scope}.p-button-secondary:not(.p-button-text):not(.p-button-link):not(.p-button-danger) {
+  background: #fff !important;
+  border: 1px solid $fg-input-line !important;
+  color: $fg-ink !important;
+
+  .p-button-icon,
+  .p-button-label {
+    color: $fg-ink !important;
+  }
+
+  &:not(:disabled):hover {
+    background: #F8FAFC !important;
+  }
+}
+
+// Nút nguy hiểm: Reject, Lock, Delete
+.p-button#{$fg-btn-scope}.p-button-danger:not(.p-button-text):not(.p-button-link) {
+  background: #fff !important;
+  border: 1px solid $fg-red !important;
+  color: $fg-red !important;
+
+  .p-button-icon,
+  .p-button-label {
+    color: $fg-red !important;
+  }
+
+  &:not(:disabled):hover {
+    background: #FEF2F2 !important;
+  }
+}
+
+// Nút chữ: xám, danger đỏ
+.p-button#{$fg-btn-scope}.p-button-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #475569 !important;
+
+  .p-button-icon,
+  .p-button-label {
+    color: #475569 !important;
+  }
+
+  &.p-button-danger {
+    color: $fg-red !important;
+
+    .p-button-icon,
+    .p-button-label {
+      color: $fg-red !important;
+    }
+  }
+}
+
+// --- Cột Actions: nút tròn 32px nền trắng viền #CBD5E1, icon #475569; xóa viền #FECACA icon đỏ
+.p-datatable-tbody .p-button.p-button-icon-only#{$fg-row-scope},
+.p-button.p-button-icon-only.row-action#{$fg-row-scope} {
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  border: 1px solid $fg-input-line !important;
+  color: #475569 !important;
+
+  .p-button-icon {
+    color: #475569 !important;
+    font-size: 13px !important;
+  }
+
+  &:not(:disabled):hover {
+    background: #F8FAFC !important;
+    border-color: #94A3B8 !important;
+  }
+
+  &.p-button-danger,
+  &.row-action--danger,
+  &:has(.pi-trash) {
+    border-color: #FECACA !important;
+    color: $fg-red !important;
+
+    .p-button-icon {
+      color: $fg-red !important;
+    }
+
+    &:not(:disabled):hover {
+      background: #FEF2F2 !important;
+      border-color: #FCA5A5 !important;
+    }
+  }
+}
+
+// --- Chip / lựa chọn nhanh (SelectButton): chọn = cam nhạt, chưa chọn = trắng
+.p-selectbutton .p-button {
+  background: #fff !important;
+  border: 1px solid $fg-line !important;
+  color: $fg-body !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+
+  .p-button-label,
+  .p-button-icon {
+    color: $fg-body !important;
+  }
+
+  &.p-highlight {
+    background: #FFF7ED !important;
+    border-color: $fg-orange !important;
+    color: #C2410C !important;
+
+    .p-button-label,
+    .p-button-icon {
+      color: #C2410C !important;
+    }
+  }
+}
+
+// --- Nhãn trạng thái chuẩn hình viên thuốc (Soft Pill Shape - Khớp 100% Ảnh mẫu & Figma)
+.p-tag,
+.p-datatable-tbody > tr > td .p-tag,
+.p-badge.p-badge-pill,
+.status-pill {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important; /* Chuẩn hình viên thuốc tròn 2 đầu */
+  padding: 4px 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+  border: 1px solid transparent !important;
+
+  &.p-tag-success {
+    background: #E8F8EE !important;
+    color: #15803D !important;
+    border-color: #D1F2D9 !important;
+  }
+  &.p-tag-info {
+    background: #E0F2FE !important;
+    color: #0369A1 !important;
+    border-color: #BAE6FD !important;
+  }
+  &.p-tag-warning {
+    background: #FEF3C7 !important;
+    color: #B45309 !important;
+    border-color: #FDE68A !important;
+  }
+  &.p-tag-danger {
+    background: #FEE2E2 !important;
+    color: #B91C1C !important;
+    border-color: #FECACA !important;
+  }
+  &.p-tag-secondary,
+  &.p-tag-contrast {
+    background: #F1F5F9 !important;
+    color: #475569 !important;
+    border-color: #E2E8F0 !important;
+  }
+
+  .p-tag-icon {
+    color: inherit !important;
+    margin-right: 4px !important;
+  }
+}
+
+// --- Bảng: header #F8FAFC chữ 13 đậm #334155 (không viết hoa), dòng 13 #334155, kẻ #EDF2F7
+.p-datatable,
+.p-datatable.p-datatable-sm {
+  .p-datatable-thead > tr > th {
+    background: #F8FAFC !important;
+    color: $fg-body !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    padding: 0.85rem 0.75rem !important;
+    border-top: 1px solid $fg-line !important;
+    border-bottom: 1px solid $fg-line !important;
+    vertical-align: middle !important;
+
+    .p-column-header-content {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 0.35rem !important;
+      width: 100% !important;
+    }
+
+    .p-column-title,
+    .p-sortable-column-icon,
+    .p-sortable-column-badge,
+    [data-pc-section='sort'] {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      flex-shrink: 0 !important;
+    }
+
+    &.p-selection-column,
+    &.p-align-center,
+    &.text-center {
+      text-align: center !important;
+
+      .p-column-header-content {
+        justify-content: center !important;
+      }
+    }
+  }
+
+  .p-datatable-tbody > tr > td {
+    color: $fg-body !important;
+    font-size: 13px !important;
+    padding: 0.85rem 0.75rem !important;
+    border-bottom: 1px solid #EDF2F7 !important;
+    vertical-align: middle !important;
+  }
+}
+
+// --- Form: nhãn 13 đậm, ô nhập bo 8 viền #CBD5E1 chữ 14, ghi chú 12 xám
+.p-card,
+.p-dialog-content,
+.p-sidebar-content {
+  label:not(.p-checkbox-label):not(.p-radiobutton-label) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: $fg-ink !important;
+  }
+
+  small {
+    font-size: 12px;
+    color: $fg-muted;
+  }
+}
+
+.p-inputtext,
+.p-dropdown,
+.p-multiselect,
+.p-autocomplete-multiple-container,
+.p-inputtextarea {
+  border-radius: 8px !important;
+  border-color: $fg-input-line !important;
+  font-size: 14px !important;
+  color: $fg-body !important;
+
+  &:enabled:focus,
+  &.p-focus {
+    border-color: $fg-orange !important;
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.12) !important;
+  }
+}
+
+// Ô nhập nằm trong dropdown không có viền riêng
+.p-dropdown .p-inputtext,
+.p-multiselect .p-multiselect-label {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+// --- Hộp thoại: bo 12, tiêu đề 18
+.p-dialog {
+  border-radius: 12px !important;
+  overflow: hidden;
+
+  .p-dialog-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: $fg-ink !important;
+  }
+}
+
+// --- Dải ghi chú (Message info/warn): nền kem, chữ nâu cam
+.p-message.p-message-warn,
+.p-message.p-message-info,
+.p-inline-message.p-inline-message-warn,
+.p-inline-message.p-inline-message-info {
+  background: #FFF7ED !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #9A3412 !important;
+  font-size: 13px !important;
+
+  .p-message-icon,
+  .p-inline-message-icon,
+  .p-message-close .pi {
+    color: #9A3412 !important;
+  }
+}
+
+// --- Tab: mục đang chọn chữ cam, gạch cam
+.p-tabview .p-tabview-nav li {
+  .p-tabview-nav-link {
+    color: $fg-muted !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+  }
+
+  &.p-highlight .p-tabview-nav-link {
+    color: $fg-orange-dark !important;
+    border-color: $fg-orange !important;
+  }
+}
+
+// --- Công tắc, ô chọn: bật = cam
+.p-inputswitch.p-highlight .p-inputswitch-slider {
+  background: $fg-orange !important;
+}
+
+.p-checkbox .p-checkbox-box.p-highlight,
+.p-radiobutton .p-radiobutton-box.p-highlight {
+  border-color: $fg-orange !important;
+  background: $fg-orange !important;
+}
+
+// --- Đầu trang: breadcrumb 13 xám, tiêu đề 24 đậm
+.standard-page-header {
+  .fg-breadcrumb {
+    font-size: 13px;
+    color: $fg-muted;
+
+    .fg-breadcrumb-sep {
+      margin: 0 6px;
+    }
+  }
+
+  .fg-page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: $fg-ink;
+    line-height: 1.2;
+    margin: 0;
+  }
+}

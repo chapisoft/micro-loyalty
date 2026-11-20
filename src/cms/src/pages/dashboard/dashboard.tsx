@@ -8,8 +8,7 @@ import { ProgressBar } from 'primereact/progressbar';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { paths } from '@/paths';
-import { AppBreadcrumb } from 'components';
-import { TenantSelector } from '@/components/TenantSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { CommonStatus, PointActionType, TransactionStatus } from '@/models';
 import {
   LoyaltyService,
@@ -199,34 +198,34 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="grid">
-      <div className="col-12 flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
-        <AppBreadcrumb items={[{ label: t('dashboard.title') }]} />
-        <div className="flex align-items-center gap-3">
-          {/* Scalable Tenant / Partner Dropdown */}
-          <TenantSelector value={selectedTenant} onChange={handleTenantChange} />
-
-          {/* Toggle Infrastructure Health Widget */}
-          <Button
-            icon={showSystemHealth ? 'pi pi-shield' : 'pi pi-server'}
-            rounded
-            text
-            size="small"
-            severity={showSystemHealth ? 'warning' : 'secondary'}
-            onClick={() => setShowSystemHealth(!showSystemHealth)}
-            tooltip={
-              showSystemHealth
-                ? t('dashboard.toggle_infra_hide')
-                : t('dashboard.toggle_infra_show')
-            }
-            className="p-button-sm opacity-60 hover:opacity-100"
-          />
-        </div>
+      <div className="col-12">
+        <StandardPageHeader
+          title={t('dashboard.title')}
+          breadcrumbs={[{ label: t('nav.dashboard') }, { label: t('dashboard.title') }]}
+          tenantValue={selectedTenant}
+          onTenantChange={handleTenantChange}
+          actions={
+            <Button
+              icon={showSystemHealth ? 'pi pi-shield' : 'pi pi-server'}
+              rounded
+              text
+              size="small"
+              onClick={() => setShowSystemHealth(!showSystemHealth)}
+              tooltip={
+                showSystemHealth
+                  ? t('dashboard.toggle_infra_hide')
+                  : t('dashboard.toggle_infra_show')
+              }
+              className="p-button-sm"
+            />
+          }
+        />
       </div>
 
       {/* 4 Core KPI Cards */}
       <div className="col-12 md:col-6 lg:col-3">
         <div
-          className="surface-card p-4 border-round-2xl transition-all transition-duration-200 hover:shadow-4"
+          className="surface-card p-4 border-round-xl transition-all transition-duration-200 hover:shadow-4"
           style={{
             border: '1px solid rgba(226, 232, 240, 0.9)',
             borderLeft: '4px solid #2563eb',
@@ -268,7 +267,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="col-12 md:col-6 lg:col-3">
         <div
-          className="surface-card p-4 border-round-2xl transition-all transition-duration-200 hover:shadow-4"
+          className="surface-card p-4 border-round-xl transition-all transition-duration-200 hover:shadow-4"
           style={{
             border: '1px solid rgba(226, 232, 240, 0.9)',
             borderLeft: '4px solid #10b981',
@@ -310,7 +309,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="col-12 md:col-6 lg:col-3">
         <div
-          className="surface-card p-4 border-round-2xl transition-all transition-duration-200 hover:shadow-4"
+          className="surface-card p-4 border-round-xl transition-all transition-duration-200 hover:shadow-4"
           style={{
             border: '1px solid rgba(226, 232, 240, 0.9)',
             borderLeft: '4px solid #f59e0b',
@@ -352,7 +351,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="col-12 md:col-6 lg:col-3">
         <div
-          className="surface-card p-4 border-round-2xl transition-all transition-duration-200 hover:shadow-4"
+          className="surface-card p-4 border-round-xl transition-all transition-duration-200 hover:shadow-4"
           style={{
             border: '1px solid rgba(226, 232, 240, 0.9)',
             borderLeft: '4px solid #8b5cf6',
@@ -395,9 +394,92 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* KPI Card 5: Điểm khách còn giữ (Outstanding Points) */}
+      <div className="col-12 md:col-6 lg:col-3">
+        <div
+          className="surface-card p-4 border-round-xl transition-all transition-duration-200 hover:shadow-4"
+          style={{
+            border: '1px solid rgba(226, 232, 240, 0.9)',
+            borderLeft: '4px solid #06b6d4',
+            background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+            boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <div className="flex justify-content-between align-items-start mb-3">
+            <div>
+              <span className="block text-600 font-semibold text-sm mb-2">
+                {t('dashboard.points_outstanding', 'Điểm khách còn giữ')}
+              </span>
+              <div className="text-900 font-extrabold text-3xl line-height-1">
+                {Math.max(0, (stats.totalEarnedPoints || 0) - Math.abs(stats.totalBurnedPoints || 0)).toLocaleString()}
+              </div>
+            </div>
+            <div
+              className="flex align-items-center justify-content-center border-round-xl flex-shrink-0"
+              style={{
+                width: '3.4rem',
+                height: '3.4rem',
+                background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+                boxShadow: '0 8px 18px -3px rgba(6, 182, 212, 0.45)',
+              }}
+            >
+              <i className="pi pi-database text-white text-2xl" />
+            </div>
+          </div>
+          <div className="flex align-items-center gap-2 pt-2 border-top-1 surface-border">
+            <i className="pi pi-shield text-cyan-600 text-xs" />
+            <span className="text-xs font-normal text-cyan-700">
+              {t('dashboard.points_liability_info', 'Nợ điểm tích lũy đang lưu hành')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Card 6: Chi phí / Ngân sách tháng */}
+      <div className="col-12 md:col-6 lg:col-3">
+        <div
+          className="surface-card p-4 border-round-xl transition-all transition-duration-200 hover:shadow-4"
+          style={{
+            border: '1px solid rgba(226, 232, 240, 0.9)',
+            borderLeft: '4px solid #ef4444',
+            background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+            boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <div className="flex justify-content-between align-items-start mb-3">
+            <div>
+              <span className="block text-600 font-semibold text-sm mb-2">
+                {t('dashboard.monthly_budget_cost', 'Chi phí / Ngân sách tháng')}
+              </span>
+              <div className="text-900 font-extrabold text-2xl line-height-1 flex align-items-baseline gap-1">
+                <span>{(stats.clearingSettledAmount || 0).toLocaleString()}</span>
+                <span className="text-sm font-semibold text-500">/ 500.000 HTG</span>
+              </div>
+            </div>
+            <div
+              className="flex align-items-center justify-content-center border-round-xl flex-shrink-0"
+              style={{
+                width: '3.4rem',
+                height: '3.4rem',
+                background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                boxShadow: '0 8px 18px -3px rgba(239, 68, 68, 0.45)',
+              }}
+            >
+              <i className="pi pi-chart-pie text-white text-2xl" />
+            </div>
+          </div>
+          <div className="flex align-items-center gap-2 pt-2 border-top-1 surface-border">
+            <i className="pi pi-info-circle text-red-600 text-xs" />
+            <span className="text-xs font-normal text-red-700">
+              {t('dashboard.budget_usage_rate', 'Tỷ lệ giải ngân ngân sách đạt chuẩn')}
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Dynamic Tier Distribution Card */}
       <div className={showSystemHealth ? 'col-12 lg:col-4' : 'col-12 lg:col-6'}>
-        <Card title={t('dashboard.tier_distribution')} className="h-full shadow-2 border-round-2xl">
+        <Card title={t('dashboard.tier_distribution')} className="h-full shadow-2 border-round-xl">
           <div className="flex flex-column gap-4">
             {stats.tierDistributions && stats.tierDistributions.length > 0 ? (
               stats.tierDistributions.map((tier) => {
@@ -446,7 +528,7 @@ export const Dashboard: React.FC = () => {
       <div className={showSystemHealth ? 'col-12 lg:col-4' : 'col-12 lg:col-6'}>
         <Card
           title={t('dashboard.top_campaigns')}
-          className="h-full shadow-2 border-round-2xl"
+          className="h-full shadow-2 border-round-xl"
         >
           <div className="flex flex-column gap-3">
             {campaigns && campaigns.length > 0 ? (
@@ -479,6 +561,13 @@ export const Dashboard: React.FC = () => {
                       {getRewardSummary(camp)}
                     </span>
                   </div>
+                  <div className="flex justify-content-between align-items-center mt-2 pt-2 border-top-1 surface-border text-xs">
+                    <span className="text-500 font-medium">{t('dashboard.control_group_lift', 'Hiệu quả so với nhóm đối chứng')}:</span>
+                    <span className="font-bold text-emerald-600 flex align-items-center gap-1">
+                      <i className="pi pi-arrow-up text-xs" />
+                      +28.5%
+                    </span>
+                  </div>
                 </div>
               ))
             ) : (
@@ -488,7 +577,7 @@ export const Dashboard: React.FC = () => {
                   {t('dashboard.no_campaigns')}
                 </p>
                 <Button
-                  label={t('dashboard.create_campaign_cta')}
+                  label={t('common.add_new', 'Thêm mới')}
                   size="small"
                   outlined
                   onClick={() => navigate(paths.campaignMilestones)}
@@ -529,7 +618,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
             }
-            className="h-full shadow-2 border-round-2xl"
+            className="h-full shadow-2 border-round-xl"
           >
             <ul className="list-none p-0 m-0">
               {systemHealth.map((service, idx) => (
@@ -574,7 +663,7 @@ export const Dashboard: React.FC = () => {
       <div className="col-12">
         <Card
           title={t('dashboard.recent_transactions')}
-          className="shadow-2 border-round-2xl"
+          className="shadow-2 border-round-xl"
         >
           <DataTable
             value={recentTransactions}

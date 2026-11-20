@@ -28,16 +28,16 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   const { t } = useTranslation();
 
   return (
-    <header className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 shadow-md select-none">
-      <div className="max-w-md md:max-w-xl mx-auto w-full px-3 sm:px-4 h-13 sm:h-14 flex items-center justify-between gap-2">
+    <header className="sticky top-0 z-40 shrink-0 w-full bg-slate-950/95 border-b border-slate-800/90 shadow-md select-none pt-[env(safe-area-inset-top)]">
+      <div className="max-w-md md:max-w-xl mx-auto w-full px-3 sm:px-4 h-14 min-h-[56px] flex items-center justify-between gap-2">
         {/* Left: Back Icon Button (Square, Sleek & Compact) */}
         <button
           onClick={onBack}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 transition flex items-center justify-center border border-slate-700 text-amber-400 hover:text-amber-300 shadow-xs shrink-0"
+          className="w-10 h-10 rounded-2xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 transition flex items-center justify-center border border-slate-700 text-amber-400 hover:text-amber-300 shadow-xs shrink-0"
           title={t('games.common.btn_back_tooltip') || t('games.common.btn_back')}
           aria-label={t('games.common.btn_back')}
         >
-          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+          <ArrowLeft className="w-5 h-5 text-amber-400" />
         </button>
 
         {/* Center: Game Title & Subtitle Badge */}

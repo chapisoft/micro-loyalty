@@ -701,6 +701,216 @@ export const GameCoverArt: React.FC<GameCoverProps> = ({ gameId, className = 'w-
         </svg>
       );
 
+    case 'JIGSAW':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgJigsaw" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1E1B4B" />
+              <stop offset="50%" stopColor="#312E81" />
+              <stop offset="100%" stopColor="#4C1D95" />
+            </linearGradient>
+            <linearGradient id="p1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#0284C7" />
+            </linearGradient>
+            <linearGradient id="p2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FBBF24" />
+              <stop offset="100%" stopColor="#D97706" />
+            </linearGradient>
+            <linearGradient id="p3Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#34D399" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <linearGradient id="p4Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F472B6" />
+              <stop offset="100%" stopColor="#DB2777" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgJigsaw)" />
+          {/* 4 Interlocking Puzzle Pieces */}
+          <g filter="url(#shadow3d)">
+            {/* Top-Left Piece */}
+            <rect x="36" y="36" width="60" height="60" rx="8" fill="url(#p1Grad)" />
+            <circle cx="96" cy="66" r="10" fill="url(#p1Grad)" />
+            {/* Top-Right Piece */}
+            <rect x="104" y="36" width="60" height="60" rx="8" fill="url(#p2Grad)" />
+            <circle cx="134" cy="96" r="10" fill="url(#p2Grad)" />
+            {/* Bottom-Left Piece */}
+            <rect x="36" y="104" width="60" height="60" rx="8" fill="url(#p3Grad)" />
+            <circle cx="66" cy="104" r="10" fill="#312E81" />
+            {/* Bottom-Right Piece */}
+            <rect x="104" y="104" width="60" height="60" rx="8" fill="url(#p4Grad)" />
+            <circle cx="104" cy="134" r="10" fill="#312E81" />
+          </g>
+          {/* Sparkles & Star */}
+          <circle cx="100" cy="100" r="14" fill="#FDE047" stroke="#FFF" strokeWidth="2" filter="url(#shadow3d)" />
+          <text x="100" y="106" textAnchor="middle" fontSize="14" fontWeight="black" fill="#1E1B4B">✨</text>
+        </svg>
+      );
+
+    case 'WATERSORT':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgWaterSort" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#0369A1" />
+              <stop offset="60%" stopColor="#075985" />
+              <stop offset="100%" stopColor="#082F49" />
+            </linearGradient>
+            <linearGradient id="tubeLiq1" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#0284C7" />
+            </linearGradient>
+            <linearGradient id="tubeLiq2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FBBF24" />
+              <stop offset="100%" stopColor="#D97706" />
+            </linearGradient>
+            <linearGradient id="tubeLiq3" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#34D399" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgWaterSort)" />
+          {/* 3 Test Tubes */}
+          <g filter="url(#shadow3d)">
+            {/* Tube 1 */}
+            <rect x="36" y="45" width="34" height="110" rx="17" fill="rgba(255,255,255,0.12)" stroke="#E0F2FE" strokeWidth="3" />
+            <rect x="40" y="80" width="26" height="70" rx="13" fill="url(#tubeLiq1)" />
+            {/* Tube 2 (Higher) */}
+            <rect x="83" y="35" width="34" height="120" rx="17" fill="rgba(255,255,255,0.12)" stroke="#E0F2FE" strokeWidth="3" />
+            <rect x="87" y="65" width="26" height="85" rx="13" fill="url(#tubeLiq2)" />
+            {/* Tube 3 */}
+            <rect x="130" y="45" width="34" height="110" rx="17" fill="rgba(255,255,255,0.12)" stroke="#E0F2FE" strokeWidth="3" />
+            <rect x="134" y="90" width="26" height="60" rx="13" fill="url(#tubeLiq3)" />
+          </g>
+          {/* Liquid bubbles */}
+          <circle cx="53" cy="95" r="3" fill="#FFF" opacity="0.6" />
+          <circle cx="100" cy="85" r="4" fill="#FFF" opacity="0.7" />
+          <circle cx="147" cy="110" r="3" fill="#FFF" opacity="0.6" />
+        </svg>
+      );
+
+    case 'STACKTOWER':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgStack" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1E1B4B" />
+              <stop offset="50%" stopColor="#312E81" />
+              <stop offset="100%" stopColor="#0F172A" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgStack)" />
+          {/* Stacked Blocks */}
+          <g filter="url(#shadow3d)">
+            <rect x="40" y="145" width="120" height="20" rx="4" fill="#EF4444" />
+            <rect x="40" y="145" width="120" height="4" fill="rgba(255,255,255,0.4)" />
+            <rect x="46" y="122" width="108" height="20" rx="4" fill="#F97316" />
+            <rect x="46" y="122" width="108" height="4" fill="rgba(255,255,255,0.4)" />
+            <rect x="52" y="99" width="96" height="20" rx="4" fill="#FBBF24" />
+            <rect x="52" y="99" width="96" height="4" fill="rgba(255,255,255,0.4)" />
+            <rect x="60" y="76" width="80" height="20" rx="4" fill="#10B981" />
+            <rect x="60" y="76" width="80" height="4" fill="rgba(255,255,255,0.4)" />
+            <rect x="70" y="53" width="60" height="20" rx="4" fill="#38BDF8" />
+            <rect x="70" y="53" width="60" height="4" fill="rgba(255,255,255,0.4)" />
+          </g>
+          {/* Stars */}
+          <text x="40" y="45" fontSize="14">✨</text>
+          <text x="155" y="60" fontSize="12">⭐</text>
+        </svg>
+      );
+
+    case 'PIPECONNECT':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgPipe" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#0F172A" />
+              <stop offset="60%" stopColor="#1E293B" />
+              <stop offset="100%" stopColor="#0B132B" />
+            </linearGradient>
+            <linearGradient id="neonWater" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#06B6D4" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgPipe)" />
+          {/* Interconnected Pipes */}
+          <g filter="url(#shadow3d)">
+            {/* Top-to-right pipe */}
+            <path d="M40 30 V90 H100 V160 H160" stroke="#334155" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <path d="M40 30 V90 H100 V160 H160" stroke="url(#neonWater)" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <path d="M40 30 V90 H100 V160 H160" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.8" />
+            {/* Valves */}
+            <circle cx="100" cy="90" r="14" fill="#F59E0B" stroke="#FFF" strokeWidth="3" />
+            <circle cx="160" cy="160" r="10" fill="#10B981" stroke="#FFF" strokeWidth="2" />
+          </g>
+          <text x="40" y="145" fontSize="24">💧</text>
+        </svg>
+      );
+
+    case 'MERGEDROP':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgMerge" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#064E3B" />
+              <stop offset="60%" stopColor="#065F46" />
+              <stop offset="100%" stopColor="#022C22" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgMerge)" />
+          {/* Concentric / Merging Fruits */}
+          <g filter="url(#shadow3d)">
+            {/* Giant Watermelon */}
+            <circle cx="100" cy="120" r="48" fill="#10B981" stroke="#047857" strokeWidth="3" />
+            <circle cx="100" cy="120" r="42" fill="#EF4444" />
+            <circle cx="90" cy="115" r="2.5" fill="#1E293B" />
+            <circle cx="105" cy="110" r="2.5" fill="#1E293B" />
+            <circle cx="100" cy="130" r="2.5" fill="#1E293B" />
+            {/* Orange */}
+            <circle cx="55" cy="65" r="24" fill="#F97316" stroke="#EA580C" strokeWidth="2" />
+            <text x="55" y="72" fontSize="20" textAnchor="middle">🍊</text>
+            {/* Strawberry */}
+            <circle cx="140" cy="60" r="18" fill="#F43F5E" stroke="#E11D48" strokeWidth="2" />
+            <text x="140" y="66" fontSize="16" textAnchor="middle">🍓</text>
+          </g>
+          <text x="100" y="50" fontSize="16" textAnchor="middle">✨</text>
+        </svg>
+      );
+
+    case 'WHACKAMOLE':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgWhack" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#451A03" />
+              <stop offset="60%" stopColor="#78350F" />
+              <stop offset="100%" stopColor="#291204" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgWhack)" />
+          {/* Mole Mound & Hammer */}
+          <g filter="url(#shadow3d)">
+            {/* Mound */}
+            <ellipse cx="100" cy="145" rx="55" ry="20" fill="#292524" />
+            <ellipse cx="100" cy="142" rx="45" ry="14" fill="#1C1917" />
+            {/* Mole */}
+            <circle cx="100" cy="115" r="28" fill="#A8A29E" stroke="#78716C" strokeWidth="2" />
+            <circle cx="90" cy="110" r="4" fill="#0C0A09" />
+            <circle cx="110" cy="110" r="4" fill="#0C0A09" />
+            <ellipse cx="100" cy="120" rx="7" ry="5" fill="#F43F5E" />
+            {/* Hammer */}
+            <g transform="rotate(-30 145 65)">
+              <rect x="140" y="60" width="12" height="65" rx="4" fill="#D97706" />
+              <rect x="125" y="50" width="42" height="26" rx="6" fill="#78350F" stroke="#FDE047" strokeWidth="2" />
+            </g>
+          </g>
+          <text x="50" y="70" fontSize="22">⭐</text>
+        </svg>
+      );
+
     case 'SCRATCH':
       return (
         <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -744,6 +954,318 @@ export const GameCoverArt: React.FC<GameCoverProps> = ({ gameId, className = 'w-
           <rect x="52" y="100" width="38" height="6" rx="3" fill="#818CF8" />
           <circle cx="130" cy="96" r="20" fill="#F59E0B" stroke="#FEF08A" strokeWidth="3" />
           <text x="130" y="103" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#FFFFFF">?</text>
+        </svg>
+      );
+
+    case 'GOLDMINER':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgMineEarth" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1E1B4B" />
+              <stop offset="28%" stopColor="#78350F" />
+              <stop offset="68%" stopColor="#451A03" />
+              <stop offset="100%" stopColor="#1C0F06" />
+            </linearGradient>
+            <linearGradient id="nuggetGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FEF08A" />
+              <stop offset="40%" stopColor="#F59E0B" />
+              <stop offset="100%" stopColor="#B45309" />
+            </linearGradient>
+            <linearGradient id="diamondGemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#E0F2FE" />
+              <stop offset="45%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#0284C7" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgMineEarth)" />
+          {/* Wooden mine gantry top beam */}
+          <rect x="0" y="0" width="200" height="44" rx="12" fill="#3B2314" />
+          <rect x="16" y="34" width="168" height="12" rx="4" fill="#92400E" stroke="#451A03" strokeWidth="2" />
+          {/* Winch pulley */}
+          <circle cx="100" cy="40" r="14" fill="#64748B" stroke="#F59E0B" strokeWidth="3" />
+          <circle cx="100" cy="40" r="5" fill="#FDE047" />
+          {/* Cable & 2-prong claw */}
+          <line x1="100" y1="54" x2="100" y2="104" stroke="#E2E8F0" strokeWidth="4" strokeLinecap="round" />
+          <path d="M100 104 L76 122 L82 140 M100 104 L124 122 L118 140" stroke="#CBD5E1" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="100" cy="104" r="6" fill="#F59E0B" stroke="#FEF08A" strokeWidth="2" />
+          {/* Faceted Golden Nugget in Claw */}
+          <polygon points="78,128 96,116 118,122 126,144 106,162 80,152" fill="url(#nuggetGoldGrad)" stroke="#FEF08A" strokeWidth="3" />
+          <polygon points="86,130 98,122 110,128 100,142" fill="#FFFBEB" fillOpacity="0.65" />
+          {/* Sparkling Cyan Diamond on side */}
+          <polygon points="154,126 168,136 162,152 146,152 140,136" fill="url(#diamondGemGrad)" stroke="#BAE6FD" strokeWidth="2" />
+          <circle cx="44" cy="150" r="16" fill="#64748B" stroke="#334155" strokeWidth="2" />
+          <circle cx="40" cy="146" r="5" fill="#94A3B8" />
+          {/* Gleam star */}
+          <path d="M132 82 L135 90 L143 93 L135 96 L132 104 L129 96 L121 93 L129 90 Z" fill="#FEF08A" />
+        </svg>
+      );
+
+    case 'HELIX':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgHelixSky" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#0F172A" />
+              <stop offset="50%" stopColor="#1E293B" />
+              <stop offset="100%" stopColor="#064E3B" />
+            </linearGradient>
+            <linearGradient id="cylGradArt" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#064E3B" />
+              <stop offset="35%" stopColor="#059669" />
+              <stop offset="70%" stopColor="#10B981" />
+              <stop offset="100%" stopColor="#047857" />
+            </linearGradient>
+            <radialGradient id="orangeBallGrad" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#FED7AA" />
+              <stop offset="40%" stopColor="#F97316" />
+              <stop offset="100%" stopColor="#C2410C" />
+            </radialGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgHelixSky)" />
+          {/* Central Cylinder Column */}
+          <rect x="84" y="0" width="32" height="200" fill="url(#cylGradArt)" />
+          {/* Top Platform Ring */}
+          <ellipse cx="100" cy="55" rx="55" ry="18" fill="#15803D" />
+          <ellipse cx="100" cy="50" rx="55" ry="18" fill="#22C55E" stroke="#4ADE80" strokeWidth="2.5" />
+          <ellipse cx="100" cy="50" rx="16" ry="6" fill="#047857" />
+          {/* Middle Platform Ring with Danger Slice & Gap */}
+          <ellipse cx="100" cy="115" rx="55" ry="18" fill="#15803D" />
+          <ellipse cx="100" cy="110" rx="55" ry="18" fill="#22C55E" stroke="#4ADE80" strokeWidth="2.5" />
+          {/* Red Danger Slice on Middle Platform */}
+          <path d="M125 102 C145 106 155 114 150 120 L116 112 Z" fill="#DC2626" stroke="#F87171" strokeWidth="2" />
+          <ellipse cx="100" cy="110" rx="16" ry="6" fill="#047857" />
+          {/* Bottom Platform Ring */}
+          <ellipse cx="100" cy="170" rx="55" ry="18" fill="#15803D" />
+          <ellipse cx="100" cy="165" rx="55" ry="18" fill="#22C55E" stroke="#4ADE80" strokeWidth="2.5" />
+          <ellipse cx="100" cy="165" rx="16" ry="6" fill="#047857" />
+          {/* Splat Mark on Top Platform */}
+          <ellipse cx="94" cy="52" rx="12" ry="5" fill="#EA580C" fillOpacity="0.85" />
+          {/* Juicy Bouncing Orange Ball with Glow */}
+          <circle cx="100" cy="80" r="16" fill="url(#orangeBallGrad)" />
+          <ellipse cx="96" cy="74" rx="4" ry="2.5" fill="#FFFFFF" fillOpacity="0.85" />
+          {/* Bouncing Energy Particles */}
+          <circle cx="92" cy="68" r="2.5" fill="#F97316" />
+          <circle cx="108" cy="70" r="2" fill="#FDE047" />
+          <circle cx="100" cy="62" r="3" fill="#FB923C" />
+        </svg>
+      );
+
+    case 'PIGGY':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgFarmPasture" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="42%" stopColor="#BAE6FD" />
+              <stop offset="42.1%" stopColor="#78350F" />
+              <stop offset="70%" stopColor="#451A03" />
+              <stop offset="70.1%" stopColor="#15803D" />
+              <stop offset="100%" stopColor="#14532D" />
+            </linearGradient>
+            <radialGradient id="fatPigGrad" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#FBCFE8" />
+              <stop offset="50%" stopColor="#F472B6" />
+              <stop offset="100%" stopColor="#DB2777" />
+            </radialGradient>
+          </defs>
+          <rect width="200" height="200" rx="36" fill="url(#bgFarmPasture)" />
+          {/* Red Barn on Horizon */}
+          <rect x="18" y="52" width="38" height="32" rx="3" fill="#DC2626" />
+          <polygon points="15,52 37,36 59,52" fill="#991B1B" />
+          <rect x="30" y="66" width="14" height="18" fill="#FEE2E2" />
+          {/* Silo */}
+          <rect x="60" y="44" width="14" height="40" rx="2" fill="#94A3B8" />
+          {/* Running Pig */}
+          <g transform="translate(112, 108)">
+            {/* Legs */}
+            <rect x="-18" y="10" width="5" height="12" rx="2" fill="#831843" />
+            <rect x="-8" y="12" width="5" height="10" rx="2" fill="#831843" />
+            <rect x="8" y="10" width="5" height="12" rx="2" fill="#831843" />
+            <rect x="18" y="12" width="5" height="10" rx="2" fill="#831843" />
+            {/* Body */}
+            <ellipse cx="0" cy="0" rx="28" ry="18" fill="url(#fatPigGrad)" />
+            {/* Ears */}
+            <polygon points="-12,-16 -8,-24 -3,-14" fill="#FBCFE8" />
+            <polygon points="6,-16 10,-24 15,-14" fill="#FBCFE8" />
+            {/* Snout */}
+            <ellipse cx="24" cy="2" rx="9" ry="7" fill="#FBCFE8" stroke="#DB2777" strokeWidth="1.5" />
+            <circle cx="22" cy="1" r="1.5" fill="#831843" />
+            <circle cx="26" cy="1" r="1.5" fill="#831843" />
+            {/* Eye */}
+            <circle cx="10" cy="-6" r="2.5" fill="#1E293B" />
+            {/* Curly Tail */}
+            <path d="M-28 -2 Q-36 -6 -32 -12" stroke="#DB2777" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          </g>
+          {/* Cowboy Character at Bottom */}
+          <g transform="translate(56, 168)">
+            {/* Boots */}
+            <rect x="-8" y="8" width="6" height="10" rx="1.5" fill="#451A03" />
+            <rect x="2" y="8" width="6" height="10" rx="1.5" fill="#451A03" />
+            {/* Jeans */}
+            <rect x="-7" y="-2" width="5" height="11" fill="#1E3A8A" />
+            <rect x="2" y="-2" width="5" height="11" fill="#1E3A8A" />
+            {/* Red Shirt */}
+            <rect x="-8" y="-16" width="16" height="15" rx="2" fill="#DC2626" />
+            {/* Head */}
+            <circle cx="0" cy="-21" r="6.5" fill="#FDE68A" />
+            {/* Cowboy Hat */}
+            <ellipse cx="0" cy="-26" rx="14" ry="4" fill="#78350F" />
+            <rect x="-6" y="-34" width="12" height="9" rx="2" fill="#78350F" />
+          </g>
+          {/* Flying Lasso Golden Rope */}
+          <path d="M58 152 Q90 120 115 106" stroke="#D97706" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          <ellipse cx="118" cy="104" rx="14" ry="9" transform="rotate(-15 118 104)" stroke="#F59E0B" strokeWidth="3" fill="none" />
+          {/* Speech Bubble */}
+          <rect x="105" y="66" width="76" height="22" rx="8" fill="#FFFFFF" fillOpacity="0.95" />
+          <polygon points="120,88 126,88 122,94" fill="#FFFFFF" />
+          <text x="143" y="81" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#0F172A">Bái bai! 👋</text>
+        </svg>
+      );
+
+    case 'MINESWEEPER':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="mineBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1E293B" />
+              <stop offset="50%" stopColor="#0F172A" />
+              <stop offset="100%" stopColor="#020617" />
+            </linearGradient>
+            <radialGradient id="mineGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#EF4444" stopOpacity="0.5" />
+              <stop offset="60%" stopColor="#DC2626" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="mineIron" x1="20%" y1="10%" x2="80%" y2="90%">
+              <stop offset="0%" stopColor="#64748B" />
+              <stop offset="40%" stopColor="#334155" />
+              <stop offset="100%" stopColor="#0F172A" />
+            </linearGradient>
+            <linearGradient id="flagPole" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FEF08A" />
+              <stop offset="50%" stopColor="#F59E0B" />
+              <stop offset="100%" stopColor="#B45309" />
+            </linearGradient>
+            <filter id="mineShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#000000" floodOpacity="0.7" />
+            </filter>
+          </defs>
+          {/* Tactical Background with Radar Grid */}
+          <rect width="200" height="200" rx="36" fill="url(#mineBg)" />
+          <circle cx="100" cy="100" r="75" stroke="#38BDF8" strokeWidth="1" strokeDasharray="4 4" strokeOpacity="0.25" />
+          <circle cx="100" cy="100" r="50" stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.3" />
+          <line x1="25" y1="100" x2="175" y2="100" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.2" />
+          <line x1="100" y1="25" x2="100" y2="175" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.2" />
+          {/* Corner Number Badges */}
+          <rect x="24" y="24" width="34" height="34" rx="8" fill="#1E293B" stroke="#475569" strokeWidth="1.5" />
+          <text x="41" y="48" textAnchor="middle" fontSize="20" fontWeight="900" fill="#60A5FA">1</text>
+          <rect x="142" y="24" width="34" height="34" rx="8" fill="#1E293B" stroke="#475569" strokeWidth="1.5" />
+          <text x="159" y="48" textAnchor="middle" fontSize="20" fontWeight="900" fill="#4ADE80">2</text>
+          {/* Danger Mine Radial Glow */}
+          <circle cx="100" cy="105" r="70" fill="url(#mineGlow)" />
+          {/* Spikes of 3D Naval Mine */}
+          <g filter="url(#mineShadow)">
+            {[0, 45, 90, 135, 180, 225, 270, 315].map((ang, i) => {
+              const rad = (ang * Math.PI) / 180;
+              const x1 = 100 + Math.cos(rad) * 35;
+              const y1 = 105 + Math.sin(rad) * 35;
+              const x2 = 100 + Math.cos(rad) * 48;
+              const y2 = 105 + Math.sin(rad) * 48;
+              return (
+                <g key={i}>
+                  <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#475569" strokeWidth="6" strokeLinecap="round" />
+                  <circle cx={x2} cy={y2} r="4.5" fill="#F59E0B" stroke="#78350F" strokeWidth="1" />
+                </g>
+              );
+            })}
+            {/* Center Iron Body */}
+            <circle cx="100" cy="105" r="38" fill="url(#mineIron)" stroke="#94A3B8" strokeWidth="2.5" />
+            <circle cx="92" cy="94" r="12" fill="#FFFFFF" fillOpacity="0.12" />
+            {/* Blinking Red Danger LED Core */}
+            <circle cx="100" cy="105" r="10" fill="#EF4444" stroke="#FCA5A5" strokeWidth="2" />
+            <circle cx="98" cy="103" r="3" fill="#FFFFFF" />
+          </g>
+          {/* Red Flag on Gold Brass Pole */}
+          <g filter="url(#mineShadow)">
+            <line x1="62" y1="120" x2="62" y2="175" stroke="url(#flagPole)" strokeWidth="3.5" strokeLinecap="round" />
+            <circle cx="62" cy="120" r="4" fill="#FDE047" />
+            <path d="M62 122 L102 135 L62 148 Z" fill="#EF4444" stroke="#DC2626" strokeWidth="1" />
+          </g>
+        </svg>
+      );
+
+    case 'SUDOKU':
+      return (
+        <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sudokuBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1E1B4B" />
+              <stop offset="50%" stopColor="#0F172A" />
+              <stop offset="100%" stopColor="#020617" />
+            </linearGradient>
+            <radialGradient id="sudokuGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.45" />
+              <stop offset="70%" stopColor="#0284C7" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#0F172A" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="tileGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.9" />
+            </linearGradient>
+            <linearGradient id="tileGold" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FDE047" />
+              <stop offset="100%" stopColor="#D97706" />
+            </linearGradient>
+            <filter id="tileShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#000000" floodOpacity="0.6" />
+            </filter>
+          </defs>
+          {/* Blueprint Deep Navy Background */}
+          <rect width="200" height="200" rx="36" fill="url(#sudokuBg)" />
+          {/* Intellect Radial Glow */}
+          <circle cx="100" cy="100" r="85" fill="url(#sudokuGlow)" />
+          {/* Luminous 3x3 Blueprint Grid */}
+          <rect x="28" y="28" width="144" height="144" rx="14" fill="#0B132B" fillOpacity="0.8" stroke="#38BDF8" strokeWidth="2.5" />
+          {/* Inner Grid Lines */}
+          <line x1="76" y1="28" x2="76" y2="172" stroke="#38BDF8" strokeWidth="2" strokeOpacity="0.8" />
+          <line x1="124" y1="28" x2="124" y2="172" stroke="#38BDF8" strokeWidth="2" strokeOpacity="0.8" />
+          <line x1="28" y1="76" x2="172" y2="76" stroke="#38BDF8" strokeWidth="2" strokeOpacity="0.8" />
+          <line x1="28" y1="124" x2="172" y2="124" stroke="#38BDF8" strokeWidth="2" strokeOpacity="0.8" />
+          {/* Secondary Subgrid Dots/Lines */}
+          <line x1="44" y1="28" x2="44" y2="172" stroke="#1E293B" strokeWidth="1" strokeDasharray="2 2" />
+          <line x1="60" y1="28" x2="60" y2="172" stroke="#1E293B" strokeWidth="1" strokeDasharray="2 2" />
+          <line x1="28" y1="44" x2="172" y2="44" stroke="#1E293B" strokeWidth="1" strokeDasharray="2 2" />
+          <line x1="28" y1="60" x2="172" y2="60" stroke="#1E293B" strokeWidth="1" strokeDasharray="2 2" />
+          {/* 3D Acrylic Floating Number Tiles */}
+          {/* Tile 9 (Top Left Box) */}
+          <g filter="url(#tileShadow)">
+            <rect x="36" y="36" width="32" height="32" rx="8" fill="#1E293B" stroke="#60A5FA" strokeWidth="1.5" />
+            <text x="52" y="60" textAnchor="middle" fontSize="22" fontWeight="900" fill="#93C5FD">9</text>
+          </g>
+          {/* Tile 7 (Top Right Box) */}
+          <g filter="url(#tileShadow)">
+            <rect x="132" y="36" width="32" height="32" rx="8" fill="#1E293B" stroke="#60A5FA" strokeWidth="1.5" />
+            <text x="148" y="60" textAnchor="middle" fontSize="22" fontWeight="900" fill="#93C5FD">7</text>
+          </g>
+          {/* Central Highlighted Gold Tile: 5 */}
+          <g filter="url(#tileShadow)">
+            <rect x="80" y="80" width="40" height="40" rx="10" fill="url(#tileGold)" stroke="#FFFBEB" strokeWidth="2" />
+            <text x="100" y="109" textAnchor="middle" fontSize="26" fontWeight="900" fill="#451A03">5</text>
+          </g>
+          {/* Tile 3 (Bottom Left Box) */}
+          <g filter="url(#tileShadow)">
+            <rect x="36" y="132" width="32" height="32" rx="8" fill="url(#tileGlass)" stroke="#BAE6FD" strokeWidth="1.5" />
+            <text x="52" y="156" textAnchor="middle" fontSize="22" fontWeight="900" fill="#FFFFFF">3</text>
+          </g>
+          {/* Tile 1 (Bottom Right Box) */}
+          <g filter="url(#tileShadow)">
+            <rect x="132" y="132" width="32" height="32" rx="8" fill="#1E293B" stroke="#60A5FA" strokeWidth="1.5" />
+            <text x="148" y="156" textAnchor="middle" fontSize="22" fontWeight="900" fill="#93C5FD">1</text>
+          </g>
+          {/* Glowing Golden Intellect Star Sparkles */}
+          <path d="M165 95 L168 102 L175 105 L168 108 L165 115 L162 108 L155 105 L162 102 Z" fill="#FDE047" />
+          <path d="M35 100 L37 105 L42 107 L37 109 L35 114 L33 109 L28 107 L33 105 Z" fill="#FDE047" />
         </svg>
       );
 

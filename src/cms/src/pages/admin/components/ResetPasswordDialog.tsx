@@ -42,7 +42,7 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       showToast({
         severity: 'warn',
         summary: t('common.warning', 'Cảnh báo'),
-        detail: 'Vui lòng nhập mật khẩu mới',
+        detail: t('user.please_enter_new_pwd', 'Vui lòng nhập mật khẩu mới'),
       });
       return;
     }
@@ -54,12 +54,12 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       },
       {
         onSuccess: (res: any) => {
-          const tempPwd = res?.temporaryPassword || res?.data?.temporaryPassword || customPassword || 'Mật khẩu đã được đặt lại';
+          const tempPwd = res?.temporaryPassword || res?.data?.temporaryPassword || customPassword || t('user.pwd_reset_done', 'Mật khẩu đã được đặt lại');
           setGeneratedPassword(tempPwd);
           showToast({
             severity: 'success',
             summary: t('common.success', 'Thành công'),
-            detail: 'Đặt lại mật khẩu thành công',
+            detail: t('user.reset_pwd_success', 'Đặt lại mật khẩu thành công'),
           });
           onSuccess();
         },
@@ -67,7 +67,7 @@ export const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
           showToast({
             severity: 'error',
             summary: t('common.error', 'Lỗi'),
-            detail: err?.response?.data?.message || 'Không thể đặt lại mật khẩu',
+            detail: err?.response?.data?.message || t('user.reset_pwd_failed', 'Không thể đặt lại mật khẩu'),
           });
         },
       }

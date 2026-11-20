@@ -314,7 +314,7 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none pb-10 animate-fade-in">
+    <div className="h-[100dvh] bg-slate-950 text-white flex flex-col overflow-hidden overscroll-none font-sans select-none">
       <GameHeader
         title={t('games.wordle.title')}
         subtitle={t('games.wordle.guesses_left', { count: MAX_GUESSES - guesses.length })}
@@ -327,7 +327,7 @@ export const WordleGame: React.FC<WordleGameProps> = ({ onBack, onClaimReward })
       />
 
       {/* ── MAIN STAGE ── */}
-      <main className="flex-1 max-w-md mx-auto w-full px-3 py-2 flex flex-col items-center justify-between">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain max-w-md mx-auto w-full px-3 py-2 pb-4 flex flex-col items-center justify-between">
         {/* Topic Badge & Hint Trigger Banner */}
         <div className="w-full bg-slate-900/70 border border-slate-800/90 rounded-2xl p-2.5 shadow-lg space-y-2">
           <div className="flex items-center justify-between gap-2">

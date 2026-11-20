@@ -17,7 +17,8 @@ import { UniversalFilterBar } from '@/components/UniversalFilterBar';
 import { StandardRowActions } from '@/components/StandardRowActions';
 import { StatusBadge, TypeBadge } from '@/components/StatusBadge';
 import { exportToExcel } from '@/components/exportHelper';
-import { CommonStatus } from '@/models';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import { CommonStatus, MediaFolder } from '@/models';
 import { LoyaltyService, GameDashboardStats } from '@/service/loyalty.service';
 
 interface GameItem {
@@ -183,6 +184,7 @@ export const GameManagementPage: React.FC = () => {
       dailyBudgetLimit: 5000,
       colorCode: '#F59E0B',
       iconSymbol: '🎁',
+      bgImageUrl: '',
       displayOrder: prizesList.length + 1,
       status: 'ACTIVE',
     });
@@ -304,6 +306,8 @@ export const GameManagementPage: React.FC = () => {
       dailyBudgetLimit: 20000,
       allowPointsSpin: true,
       gameUrl: '',
+      iconUrl: '',
+      bannerUrl: '',
       description: '',
       rulesText: '',
       status: CommonStatus.ACTIVE,
@@ -658,7 +662,18 @@ export const GameManagementPage: React.FC = () => {
           <Column
             field="gameName"
             header={t('game.game_name')}
-            body={(row: GameItem) => <span className="text-900">{row.gameName}</span>}
+            body={(row: GameItem) => (
+              <div className="flex align-items-center gap-2">
+                {row.iconUrl && (
+                  <img
+                    src={row.iconUrl}
+                    alt={row.gameName}
+                    style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
+                  />
+                )}
+                <span className="text-900">{row.gameName}</span>
+              </div>
+            )}
             sortable
             style={{ minWidth: '13rem' }}
           />
@@ -972,6 +987,16 @@ export const GameManagementPage: React.FC = () => {
               </div>
             </div>
           </div>
+          <div className="field mt-2 mb-0">
+            <ImageUploadField
+              value={prizeFormData.bgImageUrl}
+              onChange={(url) => setPrizeFormData({ ...prizeFormData, bgImageUrl: url })}
+              folder={MediaFolder.GAMES}
+              tenantId={selectedTenant}
+              label={t('game.prize_image')}
+              aspect="square"
+            />
+          </div>
 
           <div className="surface-100 p-3 border-round-lg mb-3">
             <div className="font-bold text-sm mb-2 text-primary">{t('game.prize_section_3')}</div>
@@ -1182,7 +1207,30 @@ export const GameManagementPage: React.FC = () => {
               onChange={(e) => setGameFormData({ ...gameFormData, status: e.value })}
             />
           </div>
+        <div className="grid">
+          <div className="col-12 md:col-6 field mb-3">
+            <ImageUploadField
+              value={gameFormData.iconUrl}
+              onChange={(url) => setGameFormData({ ...gameFormData, iconUrl: url })}
+              folder={MediaFolder.GAMES}
+              tenantId={selectedTenant}
+              label={t('game.icon_image')}
+              aspect="square"
+            />
+          </div>
+          <div className="col-12 md:col-6 field mb-3">
+            <ImageUploadField
+              value={gameFormData.bannerUrl}
+              onChange={(url) => setGameFormData({ ...gameFormData, bannerUrl: url })}
+              folder={MediaFolder.GAMES}
+              tenantId={selectedTenant}
+              label={t('game.banner_image')}
+              aspect="banner"
+            />
+          </div>
         </div>
+      </div>
+
         <div className="flex justify-content-end gap-2 mt-4">
           <Button
             label={t('common.cancel')}
