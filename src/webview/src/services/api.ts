@@ -27,6 +27,8 @@ const getApiBaseUrl = (): string => {
   return origin;
 };
 
+import i18next from '../language';
+
 export const getTenantId = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramTenant = urlParams.get('tenantId') || urlParams.get('tenant_id');
@@ -76,6 +78,7 @@ const API_BASE = getApiBaseUrl();
 const getAuthHeaders = (includeJsonContentType: boolean = false): Record<string, string> => {
   const headers: Record<string, string> = {
     'X-Tenant-Id': getTenantId(),
+    'Accept-Language': (i18next.language || 'en').split('-')[0].toLowerCase(),
   };
   const token = sessionStorage.getItem('loyalty_token');
   if (token) {

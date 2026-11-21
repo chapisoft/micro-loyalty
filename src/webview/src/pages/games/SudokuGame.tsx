@@ -682,7 +682,7 @@ export const SudokuGame: React.FC<SudokuGameProps> = ({ onBack, onClaimReward })
                 onClick={() => startNewGame(difficulty)}
                 className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700"
               >
-                {t('common.play_again', 'Chơi ván mới')}
+                {t('common.play_again')}
               </button>
               <button
                 onClick={() => {
@@ -691,7 +691,7 @@ export const SudokuGame: React.FC<SudokuGameProps> = ({ onBack, onClaimReward })
                 }}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white font-black text-xs transition shadow-lg shadow-sky-500/30"
               >
-                {t('common.claim_reward', 'Nhận thưởng')}
+                {t('common.claim_reward')}
               </button>
             </div>
           </div>

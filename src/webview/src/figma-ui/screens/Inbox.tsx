@@ -11,11 +11,11 @@ const time = (iso: string) => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '' : `${ddmm(iso)} · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
-const kind = (m: InboxMessageItem) =>
-  m.category === 'PROMO' ? { label: 'Just for you', Icon: Sparkles, tone: 'orange' as const, cta: 'See offer ›' }
-    : m.category === 'REWARD' ? { label: 'Reward', Icon: Gift, tone: 'green' as const, cta: 'See coins history ›' }
-      : m.category === 'TIER' ? { label: 'Tier', Icon: Clock, tone: 'blue' as const, cta: 'See tiers ›' }
-        : { label: 'Notice', Icon: Bell, tone: 'grey' as const, cta: 'Open ›' };
+const kind = (m: InboxMessageItem, t: (k: string) => string) =>
+  m.category === 'PROMO' ? { label: t('figma_ui.inbox.kind_promo'), Icon: Sparkles, tone: 'orange' as const, cta: t('figma_ui.inbox.kind_promo_cta') }
+    : m.category === 'REWARD' ? { label: t('figma_ui.inbox.kind_reward'), Icon: Gift, tone: 'green' as const, cta: t('figma_ui.inbox.kind_reward_cta') }
+      : m.category === 'TIER' ? { label: t('figma_ui.inbox.kind_tier'), Icon: Clock, tone: 'blue' as const, cta: t('figma_ui.inbox.kind_tier_cta') }
+        : { label: t('figma_ui.inbox.kind_notice'), Icon: Bell, tone: 'grey' as const, cta: t('figma_ui.inbox.kind_notice_cta') };
 
 const target = (m: InboxMessageItem) => {
   if (m.category === 'PROMO') return `/inbox/${m.id}`;
@@ -36,25 +36,25 @@ export const Inbox: React.FC = () => {
     navigate(target(m));
   };
   return (
-    <Screen title="Notifications" back="/">
+    <Screen title={t('figma_ui.inbox.title')} back="/">
       <div className="flex items-center">
         <div className="flex-1">
-          <h2 className="text-[22px] font-semibold">Inbox</h2>
-          <p className="text-[13px] text-slate-500">Your notifications</p>
+          <h2 className="text-[22px] font-semibold">{t('figma_ui.inbox.heading')}</h2>
+          <p className="text-[13px] text-slate-500">{t('figma_ui.inbox.subheading')}</p>
         </div>
-        <button type="button" aria-label="Notification settings" onClick={() => navigate('/notifications')} className="flex size-11 items-center justify-center rounded-full bg-white"><Settings className="size-5 text-slate-600" /></button>
+        <button type="button" aria-label={t('figma_ui.inbox.settings_aria')} onClick={() => navigate('/notifications')} className="flex size-11 items-center justify-center rounded-full bg-white"><Settings className="size-5 text-slate-600" /></button>
       </div>
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[200px]" />}
       {data && list.length === 0 && (
         <Empty
           art={artEmptyBox}
-          title={!userId ? t('sso.guest_login_required') : 'No notifications yet'}
-          text={!userId ? t('sso.guest_login_required_desc') : 'Rewards, offers and reminders will show up here.'}
+          title={!userId ? t('sso.guest_login_required') : t('figma_ui.inbox.empty_title')}
+          text={!userId ? t('sso.guest_login_required_desc') : t('figma_ui.inbox.empty_sub')}
         />
       )}
       {list.map((m) => {
-        const k = kind(m);
+        const k = kind(m, t);
         return (
           <button key={m.id} type="button" onClick={() => open(m)} className={`flex w-full flex-col gap-2 rounded-[20px] p-4 text-left ${m.category === 'PROMO' ? 'bg-brand-soft' : 'bg-white'}`}>
             <span className="flex items-center gap-2">
@@ -74,6 +74,7 @@ export const Inbox: React.FC = () => {
 
 // ───────────────────────── CN-02 · Targeted offer details ─────────────────────────
 export const OfferDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const userId = uid();
@@ -81,24 +82,24 @@ export const OfferDetail: React.FC = () => {
   const list = Array.isArray(data) ? (data as InboxMessageItem[]) : data?.messages || [];
   const m = list.find((x) => String(x.id) === id);
   return (
-    <Screen title="Offer details" back="/inbox">
+    <Screen title={t('figma_ui.inbox.offer_details_title')} back="/inbox">
       {failed && <ErrorBlock onRetry={reload} />}
       {!data && !failed && <Skeleton className="h-[300px]" />}
-      {data && !m && <Empty art={artEmptyBox} title="This offer has ended" />}
+      {data && !m && <Empty art={artEmptyBox} title={t('figma_ui.inbox.offer_ended')} />}
       {m && (
         <>
           <div className="relative h-[200px] w-full overflow-hidden rounded-[20px]">
             <img src={partnerPhoto(m.title)} alt="" className="size-full object-cover" />
             <span className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
             <span className="absolute bottom-3 left-4 right-4 flex flex-col gap-1 text-white">
-              <Pill tone="orange" className="w-fit">Just for you</Pill>
+              <Pill tone="orange" className="w-fit">{t('figma_ui.inbox.kind_promo')}</Pill>
               <span className="text-[20px] font-semibold">{m.title}</span>
             </span>
           </div>
-          <p className="text-[12px] text-slate-500">Sent {time(m.createdAt)}</p>
+          <p className="text-[12px] text-slate-500">{t('figma_ui.inbox.sent_at', { time: time(m.createdAt) })}</p>
           <p className="whitespace-pre-line text-[14px] leading-6">{m.body}</p>
-          <PrimaryButton onClick={() => navigate(m.actionUrl?.startsWith('/') ? m.actionUrl : '/rewards')}>See offer in Store</PrimaryButton>
-          <SecondaryButton onClick={() => navigate('/inbox')}>Back to inbox</SecondaryButton>
+          <PrimaryButton onClick={() => navigate(m.actionUrl?.startsWith('/') ? m.actionUrl : '/rewards')}>{t('figma_ui.inbox.see_offer_store')}</PrimaryButton>
+          <SecondaryButton onClick={() => navigate('/inbox')}>{t('figma_ui.inbox.back_to_inbox')}</SecondaryButton>
         </>
       )}
     </Screen>
@@ -120,23 +121,23 @@ export const NotificationSettings: React.FC = () => {
       setLocal(await LoyaltyApi.updateNotificationPreferences(next, userId));
     } catch {
       setLocal(p);
-      alert('Could not save. Please try again.');
+      alert(t('figma_ui.inbox.save_error'));
     }
   };
   const rows: { title: string; sub: string; on: boolean; disabled?: boolean; set?: (v: boolean) => void }[] = p
     ? [
-        { title: 'Offers & promotions', sub: 'Deals from Natcash and partner stores', on: !p.optOutMarketing, set: (v) => save({ optOutMarketing: !v }) },
-        { title: 'Mission & tier reminders', sub: 'New missions, close to the next tier', on: p.pushEnabled, set: (v) => save({ pushEnabled: v }) },
+        { title: t('figma_ui.inbox.pref_offers_title'), sub: t('figma_ui.inbox.pref_offers_sub'), on: !p.optOutMarketing, set: (v) => save({ optOutMarketing: !v }) },
+        { title: t('figma_ui.inbox.pref_missions_title'), sub: t('figma_ui.inbox.pref_missions_sub'), on: p.pushEnabled, set: (v) => save({ pushEnabled: v }) },
         // shortcut: the preferences API has no separate expiry flag; expiry alerts follow the always-on in-app channel
-        { title: 'Coin expiry alerts', sub: 'Coins expiring within 30 days', on: true, disabled: true },
-        { title: 'SMS', sub: 'Only for coin expiry when you have not opened the app', on: p.smsEnabled, set: (v) => save({ smsEnabled: v }) },
+        { title: t('figma_ui.inbox.pref_expiry_title'), sub: t('figma_ui.inbox.pref_expiry_sub'), on: true, disabled: true },
+        { title: t('figma_ui.inbox.pref_sms_title'), sub: t('figma_ui.inbox.pref_sms_sub'), on: p.smsEnabled, set: (v) => save({ smsEnabled: v }) },
       ]
     : [];
   return (
-    <Screen title="Notifications" back="/inbox">
+    <Screen title={t('figma_ui.inbox.title')} back="/inbox">
       <div>
-        <h2 className="text-[22px] font-semibold">Notifications</h2>
-        <p className="text-[13px] text-slate-500">Choose what Natcash Rewards may send you.</p>
+        <h2 className="text-[22px] font-semibold">{t('figma_ui.inbox.title')}</h2>
+        <p className="text-[13px] text-slate-500">{t('figma_ui.inbox.notif_choose_sub')}</p>
       </div>
       {!userId ? (
         <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
@@ -160,10 +161,10 @@ export const NotificationSettings: React.FC = () => {
         </div>
       )}
       <div className="rounded-[16px] bg-slate-100 p-4">
-        <p className="text-[13px] font-semibold">Service messages are always on</p>
-        <p className="text-[12px] text-slate-500">Payments, vouchers issued, security</p>
+        <p className="text-[13px] font-semibold">{t('figma_ui.inbox.service_always_on')}</p>
+        <p className="text-[12px] text-slate-500">{t('figma_ui.inbox.service_examples')}</p>
       </div>
-      <p className="text-[11px] text-slate-500">Even with offers on, you get at most 1 push a day and 3 a week, only between 08:00 and 20:00.</p>
+      <p className="text-[11px] text-slate-500">{t('figma_ui.inbox.frequency_note')}</p>
     </Screen>
   );
 };

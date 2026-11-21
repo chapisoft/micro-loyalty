@@ -1,23 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  LoyaltyApi,
-  getDefaultUserId,
-  type ExpiringBucketItem,
-  type ExpiringBucketsResponse,
-  type LedgerItem,
-  type MemberProfile,
-} from '../../services/api';
+import { LoyaltyApi, getDefaultUserId, type ExpiringBucketItem, type ExpiringBucketsResponse, type LedgerItem, type MemberProfile } from '../../services/api';
+import { toDateLocale } from '../../language';
 import { CalendarCheck, Fuel, Gamepad2, Gift, Hourglass, Ticket, Users } from 'lucide-react';
 import { Screen, Skeleton, ErrorBlock, CoinDot, Empty, fmt, ddmmyyyy } from '../ui';
 import { artEmptyBox } from '../art';
 
 const PAGE = 20;
 
-const monthTitle = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+const monthTitle = (iso: string, lng?: string) => new Date(iso).toLocaleDateString(toDateLocale(lng), { month: 'long', year: 'numeric' });
 
-const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const hhmm = (iso: string, lng?: string) => new Date(iso).toLocaleTimeString(toDateLocale(lng), { hour: '2-digit', minute: '2-digit' });
 
 // Figma DT-01 row icons: colour by what the coins came from
 const rowIcon = (item: LedgerItem) => {
@@ -39,7 +33,7 @@ const daysLeft = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now(
 
 /** DT-01 · Coins history (Figma 274:2420); with `sheet` the FIFO batch sheet (495:1294) opens on top. */
 export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const userId = getDefaultUserId();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
@@ -90,7 +84,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
 
   const months: [string, LedgerItem[]][] = [];
   (items || []).filter((it) => tabOf(it) === tab).forEach((it) => {
-    const m = monthTitle(it.createdAt);
+    const m = monthTitle(it.createdAt, i18n.language);
     const last = months[months.length - 1];
     if (last && last[0] === m) last[1].push(it);
     else months.push([m, [it]]);
@@ -107,7 +101,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
   const comingUp = buckets.find((b) => daysLeft(b.expiredAt) <= 30);
 
   return (
-    <Screen title="Coins history">
+    <Screen title={t('figma_ui.coins_history.title')}>
       {!userId ? (
         <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
       ) : (
@@ -125,17 +119,19 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
               </span>
               {earnedToday > 0 && (
                 <span className="text-[14px] text-slate-700">
-                  You got <b className="font-semibold text-[#FF8600]">{fmt(earnedToday)} coins</b> today
+                  {t('figma_ui.coins_history.got_today_prefix')}
+                  <b className="font-semibold text-[#FF8600]">{t('figma_ui.coins_history.got_today_highlight', { coins: fmt(earnedToday) })}</b>
+                  {t('figma_ui.coins_history.got_today_suffix')}
                 </span>
               )}
               <button type="button" onClick={() => navigate('/coins/expiring')} className="w-fit text-left text-[13px] font-medium text-[#FF8600]">
                 {expiring?.totalExpiringPoints
-                  ? `${fmt(expiring.totalExpiringPoints)} coins expire on ${ddmmyyyy(expiring.nearestExpiryDate)} ›`
-                  : 'No coins expiring soon · see batches ›'}
+                  ? t('figma_ui.coins_history.expire_on', { coins: fmt(expiring.totalExpiringPoints), date: ddmmyyyy(expiring.nearestExpiryDate) })
+                  : t('figma_ui.coins_history.no_expiring_see_batches')}
               </button>
             </div>
             <button type="button" onClick={() => navigate('/missions')} className="h-10 shrink-0 rounded-[12px] bg-[#FF8600] px-4 text-[15px] font-semibold text-white">
-              Earn more
+              {t('figma_ui.coins_history.earn_more')}
             </button>
           </div>
         )}
@@ -144,7 +140,7 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
           <div className="grid grid-cols-3 border-b border-slate-200">
             {(['earned', 'used', 'expired'] as LedgerTab[]).map((k) => (
               <button key={k} type="button" onClick={() => setTab(k)} className={`relative h-11 text-[16px] ${tab === k ? 'font-semibold text-[#FF8600]' : 'text-slate-600'}`}>
-                {k === 'earned' ? 'Earned' : k === 'used' ? 'Used' : 'Expired'}
+                {k === 'earned' ? t('figma_ui.coins_history.tab_earned') : k === 'used' ? t('figma_ui.coins_history.tab_used') : t('figma_ui.coins_history.tab_expired')}
                 {tab === k && <span className="absolute inset-x-[22%] bottom-0 h-0.5 rounded-full bg-[#FF8600]" />}
               </button>
             ))}
@@ -154,19 +150,19 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
         {items && tab === 'expired' && (
           <>
             <p className="bg-[#FFF3E6] px-4 py-2.5 text-[13px] leading-[18px] text-slate-700">
-              Coins expire 12 months after you earn them. The oldest coins are used first.
+              {t('figma_ui.coins_history.fifo_banner')}
             </p>
             {comingUp && (
               <>
-                <h3 className="bg-[#F1F5F9] px-4 py-2.5 text-[15px] font-semibold">Coming up</h3>
+                <h3 className="bg-[#F1F5F9] px-4 py-2.5 text-[15px] font-semibold">{t('figma_ui.coins_history.coming_up')}</h3>
                 <div className="flex items-center gap-3 px-4 py-3.5">
                   <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#FFE9D6]"><Hourglass className="size-5 text-[#FF8600]" /></span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[15px] font-medium leading-5">{fmt(comingUp.remainingPoints)} coins expire on {ddmmyyyy(comingUp.expiredAt)}</span>
-                    <span className="text-[13px] text-slate-500">Received {ddmmyyyy(comingUp.earnedAt)}</span>
-                    <button type="button" onClick={() => navigate('/rewards')} className="w-fit text-[13px] font-semibold text-[#FF8600]">Use them now ›</button>
+                    <span className="text-[15px] font-medium leading-5">{t('figma_ui.coins_history.coins_expire_on', { coins: fmt(comingUp.remainingPoints), date: ddmmyyyy(comingUp.expiredAt) })}</span>
+                    <span className="text-[13px] text-slate-500">{t('figma_ui.coins_history.received_on', { date: ddmmyyyy(comingUp.earnedAt) })}</span>
+                    <button type="button" onClick={() => navigate('/rewards')} className="w-fit text-[13px] font-semibold text-[#FF8600]">{t('figma_ui.coins_history.use_now')}</button>
                   </span>
-                  <span className="shrink-0 text-[15px] font-semibold text-[#FF8600]">−{fmt(comingUp.remainingPoints)} coins</span>
+                  <span className="shrink-0 text-[15px] font-semibold text-[#FF8600]">−{t('figma_ui.coins_history.amount_coins', { coins: fmt(comingUp.remainingPoints) })}</span>
                 </div>
               </>
             )}
@@ -175,14 +171,14 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
 
         {items && items.length > 0 && months.length === 0 && !(tab === 'expired' && comingUp) && (
           <p className="px-4 py-8 text-center text-[13px] text-slate-500">
-            {tab === 'expired' ? 'No coins have expired.' : tab === 'used' ? 'You have not used coins yet.' : 'No coins earned on this page yet.'}
+            {tab === 'expired' ? t('figma_ui.coins_history.empty_expired') : tab === 'used' ? t('figma_ui.coins_history.empty_used') : t('figma_ui.coins_history.empty_earned_page')}
           </p>
         )}
 
         {items && items.length === 0 && (
           <div className="px-4 py-8 text-center">
-            <p className="text-[15px] font-medium">No coin activity yet</p>
-            <p className="mt-1 text-[13px] text-slate-500">Complete a mission or pay with Natcash to earn your first coins.</p>
+            <p className="text-[15px] font-medium">{t('figma_ui.coins_history.empty_title')}</p>
+            <p className="mt-1 text-[13px] text-slate-500">{t('figma_ui.coins_history.empty_sub')}</p>
           </div>
         )}
 
@@ -199,12 +195,16 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
                     <ic.Icon className={`size-5 ${ic.fg}`} />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="line-clamp-2 text-[15px] font-medium leading-5">{expired ? 'Coins expired' : it.description || it.changeType}</span>
-                    <span className="text-[13px] text-slate-500">{expired ? `From ${it.description || 'earlier rewards'}` : `${hhmm(it.createdAt)} · ${ddmmyyyy(it.createdAt)}`}</span>
+                    <span className="line-clamp-2 text-[15px] font-medium leading-5">{expired ? t('figma_ui.coins_history.coins_expired_row') : it.description || it.changeType}</span>
+                    <span className="text-[13px] text-slate-500">
+                      {expired
+                        ? t('figma_ui.coins_history.from_earlier', { source: it.description || t('figma_ui.coins_history.earlier_rewards') })
+                        : `${hhmm(it.createdAt, i18n.language)} · ${ddmmyyyy(it.createdAt)}`}
+                    </span>
                   </span>
                   <span className={`shrink-0 text-[15px] font-semibold ${expired ? 'text-slate-500' : plus ? 'text-[#FF8600]' : 'text-slate-900'}`}>
                     {plus ? '+' : '−'}
-                    {fmt(Math.abs(it.pointChange))} coins
+                    {t('figma_ui.coins_history.amount_coins', { coins: fmt(Math.abs(it.pointChange)) })}
                   </span>
                 </div>
               );
@@ -215,41 +215,45 @@ export const CoinsHistory: React.FC<{ sheet?: boolean }> = ({ sheet = false }) =
         {items && items.length < total && (
           <div className="px-4 pt-3">
             <button type="button" onClick={loadMore} className="h-11 w-full rounded-[12px] border border-slate-200 bg-white text-[14px] font-semibold">
-              Load more
+              {t('figma_ui.coins_history.load_more')}
             </button>
           </div>
         )}
       </div>
 
       {sheet && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end" role="dialog" aria-label="Coins by batch">
-          <button type="button" aria-label="Close" onClick={() => navigate('/coins')} className="absolute inset-0 bg-slate-900/45" />
+        <div className="fixed inset-0 z-40 flex flex-col justify-end" role="dialog" aria-label={t('figma_ui.coins_history.batch_sheet_title')}>
+          <button type="button" aria-label={t('figma_ui.common.close')} onClick={() => navigate('/coins')} className="absolute inset-0 bg-slate-900/45" />
           <div className="relative mx-auto flex max-h-[85vh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[24px] bg-white px-5 pb-6 pt-2.5">
             <span className="mx-auto h-1 w-10 rounded-sm bg-slate-300" />
-            <h2 className="mt-2 text-[19px] font-semibold">Coins by batch</h2>
-            <p className="text-[13px] text-slate-500">Oldest coins are used first (FIFO). Each batch expires 12 months after you receive it.</p>
-            {buckets.length === 0 && <p className="rounded-[14px] bg-page p-3.5 text-[13px] text-slate-500">You have no coin batches yet.</p>}
+            <h2 className="mt-2 text-[19px] font-semibold">{t('figma_ui.coins_history.batch_sheet_title')}</h2>
+            <p className="text-[13px] text-slate-500">{t('figma_ui.coins_history.batch_sheet_desc')}</p>
+            {buckets.length === 0 && <p className="rounded-[14px] bg-page p-3.5 text-[13px] text-slate-500">{t('figma_ui.coins_history.batch_empty')}</p>}
             {buckets.map((b, i) => {
               const d = daysLeft(b.expiredAt);
               return (
                 <div key={b.bucketId} className="flex items-start gap-2 rounded-[14px] bg-page p-3.5">
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="text-[16px] font-semibold">{fmt(b.remainingPoints)} coins</span>
+                    <span className="text-[16px] font-semibold">{t('figma_ui.coins_history.amount_coins', { coins: fmt(b.remainingPoints) })}</span>
                     <span className="text-[12px] text-slate-500">
-                      Received {ddmmyyyy(b.earnedAt)} · Expires {ddmmyyyy(b.expiredAt)}
+                      {t('figma_ui.coins_history.batch_dates', { earned: ddmmyyyy(b.earnedAt), expired: ddmmyyyy(b.expiredAt) })}
                     </span>
                   </div>
                   {i === 0 && d <= 30 && (
-                    <span className="rounded-xl bg-[#FDE2E1] px-2.5 py-1 text-[11px] font-semibold text-[#C0392B]">Expires in {Math.max(d, 0)} days</span>
+                    <span className="rounded-xl bg-[#FDE2E1] px-2.5 py-1 text-[11px] font-semibold text-[#C0392B]">
+                      {t('figma_ui.coins_history.expires_in_days', { days: Math.max(d, 0) })}
+                    </span>
                   )}
                   {((i === 0 && d > 30) || (i === 1 && daysLeft(buckets[0].expiredAt) <= 30)) && (
-                    <span className="rounded-xl bg-[#FFF3E0] px-2.5 py-1 text-[11px] font-semibold text-[#B35400]">Next</span>
+                    <span className="rounded-xl bg-[#FFF3E0] px-2.5 py-1 text-[11px] font-semibold text-[#B35400]">
+                      {t('figma_ui.coins_history.next_badge')}
+                    </span>
                   )}
                 </div>
               );
             })}
             <button type="button" onClick={() => navigate('/rewards')} className="mt-2 h-[46px] rounded-[14px] bg-brand text-[14px] font-semibold text-white">
-              Use coins before they expire
+              {t('figma_ui.coins_history.use_before_expire')}
             </button>
           </div>
         </div>

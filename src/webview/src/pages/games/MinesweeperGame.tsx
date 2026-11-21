@@ -589,7 +589,7 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, onClai
                 onClick={() => initBoard(difficulty)}
                 className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700"
               >
-                {t('common.play_again', 'Chơi lại')}
+                {t('common.play_again')}
               </button>
               <button
                 onClick={() => {
@@ -598,7 +598,7 @@ export const MinesweeperGame: React.FC<MinesweeperGameProps> = ({ onBack, onClai
                 }}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-black text-xs transition shadow-lg shadow-amber-500/30"
               >
-                {t('common.claim_reward', 'Nhận thưởng')}
+                {t('common.claim_reward')}
               </button>
             </div>
           </div>

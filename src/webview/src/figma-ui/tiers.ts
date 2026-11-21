@@ -1,3 +1,4 @@
+import i18next from '../language';
 import medalSilver from '../assets/figma/ill-medal-silver.svg';
 import medalGold from '../assets/figma/ill-medal-gold.svg';
 import medalPlatinum from '../assets/figma/ill-medal-platinum.svg';
@@ -17,8 +18,13 @@ const LOOK: Record<string, { medal: string; cardBg: string; listBg: string }> = 
 
 export const tierLook = (code?: string) => LOOK[code?.toUpperCase() || ''] || LOOK.SILVER;
 
-/** "Silver Tier" / "SILVER" → "Silver" */
+/** Localized display label for standard tiers, falling back to stripped tier name or code. */
 export const tierLabel = (name?: string, code?: string) => {
+  const upper = (code || name || '').replace(/\s*tier$/i, '').trim().toUpperCase();
+  const key = `figma_ui.tiers.tier_names.${upper}`;
+  if (upper && i18next.exists(key)) {
+    return i18next.t(key);
+  }
   const base = (name || code || '').replace(/\s*tier$/i, '').trim();
   return base ? base.charAt(0).toUpperCase() + base.slice(1).toLowerCase() : '';
 };

@@ -29,10 +29,10 @@ const loadReferral = async (): Promise<Referral> => {
   };
 };
 
-const friendStep = (f: ReferralFriendItem) => {
-  if (f.firstTxCompleted || f.ekycStatus === 'REWARDED') return { text: 'eKYC done · first payment done', done: true };
-  if (f.ekycStatus === 'VERIFIED_EKYC') return { text: 'eKYC done · first payment pending', done: false };
-  return { text: 'Wallet opened · eKYC pending', done: false };
+const friendStep = (f: ReferralFriendItem, t: (k: string) => string) => {
+  if (f.firstTxCompleted || f.ekycStatus === 'REWARDED') return { text: t('figma_ui.invite.step_all_done'), done: true };
+  if (f.ekycStatus === 'VERIFIED_EKYC') return { text: t('figma_ui.invite.step_ekyc_done'), done: false };
+  return { text: t('figma_ui.invite.step_opened'), done: false };
 };
 
 // ───────────────────────── NV-06 · Invite friends ─────────────────────────
@@ -50,22 +50,27 @@ export const InviteFriends: React.FC = () => {
     const n = new Date();
     return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
   });
-  const rewarded = thisMonth.filter((f) => friendStep(f).done).length;
+  const rewarded = thisMonth.filter((f) => friendStep(f, t).done).length;
 
   const share = (content?: string) => {
     if (!data) return;
-    const payload = { title: 'Natcash Rewards', content: content || `Join Natcash with my code ${data.code}`, url: data.link };
+    const payload = {
+      title: t('figma_ui.invite.share_title'),
+      content: content || t('figma_ui.invite.share_content', { code: data.code }),
+      url: data.link,
+    };
     if (window.ReactNativeWebView) LoyaltyJSBridge.shareSocial(payload);
     else if (navigator.share) void navigator.share({ title: payload.title, text: payload.content, url: payload.url }).catch(() => undefined);
     else void navigator.clipboard?.writeText(`${payload.content} ${payload.url}`);
   };
 
   return (
-    <Screen title="Invite friends" back="/missions">
+    <Screen title={t('figma_ui.invite.title')} back="/missions">
       <div>
-        <h2 className="text-[22px] font-semibold leading-8">Invite friends</h2>
+        <h2 className="text-[22px] font-semibold leading-8">{t('figma_ui.invite.title')}</h2>
         <p className="mt-1 text-[13px] text-slate-500">
-          {data?.rewardPer ? `You get +${fmt(data.rewardPer)} coins` : 'You earn coins'} for each friend who opens a wallet, completes eKYC and makes a first payment.
+          {data?.rewardPer ? t('figma_ui.invite.subtitle_reward', { coins: fmt(data.rewardPer) }) : t('figma_ui.invite.subtitle_default')}
+          {t('figma_ui.invite.subtitle_suffix')}
         </p>
       </div>
       {!userId ? (
@@ -81,7 +86,7 @@ export const InviteFriends: React.FC = () => {
           <div className="flex w-full flex-col gap-3 rounded-[20px] bg-white p-4">
             <div className="flex items-start gap-3">
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-[11px] text-slate-500">Your Ambassador code</span>
+                <span className="text-[11px] text-slate-500">{t('figma_ui.invite.your_code')}</span>
                 <span className="break-all text-[24px] font-semibold text-brand">{data.code}</span>
                 <div className="mt-2 flex gap-2">
                   <SecondaryButton
@@ -92,29 +97,29 @@ export const InviteFriends: React.FC = () => {
                       setTimeout(() => setCopied(false), 1500);
                     }}
                   >
-                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? 'Copied' : 'Copy'}
+                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? t('figma_ui.invite.copied') : t('figma_ui.invite.copy')}
                   </SecondaryButton>
                   <SecondaryButton className="h-11" onClick={() => (window.location.href = `sms:?body=${encodeURIComponent(`${data.code} ${data.link}`)}`)}>
-                    <MessageSquare className="size-4" /> SMS
+                    <MessageSquare className="size-4" /> {t('figma_ui.invite.sms')}
                   </SecondaryButton>
                 </div>
               </div>
               <QrCode value={data.link} size={100} />
             </div>
-            <PrimaryButton onClick={() => share()}><Share2 className="size-4" /> Share invite link</PrimaryButton>
+            <PrimaryButton onClick={() => share()}><Share2 className="size-4" /> {t('figma_ui.invite.share_link')}</PrimaryButton>
           </div>
 
           <div className="flex w-full flex-col gap-2 rounded-[20px] bg-brand-soft p-4">
-            <span className="text-[11px] font-semibold text-[#B35400]">This month · {rewarded} friends rewarded</span>
+            <span className="text-[11px] font-semibold text-[#B35400]">{t('figma_ui.invite.this_month_rewarded', { count: rewarded })}</span>
             <span className="text-[15px] font-semibold">
-              {thisMonth.length} friends joined · {rewarded} completed · +{fmt(data.totalReward)} coins
+              {t('figma_ui.invite.month_summary', { joined: thisMonth.length, completed: rewarded, coins: fmt(data.totalReward) })}
             </span>
           </div>
 
           <div className="flex w-full flex-col gap-3 rounded-[20px] bg-white p-4">
-            <span className="text-[14px] font-semibold">How a friend counts</span>
+            <span className="text-[14px] font-semibold">{t('figma_ui.invite.how_counts')}</span>
             <div className="grid grid-cols-3 gap-2">
-              {['Opens a new Natcash wallet', 'Completes eKYC', 'Makes a first payment'].map((s, i) => (
+              {[t('figma_ui.invite.step_1'), t('figma_ui.invite.step_2'), t('figma_ui.invite.step_3')].map((s, i) => (
                 <div key={s} className="flex flex-col gap-1">
                   <span className="flex size-[22px] items-center justify-center rounded-full bg-brand/10 text-[12px] font-semibold text-brand">{i + 1}</span>
                   <span className="text-[12px] text-slate-500">{s}</span>
@@ -123,10 +128,10 @@ export const InviteFriends: React.FC = () => {
             </div>
           </div>
 
-          <h3 className="text-[16px] font-semibold">Your friends</h3>
-          {data.friends.length === 0 && <Empty art={artGift} title="No friends invited yet" text="Share your code — rewards show up here." />}
+          <h3 className="text-[16px] font-semibold">{t('figma_ui.invite.your_friends')}</h3>
+          {data.friends.length === 0 && <Empty art={artGift} title={t('figma_ui.invite.empty_title')} text={t('figma_ui.invite.empty_sub')} />}
           {data.friends.map((f) => {
-            const st = friendStep(f);
+            const st = friendStep(f, t);
             const name = f.fullName || f.maskedPhone;
             return (
               <div key={f.id} className="flex w-full items-center gap-3 rounded-[16px] bg-white p-3">
@@ -136,18 +141,18 @@ export const InviteFriends: React.FC = () => {
                   <span className="text-[11px] text-slate-500">{st.text}</span>
                 </span>
                 {st.done ? (
-                  <Pill tone="green">+{fmt(f.rewardPoints || data.rewardPer)} coins</Pill>
+                  <Pill tone="green">{t('figma_ui.invite.coins_pill', { coins: fmt(f.rewardPoints || data.rewardPer) })}</Pill>
                 ) : (
-                  <button type="button" onClick={() => share(`Finish setting up Natcash to get your welcome bonus. Code ${data.code}`)} className="rounded-full border border-brand px-3 py-1 text-[11px] font-semibold text-brand">
-                    Remind
+                  <button type="button" onClick={() => share(t('figma_ui.invite.remind_message', { code: data.code }))} className="rounded-full border border-brand px-3 py-1 text-[11px] font-semibold text-brand">
+                    {t('figma_ui.invite.remind_btn')}
                   </button>
                 )}
               </div>
             );
           })}
-          <p className="text-[11px] text-slate-500">Your friend must be new to Natcash. Referral data comes from Ambassador; Loyalty pays the coins.</p>
+          <p className="text-[11px] text-slate-500">{t('figma_ui.invite.disclaimer')}</p>
           <button type="button" onClick={() => navigate(`/invited?ref=${encodeURIComponent(data.code)}`)} className="text-left text-[12px] font-semibold text-brand">
-            Preview what your friend sees ›
+            {t('figma_ui.invite.preview_cta')}
           </button>
         </>
       )}
@@ -157,23 +162,30 @@ export const InviteFriends: React.FC = () => {
 
 // ───────────────────────── NV-07 · Invited friend · welcome ─────────────────────────
 export const InvitedWelcome: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const ref = params.get('ref') || '';
   const userId = getDefaultUserId();
   const [profile] = useLoad(() => (userId ? LoyaltyApi.getProfile(userId).catch(() => null) : Promise.resolve(null)));
   return (
-    <Screen title="Welcome" back="/">
-      <ResultBlock art={artGift} title={ref ? 'You were invited' : 'Welcome to Natcash Rewards'} value="Welcome bonus" valueTone="green" sub="Yours after your first payment with Natcash." />
+    <Screen title={t('figma_ui.invite.welcome_title')} back="/">
+      <ResultBlock
+        art={artGift}
+        title={ref ? t('figma_ui.invite.welcome_invited') : t('figma_ui.invite.welcome_default')}
+        value={t('figma_ui.invite.welcome_bonus')}
+        valueTone="green"
+        sub={t('figma_ui.invite.welcome_sub')}
+      />
       <InfoRows
         rows={[
-          ['Invited by', ref || '—'],
-          ['Wallet', profile ? 'Opened ✓' : '—'],
-          ['eKYC · first payment', profile && profile.currentPoints > 0 ? 'Done' : 'To do'],
+          [t('figma_ui.invite.row_invited_by'), ref || '—'],
+          [t('figma_ui.invite.row_wallet'), profile ? t('figma_ui.invite.wallet_opened') : '—'],
+          [t('figma_ui.invite.row_ekyc_payment'), profile && profile.currentPoints > 0 ? t('figma_ui.invite.status_done') : t('figma_ui.invite.status_todo')],
         ]}
       />
-      <PrimaryButton onClick={() => LoyaltyJSBridge.closeWebview()}>Complete eKYC</PrimaryButton>
-      <SecondaryButton onClick={() => navigate('/')}>Explore Natcash Rewards</SecondaryButton>
+      <PrimaryButton onClick={() => LoyaltyJSBridge.closeWebview()}>{t('figma_ui.invite.complete_ekyc_btn')}</PrimaryButton>
+      <SecondaryButton onClick={() => navigate('/')}>{t('figma_ui.invite.explore_rewards_btn')}</SecondaryButton>
     </Screen>
   );
 };

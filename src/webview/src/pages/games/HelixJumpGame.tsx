@@ -983,7 +983,7 @@ export const HelixJumpGame: React.FC<HelixJumpGameProps> = ({ onBack, onClaimRew
       {/* FEVER MODE BANNER */}
       {isSuperMode && (
         <div className="w-full bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-slate-950 text-center font-black text-xs py-1 animate-pulse tracking-wider shadow-lg z-20">
-          🔥 SIÊU CẦU LỬA FEVER - PHÁ TAN MỌI TẦNG THÁP! 🔥
+          🔥 {t('games.helix.fever_banner')} 🔥
         </div>
       )}
 
@@ -1013,20 +1013,20 @@ export const HelixJumpGame: React.FC<HelixJumpGameProps> = ({ onBack, onClaimRew
               {reviveCountdown}
             </div>
             <div>
-              <h3 className="text-xl font-black text-white">CƠ HỘI HỒI SINH!</h3>
+              <h3 className="text-xl font-black text-white">{t('games.helix.revive_title')}</h3>
               <p className="text-xs text-amber-300 font-bold mt-1">
                 {score >= bestScore
-                  ? 'Bạn đang giữ Kỷ Lục Mới! Đừng bỏ cuộc!'
-                  : `Chỉ còn thiếu ${Math.max(10, bestScore - score)} điểm để phá kỷ lục!`}
+                  ? t('games.helix.revive_new_record')
+                  : t('games.helix.revive_gap', { points: Math.max(10, bestScore - score) })}
               </p>
             </div>
             <button
               onClick={handleReviveNow}
               className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-green-400 hover:from-emerald-400 text-slate-950 font-black rounded-2xl text-sm shadow-xl active:scale-95 transition flex items-center justify-center gap-2"
             >
-              <span>❤️ Hồi Sinh Tiếp Tục (Miễn Phí)</span>
+              <span>❤️ {t('games.helix.btn_revive_free')}</span>
             </button>
-            <p className="text-[11px] text-slate-400">Được bảo vệ bất tử 2.5 giây khi tiếp tục</p>
+            <p className="text-[11px] text-slate-400">{t('games.helix.revive_shield_note')}</p>
           </div>
         </div>
       )}
@@ -1041,12 +1041,12 @@ export const HelixJumpGame: React.FC<HelixJumpGameProps> = ({ onBack, onClaimRew
             <div>
               <h3 className="text-xl font-black text-white">{t('games.helix.game_over_title')}</h3>
               <p className="text-xs text-slate-400 mt-1">{t('games.helix.game_over_desc', { score })}</p>
-              <div className="text-3xl font-black text-amber-400 font-mono mt-2">{score} pts</div>
+              <div className="text-3xl font-black text-amber-400 font-mono mt-2">{score} {t('common.points_short')}</div>
 
               {/* Natcash coins earned in run */}
               <div className="mt-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-300">🎁 Xu Natcash Tích Lũy:</span>
-                <span className="text-sm font-black text-amber-400 font-mono">+{natcashEarned} Xu</span>
+                <span className="text-xs font-bold text-amber-300">🎁 {t('games.helix.coins_earned_label')}</span>
+                <span className="text-sm font-black text-amber-400 font-mono">{t('games.helix.coins_value', { coins: natcashEarned })}</span>
               </div>
             </div>
             <button
@@ -1067,13 +1067,13 @@ export const HelixJumpGame: React.FC<HelixJumpGameProps> = ({ onBack, onClaimRew
               🏆
             </div>
             <div>
-              <h3 className="text-xl font-black text-white">MÀN {currentStage} HOÀN THÀNH!</h3>
-              <p className="text-xs text-slate-400 mt-1">Xuất sắc rơi xuống tận đáy tháp!</p>
-              <div className="text-3xl font-black text-emerald-400 font-mono mt-2">+{score} pts</div>
+              <h3 className="text-xl font-black text-white">{t('games.helix.stage_clear_title', { stage: currentStage })}</h3>
+              <p className="text-xs text-slate-400 mt-1">{t('games.helix.stage_clear_desc')}</p>
+              <div className="text-3xl font-black text-emerald-400 font-mono mt-2">+{score} {t('common.points_short')}</div>
 
               <div className="mt-3 p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-300">Thưởng Qua Màn:</span>
-                <span className="text-xs font-black text-emerald-400 font-mono">+50 Xu Natcash</span>
+                <span className="text-xs font-bold text-emerald-300">{t('games.helix.stage_bonus_label')}</span>
+                <span className="text-xs font-black text-emerald-400 font-mono">{t('games.helix.stage_bonus_value')}</span>
               </div>
             </div>
             <div className="flex gap-2">
@@ -1081,7 +1081,7 @@ export const HelixJumpGame: React.FC<HelixJumpGameProps> = ({ onBack, onClaimRew
                 onClick={() => startNewStage(currentStage + 1, false)}
                 className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-green-400 text-slate-950 font-black rounded-2xl text-sm shadow-xl active:scale-95 transition"
               >
-                Màn {currentStage + 1} ➡️
+                {t('games.helix.next_stage_btn', { stage: currentStage + 1 })} ➡️
               </button>
             </div>
           </div>
@@ -1096,8 +1096,8 @@ export const HelixJumpGame: React.FC<HelixJumpGameProps> = ({ onBack, onClaimRew
         gameIcon="🌀"
         goal={t('games.helix.tutorial.goal')}
         controls={t('games.helix.tutorial.controls')}
-        scoring="Rơi qua mỗi tầng: +10 điểm. Combo liên tiếp nhân số điểm. Combo x3 trở lên kích hoạt quả cầu lửa đập tan mọi chướng ngại vật!"
-        tips="Căn góc khoảng trống phía trước và xoay tháp thật nhanh để thực hiện chuỗi combo rơi nhiều tầng liên tiếp."
+        scoring={t('games.helix.tutorial.scoring')}
+        tips={t('games.helix.tutorial.tips')}
       />
     </div>
   );

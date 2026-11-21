@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
 import useSSOAuth from '../hooks/useSSOAuth';
-import { changeLanguage, SUPPORTED_LANGUAGES } from '../language';
+import { changeLanguage, SUPPORTED_LANGUAGES, toDateLocale } from '../language';
 import iconArrowLeft from '../assets/figma/icon-arrow-left.svg';
 import iconEllipsis from '../assets/figma/icon-ellipsis.svg';
 import iconX from '../assets/figma/icon-x.svg';
 
 /** Shared building blocks of the Figma "App · Customer journeys" screens (Natcash · Webview frame). */
 
-export const fmt = (n: number | undefined | null) => Math.round(Number(n) || 0).toLocaleString('en-US');
+export const fmt = (n: number | undefined | null) => Math.round(Number(n) || 0).toLocaleString(toDateLocale());
 
 /** Accepts ISO dates and the service's dd/MM/yyyy strings. */
 export const toDate = (v?: string) => {
@@ -139,7 +139,7 @@ export const TabBar: React.FC<{ shell: Shell; active: TabKey }> = ({ shell, acti
   return (
     <>
       <div className="h-[84px]" />
-      <nav aria-label="Loyalty menu" className="fixed inset-x-0 bottom-0 z-20">
+      <nav aria-label={t('figma_ui.ui.nav_menu_aria')} className="fixed inset-x-0 bottom-0 z-20">
         <div className={`${COL} flex h-[70px] rounded-t-[20px] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.06)]`}>
           {SHELL_TABS[shell].map(([k, to]) => {
             const on = k === active;

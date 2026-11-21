@@ -57,21 +57,21 @@ export const PayAtCounter: React.FC = () => {
 
   if (!userId) {
     return (
-      <Screen title="Pay at counter">
+      <Screen title={t('figma_ui.use_coins.title')}>
         <Empty art={artEmptyBox} title={t('sso.guest_login_required')} text={t('sso.guest_login_required_desc')} />
       </Screen>
     );
   }
 
   return (
-    <Screen title="Pay at counter">
+    <Screen title={t('figma_ui.use_coins.title')}>
       {failed && <ErrorBlock onRetry={refresh} />}
       {!token && !failed && <Skeleton className="h-[380px]" />}
       {token && (
         <div className="flex w-full flex-col items-center gap-3 rounded-[16px] bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-          <h2 className="text-[17px] font-semibold">Show this code to the cashier</h2>
+          <h2 className="text-[17px] font-semibold">{t('figma_ui.use_coins.show_code')}</h2>
           <p className="flex items-center gap-1 text-[12px] text-slate-500">
-            <Clock className="size-3.5" /> Refreshes in 0:{String(Math.max(left, 0)).padStart(2, '0')} · works once
+            <Clock className="size-3.5" /> {t('figma_ui.use_coins.refreshes_once', { sec: String(Math.max(left, 0)).padStart(2, '0') })}
           </p>
           <CodeTabs value={token} />
         </div>
@@ -79,21 +79,23 @@ export const PayAtCounter: React.FC = () => {
       <div className="w-full divide-y divide-slate-100 rounded-[16px] bg-white px-4">
         <div className="flex items-center gap-3 py-3">
           <span className="flex size-9 items-center justify-center rounded-full bg-[#FFF1E3]"><Wallet className="size-[18px] text-[#FE810D]" /></span>
-          <span className="flex-1 text-[15px] font-semibold">Natcash wallet</span>
+          <span className="flex-1 text-[15px] font-semibold">{t('figma_ui.use_coins.natcash_wallet')}</span>
         </div>
         {voucherId && (
           <button type="button" onClick={() => navigate(-1)} className="flex w-full items-center gap-3 py-3 text-left">
             <span className="flex size-9 items-center justify-center rounded-full bg-[#FFF1E3]"><Ticket className="size-[18px] text-[#FE810D]" /></span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[15px] font-semibold">{voucher ? `${cleanBrand(voucher.partnerName)} · ${userValueTitle(voucher)}` : 'Voucher'}</span>
-              <span className="text-[12px] text-slate-500">Cashier applies it when scanning</span>
+              <span className="truncate text-[15px] font-semibold">{voucher ? `${cleanBrand(voucher.partnerName)} · ${userValueTitle(voucher)}` : t('figma_ui.use_coins.default_voucher')}</span>
+              <span className="text-[12px] text-slate-500">{t('figma_ui.use_coins.cashier_applies')}</span>
             </span>
-            <span className="text-[14px] font-semibold text-[#FE810D]">Change</span>
+            <span className="text-[14px] font-semibold text-[#FE810D]">{t('figma_ui.use_coins.change')}</span>
           </button>
         )}
       </div>
       <p className="rounded-[14px] bg-[#FFF4EA] p-3 text-[13px] leading-5 text-slate-700">
-        The cashier scans your code. Your coins and vouchers show on the cashier’s screen – tell them what to use. {pinLimit ? `Amounts above ${fmt(Number(pinLimit))} HTG ask for your PIN.` : 'Large amounts ask for your PIN in Natcash.'}
+        {pinLimit
+          ? t('figma_ui.use_coins.cashier_guide_pin', { limit: fmt(Number(pinLimit)) })
+          : t('figma_ui.use_coins.cashier_guide_default')}
       </p>
     </Screen>
   );

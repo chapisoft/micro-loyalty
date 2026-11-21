@@ -24,7 +24,7 @@ import { userState, cleanBrand, valueTitle, userValueTitle } from './Rewards';
 import { artGift, artHourglass, artCup } from '../art';
 import { tierLook, tierLabel } from '../tiers';
 import { normMilestone } from '../data';
-import { loadGames, type GameEntry } from '../games';
+import { loadGames, localizedGameName, type GameEntry } from '../games';
 import { partnerPhoto } from '../art';
 import type { SegmentProfileResponse } from '../../services/api';
 import iconHistory from '../../assets/figma/icon-history.svg';
@@ -86,17 +86,17 @@ const DAY = 86_400_000;
  * priority reward waiting > voucher about to expire (≤ 3 days) > mission about to end (≤ 2 days), only 08:00–20:00.
  * shortcut: rules are applied here from data the app already loads; move to GET /me/popup when CN-06 ships (plan GĐ5).
  */
-const pickReminder = (d: HomeData): Reminder | null => {
+const pickReminder = (d: HomeData, t: (k: string, o?: Record<string, unknown>) => string): Reminder | null => {
   const h = new Date().getHours();
   if (h < 8 || h >= 20) return null;
   const now = Date.now();
   const claim = d.missions.find((m) => m.steps.some((s) => s.status === 'COMPLETED'));
-  if (claim) return { art: artCup, title: 'You have a reward to claim', text: `${claim.name}: your reward is waiting.`, cta: 'Claim reward', to: `/missions/${encodeURIComponent(claim.code)}` };
+  if (claim) return { art: artCup, title: t('figma_ui.home.reminder_claim_title'), text: t('figma_ui.home.reminder_claim_text', { name: claim.name }), cta: t('figma_ui.home.reminder_claim_cta'), to: `/missions/${encodeURIComponent(claim.code)}` };
   const exp = (x: UserVoucherItem) => toDate(x.expiresAt || x.validUntil).getTime();
   const v = d.vouchers.find((x) => userState(x) === 'ready' && exp(x) - now <= 3 * DAY && exp(x) > now);
-  if (v) return { art: artGift, title: 'Your voucher expires soon', text: `${userValueTitle(v)} · valid until ${ddmmyyyy(v.validUntil)}.`, cta: 'Use voucher', to: `/my-vouchers/${v.id}` };
+  if (v) return { art: artGift, title: t('figma_ui.home.reminder_voucher_title'), text: t('figma_ui.home.reminder_voucher_text', { title: userValueTitle(v), date: ddmmyyyy(v.validUntil) }), cta: t('figma_ui.home.reminder_voucher_cta'), to: `/my-vouchers/${v.id}` };
   const end = d.missions.find((m) => m.steps.some((s) => s.status === 'IN_PROGRESS' && s.expiresAt && new Date(s.expiresAt).getTime() - now <= 2 * DAY && new Date(s.expiresAt).getTime() > now));
-  if (end) return { art: artHourglass, title: 'A mission ends soon', text: `${end.name} ends in 2 days or less.`, cta: 'See mission', to: `/missions/${encodeURIComponent(end.code)}` };
+  if (end) return { art: artHourglass, title: t('figma_ui.home.reminder_mission_title'), text: t('figma_ui.home.reminder_mission_text', { name: end.name }), cta: t('figma_ui.home.reminder_mission_cta'), to: `/missions/${encodeURIComponent(end.code)}` };
   return null;
 };
 
@@ -197,13 +197,13 @@ export const LoyaltyHome: React.FC = () => {
             art,
             title: pop.title,
             text: pop.body || '',
-            cta: pop.ctaLabel || 'Open',
+            cta: pop.ctaLabel || t('figma_ui.home.popup_open_cta'),
             to: pop.deepLink?.startsWith('/') ? pop.deepLink : '/missions',
           });
         }
       } catch {
         if (cancelled) return;
-        const r = pickReminder(data);
+        const r = pickReminder(data, t);
         if (r) {
           try { sessionStorage.setItem('loyalty_popup_shown', '1'); } catch { /* ignore */ }
         }
@@ -212,20 +212,20 @@ export const LoyaltyHome: React.FC = () => {
     };
     void resolvePopup();
     return () => { cancelled = true; };
-  }, [data, userId]);
+  }, [data, userId, t]);
 
   return (
     <Screen
-      title="Rewards"
+      title={t('figma_ui.home.title')}
       tab={{ shell: 'customer', active: 'home' }}
       barTitle
       hero={
         <div className="flex items-center gap-1 pt-3">
-          <p className="min-w-0 flex-1 text-[15px] font-semibold">{isNew ? 'Your journey starts here' : 'Your benefits'}</p>
-          <button type="button" aria-label="Coins history" onClick={() => go('/coins')} className="flex size-10 items-center justify-center">
+          <p className="min-w-0 flex-1 text-[15px] font-semibold">{isNew ? t('figma_ui.home.hero_sub_new') : t('figma_ui.home.hero_sub_member')}</p>
+          <button type="button" aria-label={t('figma_ui.home.coins_history_aria')} onClick={() => go('/coins')} className="flex size-10 items-center justify-center">
             <img src={iconHistory} alt="" className="size-[22px] brightness-0 invert" />
           </button>
-          <button type="button" aria-label="Notifications" onClick={() => go('/inbox')} className="-mr-2 flex size-10 items-center justify-center">
+          <button type="button" aria-label={t('figma_ui.home.notifications_aria')} onClick={() => go('/inbox')} className="-mr-2 flex size-10 items-center justify-center">
             <img src={iconBell} alt="" className="size-[22px] brightness-0 invert" />
           </button>
         </div>
@@ -268,17 +268,17 @@ export const LoyaltyHome: React.FC = () => {
               )}
               <div className="flex w-full items-center gap-1.5">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-[17px] font-semibold leading-[22px] text-brand">{tierLabel(p.tier?.name, p.tier?.code)} tier ›</span>
+                  <span className="text-[17px] font-semibold leading-[22px] text-brand">{t('figma_ui.home.tier_link', { tier: tierLabel(p.tier?.name, p.tier?.code) })}</span>
                   <span className="text-[36px] font-semibold leading-[48px]">{fmt(p.currentPoints)}</span>
-                  <span className="text-[13px] leading-[18px] text-slate-500">available coins</span>
+                  <span className="text-[13px] leading-[18px] text-slate-500">{t('figma_ui.home.available_coins')}</span>
                 </div>
                 <img src={look.medal} alt="" className="size-[104px] shrink-0" />
               </div>
               <div className="h-px w-full bg-black/10" />
               <div className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-[12px] leading-4 text-slate-500">{isNew ? 'Start earning today' : `${fmt(p.tierPoints)} tier pts · ${year} period`}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] leading-4 text-slate-500">{isNew ? t('figma_ui.home.start_earning_today') : t('figma_ui.home.tier_pts_period', { points: fmt(p.tierPoints), year })}</span>
                 <button type="button" onClick={(e) => { e.stopPropagation(); go('/pay-at-counter'); }} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-semibold text-[#FE810D]">
-                  <QrCode className="size-4" /> Pay at counter
+                  <QrCode className="size-4" /> {t('figma_ui.home.pay_at_counter')}
                 </button>
               </div>
             </div>
@@ -290,7 +290,7 @@ export const LoyaltyHome: React.FC = () => {
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[17px] font-semibold leading-[22px] text-brand">{t('sso.guest_view_tiers')} ›</span>
                   <span className="text-[36px] font-semibold leading-[48px]">0</span>
-                  <span className="text-[13px] leading-[18px] text-slate-500">available coins</span>
+                  <span className="text-[13px] leading-[18px] text-slate-500">{t('figma_ui.home.available_coins')}</span>
                 </div>
                 <img src={look.medal} alt="" className="size-[104px] shrink-0" />
               </div>
@@ -326,14 +326,14 @@ export const LoyaltyHome: React.FC = () => {
           )}
 
           {/* Play every day · 274:1443 */}
-          <SectionHeader title="Play every day" action="Games ›" onAction={() => go('/games')} />
+          <SectionHeader title={t('figma_ui.home.play_every_day')} action={t('figma_ui.home.games_action')} onAction={() => go('/games')} />
           <SlideRow className="gap-3">
             {data.games.map((g) => (
               <button key={g.code} type="button" onClick={() => go(g.route || `/games?open=${encodeURIComponent(g.code)}`)} className="flex w-[88px] shrink-0 flex-col items-center gap-1.5">
                 <span className="size-[68px] overflow-hidden rounded-[16px]">
                   <GameArt code={g.code} iconUrl={g.iconUrl} />
                 </span>
-                <span className="line-clamp-2 text-center text-[11px] font-medium leading-4">{g.name}</span>
+                <span className="line-clamp-2 text-center text-[11px] font-medium leading-4">{localizedGameName(g.code, g.name)}</span>
               </button>
             ))}
           </SlideRow>
@@ -341,11 +341,11 @@ export const LoyaltyHome: React.FC = () => {
           {expiringCoins > 0 && (
             <button type="button" onClick={() => go('/coins/expiring')} className="flex w-full items-center gap-2.5 rounded-[20px] bg-[#EDF5EF] p-3.5 text-left">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[11px] font-medium leading-4 text-emerald-700">Coins expiring soon</span>
+                <span className="text-[11px] font-medium leading-4 text-emerald-700">{t('figma_ui.home.coins_expiring_soon')}</span>
                 <span className="text-[16px] font-semibold leading-[23px]">
-                  {fmt(expiringCoins)} coins{data.expiring?.nearestExpiryDate ? ` · Use by ${ddmm(data.expiring.nearestExpiryDate)}` : ''}
+                  {fmt(expiringCoins)} {t('figma_ui.home.coins_label')}{data.expiring?.nearestExpiryDate ? t('figma_ui.home.use_by_date', { date: ddmm(data.expiring.nearestExpiryDate) }) : ''}
                 </span>
-                <span className="text-[12px] leading-[17px] text-slate-500">Get a voucher before they expire.</span>
+                <span className="text-[12px] leading-[17px] text-slate-500">{t('figma_ui.home.expiring_cta')}</span>
               </div>
               <img src={illTicket2} alt="" className="size-14 shrink-0" />
             </button>
@@ -354,7 +354,7 @@ export const LoyaltyHome: React.FC = () => {
           {/* Missions in progress · 274:1355 / new customer "Get started" · 330:228 */}
           {data.missions.length > 0 ? (
             <>
-              <SectionHeader title={p ? 'Missions in progress' : 'Missions'} action="See all ›" onAction={() => go('/missions')} />
+              <SectionHeader title={p ? t('figma_ui.home.missions_in_progress') : t('figma_ui.tabs.missions')} action={`${t('figma_ui.common.see_all')} ›`} onAction={() => go('/missions')} />
               <SlideRow className="gap-3">
                 {data.missions.map((m) => (
                   <button key={m.code} type="button" onClick={() => go(`/missions/${encodeURIComponent(m.code)}`)} className={`flex ${data.missions.length === 1 ? 'w-full' : 'w-[300px]'} max-w-full shrink-0 snap-start flex-col gap-2.5 rounded-[20px] bg-white p-3.5 text-left`}>
@@ -365,7 +365,7 @@ export const LoyaltyHome: React.FC = () => {
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span className="truncate text-[14px] font-semibold leading-5">{m.name}</span>
                         <span className="text-[11px] leading-4 text-slate-500">
-                          {fmt(m.totalReward)} coins{m.toGo ? ` · ${fmt(m.toGo)} to go` : ''}
+                          {fmt(m.totalReward)} {t('figma_ui.home.coins_label')}{m.toGo ? t('figma_ui.home.amount_to_go', { amount: fmt(m.toGo) }) : ''}
                         </span>
                       </span>
                     </div>
@@ -375,7 +375,7 @@ export const LoyaltyHome: React.FC = () => {
                         return (
                           <span key={s.id} className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full p-1.5 ${done ? 'bg-emerald-50' : 'bg-brand-soft'}`}>
                             <img src={done ? iconCheck : iconGift} alt="" className="size-[13px]" />
-                            <span className="whitespace-nowrap text-[11px] font-medium leading-[15px] text-slate-500">Goal {idx + 1}</span>
+                            <span className="whitespace-nowrap text-[11px] font-medium leading-[15px] text-slate-500">{t('figma_ui.missions.goal_n', { n: idx + 1 })}</span>
                             <span className={`whitespace-nowrap text-[11px] font-semibold leading-4 ${done ? 'text-emerald-700' : 'text-brand'}`}>+{fmt(s.rewardPoints)}</span>
                           </span>
                         );
@@ -388,9 +388,9 @@ export const LoyaltyHome: React.FC = () => {
           ) : (
             <button type="button" onClick={() => go('/missions')} className="flex w-full items-center gap-2.5 rounded-[20px] bg-brand-soft p-3.5 text-left">
               <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[11px] font-medium leading-4 text-brand">Get started</span>
-                <span className="text-[16px] font-semibold leading-[23px]">Your first mission is waiting</span>
-                <span className="text-[12px] leading-[17px] text-slate-500">See open programs and conditions.</span>
+                <span className="text-[11px] font-medium leading-4 text-brand">{t('figma_ui.home.get_started')}</span>
+                <span className="text-[16px] font-semibold leading-[23px]">{t('figma_ui.home.first_mission_title')}</span>
+                <span className="text-[12px] leading-[17px] text-slate-500">{t('figma_ui.home.first_mission_sub')}</span>
               </span>
               <img src={illGift} alt="" className="size-14 shrink-0" />
             </button>
@@ -409,20 +409,20 @@ export const LoyaltyHome: React.FC = () => {
                 {(data.segment.subheadline || (data.segment as { description?: string }).description) && (
                   <span className="text-[12px] leading-[17px] text-slate-500">{data.segment.subheadline || (data.segment as { description?: string }).description}</span>
                 )}
-                <span className="text-[12px] font-semibold text-brand">{data.segment.ctaLabel || 'See missions'} ›</span>
+                <span className="text-[12px] font-semibold text-brand">{data.segment.ctaLabel || t('figma_ui.home.see_missions_cta')} ›</span>
               </span>
               <img src={illCalendar} alt="" className="size-16 shrink-0 rounded-full bg-white p-2" />
             </button>
           )}
 
           {/* Hot deals · 274:1428 */}
-          <SectionHeader title="Hot deals" action="See all ›" onAction={() => go('/rewards')} />
+          <SectionHeader title={t('figma_ui.home.hot_deals')} action={`${t('figma_ui.common.see_all')} ›`} onAction={() => go('/rewards')} />
           {data.deals.length === 0 ? (
             <button type="button" onClick={() => go('/rewards')} className="flex w-full items-center gap-3 rounded-[20px] bg-white p-3.5 text-left">
               <img src={dealPhoto({ partnerName: '', title: '' } as CatalogVoucherItem)} alt="" className="size-16 shrink-0 rounded-[14px] object-cover opacity-80" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-[15px] font-semibold">New partner deals are on the way</span>
-                <span className="text-[12px] leading-[17px] text-slate-500">Open the Store to see vouchers you can get with coins.</span>
+                <span className="text-[15px] font-semibold">{t('figma_ui.home.no_deals_title')}</span>
+                <span className="text-[12px] leading-[17px] text-slate-500">{t('figma_ui.home.no_deals_sub')}</span>
               </span>
             </button>
           ) : (
@@ -430,11 +430,12 @@ export const LoyaltyHome: React.FC = () => {
               <SlideRow className="gap-3">
                 {data.deals.map((v) => {
                   const enough = p ? (p.currentPoints || 0) >= v.pointCost : false;
+                  const coinsText = `${fmt(v.pointCost)} ${t('figma_ui.home.coins_label')}`;
                   const priceLabel = p
-                    ? `${enough ? '' : 'Needs '}${fmt(v.pointCost)} coins`
+                    ? enough ? coinsText : t('figma_ui.home.needs_coins_prefix', { coins: coinsText })
                     : v.pointCost === 0
-                    ? 'Free'
-                    : `${fmt(v.pointCost)} coins`;
+                    ? t('figma_ui.common.free')
+                    : coinsText;
                   return (
                     <button key={v.id} type="button" onClick={() => go(`/rewards/${v.id}`)} className="relative flex h-[150px] w-[173px] shrink-0 flex-col justify-end gap-0.5 overflow-hidden rounded-[20px] px-3.5 pb-3.5 pt-3 text-left">
                       <img src={dealPhoto(v)} alt="" className="absolute inset-0 size-full object-cover" />
@@ -482,7 +483,7 @@ export const LoyaltyHome: React.FC = () => {
                           {t('sso.policies_exchange_rate', { rate: pol.pointExchangeRate })} · {t('sso.policies_max_burn', { pct: pol.maxBurnPercentage })}
                         </p>
                       </div>
-                      <Pill tone="green">{fmt(pol.maxBurnPointsPerTx)} max</Pill>
+                      <Pill tone="green">{t('figma_ui.home.max_badge', { amount: fmt(pol.maxBurnPointsPerTx) })}</Pill>
                     </div>
                   ))}
                 </div>
@@ -490,7 +491,7 @@ export const LoyaltyHome: React.FC = () => {
             </section>
           ) : data.tiers.length > 0 && (
             <>
-              <SectionHeader title="Membership tiers" action="See all ›" onAction={() => go('/tiers')} />
+              <SectionHeader title={t('figma_ui.home.membership_tiers')} action={`${t('figma_ui.common.see_all')} ›`} onAction={() => go('/tiers')} />
               <div className="grid w-full grid-cols-2 gap-2.5">
                 {data.tiers.slice(0, 4).map((tier) => (
                   <button
@@ -503,7 +504,7 @@ export const LoyaltyHome: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-semibold text-slate-900">{tierLabel(tier.name, tier.code)}</p>
                       <p className="text-[11px] text-slate-500">
-                        ×{Number(tier.pointMultiplier || 1).toFixed(1).replace(/\.0$/, '')} · {tier.freeDailyTurns} plays/day
+                        ×{Number(tier.pointMultiplier || 1).toFixed(1).replace(/\.0$/, '')} · {t('figma_ui.home.plays_per_day', { count: tier.freeDailyTurns })}
                       </p>
                     </div>
                   </button>
@@ -535,7 +536,7 @@ export const LoyaltyHome: React.FC = () => {
                           <div className="flex items-center justify-between gap-1.5">
                             <span className="truncate text-[11px] font-semibold text-slate-500">{rv.partnerName}</span>
                             <Pill tone={rv.freeCollect ? 'green' : rv.affordable ? 'orange' : 'grey'}>
-                              {rv.freeCollect ? 'Free' : `${fmt(rv.pointCost)} ${t('sso.coins_short')}`}
+                              {rv.freeCollect ? t('figma_ui.common.free') : `${fmt(rv.pointCost)} ${t('sso.coins_short')}`}
                             </Pill>
                           </div>
                           <p className="line-clamp-2 text-[14px] font-semibold leading-5 text-slate-900">{rv.title}</p>
@@ -588,7 +589,7 @@ export const LoyaltyHome: React.FC = () => {
             <p className="text-[13px] leading-5 text-slate-500">{reminder.text}</p>
             <div className="mt-2 flex w-full flex-col gap-2">
               <PrimaryButton onClick={() => { setReminder(null); go(reminder.to); }}>{reminder.cta}</PrimaryButton>
-              <SecondaryButton onClick={() => setReminder(null)}>Later</SecondaryButton>
+              <SecondaryButton onClick={() => setReminder(null)}>{t('figma_ui.home.later_btn')}</SecondaryButton>
             </div>
           </>
         )}

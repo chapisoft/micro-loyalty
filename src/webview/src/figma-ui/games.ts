@@ -1,3 +1,4 @@
+import i18next, { pickLocalizedField } from '../language';
 import { LoyaltyApi, type GameListItem } from '../services/api';
 
 /**
@@ -43,12 +44,12 @@ export const IN_HOUSE: Record<string, { route: string; name: string; category: s
   BOMB_SWEEPER: { route: '/minesweeper', name: 'Minesweeper', category: CAT.BRAIN, artCode: 'MINESWEEPER' },
   SUDOKU: { route: '/sudoku', name: 'Sudoku Master', category: CAT.BRAIN, artCode: 'SUDOKU' },
   SUDOCU: { route: '/sudoku', name: 'Sudoku Master', category: CAT.BRAIN, artCode: 'SUDOKU' },
-  TREASURE_CHEST: { route: '/games/wheel', name: 'Mở Rương Báu', category: CAT.FUN, artCode: 'WHEEL' },
-  TOWER_CLIMB: { route: '/runner', name: 'Tháp Kho Báu', category: CAT.FUN, artCode: 'RUNNER' },
+  TREASURE_CHEST: { route: '/games/wheel', name: 'Treasure Chest', category: CAT.FUN, artCode: 'WHEEL' },
+  TOWER_CLIMB: { route: '/runner', name: 'Treasure Tower', category: CAT.FUN, artCode: 'RUNNER' },
   PENALTY_SHOOTOUT: { route: '/runner', name: 'Penalty Shootout', category: CAT.FUN, artCode: 'RUNNER' },
   PLINKO_DROP: { route: '/bubble', name: 'Plinko Fortune', category: CAT.FUN, artCode: 'BUBBLE' },
-  GOLDEN_EGG: { route: '/games/scratch', name: 'Đập Trứng Vàng', category: CAT.FUN, artCode: 'SCRATCH' },
-  LUCKY_DICE: { route: '/game2048', name: 'Xúc Xắc May Mắn', category: CAT.FUN, artCode: 'GAME2048' },
+  GOLDEN_EGG: { route: '/games/scratch', name: 'Golden Egg', category: CAT.FUN, artCode: 'SCRATCH' },
+  LUCKY_DICE: { route: '/game2048', name: 'Lucky Dice', category: CAT.FUN, artCode: 'GAME2048' },
   TOPUP_CHALLENGE: { route: '/flappy', name: 'Topup Challenge', category: CAT.FUN, artCode: 'FLAPPY' },
 };
 
@@ -66,12 +67,22 @@ export interface GameEntry {
 
 const normCode = (c: string) => c.toUpperCase().replace(/[^A-Z0-9_]/g, '');
 
+export const localizedGameName = (code?: string, fallbackName?: string, rawItem?: unknown): string => {
+  const fromApiFields = pickLocalizedField(rawItem, 'gameName', i18next.language);
+  if (fromApiFields) return fromApiFields;
+  const clean = normCode(code || '');
+  if (clean && i18next.exists(`games.catalog.${clean}`)) {
+    return i18next.t(`games.catalog.${clean}`);
+  }
+  return fallbackName || IN_HOUSE[clean]?.name || code || i18next.t('figma_ui.tabs.games');
+};
+
 export const toEntry = (g: GameListItem): GameEntry => {
   const code = normCode(g.gameCode);
   const own = IN_HOUSE[code];
   return {
     code,
-    name: g.gameName || own?.name || g.gameCode,
+    name: localizedGameName(code, g.gameName || own?.name || g.gameCode, g),
     category: (g.category || own?.category || 'OTHER').toUpperCase(),
     route: own?.route,
     partnerUrl: own ? undefined : g.gameUrl,
@@ -150,11 +161,14 @@ export async function loadGames(): Promise<{ games: GameEntry[]; fromApi: boolea
     if (apiMatch) {
       return {
         ...b,
-        name: apiMatch.gameName || b.name,
+        name: localizedGameName(b.code, apiMatch.gameName || b.name, apiMatch),
         freeLeft: apiMatch.remainingTurnsToday ?? apiMatch.freeTurnsDaily ?? 1,
       };
     }
-    return b;
+    return {
+      ...b,
+      name: localizedGameName(b.code, b.name),
+    };
   });
 
   // Deduplicate by resolved code & route so backend alias stubs never duplicate in-house tiles
@@ -184,10 +198,15 @@ export async function loadGames(): Promise<{ games: GameEntry[]; fromApi: boolea
   return { games: result, fromApi: true };
 }
 
-const LABEL: Record<string, string> = { ENTERTAINMENT: 'Entertainment', PUZZLE_BRAIN: 'Brain', EDUCATION_LEARNING: 'Learning', LEARNING: 'Learning' };
-/** Known taxonomy codes get short labels; any other CMS category is shown as written ("PARTNER_SPORTS" → "Partner sports"). */
+const CAT_KEY: Record<string, string> = {
+  ENTERTAINMENT: 'figma_ui.games.cat_fun',
+  PUZZLE_BRAIN: 'figma_ui.games.cat_brain',
+  EDUCATION_LEARNING: 'figma_ui.games.cat_learning',
+  LEARNING: 'figma_ui.games.cat_learning',
+};
+/** Known taxonomy codes get localized labels; any other CMS category is shown formatted. */
 export const catLabel = (c: string) => {
-  if (LABEL[c]) return LABEL[c];
+  if (CAT_KEY[c]) return i18next.t(CAT_KEY[c]);
   const s = c.replace(/_/g, ' ').toLowerCase();
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
