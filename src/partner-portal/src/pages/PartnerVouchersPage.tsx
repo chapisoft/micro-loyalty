@@ -32,6 +32,8 @@ export const PartnerVouchersPage: React.FC = () => {
   const [serialCode, setSerialCode] = useState('');
   const [branchCode, setBranchCode] = useState('');
   const [orderRef, setOrderRef] = useState('');
+  const [checkingVoucher, setCheckingVoucher] = useState(false);
+  const [checkResult, setCheckResult] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchVouchers = useCallback(async () => {
@@ -48,6 +50,39 @@ export const PartnerVouchersPage: React.FC = () => {
     fetchVouchers();
   }, [fetchVouchers]);
 
+  const handleCheckVoucher = async () => {
+    if (!serialCode.trim()) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: t('common.warn'),
+        detail: t('partner_portal.redeem_required'),
+      });
+      return;
+    }
+    setCheckingVoucher(true);
+    try {
+      const res = await LoyaltyService.checkPartnerVoucher(
+        {
+          code: serialCode.trim(),
+          branchCode: branchCode.trim() || undefined,
+        },
+        selectedTenant
+      );
+      setCheckResult(res);
+      if (!res?.valid) {
+        toast.current?.show({
+          severity: 'error',
+          summary: t('common.error'),
+          detail: res?.message || t('partner_portal.check_voucher_invalid'),
+        });
+      }
+    } catch (err: any) {
+      setCheckResult({ valid: false, message: err?.response?.data?.message || err.message });
+    } finally {
+      setCheckingVoucher(false);
+    }
+  };
+
   const handleRedeemAtCounter = async () => {
     if (!serialCode.trim() || !branchCode.trim()) {
       toast.current?.show({
@@ -59,6 +94,22 @@ export const PartnerVouchersPage: React.FC = () => {
     }
     setSubmitting(true);
     try {
+      const checked = await LoyaltyService.checkPartnerVoucher(
+        {
+          code: serialCode.trim(),
+          branchCode: branchCode.trim(),
+        },
+        selectedTenant
+      );
+      setCheckResult(checked);
+      if (!checked?.valid) {
+        toast.current?.show({
+          severity: 'error',
+          summary: t('common.error'),
+          detail: checked?.message || t('partner_portal.check_voucher_invalid'),
+        });
+        return;
+      }
       await LoyaltyService.redeemPartnerVoucherAtCounter(
         {
           voucherCode: serialCode.trim(),
@@ -75,6 +126,7 @@ export const PartnerVouchersPage: React.FC = () => {
       setShowRedeemDialog(false);
       setSerialCode('');
       setOrderRef('');
+      setCheckResult(null);
       fetchVouchers();
     } catch (err: any) {
       toast.current?.show({
@@ -184,14 +236,15 @@ export const PartnerVouchersPage: React.FC = () => {
             />
             <Column
               header={t('common.action', 'Thao tác')}
-              body={(r: VoucherItemModel) => (
+              body={() => (
                 <StandardRowActions
                   actions={[
                     {
                       icon: 'pi pi-qrcode',
                       label: t('partner_portal.redeem_counter', 'Đổi tại quầy'),
                       onClick: () => {
-                        setSerialCode(r.voucherCode || '');
+                        setSerialCode('');
+                        setCheckResult(null);
                         setShowRedeemDialog(true);
                       },
                     },
@@ -264,7 +317,10 @@ export const PartnerVouchersPage: React.FC = () => {
 
       <Dialog
         visible={showRedeemDialog}
-        onHide={() => setShowRedeemDialog(false)}
+        onHide={() => {
+          setShowRedeemDialog(false);
+          setCheckResult(null);
+        }}
         header={t('partner_portal.redeem_counter')}
         style={{ width: '32rem' }}
         modal
@@ -273,13 +329,44 @@ export const PartnerVouchersPage: React.FC = () => {
         <div className="flex flex-column gap-3">
           <div className="field m-0">
             <label className="text-sm font-medium">{t('partner_portal.serial_code')} *</label>
-            <InputText
-              value={serialCode}
-              onChange={(e) => setSerialCode(e.target.value.toUpperCase())}
-              className="font-mono"
-              placeholder="VCH-2026-XXXXXX"
-            />
+            <div className="p-inputgroup">
+              <InputText
+                value={serialCode}
+                onChange={(e) => {
+                  setSerialCode(e.target.value.toUpperCase());
+                  setCheckResult(null);
+                }}
+                className="font-mono"
+                placeholder="7K9M2PXQ"
+              />
+              <Button
+                type="button"
+                label={t('partner_portal.check_voucher_btn')}
+                icon="pi pi-search"
+                outlined
+                onClick={handleCheckVoucher}
+                loading={checkingVoucher}
+              />
+            </div>
           </div>
+          {checkResult && (
+            <div
+              className={`p-3 border-round text-sm ${
+                checkResult.valid ? 'bg-green-50 text-green-900 border-1 border-green-200' : 'bg-red-50 text-red-900 border-1 border-red-200'
+              }`}
+            >
+              {checkResult.valid ? (
+                <div className="flex flex-column gap-1">
+                  <span className="font-bold">{checkResult.voucherTitle}</span>
+                  <span>
+                    {t('partner_portal.check_voucher_remaining', { seconds: checkResult.remainingSeconds })}
+                  </span>
+                </div>
+              ) : (
+                <span>{checkResult.message || t('partner_portal.check_voucher_invalid')}</span>
+              )}
+            </div>
+          )}
           <div className="field m-0">
             <label className="text-sm font-medium">{t('partner_portal.branch_code')} *</label>
             <InputText

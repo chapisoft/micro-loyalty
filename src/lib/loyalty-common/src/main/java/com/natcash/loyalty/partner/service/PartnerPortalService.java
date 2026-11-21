@@ -41,6 +41,8 @@ import com.natcash.loyalty.partner.repository.PartnerProductGroupRepository;
 import com.natcash.loyalty.partner.repository.PartnerStaffAccountRepository;
 import com.natcash.loyalty.partner.service.PartnerApiKeyService.PartnerApiKeyDto;
 import com.natcash.loyalty.util.MessageUtils;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherResponse;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
 import com.natcash.loyalty.wallet.entity.LoyaltyAcceptancePolicyEntity;
 import com.natcash.loyalty.wallet.entity.LoyaltyVoucherEntity;
@@ -49,10 +51,13 @@ import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyAcceptancePolicyRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyVoucherRedemptionRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyVoucherRepository;
+import com.natcash.loyalty.wallet.service.VoucherDynamicCodeService;
+import com.natcash.loyalty.wallet.service.VoucherDynamicCodeService.ConsumedVoucherResult;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -98,6 +103,9 @@ public class PartnerPortalService {
     private final LoyaltyClearingDisputeRepository disputeRepository;
     private final PartnerNotificationRepository notificationRepository;
     private final ObjectMapper objectMapper;
+
+    @Autowired(required = false)
+    private VoucherDynamicCodeService voucherDynamicCodeService;
 
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboard(String tenantId, Long partnerId) {
@@ -476,6 +484,21 @@ public class PartnerPortalService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public CheckVoucherResponse checkCounterVoucher(
+            String tenantId, Long partnerId, String code, String branchCode, BigDecimal billAmount) {
+        ownershipGuard.verifyPartnerAccess(tenantId, partnerId);
+        if (voucherDynamicCodeService == null) {
+            throw new LoyaltyException(ErrorCode.SYSTEM_ERROR, MessageUtils.getMessage("error.system_error"));
+        }
+        return voucherDynamicCodeService.checkVoucher(tenantId, CheckVoucherRequest.builder()
+                .code(code)
+                .partnerId(partnerId)
+                .branchCode(branchCode)
+                .billAmount(billAmount)
+                .build());
+    }
+
     @Transactional
     public Map<String, Object> redeemCounterVoucher(
             String tenantId, Long partnerId, String redemptionCode, Long branchId, String branchCode,
@@ -496,16 +519,26 @@ public class PartnerPortalService {
             }
         }
 
-        LoyaltyVoucherRedemptionEntity redemption = resolveActiveRedemption(tenantId, partnerId, code, customerPhone);
+        // Bắt buộc xác thực và tiêu thụ mã động 6-8 ký tự (cấm sử dụng mã cố định tại quầy)
+        if (voucherDynamicCodeService == null) {
+            throw new LoyaltyException(ErrorCode.SYSTEM_ERROR, MessageUtils.getMessage("error.system_error"));
+        }
+        ConsumedVoucherResult consumed = voucherDynamicCodeService.consumeDynamicCode(
+                tenantId,
+                code,
+                partnerId,
+                null,
+                branchCode,
+                null,
+                customerPhone != null && !customerPhone.isBlank() ? customerPhone.trim() : null);
 
-        redemption.setStatus(VoucherStatus.USED);
-        redemption.setUsedAt(Instant.now());
-        redemption.setUsedPartnerId(partnerId);
-        redemptionRepository.save(redemption);
+        LoyaltyVoucherRedemptionEntity redemption = consumed.getRedemption();
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("redemptionCode", redemption.getRedemptionCode());
+        result.put("dynamicCode", consumed.getDynamicCode());
+        result.put("redemptionId", redemption.getId());
         result.put("voucherCode", redemption.getVoucher() != null ? redemption.getVoucher().getVoucherCode() : null);
+        result.put("voucherTitle", redemption.getVoucher() != null ? redemption.getVoucher().getTitle() : null);
         result.put("status", redemption.getStatus());
         result.put("usedAt", redemption.getUsedAt());
         result.put("usedPartnerId", partnerId);
@@ -652,42 +685,6 @@ public class PartnerPortalService {
         }
         partnerRepository.save(partner);
         return getWebhookConfig(tenantId, partnerId);
-    }
-
-    private LoyaltyVoucherRedemptionEntity resolveActiveRedemption(
-            String tenantId, Long partnerId, String code, String customerPhone) {
-        Optional<LoyaltyVoucherRedemptionEntity> byRedemption = redemptionRepository
-                .findByTenantIdAndRedemptionCode(tenantId, code);
-        if (byRedemption.isPresent()) {
-            LoyaltyVoucherRedemptionEntity r = byRedemption.get();
-            if (r.getVoucher() != null && r.getVoucher().getPartnerId() != null) {
-                ownershipGuard.verifyRecordOwnership(partnerId, r.getVoucher().getPartnerId());
-            }
-            if (r.getStatus() != VoucherStatus.ACTIVE
-                    || (r.getExpiresAt() != null && r.getExpiresAt().isBefore(Instant.now()))) {
-                throw new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND);
-            }
-            return r;
-        }
-
-        Optional<LoyaltyVoucherEntity> voucherOpt = voucherRepository.findByTenantIdAndVoucherCode(tenantId, code);
-        if (voucherOpt.isEmpty()) {
-            throw new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND);
-        }
-        LoyaltyVoucherEntity voucher = voucherOpt.get();
-        ownershipGuard.verifyRecordOwnership(partnerId, voucher.getPartnerId());
-
-        Instant now = Instant.now();
-        return redemptionRepository.findByTenantIdAndVoucher_PartnerIdAndStatusOrderByIdAsc(
-                tenantId, partnerId, VoucherStatus.ACTIVE)
-                .stream()
-                .filter(r -> r.getVoucher() != null && voucher.getId().equals(r.getVoucher().getId()))
-                .filter(r -> r.getExpiresAt() == null || r.getExpiresAt().isAfter(now))
-                .filter(r -> customerPhone == null || customerPhone.isBlank()
-                        || (r.getAccount() != null
-                                && customerPhone.trim().equalsIgnoreCase(r.getAccount().getExternalUserId())))
-                .findFirst()
-                .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND));
     }
 
     private List<Map<String, Object>> buildUnifiedTransactions(

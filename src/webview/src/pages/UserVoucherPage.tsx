@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Ticket,
-  Copy,
-  Check,
   Search,
   Gift,
   Coins,
@@ -13,9 +11,16 @@ import {
   CheckCircle2,
   Clock,
   Ban,
+  QrCode,
 } from 'lucide-react';
 import { LoyaltyJSBridge } from '../bridge/LoyaltyJSBridge';
-import { LoyaltyApi, UserVoucherItem, CatalogVoucherItem, getDefaultUserId } from '../services/api';
+import {
+  LoyaltyApi,
+  UserVoucherItem,
+  CatalogVoucherItem,
+  VoucherUseCodeResponse,
+  getDefaultUserId,
+} from '../services/api';
 import { NotificationModal, NotificationType } from '../components/NotificationModal';
 import { VoucherBarcodeModal } from '../components/VoucherBarcodeModal';
 import { SkeletonCard, EmptyState } from '../components/common/StateBlocks';
@@ -42,9 +47,10 @@ export const UserVoucherPage: React.FC<{
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedVoucher, setSelectedVoucher] = useState<{
     item: UserVoucherItem;
+    dynamic: VoucherUseCodeResponse;
     mode: 'REDEEM_RESULT' | 'CHECKOUT';
   } | null>(null);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [usingVoucherId, setUsingVoucherId] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [notifyModal, setNotifyModal] = useState<{
     isOpen: boolean;
@@ -115,12 +121,23 @@ export const UserVoucherPage: React.FC<{
     loadCatalog();
   }, [loadCatalog]);
 
-  const handleCopyCode = (code: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+  const handleUseVoucher = async (item: UserVoucherItem, mode: 'REDEEM_RESULT' | 'CHECKOUT' = 'CHECKOUT') => {
     soundHaptics.playClick();
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2500);
+    setUsingVoucherId(item.id);
+    try {
+      const dynamic = await LoyaltyApi.useVoucher(userId, item.id);
+      setSelectedVoucher({ item, dynamic, mode });
+    } catch {
+      setNotifyModal({
+        isOpen: true,
+        type: 'error',
+        title: t('vouchers.use_failed_title'),
+        message: t('vouchers.use_failed_msg'),
+        badge: t('vouchers.badge_redeem_error'),
+      });
+    } finally {
+      setUsingVoucherId(null);
+    }
   };
 
   const availablePoints = userPoints ?? 0;
@@ -152,8 +169,8 @@ export const UserVoucherPage: React.FC<{
       }
       await Promise.all([loadVouchers(), loadCatalog()]);
       showToast(t('vouchers.redeem_success_toast'));
-      // VQ-02 Result · reward ready with Scan at the counter card
-      setSelectedVoucher({ item: redeemed, mode: 'REDEEM_RESULT' });
+      // Sinh mã động 5 phút ngay sau khi đổi thành công (không dùng mã cố định)
+      await handleUseVoucher(redeemed, 'REDEEM_RESULT');
     } catch {
       setNotifyModal({
         isOpen: true,
@@ -212,7 +229,6 @@ export const UserVoucherPage: React.FC<{
     const matchQuery =
       q === '' ||
       v.title.toLowerCase().includes(q) ||
-      v.code.toLowerCase().includes(q) ||
       v.partnerName.toLowerCase().includes(q);
     return matchCat && matchStat && matchQuery;
   });
@@ -392,15 +408,15 @@ export const UserVoucherPage: React.FC<{
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {filteredVouchers.map((v) => {
-                  const isAvailable = v.status === 'AVAILABLE';
+                  const isAvailable = v.status === 'AVAILABLE' || v.status === 'ACTIVE';
                   const meta = getStatusMeta(v.status);
+                  const isGenerating = usingVoucherId === v.id;
                   return (
                     <div
                       key={v.id}
                       onClick={() => {
-                        if (isAvailable) {
-                          soundHaptics.playClick();
-                          setSelectedVoucher({ item: v, mode: 'CHECKOUT' });
+                        if (isAvailable && !isGenerating) {
+                          void handleUseVoucher(v, 'CHECKOUT');
                         }
                       }}
                       className={`bg-white rounded-2xl border p-4 shadow-xs transition flex flex-col justify-between relative overflow-hidden ${
@@ -425,24 +441,24 @@ export const UserVoucherPage: React.FC<{
                       </div>
 
                       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
-                        <div className="font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5">
-                          <span>{v.code}</span>
-                          <button
-                            onClick={(e) => handleCopyCode(v.code, e)}
-                            className="text-slate-400 hover:text-amber-600 transition"
-                            title={t('vouchers.btn_copy')}
-                          >
-                            {copiedCode === v.code ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-
                         <span className="text-[11px] text-slate-400 font-medium">
                           {t('vouchers.expiry', { date: v.validUntil })}
                         </span>
+
+                        {isAvailable && (
+                          <button
+                            type="button"
+                            disabled={isGenerating}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleUseVoucher(v, 'CHECKOUT');
+                            }}
+                            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl text-[11px] font-black shadow-xs transition disabled:opacity-60"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                            <span>{isGenerating ? t('figma_ui.common.please_wait') : t('vouchers.btn_use_now')}</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -624,16 +640,24 @@ export const UserVoucherPage: React.FC<{
         )}
       </main>
 
-      {/* MODAL: VQ-02 & VQ-03 SCAN AT THE COUNTER (QR + CODE128 + ALPHANUMERIC CODE) */}
+      {/* MODAL: MÃ SỬ DỤNG VOUCHER ĐỘNG 5 PHÚT (QR + CODE128 + 8 KÝ TỰ) */}
       <VoucherBarcodeModal
         isOpen={Boolean(selectedVoucher)}
         onClose={() => setSelectedVoucher(null)}
+        refreshing={Boolean(selectedVoucher && usingVoucherId === selectedVoucher.item.id)}
+        onRefreshCode={
+          selectedVoucher
+            ? () => handleUseVoucher(selectedVoucher.item, selectedVoucher.mode)
+            : undefined
+        }
         mode={selectedVoucher?.mode || 'CHECKOUT'}
         voucher={
           selectedVoucher
             ? {
                 id: selectedVoucher.item.id,
-                voucherCode: selectedVoucher.item.code,
+                dynamicCode: selectedVoucher.dynamic.dynamicCode,
+                expiresInSeconds: selectedVoucher.dynamic.expiresInSeconds,
+                dynamicExpiresAt: selectedVoucher.dynamic.expiresAt,
                 voucherTitle: selectedVoucher.item.title,
                 partnerName: selectedVoucher.item.partnerName,
                 discountText: selectedVoucher.item.discountText,

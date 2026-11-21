@@ -223,6 +223,12 @@ GĐ 0 → GĐ 1 (schema voucher) → GĐ 2 (dựa trên API của GĐ 1). GĐ 3,
   - Nối Webview `LoyaltyHome.tsx` gọi `GET /me/home` & `GET /me/popup` (hiển thị banner động + popup từ CMS, giữ fallback khi offline) và cập nhật CTA `Inbox.tsx` từ `/use-coins` sang `/rewards`.
   - Tạo trang CMS còn thiếu duy nhất **`BannersPopupsOffersPage` (`CN-06`)** với 3 tab Banners / Startup Popups / Targeted Offers, gắn route `/engagement/banners-popups`, menu Header và i18n VI/EN/FR/HT.
 
+- **Cập nhật cơ chế Mã Sử Dụng Voucher Động 5 Phút (`V41`, không lộ mã cố định):**
+  - Thêm migration **`V41__voucher_dynamic_code_params.sql`** (`VOUCHER_DYNAMIC_CODE_TTL_SECONDS = 300`, `VOUCHER_DYNAMIC_CODE_LENGTH = 8`).
+  - Xây dựng `VoucherDynamicCodeService` (`loyalty-common`) + unit test `VoucherDynamicCodeServiceTest`: ẩn `redemptionCode` cố định khỏi `VoucherService.getUserVouchers` / `redeemVoucher` / `collectVoucher`; khi bấm **Sử dụng**, sinh chuỗi cấu trúc ký `Ed25519` + mã hóa `AES-256-GCM` và nén thành mã 8 ký tự `Crockford Base32` (TTL 5 phút trên Redis, thu hồi mã cũ khi tạo mã mới).
+  - Bổ sung `POST /loyalty/v1/vouchers/my-vouchers/{redemptionId}/use`, `POST /loyalty/v1/vouchers/checkVoucher`, `POST /loyalty/v1/partner/vouchers/checkVoucher`, `POST /loyalty/v1/partner-portal/vouchers/checkVoucher` và `redeem-dynamic`; bắt buộc kiểm tra và tiêu thụ một lần tại `PartnerPortalService.redeemCounterVoucher`, `PartnerPaymentGatewayService` và `RewardWalletService`.
+  - Cập nhật Webview (`ShowVoucher` trong `Rewards.tsx`, `UserVoucherPage.tsx`, `VoucherBarcodeModal.tsx`) hiển thị `QR Code` + `Code128 Barcode` + chuỗi 8 ký tự động kèm bộ đếm lùi 5 phút và nút tạo lại mã mới; cập nhật `PartnerVouchersPage.tsx` bổ sung bước **Kiểm tra mã (`checkVoucher`)** trước khi gạch nợ tại quầy.
+
 **Còn tiếp theo theo kế hoạch (GĐ 6 BE & GĐ 7):**
 - **GĐ 6 (BE & SSO):** Claim `role` trong SSO JWT (thu hồi khi BCCS đổi loại tài khoản), mở rộng `AgentLoyaltyController` cho tiến độ từng agent trong mạng lưới và nút Remind.
 - **GĐ 7:** Hoàn thiện i18n EN/FR/Kreyòl đọc từ `i18n_json`, chụp đối chiếu 390×844, chạy full `./ci-local.sh`, k6 Collect đồng thời, cập nhật `plan/project_status.md` và PTTK.

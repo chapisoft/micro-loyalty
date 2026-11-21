@@ -15,7 +15,12 @@ import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerPaymentRefundRequ
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerPaymentRefundResponse;
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerPaymentStatusRequest;
 import com.natcash.loyalty.wallet.dto.PartnerGatewayDto.PartnerPaymentStatusResponse;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherResponse;
+import com.natcash.loyalty.wallet.dto.VoucherDto.RedeemDynamicVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.RedeemDynamicVoucherResponse;
 import com.natcash.loyalty.wallet.service.PartnerPaymentGatewayService;
+import com.natcash.loyalty.wallet.service.VoucherDynamicCodeService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PartnerPaymentGatewayController {
 
     private final PartnerPaymentGatewayService paymentService;
+    private final VoucherDynamicCodeService voucherDynamicCodeService;
 
     @PostMapping("/inquiry")
     @Operation(summary = "Tra cứu số dư và chính sách tiêu điểm", description = "Đối tác gửi mã khách hàng hoặc mã QR để lấy số dư điểm khả dụng, tỷ giá quy đổi và danh sách voucher")
@@ -121,5 +127,33 @@ public class PartnerPaymentGatewayController {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         PartnerPaymentStatusResponse response = paymentService.getStatus(tenantId, headerPartnerCode, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping({"/vouchers/checkVoucher", "/vouchers/check-voucher"})
+    @Operation(summary = "Kiểm tra tính hợp lệ và thời gian hiệu lực mã voucher động (B2B)",
+            description = "Hệ thống đối tác/POS/Ecommerce gọi checkVoucher để xác thực mã động 6-8 ký tự, chữ ký cặp khóa và thời gian hiệu lực 5 phút")
+    public ResponseEntity<CheckVoucherResponse> checkVoucher(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Partner-Code", required = false) String headerPartnerCode,
+            @RequestBody CheckVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        if ((request.getPartnerCode() == null || request.getPartnerCode().isBlank()) && headerPartnerCode != null) {
+            request.setPartnerCode(headerPartnerCode);
+        }
+        return ResponseEntity.ok(voucherDynamicCodeService.checkVoucher(tenantId, request));
+    }
+
+    @PostMapping("/vouchers/redeem-dynamic")
+    @Operation(summary = "Gạch nợ và sử dụng mã voucher động (B2B)",
+            description = "Xác thực checkVoucher và gạch nợ nguyên tử mã voucher động một lần")
+    public ResponseEntity<RedeemDynamicVoucherResponse> redeemDynamicVoucher(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Partner-Code", required = false) String headerPartnerCode,
+            @RequestBody RedeemDynamicVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        if ((request.getPartnerCode() == null || request.getPartnerCode().isBlank()) && headerPartnerCode != null) {
+            request.setPartnerCode(headerPartnerCode);
+        }
+        return ResponseEntity.ok(voucherDynamicCodeService.redeemDynamicVoucher(tenantId, request));
     }
 }

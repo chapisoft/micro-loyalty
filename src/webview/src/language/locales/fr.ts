@@ -301,7 +301,14 @@ export default {
     "catalog_empty_desc": "Le catalogue de récompenses est vide actuellement.",
     "redeem_failed_title": "Échec de l’échange",
     "redeem_failed_msg": "Impossible de finaliser l’échange du bon.",
-    "badge_redeem_error": "Erreur échange"
+    "badge_redeem_error": "Erreur échange",
+    "use_failed_title": "Impossible de générer le code",
+    "use_failed_msg": "Ce bon n’est plus disponible ou a expiré.",
+    "dynamic_expired_badge": "Expiré",
+    "dynamic_valid_for": "Valable pendant",
+    "dynamic_code_ttl_hint": "Code temporaire valable 5 minutes pour cette transaction.",
+    "dynamic_code_expired_desc": "Ce code temporaire a expiré. Générez un nouveau code pour continuer.",
+    "regenerate_dynamic_code": "Générer un nouveau code"
   },
   "tiers": {
     "modal_title": "Avantages des 4 Niveaux VIP",

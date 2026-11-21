@@ -528,8 +528,8 @@ export interface WheelConfigData {
 
 export interface UserVoucherItem {
   id: number;
-  code: string;
-  redemptionCode?: string;
+  code: string | null;
+  redemptionCode?: string | null;
   title: string;
   partnerName: string;
   category: string;
@@ -547,6 +547,51 @@ export interface UserVoucherItem {
   usageType?: VoucherUsageType;
   serviceLink?: string;
   imageUrl?: string;
+}
+
+export interface VoucherUseCodeResponse {
+  redemptionId: number;
+  voucherId?: number;
+  voucherCode?: string;
+  voucherTitle: string;
+  partnerId?: number;
+  partnerName: string;
+  discountText?: string;
+  usageType?: VoucherUsageType;
+  serviceLink?: string;
+  dynamicCode: string;
+  qrPayload: string;
+  barcodeValue: string;
+  keyId?: string;
+  algorithm?: string;
+  expiresInSeconds: number;
+  issuedAt: string;
+  expiresAt: string;
+}
+
+export interface CheckVoucherResponse {
+  valid: boolean;
+  dynamicCode?: string;
+  errorCode?: string;
+  message?: string;
+  redemptionId?: number;
+  voucherId?: number;
+  voucherCode?: string;
+  voucherTitle?: string;
+  partnerId?: number;
+  partnerName?: string;
+  externalUserId?: string;
+  discountType?: string;
+  discountValue?: number;
+  estimatedDiscount?: number;
+  minBillAmount?: number;
+  maxDiscountAmount?: number;
+  usageType?: VoucherUsageType;
+  branchScope?: string;
+  issuedAt?: string;
+  expiresAt?: string;
+  remainingSeconds: number;
+  voucherExpiresAt?: string;
 }
 
 /** CMS "How customers get it". Missing on older payloads: free when pointCost is 0, otherwise coins. */
@@ -975,7 +1020,6 @@ export const LoyaltyApi = {
   },
 
   // 19b. Collect a free voucher (no coins). Reserved on collect: stock is counted, never sold out at the counter.
-  // shortcut: endpoint planned in plan/figma_sync_completion_plan.md GĐ1, not in loyalty-service yet; callers show the error toast until it ships.
   async collectVoucher(externalUserId: string, voucherCode: string): Promise<UserVoucherItem> {
     const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/${encodeURIComponent(voucherCode)}/collect`, {
       method: 'POST',
@@ -983,6 +1027,35 @@ export const LoyaltyApi = {
       body: JSON.stringify({ externalUserId }),
     });
     if (!res.ok) throw new Error(`HTTP_${res.status}`);
+    return res.json();
+  },
+
+  // 19c. Bấm "Sử dụng" voucher để sinh mã động 6-8 ký tự + QR/Barcode hiệu lực 5 phút
+  async useVoucher(externalUserId: string, redemptionId: number | string): Promise<VoucherUseCodeResponse> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/my-vouchers/${encodeURIComponent(String(redemptionId))}/use`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ externalUserId }),
+    });
+    if (!res.ok) throw await parseApiError(res);
+    return res.json();
+  },
+
+  // 19d. Kiểm tra tính hợp lệ và thời gian hiệu lực mã voucher động (checkVoucher)
+  async checkVoucher(payload: {
+    code: string;
+    partnerId?: number;
+    partnerCode?: string;
+    branchCode?: string;
+    billAmount?: number;
+    externalUserId?: string;
+  }): Promise<CheckVoucherResponse> {
+    const res = await fetch(`${API_BASE}/loyalty/v1/vouchers/checkVoucher`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw await parseApiError(res);
     return res.json();
   },
 

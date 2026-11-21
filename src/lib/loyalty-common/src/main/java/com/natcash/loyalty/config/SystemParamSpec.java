@@ -119,6 +119,22 @@ public enum SystemParamSpec {
             "30",
             null,
             "Số ngày hiệu lực mặc định của mã voucher sau khi hội viên quy đổi"),
+    VOUCHER_DYNAMIC_CODE_TTL_SECONDS(
+            "VOUCHER_DYNAMIC_CODE_TTL_SECONDS",
+            "Thời gian hiệu lực mã sử dụng voucher động (giây)",
+            "POLICY",
+            ParamType.INTEGER,
+            "300",
+            null,
+            "Thời gian sống của chuỗi mã động 6-8 ký tự khi người dùng bấm sử dụng voucher (mặc định 300 giây = 5 phút)"),
+    VOUCHER_DYNAMIC_CODE_LENGTH(
+            "VOUCHER_DYNAMIC_CODE_LENGTH",
+            "Độ dài mã sử dụng voucher động (6-8 ký tự)",
+            "POLICY",
+            ParamType.INTEGER,
+            "8",
+            null,
+            "Số ký tự của mã voucher động nén theo chuẩn Crockford Base32 (hỗ trợ từ 6 đến 8 ký tự, khuyến nghị 8 ký tự)"),
 
     PAY_AT_COUNTER_PIN_LIMIT_HTG(
             "PAY_AT_COUNTER_PIN_LIMIT_HTG",

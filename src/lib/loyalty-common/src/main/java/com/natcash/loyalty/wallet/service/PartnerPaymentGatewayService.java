@@ -51,9 +51,11 @@ import com.natcash.loyalty.wallet.repository.ClearingTransactionRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyAcceptancePolicyRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyPaymentHoldRepository;
 import com.natcash.loyalty.wallet.repository.LoyaltyVoucherRedemptionRepository;
+import com.natcash.loyalty.wallet.service.VoucherDynamicCodeService.ConsumedVoucherResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +82,9 @@ public class PartnerPaymentGatewayService {
     private final DistributedLockHelper lockHelper;
     private final LoyaltyStreamProducer streamProducer;
     private final OutboxService outboxService;
+
+    @Autowired(required = false)
+    private VoucherDynamicCodeService voucherDynamicCodeService;
 
     // =========================================================================
     // 1. TRA CỨU SỐ DƯ & CHÍNH SÁCH ĐỐI TÁC (INQUIRY)
@@ -193,41 +198,48 @@ public class PartnerPaymentGatewayService {
             BigDecimal voucherDiscount = BigDecimal.ZERO;
             String appliedVoucherCode = null;
 
-            // Xử lý Voucher nếu có
+            // Xử lý Voucher nếu có (bắt buộc qua mã động khi không dùng mã định danh QR Ví)
             if (request.getVoucherRedemptionCode() != null && !request.getVoucherRedemptionCode().trim().isEmpty()) {
-                String redemptionCode = request.getVoucherRedemptionCode().trim();
-                LoyaltyVoucherRedemptionEntity redemption = redemptionRepository
-                        .findByTenantIdAndRedemptionCode(tenantId, redemptionCode)
-                        .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND,
-                                MessageUtils.getMessage("wallet.voucher.not_found")));
+                String rawVoucherCode = request.getVoucherRedemptionCode().trim();
+                if (voucherDynamicCodeService != null) {
+                    ConsumedVoucherResult heldVoucher = voucherDynamicCodeService.verifyAndConsumeCodeForHold(
+                            tenantId, rawVoucherCode, partner.getId(), partner.getPartnerCode(), null, billAmount, customerId);
+                    voucherDiscount = heldVoucher.getDiscountAmount();
+                    appliedVoucherCode = heldVoucher.getRedemption().getRedemptionCode();
+                } else {
+                    LoyaltyVoucherRedemptionEntity redemption = redemptionRepository
+                            .findByTenantIdAndRedemptionCode(tenantId, rawVoucherCode)
+                            .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND,
+                                    MessageUtils.getMessage("wallet.voucher.not_found")));
 
-                if (redemption.getStatus() != VoucherStatus.ACTIVE
-                        || redemption.getExpiresAt().isBefore(Instant.now())) {
-                    throw new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND,
-                            MessageUtils.getMessage("wallet.voucher.expired_or_used"));
-                }
-
-                LoyaltyVoucherEntity voucher = redemption.getVoucher();
-                if (voucher != null) {
-                    if (billAmount.compareTo(voucher.getMinBillAmount()) < 0) {
-                        throw new LoyaltyException(ErrorCode.POLICY_VIOLATION,
-                                MessageUtils.getMessage("wallet.voucher.min_bill_not_met"));
+                    if (redemption.getStatus() != VoucherStatus.ACTIVE
+                            || redemption.getExpiresAt().isBefore(Instant.now())) {
+                        throw new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND,
+                                MessageUtils.getMessage("wallet.voucher.expired_or_used"));
                     }
-                    BigDecimal percentDivisor = paramService.getDecimal(tenantId, SystemParamSpec.PERCENT_DIVISOR);
-                    if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
-                        voucherDiscount = billAmount.multiply(voucher.getDiscountValue())
-                                .divide(percentDivisor, 2, RoundingMode.HALF_UP);
-                        if (voucher.getMaxDiscountAmount() != null
-                                && voucherDiscount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
-                            voucherDiscount = voucher.getMaxDiscountAmount();
+
+                    LoyaltyVoucherEntity voucher = redemption.getVoucher();
+                    if (voucher != null) {
+                        if (billAmount.compareTo(voucher.getMinBillAmount()) < 0) {
+                            throw new LoyaltyException(ErrorCode.POLICY_VIOLATION,
+                                    MessageUtils.getMessage("wallet.voucher.min_bill_not_met"));
                         }
-                    } else {
-                        voucherDiscount = voucher.getDiscountValue();
+                        BigDecimal percentDivisor = paramService.getDecimal(tenantId, SystemParamSpec.PERCENT_DIVISOR);
+                        if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
+                            voucherDiscount = billAmount.multiply(voucher.getDiscountValue())
+                                    .divide(percentDivisor, 2, RoundingMode.HALF_UP);
+                            if (voucher.getMaxDiscountAmount() != null
+                                    && voucherDiscount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                                voucherDiscount = voucher.getMaxDiscountAmount();
+                            }
+                        } else {
+                            voucherDiscount = voucher.getDiscountValue();
+                        }
+                        if (voucherDiscount.compareTo(billAmount) > 0) {
+                            voucherDiscount = billAmount;
+                        }
+                        appliedVoucherCode = rawVoucherCode;
                     }
-                    if (voucherDiscount.compareTo(billAmount) > 0) {
-                        voucherDiscount = billAmount;
-                    }
-                    appliedVoucherCode = redemptionCode;
                 }
             }
 
@@ -557,33 +569,40 @@ public class PartnerPaymentGatewayService {
             String appliedVoucherCode = null;
 
             if (request.getVoucherRedemptionCode() != null && !request.getVoucherRedemptionCode().trim().isEmpty()) {
-                String redemptionCode = request.getVoucherRedemptionCode().trim();
-                LoyaltyVoucherRedemptionEntity redemption = redemptionRepository
-                        .findByTenantIdAndRedemptionCode(tenantId, redemptionCode)
-                        .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND,
-                                MessageUtils.getMessage("wallet.voucher.not_found")));
+                String rawVoucherCode = request.getVoucherRedemptionCode().trim();
+                if (voucherDynamicCodeService != null) {
+                    ConsumedVoucherResult consumedVoucher = voucherDynamicCodeService.consumeDynamicCode(
+                            tenantId, rawVoucherCode, partner.getId(), partner.getPartnerCode(), null, billAmount, customerId);
+                    voucherDiscount = consumedVoucher.getDiscountAmount();
+                    appliedVoucherCode = consumedVoucher.getDynamicCode();
+                } else {
+                    LoyaltyVoucherRedemptionEntity redemption = redemptionRepository
+                            .findByTenantIdAndRedemptionCode(tenantId, rawVoucherCode)
+                            .orElseThrow(() -> new LoyaltyException(ErrorCode.VOUCHER_NOT_FOUND,
+                                    MessageUtils.getMessage("wallet.voucher.not_found")));
 
-                if (redemption.getStatus() == VoucherStatus.ACTIVE
-                        && redemption.getExpiresAt().isAfter(Instant.now())) {
-                    LoyaltyVoucherEntity voucher = redemption.getVoucher();
-                    if (voucher != null && billAmount.compareTo(voucher.getMinBillAmount()) >= 0) {
-                        if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
-                            voucherDiscount = billAmount.multiply(voucher.getDiscountValue()).divide(percentDivisor, 2,
-                                    RoundingMode.HALF_UP);
-                            if (voucher.getMaxDiscountAmount() != null
-                                    && voucherDiscount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
-                                voucherDiscount = voucher.getMaxDiscountAmount();
+                    if (redemption.getStatus() == VoucherStatus.ACTIVE
+                            && redemption.getExpiresAt().isAfter(Instant.now())) {
+                        LoyaltyVoucherEntity voucher = redemption.getVoucher();
+                        if (voucher != null && billAmount.compareTo(voucher.getMinBillAmount()) >= 0) {
+                            if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
+                                voucherDiscount = billAmount.multiply(voucher.getDiscountValue()).divide(percentDivisor, 2,
+                                        RoundingMode.HALF_UP);
+                                if (voucher.getMaxDiscountAmount() != null
+                                        && voucherDiscount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                                    voucherDiscount = voucher.getMaxDiscountAmount();
+                                }
+                            } else {
+                                voucherDiscount = voucher.getDiscountValue();
                             }
-                        } else {
-                            voucherDiscount = voucher.getDiscountValue();
+                            if (voucherDiscount.compareTo(billAmount) > 0)
+                                voucherDiscount = billAmount;
+                            appliedVoucherCode = rawVoucherCode;
+                            redemption.setStatus(VoucherStatus.USED);
+                            redemption.setUsedAt(Instant.now());
+                            redemption.setUsedPartnerId(partner.getId());
+                            redemptionRepository.save(redemption);
                         }
-                        if (voucherDiscount.compareTo(billAmount) > 0)
-                            voucherDiscount = billAmount;
-                        appliedVoucherCode = redemptionCode;
-                        redemption.setStatus(VoucherStatus.USED);
-                        redemption.setUsedAt(Instant.now());
-                        redemption.setUsedPartnerId(partner.getId());
-                        redemptionRepository.save(redemption);
                     }
                 }
             }

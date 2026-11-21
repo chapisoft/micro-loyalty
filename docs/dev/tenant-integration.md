@@ -504,7 +504,28 @@ Ngay khi định danh thành công tài khoản người dùng của Tenant, ph�
 | `SESSION_TICKET_TTL_SECONDS` | `60` | Giây | Thời gian tồn tại tối đa của `sessionTicket` trên Redis trước khi tự hủy |
 | `SESSION_ACCESS_TOKEN_TTL_SECONDS` | `900` | Giây | Thời hạn sử dụng JWT Access Token cấp sau khi đổi vé SSO |
 | `REWARD_WALLET_DYNAMIC_QR_TTL_SECONDS` | `60` | Giây | Thời hạn hiệu lực mỗi lần sinh mã QR thanh toán tại quầy |
+| `VOUCHER_DYNAMIC_CODE_TTL_SECONDS` | `300` | Giây | Thời hạn hiệu lực mã sử dụng voucher động (5 phút) trên Redis & chữ ký cấu trúc |
+| `VOUCHER_DYNAMIC_CODE_LENGTH` | `8` | Ký tự | Độ dài chuỗi mã voucher động nén theo `Crockford Base32` (hỗ trợ 6–8 ký tự) |
 | `PAY_AT_COUNTER_PIN_LIMIT_HTG` | `2000.00` | HTG | Ngưỡng giá trị hóa đơn yêu cầu xác thực PIN tại ví gốc của Tenant khi trừ điểm |
+
+---
+
+### 7.3. Cơ Chế Mã Sử Dụng Voucher Động 5 Phút Và API `checkVoucher`
+
+Để chống lộ và lạm dụng mã voucher tĩnh, hệ thống **không hiển thị và không cho phép sử dụng mã voucher bằng chuỗi `redemptionCode` cố định** trên giao diện khách hàng hay tại các kênh thanh toán:
+
+1. **Sinh mã sử dụng động (`POST /loyalty/v1/vouchers/my-vouchers/{redemptionId}/use`):**
+   * Khi khách hàng bấm **Sử dụng** trên voucher đang sở hữu, `VoucherDynamicCodeService` tạo chuỗi cấu trúc `V1|<tenantId>|<redemptionId>|<voucherId>|<voucherCode>|<externalUserId>|<issuedAt>|<expiresAt>|<nonce>`.
+   * Chuỗi cấu trúc được ký bằng cặp khóa bất đối xứng `Ed25519`, niêm phong bằng `AES-256-GCM`, sau đó nén qua `HMAC-SHA256` sang chuỗi **8 ký tự `Crockford Base32`** (ví dụ `7K9M2PXQ`, loại bỏ `I, L, O, U` tránh đọc nhầm) và lưu trên `Redis` với thời hạn cấu hình **`VOUCHER_DYNAMIC_CODE_TTL_SECONDS = 300` (5 phút)**.
+   * Khi sinh mã mới cho cùng một voucher, mã động trước đó bị thu hồi ngay lập tức; giao diện hiển thị đồng bộ **QR Code + Code128 Barcode + chuỗi 8 ký tự** kèm bộ đếm ngược thời gian.
+2. **Kiểm tra hợp lệ qua `checkVoucher`:**
+   * Các hệ thống sử dụng (POS, Partner Portal, Cổng thanh toán trực tuyến, Core Natcash) trước khi áp dụng giảm giá bắt buộc gọi một trong các điểm cuối:
+     * `POST /loyalty/v1/vouchers/checkVoucher` (`customer-service`)
+     * `POST /loyalty/v1/partner/vouchers/checkVoucher` (`partner-service` — luồng B2B)
+     * `POST /loyalty/v1/partner-portal/vouchers/checkVoucher` (`partner-service` — Cổng Đối tác)
+   * Hệ thống chuẩn hóa mã nhập (bỏ khoảng trắng/dấu gạch ngang, ánh xạ `O→0`, `I/L→1`), giải mã phong bì `AES-256-GCM`, xác thực chữ ký `Public Key Ed25519`, kiểm tra thời gian hiệu lực 5 phút, trạng thái `ACTIVE` trong PostgreSQL và phạm vi đối tác/chi nhánh/giá trị hóa đơn tối thiểu.
+3. **Tiêu thụ nguyên tử một lần (`Single-Use`):**
+   * Khi giao dịch hoàn tất hoặc thu ngân xác nhận gạch nợ (`redeem-counter`, `redeem-dynamic`, `authorize`/`directPayment`, `reward-wallet/redeem`), hệ thống khóa phân tán `Redisson`, xóa nguyên tử mã động khỏi `Redis` và chuyển trạng thái voucher sang `USED`. Mọi yêu cầu dùng lại mã động hoặc nhập mã cố định đều bị từ chối.
 
 ---
 

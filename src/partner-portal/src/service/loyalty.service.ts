@@ -254,6 +254,16 @@ export const LoyaltyService = {
     }
   },
 
+  async checkPartnerVoucher(
+    data: { code: string; branchCode?: string; billAmount?: number },
+    tenantId: string = PARTNER_PORTAL_CONSTANTS.DEFAULT_TENANT_ID
+  ): Promise<any> {
+    const response: any = await apiClient.post('/loyalty/v1/partner-portal/vouchers/checkVoucher', data, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return unwrapObject<any>(response);
+  },
+
   async redeemPartnerVoucherAtCounter(
     data: PartnerVoucherRedeemRequestModel,
     tenantId: string = PARTNER_PORTAL_CONSTANTS.DEFAULT_TENANT_ID

@@ -200,7 +200,7 @@ flowchart LR
 | STT | Thành phần giao diện / Chức năng | Chi tiết công việc Tầng App & Webview cần thực hiện | Giao thức / Dữ liệu tương tác |
 | :---: | :--- | :--- | :--- |
 | **1** | **Trung tâm Khách hàng thân thiết** | Xây dựng màn hình `LoyaltyScreen`: Hiển thị thẻ VIP (Bạc, Vàng, Bạch Kim, Kim Cương), thanh tiến độ điểm xét hạng chu kỳ 12 tháng, danh sách nhiệm vụ điểm danh ngày và các thẻ gợi nhắc thông minh (sinh nhật, nâng hạng). | Gọi `POST /loyalty/v1/profile`, `POST /loyalty/v1/missions/list`, `POST /loyalty/v1/engagement/in-app-nudges` qua Gateway. |
-| **2** | **Màn hình Sinh mã QR Tiêu điểm** | Xây dựng modal/màn hình sinh mã QR động chứa token bảo mật mã hóa có hiệu lực trong 60 giây để máy POS siêu thị quét tra cứu Ví Phần Thưởng và trừ điểm/dùng voucher trực tiếp trên hóa đơn. | Tạo chuỗi mã hóa: `QR:tenant_id:user_id:timestamp:hash` kèm đếm lùi thời gian tự làm mới. |
+| **2** | **Màn hình Sinh mã QR Tiêu điểm & Mã Voucher Động** | Xây dựng modal/màn hình sinh mã QR động Ví Phần Thưởng (hiệu lực 60 giây) và cơ chế sinh mã sử dụng voucher động 8 ký tự (hiệu lực 5 phút, không lộ mã cố định) kèm `QR Code` + `Code128 Barcode`. | Ví: `generateQrToken` (TTL 60s). Voucher: `POST /loyalty/v1/vouchers/my-vouchers/{redemptionId}/use` sinh mã `Crockford Base32` 8 ký tự từ chuỗi cấu trúc ký `Ed25519` + `AES-256-GCM` (TTL 300s). |
 | **3** | **Cổng GameHub & Trình chơi Webview Độc Lập** | Phân tách `loyalty-webview` thành module độc lập chứa FE Loyalty, GameHub và các Game H5: Lưới danh sách game theo thể loại, kho lượt chơi cá nhân, bảng xếp hạng và cầu nối `LoyaltyJSBridge` cho game H5. Hỗ trợ mở Cổng GameHub độc lập trực tiếp không cần qua Loyalty. | Nhận sự kiện `window.LoyaltyJSBridge.requestPayment(payload)` từ Webview để mở modal xác thực ví. |
 | **4** | **Phím Tắt Động & Deep Link Chơi Game 1 Chạm** | Cài đặt cơ chế Dynamic Shortcuts và Deep Link Scheme (`natcash://game/:gameCode`, `natcash://gamehub`): Hiển thị icon/banner game động trên trang chủ ví Natcash, người dùng bấm 1 chạm là vào chơi ngay game tương ứng. | Mở trực tiếp Webview URL: `.../webview/game/:gameCode?ticket={ticket}&theme=natcash&source=home_shortcut`. |
 | **5** | **Vòng quay may mắn (Lucky Draw)** | Nhúng component đĩa quay may mắn Canvas 60 FPS, phát âm thanh `lucky_rotate_sound.mp3`, nhận diện số lượt quay, gọi API quay thưởng và hiển thị popup kết quả trúng thưởng. | Gọi `POST /luckydraw/v1/config` để lấy số lượt và `POST /luckydraw/v1/spin` để thực hiện quay. |
@@ -460,9 +460,13 @@ Mọi yêu cầu gọi đến `loyalty-service` đều phải truyền kèm các
 4. **`POST /loyalty/v1/profile`**: Lấy thông tin tài khoản hội viên, hạng hiện tại, điểm khả dụng và điểm xét hạng.
 5. **`POST /loyalty/v1/earn`**: Tích lũy điểm tự động sau khi giao dịch ví/nạp cước thành công.
 6. **`POST /loyalty/v1/point-history`**: Tra cứu sổ cái lịch sử biến động điểm thưởng.
-7. **`POST /loyalty/v1/vouchers/catalog`**: Danh mục phiếu giảm giá trong kho quà.
-8. **`POST /loyalty/v1/vouchers/redeem`**: Đổi điểm thưởng lấy mã voucher ưu đãi.
-9. **`POST /loyalty/v1/cashback/redeem`**: Đổi điểm thưởng lấy tiền mặt hoàn thẳng vào số dư ví Natcash.
+7. **`GET /loyalty/v1/vouchers`**: Danh mục phiếu giảm giá trong kho quà (hỗ trợ lọc theo `audience`).
+8. **`POST /loyalty/v1/vouchers/redeem`**: Đổi điểm thưởng lấy voucher vào kho cá nhân (không trả mã cố định ra giao diện).
+9. **`POST /loyalty/v1/vouchers/{voucherCode}/collect`**: Lưu voucher miễn phí theo đợt và giới hạn khách hàng.
+10. **`POST /loyalty/v1/vouchers/my-vouchers/{redemptionId}/use`**: Người dùng bấm **Sử dụng** để sinh mã động 8 ký tự `Crockford Base32` (từ chuỗi cấu trúc ký cặp khóa `Ed25519` và mã hóa `AES-256-GCM`, kèm `QR Code` + `Code128 Barcode`, TTL cấu hình mặc định 5 phút).
+11. **`POST /loyalty/v1/vouchers/checkVoucher`** *(và `/loyalty/v1/partner/vouchers/checkVoucher`, `/loyalty/v1/partner-portal/vouchers/checkVoucher`)*: Các hệ thống sử dụng gọi kiểm tra tính hợp lệ chữ ký cặp khóa, thời gian hiệu lực 5 phút, phạm vi đối tác/chi nhánh và đơn tối thiểu trước khi áp dụng.
+12. **`POST /loyalty/v1/vouchers/redeem-dynamic`** *(và `/loyalty/v1/partner/vouchers/redeem-dynamic`)*: Xác thực `checkVoucher` và tiêu thụ nguyên tử mã voucher động một lần.
+13. **`POST /loyalty/v1/cashback/redeem`**: Đổi điểm thưởng lấy tiền mặt hoàn thẳng vào số dư ví Natcash.
 
 ### 8.7. Nhóm Giao Diện Cổng GameHub (Giải Trí – Trí Tuệ – Giáo Dục) & Học Tập Đổi Thưởng
 1. **`POST /gamehub/v1/games/list`**: Truy vấn danh sách game theo phân loại 2 chiều (`ENTERTAINMENT`, `PUZZLE_BRAIN`, `EDUCATION_LEARNING` × `FREE_TO_PLAY`, `PARTNER_MONETIZED`).

@@ -13,8 +13,9 @@ Tài liệu quy trình bàn giao vận hành, hướng dẫn kết nối thí đ
    * `SecretKey`: `SEC_CRM_DELI_01` (Dùng để sinh chữ ký số HMAC-SHA256 trên từng request).
 2. **Quy trình Quét Mã & Thanh Toán Tại Quầy Thu Ngân:**
    * Khách hàng mở ứng dụng Natcash hoặc thẻ thành viên xuất trình mã QR động 60 giây.
-   * Thu ngân quét mã QR → POS gửi `POST /loyalty/api/v1/wallet/inquiry` kiểm tra số dư điểm khả dụng và danh sách voucher còn hiệu lực.
-   * Thu ngân xác nhận trừ điểm / áp mã giảm giá → POS gửi `POST /loyalty/api/v1/wallet/redeem` có chữ ký HMAC-SHA256.
+   * Thu ngân quét mã QR → POS gửi `POST /loyalty/v1/partner/inquiry` (hoặc `/loyalty/v1/reward-wallet/inquiry`) kiểm tra số dư điểm khả dụng và danh sách voucher còn hiệu lực.
+   * Trường hợp khách hàng dùng trực tiếp voucher tại quầy hoặc nhập mã giảm giá: khách bấm **Sử dụng** để sinh mã động 8 ký tự (hiệu lực 5 phút kèm `QR` / `Code128 Barcode`); POS/Partner Portal gọi `POST /loyalty/v1/partner/vouchers/checkVoucher` (hoặc `/loyalty/v1/partner-portal/vouchers/checkVoucher`) xác thực trước khi gạch nợ một lần.
+   * Thu ngân xác nhận trừ điểm / áp mã giảm giá → POS gửi `POST /loyalty/v1/partner/payment/direct` (hoặc `/loyalty/v1/reward-wallet/redeem`) có chữ ký HMAC-SHA256.
 
 ---
 

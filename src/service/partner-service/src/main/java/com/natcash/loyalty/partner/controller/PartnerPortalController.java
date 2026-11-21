@@ -10,6 +10,8 @@ import com.natcash.loyalty.partner.entity.PartnerStaffAccountEntity;
 import com.natcash.loyalty.partner.service.PartnerApiKeyService.PartnerApiKeyDto;
 import com.natcash.loyalty.partner.service.PartnerOwnershipGuard;
 import com.natcash.loyalty.partner.service.PartnerPortalService;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherResponse;
 import com.natcash.loyalty.wallet.entity.LoyaltyVoucherEntity;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
@@ -187,6 +189,20 @@ public class PartnerPortalController {
             @RequestParam(value = "partnerId", required = false) Long paramPartnerId) {
         return ResponseEntity.ok(portalService.listPartnerVouchers(
                 resolveTenantId(headerTenantId), resolvePartnerId(headerPartnerId, paramPartnerId)));
+    }
+
+    @PostMapping({"/vouchers/checkVoucher", "/vouchers/check-voucher"})
+    public ResponseEntity<CheckVoucherResponse> checkCounterVoucher(
+            @RequestHeader(value = LoyaltyConstants.TENANT_HEADER, required = false) String headerTenantId,
+            @RequestHeader(value = LoyaltyConstants.PARTNER_ID_HEADER, required = false) Long headerPartnerId,
+            @RequestParam(value = "partnerId", required = false) Long paramPartnerId,
+            @RequestBody CheckVoucherRequest request) {
+        return ResponseEntity.ok(portalService.checkCounterVoucher(
+                resolveTenantId(headerTenantId),
+                resolvePartnerId(headerPartnerId, paramPartnerId),
+                request.getCode(),
+                request.getBranchCode(),
+                request.getBillAmount()));
     }
 
     @PostMapping("/vouchers/redeem-counter")

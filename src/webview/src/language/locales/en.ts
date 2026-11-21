@@ -301,7 +301,14 @@ export default {
     "catalog_empty_desc": "The reward catalog is currently empty.",
     "redeem_failed_title": "Redemption Failed",
     "redeem_failed_msg": "Unable to complete voucher redemption.",
-    "badge_redeem_error": "Redeem Error"
+    "badge_redeem_error": "Redeem Error",
+    "use_failed_title": "Unable to generate voucher code",
+    "use_failed_msg": "This voucher is no longer available or has expired.",
+    "dynamic_expired_badge": "Expired",
+    "dynamic_valid_for": "Valid for",
+    "dynamic_code_ttl_hint": "Temporary use code valid for 5 minutes for this transaction.",
+    "dynamic_code_expired_desc": "This temporary code has expired. Generate a new code to continue.",
+    "regenerate_dynamic_code": "Generate new code"
   },
   "tiers": {
     "modal_title": "VIP 4-Tier Privileges & Benefits",

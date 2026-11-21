@@ -20,6 +20,10 @@ import {
   HelpCircle,
   ChevronRight,
   MapPin,
+  Clock,
+  Copy,
+  Check,
+  RefreshCw,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -31,6 +35,7 @@ import {
   type UserVoucherItem,
   type VoucherAcquireType,
   type VoucherUsageType,
+  type VoucherUseCodeResponse,
 } from '../../services/api';
 import { LoyaltyJSBridge } from '../../bridge/LoyaltyJSBridge';
 import { generateBarcode128Svg } from '../../utils/barcode128';
@@ -159,11 +164,10 @@ const HOW_TO_USE_KEY: Record<VoucherUsageType, string> = {
   [VoucherUsageTypeEnum.ONLINE]: 'figma_ui.vouchers.how_online',
 };
 
-/** Use, by the voucher's "How to use": at store -> Pay at counter with voucher; partner code -> show code; online -> service checkout. */
+/** Use, by the voucher's "How to use": at store -> Pay at counter with voucher; partner/online -> generate 5-min dynamic code. */
 export const openUse = (navigate: ReturnType<typeof useNavigate>, shell: Shell, v: UserVoucherItem) => {
   const u = usageOf(v);
   if (u === VoucherUsageTypeEnum.NATCASH_STORE) navigate(`/pay-at-counter?voucher=${v.id}`);
-  else if (u === VoucherUsageTypeEnum.ONLINE) LoyaltyJSBridge.openService(v.serviceLink || '', v.redemptionCode || v.code);
   else navigate(`${voucherBase(shell).mine}/${v.id}/code`);
 };
 
@@ -1004,7 +1008,7 @@ export const MyVouchers: React.FC<{ shell?: Shell }> = ({ shell = 'customer' }) 
   const count = (tabKey: MineTab) => (tabKey === 'all' ? all.length : all.filter((v) => (tabKey === 'ready' ? ['ready', 'pending'] : [tabKey]).includes(userState(v))).length);
   const list = all
     .filter((v) => tab === 'all' || (tab === 'ready' ? ['ready', 'pending'] : [tab]).includes(userState(v)))
-    .filter((v) => `${v.title} ${v.partnerName || ''} ${v.code}`.toLowerCase().includes(q.toLowerCase()));
+    .filter((v) => `${v.title} ${v.partnerName || ''}`.toLowerCase().includes(q.toLowerCase()));
 
   const tabs: [MineTab, string][] = [
     ['all', 'figma_ui.common.all'],
@@ -1163,30 +1167,115 @@ export const CodeTabs: React.FC<{ value: string; digits?: string }> = ({ value, 
   );
 };
 
-// ───────────────────────── VQ-03 · Show partner code (Figma 495:1494) ─────────────────────────
+const formatMmSs = (seconds: number) => {
+  const s = Math.max(0, seconds);
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+};
+
+// ───────────────────────── VQ-03 · Show dynamic 5-min partner/online code ─────────────────────────
 export const ShowVoucher: React.FC = () => {
   const { id = '' } = useParams();
   const { t } = useTranslation();
-  const [data, failed, reload] = useLoad(async () => {
+  const [useCode, setUseCode] = useState<VoucherUseCodeResponse | null>(null);
+  const [left, setLeft] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [failed, setFailed] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const issueDynamicCode = React.useCallback(async () => {
     const userId = uid();
-    return userId ? LoyaltyApi.getUserVouchers(userId).catch(() => [] as UserVoucherItem[]) : Promise.resolve([] as UserVoucherItem[]);
+    if (!userId || !id) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      const res = await LoyaltyApi.useVoucher(userId, id);
+      setUseCode(res);
+      const diff = res.expiresAt
+        ? Math.max(0, Math.floor((new Date(res.expiresAt).getTime() - Date.now()) / 1000))
+        : res.expiresInSeconds;
+      setLeft(diff > 0 ? diff : res.expiresInSeconds || 300);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
-  const v = data?.find((x) => String(x.id) === id);
-  const code = v ? v.redemptionCode || v.code : '';
+
+  React.useEffect(() => {
+    void issueDynamicCode();
+  }, [issueDynamicCode]);
+
+  React.useEffect(() => {
+    if (!useCode) return;
+    const tmr = setInterval(() => {
+      setLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(tmr);
+  }, [useCode?.dynamicCode]);
+
+  const expired = Boolean(useCode && left <= 0);
+  const handleCopy = () => {
+    if (!useCode || expired) return;
+    navigator.clipboard.writeText(useCode.dynamicCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <Screen title={t('figma_ui.vouchers.show_code')}>
-      {failed && <ErrorBlock onRetry={reload} />}
-      {!data && !failed && <Skeleton className="h-[420px]" />}
-      {data && !v && <Empty art={artEmptyBox} title={t('figma_ui.vouchers.not_found')} />}
-      {v && (
+      {failed && <ErrorBlock onRetry={() => void issueDynamicCode()} />}
+      {loading && !failed && <Skeleton className="h-[420px]" />}
+      {!loading && !failed && !useCode && <Empty art={artEmptyBox} title={t('figma_ui.vouchers.not_found')} />}
+      {!loading && useCode && (
         <div className="flex w-full flex-col items-center gap-3 rounded-[16px] bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
           <div className="w-full text-center">
-            {cleanBrand(v.partnerName) && <p className="text-[13px] text-slate-500">{cleanBrand(v.partnerName)}</p>}
-            <p className="text-[22px] font-bold">{userValueTitle(v)}</p>
-            {v.validUntil && <p className="text-[12px] text-slate-500">{t('figma_ui.vouchers.valid_until', { date: ddmmyyyy(v.validUntil) || v.validUntil })}</p>}
+            {cleanBrand(useCode.partnerName) && <p className="text-[13px] text-slate-500">{cleanBrand(useCode.partnerName)}</p>}
+            <p className="text-[22px] font-bold">{useCode.discountText || useCode.voucherTitle}</p>
+            <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-[#FFF4EA] px-3 py-1 text-[12px] font-semibold text-[#E06C00]">
+              <Clock className="size-3.5" />
+              {expired ? t('vouchers.dynamic_expired_badge') : `${t('vouchers.dynamic_valid_for')} ${formatMmSs(left)}`}
+            </p>
           </div>
-          <CodeTabs value={code} digits={code} />
-          <p className="text-center text-[12px] text-slate-500">{t('figma_ui.vouchers.show_code_hint')}</p>
+
+          {expired ? (
+            <div className="flex w-full flex-col items-center gap-3 rounded-[14px] bg-slate-50 p-6 text-center">
+              <p className="text-[13px] font-medium text-rose-600">{t('vouchers.dynamic_code_expired_desc')}</p>
+              <PrimaryButton onClick={() => void issueDynamicCode()}>
+                <span className="inline-flex items-center gap-1.5">
+                  <RefreshCw className="size-4" />
+                  {t('vouchers.regenerate_dynamic_code')}
+                </span>
+              </PrimaryButton>
+            </div>
+          ) : (
+            <>
+              <CodeTabs value={useCode.dynamicCode} digits={useCode.dynamicCode} />
+              <div className="flex w-full items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  {copied ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                  <span>{copied ? t('common.copied') : t('common.copy')}</span>
+                </button>
+                {useCode.usageType === VoucherUsageTypeEnum.ONLINE && useCode.serviceLink && (
+                  <button
+                    type="button"
+                    onClick={() => LoyaltyJSBridge.openService(useCode.serviceLink || '', useCode.dynamicCode)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#FE810D] px-4 py-1.5 text-[13px] font-semibold text-white"
+                  >
+                    {t('figma_ui.vouchers.use_voucher')}
+                  </button>
+                )}
+              </div>
+              <p className="text-center text-[12px] text-slate-500">{t('vouchers.dynamic_code_ttl_hint')}</p>
+            </>
+          )}
         </div>
       )}
     </Screen>

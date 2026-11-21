@@ -29,6 +29,7 @@ public class LoyaltyProperties {
     private Tenant tenant = new Tenant();
     private Security security = new Security();
     private Qr qr = new Qr();
+    private Voucher voucher = new Voucher();
     private Wallet wallet = new Wallet();
     private Session session = new Session();
     private Webhook webhook = new Webhook();
@@ -85,6 +86,16 @@ public class LoyaltyProperties {
     public static class Qr {
         private int tokenTtlSeconds = 60;
         private int defaultTtlSeconds = 60;
+    }
+
+    @Getter
+    @Setter
+    public static class Voucher {
+        private int dynamicCodeTtlSeconds = 300;
+        private int dynamicCodeLength = 8;
+        private String keyId = "v1";
+        private String privateKey = "";
+        private String publicKey = "";
     }
 
     @Getter

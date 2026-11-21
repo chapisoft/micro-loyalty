@@ -16,9 +16,14 @@ public final class RedisKeys {
     public static final String TOTAL_PRIZE_STOCK_PREFIX = "stock:prize:total:";
     public static final String SESSION_TICKET_PREFIX = "sso:ticket:";
     public static final String QR_PAYMENT_TOKEN_PREFIX = "qr:token:";
+    public static final String VOUCHER_USE_CODE_PREFIX = "voucher:use:code:";
+    public static final String VOUCHER_USE_ACTIVE_PREFIX = "voucher:use:active:";
+    public static final String VOUCHER_KEYPAIR_PUBLIC = "loyalty:voucher:keypair:public";
+    public static final String VOUCHER_KEYPAIR_PRIVATE = "loyalty:voucher:keypair:private";
 
     public static final String LOCK_GAME_PREFIX = "lock:game:";
     public static final String LOCK_VOUCHER_REDEEM_PREFIX = "lock:voucher:redeem:";
+    public static final String LOCK_VOUCHER_USE_PREFIX = "lock:voucher:use:";
     public static final String GAME_DAILY_BUDGET_PREFIX = "budget:game:";
 
     public static final String LOCK_BATCH_POINT_EXPIRATION = "lock:batch:point-expiration";
@@ -64,6 +69,18 @@ public final class RedisKeys {
 
     public static String getVoucherRedeemLockKey(String tenantId, String userId) {
         return LOCK_VOUCHER_REDEEM_PREFIX + tenantId + ":" + userId;
+    }
+
+    public static String getVoucherUseLockKey(String tenantId, Long redemptionId) {
+        return LOCK_VOUCHER_USE_PREFIX + tenantId + ":" + redemptionId;
+    }
+
+    public static String getVoucherUseCodeKey(String tenantId, String dynamicCode) {
+        return VOUCHER_USE_CODE_PREFIX + tenantId + ":" + dynamicCode;
+    }
+
+    public static String getVoucherUseActiveKey(String tenantId, Long redemptionId) {
+        return VOUCHER_USE_ACTIVE_PREFIX + tenantId + ":" + redemptionId;
     }
 
     public static String getIdempotencyKey(String tenantId, String transactionCode) {

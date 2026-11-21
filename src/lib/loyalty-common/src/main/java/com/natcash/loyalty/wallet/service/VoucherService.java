@@ -129,7 +129,8 @@ public class VoucherService {
 
                     return UserVoucherResponse.builder()
                             .id(r.getId())
-                            .code(r.getRedemptionCode())
+                            // Không trả mã redemptionCode cố định ra client; người dùng bấm Sử dụng để sinh mã động 5 phút
+                            .code(null)
                             .title(title)
                             .partnerName(partnerName)
                             .category(category)
@@ -270,7 +271,7 @@ public class VoucherService {
 
             return UserVoucherResponse.builder()
                     .id(savedRedemption.getId())
-                    .code(savedRedemption.getRedemptionCode())
+                    .code(null)
                     .title(voucher.getTitle())
                     .discountText(voucher.getDiscountValue() + " " + CurrencyCode.HTG.getCode())
                     .minOrder(MessageUtils.getMessage("voucher.min_order", voucher.getMinBillAmount()))
@@ -350,7 +351,7 @@ public class VoucherService {
 
             return UserVoucherResponse.builder()
                     .id(saved.getId())
-                    .code(saved.getRedemptionCode())
+                    .code(null)
                     .title(voucher.getTitle())
                     .discountText(voucher.getDiscountType() == DiscountType.PERCENTAGE ? voucher.getDiscountValue() + "%"
                             : voucher.getDiscountValue() + " " + CurrencyCode.HTG.getCode())

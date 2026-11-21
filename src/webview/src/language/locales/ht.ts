@@ -301,7 +301,14 @@ export default {
     "catalog_empty_desc": "Katalòg kado a vid pou kounye a.",
     "redeem_failed_title": "Echanj pa reyisi",
     "redeem_failed_msg": "Pa ka fini tranzaksyon echanj koupon an.",
-    "badge_redeem_error": "Erè Echanj"
+    "badge_redeem_error": "Erè Echanj",
+    "use_failed_title": "Pa ka jenere kòd koupon an",
+    "use_failed_msg": "Koupon sa a pa disponib ankò oswa li ekspire.",
+    "dynamic_expired_badge": "Ekspire",
+    "dynamic_valid_for": "Valab pou",
+    "dynamic_code_ttl_hint": "Kòd tanporè sa a valab pou 5 minit sèlman pou tranzaksyon sa a.",
+    "dynamic_code_expired_desc": "Kòd tanporè a ekspire. Jenere yon nouvo kòd pou kontinye.",
+    "regenerate_dynamic_code": "Jenere nouvo kòd"
   },
   "tiers": {
     "modal_title": "Avantaj 4 Nivo Manm VIP Yo",

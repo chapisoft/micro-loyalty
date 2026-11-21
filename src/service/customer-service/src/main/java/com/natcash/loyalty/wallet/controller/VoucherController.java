@@ -7,10 +7,17 @@ import com.natcash.loyalty.domain.enums.VoucherStatus;
 import com.natcash.loyalty.security.SecurityContextUtils;
 import com.natcash.loyalty.tenant.TenantContext;
 import com.natcash.loyalty.util.MessageUtils;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.CheckVoucherResponse;
 import com.natcash.loyalty.wallet.dto.VoucherDto.CreateVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.RedeemDynamicVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.RedeemDynamicVoucherResponse;
 import com.natcash.loyalty.wallet.dto.VoucherDto.RedeemVoucherRequest;
+import com.natcash.loyalty.wallet.dto.VoucherDto.UseVoucherRequest;
 import com.natcash.loyalty.wallet.dto.VoucherDto.UserVoucherResponse;
 import com.natcash.loyalty.wallet.dto.VoucherDto.VoucherResponse;
+import com.natcash.loyalty.wallet.dto.VoucherDto.VoucherUseCodeResponse;
+import com.natcash.loyalty.wallet.service.VoucherDynamicCodeService;
 import com.natcash.loyalty.wallet.service.VoucherService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,10 +44,15 @@ import java.util.List;
 public class VoucherController {
 
     private final VoucherService voucherService;
+    private final VoucherDynamicCodeService voucherDynamicCodeService;
     private final SystemAuditLogService auditLogService;
 
-    public VoucherController(VoucherService voucherService, SystemAuditLogService auditLogService) {
+    public VoucherController(
+            VoucherService voucherService,
+            VoucherDynamicCodeService voucherDynamicCodeService,
+            SystemAuditLogService auditLogService) {
         this.voucherService = voucherService;
+        this.voucherDynamicCodeService = voucherDynamicCodeService;
         this.auditLogService = auditLogService;
     }
 
@@ -160,6 +172,39 @@ public class VoucherController {
             @RequestBody RedeemVoucherRequest request) {
         String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
         return ResponseEntity.ok(voucherService.collectVoucher(tenantId, request.getExternalUserId(), voucherCode));
+    }
+
+    @PostMapping("/my-vouchers/{redemptionId}/use")
+    @Operation(summary = "Sinh mã sử dụng voucher động (6-8 ký tự, TTL 5 phút)",
+            description = "Người dùng bấm Sử dụng voucher để sinh mã động nén từ chuỗi cấu trúc ký bằng cặp khóa kèm QR/Barcode, hiệu lực theo tham số cấu hình (mặc định 5 phút)")
+    public ResponseEntity<VoucherUseCodeResponse> generateUseCode(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @PathVariable("redemptionId") Long redemptionId,
+            @RequestBody(required = false) UseVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        String requestedUserId = request != null ? request.getExternalUserId() : null;
+        String resolvedUserId = SecurityContextUtils.resolveUserId(requestedUserId);
+        return ResponseEntity.ok(voucherDynamicCodeService.generateUseCode(tenantId, redemptionId, resolvedUserId));
+    }
+
+    @PostMapping({"/checkVoucher", "/check-voucher"})
+    @Operation(summary = "Kiểm tra tính hợp lệ và thời gian hiệu lực của mã voucher động",
+            description = "Các hệ thống sử dụng gọi API checkVoucher để xác thực chuỗi mã động (6-8 ký tự), chữ ký cặp khóa và thời gian hiệu lực 5 phút trước khi cho phép áp dụng")
+    public ResponseEntity<CheckVoucherResponse> checkVoucher(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody CheckVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        return ResponseEntity.ok(voucherDynamicCodeService.checkVoucher(tenantId, request));
+    }
+
+    @PostMapping("/redeem-dynamic")
+    @Operation(summary = "Xác nhận sử dụng mã voucher động cho giao dịch",
+            description = "Kiểm tra checkVoucher và gạch nợ nguyên tử mã voucher động (Single-Use)")
+    public ResponseEntity<RedeemDynamicVoucherResponse> redeemDynamicVoucher(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestBody RedeemDynamicVoucherRequest request) {
+        String tenantId = headerTenantId != null ? headerTenantId : TenantContext.getTenantId();
+        return ResponseEntity.ok(voucherDynamicCodeService.redeemDynamicVoucher(tenantId, request));
     }
 
     @PostMapping("/batch-import")

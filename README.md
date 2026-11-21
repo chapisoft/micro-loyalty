@@ -23,7 +23,7 @@ Hệ thống được thiết kế theo kiến trúc Microservices độc lập 
 | **`game-service`** | Cổng GameHub, Vòng quay may mắn và ngân hàng câu hỏi Micro-Learning | `8083` |
 | **`campaign-service`** | Chiến dịch, cột mốc nhiệm vụ, phân khúc hội viên, ngân sách đồng tài trợ, cảnh báo và AI Copilot | `8084` |
 | **`partner-service`** | Đối soát bù trừ đa phương, cổng thanh toán bằng điểm, chi nhánh đối tác, Partner Portal API và Webhook Outbox | `8085` |
-| **`loyalty-common`, `loyalty-engine`, `ims-libraries`** | Bộ thư viện lõi dùng chung cho cả 5 Microservices trên nền tảng Java 17 LTS / Spring Boot 3.5.3, quản lý cơ sở dữ liệu độc lập `loyalty_db` trên PostgreSQL 15+ (Flyway `V1`–`V27`) và khóa phân tán Redis 7 | Thư viện dùng chung |
+| **`loyalty-common`, `loyalty-engine`, `ims-libraries`** | Bộ thư viện lõi dùng chung cho cả 5 Microservices trên nền tảng Java 17 LTS / Spring Boot 3.5.3, quản lý cơ sở dữ liệu độc lập `loyalty_db` trên PostgreSQL 15+ (Flyway `V1`–`V41`) và khóa phân tán Redis 7 | Thư viện dùng chung |
 | **`loyalty-saas-gateway`** | Nginx API Gateway điều phối lưu lượng công khai và nội bộ theo tiền tố đường dẫn URI tới 5 Microservices và 3 cổng giao diện | `18095` |
 | **`loyalty-cms`** | Cổng thông tin quản trị trung tâm (ReactJS 18 / TypeScript / Vite / PrimeReact / Nginx) | `8990` (dev) |
 | **`loyalty-webview`** | Cổng Webview nhúng di động (ReactJS 18 / TypeScript / Vite / TailwindCSS) tích hợp `LoyaltyJSBridge`, đĩa quay Canvas 60 FPS và sảnh GameHub | `3001` (dev) |
@@ -413,5 +413,6 @@ curl -i http://127.0.0.1:18095/loyalty/v1/partners/locations
 * **Xác thực đa tầng chuẩn hóa:**
   * Giao tiếp máy chủ sang máy chủ: Xác thực Khóa kép (`X-Api-Key`, `SecretKey`), ký số `HMAC-SHA256` và kiểm tra sai lệch thời gian `X-Timestamp` (tối đa ±300 giây).
   * Giao tiếp Webview nhúng: Xác thực vé phiên một lần (`session_ticket` thời hạn 60 giây) đổi lấy mã truy cập ngắn hạn JWT (15 phút).
+  * Bảo mật sử dụng Voucher động: Không hiển thị hoặc cho phép tiêu thụ bằng mã cố định; khi người dùng bấm Sử dụng, `VoucherDynamicCodeService` ký cấu trúc bằng cặp khóa `Ed25519` + mã hóa `AES-256-GCM` và nén thành chuỗi 8 ký tự `Crockford Base32` (TTL mặc định 5 phút qua `VOUCHER_DYNAMIC_CODE_TTL_SECONDS`) kèm `QR Code` / `Code128 Barcode`, bắt buộc kiểm tra hợp lệ và thời hạn qua API `checkVoucher` trước khi gạch nợ một lần.
 * **Đồng bộ phi tập trung qua Transactional Outbox:** Đảm bảo 100% sự kiện thăng hạng và biến động điểm được gửi đến đích thành công qua cơ chế Outbox Publisher và tự động thử lại theo cấp số nhân (5 lần).
 * **Kiểm soát tần suất thông báo:** Giới hạn tối đa 1 thông báo đẩy mỗi ngày cho mỗi khách hàng, chỉ gửi trong khung giờ thân thiện từ 8h00 sáng đến 20h00 tối và ưu tiên hiển thị thông điệp gợi nhắc âm thầm trong ứng dụng.

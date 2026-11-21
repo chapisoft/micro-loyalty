@@ -301,7 +301,14 @@ export default {
     "catalog_empty_desc": "Danh mục quà tặng hiện trống hoặc đang cập nhật.",
     "redeem_failed_title": "Đổi ưu đãi không thành công",
     "redeem_failed_msg": "Không thể hoàn tất giao dịch đổi ưu đãi.",
-    "badge_redeem_error": "Lỗi đổi quà"
+    "badge_redeem_error": "Lỗi đổi quà",
+    "use_failed_title": "Không thể tạo mã sử dụng",
+    "use_failed_msg": "Voucher không khả dụng hoặc đã hết hạn sử dụng.",
+    "dynamic_expired_badge": "Hết hạn",
+    "dynamic_valid_for": "Hiệu lực trong",
+    "dynamic_code_ttl_hint": "Mã sử dụng tạm thời có hiệu lực trong 5 phút cho giao dịch này.",
+    "dynamic_code_expired_desc": "Mã sử dụng tạm thời đã hết hiệu lực. Vui lòng tạo mã mới để tiếp tục.",
+    "regenerate_dynamic_code": "Tạo mã mới"
   },
   "tiers": {
     "modal_title": "Đặc Quyền 4 Hạng Hội Viên VIP",
