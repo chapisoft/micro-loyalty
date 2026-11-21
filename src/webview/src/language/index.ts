@@ -1,34 +1,54 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import vi from './locales/vi';
-import en from './locales/en';
-import fr from './locales/fr';
-import ht from './locales/ht';
-
 // Detect language from URL search param (?lang=vi|en|fr|ht) or localStorage
 const urlParams = new URLSearchParams(window.location.search);
 const queryLang = urlParams.get('lang')?.toLowerCase();
-const validLangs = ['vi', 'en', 'fr', 'ht'];
-const initialLang =
-  (queryLang && validLangs.includes(queryLang) ? queryLang : null) ||
-  localStorage.getItem('loyalty_webview_lng') ||
+const validLangs = ['vi', 'en', 'fr', 'ht'] as const;
+type ValidLang = (typeof validLangs)[number];
+
+const initialLang: ValidLang =
+  (queryLang && (validLangs as readonly string[]).includes(queryLang) ? (queryLang as ValidLang) : null) ||
+  ((localStorage.getItem('loyalty_webview_lng') || '') as ValidLang) ||
   'en';
+
+const resolvedInitialLang: ValidLang = (validLangs as readonly string[]).includes(initialLang) ? initialLang : 'en';
+
+const LOCALE_LOADERS: Record<ValidLang, () => Promise<{ default: Record<string, unknown> }>> = {
+  vi: () => import('./locales/vi'),
+  en: () => import('./locales/en'),
+  fr: () => import('./locales/fr'),
+  ht: () => import('./locales/ht'),
+};
 
 i18next.use(initReactI18next).init({
   debug: false,
-  lng: initialLang,
+  lng: resolvedInitialLang,
   fallbackLng: 'en',
   interpolation: {
     escapeValue: false, // React already escapes values
   },
-  resources: {
-    vi: { translation: vi },
-    en: { translation: en },
-    fr: { translation: fr },
-    ht: { translation: ht },
-  },
+  resources: {},
 });
+
+const ensureLocaleLoaded = async (lng: ValidLang): Promise<void> => {
+  if (i18next.hasResourceBundle(lng, 'translation')) return;
+  const mod = await LOCALE_LOADERS[lng]();
+  i18next.addResourceBundle(lng, 'translation', mod.default, true, true);
+};
+
+let initPromise: Promise<void> | null = null;
+export const initI18n = (): Promise<void> => {
+  if (!initPromise) {
+    initPromise = (async () => {
+      await ensureLocaleLoaded(resolvedInitialLang);
+      if (resolvedInitialLang !== 'en') {
+        void ensureLocaleLoaded('en');
+      }
+    })();
+  }
+  return initPromise;
+};
 
 const LOCALE_MAP: Record<string, string> = {
   vi: 'vi-VN',
@@ -46,7 +66,7 @@ const SUFFIX_ORDER: Record<string, string[]> = {
 
 export const normalizeLang = (lng?: string): string => {
   const short = (lng || i18next.language || 'en').split('-')[0].toLowerCase();
-  return validLangs.includes(short) ? short : 'en';
+  return (validLangs as readonly string[]).includes(short) ? short : 'en';
 };
 
 export const toDateLocale = (lng?: string): string => LOCALE_MAP[normalizeLang(lng)] || 'en-US';
@@ -75,18 +95,20 @@ export const pickLocalizedField = (
   return '';
 };
 
-export const changeLanguage = (lng: string) => {
-  if (validLangs.includes(lng)) {
-    i18next.changeLanguage(lng);
-    localStorage.setItem('loyalty_webview_lng', lng);
+export const changeLanguage = async (lng: string) => {
+  if ((validLangs as readonly string[]).includes(lng)) {
+    const valid = lng as ValidLang;
+    await ensureLocaleLoaded(valid);
+    await i18next.changeLanguage(valid);
+    localStorage.setItem('loyalty_webview_lng', valid);
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = lng;
+      document.documentElement.lang = valid;
     }
   }
 };
 
 if (typeof document !== 'undefined') {
-  document.documentElement.lang = normalizeLang(initialLang);
+  document.documentElement.lang = normalizeLang(resolvedInitialLang);
 }
 
 export const SUPPORTED_LANGUAGES = [

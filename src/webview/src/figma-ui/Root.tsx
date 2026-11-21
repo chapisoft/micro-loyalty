@@ -3,15 +3,52 @@ import { HashRouter, Route, Routes, Navigate, useNavigate, useLocation } from 'r
 import { SSOAuthProvider, useSSOAuth } from '../hooks/useSSOAuth';
 import { Skeleton } from './ui';
 import LoyaltyHome from './screens/LoyaltyHome';
-import MemberTiers, { ProgramTerms } from './screens/MemberTiers';
-import CoinsHistory from './screens/CoinsHistory';
-import { MissionsList, MissionDetail, CheckIn } from './screens/Missions';
-import { InviteFriends, InvitedWelcome } from './screens/Invite';
-import { RewardStore, RewardDetail, RedeemDone, MyVouchers, MyVoucherDetail, ShowVoucher } from './screens/Rewards';
-import { GameHub, Wheel, ScratchCard, GameResult, GetPlays, LearningList, LearningDetail, Lesson, PlayHistory } from './screens/Games';
-import { PayAtCounter } from './screens/UseCoins';
-import { Inbox, OfferDetail, NotificationSettings } from './screens/Inbox';
-import { AgentHome, AgentMissions, AgentMissionDetail, AgentNetwork, AgentVouchers, AgentVoucherDetail, AgentMyVouchers, AgentMyVoucherDetail } from './screens/Agent';
+
+const MemberTiers = lazy(() => import('./screens/MemberTiers'));
+const ProgramTerms = lazy(() => import('./screens/MemberTiers').then((m) => ({ default: m.ProgramTerms })));
+const CoinsHistory = lazy(() => import('./screens/CoinsHistory'));
+const MissionsList = lazy(() => import('./screens/Missions').then((m) => ({ default: m.MissionsList })));
+const MissionDetail = lazy(() => import('./screens/Missions').then((m) => ({ default: m.MissionDetail })));
+const CheckIn = lazy(() => import('./screens/Missions').then((m) => ({ default: m.CheckIn })));
+const InviteFriends = lazy(() => import('./screens/Invite').then((m) => ({ default: m.InviteFriends })));
+const InvitedWelcome = lazy(() => import('./screens/Invite').then((m) => ({ default: m.InvitedWelcome })));
+const RewardStore = lazy(() => import('./screens/Rewards').then((m) => ({ default: m.RewardStore })));
+const RewardDetail = lazy(() => import('./screens/Rewards').then((m) => ({ default: m.RewardDetail })));
+const RedeemDone = lazy(() => import('./screens/Rewards').then((m) => ({ default: m.RedeemDone })));
+const MyVouchers = lazy(() => import('./screens/Rewards').then((m) => ({ default: m.MyVouchers })));
+const MyVoucherDetail = lazy(() => import('./screens/Rewards').then((m) => ({ default: m.MyVoucherDetail })));
+const ShowVoucher = lazy(() => import('./screens/Rewards').then((m) => ({ default: m.ShowVoucher })));
+const GameHub = lazy(() => import('./screens/Games').then((m) => ({ default: m.GameHub })));
+const Wheel = lazy(() => import('./screens/Games').then((m) => ({ default: m.Wheel })));
+const ScratchCard = lazy(() => import('./screens/Games').then((m) => ({ default: m.ScratchCard })));
+const GameResult = lazy(() => import('./screens/Games').then((m) => ({ default: m.GameResult })));
+const GetPlays = lazy(() => import('./screens/Games').then((m) => ({ default: m.GetPlays })));
+const LearningList = lazy(() => import('./screens/Games').then((m) => ({ default: m.LearningList })));
+const LearningDetail = lazy(() => import('./screens/Games').then((m) => ({ default: m.LearningDetail })));
+const Lesson = lazy(() => import('./screens/Games').then((m) => ({ default: m.Lesson })));
+const PlayHistory = lazy(() => import('./screens/Games').then((m) => ({ default: m.PlayHistory })));
+const PayAtCounter = lazy(() => import('./screens/UseCoins').then((m) => ({ default: m.PayAtCounter })));
+const Inbox = lazy(() => import('./screens/Inbox').then((m) => ({ default: m.Inbox })));
+const OfferDetail = lazy(() => import('./screens/Inbox').then((m) => ({ default: m.OfferDetail })));
+const NotificationSettings = lazy(() => import('./screens/Inbox').then((m) => ({ default: m.NotificationSettings })));
+const AgentHome = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentHome })));
+const AgentMissions = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentMissions })));
+const AgentMissionDetail = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentMissionDetail })));
+const AgentNetwork = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentNetwork })));
+const AgentVouchers = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentVouchers })));
+const AgentVoucherDetail = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentVoucherDetail })));
+const AgentMyVouchers = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentMyVouchers })));
+const AgentMyVoucherDetail = lazy(() => import('./screens/Agent').then((m) => ({ default: m.AgentMyVoucherDetail })));
+
+const ScreenFallback = (
+  <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 p-4 pt-10">
+      <Skeleton className="h-[177px]" />
+      <Skeleton className="h-[96px]" />
+      <Skeleton className="h-[120px]" />
+    </div>
+  </div>
+);
 
 // In-house mini-game players (routed with back navigation returning directly to /games)
 const FlappyNatcomGame = lazy(() => import('../pages/games/FlappyNatcomGame').then((m) => ({ default: m.FlappyNatcomGame })));
@@ -62,7 +99,8 @@ const AppRoutes: React.FC = () => {
     );
   }
   return (
-    <Routes>
+    <Suspense fallback={ScreenFallback}>
+      <Routes>
         {/* 1 · Entry & membership */}
         <Route path="/" element={<LoyaltyHome />} />
         <Route path="/tiers" element={<MemberTiers />} />
@@ -147,6 +185,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/home" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </Suspense>
   );
 };
 
