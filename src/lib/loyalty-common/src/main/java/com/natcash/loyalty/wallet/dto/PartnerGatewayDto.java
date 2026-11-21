@@ -108,6 +108,8 @@ public final class PartnerGatewayDto {
         private BigDecimal pointsToBurn;
 
         private String voucherRedemptionCode;
+        private List<String> voucherRedemptionCodes;
+        private String branchCode;
         private String description;
     }
 
@@ -126,6 +128,8 @@ public final class PartnerGatewayDto {
         private BigDecimal pointDiscountAmount;
         private BigDecimal voucherDiscountAmount;
         private BigDecimal finalAmountToPay;
+        private String appliedVoucherCode;
+        private List<String> appliedVoucherCodes;
         private HoldStatus status;
         private Instant expiresAt;
         private Instant createdAt;
@@ -168,6 +172,7 @@ public final class PartnerGatewayDto {
         private BigDecimal finalAmountToPay;
         private BigDecimal remainingPoints;
         private String appliedVoucherCode;
+        private List<String> appliedVoucherCodes;
         private ClearingStatus status;
         private Instant capturedAt;
     }
@@ -228,6 +233,8 @@ public final class PartnerGatewayDto {
         private BigDecimal pointsToBurn;
 
         private String voucherRedemptionCode;
+        private List<String> voucherRedemptionCodes;
+        private String branchCode;
         private String description;
     }
 
@@ -247,6 +254,7 @@ public final class PartnerGatewayDto {
         private BigDecimal finalAmountToPay;
         private BigDecimal remainingPoints;
         private String appliedVoucherCode;
+        private List<String> appliedVoucherCodes;
         private ClearingStatus status;
         private Instant redeemedAt;
     }

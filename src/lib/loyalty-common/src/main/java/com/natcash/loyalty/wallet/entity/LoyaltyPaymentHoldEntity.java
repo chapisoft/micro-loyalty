@@ -20,7 +20,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -65,6 +67,14 @@ public class LoyaltyPaymentHoldEntity {
     @Column(name = "voucher_code", length = 100)
     private String voucherCode;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "voucher_codes_json", nullable = false, columnDefinition = "jsonb")
+    @Builder.Default
+    private String voucherCodesJson = "[]";
+
+    @Column(name = "branch_code", length = 80)
+    private String branchCode;
+
     @Column(name = "voucher_discount_amount", nullable = false, precision = 18, scale = 2)
     @Builder.Default
     private BigDecimal voucherDiscountAmount = BigDecimal.ZERO;
@@ -95,6 +105,9 @@ public class LoyaltyPaymentHoldEntity {
         }
         if (this.voucherDiscountAmount == null) {
             this.voucherDiscountAmount = BigDecimal.ZERO;
+        }
+        if (this.voucherCodesJson == null || this.voucherCodesJson.isBlank()) {
+            this.voucherCodesJson = "[]";
         }
     }
 }

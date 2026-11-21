@@ -8,8 +8,8 @@
     <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
       <PatternLayout pattern="${LOG_PATTERN}"/>
     </Console>
-    <RollingFile name="FileAppender" fileName="${LOG_PATH}/cms-service.log"
-                 filePattern="${LOG_PATH}/cms-service-%d{yyyy-MM-dd}-%i.log.gz">
+    <RollingFile name="FileAppender" fileName="${LOG_PATH}/partner-service.log"
+                 filePattern="${LOG_PATH}/partner-service-%d{yyyy-MM-dd}-%i.log.gz">
       <PatternLayout pattern="${LOG_PATTERN}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -17,7 +17,7 @@
       </Policies>
       <DefaultRolloverStrategy max="5">
         <Delete basePath="${LOG_PATH}" maxDepth="1">
-          <IfFileName glob="cms-service-*.log.gz" />
+          <IfFileName glob="partner-service-*.log.gz" />
           <IfLastModified age="3d" />
         </Delete>
       </DefaultRolloverStrategy>

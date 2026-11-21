@@ -74,6 +74,34 @@ public class ClearingTransactionEntity {
     @Column(name = "reconciliation_batch_code", length = 100)
     private String reconciliationBatchCode;
 
+    @Column(name = "bill_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal billAmount = BigDecimal.ZERO;
+
+    @Column(name = "wallet_paid_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal walletPaidAmount = BigDecimal.ZERO;
+
+    @Column(name = "point_discount_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal pointDiscountAmount = BigDecimal.ZERO;
+
+    @Column(name = "voucher_discount_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal voucherDiscountAmount = BigDecimal.ZERO;
+
+    @Column(name = "branch_code", length = 80)
+    private String branchCode;
+
+    @Column(name = "core_tx_id", length = 100)
+    private String coreTxId;
+
+    @Column(name = "core_pool_deducted_amount", precision = 18, scale = 2)
+    private BigDecimal corePoolDeductedAmount;
+
+    @Column(name = "reconciled_at")
+    private Instant reconciledAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "reconciliation_status", nullable = false, length = 30)
     @Builder.Default
@@ -112,6 +140,18 @@ public class ClearingTransactionEntity {
         }
         if (this.reconciliationStatus == null) {
             this.reconciliationStatus = ReconciliationStatus.UNMATCHED;
+        }
+        if (this.billAmount == null) {
+            this.billAmount = BigDecimal.ZERO;
+        }
+        if (this.walletPaidAmount == null) {
+            this.walletPaidAmount = BigDecimal.ZERO;
+        }
+        if (this.pointDiscountAmount == null) {
+            this.pointDiscountAmount = BigDecimal.ZERO;
+        }
+        if (this.voucherDiscountAmount == null) {
+            this.voucherDiscountAmount = BigDecimal.ZERO;
         }
     }
 }

@@ -8,6 +8,8 @@ import com.natcash.loyalty.account.repository.LoyaltyAccountRepository;
 import com.natcash.loyalty.account.repository.LoyaltyPartnerRepository;
 import com.natcash.loyalty.account.service.AccountService;
 import com.natcash.loyalty.campaign.service.MilestoneService;
+import com.natcash.loyalty.clearing.service.ClearingBreakdownRecorderService;
+import com.natcash.loyalty.clearing.service.ClearingBreakdownRecorderService.VoucherSlice;
 import com.natcash.loyalty.config.SystemParamSpec;
 import com.natcash.loyalty.config.service.SystemParameterService;
 import com.natcash.loyalty.constant.ErrorCode;
@@ -18,12 +20,14 @@ import com.natcash.loyalty.domain.enums.CurrencyAssetType;
 import com.natcash.loyalty.domain.enums.DiscountType;
 import com.natcash.loyalty.domain.enums.PaymentTxStatus;
 import com.natcash.loyalty.domain.enums.PointActionType;
+import com.natcash.loyalty.domain.enums.SponsorType;
 import com.natcash.loyalty.domain.enums.TierLevel;
 import com.natcash.loyalty.domain.enums.VoucherStatus;
 import com.natcash.loyalty.exception.LoyaltyException;
 import com.natcash.loyalty.ledger.entity.LoyaltyPointLedgerEntity;
 import com.natcash.loyalty.ledger.repository.LoyaltyPointLedgerRepository;
 import com.natcash.loyalty.ledger.service.PointBucketFifoService;
+import com.natcash.loyalty.ledger.service.PointBucketFifoService.FifoBucketConsumption;
 import com.natcash.loyalty.lock.DistributedLockHelper;
 import com.natcash.loyalty.stream.LoyaltyStreamEvent;
 import com.natcash.loyalty.stream.LoyaltyStreamProducer;
@@ -60,8 +64,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -87,6 +95,9 @@ public class RewardWalletService {
 
     @Autowired(required = false)
     private VoucherDynamicCodeService voucherDynamicCodeService;
+
+    @Autowired(required = false)
+    private ClearingBreakdownRecorderService breakdownRecorderService;
 
     public RewardWalletService(AccountService accountService,
             LoyaltyAccountRepository accountRepository,
@@ -298,24 +309,37 @@ public class RewardWalletService {
                     BigDecimal billAmount = request.getTotalBillAmount();
                     BigDecimal pointsToBurn = request.getPointsToBurn() != null ? request.getPointsToBurn()
                             : BigDecimal.ZERO;
-                    BigDecimal voucherDiscount = BigDecimal.ZERO;
-                    String appliedVoucherCode = null;
 
-                    // 4. Xử lý áp dụng Voucher nếu có (bắt buộc mã động 6-8 ký tự khi voucherDynamicCodeService hoạt động)
-                    if (request.getVoucherRedemptionCode() != null
-                            && !request.getVoucherRedemptionCode().trim().isEmpty()) {
-                        String rawVoucherCode = request.getVoucherRedemptionCode().trim();
+                    // 4. Xử lý áp dụng một hoặc nhiều Voucher (bắt buộc mã động khi voucherDynamicCodeService hoạt động)
+                    Set<String> requestedVoucherCodes = new LinkedHashSet<>();
+                    if (request.getVoucherRedemptionCodes() != null) {
+                        request.getVoucherRedemptionCodes().stream()
+                                .filter(c -> c != null && !c.trim().isEmpty())
+                                .map(String::trim)
+                                .forEach(requestedVoucherCodes::add);
+                    }
+                    if (request.getVoucherRedemptionCode() != null && !request.getVoucherRedemptionCode().trim().isEmpty()) {
+                        requestedVoucherCodes.add(request.getVoucherRedemptionCode().trim());
+                    }
+
+                    List<VoucherSlice> appliedSlices = new ArrayList<>();
+                    BigDecimal remainingForVouchers = billAmount;
+                    for (String rawVoucherCode : requestedVoucherCodes) {
+                        if (remainingForVouchers.compareTo(BigDecimal.ZERO) <= 0) {
+                            break;
+                        }
                         if (voucherDynamicCodeService != null) {
                             ConsumedVoucherResult consumed = voucherDynamicCodeService.consumeDynamicCode(
                                     tenantId,
                                     rawVoucherCode,
                                     request.getRedeemerPartnerId(),
                                     null,
-                                    null,
-                                    billAmount,
+                                    request.getBranchCode(),
+                                    remainingForVouchers,
                                     finalUserId);
-                            voucherDiscount = consumed.getDiscountAmount();
-                            appliedVoucherCode = consumed.getDynamicCode();
+                            BigDecimal applied = consumed.getDiscountAmount().min(remainingForVouchers).max(BigDecimal.ZERO);
+                            appliedSlices.add(buildVoucherSlice(consumed.getRedemption(), consumed.getVoucher(), consumed.getDynamicCode(), applied));
+                            remainingForVouchers = remainingForVouchers.subtract(applied);
                         } else {
                             LoyaltyVoucherRedemptionEntity redemption = redemptionRepository
                                     .findByTenantIdAndRedemptionCode(tenantId, rawVoucherCode)
@@ -335,29 +359,36 @@ public class RewardWalletService {
                                             MessageUtils.getMessage("wallet.error.bill_below_min_voucher"));
                                 }
 
+                                BigDecimal applied;
                                 if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
-                                    voucherDiscount = billAmount.multiply(voucher.getDiscountValue())
+                                    applied = remainingForVouchers.multiply(voucher.getDiscountValue())
                                             .divide(paramService.getDecimal(tenantId, SystemParamSpec.PERCENT_DIVISOR), 2, RoundingMode.HALF_UP);
                                     if (voucher.getMaxDiscountAmount() != null
-                                            && voucherDiscount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
-                                        voucherDiscount = voucher.getMaxDiscountAmount();
+                                            && applied.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                                        applied = voucher.getMaxDiscountAmount();
                                     }
                                 } else {
-                                    voucherDiscount = voucher.getDiscountValue();
+                                    applied = voucher.getDiscountValue();
                                 }
 
-                                if (voucherDiscount.compareTo(billAmount) > 0) {
-                                    voucherDiscount = billAmount;
-                                }
-
-                                appliedVoucherCode = rawVoucherCode;
+                                applied = applied.min(remainingForVouchers).max(BigDecimal.ZERO);
                                 redemption.setStatus(VoucherStatus.USED);
                                 redemption.setUsedAt(Instant.now());
                                 redemption.setUsedPartnerId(request.getRedeemerPartnerId());
                                 redemptionRepository.save(redemption);
+                                appliedSlices.add(buildVoucherSlice(redemption, voucher, rawVoucherCode, applied));
+                                remainingForVouchers = remainingForVouchers.subtract(applied);
                             }
                         }
                     }
+
+                    BigDecimal voucherDiscount = appliedSlices.stream()
+                            .map(VoucherSlice::getAppliedDiscount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<String> appliedVoucherCodes = appliedSlices.stream()
+                            .map(VoucherSlice::getAppliedCode)
+                            .collect(Collectors.toList());
+                    String appliedVoucherCode = appliedVoucherCodes.isEmpty() ? null : appliedVoucherCodes.get(0);
 
                     // 5. Tải chính sách đối tác để lấy tỷ lệ khấu trừ tối đa và tỷ giá quy đổi
                     BigDecimal maxBurnPercentage = paramService.getDecimal(tenantId, SystemParamSpec.MAX_DAILY_BURN_PERCENTAGE);
@@ -404,14 +435,15 @@ public class RewardWalletService {
                         finalAmountToPay = BigDecimal.ZERO;
                     }
 
-                    // 6. Cập nhật số dư điểm và ghi sổ cái bất biến
+                    // 6. Cập nhật số dư điểm và ghi sổ cái bất biến + theo dõi lô FIFO
                     BigDecimal remainingPoints = currentPoints.subtract(effectivePointsToBurn);
                     account.setCurrentPoints(remainingPoints);
                     accountRepository.save(account);
 
+                    List<FifoBucketConsumption> fifoConsumptions = Collections.emptyList();
                     if (effectivePointsToBurn.compareTo(BigDecimal.ZERO) > 0) {
                         if (pointBucketFifoService != null && account.getId() != null) {
-                            pointBucketFifoService.consumeFifo(
+                            fifoConsumptions = pointBucketFifoService.consumeFifoWithTrace(
                                     tenantId, account.getId(), effectivePointsToBurn, CurrencyAssetType.LOYALTY_COIN);
                         }
                         LoyaltyPointLedgerEntity ledger = LoyaltyPointLedgerEntity.builder()
@@ -429,8 +461,9 @@ public class RewardWalletService {
                         ledgerRepository.save(ledger);
                     }
 
-                    // 7. Ghi nhận giao dịch bù trừ liên minh (Clearing Transaction)
-                    Long resolvedIssuerId = resolveIssuerPartnerId(tenantId);
+                    // 7. Ghi nhận giao dịch bù trừ liên minh (Clearing Transaction + Breakdowns)
+                    BigDecimal totalLoyaltyDiscount = pointDiscount.add(voucherDiscount);
+                    Long resolvedIssuerId = resolveIssuerPartnerId(tenantId, appliedSlices, fifoConsumptions);
                     ClearingTransactionEntity clearing = ClearingTransactionEntity.builder()
                             .tenantId(tenantId)
                             .transactionCode(txCode)
@@ -438,19 +471,29 @@ public class RewardWalletService {
                             .redeemerPartnerId(request.getRedeemerPartnerId())
                             .externalUserId(finalUserId)
                             .pointsRedeemed(effectivePointsToBurn)
-                            .fiatAmount(pointDiscount)
+                            .billAmount(billAmount)
+                            .walletPaidAmount(finalAmountToPay)
+                            .pointDiscountAmount(pointDiscount)
+                            .voucherDiscountAmount(voucherDiscount)
+                            .fiatAmount(totalLoyaltyDiscount)
+                            .branchCode(request.getBranchCode())
                             .exchangeRate(exchangeRate)
                             .status(ClearingStatus.PENDING)
                             .createdAt(Instant.now())
                             .build();
                     clearingRepository.save(clearing);
 
+                    if (breakdownRecorderService != null) {
+                        breakdownRecorderService.recordBreakdowns(
+                                clearing, appliedSlices, fifoConsumptions, pointDiscount, effectivePointsToBurn, exchangeRate, resolvedIssuerId);
+                    }
+
                     // 8. Bắn sự kiện lên Redis Streams
                     LoyaltyStreamEvent streamEvent = LoyaltyStreamEvent.builder()
                             .tenantId(tenantId)
                             .eventType("POINTS_REDEEMED")
                             .externalUserId(finalUserId)
-                            .amount(pointDiscount.longValue())
+                            .amount(totalLoyaltyDiscount.longValue())
                             .transactionCode(txCode)
                             .timestamp(Instant.now())
                             .build();
@@ -479,13 +522,59 @@ public class RewardWalletService {
                             .pointsBurned(effectivePointsToBurn)
                             .remainingPoints(remainingPoints)
                             .appliedVoucherCode(appliedVoucherCode)
+                            .appliedVoucherCodes(appliedVoucherCodes)
                             .status(PaymentTxStatus.SUCCESS.name())
                             .redeemedAt(Instant.now())
                             .build();
                 });
     }
 
-    private Long resolveIssuerPartnerId(String tenantId) {
+    private VoucherSlice buildVoucherSlice(
+            LoyaltyVoucherRedemptionEntity redemption,
+            LoyaltyVoucherEntity voucher,
+            String appliedCode,
+            BigDecimal appliedDiscount) {
+        Long voucherPartnerId = voucher != null ? voucher.getPartnerId() : null;
+        SponsorType sponsorType = voucher != null && voucher.getSponsorType() != null
+                ? voucher.getSponsorType()
+                : (voucherPartnerId != null ? SponsorType.PARTNER : SponsorType.NATCASH);
+        BigDecimal natcashPct = voucher != null && voucher.getNatcashSharePercent() != null
+                ? voucher.getNatcashSharePercent()
+                : (sponsorType == SponsorType.PARTNER ? BigDecimal.ZERO : new BigDecimal("100.00"));
+        BigDecimal partnerPct = voucher != null && voucher.getPartnerSharePercent() != null
+                ? voucher.getPartnerSharePercent()
+                : (sponsorType == SponsorType.PARTNER ? new BigDecimal("100.00") : BigDecimal.ZERO);
+        return VoucherSlice.builder()
+                .redemptionId(redemption != null ? redemption.getId() : null)
+                .voucherId(voucher != null ? voucher.getId() : null)
+                .sourceRef(voucher != null ? voucher.getVoucherCode() : appliedCode)
+                .appliedCode(appliedCode)
+                .partnerId(voucherPartnerId)
+                .sponsorType(sponsorType)
+                .natcashSharePercent(natcashPct)
+                .partnerSharePercent(partnerPct)
+                .appliedDiscount(appliedDiscount)
+                .build();
+    }
+
+    private Long resolveIssuerPartnerId(
+            String tenantId,
+            List<VoucherSlice> voucherSlices,
+            List<FifoBucketConsumption> fifoConsumptions) {
+        if (voucherSlices != null) {
+            for (VoucherSlice slice : voucherSlices) {
+                if (slice.getPartnerId() != null) {
+                    return slice.getPartnerId();
+                }
+            }
+        }
+        if (fifoConsumptions != null) {
+            for (FifoBucketConsumption b : fifoConsumptions) {
+                if (b.getFundingPartnerId() != null) {
+                    return b.getFundingPartnerId();
+                }
+            }
+        }
         List<LoyaltyPartnerEntity> partners = partnerRepository.findByTenantId(tenantId);
         if (partners != null && !partners.isEmpty()) {
             return partners.stream()
@@ -536,6 +625,10 @@ public class RewardWalletService {
 
         clearing.setStatus(ClearingStatus.CANCELLED);
         clearingRepository.save(clearing);
+
+        if (breakdownRecorderService != null) {
+            breakdownRecorderService.revertBreakdownsAndAssets(clearing, null);
+        }
 
         log.info("[REFUND-SUCCESS] tenantId={}, user={}, origTx={}, refundTx={}, pointsRefunded={}",
                 tenantId, userId, originalTx, refundTx, pointsRefunded);

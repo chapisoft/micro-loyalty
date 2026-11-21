@@ -1431,7 +1431,7 @@ export const LoyaltyService = {
   },
 
   async createClearingBatch(
-    data: Partial<ClearingPaymentBatchModel>,
+    data: Partial<ClearingPaymentBatchModel> & { mdrFeePercent?: number; batchDirection?: string },
     tenantId: string = getStoredTenantId()
   ): Promise<ClearingPaymentBatchModel> {
     const response: any = await apiClient.post('/loyalty/v1/clearinghouse/batches', data, {
@@ -1445,11 +1445,89 @@ export const LoyaltyService = {
     tenantId: string = getStoredTenantId()
   ): Promise<ClearingPaymentBatchModel> {
     const response: any = await apiClient.post(
-      `/loyalty/v1/partner-portal/settlements/${encodeURIComponent(batchCode)}/confirm`,
+      `/loyalty/v1/clearinghouse/batches/${encodeURIComponent(batchCode)}/confirm`,
       { confirmedBy: 'cms_admin' },
       { headers: { 'X-Tenant-Id': tenantId } }
     );
     return unwrapObject<ClearingPaymentBatchModel>(response);
+  },
+
+  async submitClearingBatchApproval(
+    batchCode: string,
+    tenantId: string = getStoredTenantId(),
+    makerUsername?: string
+  ): Promise<ClearingPaymentBatchModel> {
+    const response: any = await apiClient.post(
+      `/loyalty/v1/clearinghouse/batches/${encodeURIComponent(batchCode)}/submit-approval`,
+      { makerUsername: makerUsername || '' },
+      { headers: { 'X-Tenant-Id': tenantId } }
+    );
+    return unwrapObject<ClearingPaymentBatchModel>(response);
+  },
+
+  async payClearingBatch(
+    batchCode: string,
+    payload: { bankRefCode?: string; coreSettlementTxId?: string; paidBy?: string; note?: string },
+    tenantId: string = getStoredTenantId()
+  ): Promise<ClearingPaymentBatchModel> {
+    const response: any = await apiClient.post(
+      `/loyalty/v1/clearinghouse/batches/${encodeURIComponent(batchCode)}/pay`,
+      payload,
+      { headers: { 'X-Tenant-Id': tenantId } }
+    );
+    return unwrapObject<ClearingPaymentBatchModel>(response);
+  },
+
+  async getSponsorAttributionSummary(
+    tenantId: string = getStoredTenantId(),
+    fromDate?: string,
+    toDate?: string
+  ): Promise<SponsorAttributionSummaryModel> {
+    try {
+      const response: any = await apiClient.get('/loyalty/v1/clearinghouse/sponsor-summary', {
+        params: { fromDate, toDate },
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return unwrapObject<SponsorAttributionSummaryModel>(response);
+    } catch (e) {
+      console.error('[getSponsorAttributionSummary] Error:', e);
+      return {
+        periodFrom: fromDate || '',
+        periodTo: toDate || '',
+        totalPoolReplenishRequired: 0,
+        natcashBudgetAmount: 0,
+        partnerReceivableAmount: 0,
+        items: [],
+      };
+    }
+  },
+
+  async getClearingBreakdowns(
+    tenantId: string = getStoredTenantId(),
+    fromDate?: string,
+    toDate?: string,
+    fundingPartnerId?: number
+  ): Promise<ClearingBreakdownItemModel[]> {
+    try {
+      const response: any = await apiClient.get('/loyalty/v1/clearinghouse/breakdowns', {
+        params: { fromDate, toDate, fundingPartnerId },
+        headers: { 'X-Tenant-Id': tenantId },
+      });
+      return unwrapList<ClearingBreakdownItemModel>(response);
+    } catch (e) {
+      console.error('[getClearingBreakdowns] Error:', e);
+      return [];
+    }
+  },
+
+  async reconcileThreeWay(
+    payload: { batchCode?: string; items: ThreeWayReconcileItemModel[] },
+    tenantId: string = getStoredTenantId()
+  ): Promise<ThreeWayReconcileResponseModel> {
+    const response: any = await apiClient.post('/loyalty/v1/clearinghouse/reconcile-three-way', payload, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    return unwrapObject<ThreeWayReconcileResponseModel>(response);
   },
 
   // 14. Bộ dựng luật chiến dịch (NV-05), Theo dõi (NV-06), AI Copilot (AI-01) & Ngân sách (NS-01)
@@ -2583,18 +2661,93 @@ export interface ClearingPaymentBatchModel {
   partnerId: number;
   partnerCode?: string;
   partnerName: string;
+  period?: string;
   periodFrom: string;
   periodTo: string;
   grossAmount: number;
   discountAmount: number;
   mdrFeeAmount: number;
+  sponsorPayableAmount?: number;
   netPayableAmount: number;
+  batchDirection?: string;
+  coreSettlementTxId?: string;
+  bankRefCode?: string;
+  approvalRequestId?: number;
   excludedDisputeCodes?: string[];
   confirmDeadlineAt?: string;
   status: string;
   createdAt?: string;
   confirmedAt?: string;
   paidAt?: string;
+}
+
+export interface SponsorAttributionItemModel {
+  fundingPartnerId?: number | null;
+  partnerCode: string;
+  partnerName: string;
+  sponsorType: string;
+  voucherAmount: number;
+  coinAmount: number;
+  totalPayableToPool: number;
+  txCount: number;
+  replenishChannel: string;
+}
+
+export interface SponsorAttributionSummaryModel {
+  periodFrom: string;
+  periodTo: string;
+  totalPoolReplenishRequired: number;
+  natcashBudgetAmount: number;
+  partnerReceivableAmount: number;
+  items: SponsorAttributionItemModel[];
+}
+
+export interface ClearingBreakdownItemModel {
+  id: number;
+  clearingTxId: number;
+  transactionCode: string;
+  holdCode?: string;
+  sourceType: string;
+  sourceRef?: string;
+  bucketId?: number;
+  redemptionId?: number;
+  sponsorType: string;
+  fundingPartnerId?: number | null;
+  fundingPartnerCode?: string;
+  fundingPartnerName?: string;
+  shareRatio: number;
+  pointsConsumed: number;
+  exchangeRate: number;
+  payableAmount: number;
+  reverted: boolean;
+  reconciliationStatus: string;
+  coreTxId?: string;
+  createdAt: string;
+}
+
+export interface ThreeWayReconcileItemModel {
+  coreTxId: string;
+  holdCode?: string;
+  transactionCode?: string;
+  partnerOrderId?: string;
+  orgAmount?: number;
+  walletPaidAmount?: number;
+  poolDeductedAmount: number;
+  coreStatus: 'SUCCESS' | 'REVERTED';
+}
+
+export interface ThreeWayReconcileResponseModel {
+  batchCode: string;
+  totalChecked: number;
+  matchedCount: number;
+  autoConfirmedCount: number;
+  autoRevertedCount: number;
+  disputedCount: number;
+  missingTxCount: number;
+  totalPoolDeductedAmount: number;
+  totalBreakdownMatchedAmount: number;
+  disputeCodes: string[];
+  reconciledAt: string;
 }
 
 export interface CampaignRuleModel {

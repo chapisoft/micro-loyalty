@@ -2,6 +2,7 @@ package com.natcash.loyalty.ledger.entity;
 
 import com.natcash.loyalty.domain.enums.BucketStatus;
 import com.natcash.loyalty.domain.enums.CurrencyAssetType;
+import com.natcash.loyalty.domain.enums.SponsorType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -59,6 +60,14 @@ public class PointExpirationBucketEntity {
 
     @Column(name = "source_ref", length = 100)
     private String sourceRef;
+
+    @Column(name = "funding_partner_id")
+    private Long fundingPartnerId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sponsor_type", nullable = false, length = 30)
+    @Builder.Default
+    private SponsorType sponsorType = SponsorType.NATCASH;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)

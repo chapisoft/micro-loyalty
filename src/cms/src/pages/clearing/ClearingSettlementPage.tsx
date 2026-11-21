@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { InputText } from 'primereact/inputtext';
+import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
@@ -21,6 +22,10 @@ import {
   LoyaltyService,
   ClearingSummaryModel,
   ClearingPaymentBatchModel,
+  ClearingBreakdownItemModel,
+  SponsorAttributionSummaryModel,
+  SponsorAttributionItemModel,
+  ThreeWayReconcileItemModel,
   DisputeItemModel,
   PartnerTransactionItemModel,
   PartnerTransactionsResponseModel,
@@ -96,13 +101,19 @@ export const ClearingSettlementPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState<PartnerTransactionsResponseModel | null>(null);
 
-  // LM-07 Payment Batches (PAY-...)
+  // LM-07 Payment Batches (PAY-...) & Pooled W_LOYALTY_POOL Breakdowns
   const [batches, setBatches] = useState<ClearingPaymentBatchModel[]>([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
   const [showCreateBatchDialog, setShowCreateBatchDialog] = useState(false);
   const [batchPartnerId, setBatchPartnerId] = useState<number | null>(null);
   const [batchMdrRate, setBatchMdrRate] = useState<number>(1.5);
   const [trackBatch, setTrackBatch] = useState<ClearingPaymentBatchModel | null>(null);
+  const [bankRefCode, setBankRefCode] = useState<string>('');
+  const [coreSettlementTxId, setCoreSettlementTxId] = useState<string>('');
+  const [sponsorSummary, setSponsorSummary] = useState<SponsorAttributionSummaryModel | null>(null);
+  const [breakdowns, setBreakdowns] = useState<ClearingBreakdownItemModel[]>([]);
+  const [showReconcileDialog, setShowReconcileDialog] = useState(false);
+  const [reconcilePayloadJson, setReconcilePayloadJson] = useState<string>('[]');
 
   const fetchClearingData = useCallback(async () => {
     setLoading(true);
@@ -111,10 +122,12 @@ export const ClearingSettlementPage: React.FC = () => {
       const fromIso = fromDate ? new Date(fromDate + 'T00:00:00').toISOString() : undefined;
       const toIso = toDate ? new Date(toDate + 'T23:59:59').toISOString() : undefined;
 
-      const [report, disputes, batchRes] = await Promise.all([
+      const [report, disputes, batchRes, sponsorRes, breakdownRes] = await Promise.all([
         LoyaltyService.getClearingReport(selectedTenant, fromIso, toIso),
         LoyaltyService.getDisputes(selectedTenant),
         LoyaltyService.getClearingBatches(selectedTenant),
+        LoyaltyService.getSponsorAttributionSummary(selectedTenant, fromIso, toIso),
+        LoyaltyService.getClearingBreakdowns(selectedTenant, fromIso, toIso),
       ]);
 
       if (report && Array.isArray(report.partnerSummaries)) {
@@ -130,11 +143,15 @@ export const ClearingSettlementPage: React.FC = () => {
       }
 
       setBatches(Array.isArray(batchRes) ? batchRes : []);
+      setSponsorSummary(sponsorRes || null);
+      setBreakdowns(Array.isArray(breakdownRes) ? breakdownRes : []);
     } catch (e) {
       console.error('[fetchClearingData] Error:', e);
       setClearingList([]);
       setDisputeList([]);
       setBatches([]);
+      setSponsorSummary(null);
+      setBreakdowns([]);
     } finally {
       setLoading(false);
       setBatchesLoading(false);
@@ -149,7 +166,7 @@ export const ClearingSettlementPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       await LoyaltyService.createClearingBatch(
-        { partnerId: batchPartnerId, periodFrom: fromDate, periodTo: toDate },
+        { partnerId: batchPartnerId, periodFrom: fromDate, periodTo: toDate, mdrFeePercent: batchMdrRate },
         selectedTenant
       );
       toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('clearing.batch_created') });
@@ -168,6 +185,66 @@ export const ClearingSettlementPage: React.FC = () => {
       await LoyaltyService.confirmClearingBatch(batch.batchCode, selectedTenant);
       toast.current?.show({ severity: 'success', summary: t('common.success'), detail: `${batch.batchCode} ${t('clearing.batch_confirmed')}` });
       setTrackBatch(null);
+      fetchClearingData();
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitApprovalBatch = async (batch: ClearingPaymentBatchModel) => {
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.submitClearingBatchApproval(batch.batchCode, selectedTenant);
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('clearing.approval_submitted') });
+      setTrackBatch(null);
+      fetchClearingData();
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePayBatch = async (batch: ClearingPaymentBatchModel) => {
+    setIsSubmitting(true);
+    try {
+      await LoyaltyService.payClearingBatch(
+        batch.batchCode,
+        { bankRefCode: bankRefCode.trim() || undefined, coreSettlementTxId: coreSettlementTxId.trim() || undefined },
+        selectedTenant
+      );
+      toast.current?.show({ severity: 'success', summary: t('common.success'), detail: t('clearing.batch_paid_success') });
+      setBankRefCode('');
+      setCoreSettlementTxId('');
+      setTrackBatch(null);
+      fetchClearingData();
+    } catch (err: any) {
+      toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRunThreeWayReconcile = async () => {
+    setIsSubmitting(true);
+    try {
+      const parsed = JSON.parse(reconcilePayloadJson || '[]') as ThreeWayReconcileItemModel[];
+      const res = await LoyaltyService.reconcileThreeWay({ items: Array.isArray(parsed) ? parsed : [] }, selectedTenant);
+      toast.current?.show({
+        severity: 'success',
+        summary: t('common.success'),
+        detail: t('clearing.three_way_result', {
+          total: res.totalChecked,
+          matched: res.matchedCount,
+          confirmed: res.autoConfirmedCount,
+          reverted: res.autoRevertedCount,
+          disputed: res.disputedCount,
+        }),
+        life: 5000,
+      });
+      setShowReconcileDialog(false);
       fetchClearingData();
     } catch (err: any) {
       toast.current?.show({ severity: 'error', summary: t('common.error'), detail: err?.response?.data?.message || err.message });
@@ -405,6 +482,14 @@ export const ClearingSettlementPage: React.FC = () => {
               onClick={exportToExcel}
               size="small"
             />
+            <Button
+              icon="pi pi-sync"
+              label={t('clearing.run_three_way_reconcile')}
+              severity="info"
+              outlined
+              onClick={() => setShowReconcileDialog(true)}
+              size="small"
+            />
           </div>
 
           {/* Nút chọn nhanh kỳ kế toán */}
@@ -576,9 +661,59 @@ export const ClearingSettlementPage: React.FC = () => {
               <Column field="partnerName" header={t('clearing.partner_name')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{b.partnerCode} - {b.partnerName || ''}</span>} style={{ minWidth: '13rem' }} />
               <Column header={t('clearing.period')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-mono text-xs">{b.periodFrom} → {b.periodTo}</span>} style={{ minWidth: '13rem' }} />
               <Column field="grossAmount" header={t('clearing.gross_amount')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.grossAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
-              <Column field="mdrFeeAmount" header={t('clearing.mdr_fee', 'Phí MDR')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9.5rem', textAlign: 'right' }} />
+              <Column field="mdrFeeAmount" header={t('clearing.mdr_fee')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.mdrFeeAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '8.5rem', textAlign: 'right' }} />
+              <Column field="sponsorPayableAmount" header={t('clearing.sponsor_payable')} body={(b: ClearingPaymentBatchModel) => <span className="text-900">{Number(b.sponsorPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
               <Column field="netPayableAmount" header={t('clearing.net_payable')} body={(b: ClearingPaymentBatchModel) => <span className="text-900 font-semibold">{Number(b.netPayableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+              <Column field="batchDirection" header={t('clearing.batch_direction')} body={(b: ClearingPaymentBatchModel) => <span className="font-mono text-xs text-700">{b.batchDirection || '-'}</span>} style={{ minWidth: '10rem' }} />
               <Column field="status" header={t('common.status')} body={(b: ClearingPaymentBatchModel) => <StatusBadge status={b.status} />} style={{ minWidth: '8.5rem', textAlign: 'center' }} />
+            </DataTable>
+          </TabPanel>
+
+          <TabPanel header={t('clearing.tab_breakdowns', { count: breakdowns.length })} leftIcon="pi pi-sitemap mr-2">
+            <div className="grid mb-3">
+              <div className="col-12 md:col-4">
+                <div className="surface-100 p-3 border-round">
+                  <span className="text-500 text-xs block">{t('clearing.pool_replenish_total')}</span>
+                  <span className="text-900 font-bold text-xl">{Number(sponsorSummary?.totalPoolReplenishRequired || 0).toLocaleString()} HTG</span>
+                </div>
+              </div>
+              <div className="col-12 md:col-4">
+                <div className="surface-100 p-3 border-round">
+                  <span className="text-500 text-xs block">{t('clearing.natcash_budget_replenish')}</span>
+                  <span className="text-primary font-bold text-xl">{Number(sponsorSummary?.natcashBudgetAmount || 0).toLocaleString()} HTG</span>
+                </div>
+              </div>
+              <div className="col-12 md:col-4">
+                <div className="surface-100 p-3 border-round">
+                  <span className="text-500 text-xs block">{t('clearing.partner_receivable_replenish')}</span>
+                  <span className="text-orange-600 font-bold text-xl">{Number(sponsorSummary?.partnerReceivableAmount || 0).toLocaleString()} HTG</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="font-semibold text-sm text-700 mb-2">{t('clearing.sponsor_summary_title')}</div>
+            <DataTable<SponsorAttributionItemModel[]> value={sponsorSummary?.items || []} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')} className="mb-4">
+              <Column header={t('common.order_number')} body={(_, opt) => opt.rowIndex + 1} style={{ width: '4rem', textAlign: 'center' }} />
+              <Column field="partnerName" header={t('clearing.funding_partner')} body={(s: SponsorAttributionItemModel) => <span className="text-900 font-medium">{s.partnerCode} - {s.partnerName}</span>} style={{ minWidth: '14rem' }} />
+              <Column field="sponsorType" header={t('clearing.sponsor_type')} body={(s: SponsorAttributionItemModel) => <StatusBadge status={s.sponsorType} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
+              <Column field="voucherAmount" header={t('clearing.voucher_amount')} body={(s: SponsorAttributionItemModel) => <span className="font-mono text-900">{Number(s.voucherAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+              <Column field="coinAmount" header={t('clearing.coin_amount')} body={(s: SponsorAttributionItemModel) => <span className="font-mono text-900">{Number(s.coinAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+              <Column field="totalPayableToPool" header={t('clearing.total_payable_pool')} body={(s: SponsorAttributionItemModel) => <span className="font-mono font-semibold text-900">{Number(s.totalPayableToPool || 0).toLocaleString()} HTG</span>} style={{ minWidth: '10rem', textAlign: 'right' }} />
+              <Column field="replenishChannel" header={t('clearing.replenish_channel')} body={(s: SponsorAttributionItemModel) => <Tag value={s.replenishChannel} severity={s.replenishChannel === 'CORE_035404' ? 'info' : 'warning'} />} style={{ minWidth: '10rem', textAlign: 'center' }} />
+            </DataTable>
+
+            <div className="font-semibold text-sm text-700 mb-2">{t('clearing.breakdowns_detail_title')}</div>
+            <DataTable<ClearingBreakdownItemModel[]> value={breakdowns} paginator rows={10} stripedRows responsiveLayout="scroll" emptyMessage={t('common.no_data')}>
+              <Column header={t('common.order_number')} body={(_, opt) => opt.rowIndex + 1} style={{ width: '4rem', textAlign: 'center' }} />
+              <Column field="transactionCode" header={t('clearing.detail_tx_code')} body={(b: ClearingBreakdownItemModel) => <span className="font-mono font-semibold text-900">{b.transactionCode}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="holdCode" header={t('clearing.hold_code')} body={(b: ClearingBreakdownItemModel) => <span className="font-mono text-xs text-700">{b.holdCode || '-'}</span>} style={{ minWidth: '9rem' }} />
+              <Column field="coreTxId" header={t('clearing.core_tx_id')} body={(b: ClearingBreakdownItemModel) => <span className="font-mono text-xs text-700">{b.coreTxId || '-'}</span>} style={{ minWidth: '9rem' }} />
+              <Column field="sourceType" header={t('clearing.source_type')} body={(b: ClearingBreakdownItemModel) => <Tag value={b.sourceType} severity={b.sourceType === 'VOUCHER' ? 'success' : 'info'} />} style={{ minWidth: '8rem', textAlign: 'center' }} />
+              <Column field="sourceRef" header={t('clearing.source_ref')} body={(b: ClearingBreakdownItemModel) => <span className="font-mono text-900">{b.sourceRef || '-'}</span>} style={{ minWidth: '10rem' }} />
+              <Column field="fundingPartnerName" header={t('clearing.funding_partner')} body={(b: ClearingBreakdownItemModel) => <span className="text-900">{b.fundingPartnerName || b.fundingPartnerCode || '-'}</span>} style={{ minWidth: '11rem' }} />
+              <Column field="shareRatio" header={t('clearing.share_ratio')} body={(b: ClearingBreakdownItemModel) => <span className="font-mono">{Number(b.shareRatio || 0)}%</span>} style={{ minWidth: '6.5rem', textAlign: 'right' }} />
+              <Column field="payableAmount" header={t('clearing.payable_amount')} body={(b: ClearingBreakdownItemModel) => <span className="font-mono font-semibold text-900">{Number(b.payableAmount || 0).toLocaleString()} HTG</span>} style={{ minWidth: '9rem', textAlign: 'right' }} />
+              <Column field="reconciliationStatus" header={t('clearing.reconciliation_status')} body={(b: ClearingBreakdownItemModel) => <StatusBadge status={b.reconciliationStatus} />} style={{ minWidth: '9rem', textAlign: 'center' }} />
             </DataTable>
           </TabPanel>
         </TabView>
@@ -817,16 +952,53 @@ export const ClearingSettlementPage: React.FC = () => {
             </div>
             <div>
               <div className="text-xs text-500 mb-1">{t('clearing.settlement_progress')}</div>
-              <ProgressBar value={trackBatch.status === PaymentBatchStatus.PAID ? 100 : trackBatch.status === PaymentBatchStatus.PARTNER_CONFIRMED ? 75 : trackBatch.status === PaymentBatchStatus.PENDING_CONFIRM ? 40 : 20} />
+              <ProgressBar value={trackBatch.status === PaymentBatchStatus.PAID ? 100 : trackBatch.status === PaymentBatchStatus.CONFIRMED || trackBatch.status === PaymentBatchStatus.PARTNER_CONFIRMED ? 75 : trackBatch.status === PaymentBatchStatus.PENDING_CONFIRM ? 40 : 20} />
             </div>
-            <div className="flex justify-content-end gap-2 mt-2">
+            {trackBatch.status !== PaymentBatchStatus.PAID && (
+              <div className="grid p-fluid mt-1">
+                <div className="col-6 field m-0">
+                  <label className="text-xs font-medium">{t('clearing.bank_ref_code')}</label>
+                  <InputText value={bankRefCode} onChange={(e) => setBankRefCode(e.target.value)} />
+                </div>
+                <div className="col-6 field m-0">
+                  <label className="text-xs font-medium">{t('clearing.core_settlement_tx_id')}</label>
+                  <InputText value={coreSettlementTxId} onChange={(e) => setCoreSettlementTxId(e.target.value)} />
+                </div>
+              </div>
+            )}
+            <div className="flex justify-content-end gap-2 mt-2 flex-wrap">
               <Button label={t('common.close')} outlined onClick={() => setTrackBatch(null)} />
+              {trackBatch.status === PaymentBatchStatus.PENDING_CONFIRM && !trackBatch.approvalRequestId && (
+                <Button label={t('clearing.submit_approval')} icon="pi pi-send" severity="info" outlined onClick={() => handleSubmitApprovalBatch(trackBatch)} loading={isSubmitting} />
+              )}
+              {trackBatch.status === PaymentBatchStatus.PENDING_CONFIRM && (
+                <Button label={t('clearing.confirm_settle_batch')} icon="pi pi-check-circle" severity="secondary" onClick={() => handleConfirmBatch(trackBatch)} loading={isSubmitting} />
+              )}
               {trackBatch.status !== PaymentBatchStatus.PAID && (
-                <Button label={t('clearing.confirm_settle_batch')} icon="pi pi-check-circle" severity="success" onClick={() => handleConfirmBatch(trackBatch)} loading={isSubmitting} />
+                <Button label={t('clearing.mark_paid_action')} icon="pi pi-wallet" severity="success" onClick={() => handlePayBatch(trackBatch)} loading={isSubmitting} />
               )}
             </div>
           </div>
         )}
+      </Dialog>
+
+      {/* Dialog Chạy Đối soát 3 bên (W_LOYALTY_POOL <-> Channels <-> Loyalty) */}
+      <Dialog visible={showReconcileDialog} onHide={() => setShowReconcileDialog(false)} header={t('clearing.three_way_dialog_title')} style={{ width: '44rem' }} modal>
+        <div className="p-fluid flex flex-column gap-3">
+          <div className="field m-0">
+            <label className="text-sm font-medium">{t('clearing.three_way_payload_label')}</label>
+            <InputTextarea
+              rows={8}
+              value={reconcilePayloadJson}
+              onChange={(e) => setReconcilePayloadJson(e.target.value)}
+              className="font-mono text-xs"
+            />
+          </div>
+        </div>
+        <div className="flex justify-content-end gap-2 mt-4">
+          <Button label={t('common.cancel')} outlined onClick={() => setShowReconcileDialog(false)} />
+          <Button label={t('clearing.three_way_run_btn')} icon="pi pi-check" severity="info" onClick={handleRunThreeWayReconcile} loading={isSubmitting} />
+        </div>
       </Dialog>
     </div>
   );

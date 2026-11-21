@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8085}
   servlet:
     context-path: /loyalty-service
 
@@ -7,7 +7,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   application:
-    name: cms-service
+    name: partner-service
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/loyalty_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -30,7 +30,7 @@ spring:
         show_sql: false
     open-in-view: false
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:false}
     baseline-on-migrate: true
     locations: classpath:db/migration
   data:

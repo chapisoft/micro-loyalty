@@ -35,7 +35,8 @@ public class NatcashWalletClient {
     }
 
     /**
-     * Xác nhận giao dịch thanh toán trừ tiền ví tại quầy siêu thị POS
+     * Xác nhận giao dịch thanh toán trừ tiền ví tại quầy siêu thị POS.
+     * Bỏ fallback trả true giả lập khi thiếu cấu hình hoặc mất kết nối Core để tránh sai lệch đối soát tài chính.
      */
     public boolean verifyAndDeductWalletBalance(String externalUserId, BigDecimal fiatAmount, String transactionRef) {
         log.info("[NATCASH-WALLET-CALL] user={}, amount={} HTG, txRef={}", externalUserId, fiatAmount, transactionRef);
@@ -44,8 +45,8 @@ public class NatcashWalletClient {
             String baseUrl = config.getBaseUrl();
             String apiKey = config.getApiKey();
             if (baseUrl == null || baseUrl.isBlank()) {
-                log.warn("[NATCASH-WALLET-SKIP] Chưa cấu hình loyalty.integration.natcash.base-url trong etc/application.yml");
-                return true;
+                log.error("[NATCASH-WALLET-MISCONFIGURED] Chưa cấu hình loyalty.integration.natcash.base-url trong application.yml");
+                return false;
             }
             String url = baseUrl + "/wallet/deduct";
             HttpHeaders headers = new HttpHeaders();
@@ -67,9 +68,46 @@ public class NatcashWalletClient {
                 log.info("[NATCASH-WALLET-SUCCESS] txRef={}, status={}", transactionRef, response.getStatusCode());
                 return true;
             }
+            log.warn("[NATCASH-WALLET-REJECTED] txRef={}, status={}", transactionRef, response.getStatusCode());
+            return false;
         } catch (Exception e) {
-            log.warn("[NATCASH-WALLET-FALLBACK] Kết nối Core ví ngoại vi dùng fallback adapter an toàn: {}", e.getMessage());
+            log.error("[NATCASH-WALLET-ERROR] Lỗi kết nối Core ví Natcash txRef={}: {}", transactionRef, e.getMessage());
+            return false;
         }
-        return true;
+    }
+
+    /**
+     * Gọi hoàn tiền giao dịch ví sang Core Natcash khi giao dịch bị hủy / Revert.
+     */
+    public boolean refundWalletTransaction(String originalTxRef, BigDecimal refundAmount, String refundTxRef) {
+        log.info("[NATCASH-WALLET-REFUND-CALL] origTx={}, amount={} HTG, refundTx={}", originalTxRef, refundAmount, refundTxRef);
+        try {
+            LoyaltyProperties.Integration.Natcash config = LoyaltyProperties.get().getIntegration().getNatcash();
+            String baseUrl = config.getBaseUrl();
+            String apiKey = config.getApiKey();
+            if (baseUrl == null || baseUrl.isBlank()) {
+                log.error("[NATCASH-WALLET-MISCONFIGURED] Chưa cấu hình loyalty.integration.natcash.base-url cho lệnh hoàn tiền");
+                return false;
+            }
+            String url = baseUrl + "/wallet/refund";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set(LoyaltyConstants.API_KEY_HEADER, apiKey);
+            headers.set("X-Transaction-Ref", refundTxRef);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("originalTransactionRef", originalTxRef);
+            body.put("refundTransactionRef", refundTxRef);
+            body.put("amount", refundAmount);
+            body.put("currency", CurrencyCode.HTG.getCode());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            ParameterizedTypeReference<Map<String, Object>> responseType = new ParameterizedTypeReference<>() {};
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity, responseType);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.error("[NATCASH-WALLET-REFUND-ERROR] Lỗi hoàn tiền Core ví Natcash origTx={}: {}", originalTxRef, e.getMessage());
+            return false;
+        }
     }
 }

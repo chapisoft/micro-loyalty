@@ -1,5 +1,6 @@
 package com.natcash.loyalty.clearing.entity;
 
+import com.natcash.loyalty.domain.enums.BatchDirection;
 import com.natcash.loyalty.domain.enums.BatchSettlementStatus;
 
 import jakarta.persistence.Column;
@@ -85,6 +86,21 @@ public class ClearingPaymentBatchEntity {
 
     @Column(name = "bank_ref_code", length = 100)
     private String bankRefCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "batch_direction", nullable = false, length = 30)
+    @Builder.Default
+    private BatchDirection batchDirection = BatchDirection.MERCHANT_SETTLEMENT;
+
+    @Column(name = "sponsor_payable_amount", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal sponsorPayableAmount = BigDecimal.ZERO;
+
+    @Column(name = "core_settlement_tx_id", length = 100)
+    private String coreSettlementTxId;
+
+    @Column(name = "approval_request_id")
+    private Long approvalRequestId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)

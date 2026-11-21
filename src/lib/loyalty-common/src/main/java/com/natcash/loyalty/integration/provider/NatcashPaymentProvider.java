@@ -41,8 +41,8 @@ public class NatcashPaymentProvider implements PaymentGatewayProvider {
         return PaymentDeductResult.builder()
                 .success(ok)
                 .transactionRef(transactionRef)
-                .deductedAmount(amount)
-                .externalCode("NC_200")
+                .deductedAmount(ok ? amount : BigDecimal.ZERO)
+                .externalCode(ok ? "NC_200" : "NC_FAILED")
                 .message(ok ? MessageUtils.getMessage("integration.payment.natcash_success")
                         : MessageUtils.getMessage("integration.payment.natcash_failed"))
                 .build();
@@ -56,11 +56,15 @@ public class NatcashPaymentProvider implements PaymentGatewayProvider {
         log.info("[PROVIDER-NATCASH-REFUND] tenant={}, origTx={}, amount={}",
                 config.getTenantId(), originalTxRef, refundAmount);
 
+        String refundRef = "REF_" + originalTxRef;
+        boolean ok = natcashWalletClient.refundWalletTransaction(originalTxRef, refundAmount, refundRef);
+
         return PaymentRefundResult.builder()
-                .success(true)
-                .refundTransactionRef("REF_" + originalTxRef)
-                .refundedAmount(refundAmount)
-                .message(MessageUtils.getMessage("integration.refund.natcash_success"))
+                .success(ok)
+                .refundTransactionRef(refundRef)
+                .refundedAmount(ok ? refundAmount : BigDecimal.ZERO)
+                .message(ok ? MessageUtils.getMessage("integration.refund.natcash_success")
+                        : MessageUtils.getMessage("integration.payment.natcash_failed"))
                 .build();
     }
 }

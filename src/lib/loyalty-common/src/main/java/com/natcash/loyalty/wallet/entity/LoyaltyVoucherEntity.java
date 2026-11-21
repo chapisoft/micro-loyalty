@@ -1,6 +1,7 @@
 package com.natcash.loyalty.wallet.entity;
 
 import com.natcash.loyalty.domain.enums.DiscountType;
+import com.natcash.loyalty.domain.enums.SponsorType;
 import com.natcash.loyalty.domain.enums.VoucherStatus;
 
 import jakarta.persistence.Column;
@@ -148,6 +149,19 @@ public class LoyaltyVoucherEntity {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sponsor_type", nullable = false, length = 30)
+    @Builder.Default
+    private SponsorType sponsorType = SponsorType.NATCASH;
+
+    @Column(name = "natcash_share_percent", nullable = false, precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal natcashSharePercent = new BigDecimal("100.00");
+
+    @Column(name = "partner_share_percent", nullable = false, precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal partnerSharePercent = BigDecimal.ZERO;
+
     /** {"en":{"name","condition","terms"},"fr":{…},"ht":{…}} */
     @Column(name = "i18n_json", columnDefinition = "text")
     private String i18nJson;
@@ -170,6 +184,15 @@ public class LoyaltyVoucherEntity {
         }
         if (this.discountType == null) {
             this.discountType = DiscountType.FIXED_AMOUNT;
+        }
+        if (this.sponsorType == null) {
+            this.sponsorType = this.partnerId != null ? SponsorType.PARTNER : SponsorType.NATCASH;
+        }
+        if (this.natcashSharePercent == null) {
+            this.natcashSharePercent = this.sponsorType == SponsorType.PARTNER ? BigDecimal.ZERO : new BigDecimal("100.00");
+        }
+        if (this.partnerSharePercent == null) {
+            this.partnerSharePercent = this.sponsorType == SponsorType.PARTNER ? new BigDecimal("100.00") : BigDecimal.ZERO;
         }
     }
 

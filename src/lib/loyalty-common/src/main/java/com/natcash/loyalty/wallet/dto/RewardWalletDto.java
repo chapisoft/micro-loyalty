@@ -98,8 +98,12 @@ public final class RewardWalletDto {
 
         private String voucherRedemptionCode;
 
+        private List<String> voucherRedemptionCodes;
+
         @NotNull(message = "{validation.redeemer_partner_id.not_null}")
         private Long redeemerPartnerId;
+
+        private String branchCode;
 
         private String description;
     }
@@ -174,6 +178,7 @@ public final class RewardWalletDto {
         private BigDecimal pointsBurned;
         private BigDecimal remainingPoints;
         private String appliedVoucherCode;
+        private List<String> appliedVoucherCodes;
         private String status;
         private Instant redeemedAt;
     }

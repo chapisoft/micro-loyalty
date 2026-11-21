@@ -1,6 +1,7 @@
 package com.natcash.loyalty.wallet.repository;
 
 import com.natcash.loyalty.domain.enums.ClearingStatus;
+import com.natcash.loyalty.domain.enums.ReconciliationStatus;
 import com.natcash.loyalty.wallet.entity.ClearingTransactionEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,7 +19,17 @@ public interface ClearingTransactionRepository extends JpaRepository<ClearingTra
 
     Optional<ClearingTransactionEntity> findByTenantIdAndTransactionCode(String tenantId, String transactionCode);
 
+    Optional<ClearingTransactionEntity> findByTenantIdAndHoldCode(String tenantId, String holdCode);
+
+    Optional<ClearingTransactionEntity> findByTenantIdAndPartnerOrderId(String tenantId, String partnerOrderId);
+
     List<ClearingTransactionEntity> findByTenantIdAndStatus(String tenantId, ClearingStatus status);
+
+    List<ClearingTransactionEntity> findByTenantIdAndReconciliationStatus(String tenantId, ReconciliationStatus reconciliationStatus);
+
+    List<ClearingTransactionEntity> findByStatusAndCreatedAtBefore(ClearingStatus status, Instant before);
+
+    List<ClearingTransactionEntity> findByReconciliationStatusAndCreatedAtBefore(ReconciliationStatus reconciliationStatus, Instant before);
 
     List<ClearingTransactionEntity> findByTenantIdAndCreatedAtBetween(String tenantId, Instant from, Instant to);
 

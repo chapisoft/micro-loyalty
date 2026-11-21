@@ -22,6 +22,7 @@ import com.natcash.loyalty.constant.SecurityConstants;
 import com.natcash.loyalty.domain.enums.ApprovalActionType;
 import com.natcash.loyalty.domain.enums.ApprovalStatus;
 import com.natcash.loyalty.domain.enums.ApprovalTargetType;
+import com.natcash.loyalty.domain.enums.BatchSettlementStatus;
 import com.natcash.loyalty.domain.enums.CommonStatus;
 import com.natcash.loyalty.domain.enums.CurrencyAssetType;
 import com.natcash.loyalty.domain.enums.PointActionType;
@@ -221,6 +222,10 @@ public class ApprovalQueueService {
             applyLeaderboardPayoutDecision(tenantId, entity, true, entity.getCheckerUsername());
             return;
         }
+        if (entity.getTargetType() == ApprovalTargetType.PAYMENT_BATCH) {
+            applyPaymentBatchDecision(tenantId, entity, true, entity.getCheckerUsername());
+            return;
+        }
         if (accountRepository == null || entity.getPayloadAfter() == null) {
             return;
         }
@@ -239,6 +244,37 @@ public class ApprovalQueueService {
     private void applyRejectedSideEffect(String tenantId, ApprovalRequestEntity entity, String checker) {
         if (entity.getTargetType() == ApprovalTargetType.LEADERBOARD_PAYOUT) {
             applyLeaderboardPayoutDecision(tenantId, entity, false, checker);
+        } else if (entity.getTargetType() == ApprovalTargetType.PAYMENT_BATCH) {
+            applyPaymentBatchDecision(tenantId, entity, false, checker);
+        }
+    }
+
+    private void applyPaymentBatchDecision(String tenantId, ApprovalRequestEntity entity, boolean approved, String checker) {
+        if (jdbcTemplate == null || entity.getTargetId() == null || entity.getTargetId().isBlank()) {
+            return;
+        }
+        try {
+            Long batchId = Long.parseLong(entity.getTargetId().trim());
+            if (approved) {
+                jdbcTemplate.update(
+                        "UPDATE clearing_payment_batches SET status = ?, confirmed_at = COALESCE(confirmed_at, ?), confirmed_by = COALESCE(confirmed_by, ?), updated_at = ? WHERE id = ? AND tenant_id = ? AND status = ?",
+                        BatchSettlementStatus.CONFIRMED.name(),
+                        Timestamp.from(Instant.now()),
+                        checker,
+                        Timestamp.from(Instant.now()),
+                        batchId,
+                        tenantId,
+                        BatchSettlementStatus.PENDING_CONFIRM.name());
+            } else {
+                jdbcTemplate.update(
+                        "UPDATE clearing_payment_batches SET status = ?, updated_at = ? WHERE id = ? AND tenant_id = ?",
+                        BatchSettlementStatus.DISPUTED.name(),
+                        Timestamp.from(Instant.now()),
+                        batchId,
+                        tenantId);
+            }
+        } catch (NumberFormatException ex) {
+            log.warn("Invalid PAYMENT_BATCH targetId '{}' for approval request {}", entity.getTargetId(), entity.getRequestCode());
         }
     }
 
